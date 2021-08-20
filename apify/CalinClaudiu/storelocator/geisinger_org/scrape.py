@@ -1,6 +1,7 @@
 from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
+from sglogging import sglog
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from bs4 import BeautifulSoup as b4
@@ -10,6 +11,7 @@ import ssl
 from sgrequests import SgRequests
 import json
 
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 ssl._create_default_https_context = ssl._create_unverified_context
 import os
 import os.path
@@ -64,24 +66,33 @@ def fetch_data():
         k = '{"stores":[' + k + "}]}"
         son = json.loads(k)
         for i in son["stores"]:
+            logzilla.info(
+                f'http://locations.geisinger.org/details.cfm?id={str(i["CLINICID"])}'
+            )
             pageText = None
-            with SgChrome() as driver:
-                driver.get(
-                    str(
-                        "http://locations.geisinger.org/details.cfm?id="
-                        + str(i["CLINICID"])
+            try:
+                with SgChrome() as driver:
+                    driver.get(
+                        str(
+                            "http://locations.geisinger.org/details.cfm?id="
+                            + str(i["CLINICID"])
+                        )
                     )
-                )
-                element = driver.find_element_by_tag_name("iframe")
-                driver.execute_script("arguments[0].scrollIntoView();", element)
-                time.sleep(3)
-                pageText = driver.page_source
-                driver.switch_to.frame(element)
-                coordText = driver.page_source
-            backup = pageText.replace("<b>", '"').replace("</b>", '"')
-            soupy = b4(backup, "lxml")
-            soup = b4(pageText, "lxml")
-            coordSoup = b4(coordText, "lxml")
+                    element = driver.find_element_by_tag_name("iframe")
+                    driver.execute_script("arguments[0].scrollIntoView();", element)
+                    time.sleep(3)
+                    pageText = driver.page_source
+                    driver.switch_to.frame(element)
+                    coordText = driver.page_source
+            except Exception:
+                pass
+            try:
+                backup = pageText.replace("<b>", '"').replace("</b>", '"')
+                soupy = b4(backup, "lxml")
+                soup = b4(pageText, "lxml")
+                coordSoup = b4(coordText, "lxml")
+            except Exception:
+                pass
             try:
                 i["hours"] = "; ".join(
                     list(
@@ -129,7 +140,10 @@ def fetch_data():
                     except Exception:
                         i["hours"] = "<MISSING>"
 
-            i["hours"] = old.replace(":;", "")
+            try:
+                i["hours"] = old.replace(":;", "")
+            except Exception:
+                pass
             coords = None
             try:
                 links = coordSoup.find_all("a", {"href": True})
@@ -172,7 +186,10 @@ def fetch_data():
                 i["hours"] = i["hours"].replace(";;", ";")
                 i["hours"] = i["hours"].replace(";;", ";")
             except Exception:
-                i["hours"] = i["hours"]
+                try:
+                    i["hours"] = i["hours"]
+                except Exception:
+                    i["hours"] = "<INACCESSIBLE>"
 
             try:
                 i["ADDRESS2"] = i["ADDRESS2"]
@@ -257,8 +274,8 @@ def scrape():
         location_name=MappingField(
             mapping=["NAME"], value_transform=lambda x: x.replace("&amp; ", "")
         ),
-        latitude=MappingField(mapping=["lat"]),
-        longitude=MappingField(mapping=["lon"]),
+        latitude=MappingField(mapping=["lat"], is_required=False),
+        longitude=MappingField(mapping=["lon"], is_required=False),
         street_address=MultiMappingField(
             mapping=[["ADDRESS1"], ["ADDRESS2"]],
             raw_value_transform=fix_address,
