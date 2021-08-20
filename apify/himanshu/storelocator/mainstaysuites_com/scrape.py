@@ -1,13 +1,12 @@
-from typing import Iterable
-
+from typing import Iterable, Tuple, Callable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
-
+from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 import random
 
@@ -25,23 +24,48 @@ def fix_comma(x):
         return x
 
 
-def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
-    headers = {}
-    headers["x-requested-with"] = "XMLHttpRequest"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    state = CrawlStateSingleton.get_instance()
-    maxZ = None
-    maxZ = search.items_remaining()
-    total = 0
-    for lat, lng in search:
+class ExampleSearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
+
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
+
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        """
+        This method gets called on each iteration of the search.
+        It provides you with all the data you could get from the search instance, as well as
+        a method to register found locations.
+
+        :param coord: The current coordinate (lat, long)
+        :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
+        :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
+        :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
+        :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
+        """
+
+        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
+        lat, lng = coord
+        # just some clever accounting of locations/country:
         found = 0
-        rec_count = state.get_misc_value(
-            search.current_country(), default_factory=lambda: 0
-        )
-        state.set_misc_value(search.current_country(), rec_count + 1)
         url = str(f"https://www.starbucks.com/bff/locations?lat={lat}&lng={lng}")
+        headers = {}
+        headers["x-requested-with"] = "XMLHttpRequest"
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         try:
             locations = http.get(url, headers=headers).json()
             errorName = None
@@ -52,6 +76,13 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         if locations["paging"]["total"] > 0:
             for record in locations["stores"]:
                 try:
+                    try:
+                        found_location_at(
+                            record["coordinates"]["latitude"],
+                            record["coordinates"]["longitude"],
+                        )
+                    except Exception:
+                        pass
                     yield SgRecord(
                         page_url="https://www.starbucks.com/store-locator/store/{}/{}".format(
                             str(record["id"]), str(record["slug"])
@@ -103,12 +134,9 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         raw_address=errorName if errorName else str(record),
                     )
                     found += 1
-                progress = (
-                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-                )
-                total += found
+                progress = "??.?%"
                 logzilla.info(
-                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()}"
+                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: ??|prog: {progress}|\nRemaining: {items_remaining}"
                 )
         else:
             yield SgRecord(
@@ -131,16 +159,22 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=None,
-        max_search_results=49,
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_8()
     )
+
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
     ) as writer:
         with SgRequests() as http:
-            for rec in fetch_records(http, search):
-                writer.write_row(rec)
+            search_iter = ExampleSearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=SearchableCountries.ALL,
+                max_threads=8,
+            )
 
-    state = CrawlStateSingleton.get_instance()
+            for rec in par_search.run():
+                writer.write_row(rec)
