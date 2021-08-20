@@ -44,7 +44,8 @@ def fetch_data():
         hours_of_operation = " ".join(hoo)
         phone = poi_html.xpath(
             './/dt[contains(text(), "電話番号")]/following-sibling::dd/span/text()'
-        )[0]
+        )
+        phone = phone[0] if phone else ""
 
         item = SgRecord(
             locator_domain=domain,
