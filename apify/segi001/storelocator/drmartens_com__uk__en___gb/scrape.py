@@ -29,7 +29,6 @@ def fetch_data():
         if city[0] == "name":
             continue
         url = start_url.format(city[0].lower().replace(" ", "%20"))
-        print(url)
         response = session.get(url)
         try:
             data = json.loads(response.text)
@@ -47,7 +46,7 @@ def fetch_data():
                     continue
                 data = json.loads(response.text)
                 all_locations += data["data"]
-        print(len(all_locations))
+
         for poi in all_locations:
             street_address = poi["line1"]
             if poi["line2"]:
