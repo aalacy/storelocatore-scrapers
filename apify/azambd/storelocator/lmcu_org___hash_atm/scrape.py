@@ -7,7 +7,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sgscrape.pause_resume import CrawlStateSingleton
 
 from sgselenium.sgselenium import SgChrome
@@ -40,9 +40,7 @@ def initiate_driver(url, class_name, driver=None):
         x = x + 1
         try:
             driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=True,
             ).driver()
             driver.get(url)
 
@@ -212,7 +210,7 @@ def scrape():
     start = time.time()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_2(),
+        granularity=Grain_4(),
     )
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
