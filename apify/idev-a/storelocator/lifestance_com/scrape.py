@@ -131,4 +131,4 @@ if __name__ == "__main__":
     ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.writerow(rec)
+            writer.write_row(rec)

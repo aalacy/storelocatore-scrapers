@@ -26,7 +26,7 @@ logger = SgLogSetup().get_logger("autograph-hotels_marriott_com")
 
 headers_api = {
     "accept": "application/json, text/plain, */*",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
 
 
@@ -64,6 +64,7 @@ url_api_endpoints_23_brands = {
 
 
 def fetch_data_for_23_child_brands_from_api_endpoints():
+    # This scrapes the data for 23 child brands
     with SgRequests() as session:
         for k, v in url_api_endpoints_23_brands.items():
             url = v
