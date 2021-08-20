@@ -119,6 +119,7 @@ def fetch_data(sgw: SgWriter):
             phone = phone.split("(Wittelsheim)")[1].strip()
         if phone == "0" or phone == "2":
             phone = "<MISSING>"
+
         if state.find("EX5") != -1:
             state = "<MISSING>"
             postal = "EX5 2UL"
@@ -160,6 +161,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://geodis.com/"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         fetch_data(writer)
