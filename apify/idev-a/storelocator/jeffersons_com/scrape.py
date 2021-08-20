@@ -34,7 +34,7 @@ def fetch_data():
             _hr = sp1.find("h3", string=re.compile(r"^HOURS", re.IGNORECASE))
             if _hr:
                 hours = [
-                    hh.text.strip()
+                    "; ".join(hh.stripped_strings)
                     for hh in _hr.find_next_siblings("p")
                     if hh.text.strip()
                 ]
