@@ -55,7 +55,11 @@ def request_with_retries(url):
 
 
 def _d(page_url, _):
-    raw_address = _.select_one(".address").text.strip()
+    raw_address = ", ".join(
+        _.select_one(".address").text.strip().split(",")[1:]
+    ).strip()
+    if "United Kingdom" not in raw_address:
+        raw_address += ", United Kingdom"
     coord = _.select_one(".address")["data-lat-long"].split(",")
     addr = parse_address_intl(raw_address)
     street_address = addr.street_address_1
