@@ -48,7 +48,7 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.spadstwisters.com/locations"
         location_name = j.get("title")
         info = "".join(j.get("description")).split("\n")
-        ad = "".join("".join(j.get("description")).split("\n")[:2])
+        ad = " ".join("".join(j.get("description")).split("\n")[:2])
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
