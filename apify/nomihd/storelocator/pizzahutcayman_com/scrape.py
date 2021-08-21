@@ -29,10 +29,6 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://www.pizzahutcayman.com/"
-    search_res = session.get(
-        search_url,
-        headers=headers,
-    )
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="col-md-6"][./ul[@class="contact-info"]]')
