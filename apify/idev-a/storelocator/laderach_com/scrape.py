@@ -51,7 +51,7 @@ def fetch_data():
             for store in stores:
                 store_number = store.iframe["src"].split("/")[-1]
                 logger.info(store_number)
-                if store_number == "50047":
+                if store_number == "50047" or store_number == "63198":
                     continue
                 driver.get(store.iframe["src"])
                 WebDriverWait(driver, 10).until(
