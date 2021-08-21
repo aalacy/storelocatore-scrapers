@@ -18,6 +18,24 @@ locator_domain = "https://fatburger.com/"
 base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=BBOAPSVZOXCPKFUV&center={},{}&coordinates={},{},{},{}&multi_account=true&page=1&pageSize=1000"
 
 
+hr_obj = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
+}
+
+
+def _time(val):
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
+
+
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     state = CrawlStateSingleton.get_instance()
     for lat, lng in search:
@@ -72,12 +90,3 @@ if __name__ == "__main__":
             http.clear_cookies()
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
-    print("Printing number of records by country-code:")
-    for country_code in SearchableCountries.ALL:
-        print(
-            country_code,
-            ": ",
-            state.get_misc_value(country_code, default_factory=lambda: 0),
-        )
