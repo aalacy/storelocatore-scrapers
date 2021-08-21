@@ -1,45 +1,18 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("oakstreethealth_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.oakstreethealth.com/locations/all"
 
@@ -78,13 +51,13 @@ def fetch_data():
         try:
             zip_code = (
                 base.find("a", string="Get Directions")
-                .find_previous("span")
+                .find_previous("div")
                 .text.split()[-1]
             )
         except:
             zip_code = (
                 base.find("a", string="Get directions")
-                .find_previous("span")
+                .find_previous("div")
                 .text.split()[-1]
             )
 
@@ -92,9 +65,9 @@ def fetch_data():
             zip_code = "0" + zip_code
 
         try:
-            raw_types = base.find_all(class_="section section--featureGrid")[
-                1
-            ].find_all(class_="feature-block w-full flex flex-col space-y-6")
+            raw_types = base.find(id="services").find_all(
+                class_="feature-block w-full flex flex-col space-y-6"
+            )
             location_type = ""
             for raw_type in raw_types:
                 location_type = location_type + "," + list(raw_type.stripped_strings)[0]
@@ -111,8 +84,10 @@ def fetch_data():
             phone = "<MISSING>"
         try:
             hours_of_operation = " ".join(
-                list(base.find(class_="w-full lg:w-3/4 pt-2").stripped_strings)
+                list(base.find_all(class_="flex items-start")[-1].stripped_strings)
             )
+            if "day" not in hours_of_operation.lower():
+                hours_of_operation = "<MISSING>"
         except:
             hours_of_operation = "<MISSING>"
 
@@ -152,31 +127,25 @@ def fetch_data():
             latitude = "40.6567175"
             longitude = "-73.9519989"
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
