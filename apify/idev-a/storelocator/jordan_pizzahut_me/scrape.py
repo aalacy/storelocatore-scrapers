@@ -68,7 +68,6 @@ def fetch_data():
     cities = json.loads(session.get(base_url, headers=_headers).json()["CityList"])
     logger.info(f"{len(cities)} cities found")
     for city, sp1 in fetchConcurrentList(cities):
-        cnt = sp1.select_one('div[name="divstorelist"]')["data-storecount"]
         for _ in sp1.select("li.storename"):
             page_url = _.a["href"]
             if not page_url.startswith("http"):
