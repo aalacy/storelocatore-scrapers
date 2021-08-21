@@ -23,7 +23,6 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     locator_domain = "oakstreethealth.com"
 
     items = base.find(class_="flex-blocks").find_all("li")
