@@ -123,7 +123,6 @@ def fetch_data(http, state) -> Iterable[SgRecord]:
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
