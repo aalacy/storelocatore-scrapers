@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
@@ -17,7 +17,7 @@ headers = {
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
     expected_search_radius_miles=50,
-    granularity=Grain_1_KM(),
+    use_state=False,
 )
 
 DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
@@ -167,19 +167,15 @@ def fetch_data():
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
 
-            cur_page = 0
-            if soup.select_one("ul.pager li.pager-current span"):
-                cur_page = int(
-                    soup.select_one("ul.pager li.pager-current span")
-                    .text.split("of")[-1]
-                    .strip()
-                )
-
             logger.info(
                 f"{code} | page {page} | found: {found} | total: {total} | progress: {progress}"
             )
-            page += 1
-            if page > cur_page:
+
+            if soup.select_one("ul.pager li.next a"):
+                page = int(
+                    soup.select_one("ul.pager li.next a")["href"].split("page=")[-1]
+                )
+            else:
                 break
 
 

@@ -119,7 +119,7 @@ def fetch_data():
                         )
                         hours = hours.replace("00:00-00:00", "Closed")
                         if store not in ids:
-                            loc = "<MISSING>"
+                            loc = "https://www.barclays.co.uk/branch-finder"
                             country = "GB"
                             ids.append(store)
                             add = (
@@ -132,6 +132,8 @@ def fetch_data():
                             add = add.replace(",", "").strip()
                             add = add.replace("&#x2f;", "/")
                             name = name.replace("&#x2f;", "/")
+                            if typ == "ATM":
+                                phone = "<MISSING>"
                             yield SgRecord(
                                 locator_domain=website,
                                 page_url=loc,
