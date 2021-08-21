@@ -36,9 +36,16 @@ def fetch_data():
             phone = loc_dom.xpath('//*[contains(text(), "tel:")]/text()')
             if phone:
                 phone = phone[0].split("fax:")[0].replace("tel:", "").strip()
-            else:
+                if not phone:
+                    phone = loc_dom.xpath('//b[i[contains(text(), "tel:")]]/text()')
+                    if phone:
+                        phone = phone[0].strip()
+            if not phone:
                 phone = loc_dom.xpath('//*[i[contains(text(), "tel:")]]/text()')
                 phone = phone[0].strip()
+        store_number = poi["Index"]
+        if "facilityid" in store_url:
+            store_number = store_url.split("facilityid")[-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -49,7 +56,7 @@ def fetch_data():
             state=poi["State"],
             zip_postal=poi["Zip"],
             country_code=SgRecord.MISSING,
-            store_number=poi["Index"],
+            store_number=store_number,
             phone=phone,
             location_type=poi["ServiceType"],
             latitude=poi["Latitude"],
