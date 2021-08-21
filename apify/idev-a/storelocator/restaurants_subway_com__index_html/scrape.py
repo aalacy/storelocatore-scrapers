@@ -97,6 +97,8 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
                 else:
                     state.push_request(SerializableRequest(url=state_url))
 
+    return True
+
 
 if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
