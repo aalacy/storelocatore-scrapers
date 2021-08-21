@@ -7,8 +7,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
-import math
-from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("subway")
@@ -21,7 +19,6 @@ _headers = {
 base_url = "https://restaurants.subway.com/index.html"
 locator_domain = "https://restaurants.subway.com/"
 session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
-max_workers = 12
 
 
 def fetchConcurrentList(links, http):
@@ -58,7 +55,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
                 hours.append(hh["content"])
 
         yield SgRecord(
-            page_url=page_url,
+            page_url=next_r.url,
             location_name=list(sp1.select_one('h1[itemprop="name"]').stripped_strings)[
                 -1
             ],
