@@ -50,21 +50,22 @@ def fetch_data():
             logger.info(f"{len(stores)} found")
             for store in stores:
                 store_number = store.iframe["src"].split("/")[-1]
-                if store_number != "50047":
-                    driver.get(store.iframe["src"])
-                    WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located(
-                            (
-                                By.XPATH,
-                                '//div[@class="sk-google-business-profile-container"]',
-                            )
+                logger.info(store_number)
+                if store_number == "50047":
+                    continue
+                driver.get(store.iframe["src"])
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            '//div[@class="sk-google-business-profile-container"]',
                         )
                     )
-                    sp1 = bs(driver.page_source, "lxml")
-                    if sp1.select_one(".sk-google-business-profile-coming-soon-text"):
-                        continue
+                )
+                sp1 = bs(driver.page_source, "lxml")
+                if sp1.select_one(".sk-google-business-profile-coming-soon-text"):
+                    continue
                 url = f"https://data.accentapi.com/feed/{store_number}.json?nocache=1622049836522"
-                logger.info(url)
                 _ = session.get(url, headers=_headers).json()
                 _addr = _["content"]["location"]
                 addr = parse_address_intl(_addr)
