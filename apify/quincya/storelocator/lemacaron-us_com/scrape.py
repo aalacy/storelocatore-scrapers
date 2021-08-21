@@ -28,8 +28,6 @@ def fetch_data(sgw: SgWriter):
     base = BeautifulSoup(req.text, "lxml")
     items = base.find_all(class_="location-links")
 
-    data = []
-
     js_req = session.get(js_link, headers=headers)
     js = BeautifulSoup(js_req.text, "lxml")
     js = js.text.split("js =")[1].split(";function")[0]
