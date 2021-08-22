@@ -51,7 +51,6 @@ def fetch_data():
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 phone = soup.find("strong", {"itemprop": "telephone"}).text
-                print(phone)
                 raw_address = soup.find(
                     "span", {"itemprop": "streetAddress"}
                 ).text.replace("\n", "")
