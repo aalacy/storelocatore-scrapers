@@ -100,7 +100,6 @@ def fetch_data():
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//a[contains(text(), "UK")]/@href')
     for page_url in all_locations:
-        print(page_url)
         loc_response = session.get(page_url, headers=hdr)
         if loc_response.status_code != 200:
             continue
