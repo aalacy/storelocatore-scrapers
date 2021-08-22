@@ -53,9 +53,10 @@ def fetch_data():
                 street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
-                zip_postal = addr.postcode
-                if len(zip_postal) < 6:
-                    zip_postal = _addr.split(",")[-1].strip()
+                zip_postal = _addr.split(",")[-1].strip()
+                city = addr.city
+                if len(location_name.split(",")) > 1:
+                    city = location_name.split(",")[0]
                 phone = ""
                 if store.select_one("div.all-restaurants__phone"):
                     phone = store.select_one("div.all-restaurants__phone").text.replace(
@@ -90,7 +91,7 @@ def fetch_data():
                     page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=addr.state,
                     zip_postal=zip_postal,
                     phone=phone,

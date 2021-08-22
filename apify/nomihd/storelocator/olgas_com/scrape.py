@@ -45,6 +45,9 @@ def fetch_data():
             street_address = street_address + ", " + store["address2"]
 
         street_address = street_address.replace("Breeze Dining Court,", "").strip()
+        if "Online Only" in street_address:
+            continue
+
         city = store["city"]
         state = store["state"]
         zip = store["zip"]
