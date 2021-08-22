@@ -42,7 +42,7 @@ def fetch_data():
         location_type = "promartialarts"
         latitude = val["lat"].strip()
         longitude = val["lng"].strip()
-        hours_of_operation = val["hours"].strip()
+        hours_of_operation = val["hours"].replace("&amp;", " ").strip()
         raw_address = f"{street_address}, {city}, {state}, {zip_postal}"
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
