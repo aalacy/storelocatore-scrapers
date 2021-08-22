@@ -1,82 +1,157 @@
 # -*- coding: utf-8 -*-
+import time
+import random
+import datetime
+import threading
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
-from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from tenacity import retry, stop_after_attempt
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgselenium import SgChrome
+from sgzip.static import static_coordinate_list, SearchableCountries
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+local = threading.local()
 
 headers = {
     "authority": "apps.pnc.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
+    "accept": "application/json, text/plain, */*",
     "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://apps.pnc.com/locator/search",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 id_list = []
 
 
-def fetch_records_for(coords):
-    lat = coords[0]
-    lng = coords[1]
-    log.info(f"pulling records for coordinates: {lat,lng}")
-    search_url = "https://apps.pnc.com/locator-api/locator/api/v2/location/?latitude={}&longitude={}&radius=100&radiusUnits=mi&branchesOpenNow=false"
+def get_session():
+    if not hasattr(local, "session") or local.count > 10:
+        local.session = SgRequests()
+        local.count = 0
 
-    stores_req = session.get(search_url.format(lat, lng), headers=headers)
-    stores = json.loads(stores_req.text)["locations"]
-    yield stores
+    local.count += 1
+    return local.session
 
 
-def process_record(raw_results_from_one_coordinate):
-    for stores in raw_results_from_one_coordinate:
-        for store in stores:
-            if store["locationType"]["locationTypeDesc"] != "ATM":
-                continue
-            if store["partnerFlag"] == "1":
-                continue
-            if store["locationId"] in id_list:
-                continue
+def retry_error_callback(retry_state):
+    coord = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {coord}")
+    return None
 
-            id_list.append(store["locationId"])
 
-            page_url = "<MISSING>"
-            locator_domain = website
-            location_name = store["locationName"]
-            street_address = store["address"]["address1"]
-            if (
-                store["address"]["address2"] is not None
-                and len(store["address"]["address2"]) > 0
-            ):
-                street_address = street_address + ", " + store["address"]["address2"]
+@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
+def fetch_locations(url):
+    return get_session().get(url, headers=headers, timeout=15).json()
 
-            city = store["address"]["city"]
-            state = store["address"]["state"]
-            zip = store["address"]["zip"]
-            country_code = "US"
 
-            store_number = store["locationId"]
-            phone = "<MISSING>"
+def fetch_location(url, driver):
+    return driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        return fetch("{url}")
+            .then(res => res.json())
+            .then(done)
+    """
+    )
 
-            location_type = store["locationType"]["locationTypeDesc"]
-            hours_of_operation = "<MISSING>"
-            latitude = store["address"]["latitude"]
-            longitude = store["address"]["longitude"]
 
-            yield SgRecord(
+def fetch_records_for(coord):
+    lat, lng = coord
+    timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
+    search_url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/?t={timestamp}&latitude={lat}&longitude={lng}&radius=100&radiusUnits=mi&branchesOpenNow=false"
+    result = fetch_locations(search_url)
+    if not result:
+        return []
+
+    stores = result["locations"]
+    return process_record(stores)
+
+
+def get_details(store_number, driver):
+    url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{store_number}"
+    details = fetch_location(url, driver)
+
+    return details, url
+
+
+@retry(stop=stop_after_attempt(3))
+def get_hours(data, details):
+    store = data["store"]
+    services = details.get("services", []) or []
+
+    store["page_url"] = data["page_url"]
+    store["hours_of_operation"] = MISSING
+
+    for service in services:
+        if service["hours"]:
+            hours = []
+            for key, value in service["hours"].items():
+                if key == "twentyFourHours":
+                    continue
+
+                hr = value[0]
+                opening = hr["open"]
+                closing = hr["close"]
+                if opening and closing:
+                    hours.append(f"{key}: {opening}-{closing}")
+                else:
+                    hours.append(f"{key}: Closed")
+            store["hours_of_operation"] = ",".join(hours) if len(hours) else MISSING
+
+    return store
+
+
+def process_record(stores):
+    locations = []
+    for store in stores:
+        store_number = store["locationId"]
+        if store["partnerFlag"] == "1" or store_number in id_list:
+            continue
+        id_list.append(store_number)
+
+        page_url = MISSING
+        locator_domain = website
+        location_name = store["locationName"]
+        street_address = store["address"]["address1"]
+        if (
+            store["address"]["address2"] is not None
+            and len(store["address"]["address2"]) > 0
+        ):
+            street_address = street_address + ", " + store["address"]["address2"]
+
+        city = store["address"]["city"]
+        state = store["address"]["state"]
+        zip = store["address"]["zip"]
+        country_code = "US"
+        latitude = store["address"]["latitude"]
+        longitude = store["address"]["longitude"]
+
+        phone = MISSING
+        cInfo = store["contactInfo"] or []
+        for contact in cInfo:
+            if "External Phone" in contact["contactType"]:
+                phone = contact["contactInfo"]
+                break
+
+        location_type = store["locationType"]["locationTypeDesc"]
+        if location_type != "ATM" and store["children"]:
+            location_type = "BRANCH AND ATM"
+
+        hours_of_operation = MISSING
+
+        if location_type == "ATM" or location_type == "BRANCH AND ATM":
+            record = SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
@@ -91,30 +166,156 @@ def process_record(raw_results_from_one_coordinate):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-            )
+            ).as_dict()
+
+            locations.append({"store": record, "externalId": store["externalId"]})
+
+    return locations
+
+
+MISSING = "<MISSING>"
+FIELDS = [
+    "locator_domain",
+    "page_url",
+    "location_name",
+    "location_type",
+    "store_number",
+    "street_address",
+    "city",
+    "state",
+    "zip",
+    "country_code",
+    "latitude",
+    "longitude",
+    "phone",
+    "hours_of_operation",
+]
+
+
+def batch(l, n):
+    for i in range(0, len(l), n):
+        yield l[i : i + n]
+
+
+def write_output(data):
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for row in data:
+            writer.write_row(row)
+
+
+def retry_refetch_hours_error_callback(retry_state):
+    return None
+
+
+@retry(
+    stop=stop_after_attempt(3), retry_error_callback=retry_refetch_hours_error_callback
+)
+def refetch_hours(location, driver):
+    id = location["externalId"]
+    page_url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+    location["page_url"] = page_url
+    details = driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        fetch("{page_url}")
+            .then(res => res.json())
+            .then(done)
+    """
+    )
+
+    if details.get("httpStatusCode"):
+        raise Exception()
+
+    return details
+
+
+def batch_get_hours(locations, driver):
+    commands = []
+
+    time.sleep(random.randint(0, 4))
+    for location in locations:
+        id = location["externalId"]
+        page_url = (
+            f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+        )
+        location["page_url"] = page_url
+        commands.append(f'fetch("{page_url}").then(res => res.json())')
+
+    result = driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        Promise.allSettled([{','.join(commands)}])
+            .then(results => done({{
+                status: 'success',
+                data: results
+            }}))
+            .catch(err => done({{
+                status: 'error',
+                error: err
+            }}))
+    """
+    )
+    if result["status"] == "error":
+        log.error(result["error"])
+
+    pois = []
+    data = result.get("data")
+    if not data:
+        return []
+
+    for idx, location in enumerate(locations):
+        details = result["data"][idx].get("value")
+        if not details:
+            log.info(result["data"][idx])
+            continue
+
+        if details.get("httpStatusCode"):
+            refetched_details = refetch_hours(location, driver)
+            if refetched_details:
+                details = refetched_details
+            else:
+                log.error(f'error fetching details: {location["page_url"]}')
+
+        pois.append(get_hours(location, details))
+
+    return pois
 
 
 def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = parallelize(
-            search_space=static_coordinate_list(
-                radius=100, country_code=SearchableCountries.USA
-            ),
-            fetch_results_for_rec=fetch_records_for,
-            processing_function=process_record,
-            max_threads=32,  # tweak to see what's fastest
-        )
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+    log.info("start")
+    locations = []
+    coords = static_coordinate_list(radius=10, country_code=SearchableCountries.USA)
 
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_records_for, coord) for coord in coords]
+        for future in as_completed(futures):
+            locations.extend(future.result())
 
-    log.info("Finished")
+        with SgChrome().driver() as driver:
+            driver.set_script_timeout(120)
+            driver.get("https://pnc.com")
+            for chunk in batch(locations, 5):
+                pois = batch_get_hours(chunk, driver)
+                for poi in pois:
+                    yield SgRecord(
+                        locator_domain=poi["locator_domain"],
+                        page_url=poi["page_url"],
+                        location_name=poi["location_name"],
+                        street_address=poi["street_address"],
+                        city=poi["city"],
+                        state=poi["state"],
+                        zip_postal=poi["zip"],
+                        country_code=poi["country_code"],
+                        store_number=poi["store_number"],
+                        phone=poi["phone"],
+                        location_type=poi["location_type"],
+                        latitude=poi["latitude"],
+                        longitude=poi["longitude"],
+                        hours_of_operation=poi["hours_of_operation"],
+                    )
+    log.info("end")
 
 
 if __name__ == "__main__":
-    scrape()
+    data = scrape()
+    write_output(data)

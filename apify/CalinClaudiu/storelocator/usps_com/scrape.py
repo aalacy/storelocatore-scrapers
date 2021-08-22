@@ -1,79 +1,61 @@
-from sgscrape import simple_scraper_pipeline as sp
-from sgrequests import SgRequests
+from typing import Iterable
+
 from sglogging import sglog
+from sgrequests import SgRequests
+from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.pause_resume import CrawlState
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import os
 
 
-def fetch_data():
-
+def fetch_data() -> Iterable[dict]:
+    http = SgRequests()
     logzilla = sglog.SgLogSetup().get_logger(logger_name="CRAWLER")
+    state = CrawlState()
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], max_search_results=199, state=state
+    )
 
+    url = "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
         "Content-Type": "application/json",
     }
 
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_results=199,
-    )
-    identities = set()
     for zipcode in search:
+        state.save_state()
         data = (
             '{"maxDistance":"100000","lbro":"","requestType":"","requestServices":"","requestRefineTypes":"","requestRefineHours":"","requestZipCode":"'
             + str(zipcode)
             + '","requestZipPlusFour":""}'
         )
-        logzilla.info(f"{(zipcode)} | remaining: {search.items_remaining()}")
-        count = 0
-        while count < 5:
-            try:
-                os.environ["PROXY_URL"] = ""
-                os.environ["PROXY_PASSWORD"] = ""
-                session = SgRequests()
-                results = session.post(
-                    "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations",
-                    headers=headers,
-                    data=data,
-                ).json()
-                count = 6
-            except Exception:
-                session = ""
-                count += 1
-                continue
-
-        if count == 5:
-            raise Exception("This should never happen")
-
         try:
-            results = results["locations"]
+            results = http.post(url=url, data=data, headers=headers).json()["locations"]
             if len(results) > 0:
                 for i in results:
                     try:
                         search.found_location_at(i["latitude"], i["longitude"])
                     except Exception:
-                        pass
-                    if i["locationID"] not in identities:
-                        identities.add(i["locationID"])
-                        try:
-                            i["address3"] = i["address3"]
-                        except Exception:
-                            i["address3"] = ""
+                        logzilla.debug("Missing lat/lng")
 
-                        try:
-                            i["address2"] = i["address2"]
-                        except Exception:
-                            i["address2"] = ""
+                    try:
+                        i["address3"] = i["address3"]
+                    except Exception:
+                        i["address3"] = ""
 
-                        try:
-                            i["zip4"] = i["zip4"]
-                        except Exception:
-                            i["zip4"] = ""
+                    try:
+                        i["address2"] = i["address2"]
+                    except Exception:
+                        i["address2"] = ""
 
-                        yield i
+                    try:
+                        i["zip4"] = i["zip4"]
+                    except Exception:
+                        i["zip4"] = ""
 
-        except Exception:
+                    yield i
+
+        except Exception as e:
+            logzilla.warning("Exc in fetch_data", exc_info=e)
             continue
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
@@ -156,7 +138,6 @@ def scrape():
         page_url=sp.MissingField(),
         location_name=sp.MappingField(
             mapping=["locationName"],
-            part_of_record_identity=True,
             is_required=False,
         ),
         latitude=sp.MappingField(
@@ -176,16 +157,13 @@ def scrape():
             multi_mapping_concat_with=", ",
             is_required=False,
             value_transform=fix_comma,
-            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["city"],
             is_required=False,
-            part_of_record_identity=True,
         ),
         state=sp.MappingField(
             mapping=["state"],
-            part_of_record_identity=True,
             is_required=False,
         ),
         zipcode=sp.MultiMappingField(
@@ -193,7 +171,6 @@ def scrape():
             multi_mapping_concat_with="-",
             value_transform=fix_minus,
             is_required=False,
-            part_of_record_identity=True,
         ),
         country_code=sp.MissingField(),
         phone=sp.MappingField(
@@ -201,7 +178,7 @@ def scrape():
             is_required=False,
         ),
         store_number=sp.MappingField(
-            mapping=["locationID"],
+            mapping=["locationID"], part_of_record_identity=True
         ),
         hours_of_operation=sp.MappingField(
             mapping=["locationServiceHours"],
@@ -210,7 +187,6 @@ def scrape():
         location_type=sp.MappingField(
             mapping=["locationType"],
             is_required=False,
-            part_of_record_identity=True,
         ),
     )
 
@@ -220,7 +196,6 @@ def scrape():
         field_definitions=field_defs,
         log_stats_interval=15,
     )
-
     pipeline.run()
 
 

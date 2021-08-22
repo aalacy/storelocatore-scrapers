@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("edojapan")
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -15,46 +18,26 @@ _headers = {
 
 
 def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
+    return val.strip().replace("–", "-").replace("\xa0", " ")
 
 
 def fetch_data():
     with SgRequests() as session:
-        locator_domain = "https://www.edojapan.com"
-        base_url = "https://www.edojapan.com/locations/"
+        locator_domain = "https://www.edojapan.com/"
+        base_url = "https://www.edojapan.com/"
         soup = bs(session.get(base_url).text, "lxml")
-        links = soup.select("table.location-table tbody tr")
+        links = soup.select("section.location-list a")
         for link in links:
-            page_url = locator_domain + link.a["href"]
+            page_url = link["href"]
+            logger.info(page_url)
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _ = json.loads(
                 soup1.findAll("script", type="application/ld+json")[-1].string
             )
-            latitude = longitude = ""
-            if "hasMap" in _:
-                coord = _["hasMap"].split("daddr=")[1].split(",")
-                latitude = coord[0].strip()
-                longitude = coord[-1].strip()
-            hours_of_operation = "; ".join(
-                [
-                    hour
-                    for hour in _.get("openingHours", [])
-                    if not hour.startswith("HO")
-                ]
-            )
-            if _.get("openingHours", []):
-                if _["openingHours"][0] == "Co -":
-                    hours_of_operation = "Coming Soon"
-
+            hours = [
+                f"{hh['dayOfWeek']}: {hh['opens']}-{hh['closes']}"
+                for hh in _.get("openingHoursSpecification", [])
+            ]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
@@ -63,11 +46,11 @@ def fetch_data():
                 state=_["address"]["addressRegion"],
                 zip_postal=_["address"]["postalCode"],
                 country_code=_["address"]["addressCountry"],
-                latitude=latitude,
-                longitude=longitude,
-                phone=_["contactPoint"]["telephone"],
+                latitude=_["geo"]["latitude"],
+                longitude=_["geo"]["longitude"],
+                phone=_["telephone"],
                 locator_domain=locator_domain,
-                hours_of_operation=_valid(hours_of_operation),
+                hours_of_operation=_valid("; ".join(hours)),
             )
 
 

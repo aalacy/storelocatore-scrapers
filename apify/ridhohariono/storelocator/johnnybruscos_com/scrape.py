@@ -3,6 +3,7 @@ import usaddress
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
+import re
 
 
 DOMAIN = "johnnybruscos.com"
@@ -84,6 +85,16 @@ def fetch_data():
             if link:
                 page_url = link["href"]
                 store_content = pull_content(page_url)
+                is_coming_soon = store_content.find(
+                    "img",
+                    {
+                        "src": re.compile(
+                            r".*/wp-content/themes/johnnyspizza/images/coming-soon.png"
+                        )
+                    },
+                )
+                if is_coming_soon:
+                    continue
                 store_info = store_content.find(
                     "div", {"class": "site-inner single-site-inner"}
                 ).find("div", {"class": "wrap"})

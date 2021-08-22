@@ -5,8 +5,19 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sgscrape.sgpostal import parse_address_intl
+
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def write_output(data):
@@ -54,7 +65,14 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="single-location__image"]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
-        with SgChrome() as driver:
+        urls_pass = [
+            "https://leavetheherdbehind.com/blogs/locations/greenhill-mall",
+            "https://leavetheherdbehind.com/blogs/locations/manila",
+        ]
+        if store_url in urls_pass:
+            continue
+
+        with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
 
@@ -62,26 +80,33 @@ def fetch_data():
             '//h1[@class="hero__title title-lg location-title-label"]/span/text()'
         )
         location_name = location_name[0] if location_name else "<MISSING>"
-        address_raw = loc_dom.xpath("//address/p/text()")[0]
-        addr = parse_address_intl(address_raw)
+        address_raw = loc_dom.xpath("//address/p/text()")
+        addr = parse_address_intl(" ".join(address_raw))
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address = addr.street_address_2 + " " + addr.street_address_1
         street_address = street_address if street_address else "<MISSING>"
         city = addr.city
         city = city if city else "<MISSING>"
+        if city == "<MISSING>":
+            if len(" ".join(address_raw).split(", ")) == 3:
+                city = " ".join(address_raw).split(", ")[1]
+        street_address = street_address.split(city)[0].strip()
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "UK"
+        if zip_code == "<MISSING>":
+            if len(" ".join(address_raw).split(", ")) == 3:
+                zip_code = " ".join(address_raw).split(", ")[-1]
+        country_code = "<MISSING>"
         location_type = "<MISSING>"
         store_number = "<MISSING>"
         phone = "<MISSING>"
         geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')[0]
         geo = re.findall(r"center: \[(.+?)\],", geo_data)[0].split(",")
-        latitude = geo[0]
-        longitude = geo[1]
+        latitude = geo[1]
+        longitude = geo[0]
         hours_of_operation = loc_dom.xpath(
             '//h2[contains(text(), "Opening Hours")]/following-sibling::div/span/text()'
         )

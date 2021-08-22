@@ -77,7 +77,14 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("<")[0]
                 if "|" in name:
                     name = name.split("|")[0].strip()
-            if add == "" and "</strong></p>" in line2 and CS is False:
+            if (
+                add == ""
+                and "</strong></p>" in line2
+                and CS is False
+                and "locations/financialdistrict" not in loc
+                and "locations/santamonica" not in loc
+                and "locations/redondobeach" not in loc
+            ):
                 g = next(lines)
                 h = next(lines)
                 g = str(g.decode("utf-8"))
@@ -131,11 +138,28 @@ def fetch_data():
             city = "Daly City"
             state = "CA"
             zc = "94014"
+        if "locations/redondobeach" in loc:
+            add = "819 North Harbor Drive"
+            city = "Redondo Beach"
+            state = "CA"
+            zc = "90277"
+        if "locations/santamonica" in loc:
+            add = "2425 Olympic Boulevard"
+            city = "Santa Monica"
+            state = "CA"
+            zc = "90404"
         if "locations/broadwaytennis" in loc:
             add = "60 Edwards Court"
             city = "Burlingame"
             state = "CA"
             zc = "94010"
+        if "locations/financialdistrict" in loc:
+            add = "555 California Street"
+            city = "San Francisco"
+            state = "CA"
+            zc = "94104"
+        if hours == "":
+            hours = "<MISSING>"
         yield [
             website,
             loc,

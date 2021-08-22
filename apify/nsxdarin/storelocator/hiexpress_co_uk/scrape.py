@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    ids = []
     states = []
     url = (
         "https://www.ihg.com/holidayinnexpress/destinations/gb/en/united-kingdom-hotels"
@@ -51,7 +52,9 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "hotels</span></a>" in line:
-            states.append(line.split('href="')[1].split('"')[0])
+            sname = line.split('href="')[1].split('"')[0]
+            if sname not in states:
+                states.append(sname)
     for state in states:
         logger.info(state)
         r2 = session.get(state, headers=headers)
@@ -98,22 +101,26 @@ def fetch_data():
                     .replace("<p>", "")
                     .replace("</p>", "")
                 )
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if store not in ids:
+            ids.append(store)
+            if phone == "":
+                phone = "<MISSING>"
+            yield [
+                website,
+                loc,
+                name,
+                add,
+                city,
+                state,
+                zc,
+                country,
+                store,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
 
 
 def scrape():

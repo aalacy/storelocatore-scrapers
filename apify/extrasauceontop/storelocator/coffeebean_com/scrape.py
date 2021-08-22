@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import us
 import re
+import html
 
 locator_domains = []
 websites = []
@@ -111,6 +112,9 @@ for loc in locs:
                 hours = hours + "; " + hrs
     if hours == "":
         hours = "<MISSING>"
+
+    if "temporarily closed" in r.text.lower():
+        hours = "Temporarily Closed"
     if lat == "":
         lat = "<MISSING>"
         lng = "<MISSING>"
@@ -125,6 +129,14 @@ for loc in locs:
     if country in ["", "NULL"]:
         if us.states.lookup(state):
             country = "USA"
+
+    if add == "<MISSING>":
+        add = website.split("/")[-1].replace("-", " ")
+
+        if add.isdigit() is True:
+            add = "<MISSING>"
+
+    name = html.unescape(name)
 
     x = x + 1
     if country == "USA":

@@ -1,109 +1,81 @@
-# https://zoeskitchen.com/locations/search?location=WI
-# https://www.llbean.com/llb/shop/1000001703?nav=gn-hp
-
-
-import requests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('llbean_com')
+session = SgRequests()
+website = "llbean_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://llbean.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    # Your scraper here
-
-    data = []
-    p = 1
-    pattern = re.compile(r'\s\s+')
-    url = 'https://www.llbean.com/llb/shop/1000001703?nav=gn-hp'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    maindiv = soup.find('div', {'id':'storeLocatorZone'})
-    link_list = maindiv.findAll('a')
-    logger.info(len(link_list))
-    for alink in link_list:
-        if alink.text.find(":") == -1 or alink.find("Freeport") == -1:
-            link = "https://www.llbean.com" + alink['href']
-            logger.info(link)
-            page1 = requests.get(link)
-            soup1 = BeautifulSoup(page1.text, "html.parser")
-            title = soup1.find('h1').text
-            phone = soup1.find('li',{'class','phone'}).text
-            phone = re.sub(pattern,"",phone)
-            street = soup1.find('span',{'class':'street-address'}).text
-            city = soup1.find('em', {'class': 'locality'}).text
-            state = soup1.find('abbr', {'class': 'region'}).text
-            pcode = soup1.find('em', {'class': 'postal-code'}).text
-            start = link.find("shop")
-            start = link.find("/", start) + 1
-            store = link[start:len(link)]
-            hours = soup1.find('div',{'class': 'row item-holder'}).text
-            hours = re.sub(pattern," ",hours)
-            soup1 = str(soup1)
-            start = soup1.find("var latitude")
-            start = soup1.find("=", start) + 3
-            end = soup1.find(';', start)
-            lat = soup1[start:end]
-            start = soup1.find("var longitude")
-            start = soup1.find("=", start) + 3
-            end = soup1.find(';', start)
-            longt = soup1[start:end]
-            hours = hours.replace("\n", "")
-            if len(hours) < 3:
-                hours = "<MISSING>"
-
-            #logger.info(title)
-            #logger.info(store)
-            #logger.info(street)
-            #logger.info(city)
-            #logger.info(state)
-            #logger.info(pcode)
-            #logger.info(phone)
-            #logger.info(lat)
-            #logger.info(longt)
-            #logger.info(hours)
-            logger.info(p)
-            p += 1
-            data.append([
-                'https://www.llbean.com',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                'US',
-                store,
-                phone,
-                "flagship, Bike, Boat & Ski, hunting and fishing",
-                lat,
-                longt,
-                hours
-            ])
-
-    return data
-
+    url = "https://www.llbean.com/llb/shop/1000001703?pla1=1"
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    loclist = soup.find("div", {"id": "storeLocatorZone"}).findAll("a")
+    for loc in loclist[1:]:
+        page_url = "https://www.llbean.com" + loc["href"]
+        log.info(page_url)
+        r = session.get(page_url, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        address = soup.find("address")
+        location_name = soup.find("strong", {"class": "title"}).text
+        store_number = page_url.rsplit("/")[-1]
+        street_address = address.find("span", {"class": "street-address"}).text
+        city = address.find("em", {"class": "locality"}).text
+        state = address.find("abbr", {"class": "region"}).text
+        zip_postal = address.find("em", {"class": "postal-code"}).text
+        phone = address.find("strong", {"class": "tel"}).text
+        country_code = "US"
+        hours_of_operation = (
+            soup.find("ul", {"class": "schedule hoursActive"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+        latitude = r.text.split("var latitude =  ")[1].split(";")[0]
+        longitude = r.text.split("var longitude =  ")[1].split(";")[0]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
+
+if __name__ == "__main__":
+    scrape()

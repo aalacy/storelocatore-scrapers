@@ -68,7 +68,9 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         hours_of_operation = loc_dom.xpath('//div[@class="loc-hours"]/p/text()')
         hours_of_operation = [elem.strip() for elem in hours_of_operation]
-        hours_of_operation = " ".join(hours_of_operation)
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

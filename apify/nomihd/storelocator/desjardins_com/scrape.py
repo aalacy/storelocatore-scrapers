@@ -68,8 +68,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://pservices.desjardins.com/proxy/001/index_ps_en.json"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)["entrees"]
@@ -77,7 +75,9 @@ def fetch_data():
         store_number = store["id"]
         latitude = store["latitude"]
         longitude = store["longitude"]
-        page_url = "<MISSING>"
+        page_url = "https://www.desjardins.com/ca/your-caisse/address/index.jsp?transit={}{}".format(
+            store["inst"], store["transit"]
+        )
         log.info(f"Pulling data for ID: {store_number}")
         store_req = session.get(
             "https://pservices.desjardins.com/caisses/donnees_caisses.nsf/traitement?Open&ic=details&l=en&id="
@@ -192,10 +192,9 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
+            yield curr_list
         except:
             pass
-    return loc_list
 
 
 def scrape():

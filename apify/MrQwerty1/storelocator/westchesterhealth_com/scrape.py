@@ -70,7 +70,11 @@ def get_data(slug):
     tree = html.fromstring(r.text)
 
     location_name = (
-        "".join(tree.xpath("//div[@class='locations-address']/h2[1]/text()"))
+        "".join(
+            tree.xpath(
+                "//div[@class='locations-address']/h2[1]/text()|//div[@class='locations-address']/text()"
+            )
+        )
         .replace("\n", " ")
         .strip()
     )

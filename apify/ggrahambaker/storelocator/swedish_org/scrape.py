@@ -1,12 +1,10 @@
 import csv
-import re
 import json
-from bs4 import BeautifulSoup
-from sgrequests import SgRequests
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from sglogging import SgLogSetup
+import re
 
-logger = SgLogSetup().get_logger("swedish_org")
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 
@@ -113,61 +111,69 @@ def fetch_loctype_urls():
 
 
 def fetch_data():
+
+    found = []
     location_map = fetch_populated_location_map()
 
-    loctype_urls = fetch_loctype_urls()
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [
-            executor.submit(populate_loc_type, url, location_map)
-            for url in loctype_urls
+    for key in location_map:
+        location = location_map[key]
+        page_url = location.get("page_url")
+
+        if ".providence.org" in page_url:
+            page_url = page_url.replace("https://www.swedish.org", "")
+
+        r = session.get(page_url)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        if ".providence.org" in page_url:
+            phoneNumber = soup.find(class_="loc-phone").text.strip()
+            hours_of_operation = " ".join(
+                list(soup.find(class_="hours-text").stripped_strings)
+            )
+        else:
+            phone = soup.find(class_="mobile-only-phone")
+            phoneNumber = clean_phone(phone)
+            if not phoneNumber:
+                try:
+                    phoneNumber = re.findall(
+                        r"[\d]{3}-[\d]{3}-[\d]{4}",
+                        str(soup.find(id="main-content").text),
+                    )[0]
+                except:
+                    pass
+
+            hours = soup.select_one(
+                "#main_0_rightpanel_0_pnlOfficeHours .option-content"
+            )
+            hours_of_operation = (
+                hours.text.replace("\n", " ").strip()
+                if hours and hours.text != ""
+                else None
+            )
+
+        location_map[key]["phone"] = phoneNumber or "<MISSING>"
+        location_map[key]["hours_of_operation"] = hours_of_operation or "<MISSING>"
+
+        if location.get("location_name") + location.get("street_address") in found:
+            continue
+        found.append(location.get("location_name") + location.get("street_address"))
+
+        yield [
+            location.get("locator_domain"),
+            page_url,
+            location.get("location_name"),
+            "<MISSING>",
+            location.get("store_number"),
+            location.get("street_address"),
+            location.get("city"),
+            location.get("state"),
+            location.get("zip"),
+            location.get("country_code"),
+            location.get("latitude"),
+            location.get("longitude"),
+            location.get("phone"),
+            location.get("hours_of_operation"),
         ]
-        for result in as_completed(futures):
-            result.result()
-
-    for key, location in location_map.items():
-        if not location.get("location_type"):
-            location_map[key]["location_type"] = "<MISSING>"
-
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [
-            executor.submit(populate_details, location, location_map)
-            for location in location_map.items()
-        ]
-        for result in as_completed(futures):
-            location = result.result()
-
-            yield [
-                location.get("locator_domain"),
-                location.get("page_url"),
-                location.get("location_name"),
-                location.get("location_type"),
-                location.get("store_number"),
-                location.get("street_address"),
-                location.get("city"),
-                location.get("state"),
-                location.get("zip"),
-                location.get("country_code"),
-                location.get("latitude"),
-                location.get("longitude"),
-                location.get("phone"),
-                location.get("hours_of_operation"),
-            ]
-
-
-def populate_loc_type(loctype_url, location_map):
-    r = session.get(loctype_url.get("url"), headers=headers)
-    groups = fetch_json_data(r.text)
-
-    for group in groups:
-        for location in group.get("Locations", []):
-            key = location.get("Maps")
-
-            if key in location_map:
-                location_map[key]["location_type"] = loctype_url.get("loctype").replace(
-                    "swedish", ""
-                )
-            else:
-                logger.info(f"location missing in map: {key}")
 
 
 def fetch_json_data(content):
@@ -193,34 +199,6 @@ def parse_address(address):
 
     street_address = " ".join(parts).strip()
     return [street_address, city, state, zipcode[0:5]]
-
-
-def populate_details(location_tuple, location_map):
-    key, location = location_tuple
-
-    r = session.get(location.get("page_url"))
-    soup = BeautifulSoup(r.text, "html.parser")
-
-    phone = soup.find(class_="mobile-only-phone")
-
-    phoneNumber = clean_phone(phone)
-    if not phoneNumber:
-        try:
-            phoneNumber = re.findall(
-                r"[\d]{3}-[\d]{3}-[\d]{4}", str(soup.find(id="main-content").text)
-            )[0]
-        except:
-            pass
-
-    hours = soup.select_one("#main_0_rightpanel_0_pnlOfficeHours .option-content")
-    hours_of_operation = (
-        hours.text.replace("\n", " ").strip() if hours and hours.text != "" else None
-    )
-
-    location_map[key]["phone"] = phoneNumber or "<MISSING>"
-    location_map[key]["hours_of_operation"] = hours_of_operation or "<MISSING>"
-
-    return location_map[key]
 
 
 def clean_phone(phone):

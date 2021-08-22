@@ -61,8 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.acerenttoown.com/locations"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
@@ -88,6 +86,8 @@ def fetch_data():
             location_name = "<MISSING>"
 
         street_address = store_json["address"]["streetAddress"]
+        if "," == street_address[-1]:
+            street_address = "".join(street_address[:-1]).strip()
         city = store_json["address"]["addressLocality"]
         state = store_json["address"]["addressRegion"]
         zip = store_json["address"]["postalCode"]
@@ -149,9 +149,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        loc_list.append(curr_list)
-
-    return loc_list
+        yield curr_list
 
 
 def scrape():

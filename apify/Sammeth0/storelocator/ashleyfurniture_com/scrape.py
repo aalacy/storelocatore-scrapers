@@ -121,7 +121,7 @@ def fetch_data():
 
     all_store_data = []
 
-    base_link = "https://stores.ashleyfurniture.com/umbraco/surface/location/GetDataByState?region="
+    base_link = "https://stores.ashleyfurniture.com/umbraco/surface/locate/GetDataByState?region="
 
     for st in abbrev_us_state:
         api_link = base_link + st

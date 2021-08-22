@@ -127,6 +127,14 @@ def fetch_data():
                     if "00000" in lat or "00000" in lng:
                         lat = "<MISSING>"
                         lng = "<MISSING>"
+                    if "ation-locations/20680.html" in loc:
+                        add = "2623 N Harlem"
+                        city = "Chicago"
+                        state = "IL"
+                        zc = "60707"
+                        name = "Chicago, IL Tax Preparation Office"
+                        hours = "Sun-Sat: By appt. only"
+                        phone = "(773) 920-7766"
                     yield [
                         website,
                         loc,

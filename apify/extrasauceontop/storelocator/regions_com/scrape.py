@@ -3,7 +3,8 @@ import json
 from sgrequests import SgRequests
 import pandas as pd
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
+from sgscrape import simple_scraper_pipeline as sp
 
 
 def extract_json(html_string):
@@ -40,9 +41,7 @@ def extract_json(html_string):
 def get_data():
 
     session = SgRequests()
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_results=25
-    )
+    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=30)
 
     locator_domains = []
     page_urls = []
@@ -68,7 +67,6 @@ def get_data():
         response = session.get(url).text
 
         json_objects = extract_json(response)
-
         for location in json_objects:
             if "title" not in location.keys():
                 continue
@@ -108,8 +106,6 @@ def get_data():
             latitudes.append(latitude)
             longitudes.append(longitude)
             store_numbers.append(store_number)
-
-            search.found_location_at(latitude, longitude)
 
         soup = bs(response, "html.parser")
 
@@ -157,58 +153,103 @@ def get_data():
         if row[1]["location_type"] == "branch" and row[1]["page_url"] != "<MISSING>":
             response = session.get("https://" + row[1]["page_url"]).text
             json_objects = extract_json(response)
+
             for item in json_objects:
                 if "name" not in item.keys():
                     continue
                 else:
                     try:
-                        phone = item["telephone"]
+                        phone = item["telephone"].replace("+", "")
                     except Exception:
                         pass
 
+                    hours = ""
                     try:
-                        hours = ""
-                        for piece in item["department"][0]["openingHours"]:
-                            hours = hours + piece + ", "
-                        hours = hours[:-2]
+                        for part in item["openingHoursSpecification"]["dayOfWeek"]:
+                            for day in part["dayOfWeek"]:
+                                if part["opens"] == part["closes"]:
+                                    hours = hours + day + " closed, "
+                                else:
+                                    hours = (
+                                        hours
+                                        + day
+                                        + " "
+                                        + part["opens"]
+                                        + " - "
+                                        + part["closes"]
+                                        + ", "
+                                    )
 
-                        if hours == "Mo  - Su Closed":
-                            hours = ""
-                            for piece in item["department"][1]["openingHours"]:
-                                hours = hours + piece + ", "
-                            hours = hours[:-2]
                     except Exception:
                         pass
+
                     break
 
+        if hours != "<MISSING>":
+            hours = hours[:-2]
         hours_of_operations.append(hours)
         phones.append(phone)
 
     df["phone"] = phones
     df["hours_of_operation"] = hours_of_operations
 
-    return df
+    for row in df.iterrows():
+
+        yield {
+            "locator_domain": row[1]["locator_domain"],
+            "page_url": row[1]["page_url"],
+            "location_name": row[1]["location_name"],
+            "latitude": row[1]["latitude"],
+            "longitude": row[1]["longitude"],
+            "city": row[1]["city"],
+            "store_number": row[1]["store_number"],
+            "street_address": row[1]["street_address"],
+            "state": row[1]["state"],
+            "zip": row[1]["zip"],
+            "phone": row[1]["phone"],
+            "location_type": row[1]["location_type"],
+            "hours": row[1]["hours_of_operation"],
+            "country_code": row[1]["country_code"],
+        }
 
 
-def write_data(df):
-    df = df.fillna("<MISSING>")
-    df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-
-    df["dupecheck"] = (
-        df["location_name"]
-        + df["street_address"]
-        + df["city"]
-        + df["state"]
-        + df["location_type"]
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 
-    df = df.drop_duplicates(subset=["dupecheck"])
-    df = df.drop(columns=["dupecheck"])
-    df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-    df = df.fillna("<MISSING>")
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-    df.to_csv("data.csv", index=False)
 
-
-df = get_data()
-write_data(df)
+scrape()

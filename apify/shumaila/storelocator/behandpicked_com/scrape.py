@@ -47,8 +47,8 @@ def fetch_data():
 
     soup = BeautifulSoup(r.text, "html.parser")
 
-    titlelist = soup.find("div", {"class": "category-banner-section"}).findAll("strong")
-    divlist = soup.find("div", {"class": "category-banner-section"}).text
+    titlelist = soup.find("div", {"class": "page-content"}).findAll("strong")
+    divlist = soup.find("div", {"class": "page-content"}).text
     for i in range(0, len(titlelist) - 1):
         content = (
             divlist.split(titlelist[i].text)[1]
@@ -103,7 +103,10 @@ def fetch_data():
         city = city.lstrip().replace(",", "")
         state = state.lstrip().replace(",", "")
         pcode = pcode.lstrip().replace(",", "")
-
+        try:
+            street = street.split("located", 1)[0]
+        except:
+            pass
         data.append(
             [
                 "https://behandpicked.com/",

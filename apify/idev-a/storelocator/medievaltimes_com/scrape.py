@@ -1,9 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
-import re
+import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("medievaltimes")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -27,32 +29,45 @@ ca_provinces_codes = {
 
 
 def fetch_data():
-    locator_domain = "https://www.medievaltimes.com"
-    base_url = "https://www.medievaltimes.com/"
+    locator_domain = "https://www.medievaltimes.com/"
+    base_url = "https://www.medievaltimes.com/locations"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("div#castleModal ul.castle-list li a")
-        for link in locations:
-            page_url = locator_domain + link["href"]
-            soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = parse_address_intl(
-                soup1.select_one("div.castle-conversion__location a").text
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("castles:")[1]
+            .split("current_castle:")[0]
+            .strip()[1:-2]
+        )
+        for key, _ in locations.items():
+            if key.isdigit():
+                continue
+            page_url = locator_domain + _["full_uri"]
+            logger.info(page_url)
+            ss = json.loads(
+                bs(session.get(page_url, headers=_headers).text, "lxml")
+                .find("script", type="application/ld+json")
+                .string
             )
-            location_name = soup1.select_one("h1.castle-conversion__title").text
             country_code = "US"
-            if addr.state in ca_provinces_codes:
+            if _["state"] in ca_provinces_codes:
                 country_code = "CA"
-            phone = soup1.find("a", href=re.compile(r"tel:"))["href"][4:]
+            hours_of_operation = f"{ss['openingHoursSpecification']['name']}: {ss['openingHoursSpecification']['opens']}-{ss['openingHoursSpecification']['closes']}".replace(
+                "Opening Hours", ""
+            )
             yield SgRecord(
                 page_url=page_url,
-                location_name=location_name,
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                store_number=_["id"],
+                location_name=ss["name"],
+                street_address=_["address"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zip"],
                 country_code=country_code,
-                phone=phone,
+                phone=_["phone_number"],
+                latitude=ss["geo"]["latitude"],
+                longitude=ss["geo"]["longitude"],
                 locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
             )
 
 
