@@ -27,6 +27,7 @@ def fetch_data(sgw: SgWriter):
 
         for store in stores:
             store_number = store["storeCode"]
+            location_name = store["storeShortName"]
             if not store_number:
                 link = ""
                 store_number = location_name.split("#")[-1]
@@ -35,7 +36,6 @@ def fetch_data(sgw: SgWriter):
                 link = "https://www.johnstonesupply.com/store%s/contact-us" % (
                     store_number
                 )
-            location_name = store["storeShortName"]
             street_address = store["streetAddress"].strip()
             if "coming soon" in street_address.lower():
                 continue
