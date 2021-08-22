@@ -54,7 +54,7 @@ def fetch_data():
                         country = item.split('"country":"')[1].split('"')[0]
                         zc = item.split('"postCode":"')[1].split('"')[0]
                         name = item.split('"line1":"')[1].split('"')[0]
-                        phone = "<MISSING>"
+                        phone = "0345 734 5345"
                         hours = (
                             "Sun: "
                             + item.split('"sunday":{"openTime":"')[1].split('"')[0]
@@ -132,6 +132,8 @@ def fetch_data():
                             add = add.replace(",", "").strip()
                             add = add.replace("&#x2f;", "/")
                             name = name.replace("&#x2f;", "/")
+                            if typ == "ATM":
+                                phone = "<MISSING>"
                             yield SgRecord(
                                 locator_domain=website,
                                 page_url=loc,
