@@ -48,7 +48,6 @@ def fetch_data(sgw: SgWriter):
             "https://homesmart.com/officesagents/?"
             + item.find(id="agents")["href"].split("?")[-1].strip()
         ).replace(" ", "%20")
-        print(link)
 
         sgw.write_row(
             SgRecord(
