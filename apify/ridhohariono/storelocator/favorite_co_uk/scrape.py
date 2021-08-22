@@ -207,7 +207,7 @@ def wait_load(driver):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get(
         "https://favorite.co.uk/store-finder?postcode=london&delivery=0&lat=51.5073509&lng=-0.1277583"
     )
