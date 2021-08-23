@@ -1,4 +1,3 @@
-import simplejson
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -14,7 +13,7 @@ def fetch_data(_zip, sgw: SgWriter):
         r = session.get(api, headers=headers)
         try:
             js = r.json().get("data") or []
-        except simplejson.errors.JSONDecodeError:
+        except:
             return
 
         for j in js:
