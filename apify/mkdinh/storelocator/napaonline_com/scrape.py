@@ -25,7 +25,7 @@ local = threading.local()
 def get_driver():
     if not hasattr(local, "driver"):
         local.driver = SgChrome(
-            seleniumwire_auto_config=False, is_headless=True
+            seleniumwire_auto_config=False, is_headless=False
         ).driver()
         local.driver.set_script_timeout(120)
         load_initial_page(local.driver)
@@ -311,8 +311,8 @@ def crawl_city_url(url, page):
 
 @retry(stop=stop_after_attempt(3), reraise=True)
 def load_initial_page(driver):
-    driver.get("https://www.napaonline.com")
-    driver.execute_script('window.open("https://www.napaonline.com")')
+    driver.get("https://www.napaonline.com/")
+    driver.execute_script('window.open("https://www.napaonline.com/")')
     sleep(15)
 
 
@@ -351,7 +351,7 @@ def fetch_data():
         dedup_tracker=tracker,
     )
 
-    with ThreadPoolExecutor(max_workers=10) as executor, get_driver() as driver:
+    with ThreadPoolExecutor(max_workers=6) as executor, get_driver() as driver:
         for page in (near_me_config, stores_config):
             count = 0
             state_urls = []
