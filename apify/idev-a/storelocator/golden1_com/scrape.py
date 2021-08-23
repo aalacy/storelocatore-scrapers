@@ -5,7 +5,7 @@ from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import ssl
@@ -69,10 +69,12 @@ if __name__ == "__main__":
             cookie = cookie + cook["name"] + "=" + cook["value"] + "; "
 
         _headers["cookie"] = cookie.strip()[:-1]
-        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        )
         with SgWriter(
             deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)
         ) as writer:
-            with SgRequests() as http:
+            with SgRequests(proxy_country="us") as http:
                 for rec in fetch_records(http, search):
                     writer.write_row(rec)
