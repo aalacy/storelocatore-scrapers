@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-from actually_scrape import fetch_germany_ISH
+from actually_scrape import fetch_germany_ISH  # noqa
 
 
 def getTestCountries(session):
