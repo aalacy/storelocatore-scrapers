@@ -24,7 +24,6 @@ def fetch_data(sgw: SgWriter):
         location_name = " ".join(d.xpath(".//h5/text()"))
         if not location_name:
             continue
-        location_type = "<MISSING>"
         street_address = "".join(d.xpath(".//h5/following-sibling::p[1]/text()[1]"))
         ad = (
             "".join(d.xpath(".//h5/following-sibling::p[1]/text()[2]"))
@@ -36,11 +35,6 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         city = a.city or "<MISSING>"
         country_code = "Brazil"
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -52,11 +46,11 @@ def fetch_data(sgw: SgWriter):
             zip_postal=postal,
             country_code=country_code,
             store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            phone=SgRecord.MISSING,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
         )
 
         sgw.write_row(row)
