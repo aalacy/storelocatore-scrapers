@@ -53,7 +53,6 @@ def fetch_data():
                 if "undefined" in street_address:
                     address = loc.get_text(separator="|", strip=True).split("|")
                     location_name = address[0]
-                    print(location_name)
                     address = address[1].split(",")
                     street_address = address[0]
                     city = address[1]
