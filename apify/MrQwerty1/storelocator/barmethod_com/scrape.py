@@ -19,7 +19,7 @@ def get_data(page_url, sgw: SgWriter):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1[@class='mtn']/text()")).strip()
-    if location_name == "<MISSING>":
+    if not location_name:
         return
     line = tree.xpath("//address/text()")
     line = list(filter(None, [l.strip() for l in line]))
