@@ -126,6 +126,17 @@ def human_hours(k):
 def add_walmart(x):
     return x if "Walmart" in x else "Walmart " + x
 
+def test_fuel(x):
+    result = []
+    x = x.keys()
+    for i in x:
+        if "FUEL" in i:
+            result.append(str(i))
+    for i in x:
+        if "GAS" in i:
+            result.append(str(i))
+
+    return ', '.join(result)
 
 def scrape():
     url = "https://www.walmart.com/vision"
@@ -178,9 +189,7 @@ def scrape():
         ),
         location_type=sp.MappingField(
             mapping=["servicesMap"],
-            value_transform=lambda x: "Fuel"
-            if any(i in str(x) for i in ["FUEL", "GAS"])
-            else "<MISSING>",
+            raw_value_transform=test_fuel
             part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),
