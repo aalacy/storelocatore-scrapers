@@ -8,33 +8,31 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    start_url = "https://www.oxxo.co/api/get-tiendas?plaza=&latitude=39.53698983041732&longitude=-0.534440644262757"
-    domain = "oxxo.co"
+    start_url = "https://www.oxxo.cl/api/get-tiendas?plaza=&latitude=39.53707606572555&longitude=-0.53438495274013"
+    domain = "oxxo.cl"
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest",
     }
     all_locations = session.get(start_url, headers=hdr).json()
 
     for poi in all_locations:
-        city = poi["colonia"]
-        if city == "CALLE 52":
-            city = SgRecord.MISSING
-
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.oxxo.co/ubicaciones",
-            location_name=f'OXXO | {poi["calle"]}',
+            page_url="https://www.oxxo.cl/ubicaciones",
+            location_name=poi["nombre"],
             street_address=poi["calle"],
-            city=city,
-            state=SgRecord.MISSING,
-            zip_postal=poi["cp"],
-            country_code="CO",
+            city=poi["ciudad"],
+            state=poi["municipio"],
+            zip_postal=SgRecord.MISSING,
+            country_code="CL",
             store_number=poi["id"],
             phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
             latitude=poi["latitud"],
             longitude=poi["longitud"],
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=poi["description_horarios"],
         )
 
         yield item
