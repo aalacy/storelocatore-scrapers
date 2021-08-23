@@ -39,8 +39,8 @@ def fetch_data():
         except:
             pass
         driver.get(base_url)
-        request = driver.wait_for_request(json_url, 30)
-        request = driver.wait_for_request(json_url, 30)
+        driver.wait_for_request(json_url, 30)
+        driver.wait_for_request(json_url, 30)
         data = []
         while True:
             data = [rr.response for rr in driver.requests if json_url in rr.url]
