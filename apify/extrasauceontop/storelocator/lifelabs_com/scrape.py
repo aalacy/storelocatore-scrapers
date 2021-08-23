@@ -103,9 +103,6 @@ def get_data():
             continue
 
 
-print("here")
-
-
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
