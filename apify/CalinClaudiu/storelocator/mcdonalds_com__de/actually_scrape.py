@@ -1,4 +1,3 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
@@ -275,7 +274,6 @@ def fetch_germany_ISH(country):
                 yield rec
         elif locationsPage:
             isMap = test_for_map(locationsPage, country, session, domain)
-            print(isMap)
             if isMap:
                 for rec in pull_from_map(session, country):
                     yield rec
