@@ -1,9 +1,11 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from urllib.parse import urljoin
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address, International_Parser
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 ca_provinces_codes = {
     "AB",
@@ -20,6 +22,12 @@ ca_provinces_codes = {
     "SK",
     "YT",
 }
+
+
+def write_output(data):
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for row in data:
+            writer.write_row(row)
 
 
 def _valid(val):
@@ -48,7 +56,9 @@ def fetch_data():
             soup1 = bs(session.get(page_url).text, "lxml")
             location_name = soup1.select_one("h1.title span").text.strip()
             contact_info = soup1.select_one("div.contact-info p a")
-            addr = parse_address_intl(" ".join(list(contact_info.stripped_strings)))
+            addr = parse_address(
+                International_Parser(), " ".join(list(contact_info.stripped_strings))
+            )
             phone = soup1.select("div.contact-info p")[1].a.text
             direction = contact_info["href"].split("/")[-1].strip().split(",")
             hours_of_operation = soup1.select_one("h2.subtitle").text
@@ -59,13 +69,8 @@ def fetch_data():
             ):
                 hours_of_operation = "Temporarily closed"
             else:
-                tags = soup1.select("table.hours tr")
-                hours = []
-                for tag in tags:
-                    hours.append(
-                        f"{tag.select_one('td.day').text.strip()} {tag.select_one('td.opening').text.strip()}-{tag.select_one('td.closing').text}"
-                    )
-                hours_of_operation = "; ".join(hours)
+                tags = soup1.select("table.hours tbody tr")
+                hours_of_operation = ",".join(tag["content"] for tag in tags)
 
             yield SgRecord(
                 page_url=page_url,
@@ -84,7 +89,5 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    data = fetch_data()
+    write_output(data)

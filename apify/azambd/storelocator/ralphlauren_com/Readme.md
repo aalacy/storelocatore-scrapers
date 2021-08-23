@@ -10,13 +10,3 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-## R&D:
-
-Scraped 3 countries [US, CA, GB]. But can be done all 31 countries some small code modification required. 
-
-### Missing fields
-
-- location_type
-- for UK stores no state
-- Phone is missing for some address
-- 2 stores data is missing mostly. `https://www.ralphlauren.com/Stores-Details?StoreID=rlhomevirtualappointment`, `ralphlauren.com/Stores-Details?StoreID=rrlvirtualappointment`.
