@@ -49,6 +49,10 @@ def fetch_data():
             stores = soup.select("div.store-row-container div.store-row")
             logger.info(f"{len(stores)} found")
             for store in stores:
+                store_number = store.iframe["src"].split("/")[-1]
+                logger.info(store_number)
+                if store_number == "50047" or store_number == "63198":
+                    continue
                 driver.get(store.iframe["src"])
                 WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located(
@@ -61,8 +65,7 @@ def fetch_data():
                 sp1 = bs(driver.page_source, "lxml")
                 if sp1.select_one(".sk-google-business-profile-coming-soon-text"):
                     continue
-                url = f"https://data.accentapi.com/feed/{store.iframe['src'].split('/')[-1]}.json?nocache=1622049836522"
-                logger.info(url)
+                url = f"https://data.accentapi.com/feed/{store_number}.json?nocache=1622049836522"
                 _ = session.get(url, headers=_headers).json()
                 _addr = _["content"]["location"]
                 addr = parse_address_intl(_addr)
@@ -93,7 +96,7 @@ def fetch_data():
                 yield SgRecord(
                     page_url=_["content"]["website"],
                     location_name=_["content"]["place_name"],
-                    store_number=store["id"].split("-")[-1],
+                    store_number=store_number,
                     street_address=street_address,
                     city=city,
                     state=state,

@@ -1,9 +1,20 @@
-import csv
-import time
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("goodcentssubs_com")
+session = SgRequests()
+website = "savoypizza_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://savoypizza.com/"
+MISSING = SgRecord.MISSING
 
 session = SgRequests()
 headers = {
@@ -415,50 +426,7 @@ coordinates = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
-    data = []
     time = ""
     for i, j in zip(center, coordinates):
         url = (
@@ -478,16 +446,20 @@ def fetch_data():
         )
         r = session.get(url, headers=headers, verify=False).json()
         for loc in r:
-            page = loc["store_info"]["website"].strip()
-            name = loc["store_info"]["name"].strip()
-            street = loc["store_info"]["address"].strip()
+            if loc["status"] == "coming soon":
+                continue
+            page_url = loc["store_info"]["website"].strip()
+            log.info(page_url)
+            location_name = loc["store_info"]["name"].strip()
+            street_address = loc["store_info"]["address"].strip()
             city = loc["store_info"]["locality"].strip()
             state = loc["store_info"]["region"].strip()
-            pcode = loc["store_info"]["postcode"].strip()
-            lat = loc["store_info"]["latitude"].strip()
-            lng = loc["store_info"]["longitude"].strip()
+            zip_postal = loc["store_info"]["postcode"].strip()
+            country_code = "US"
+            latitude = loc["store_info"]["latitude"].strip()
+            longitude = loc["store_info"]["longitude"].strip()
             phone = loc["store_info"]["phone"].strip()
-            storeid = loc["store_info"]["corporate_id"].strip()
+            store_number = loc["store_info"]["corporate_id"].strip()
             hours = loc["store_info"]["store_hours"].strip()
             hours = hours.split(";")
             if len(hours) < 8:
@@ -550,39 +522,44 @@ def fetch_data():
                     time = time + " " + Hrs
                 Hrs = ""
                 HOO = time
-                time = ""
                 HOO = HOO.strip()
                 if (
                     HOO
                     == "Mon: 12:00 AM - 12:00 AM Tues: 12:00 AM - 12:00 AM Wed: 12:00 AM - 12:00 AM Thurs: 12:00 AM - 12:00 AM Fri: 12:00 AM - 12:00 AM Sat: 12:00 AM - 12:00 AM Sun: 12:00 AM - 12:00 AM"
                 ):
                     HOO = "Mon: Open 24 hours, Tues: Open 24 hours, Wed: Open 24 hours, Thurs: Open 24 hours, Fri: Open 24 hours, Sat: Open 24 hours, Sun: Open 24 hours"
-            data.append(
-                [
-                    "https://goodcentssubs.com/",
-                    page,
-                    name,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    storeid,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    lng,
-                    HOO,
-                ]
-            )
-    return data
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=HOO.strip(),
+                )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
