@@ -15,7 +15,7 @@ logger = SgLogSetup().get_logger("foodfairmarkets_com")
 
 
 def fetch_data():
-    url = "https://api.freshop.com/1/stores?app_key=foodfair_market&fields=id%2Cname&has_address=true&token=cc6fe941710fa6038d822ffed1f7b959"
+    url = "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token=cc6fe941710fa6038d822ffed1f7b959"
     r = session.get(url, headers=headers)
     website = "foodfairmarkets.com"
     typ = "<MISSING>"

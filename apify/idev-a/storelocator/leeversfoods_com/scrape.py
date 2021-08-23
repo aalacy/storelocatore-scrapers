@@ -27,26 +27,24 @@ def fetch_data():
             td = _.select("td")
             page_url = _.select_one("a.StoreViewLink")["href"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            res = session.get(page_url, headers=_headers).text
+            sp1 = bs(res, "lxml")
             addr = list(sp1.select_one("p.Address").stripped_strings)[1:]
             addr = [aa.replace("\xa0", " ") for aa in addr]
-            try:
-                coord = sp1.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
-            except:
-                coord = ["", ""]
+            coord = res.split("initializeMap(")[1].split(");")[0].split(",")
             hours = []
             _hr = sp1.find("dt", string=re.compile(r"Hours of Operation"))
             if _hr:
                 hours = _hr.find_next_sibling().text.replace(",", ";")
             yield SgRecord(
                 page_url=page_url,
-                location_name=td[0].text.strip(),
+                location_name=td[0].strong.text.strip(),
                 street_address=td[1].text.strip(),
-                city=td[0].text.strip(),
+                city=td[0].strong.text.strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-                latitude=coord[1],
-                longitude=coord[0],
+                latitude=coord[0][1:-1],
+                longitude=coord[1][1:-1],
                 country_code="US",
                 phone=td[2].text.strip(),
                 locator_domain=locator_domain,

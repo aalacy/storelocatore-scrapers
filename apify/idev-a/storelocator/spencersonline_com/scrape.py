@@ -59,7 +59,7 @@ ca_provinces_codes = {
 }
 
 
-max_workers = 12
+max_workers = 1
 
 
 def fetchConcurrentSingle(data):

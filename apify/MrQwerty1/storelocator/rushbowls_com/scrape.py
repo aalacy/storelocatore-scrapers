@@ -1,45 +1,14 @@
-import csv
 import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://rushbowls.com/"
+def fetch_data(sgw: SgWriter):
     api_url = "https://rushbowls.com/locations"
-
-    session = SgRequests()
     r = session.get(api_url)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(),'')]/text()"))
@@ -59,54 +28,59 @@ def fetch_data():
         if street_address == "<MISSING>" and postal == "<MISSING>":
             continue
         country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
-        page_url = j.get("fran_web_address") or "<MISSING>"
+        store_number = j.get("id")
+        page_url = j.get("fran_web_address")
         location_name = j.get("fran_location_name")
-        phone = j.get("fran_phone") or "<MISSING>"
+        phone = j.get("fran_phone")
         if "coming" in phone.lower():
             phone = "<MISSING>"
-        latitude = j.get("fran_latitude") or "<MISSING>"
-        longitude = j.get("fran_longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        latitude = j.get("fran_latitude")
+        longitude = j.get("fran_longitude")
 
         _tmp = []
         source = j.get("fran_hours") or "<html></html>"
         root = html.fromstring(source)
         hours = root.xpath("//text()")
         for h in hours:
-            if not h.strip() or "COVID" in h or "2021" in h:
+            if (
+                not h.strip()
+                or "COVID" in h
+                or "2021" in h
+                or "July" in h
+                or "4/4" in h
+            ):
                 continue
             if "*" in h or "Under" in h or "Hours" in h:
                 break
             _tmp.append(h.strip())
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
+        status = j.get("status") or ""
+        if "coming" in status:
+            hours_of_operation = "Coming Soon!"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://rushbowls.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
