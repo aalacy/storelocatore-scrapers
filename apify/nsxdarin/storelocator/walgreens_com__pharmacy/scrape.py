@@ -1,4 +1,3 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
