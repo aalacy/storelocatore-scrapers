@@ -2,7 +2,7 @@ from lxml import html
 import time
 from typing import Iterable
 
-from sgpostal.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_usa
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -49,7 +49,7 @@ def fetch_stores(http, state):
 def get_address(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
