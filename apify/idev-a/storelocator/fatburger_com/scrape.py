@@ -1,16 +1,14 @@
-from typing import Iterable, Tuple, Callable
+from typing import Iterable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_4
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sglogging import SgLogSetup
-import os
 
-logger = SgLogSetup().get_logger("massimodutti")
+logger = SgLogSetup().get_logger("fatburger")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -18,6 +16,7 @@ _headers = {
 
 locator_domain = "https://fatburger.com/"
 base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=BBOAPSVZOXCPKFUV&center={},{}&coordinates={},{},{},{}&multi_account=true&page=1&pageSize=1000"
+
 
 hr_obj = {
     "1": "Monday",
@@ -30,25 +29,6 @@ hr_obj = {
 }
 
 
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-au:{}@proxy.apify.com:8000/"
-
-
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
-
-
 def _time(val):
     val = str(val)
     if len(val) == 3:
@@ -56,28 +36,22 @@ def _time(val):
     return val[:2] + ":" + val[2:]
 
 
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self._http = http
-        self.__state = CrawlStateSingleton.get_instance()
-
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
-
-        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
-        a1 = coord[0] - 1.42754794932
-        b1 = coord[1] + 1.71661376953
-        a2 = coord[0] + 1.42754794932
-        b2 = coord[1] - 1.71661376953
-        locations = self._http.get(
-            base_url.format(coord[0], coord[1], a1, b1, a2, b2), headers=_headers
+def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
+    state = CrawlStateSingleton.get_instance()
+    for lat, lng in search:
+        a1 = lat - 1.42754794932
+        b1 = lng + 1.71661376953
+        a2 = lat + 1.42754794932
+        b2 = lng - 1.71661376953
+        locations = http.get(
+            base_url.format(lat, lng, a1, b1, a2, b2), headers=_headers
         ).json()
+        logger.info(f"[{search.current_country()}] {len(locations)}")
+        # just some clever accounting of locations/country:
+        rec_count = state.get_misc_value(
+            search.current_country(), default_factory=lambda: 0
+        )
+        state.set_misc_value(search.current_country(), rec_count + len(locations))
         for store in locations:
             if store["status"] != "open":
                 continue
@@ -107,30 +81,12 @@ class ExampleSearchIteration(SearchIteration):
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
-        logger.info(f"[{current_country}] {len(locations)}")
-        # just some clever accounting of locations/country:
-        rec_count = self.__state.get_misc_value(
-            current_country, default_factory=lambda: 0
-        )
-        self.__state.set_misc_value(current_country, rec_count + len(locations))
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        use_state=False, search_type="DynamicGeoSearch", granularity=Grain_4()
-    )
-
+    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="us") as http:
             http.clear_cookies()
-            http.proxies = set_proxies()
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-                max_threads=8,
-            )
-
-            for rec in par_search.run():
+            for rec in fetch_records(http, search):
                 writer.write_row(rec)
