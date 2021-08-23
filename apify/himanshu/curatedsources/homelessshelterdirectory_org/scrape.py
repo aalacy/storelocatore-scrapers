@@ -3,7 +3,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, wait, ALL_COMPL
 import threading
 import random
 import time
-import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
@@ -63,37 +62,6 @@ def increment_request_count():
         thread_local.request_count = 1
     else:
         thread_local.request_count += 1
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "updated_date",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def get(url, attempt=1):
