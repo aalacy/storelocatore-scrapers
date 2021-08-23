@@ -26,7 +26,7 @@ json_url = "https://www.kfc.com.au/KFCALocation/FindaKFCbyLatLong"
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(proxy_country="AU") as session:
         payload = {
             "location": {
                 "SelectedOrderMode": "null",
