@@ -59,13 +59,22 @@ def fetch_data():
             if sp1.select_one("div.hours"):
                 if "coming soon" in sp1.select_one("div.hours").text.lower():
                     continue
+                is_break = False
                 for hh in sp1.select("div.hours p"):
+                    if is_break:
+                        break
                     for hr in hh.stripped_strings:
                         _hh = hr.lower()
-                        if "we" in _hh or "see" in _hh or "now open" in _hh:
+                        if (
+                            "see" in _hh
+                            or "now open" in _hh
+                            or (hours and hr.split(" ")[0][:3] in hours[0])
+                        ):
+                            is_break = True
                             break
                         if (
-                            "hours" in _hh
+                            "we" in _hh
+                            or "hours" in _hh
                             or "beginning" in _hh
                             or "/" in _hh
                             or ("open" in _hh and "open 7 days" not in _hh)

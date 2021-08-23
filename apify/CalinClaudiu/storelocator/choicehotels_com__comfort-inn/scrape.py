@@ -80,6 +80,7 @@ class ExampleSearchIteration(SearchIteration):
         except Exception as e:
             logzilla.error(f"{e}")
             locations = {"hotelCount": 0}
+            locations["status"] = "FAIL"
             errorName = str(e)
         if (
             locations["status"] == "OK"
