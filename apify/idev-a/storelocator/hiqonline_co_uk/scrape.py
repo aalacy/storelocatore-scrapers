@@ -67,7 +67,11 @@ def _dd(page_url, _, loc, city):
         for day in days:
             hours.append(f"{day}: closed")
     coord = loc.select_one(".address")["data-lat-long"].split(",")
-    raw_address = _.select_one('li[itemprop="address"]').text.strip()
+    raw_address = (
+        " ".join(_.select_one('li[itemprop="address"]').stripped_strings)
+        .replace("\n", " ")
+        .strip()
+    )
     return SgRecord(
         page_url=page_url,
         location_name=_.h3.text.strip(),
