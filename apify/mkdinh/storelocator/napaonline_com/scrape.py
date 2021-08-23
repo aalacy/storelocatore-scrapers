@@ -27,7 +27,7 @@ def get_driver():
         local.driver = SgChrome(
             seleniumwire_auto_config=False, is_headless=True
         ).driver()
-        local.driver.set_script_timeout(120)
+        local.driver.set_script_timeout(240)
         load_initial_page(local.driver)
 
     sleep(randint(3, 5))
