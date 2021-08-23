@@ -19,7 +19,7 @@ def fetch_data():
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
         max_search_distance_miles=None,
-        max_search_results=25,
+        max_search_results=None,
     )
     for lat, lng in search:
         session = SgRequests()
@@ -114,7 +114,7 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-        time.sleep(7)
+        time.sleep(3)
 
 
 def scrape():
