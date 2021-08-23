@@ -131,6 +131,10 @@ def fetch_location(loc, driver):
         phone = "(352) 372-5715"
     if "4590 Jon" in name or "9150 Cov" in name:
         hours = "Sun-Thu: 11:00AM-10:00PM; Fri-Sat: 11:00AM-11:00PM"
+    if "cold-spring/cold-spring/5198" in loc:
+        phone = "(859) 441-4820"
+    if "skokie/skokie-lincolnwood/5519" in loc:
+        phone = "(847) 674-1673"
     if "Find A R" not in name:
         return [
             website,
