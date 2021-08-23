@@ -8,6 +8,7 @@ from typing import Iterable
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sgscrape.pause_resume import CrawlStateSingleton
 from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("golden1")
 

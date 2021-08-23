@@ -4,3 +4,4 @@ sgscrape==0.1.13
 sgzip==0.10.1
 sgrequests==0.1.13
 sgselenium==0.1.4
+beautifulsoup4==4.9.3
