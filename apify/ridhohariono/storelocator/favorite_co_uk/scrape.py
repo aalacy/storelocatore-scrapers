@@ -198,16 +198,17 @@ def get_latlong(url):
 def wait_load(driver):
     try:
         WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="findstore-postcode"]'))
+            lambda driver: driver.execute_script("return jQuery.active == 0")
         )
     except:
         driver.refresh()
+        time.sleep(2)
     return driver
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
+    driver = SgSelenium(is_headless=False).chrome()
     driver.get(
         "https://favorite.co.uk/store-finder?postcode=london&delivery=0&lat=51.5073509&lng=-0.1277583"
     )
@@ -216,11 +217,20 @@ def fetch_data():
         driver.find_element_by_xpath('//*[@id="findstore-postcode"]').clear()
         driver.find_element_by_xpath('//*[@id="findstore-postcode"]').send_keys(city)
         driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
-        time.sleep(1)
+        driver = wait_load(driver)
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="ajx-storefinder"]/div/div[1]/div[2]')
+            )
+        )
         soup = bs(driver.page_source, "lxml")
-        main = soup.find_all("div", {"class": "row row-store mb0"})
+        main = soup.find("div", {"id": "ajx-storefinder"}).find_all(
+            "div", {"class": "row row-store mb0"}
+        )
         if not main:
-            continue
+            log.info(f"({city}) Element Not Found! trying to refresh...")
+            driver = wait_load(driver)
+            main = soup.find_all("div", {"class": "row row-store mb0"})
         for row in main:
             page_url = driver.current_url
             content = row.find("div", {"class": "col-12 mb0"})
@@ -235,6 +245,9 @@ def fetch_data():
                 .split(",")[2:]
             ).replace("\n", " ")
             street_address, city, state, zip_postal = getAddress(raw_address)
+            if "4 Broadwalk" in raw_address:
+                street_address = "4 Broadwalk"
+                city = "Crawley"
             country_code = "UK"
             store_number = "<MISSING>"
             phone = soup.find(

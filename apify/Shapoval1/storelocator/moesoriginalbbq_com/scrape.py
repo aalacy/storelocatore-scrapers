@@ -516,12 +516,12 @@ def fetch_data(sgw: SgWriter):
             postal = ad.split(",")[2].split()[1].strip()
         if location_name == "Leadville":
             street_address = (
-                "".join(tree.xpath('//a[contains(@href, "google")]//text()[1]'))
+                "".join(tree.xpath('//a[contains(@href, "goo.")]//text()[1]'))
                 .replace("\n", "")
                 .strip()
             )
             ad = (
-                "".join(tree.xpath('//a[contains(@href, "google")]//text()[2]'))
+                "".join(tree.xpath('//a[contains(@href, "google")]//text()[1]'))
                 .replace("\n", "")
                 .strip()
             )
