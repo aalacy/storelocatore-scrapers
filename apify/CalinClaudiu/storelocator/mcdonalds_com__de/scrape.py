@@ -40,8 +40,7 @@ def fetch_data():
             for i in countryData:
                 yield i
         except Exception:
-            pass #lul
-            
+            pass  # lul
 
 
 def fix_comma(x):
