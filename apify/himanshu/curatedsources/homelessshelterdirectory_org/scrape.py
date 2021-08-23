@@ -19,7 +19,6 @@ logger = SgLogSetup().get_logger("homelessshelterdirectory_org")
 show_logs = False
 thread_local = threading.local()
 max_workers = 64
-unique_locations = []
 base_url = "https://www.homelessshelterdirectory.org/"
 
 
