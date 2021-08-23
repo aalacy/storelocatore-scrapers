@@ -242,6 +242,18 @@ def fetch_data(sgw: SgWriter):
                 .split(";")[1]
                 .strip()
             )
+        if city.find("(") != -1:
+            city = city.split("(")[0].strip()
+        if city.find("-") != -1:
+            city = city.split("-")[0].strip()
+        if city.find(";") != -1:
+            city = city.split(";")[0].strip()
+        if city.find("/") != -1:
+            city = city.split("/")[0].strip()
+        if city == "62500":
+            city = "St Martin Lez Tatinghem"
+            postal = "62500"
+        city = city.replace("- TERMINAL CARGO", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
