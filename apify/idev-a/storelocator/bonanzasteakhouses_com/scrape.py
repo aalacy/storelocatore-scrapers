@@ -16,7 +16,7 @@ base_url = "https://pon-bon.com/locations"
 def fetch_data():
     with SgRequests() as session:
         sp1 = bs(session.get(base_url, headers=_headers).text, "lxml")
-        user_id = sp1.select_one(f"div#storerocket-widget")["data-storerocket-id"]
+        user_id = sp1.select_one("div#storerocket-widget")["data-storerocket-id"]
         json_url = f"https://storerocket.io/api/user/{user_id}/locations?radius=500&units=miles"
         locations = session.get(json_url, headers=_headers).json()["results"][
             "locations"
