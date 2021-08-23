@@ -41,22 +41,22 @@ def get(obj, key, default=MISSING):
     return obj.get(key, default) or default
 
 
-@retry(stop=stop_after_attempt(3))
+@retry(stop=stop_after_attempt(3), reraise=True)
 def fetch_stores():
     data = {
-        "apiKey": "0IILjid96hgTNUwAVKFldgNA4Fe3Cwcr",
+        "apiKey": "kBzrBap6mSlwPNQbX5uNbl4JiQRf7yJz",
         "act": "storenumber",
         "appVer": "2.0",
     }
 
     session = SgRequests()
     response = session.post(
-        "https://services.walgreens.com/api/util/storenumber/v1", json=data
+        "https://services-qa.walgreens.com/api/util/storenumber/v1", json=data
     ).json()
     return [int(number) for number in response["store"]]
 
 
-@retry(stop=stop_after_attempt(3))
+@retry(stop=stop_after_attempt(3), reraise=True)
 def fetch_location(store_number, session):
     page_url = f"https://www.walgreens.com/locator/v1/stores/{store_number}"
     response = session.get(page_url)
@@ -70,6 +70,10 @@ def fetch_location(store_number, session):
 
     locator_domain = "walgreens.com"
     location_name = MISSING
+
+    if not len(data):
+        logger.info(f"no data: {page_url}")
+        return None
 
     address = data["address"]
     street_address = get(address, "street")
