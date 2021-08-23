@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    start_url = "https://www.oxxo.co/api/get-tiendas?plaza=bucaramanga&latitude=39.53698983041732&longitude=-0.534440644262757"
+    start_url = "https://www.oxxo.co/api/get-tiendas?plaza=&latitude=39.53698983041732&longitude=-0.534440644262757"
     domain = "oxxo.co"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
