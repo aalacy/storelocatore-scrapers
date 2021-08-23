@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 import json
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("gucci")
 
@@ -89,11 +91,23 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=" ".join(_.select_one("p.address").stripped_strings),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
