@@ -1,7 +1,8 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-from actually_scrape import fetch_germany
+from actually_scrape import fetch_germany_ISH
+
 
 def getTestCountries(session):
     url = "https://corporate.mcdonalds.com/corpmcd/our-company/where-we-operate.html"
@@ -29,12 +30,14 @@ def getTestCountries(session):
     return countries
 
 
-
 def fetch_data():
+    countries = None
     with SgRequests() as session:
         countries = getTestCountries(session)
-        for country in countries:
-            countryData = fetch_germany(country)
+    for country in countries:
+        countryData = fetch_germany_ISH(country)
+        for i in countryData:
+            yield i
 
 
 def fix_comma(x):
@@ -72,10 +75,8 @@ def scrape():
             is_required=False,
             part_of_record_identity=True,
         ),
-        street_address=sp.MultiMappingField(
-            mapping=[["street_address1"], ["street_address2"]],
-            multi_mapping_concat_with=", ",
-            value_transform=fix_comma,
+        street_address=sp.MappingField(
+            mapping=["street_address"],
             is_required=False,
             part_of_record_identity=True,
         ),
@@ -102,7 +103,7 @@ def scrape():
         scraper_name="pipeline",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=5000,
+        log_stats_interval=1000,
     )
 
     pipeline.run()
