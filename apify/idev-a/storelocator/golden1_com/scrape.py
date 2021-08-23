@@ -6,7 +6,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
-from sgscrape.pause_resume import CrawlStateSingleton
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 
