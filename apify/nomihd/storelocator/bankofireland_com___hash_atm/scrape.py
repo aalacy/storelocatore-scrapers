@@ -57,10 +57,28 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if city and city.isdigit():
+            city = raw_address.split(",")[-2].strip().split(" ")[0].strip()
+
+        city_list = []
+        try:
+            temp_city = city.split(" ")
+            for ct in temp_city:
+                if ct.isdigit():
+                    break
+                else:
+                    city_list.append(ct)
+
+            city = " ".join(city_list).strip()
+        except:
+            raise
+
         state = formatted_addr.state
-        zip = formatted_addr.postcode
+        zip = "<MISSING>"
 
         country_code = "IE"
+        if "Northern Ireland" in raw_address:
+            country_code = "GB"
 
         location_name = store_list[store_key]["name"].strip()
 
