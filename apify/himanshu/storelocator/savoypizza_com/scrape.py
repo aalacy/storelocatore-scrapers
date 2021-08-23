@@ -33,7 +33,10 @@ def fetch_data():
             location_name = loc.find("h1").text
             temp = loc.findAll("p")
             hours_of_operation = (
-                temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                temp[1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Hours:", "")
             )
             if "COMING" in hours_of_operation:
                 continue
