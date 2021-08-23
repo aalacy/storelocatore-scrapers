@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import re
 from sgscrape import simple_scraper_pipeline as sp
 import json
 
@@ -90,12 +89,8 @@ def get_data():
         "https://www.google.com/maps/d/viewer?mid=1k_5K2ikpmcAyElx_ND0io5MT-3w&ll=35.64271937457243%2C-88.47843979999999&z=4"
     ).text
 
-    with open("file.txt", "w", encoding="utf-8") as output:
-        print(response, file=output)
-
     json_objects = extract_json(response.split("var _pageData = ")[1].replace("\\", ""))
-    with open("json.txt", "w", encoding="utf-8") as output:
-        json.dump(json_objects[0][1][6][0][4][0][6], output, indent=4)
+
     for location in json_objects[0][1][6][0][4][0][6]:
         latitude = location[4][0][1][0]
         longitude = location[4][0][1][1]
