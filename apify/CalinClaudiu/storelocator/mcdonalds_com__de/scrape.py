@@ -35,9 +35,13 @@ def fetch_data():
     with SgRequests() as session:
         countries = getTestCountries(session)
     for country in countries:
-        countryData = fetch_germany_ISH(country)
-        for i in countryData:
-            yield i
+        try:
+            countryData = fetch_germany_ISH(country)
+            for i in countryData:
+                yield i
+        except Exception:
+            pass #lul
+            
 
 
 def fix_comma(x):
