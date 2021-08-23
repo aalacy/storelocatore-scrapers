@@ -75,6 +75,7 @@ def fetch_data(sgw: SgWriter):
             .replace("NY-", "")
             .strip()
         )
+
         if postal.find("Santiago") != -1:
             postal = "<MISSING>"
 
@@ -119,6 +120,129 @@ def fetch_data(sgw: SgWriter):
         if phone == "0" or phone == "2":
             phone = "<MISSING>"
 
+        if state.find("EX5") != -1:
+            state = "<MISSING>"
+            postal = "EX5 2UL"
+            country_code = "UK"
+        if state == "HP12":
+            state = "<MISSING>"
+            postal = "HP12 3TA"
+            country_code = "UK"
+        if state == "HU4":
+            state = "<MISSING>"
+            postal = "HU4 7DW"
+            country_code = "UK"
+        if state == "NN17":
+            state = "<MISSING>"
+            postal = "NN17 9RS"
+            country_code = "UK"
+
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -143,6 +267,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://geodis.com/"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         fetch_data(writer)
