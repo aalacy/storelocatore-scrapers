@@ -1,3 +1,5 @@
+import json
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -6,12 +8,14 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
+    # Your scraper here
     session = SgRequests()
-
     domain = "kidtokid.com"
     start_url = "https://kidtokid.com/global/gen/model/search?include_classes=sitefile,address&take=6000&class_string=location"
 
-    data = session.get(start_url).json()
+    response = session.get(start_url)
+    data = json.loads(response.text)
+
     for poi in data["data"]["models"]:
         store_url = "https://kidtokid.com/location/{}".format(poi["url"])
         location_name = poi["name"]
@@ -28,10 +32,7 @@ def fetch_data():
         store_number = poi["location_id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
-        if "Kid to Kid" in poi["data"]:
-            location_type = "kidtokid"
-        else:
-            location_type = "uptown"
+        location_type = "<MISSING>"
         latitude = poi["address"]["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["address"]["longitude"]
@@ -51,8 +52,7 @@ def fetch_data():
         if hours_of_operation.endswith(","):
             hours_of_operation = hours_of_operation[:-1]
         if not hours_of_operation:
-            location_type = "coming soon"
-            hours_of_operation = "<MISSING>"
+            continue
 
         item = SgRecord(
             locator_domain=domain,
