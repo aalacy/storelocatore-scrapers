@@ -1,155 +1,98 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import re
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "crocs_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.crocs.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    url = "https://locations.crocs.com/"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    state_list = soup.findAll("div", {"class": "itemlist"})
-    p = 0
-    for states in state_list:
-        states = states.find("a")
-        states = states["href"]
-        r = session.get(states, headers=headers, verify=False)
+    if True:
+        url = "https://locations.crocs.com/"
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        city_list = soup.findAll("div", {"class": "itemlist"})
-
-        for cities in city_list:
-            cities = cities.find("a")
-            cities = cities["href"]
-            r = session.get(cities, headers=headers, verify=False)
-
+        loclist = soup.findAll("a", {"data-group": "1"})
+        for loc in loclist:
+            page_url = "https://locations.crocs.com" + loc["href"]
+            log.info(page_url)
+            location_name = "Crocs"
+            r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            branch_list = soup.findAll("div", {"class": "itemlist_fullwidth"})
-
-            for branch in branch_list:
-                branch = branch.find("a")
-                link = branch["href"]
-
-                r = session.get(link, headers=headers, verify=False)
-
-                soup = BeautifulSoup(r.text, "html.parser")
-                detail = soup.findAll("script", {"type": "application/ld+json"})
-                detail = str(detail[1])
-                start = detail.find("@id")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                store = detail[start:end]
-                start = detail.find("streetAddress")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                street = detail[start:end]
-                start = detail.find("addressLocality")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                city = detail[start:end]
-                start = detail.find("addressRegion")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                state = detail[start:end]
-                start = detail.find("postalCode")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                pcode = detail[start:end]
-                start = detail.find("addressCountry")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                ccode = detail[start:end]
-                start = detail.find("latitude")
-                start = detail.find(":", start) + 1
-                end = detail.find(",", start)
-                lat = detail[start:end]
-                start = detail.find("longitude")
-                start = detail.find(":", start) + 1
-                end = detail.find("}", start)
-                longt = detail[start:end]
-                longt = longt.replace("\n", "")
-                longt = longt.rstrip()
-                start = detail.find("telephone")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                phone = detail[start:end]
-
-                title = soup.find("h1").text.replace("\n", "")
-                title = re.sub("\\s+", " ", title).strip()
-                hours = (
-                    soup.find("div", {"class": "hrs"})
-                    .find("table")
-                    .text.replace("\n", " ")
+            try:
+                temp = (
+                    soup.find(
+                        "div",
+                        {
+                            "class": "section-subtitle landing-header-address landing-header-detail-section"
+                        },
+                    )
+                    .get_text(separator="|", strip=True)
+                    .split("|")
                 )
-                hours = re.sub("\\s+", " ", hours).strip()
-                hours = hours.replace(
-                    "Holiday hours may vary. Please call store for details.", ""
-                )
-                hours = hours.replace("*", "").replace("day ", "day : ")
-
-                data.append(
-                    [
-                        "https://www.crocs.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        ccode,
-                        store,
-                        phone,
-                        "store",
-                        lat,
-                        longt,
-                        hours,
-                    ]
-                )
-
-                p += 1
-    return data
+            except:
+                continue
+            store_number = soup.find("div", {"id": "retailer-page-wrapper"})["data-id"]
+            phone = temp[-1]
+            street_address = temp[0]
+            address = temp[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            if zip_postal.isnumeric() is False:
+                continue
+            latitude = r.text.split('"latitude":"')[1].split('"')[0]
+            longitude = r.text.split('"longitude":"')[1].split('"')[0]
+            hours_of_operation = (
+                soup.find("div", {"class": "store-hours-days"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-    data = fetch_data()
-    write_output(data)
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
