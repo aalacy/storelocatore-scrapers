@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 
-website = "pizzahut.ro"
+website = "pizzahutdelivery.ro"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -60,13 +60,15 @@ def fetch_data():
     for key in locations.keys():
         stores = locations[key]
         for store in stores:
-            page_url = "<MISSING>"
+            page_url = "https://www.pizzahutdelivery.ro/ro/contact/locatii"
 
             locator_domain = website
 
             location_name = store["name"]
 
             street_address = store["address"]
+            if street_address is None or len(street_address) <= 0:
+                continue
             city = cities_dict[str(store["cityId"])]
 
             state = "<MISSING>"
