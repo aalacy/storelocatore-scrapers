@@ -50,7 +50,7 @@ def fetch_data():
             filter(
                 str,
                 stores[index].xpath(
-                    'div/div[./p[contains(text(),"Locations")]]//a/text()'
+                    'div/div[./p[contains(text(),"Locations")]]//a//text()'
                 ),
             )
         )
@@ -60,7 +60,9 @@ def fetch_data():
             .strip()
             .encode("ascii", "replace")
             .decode("utf-8")
-            .replace("?", "-")
+            .replace("?", "")
+            .strip()
+            .replace("3000,  ", "3000 ")
             .strip()
         )
         city_state_zip = "".join(raw_address[-1]).strip()
@@ -98,6 +100,8 @@ def fetch_data():
             .replace("\n", "")
             .strip()
         )
+        if hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
