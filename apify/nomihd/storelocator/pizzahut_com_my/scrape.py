@@ -9,6 +9,7 @@ import json
 from sgscrape.simple_utils import parallelize
 from sgzip.dynamic import DynamicGeoSearch
 from sgpostal import sgpostal as parser
+from sgscrape.pause_resume import CrawlStateSingleton
 
 website = "pizzahut.com.my"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -32,6 +33,7 @@ headers = {
 
 
 def fetch_records_for(coords):
+    state = CrawlStateSingleton.get_instance()
     lat = coords[0]
     lng = coords[1]
     log.info(f"pulling records for coordinates: {lat,lng}")
@@ -129,6 +131,7 @@ def scrape():
             writer.write_row(rec)
             count = count + 1
 
+    state = CrawlStateSingleton.get_instance()
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
