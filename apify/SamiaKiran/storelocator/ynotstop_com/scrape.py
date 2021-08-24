@@ -64,15 +64,12 @@ def fetch_data():
                     .text.split("|")[0]
                 )
             except:
-                if "Licensed Store" in hours_of_operation:
-                    hours_of_operation = MISSING
-                else:
-                    loc.find("div", {"class": "desc FParagraph EditorText"}).find(
-                        "li"
-                    ).text
+                loc.find("div", {"class": "desc FParagraph EditorText"}).find("li").text
             latitude, longitude = (
                 temp_coords.split("LatLng(")[1].split("),", 1)[0].split(",")
             )
+            if hours_of_operation == "Licensed Store":
+                hours_of_operation = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
