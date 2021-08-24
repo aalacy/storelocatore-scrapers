@@ -66,6 +66,20 @@ def fetch_data():
         country = "US"
         if "denver-international-airport" in loc:
             phone = "303-342-6612"
+        if "Sun:" not in hours:
+            hours = hours.replace("Today:", "Sun:")
+        if "Mon:" not in hours:
+            hours = hours.replace("Today:", "Mon:")
+        if "Tue:" not in hours:
+            hours = hours.replace("Today:", "Tue:")
+        if "Wed:" not in hours:
+            hours = hours.replace("Today:", "Wed:")
+        if "Thu:" not in hours:
+            hours = hours.replace("Today:", "Thu:")
+        if "Fri:" not in hours:
+            hours = hours.replace("Today:", "Fri:")
+        if "Sat:" not in hours:
+            hours = hours.replace("Today:", "Sat:")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

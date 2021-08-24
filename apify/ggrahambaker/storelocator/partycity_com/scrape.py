@@ -29,20 +29,20 @@ def fetch_data():
         )
         for state in state_list:
             state_url = state["href"]
-            r = session.get(state_url, headers=headers)
+            r = session.get(state_url, headers=headers, timeout=180)
             soup = BeautifulSoup(r.text, "html.parser")
             city_list = soup.find("div", {"class": "tlsmap_list"}).findAll(
                 "a", {"class": "gaq-link"}
             )
             for city in city_list:
                 city_url = city["href"]
-                r = session.get(city_url, headers=headers)
+                r = session.get(city_url, headers=headers, timeout=180)
                 soup = BeautifulSoup(r.text, "html.parser")
                 loclist = soup.findAll("div", {"class": "map-list-item"})
                 for loc in loclist:
                     page_url = loc.find("a")["href"]
                     log.info(page_url)
-                    r = session.get(page_url, headers=headers)
+                    r = session.get(page_url, headers=headers, timeout=180)
                     soup = BeautifulSoup(r.text, "html.parser")
                     try:
                         if (
