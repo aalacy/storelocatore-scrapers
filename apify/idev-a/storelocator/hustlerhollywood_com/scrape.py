@@ -33,8 +33,8 @@ def fetch_data():
             if _.select("div.store-item__hours"):
                 hours = [
                     ": ".join(hh.stripped_strings)
-                    for hh in _.select("div.store-item__hours")[0].select(
-                        "div.hours-sort-container div.hours-row"
+                    for hh in _.select("div.hours-sort-container")[0].select(
+                        "div.hours-row"
                     )
                 ]
             yield SgRecord(

@@ -6,8 +6,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
-from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sglogging import SgLogSetup
 import dirtyjson as json
 
 logger = SgLogSetup().get_logger("kfcvietnam")
@@ -32,7 +32,7 @@ base_url = "https://kfcvietnam.com.vn/vi/nha-hang.html"
 locator_domain = "https://kfcvietnam.com.vn"
 detail_url = "https://kfcvietnam.com.vn/vi/load_restaurant"
 session = SgRequests().requests_retry_session()
-max_workers = 4
+max_workers = 2
 
 
 def fetchConcurrentSingle(link):
@@ -80,27 +80,41 @@ def fetch_data():
     for link, res in fetchConcurrentList(links):
         for key, _ in enumerate(bs(res["html"], "lxml").select("li.find_store_item")):
             store_number = _["onclick"].split("(")[1].split(",")[0]
-            addr = parse_address_intl(
-                _.select_one("div.store_name p").text.strip() + ", Vietnam"
-            )
+            raw_address = _.select_one("div.store_name p").text.strip()
+            addr = parse_address_intl(raw_address + ", Vietnam")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             coord = res["restaurant"][key]
+            latitude = coord[1]
+            longitude = coord[2]
+            if float(latitude) < -90 or float(latitude) > 90:
+                latitude = str(latitude)[:2] + "." + str(latitude)[2:]
+            if float(longitude) < -180 or float(longitude) > 180:
+                longitude = str(longitude)[:3] + "." + str(longitude)[3:]
+
             hours = list(_.select_one("div.find_store_des").stripped_strings)[1:]
+            city = addr.city
+            try:
+                if city in ["Sơn", "Trì", "An"] and len(raw_address.split(",")) > 2:
+                    city = raw_address.split(",")[-2].strip()
+            except:
+                import pdb
+
+                pdb.set_trace()
             yield SgRecord(
                 page_url=res["url"],
                 store_number=store_number,
                 location_name=_.select_one("div.store_name h5").text.strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
-                zip_postal=addr.postcode,
                 country_code="Vietnam",
                 locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[2],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=raw_address,
             )
 
 

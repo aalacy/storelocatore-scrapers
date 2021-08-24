@@ -135,6 +135,13 @@ CITIES = [
     "Dunstable",
     "Rainham",
     "Snodland",
+    "Stampford",
+    "STAMFORD HILL",
+    "Walthamstow",
+    "Horley",
+    "Blackheath",
+    "Battersea",
+    "Hammersmith",
 ]
 
 
@@ -191,10 +198,11 @@ def get_latlong(url):
 def wait_load(driver):
     try:
         WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="findstore-postcode"]'))
+            lambda driver: driver.execute_script("return jQuery.active == 0")
         )
     except:
         driver.refresh()
+        time.sleep(2)
     return driver
 
 
@@ -209,14 +217,23 @@ def fetch_data():
         driver.find_element_by_xpath('//*[@id="findstore-postcode"]').clear()
         driver.find_element_by_xpath('//*[@id="findstore-postcode"]').send_keys(city)
         driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
-        time.sleep(1)
+        driver = wait_load(driver)
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="ajx-storefinder"]/div/div[1]/div[2]')
+            )
+        )
         soup = bs(driver.page_source, "lxml")
-        main = soup.find("div", {"class": "row row-store mb0"})
-        if not main or len(main) > 50:
-            continue
+        main = soup.find("div", {"id": "ajx-storefinder"}).find_all(
+            "div", {"class": "row row-store mb0"}
+        )
+        if not main:
+            log.info(f"({city}) Element Not Found! trying to refresh...")
+            driver = wait_load(driver)
+            main = soup.find_all("div", {"class": "row row-store mb0"})
         for row in main:
             page_url = driver.current_url
-            content = main.find("div", {"class": "col-12 mb0"})
+            content = row.find("div", {"class": "col-12 mb0"})
             location_name = (
                 content.find("div", {"class": "store-name"})
                 .get_text(strip=True, separator=",")
@@ -226,8 +243,11 @@ def fetch_data():
                 content.find("div", {"class": "store-name"})
                 .get_text(strip=True, separator=",")
                 .split(",")[2:]
-            )
+            ).replace("\n", " ")
             street_address, city, state, zip_postal = getAddress(raw_address)
+            if "4 Broadwalk" in raw_address:
+                street_address = "4 Broadwalk"
+                city = "Crawley"
             country_code = "UK"
             store_number = "<MISSING>"
             phone = soup.find(
@@ -258,7 +278,7 @@ def fetch_data():
                 .strip()
             )
             latitude, longitude = get_latlong(page_url)
-            log.info("Found Location{} => {}".format(location_name, street_address))
+            log.info("Found Location {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -289,7 +309,7 @@ def scrape():
                 {
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
-                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
                 }
             )
         )
