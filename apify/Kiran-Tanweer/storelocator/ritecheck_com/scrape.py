@@ -4,8 +4,10 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 import re
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
+import sgscrape.sgwriter
+import sgscrape.sgrecord
+import sgscrape.sgrecord_id
+import sgscrape.sgrecord_deduper
 
 session = SgRequests()
 website = "ritecheck_com"
