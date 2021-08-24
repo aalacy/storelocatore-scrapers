@@ -4,10 +4,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("hiexpress_com")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -21,7 +21,9 @@ def fetch_data():
     ]
     for url in urls:
         states = []
+        session = SgRequests()
         r = session.get(url, headers=headers)
+        time.sleep(1)
         if r.encoding is None:
             r.encoding = "utf-8"
         for line in r.iter_lines(decode_unicode=True):
@@ -30,6 +32,8 @@ def fetch_data():
         for state in states:
             cities = []
             logger.info("Pulling State %s..." % state)
+            time.sleep(1)
+            session = SgRequests()
             r2 = session.get(state, headers=headers)
             if r2.encoding is None:
                 r2.encoding = "utf-8"
@@ -38,6 +42,8 @@ def fetch_data():
                     cities.append(line2.split('href="')[1].split('"')[0])
             for city in cities:
                 logger.info("Pulling City %s..." % city)
+                time.sleep(1)
+                session = SgRequests()
                 r3 = session.get(city, headers=headers)
                 if r3.encoding is None:
                     r3.encoding = "utf-8"
