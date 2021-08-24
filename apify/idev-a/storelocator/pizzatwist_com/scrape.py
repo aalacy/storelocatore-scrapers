@@ -4,11 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 import re
 
-logger = SgLogSetup().get_logger("pizzatwist")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -44,7 +42,6 @@ def fetch_data():
             page_url = _.select_one("a.card_btn")["href"].strip()
             if page_url.endswith("pizzatwist.com/"):
                 page_url += "home"
-            logger.info(page_url)
             hours = []
             coord = ["", ""]
             phone = ""
