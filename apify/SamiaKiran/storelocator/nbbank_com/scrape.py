@@ -7,51 +7,51 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "oururgentcare_com"
+website = "canyonranch_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://www.oururgentcare.com/"
+DOMAIN = "https://www.canyonranch.com/"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        url = "https://www.oururgentcare.com/locations/"
+        url = "https://nbbank.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"id": "content-archive"}).findAll("article")
+        loclist = soup.find("div", {"class": "display_list_items"}).findAll(
+            "tr", {"class": "data_item_detail_row"}
+        )
         for loc in loclist:
-            store_number = loc["id"].replace("post-", "")
-            page_url = loc.find("a")["href"]
+            loc = loc.findAll("td")
+            page_url = "https://nbbank.com" + loc[-1].find("a")["href"]
             log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1", {"class": "title"}).text
-            street_address = soup.find("div", {"class": "address_1"}).text
-            phone = soup.find("div", {"class": "phone_number"}).text
-            hours_of_operation = (
-                soup.find("div", {"class": "footer-hours"})
-                .get_text(separator="|", strip=True)
-                .split("|")
-            )
-            hours_of_operation = (
-                hours_of_operation[1] + " " + hours_of_operation[2].replace("OPEN", "")
-            )
-            address = soup.find("div", {"class": "address_2"}).text.split(",")
+            store_number = page_url.split("pid=")[1].replace("%3d", "")
+            location_name = loc[1].text
+            address = loc[2].get_text(separator="|", strip=True).split("|")
+            if len(address) > 4:
+                del address[1]
+            country_code = "USA"
+            street_address = address[0]
+            address = address[1].split(",")
             city = address[0]
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
-            latitude, longitude = (
-                soup.find("a", {"id": "get-directions"})["href"]
-                .split("addr=")[2]
-                .split(",")
+            phone = loc[3].text
+            hours_of_operation = (
+                loc[-3]["data-title"]
+                + " "
+                + loc[-3].get_text(separator="|", strip=True).replace("|", " ")
+                + " "
+                + loc[-2]["data-title"]
+                + " "
+                + loc[-2].get_text(separator="|", strip=True).replace("|", " ")
             )
-            country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -64,8 +64,8 @@ def fetch_data():
                 store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
+                latitude=MISSING,
+                longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
             )
 
