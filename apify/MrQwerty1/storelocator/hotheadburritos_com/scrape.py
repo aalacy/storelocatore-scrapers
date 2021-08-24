@@ -1,43 +1,111 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def get_urls():
+    r = session.get(
+        "https://hotheadburritos.com/locationfeed/getlocations.php", headers=headers
+    )
+    tree = html.fromstring(r.text)
+
+    return tree.xpath(
+        "//div[@class='location-info']/a[1][contains(@href, '.com')]/@href"
+    )
+
+
+def get_id(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//div[@id='storelanding']/div/@id"))
+
+
+def get_coords_from_embed(text):
+    try:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+    return latitude, longitude
+
+
+def get_data(page_url, sgw: SgWriter):
+    store_number = get_id(page_url)
+    data = {"id": store_number}
+    r = session.post(
+        "https://hotheadburritos.com/locationfeed/locations-landing/landing.php",
+        headers=headers,
+        data=data,
+    )
+    tree = html.fromstring(r.text)
+
+    if tree.xpath("//h1[contains(text(), 'Soon')]"):
+        return
+
+    location_name = "".join(tree.xpath("//div[@id='store-info']//h1/text()")).strip()
+    line = tree.xpath(
+        "//div[@class='col-sm-5']/a/text()|//div[@class='col-sm-5']/text()"
+    )
+    line = list(filter(None, [l.strip() for l in line]))
+
+    street_address = ", ".join(line[:-1])
+    if street_address.endswith(","):
+        street_address = street_address[:-1]
+    line = line[-1]
+    city = line.split(",")[0].strip()
+    line = line.split(",")[1].strip()
+    state = line.split()[0]
+    postal = line.split()[1]
+    country_code = "US"
+
+    phone = "".join(tree.xpath("//a[contains(@href, 'tel')]/text()")).strip()
+    text = "".join(tree.xpath("//iframe/@src"))
+    latitude, longitude = get_coords_from_embed(text)
+
+    _tmp = []
+    for i in range(7):
+        _tmp.append(
+            "".join(tree.xpath(f"//p[contains(@class, 'd{i}')]/text()")).strip()
         )
+    hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-        for row in data:
-            writer.writerow(row)
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
     locator_domain = "https://hotheadburritos.com/"
-    api_url = "https://hotheadburritos.com/locationfeed/getlocations.php"
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -46,74 +114,6 @@ def fetch_data():
         "Upgrade-Insecure-Requests": "1",
         "Cache-Control": "max-age=0",
     }
-
     session = SgRequests()
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='location-data']")
-
-    for d in divs:
-        location_name = "".join(d.xpath(".//a/h3/text()")).strip() or "<MISSING>"
-        if location_name.lower().find("coming") != -1 or location_name == "<MISSING>":
-            continue
-
-        page_url = "".join(d.xpath(".//h5/a/@href")) or "<MISSING>"
-        line = d.xpath(".//h4/text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = line[0]
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0].strip()
-        postal = line.split()[1].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel')]/text()")).strip()
-            or "<MISSING>"
-        )
-        try:
-            latitude, longitude = (
-                "".join(d.xpath(".//img[@class='location-map lazy']/@data-src"))
-                .split("markers=")[1]
-                .split("&")[0]
-                .split(",")
-            )
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        location_type = "<MISSING>"
-
-        hours = d.xpath(".//p[@style='margin-top: 20px;']/text()")
-        hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours) or "<MISSING>"
-        if location_name.lower().find("closed") != -1:
-            hours_of_operation = "Temporarily Closed"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
