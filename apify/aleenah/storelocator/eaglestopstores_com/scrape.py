@@ -35,7 +35,9 @@ headers = {
 def fetch_data():
     if True:
         url = "https://eaglestopstores.com/wp-admin/admin-ajax.php"
-        loclist = session.post(url, headers=headers, data=payload).json()["locations"]
+        loclist = session.post(url, headers=headers, data=payload, timeout=200).json()[
+            "locations"
+        ]
         for loc in loclist:
             location_name = loc["name"]
             log.info(location_name)
