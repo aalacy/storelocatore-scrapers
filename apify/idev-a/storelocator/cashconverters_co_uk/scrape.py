@@ -64,7 +64,7 @@ def fetch_data():
             )
             addr = _["addressline2"].split(",")
             hours = []
-            for hh in _.get("openingHoursSpecification", []):
+            for hh in ss.get("openingHoursSpecification", []):
                 hours.append(
                     f"{','.join(hh['dayOfWeek'])}: {hh['opens']}-{hh['closes']}"
                 )
