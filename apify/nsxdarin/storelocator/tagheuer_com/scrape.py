@@ -56,6 +56,8 @@ def fetch_data():
         "ae",
         "gb",
         "us",
+        "al",
+        "dz",
     ]
     for cc in countries:
         page = 1
