@@ -55,7 +55,7 @@ def fetch_data(sgw: SgWriter):
         )
         location_type = (re.sub(" +", " ", location_type)).strip()
         try:
-            phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(base))[0]
+            phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(base))[-1]
         except:
             phone = "<MISSING>"
 
