@@ -17,7 +17,7 @@ base_url = "https://www.cashconverters.co.uk/c3api/store/query"
 _headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
 }
-session = SgRequests().requests_retry_session()
+session = SgRequests(proxy_country="gb").requests_retry_session()
 max_workers = 2
 
 
@@ -52,37 +52,34 @@ def request_with_retries(url):
 
 
 def fetch_data():
-    with SgRequests(proxy_country="gb") as session:
-        locations = session.get(base_url, headers=_headers).json()["Value"]
-        logger.info(f"{len(locations)} found")
-        for page_url, _, res in fetchConcurrentList(locations):
-            if "stores/" not in page_url:
-                continue
-            logger.info(page_url)
-            ss = json.loads(
-                bs(res.text, "lxml").find("script", type="application/ld+json").string
-            )
-            addr = _["addressline2"].split(",")
-            hours = []
-            for hh in ss.get("openingHoursSpecification", []):
-                hours.append(
-                    f"{','.join(hh['dayOfWeek'])}: {hh['opens']}-{hh['closes']}"
-                )
-            yield SgRecord(
-                page_url=res.url,
-                location_name=_["title"],
-                street_address=_["addressline1"],
-                city=addr[0],
-                state=" ".join(addr[1:-2]),
-                zip_postal=" ".join(addr[-2:]),
-                country_code="UK",
-                phone=_["phone"],
-                latitude=_["lat"],
-                longitude=_["lng"],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-                raw_address=_["addressline1"] + " " + _["addressline2"],
-            )
+    locations = session.get(base_url, headers=_headers).json()["Value"]
+    logger.info(f"{len(locations)} found")
+    for page_url, _, res in fetchConcurrentList(locations):
+        if "stores/" not in page_url:
+            continue
+        logger.info(page_url)
+        ss = json.loads(
+            bs(res.text, "lxml").find("script", type="application/ld+json").string
+        )
+        addr = _["addressline2"].split(",")
+        hours = []
+        for hh in ss.get("openingHoursSpecification", []):
+            hours.append(f"{','.join(hh['dayOfWeek'])}: {hh['opens']}-{hh['closes']}")
+        yield SgRecord(
+            page_url=res.url,
+            location_name=_["title"],
+            street_address=_["addressline1"],
+            city=addr[0],
+            state=" ".join(addr[1:-2]),
+            zip_postal=" ".join(addr[-2:]),
+            country_code="UK",
+            phone=_["phone"],
+            latitude=_["lat"],
+            longitude=_["lng"],
+            locator_domain=locator_domain,
+            hours_of_operation="; ".join(hours),
+            raw_address=_["addressline1"] + " " + _["addressline2"],
+        )
 
 
 if __name__ == "__main__":
