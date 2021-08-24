@@ -7,6 +7,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "bareminerals.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -237,7 +239,9 @@ def process_record(raw_results_from_one_coordinate):
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         countries = ["US", "AT", "CA", "FR", "DE", "IE", "UK"]
 
         totalCountries = len(countries)
@@ -246,7 +250,7 @@ def scrape():
             if country != "US":
                 try:
                     search = DynamicGeoSearch(
-                        max_radius_miles=100, country_codes=[country]
+                        expected_search_radius_miles=100, country_codes=[country]
                     )
                     results = parallelize(
                         search_space=[
