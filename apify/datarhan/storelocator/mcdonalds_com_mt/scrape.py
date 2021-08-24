@@ -1,3 +1,5 @@
+import re
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -15,7 +17,14 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    frm = {"action": "get_locations", "token": "df11efe754"}
+
+    response = session.get("https://www.mcdonalds.com.mt/locate/")
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "wpjs")]/text()')[0]
+    data = re.findall("wpjs =(.+);", data)[0]
+    data = json.loads(data)
+
+    frm = {"action": "get_locations", "token": data["ajax_nonce"]}
     data = session.post(start_url, headers=hdr, data=frm).json()
 
     for poi in data["data"]:
@@ -45,7 +54,7 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["title"],
+            location_name=poi["title"].replace("&#8220;", '"'),
             street_address=street_address,
             city=poi["latlng"]["city"],
             state=poi["latlng"].get("state"),
