@@ -55,11 +55,11 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath('//div[@class="blog-entry" and .//a]')
+    store_list = search_sel.xpath('//ul[@id="menu-locations-menu"]/li/a')
 
     for store in store_list:
 
-        page_url = "".join(store.xpath("./div/a/@href"))
+        page_url = "".join(store.xpath("@href"))
         if "http" not in page_url:
             page_url = base + "/" + page_url
         locator_domain = website
@@ -81,7 +81,7 @@ def fetch_data():
         ).strip()
         country_code = "US"
 
-        location_name = "".join(store.xpath(".//h2/a/text()")).strip()
+        location_name = "".join(store.xpath("text()")).strip()
 
         phone = " ".join(
             store_sel.xpath('//span[@itemprop="telephone"]//text()')
@@ -89,7 +89,7 @@ def fetch_data():
 
         if len(street_address) <= 0:
             appoint_link = "".join(
-                store_sel.xpath('//div[@class="app-container"]/iframe/@src')
+                store_sel.xpath('//div[@class="app-container"]/iframe/@data-src')
             ).strip()
             temp_sel = lxml.html.fromstring(session.get(appoint_link).text)
             raw_info = temp_sel.xpath('//div[@class="address"]/text()')
@@ -123,7 +123,7 @@ def fetch_data():
             ).strip()
 
         map_link = "".join(
-            store_sel.xpath('//iframe[contains(@src,"maps")]/@src')
+            store_sel.xpath('//iframe[contains(@data-src,"maps")]/@data-src')
         ).strip()
 
         latitude, longitude = get_latlng(map_link)
