@@ -57,12 +57,9 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
-        hours_of_operation = (
-            hours_of_operation.replace("Open Daily", "")
-            .replace("Take Out & Indoor Dining", "")
-            .replace("Daily", "")
-            .strip()
-        )
+        hours_of_operation = hours_of_operation.replace(
+            "Take Out & Indoor Dining", ""
+        ).strip()
         phone = "".join(
             tree.xpath(
                 '//p[.//span[contains(text(), "PHONE")]]/following-sibling::p[1]//text()'
