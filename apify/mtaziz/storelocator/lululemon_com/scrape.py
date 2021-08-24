@@ -43,18 +43,18 @@ def get_special_headers():
         logger.info(f"Just to make sure all-lululemon-stores exists: {element1}")
 
         # Find out the lululemon all stores link so that we can load that page
-        all_stores_find_element_by_class = driver.find_element_by_class_name(
-            "ctaBlock-GVjCz"
+        all_stores_find_element_by_xpath = driver.find_element_by_xpath(
+            see_all_store_listings
         )
 
         # Hover your mouse to make the link workable
         hover = ActionChains(driver).move_to_element_with_offset(
-            all_stores_find_element_by_class, 0, 0
+            all_stores_find_element_by_xpath, 0, 0
         )
         hover.perform()
 
         # Click on it
-        all_stores_find_element_by_class.click()
+        all_stores_find_element_by_xpath.click()
         driver.implicitly_wait(20)
         time.sleep(10)
         logger.info("The page is loaded")

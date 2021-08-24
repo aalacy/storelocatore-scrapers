@@ -78,6 +78,7 @@ def fetch_data():
                 latitude=_["locationDetail"]["latitude"],
                 longitude=_["locationDetail"]["longitude"],
                 locator_domain=locator_domain,
+                raw_address=_["address"].strip(),
             )
 
 
