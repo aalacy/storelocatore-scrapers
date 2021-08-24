@@ -60,6 +60,19 @@ def fetch_data():
         if city and city.isdigit():
             city = raw_address.split(",")[-2].strip().split(" ")[0].strip()
 
+        city_list = []
+        try:
+            temp_city = city.split(" ")
+            for ct in temp_city:
+                if ct.isdigit():
+                    break
+                else:
+                    city_list.append(ct)
+
+            city = " ".join(city_list).strip()
+        except:
+            raise
+
         state = formatted_addr.state
         zip = "<MISSING>"
 
