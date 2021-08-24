@@ -69,10 +69,12 @@ if __name__ == "__main__":
             cookie = cookie + cook["name"] + "=" + cook["value"] + "; "
 
         _headers["cookie"] = cookie.strip()[:-1]
-        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+        )
         with SgWriter(
             deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)
         ) as writer:
-            with SgRequests() as http:
+            with SgRequests(proxy_country="us") as http:
                 for rec in fetch_records(http, search):
                     writer.write_row(rec)
