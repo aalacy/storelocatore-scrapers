@@ -56,10 +56,8 @@ def fetch_store_urls():
 def fetch_data():
     log.info("Fetching store_locator data")
     page_urls = fetch_store_urls()
-    locations = []
     for page_url in page_urls:
         soup = pull_content(page_url)
-        locator_domain = DOMAIN
         location_name = handle_missing(
             soup.find("h1", {"id": "location-name"}).get_text(
                 strip=True, separator=" | "
