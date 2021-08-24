@@ -1,37 +1,18 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("walgreens_com__pharmacy")
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 MISSING = "<MISSING>"
@@ -41,22 +22,22 @@ def get(obj, key, default=MISSING):
     return obj.get(key, default) or default
 
 
-@retry(stop=stop_after_attempt(3))
+@retry(stop=stop_after_attempt(3), reraise=True)
 def fetch_stores():
     data = {
-        "apiKey": "0IILjid96hgTNUwAVKFldgNA4Fe3Cwcr",
+        "apiKey": "kBzrBap6mSlwPNQbX5uNbl4JiQRf7yJz",
         "act": "storenumber",
         "appVer": "2.0",
     }
 
     session = SgRequests()
     response = session.post(
-        "https://services.walgreens.com/api/util/storenumber/v1", json=data
+        "https://services-qa.walgreens.com/api/util/storenumber/v1", json=data
     ).json()
     return [int(number) for number in response["store"]]
 
 
-@retry(stop=stop_after_attempt(3))
+@retry(stop=stop_after_attempt(3), reraise=True)
 def fetch_location(store_number, session):
     page_url = f"https://www.walgreens.com/locator/v1/stores/{store_number}"
     response = session.get(page_url)
@@ -70,6 +51,10 @@ def fetch_location(store_number, session):
 
     locator_domain = "walgreens.com"
     location_name = MISSING
+
+    if not len(data):
+        logger.info(f"no data: {page_url}")
+        return None
 
     address = data["address"]
     street_address = get(address, "street")
@@ -140,4 +125,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
