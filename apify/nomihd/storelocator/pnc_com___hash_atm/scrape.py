@@ -35,7 +35,6 @@ def get_session(refresh):
     return local.session
 
 
-@retry(stop=stop_after_attempt(3))
 def fetch_locations(url, retry=0):
     try:
         return get_session(retry > 0).get(url, headers=headers, timeout=30).json()
