@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -28,7 +28,7 @@ def fetch_data():
         statelist = soup.find("div", {"class": "light-gray"}).findAll("a")
         for state in statelist:
             stiteMap_url = "https://www.extraspace.com" + state["href"]
-            r = session.get(stiteMap_url, headers=headers)
+            r = session.get(stiteMap_url, headers=headers, timeout=180)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.findAll("a", {"class": "electric-gray"})
             for loc in loclist:
