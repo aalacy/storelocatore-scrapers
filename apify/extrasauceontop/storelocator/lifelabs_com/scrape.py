@@ -81,7 +81,7 @@ def get_data():
                     == "mon closed, tue closed, wed closed, thu closed, fri closed, sat closed, sun closed"
                 ):
                     continue
-                if zipp == None or zipp == "None":
+                if zipp is None or zipp == "None":
                     hours = "<MISSING>"
                 yield {
                     "locator_domain": locator_domain,
