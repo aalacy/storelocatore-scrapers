@@ -27,6 +27,9 @@ def fetch_data():
             response = session.get(urljoin(start_url, url))
             dom = etree.HTML(response.text)
             all_cities = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
+            all_locations += dom.xpath(
+                '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
+            )
             for url in all_cities:
                 response = session.get(urljoin(start_url, url))
                 dom = etree.HTML(response.text)
@@ -56,6 +59,8 @@ def fetch_data():
         store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+        if not loc_dom.xpath('//img[contains(@src, "/mer.svg")]'):
+            continue
         poi = loc_dom.xpath(
             '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
         )
