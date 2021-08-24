@@ -33,6 +33,9 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            location_type = _["category"][0]
+            if "Quick_Credit" != location_type:
+                continue
             yield SgRecord(
                 page_url=_["exturl"],
                 store_number=_["storeId"],
@@ -45,7 +48,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 country_code="USA",
                 phone=_["telephone"],
-                location_type="quick-credit",
+                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=_["address"],
