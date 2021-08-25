@@ -1,7 +1,10 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
+from sglogging import sglog as loggie
 from bs4 import BeautifulSoup as b4
 from actually_scrape import fetch_germany_ISH  # noqa
+
+logerilla = loggie.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def getTestCountries(session):
@@ -39,7 +42,8 @@ def fetch_data():
             countryData = fetch_germany_ISH(country)
             for i in countryData:
                 yield i
-        except Exception:
+        except Exception as e:
+            logerilla.error(f"OOPSIE:\n\n{e}")
             pass  # lul
 
 
