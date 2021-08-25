@@ -286,7 +286,7 @@ def fetch_germany_ISH(country):
         elif locationsPage:
             isMap = test_for_map(locationsPage, country, session, domain)
             if isMap:
-                logzilla.info(f"Map test passed!") # noqa
+                logzilla.info(f"Map test passed!")  # noqa
                 for rec in pull_from_map(session, country):
                     yield rec
 
