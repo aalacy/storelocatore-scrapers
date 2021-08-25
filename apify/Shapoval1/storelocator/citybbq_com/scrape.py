@@ -22,7 +22,7 @@ def get_hours(hours) -> str:
 def get_data(coords, sgw: SgWriter):
     lat, long = coords
     locator_domain = "https://www.citybbq.com"
-    api_url = f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={str(lat)}&long={str(long)}&radius=20000&limit=100&nomnom=calendars&nomnom_calendars_from=20210809&nomnom_calendars_to=20210817&nomnom_exclude_extref=999"
+    api_url = f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={str(lat)}&long={str(long)}&radius=20000&limit=100&nomnom=calendars&nomnom_calendars_from=20210824&nomnom_calendars_to=20210901&nomnom_exclude_extref=999"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
@@ -90,7 +90,7 @@ def get_data(coords, sgw: SgWriter):
 
         sgw.write_row(row)
 
-    api_url = "https://nomnom-prod-api.citybbq.com/restaurants/near?lat=13.49&long=144.78&radius=20&limit=6&nomnom=calendars&nomnom_calendars_from=20210810&nomnom_calendars_to=20210818&nomnom_exclude_extref=999"
+    api_url = "https://nomnom-prod-api.citybbq.com/restaurants/near?lat=13.49&long=144.78&radius=20&limit=6&nomnom=calendars&nomnom_calendars_from=20210824&nomnom_calendars_to=20210901&nomnom_exclude_extref=999"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
