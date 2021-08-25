@@ -68,7 +68,6 @@ def get_data():
             if "Mexico" in city_state_zipp:
                 state = "<MISSING>"
                 zipp = city_state_zipp.split("Mexico")[0].split(" ")[-1]
-                print(zipp)
 
         if len(state) < 2:
             pass
