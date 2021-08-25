@@ -1,4 +1,4 @@
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from lxml import html
 import time
 import json
