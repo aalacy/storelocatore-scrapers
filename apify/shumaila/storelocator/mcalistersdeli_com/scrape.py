@@ -32,7 +32,6 @@ def store_data(soup):
         x.get_text(separator="|", strip=True).replace("|", " ")
         for x in hours_of_operation
     )
-    print(hours_of_operation)
     latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
     longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
     return (
