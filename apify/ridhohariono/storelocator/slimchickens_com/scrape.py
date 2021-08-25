@@ -32,9 +32,7 @@ def fetch_data():
         if loc_dom.xpath('//h1[contains(text(), "Coming Soon")]'):
             continue
 
-        location_name = poi["name"]
-        if "Coming Soon" in location_name:
-            continue
+        location_name = poi["name"].replace("(Coming Soon)", "").strip()
         street_address = poi["address_line_1"]
         if poi["address_line_2"]:
             street_address += " " + poi["address_line_2"]

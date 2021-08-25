@@ -3,7 +3,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sglogging import SgLogSetup
@@ -37,21 +36,16 @@ def _time(val):
 
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
-    state = CrawlStateSingleton.get_instance()
     for lat, lng in search:
         a1 = lat - 1.42754794932
         b1 = lng + 1.71661376953
         a2 = lat + 1.42754794932
         b2 = lng - 1.71661376953
+        http.clear_cookies()
         locations = http.get(
             base_url.format(lat, lng, a1, b1, a2, b2), headers=_headers
         ).json()
         logger.info(f"[{search.current_country()}] {len(locations)}")
-        # just some clever accounting of locations/country:
-        rec_count = state.get_misc_value(
-            search.current_country(), default_factory=lambda: 0
-        )
-        state.set_misc_value(search.current_country(), rec_count + len(locations))
         for store in locations:
             if store["status"] != "open":
                 continue
@@ -87,6 +81,5 @@ if __name__ == "__main__":
     search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         with SgRequests(proxy_country="us") as http:
-            http.clear_cookies()
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
