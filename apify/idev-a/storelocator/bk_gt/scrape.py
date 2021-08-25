@@ -57,15 +57,20 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             zip_postal = addr.postcode
-            if not zip_postal.isdigit():
+            if zip_postal and not zip_postal.isdigit():
                 zip_postal = ""
+            city = addr.city
+            if city:
+                city = (
+                    city.replace("Guatemala", "")
+                    .replace(".", "")
+                    .replace("Cuesta Blanca", "")
+                )
             yield SgRecord(
                 page_url=page_url,
                 location_name=link["title"],
                 street_address=street_address,
-                city=addr.city.replace("Guatemala", "")
-                .replace(".", "")
-                .replace("Cuesta Blanca", ""),
+                city=city,
                 state=addr.state,
                 zip_postal=zip_postal,
                 latitude=link["latitud"],
