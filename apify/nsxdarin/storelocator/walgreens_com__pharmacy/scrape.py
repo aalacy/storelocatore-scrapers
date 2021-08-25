@@ -124,7 +124,6 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-    logger.info('done')
 
 
 if __name__ == "__main__":
