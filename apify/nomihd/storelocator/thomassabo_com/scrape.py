@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.simple_utils import parallelize
+from sgzip.dynamic import DynamicGeoSearch
 
 website = "thomassabo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -29,14 +30,18 @@ headers = {
 
 
 def fetch_records_for(tup):
-    coords, country = tup
+    coords, CurrentCountry, countriesRemaining = tup
     lat = coords[0]
     lng = coords[1]
-    log.info(f"pulling info for country: {country} having coordinates as {lat},{lng}")
+    log.info(
+        f"pulling info for country: {CurrentCountry} having coordinates as {lat},{lng}"
+    )
 
     search_url = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=country&searchPhrase={}&searchDistance={}&lat={}&lng={}&filterBy="
 
-    stores_req = session.get(search_url.format(country, 75, lat, lng), headers=headers)
+    stores_req = session.get(
+        search_url.format(CurrentCountry, 75, lat, lng), headers=headers
+    )
     stores = []
 
     try:
@@ -44,11 +49,11 @@ def fetch_records_for(tup):
     except:
         pass
 
-    return stores, country
+    return stores
 
 
 def process_record(raw_results_from_one_coordinate):
-    stores, country = raw_results_from_one_coordinate
+    stores = raw_results_from_one_coordinate
     for store in stores:
         page_url = "<MISSING>"
         locator_domain = website
@@ -112,32 +117,74 @@ def scrape():
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        data = json.loads(
-            session.get(
-                "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-            ).text,
-            strict=False,
-        )
+        countries = [
+            "AU",
+            "AT",
+            "BE",
+            "CA",
+            "CN",
+            "CZ",
+            "DK",
+            "EE",
+            "FI",
+            "FR",
+            "DE",
+            "GB",
+            "HK",
+            "HU",
+            "INT",
+            "IE",
+            "IT",
+            "JP",
+            "LV",
+            "LI",
+            "LT",
+            "LU",
+            "MY",
+            "NL",
+            "NZ",
+            "NO",
+            "PL",
+            "PT",
+            "RU",
+            "SK",
+            "SI",
+            "KR",
+            "ES",
+            "SE",
+            "CH",
+            "TH",
+            "US",
+        ]
 
-        for feature in data["features"]:
-            coordinates = feature["geometry"]["coordinates"][0][0]
-            country = feature["properties"]["ISO_A2"]
-
-            results = parallelize(
-                search_space=[
-                    (
-                        coord,
-                        country,
-                    )
-                    for coord in coordinates
-                ],
-                fetch_results_for_rec=fetch_records_for,
-                processing_function=process_record,
-                max_threads=10,  # tweak to see what's fastest
-            )
-            for rec in results:
-                writer.write_row(rec)
-                count = count + 1
+        totalCountries = len(countries)
+        currentCountryCount = 0
+        for country in countries:
+            try:
+                search = DynamicGeoSearch(
+                    expected_search_radius_miles=100, country_codes=[country]
+                )
+                results = parallelize(
+                    search_space=[
+                        (
+                            coord,
+                            search.current_country(),
+                            str(f"{currentCountryCount}/{totalCountries}"),
+                        )
+                        for coord in search
+                    ],
+                    fetch_results_for_rec=fetch_records_for,
+                    processing_function=process_record,
+                    max_threads=20,  # tweak to see what's fastest
+                )
+                for rec in results:
+                    writer.write_row(rec)
+                    count = count + 1
+                currentCountryCount += 1
+            except Exception as e:
+                log.error(f"{country}: not found\n{e}")
+                currentCountryCount += 1
+                pass
 
     log.info(f"No of records being processed: {count}")
     log.info("Finished")

@@ -137,6 +137,124 @@ def fetch_data(sgw: SgWriter):
             postal = "NN17 9RS"
             country_code = "UK"
 
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find("(") != -1:
+            city = city.split("(")[0].strip()
+        if city.find("-") != -1:
+            city = city.split("-")[0].strip()
+        if city.find(";") != -1:
+            city = city.split(";")[0].strip()
+        if city.find("/") != -1:
+            city = city.split("/")[0].strip()
+        if city == "62500":
+            city = "St Martin Lez Tatinghem"
+            postal = "62500"
+        city = city.replace("- TERMINAL CARGO", "").strip()
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
