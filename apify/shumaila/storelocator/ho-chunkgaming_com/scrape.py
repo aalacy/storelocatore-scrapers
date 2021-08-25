@@ -42,7 +42,8 @@ def fetch_data():
         )
         title = address[0]
         phone = address[3]
-        street = address[1].replace("/n", "")
+        street = address[1].split("\n")
+        street = " ".join(x.strip() for x in street)
         address = address[2].split(",")
         city = address[0]
         address = address[1].split()
