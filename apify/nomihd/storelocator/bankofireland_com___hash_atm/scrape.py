@@ -71,7 +71,7 @@ def fetch_data():
 
             city = " ".join(city_list).strip()
         except:
-            raise
+            pass
 
         state = formatted_addr.state
         zip = "<MISSING>"

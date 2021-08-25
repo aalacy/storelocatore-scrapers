@@ -44,8 +44,6 @@ def fetch_data():
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = poi["type"]
-        if location_type != "atm":
-            continue
         geo = poi["coords"].split(",")
         latitude = geo[0]
         longitude = geo[1]

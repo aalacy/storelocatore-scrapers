@@ -15,10 +15,8 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-
 base_url = "https://restaurants.subway.com/index.html"
 locator_domain = "https://restaurants.subway.com/"
-session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
 
 
 def fetchConcurrentList(links, http):
