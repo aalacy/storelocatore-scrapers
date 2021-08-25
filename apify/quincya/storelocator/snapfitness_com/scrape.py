@@ -68,23 +68,6 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.snapfitness.com/" + loc["URL"]
         location_type = "<MISSING>"
 
-        store_data = [
-            locator_domain,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone_number,
-            location_type,
-            lat,
-            longit,
-            hours,
-            page_url,
-        ]
-
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
