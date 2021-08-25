@@ -1,3 +1,5 @@
+from datetime import date
+import calendar
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -23,15 +25,16 @@ def store_data(soup):
     location_name = soup.find("h2", {"class": "Core-title"}).text
     phone = soup.find("div", {"itemprop": "telephone"}).text
     street_address = soup.find("span", {"class": "c-address-street-1"}).text
-    city = soup.find("span", {"class": "c-address-street-1"}).text
+    city = soup.find("span", {"class": "c-address-city"}).text
     state = soup.find("abbr", {"class": "c-address-state"}).text
     zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
     country_code = "US"
-    hours_of_operation = soup.findAll("tr", {"itemprop": "openingHours"})[1:]
+    hours_of_operation = soup.findAll("tr", {"itemprop": "openingHours"})
     hours_of_operation = "  ".join(
         x.get_text(separator="|", strip=True).replace("|", " ")
         for x in hours_of_operation
     )
+    print(hours_of_operation)
     latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
     longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
     return (
