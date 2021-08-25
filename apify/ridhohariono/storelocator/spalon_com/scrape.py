@@ -56,7 +56,7 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    store_urls = soup.find("li", {"id": "DrpDwnMn0-5s33"}).find("ul").find_all("a")
+    store_urls = soup.find("li", {"id": "DrpDwnMn0-5s34"}).find("ul").find_all("a")
     for row in store_urls:
         page_url = row["href"]
         soup = pull_content(page_url)
@@ -64,7 +64,7 @@ def fetch_data():
             "div", {"data-mesh-id": re.compile(r".*Content-gridContainer")}
         )
         location_name = row.text.title()
-        info = content.find_all("div", {"class": "_1P1ro"})
+        info = content.find_all("div", {"class": "_2kLdM"})
         raw_address = info[0].text.strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = info[1].text.strip()
