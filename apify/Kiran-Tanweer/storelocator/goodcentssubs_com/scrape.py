@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "savoypizza_com"
+website = "goodcentssubs_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -436,7 +436,6 @@ def fetch_data():
         "6": "Sat ",
         "7": "Sun ",
     }
-    time = ""
     for i, j in zip(center, coordinates):
         url = (
             "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=PFXIXKQCSSESFAKV&center="
