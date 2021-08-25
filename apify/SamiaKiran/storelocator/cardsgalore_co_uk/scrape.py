@@ -44,6 +44,7 @@ def fetch_data():
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
             phone = loc[-1]
+            phone = phone.split("Tel:")[1]
             log.info(phone)
             country_code = "UK"
             yield SgRecord(
