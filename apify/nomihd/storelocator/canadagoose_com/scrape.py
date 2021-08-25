@@ -5,9 +5,9 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgChrome
 import time
 import ssl
+from undetected_chromedriver import Chrome, ChromeOptions
 
 try:
     _create_unverified_https_context = (
@@ -20,6 +20,17 @@ else:
 
 website = "canadagoose.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+options = ChromeOptions()
+options.headless = True
+# options.add_argument("--headless")
+options.add_argument("--disable-gpu")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--ignore-certificate-errors")
+options.add_argument(
+    "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
+)
 
 
 def get_latlng(map_link):
@@ -49,7 +60,7 @@ def fetch_data():
         "https://www.canadagoose.com/us/en/find-a-retailer/find-a-retailer.html"
     )
 
-    with SgChrome() as driver:
+    with Chrome(options=options) as driver:
         driver.get(search_url)
         time.sleep(30)
         search_sel = lxml.html.fromstring(driver.page_source)
