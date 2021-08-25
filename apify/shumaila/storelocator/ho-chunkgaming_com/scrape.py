@@ -42,7 +42,7 @@ def fetch_data():
         )
         title = address[0]
         phone = address[3]
-        street = address[1]
+        street = address[1].replace("/n", "")
         address = address[2].split(",")
         city = address[0]
         address = address[1].split()
@@ -127,7 +127,11 @@ def fetch_data():
                 try:
                     lat, longt = r.text.split("&sll=", 1)[1].split('"', 1)[0].split(",")
                 except:
-                    lat = longt = "<MISSING>"
+                    lat, longt = (
+                        soup.select_one("a[href*=geo]")["href"]
+                        .split("geo:")[1]
+                        .split(",")
+                    )
         yield SgRecord(
             locator_domain="https://www.ho-chunkgaming.com/",
             page_url=link,
