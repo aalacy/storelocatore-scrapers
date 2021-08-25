@@ -9,6 +9,16 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from lxml import html
 import json
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 DOMAIN = "levi.com"
@@ -54,6 +64,20 @@ def get_list_of_countries_global():
         return list_of_country_codes
 
 
+def get_custom_location_name(location_type):
+    if location_type == "OUTLET":
+        location_name = "Levi's Outlet"
+    elif location_type == "RETAILER":
+        location_name = "Levi's Retail Partner"
+    elif location_type == "ClothingStore":
+        location_name = "Levi's Store"
+    elif location_type == "STORE":
+        location_name = "Levi's Store"
+    else:
+        location_name = location_name
+    return location_name
+
+
 def fetch_data_global():
     list_of_country_codes = get_list_of_countries_global()
     total = 0
@@ -86,6 +110,7 @@ def fetch_data_global():
                     store_number = i["storeId"] or MISSING
                     phone = i["phone"] or MISSING
                     location_type = i["storeType"] or MISSING
+                    location_name = get_custom_location_name(location_type)
                     latitude = i["latitude"] or MISSING
                     longitude = i["longitude"] or MISSING
                     hours_of_operation = ""
@@ -200,6 +225,9 @@ def fetch_data_us_ca():
             location_type = data[0]["@type"]
             location_type = location_type if location_type else MISSING
             logger.info(f"[{idx}] location_type: {location_type}")
+
+            # Custom Location Name
+            location_name = get_custom_location_name(location_type)
 
             # Latitude
             latitude = data[0]["geo"]["latitude"]

@@ -26,7 +26,7 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
-        sleep(15)
+        sleep(30)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//ul[@class="list02"]/li')
@@ -44,7 +44,8 @@ def fetch_data():
         hours_of_operation = " ".join(hoo)
         phone = poi_html.xpath(
             './/dt[contains(text(), "電話番号")]/following-sibling::dd/span/text()'
-        )[0]
+        )
+        phone = phone[0] if phone else ""
 
         item = SgRecord(
             locator_domain=domain,
