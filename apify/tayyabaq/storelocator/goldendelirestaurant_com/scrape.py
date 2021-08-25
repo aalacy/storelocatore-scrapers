@@ -33,10 +33,11 @@ def fetch_data():
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
-            location_name = MISSING
-            page_url = loc.find("a")["href"]
+            page_url = loc.find("a")
+            location_name = page_url.text.replace("Visit Our Yelp", "Golden Deli")
+            page_url = page_url["href"]
             hours_of_operation = (
-                soup.find("ul").get_text(separator="|", strip=True).replace("|", " ")
+                loc.find("ul").get_text(separator="|", strip=True).replace("|", " ")
             )
 
             log.info(page_url)
