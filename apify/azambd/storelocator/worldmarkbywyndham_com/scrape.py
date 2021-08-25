@@ -1,4 +1,4 @@
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from lxml import html
 import time
 import json
@@ -7,6 +7,9 @@ import re
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
 from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
@@ -68,7 +71,7 @@ def fetchStores():
 
             while delay < 60:
                 driverSleep(driver)
-                if 'class="resort-card__name"' in driver.page_source:
+                if 'class="resort-cardV2__name"' in driver.page_source:
                     break
                 delay = delay + 1
 
@@ -102,11 +105,13 @@ def fetchStores():
                 screen_height = new_screen_height
 
             body = html.fromstring(driver.page_source, "lxml")
-            resort_divs = body.xpath('//div[contains(@class, "resort-card__content")]')
+            resort_divs = body.xpath(
+                '//div[contains(@class, "resort-cardV2__content")]'
+            )
             log.debug(f"Total resorts divs = {len(resort_divs)}")
             stores = []
             for resort_div in resort_divs:
-                title = resort_div.xpath('.//div[@class="resort-card__name"]/a')[0]
+                title = resort_div.xpath('.//div[@class="resort-cardV2__name"]/a')[0]
                 page_url = title.xpath(".//@href")[0]
                 location_name = title.xpath(".//text()")[0]
                 stores.append(
@@ -348,7 +353,7 @@ def fetchData():
 def scrape():
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in result:
             writer.write_row(rec)
     end = time.time()
