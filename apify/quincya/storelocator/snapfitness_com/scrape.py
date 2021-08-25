@@ -1,39 +1,12 @@
-import csv
-
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     session = SgRequests()
 
     headers = {
@@ -67,9 +40,7 @@ def fetch_data():
 
     res_json = session.post(base_link, headers=headers, data=payload).json()
 
-    data = []
-    for i in res_json:
-        loc = res_json[i]
+    for loc in res_json:
         location_name = "Snap Fitness " + loc["Name"].strip()
 
         phone_number = loc["PhoneNumber"]
@@ -114,14 +85,25 @@ def fetch_data():
             page_url,
         ]
 
-        data.append(store_data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone_number,
+                location_type=location_type,
+                latitude=lat,
+                longitude=longit,
+                hours_of_operation=hours,
+            )
+        )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
