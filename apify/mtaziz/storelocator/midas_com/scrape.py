@@ -54,6 +54,8 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
         for store_url in store_url_list:
             state.push_request(SerializableRequest(url=store_url))
 
+    return True
+
 
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     # Your scraper here
