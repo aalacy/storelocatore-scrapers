@@ -5,6 +5,17 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 website = "eaglestopstores_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -24,7 +35,9 @@ headers = {
 def fetch_data():
     if True:
         url = "https://eaglestopstores.com/wp-admin/admin-ajax.php"
-        loclist = session.post(url, headers=headers, data=payload).json()["locations"]
+        loclist = session.post(url, headers=headers, data=payload, timeout=200).json()[
+            "locations"
+        ]
         for loc in loclist:
             location_name = loc["name"]
             log.info(location_name)
