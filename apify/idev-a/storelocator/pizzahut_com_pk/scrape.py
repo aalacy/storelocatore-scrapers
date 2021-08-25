@@ -5,7 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("pizzahut")
+logger = SgLogSetup().get_logger("pizza")
 
 _headers = {
     "Accept": "application/json, text/plain, */*",
