@@ -1,4 +1,3 @@
-import json
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -43,7 +42,6 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     )
     ca_state_urls = [f"{DOMAIN}{url}" for url in ca_state_urls]
     us_ca_state_urls = us_state_urls + ca_state_urls
-    us_ca_store_urls = []
     for u in us_ca_state_urls:
         logger.info(f"Pulling the store URLs from: {u}")
         r2 = http.get(u, headers=headers)
