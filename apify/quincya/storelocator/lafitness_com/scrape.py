@@ -81,7 +81,7 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                 )
             except:
-                continue
+                hours_of_operation = "<MISSING>"
 
             sgw.write_row(
                 SgRecord(

@@ -48,7 +48,7 @@ def fetch_data(sgw: SgWriter):
         if location_name.find("Orlando") != -1:
             line = j.get("description")
             b = html.fromstring(line)
-            add = line.xpath("//p[1]//text()")
+            add = b.xpath("//p[1]//text()")
             city = "".join(add[1]).split(",")[0]
             state = "".join(add[1]).split(",")[1].strip().split()[0]
             hours_of_operation = " ".join(b.xpath("//p[2]//text()"))
