@@ -53,7 +53,7 @@ def fetch_data():
         if poi.get("hoursTableHTML"):
             hoo = etree.HTML(poi["hoursTableHTML"]).xpath("//td//text()")
             hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo).replace("N/A", "") if hoo else "<MISSING>"
 
         item = SgRecord(
             locator_domain=domain,
