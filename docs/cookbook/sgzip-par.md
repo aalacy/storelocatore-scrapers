@@ -6,7 +6,7 @@
 sgzip>=0.10.0
 ```
 
-### Required reading: [Dynamic Geospatial Search (Link)](./sgzip)
+### Required reading: [Dynamic Geospatial Search (Link)](./sgzip.md)
 
 ## Rationale (Why?)
 
