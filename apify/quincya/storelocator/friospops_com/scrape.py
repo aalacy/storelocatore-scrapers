@@ -83,8 +83,6 @@ def fetch_data(sgw: SgWriter):
 
             city_line = raw_address[-1].split(",")
             city = city_line[0].strip()
-            if len(city) > 30:
-                continue
             zip_code = city_line[-1][-6:].strip()
             if zip_code.isnumeric():
                 state = city_line[1].split()[0].strip()
@@ -101,7 +99,10 @@ def fetch_data(sgw: SgWriter):
                         zip_code = city_line[-1][-6:].strip()
                     except:
                         city = location_name.split("in ")[-1].split(",")[0]
-                        state = location_name.split("in ")[-1].split(",")[1].strip()
+                        try:
+                            state = location_name.split("in ")[-1].split(",")[1].strip()
+                        except:
+                            state = "<MISSING>"
         else:
             street_address = "Historic Downtown"
             city = "McKinney"
@@ -170,12 +171,16 @@ def fetch_data(sgw: SgWriter):
         if "TBD" in phone.upper():
             phone = "<MISSING>"
         if city.lower() == "city":
-            continue
+            city = location_name.split("in")[-1].strip()
+            state = "<MISSING>"
         if not zip_code.isdigit():
             zip_code = "<MISSING>"
         if "Keller, Texas" in location_name:
             street_address = street_address.replace("Keller", "").strip()
             city = "Keller"
+        if "Pop cart!" in street_address:
+            street_address = "<MISSING>"
+            location_type = "The Frios Mobile"
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
