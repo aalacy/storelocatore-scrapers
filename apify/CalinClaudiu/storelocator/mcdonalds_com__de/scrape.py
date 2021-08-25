@@ -43,7 +43,7 @@ def fetch_data():
             for i in countryData:
                 yield i
         except Exception as e:
-            logerilla.error(f"OOPSIE:\n\n{e}")
+            logerilla.error(f"OOPSIE:\n\n{e}")  # noqa
             pass  # lul
 
 
