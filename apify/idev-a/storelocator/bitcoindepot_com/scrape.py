@@ -1,12 +1,8 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from urllib.parse import urljoin
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import math
-from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("bitcoindepot")
@@ -44,54 +40,21 @@ header1 = {
 locator_domain = "https://bitcoindepot.com"
 base_url = "https://bitcoindepot.com/locations/"
 map_url = "https://bitcoindepot.com/get-map-points/"
-session = SgRequests().requests_retry_session()
-max_workers = 24
-
-
-def fetchConcurrentSingle(link):
-    page_url = urljoin(locator_domain, link["href"])
-    data = {"location_group": link["href"].split("/")[-1]}
-    response = session.post(map_url, headers=header1, data=data).json()["set_locations"]
-    return page_url, response
-
-
-def fetchConcurrentList(list, occurrence=max_workers):
-    output = []
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list):
-            if result:
-                count = count + 1
-                if count % reminder == 0:
-                    logger.debug(f"Concurrent Operation count = {count}")
-                output.append(result)
-    return output
-
-
-def request_with_retries(url):
-    return session.get(url, headers=_headers)
 
 
 def fetch_data():
-    res = session.get(base_url, headers=_headers)
-    header1["x-csrftoken"] = res.cookies.get_dict()["csrftoken"]
-    links = bs(res.text, "lxml").select("a.list-country-list-link")
-    logger.info(f"{len(links)} found")
-    for page_url, locations in fetchConcurrentList(links):
-        logger.info(page_url)
+    with SgRequests() as session:
+        res = session.get(base_url, headers=_headers)
+        header1["x-csrftoken"] = res.cookies.get_dict()["csrftoken"]
+
+        locations = session.post(map_url, headers=header1).json()["set_locations"]
         for _ in locations:
             hours_of_operation = ""
             if _.get("hours"):
                 hours_of_operation = (
                     _["hours"]
-                    .replace("\r\n", "; ")
+                    .replace("\n", "; ")
+                    .replace("\r", "")
                     .replace("–", "-")
                     .strip()
                     .replace(",", "; ")
@@ -102,7 +65,7 @@ def fetch_data():
             if _["state"] in ca_provinces_codes:
                 country_code = "CA"
             yield SgRecord(
-                page_url=page_url,
+                page_url="https://bitcoindepot.com/locations/",
                 location_name=_["name"],
                 street_address=_["address"].replace(",", ""),
                 city=_["city"],
@@ -124,7 +87,6 @@ if __name__ == "__main__":
                 {
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
-                    SgRecord.Headers.PAGE_URL,
                 }
             )
         )
