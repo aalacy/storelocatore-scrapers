@@ -100,15 +100,10 @@ def fetch_data(sgw: SgWriter):
         for h in main:
             if "//" in h or "am-" in h or "am -" in h:
                 hours += h + " "
-            if re.search(r"([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)", h):
-                phone_number = re.search(
-                    r"([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)", h
-                ).group()
-            else:
-                try:
-                    phone_number = re.findall(r".+[0-9]{3}-[0-9]{4}", h)[0]
-                except:
-                    phone_number = ""
+            try:
+                phone_number = re.findall(r".+[0-9]{3}-[0-9]{4}", h)[0]
+            except:
+                pass
 
         hours = hours.replace("–", "-").strip()
 
