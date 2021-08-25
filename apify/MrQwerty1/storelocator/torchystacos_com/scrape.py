@@ -1,46 +1,23 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
+from sglogging import sglog
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "torchystacos.com"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def get_hours(url):
     _id = url.split("/")[-2]
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     }
+    log.info(f"Now Crawling: {url}")
     r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
     hoo = (
@@ -50,15 +27,16 @@ def get_hours(url):
         or "<MISSING>"
     )
 
+    if tree.xpath("//img[contains(@src, 'coming_soon')]"):
+        hoo = "Coming Soon"
+
+    log.info(f"HOO: {hoo}")
     return {_id: hoo}
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw):
     urls = []
     hours = []
-    session = SgRequests()
-    locator_domain = "https://torchystacos.com/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -70,7 +48,7 @@ def fetch_data():
     for j in js:
         urls.append("https://torchystacos.com" + j.get("permalink"))
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_hours, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             hours.append(future.result())
@@ -93,39 +71,34 @@ def fetch_data():
 
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lon") or "<MISSING>"
-        location_type = "<MISSING>"
 
         if location_name.lower().find("coming") == -1:
             hours_of_operation = hours.get(_id)
         else:
             hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://torchystacos.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
