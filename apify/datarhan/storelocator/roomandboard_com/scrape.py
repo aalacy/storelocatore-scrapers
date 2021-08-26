@@ -25,8 +25,11 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
-        driver.find_element_by_xpath('//button[contains(text(), "See")]').click()
-        driver.find_element_by_xpath('//button[@id="submit"]').click()
+        try:
+            driver.find_element_by_xpath('//button[contains(text(), "See")]').click()
+            driver.find_element_by_xpath('//button[@id="submit"]').click()
+        except Exception:
+            pass
         dom = etree.HTML(driver.page_source)
 
         all_locations = dom.xpath(
