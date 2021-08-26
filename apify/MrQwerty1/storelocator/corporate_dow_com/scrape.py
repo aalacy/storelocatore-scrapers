@@ -29,16 +29,21 @@ def fetch_data(sgw: SgWriter):
 
         line = ", ".join(_tmp)
         adr = parse_address(International_Parser(), line)
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or SgRecord.MISSING
-        )
+        street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+            "None", ""
+        ).strip()
 
-        city = adr.city or SgRecord.MISSING
-        state = adr.state or SgRecord.MISSING
-        postal = adr.postcode or SgRecord.MISSING
+        city = adr.city
+        if city == "City":
+            lines = line.split(",")
+            for li in lines:
+                if "City" in li:
+                    city = li.strip()
+                    break
+        if city == "Zip":
+            city = line.split("(")[0].split(",")[-1].strip()
+        state = adr.state
+        postal = adr.postcode
         location_name = j.get("locationName")
         if not location_name:
             continue
