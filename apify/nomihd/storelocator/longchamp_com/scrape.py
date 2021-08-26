@@ -130,6 +130,10 @@ def scrape():
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
+        session.get(
+            "https://www.longchamp.com/en/en/stores?showMap=true", headers=headers
+        )
+
         countries = (
             SearchableCountries.WITH_ZIPCODE_AND_COORDS
             + SearchableCountries.WITH_COORDS_ONLY

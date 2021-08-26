@@ -4,11 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 import re
 
-logger = SgLogSetup().get_logger("pizzatwist")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -41,10 +39,9 @@ def fetch_data():
                 continue
             _addr = [aa.text.strip() for aa in _.select("p")]
             addr = parse_address_intl(" ".join(_addr))
-            page_url = _.select_one("a.card_btn")["href"]
+            page_url = _.select_one("a.card_btn")["href"].strip()
             if page_url.endswith("pizzatwist.com/"):
                 page_url += "home"
-            logger.info(page_url)
             hours = []
             coord = ["", ""]
             phone = ""
@@ -92,15 +89,7 @@ def fetch_data():
                     )
                 if sp1.find("a", href=re.compile(r"tel:")):
                     phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
-                if sp1.select_one("div.about-description div"):
-                    street_address = sp1.select_one(
-                        "div.about-description div"
-                    ).h6.text.strip()
 
-            if not hours or not phone:
-                import pdb
-
-                pdb.set_trace()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h3.text.strip(),
