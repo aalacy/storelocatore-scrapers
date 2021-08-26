@@ -46,7 +46,7 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             if not street_address:
-                street_address = _["Address"]
+                street_address = _["Address"].strip()
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["ID"],
@@ -58,6 +58,7 @@ def fetch_data():
                 country_code="UAE",
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
+                raw_address=_["Address"].strip(),
             )
 
 

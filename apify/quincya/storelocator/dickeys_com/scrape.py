@@ -1,6 +1,4 @@
-import csv
-import ssl
-import time
+import re
 
 from bs4 import BeautifulSoup
 
@@ -8,51 +6,15 @@ from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("dickeys_com")
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.dickeys.com/locations"
 
@@ -68,7 +30,7 @@ def fetch_data():
     all_links = []
 
     main_items = base.find(
-        class_="style__StyledSearchByState-sc-1hzbtfv-1 kmMKLM"
+        "div", {"class": re.compile(r"style__StyledSearchByState.+")}
     ).find_all("a")
     for main_item in main_items:
         main_link = locator_domain + main_item["href"]
@@ -113,7 +75,7 @@ def fetch_data():
 
                 location_name = item.a.text.strip()
                 raw_address = item.find(
-                    class_="Typography__P2-sc-11outmd-1 dqthKE store-info__address"
+                    "p", {"class": re.compile(r".+store-info__address")}
                 ).text.split(",")
                 street_address = (
                     (" ".join(raw_address[:-2]).strip())
@@ -128,7 +90,7 @@ def fetch_data():
                 store_number = "<MISSING>"
                 location_type = "<MISSING>"
                 phone = item.find(
-                    class_="Typography__P2-sc-11outmd-1 dqthKE store-info__telephone"
+                    "p", {"class": re.compile(r".+store-info__telephone")}
                 ).a.text.strip()
                 if not phone:
                     phone = "<MISSING>"
@@ -146,97 +108,25 @@ def fetch_data():
                 latitude = "<INACCESSIBLE>"
                 longitude = "<INACCESSIBLE>"
 
-                yield [
-                    locator_domain,
-                    final_link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-
-    if (
-        "https://www.dickeys.com/locations/New-York/Brooklyn/1683-brooklyn"
-        not in all_links
-    ):
-        ny_link = "https://www.dickeys.com/locations/New-York/"
-        driver = SgChrome(user_agent=user_agent).driver()
-        driver.get(ny_link)
-        time.sleep(5)
-        ny = driver.find_element_by_xpath("//a[contains(text(), 'Brooklyn')]")
-        ny.click()
-        time.sleep(5)
-        next_base = BeautifulSoup(driver.page_source, "lxml")
-        final_items = next_base.find_all(class_="store-info__inner")
-
-        for item in final_items:
-            final_link = (locator_domain + item.a["href"]).replace("//loc", "/loc")
-
-            location_name = item.a.text.strip()
-            raw_address = item.find(
-                class_="Typography__P2-sc-11outmd-1 dqthKE store-info__address"
-            ).text.split(",")
-            street_address = (
-                (" ".join(raw_address[:-2]).strip())
-                .replace("Fairfield OH", "")
-                .replace("  ", " ")
-                .strip()
-            )
-            city = raw_address[-2].strip()
-            state = raw_address[-1].strip()[:-6].strip()
-            zip_code = raw_address[-1][-6:].strip()
-            country_code = "US"
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
-            phone = item.find(
-                class_="Typography__P2-sc-11outmd-1 dqthKE store-info__telephone"
-            ).a.text.strip()
-            if not phone:
-                phone = "<MISSING>"
-
-            try:
-                hours_of_operation = " ".join(
-                    list(
-                        item.find(class_="store-info__time")
-                        .find_previous("div")
-                        .stripped_strings
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=final_link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
                     )
                 )
-            except:
-                hours_of_operation = "<MISSING>"
-            latitude = "<INACCESSIBLE>"
-            longitude = "<INACCESSIBLE>"
-
-            yield [
-                locator_domain,
-                final_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        driver.close()
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
