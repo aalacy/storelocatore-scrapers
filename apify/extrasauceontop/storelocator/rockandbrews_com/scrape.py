@@ -63,14 +63,20 @@ def get_data():
         city = city_state_zipp.split(", ")[0]
         try:
             state = city_state_zipp.split(", ")[1].split(" ")[0]
+            zipp = city_state_zipp.split(", ")[1].split(" ")[1]
         except Exception:
-            continue
-        zipp = city_state_zipp.split(", ")[1].split(" ")[1]
+            if "Mexico" in city_state_zipp:
+                state = "<MISSING>"
+                zipp = city_state_zipp.split("Mexico")[0].split(" ")[-1]
 
         if len(state) < 2:
             pass
         else:
-            country_code = "US"
+            if state == "<MISSING>":
+                country_code = "MX"
+
+            else:
+                country_code = "US"
 
             store_number = "<MISSING>"
 
@@ -79,9 +85,15 @@ def get_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            hour = grid.find("div", attrs={"class": "hours"}).text
+            hour = (
+                grid.find("div", attrs={"class": "hours"})
+                .text.split(" Happy")[0]
+                .split(" Kitchen")[0]
+            )
 
-            location_url_format = name.replace(" ", "-").replace("&", "-and-")
+            location_url_format = (
+                name.replace(" ", "-").replace("&", "-and-").replace(".", "").lower()
+            )
             page_url = "https://www.rockandbrews.com/" + location_url_format
 
             driver.get(page_url)
