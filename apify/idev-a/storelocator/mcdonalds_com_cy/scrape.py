@@ -22,9 +22,10 @@ def fetch_data():
             href = _.select_one(".restaurant-location__title a")["href"]
             page_url = locator_domain + href
             raw_address = (
-                _.select_one(".restaurant-location__address")
-                .text.replace("\n", " ")
+                " ".join(_.select_one(".restaurant-location__address").stripped_strings)
+                .replace("\n", " ")
                 .replace(",", " ")
+                .replace("Cyprus", "")
                 .strip()
             )
             street_address = city = zip_postal = ""
