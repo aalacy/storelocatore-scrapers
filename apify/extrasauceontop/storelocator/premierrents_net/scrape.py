@@ -36,9 +36,6 @@ def get_data():
         "https://www.google.com/maps/d/kml?mid=1k_5K2ikpmcAyElx_ND0io5MT-3w&forcekml=1"
     ).text
 
-    with open("file.txt", "w", encoding="utf-8") as output:
-        print(response, file=output)
-
     soup = bs(response, "html.parser")
 
     places = soup.find_all("placemark")
