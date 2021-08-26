@@ -84,7 +84,7 @@ def get_address(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-class SearchIteration(SearchIteration):
+class DrmSearchIteration(SearchIteration):
     def __init__(self, http: SgRequests):
         self.__http = http
         self.__state = CrawlStateSingleton.get_instance()
@@ -97,7 +97,7 @@ class SearchIteration(SearchIteration):
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
-        stores = []
+        stores = []  # type: ignore
         page = 0
 
         zipcode = str(zipcode).replace(" ", "%20")
@@ -156,7 +156,7 @@ class SearchIteration(SearchIteration):
                 for day, hours in hoo.items():
                     hours_of_operation.append(f"{day} {hours}")
 
-            hours_of_operation = " ".join(hours_of_operation)
+            hours_of_operation = " ".join(hours_of_operation)  # type: ignore
             if len(hours_of_operation) == 0:
                 hours_of_operation = MISSING
 
@@ -188,7 +188,7 @@ def scrape():
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         with SgRequests() as http:
-            search_iter = SearchIteration(http=http)
+            search_iter = DrmSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
