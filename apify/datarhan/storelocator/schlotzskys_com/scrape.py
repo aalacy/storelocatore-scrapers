@@ -28,7 +28,7 @@ def fetch_data():
         if not data.get("Locations"):
             continue
         for poi in data["Locations"]:
-            store_url = "https://www.schlotzskys.com" + poi["Url"]
+            store_url = poi["Url"]
             hours_of_operation = []
             for elem in poi["Hours"]:
                 if elem["FormattedDayOfWeek"] == "today":
