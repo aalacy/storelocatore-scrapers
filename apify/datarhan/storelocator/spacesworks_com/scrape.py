@@ -41,6 +41,7 @@ def fetch_data():
         if poi.get("addressLine2"):
             street_address += " " + poi["addressLine2"]
         time = str(poi["openingDate"])
+        location_type = ""
         if datetime.fromisoformat(time) > datetime.now(timezone.utc):
             location_type = "coming soon"
         hoo = []
@@ -75,7 +76,7 @@ def fetch_data():
             country_code=poi.get("countryId"),
             store_number=poi["id"],
             phone=poi.get("phone"),
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=poi["latitude"],
             longitude=poi["longitude"],
             hours_of_operation=hours_of_operation,
