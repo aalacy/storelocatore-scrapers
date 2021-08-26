@@ -11,6 +11,7 @@ def get_data():
     session = SgRequests()
 
     for zip_code in search:
+
         url = (
             "https://www.salvationarmy.org.uk/map-page?near%5Bvalue%5D="
             + str(zip_code)
@@ -22,11 +23,11 @@ def get_data():
 
         grids = soup.find_all("div", attrs={"class": "geolocation-location js-hide"})
         location_grids = soup.find_all("div", attrs={"class": "e-grid-column"})
-
+        website_grids = soup.find_all("a", attrs={"rel": "bookmark"})
         x = 0
         for grid in grids:
             locator_domain = "salvationarmy.org.uk"
-            page_url = url
+            page_url = "salvationarmy.org.uk" + website_grids[x]["href"]
             country_code = "UK"
 
             location_name = grid.find(
