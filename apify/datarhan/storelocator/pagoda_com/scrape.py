@@ -13,7 +13,6 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     domain = "pagoda.com"
     start_url = "https://www.pagoda.com/store-finder/view-all-states"
-    scraped_locations = []
 
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
