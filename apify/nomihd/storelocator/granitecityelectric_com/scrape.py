@@ -33,14 +33,14 @@ def fetch_data():
         locator_domain = website
 
         store_req = session.get(page_url, headers=headers)
+        if "location is permanently closed" in store_req.text:
+            continue
         store_sel = lxml.html.fromstring(store_req.text)
         location_name = "".join(store.xpath("text()")).strip()
         address = store_sel.xpath('//div[@class="storeInfoLeft"]/p/text()')
         if len(address) <= 0:
             address = store_sel.xpath('//div[@class="storeInfoLeft"]/h3/text()')
 
-        if len(address) <= 0:
-            continue
         add_list = []
         hours_of_operation = ""
 
