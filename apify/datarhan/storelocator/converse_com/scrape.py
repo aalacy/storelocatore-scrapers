@@ -12,9 +12,6 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
     start_url = "https://www.converse.com/stores-all"
     domain = "converse.com"
     hdr = {
