@@ -85,9 +85,15 @@ def get_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            hour = grid.find("div", attrs={"class": "hours"}).text
+            hour = (
+                grid.find("div", attrs={"class": "hours"})
+                .text.split(" Happy")[0]
+                .split(" Kitchen")[0]
+            )
 
-            location_url_format = name.replace(" ", "-").replace("&", "-and-")
+            location_url_format = (
+                name.replace(" ", "-").replace("&", "-and-").replace(".", "").lower()
+            )
             page_url = "https://www.rockandbrews.com/" + location_url_format
 
             driver.get(page_url)
