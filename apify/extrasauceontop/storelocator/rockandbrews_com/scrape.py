@@ -70,7 +70,7 @@ def get_data():
                 city = ""
                 for part in city_parts:
                     city = city + " " + part
-                
+
                 city = city.strip()
                 state = "<MISSING>"
                 zipp = city_state_zipp.split("Mexico")[0].split(" ")[-1]
