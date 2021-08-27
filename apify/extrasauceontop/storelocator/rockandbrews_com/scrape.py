@@ -116,7 +116,7 @@ def get_data():
                         "div", attrs={"class": "col-md-6 pm-custom-section-col"}
                     ).find_all("a")[-1]["href"]
 
-                except Exception as e:
+                except Exception:
                     phone = "<MISSING>"
 
             if bool(re.search("[a-zA-Z]", phone)):
