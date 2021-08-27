@@ -1,11 +1,9 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium import SgSelenium
-from selenium.webdriver.common.keys import Keys
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -23,9 +21,9 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-DOMAIN = "phenixsalonsuitesid.com"
-BASE_URL = "https://phenixsalonsuitesid.com/"
-LOCATION_URL = "https://phenixsalonsuitesid.com/"
+DOMAIN = "ultimateoutdoors.com"
+BASE_URL = "https://ultimateoutdoors.com/"
+LOCATION_URL = "https://www.ultimateoutdoors.com/google/store-locator?search=showall"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -74,7 +72,7 @@ def wait_load(driver):
             lambda driver: driver.execute_script("return jQuery.active == 0")
         )
         WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "1148506123"))
+            EC.presence_of_element_located((By.CLASS_NAME, "store-list"))
         )
     except:
         driver.refresh()
@@ -84,29 +82,33 @@ def fetch_data():
     log.info("Fetching store_locator data")
     driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
-    html = driver.find_element_by_tag_name("html")
-    html.send_keys(Keys.END)
     wait_load(driver)
     soup = bs(driver.page_source, "lxml")
     driver.quit()
-    content = soup.find("div", {"class": "dmRespColsWrapper", "id": "1937241065"})
-    store_info = content.find_all(
-        "div", {"class": re.compile(r"dmRespCol small-12 medium-6 large-6.*")}
-    )
+    content = soup.find("ul", {"class": "store-list"})
+    store_info = content.find_all("li", {"class": "group"})
     for row in store_info:
-        location_name = row.find(
-            "font", {"style": "color: rgb(255, 255, 255);"}
-        ).text.strip()
-        map_content = row.find("div", {"data-type": "inlineMap"})
-        raw_address = map_content["addresstodisplay"]
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = MISSING
-        hours_of_operation = MISSING
-        store_number = MISSING
-        country_code = "US"
-        location_type = "phenixsalonsuitesid"
-        latitude = map_content["data-lat"]
-        longitude = map_content["data-lng"]
+        info = row.find("div", {"class": "store-details"})
+        location_name = info.find("h3").text.strip()
+        raw_address = ",".join(
+            [addr.text for addr in info.find_all("p", {"class": "storeAddress"})]
+        )
+        addr = info.find_all("p", {"class": "storeAddress"})
+        street_address = addr[0].text.strip()
+        city = location_name.split(" | ")[1].strip()
+        state = MISSING
+        zip_postal = addr[1].text.strip()
+        phone = info.find("p", {"class": "tel"}).text
+        hours_of_operation = (
+            row.find("table", {"class": "storefinder_opening"})
+            .find_all("tr")[1]
+            .get_text(strip=True, separator=",")
+        )
+        store_number = row["data-id"]
+        country_code = "GB"
+        location_type = location_name.split(" | ")[0].strip()
+        latitude = MISSING
+        longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
