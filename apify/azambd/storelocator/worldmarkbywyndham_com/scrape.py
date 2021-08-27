@@ -1,4 +1,4 @@
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from lxml import html
 import time
 import json
@@ -7,6 +7,9 @@ import re
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
 from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
@@ -68,7 +71,7 @@ def fetchStores():
 
             while delay < 60:
                 driverSleep(driver)
-                if 'class="resort-card__name"' in driver.page_source:
+                if 'class="resort-cardV2__name"' in driver.page_source:
                     break
                 delay = delay + 1
 
@@ -102,11 +105,13 @@ def fetchStores():
                 screen_height = new_screen_height
 
             body = html.fromstring(driver.page_source, "lxml")
-            resort_divs = body.xpath('//div[contains(@class, "resort-card__content")]')
+            resort_divs = body.xpath(
+                '//div[contains(@class, "resort-cardV2__content")]'
+            )
             log.debug(f"Total resorts divs = {len(resort_divs)}")
             stores = []
             for resort_div in resort_divs:
-                title = resort_div.xpath('.//div[@class="resort-card__name"]/a')[0]
+                title = resort_div.xpath('.//div[@class="resort-cardV2__name"]/a')[0]
                 page_url = title.xpath(".//@href")[0]
                 location_name = title.xpath(".//text()")[0]
                 stores.append(
@@ -245,8 +250,6 @@ def fetchData():
         raw_address = None
 
         phone = getReviewedPath(jsonData, "itemReviewed.telephone.0")
-        latitude = getReviewedPath(jsonData, "itemReviewed.geo.latitude")
-        longitude = getReviewedPath(jsonData, "itemReviewed.geo.longitude")
         hours_of_operation = MISSING
         city = getJSObject(response, "addressLocality")
 
@@ -323,6 +326,32 @@ def fetchData():
         else:
             country_code = "US"
 
+        height = driver.execute_script("return document.body.scrollHeight")
+        driver.implicitly_wait(10)
+        driver.execute_script("window.scrollTo(0, 0)")
+        for i in range(0, height, 60):
+            # load content
+            driver.execute_script("window.scrollTo(0, " + str(i) + ")")
+            time.sleep(0.4)
+        iframe = driver.find_element_by_xpath('//div[@class="map"]/iframe')
+
+        driver.switch_to.frame(iframe)
+        htmlmarkups = driver.page_source
+        body = html.fromstring(htmlmarkups, "lxml")
+        map_link = body.xpath('//div[@class="google-maps-link"]/a/@href')[0]
+        log.info(f"MAPS LINK: {map_link}")
+        try:
+            geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", map_link)[
+                0
+            ].split(",")
+        except:
+            geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{1,3}\.[0-9]+", map_link)[0].split(
+                ","
+            )
+        latitude = geo[0]
+        longitude = geo[1]
+        log.info(f"{latitude},{longitude}")
+
         yield SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,
@@ -348,7 +377,7 @@ def fetchData():
 def scrape():
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in result:
             writer.write_row(rec)
     end = time.time()

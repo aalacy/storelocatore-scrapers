@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("pizzahut")
 
@@ -28,8 +29,7 @@ base_url = "https://apimes1.phdvasia.com/v2/product-hut-fe/localization/getListA
 def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     areas = http.get(base_url, headers=_headers).json()["data"]["items"]
     for area in areas:
-        area_url = f"https://apimes1.phdvasia.com/v2/product-hut-fe/localization/getBlockByArea?area={area['area'].replace(' ','%20')}"
-        logger.info(area_url)
+        area_url = f"https://apimes1.phdvasia.com/v1/product-hut-fe/area/list_outlets?name={area['area'].replace(' ','%20')}&order_type=C"
         state.push_request(SerializableRequest(url=area_url))
 
     return True
@@ -37,18 +37,30 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
-        locations = http.get(next_r.url, headers=_headers).json()["data"]["item"][
-            "block"
-        ]
+        logger.info(next_r.url)
+        http.clear_cookies()
+        locations = http.get(next_r.url, headers=_headers).json()["data"]["items"]
         for _ in locations:
+            raw_address = _["address"]
+            if "Kuwait" not in raw_address:
+                raw_address += ", Kuwait"
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             yield SgRecord(
                 store_number=_["id"],
                 location_name=_["name"],
-                street_address=_["name"],
-                city=_["customize"]["CityName"],
-                state=_["customize"]["ProvinceName"],
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                phone=_["phone"].split("/")[0],
+                latitude=_["lat"],
+                longitude=_["long"],
                 country_code="Kuwait",
                 locator_domain=locator_domain,
+                raw_address=raw_address,
             )
 
 
@@ -57,7 +69,7 @@ if __name__ == "__main__":
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="us") as http:
             state.get_misc_value(
                 "init", default_factory=lambda: record_initial_requests(http, state)
             )

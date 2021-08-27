@@ -64,6 +64,18 @@ def get_list_of_countries_global():
         return list_of_country_codes
 
 
+def get_custom_location_name(location_type):
+    if location_type == "OUTLET":
+        location_name = "Levi's Outlet"
+    elif location_type == "RETAILER":
+        location_name = "Levi's Retail Partner"
+    elif location_type == "STORE":
+        location_name = "Levi's Store"
+    else:
+        location_name = location_name
+    return location_name
+
+
 def fetch_data_global():
     list_of_country_codes = get_list_of_countries_global()
     total = 0
@@ -96,6 +108,7 @@ def fetch_data_global():
                     store_number = i["storeId"] or MISSING
                     phone = i["phone"] or MISSING
                     location_type = i["storeType"] or MISSING
+                    location_name = get_custom_location_name(location_type)
                     latitude = i["latitude"] or MISSING
                     longitude = i["longitude"] or MISSING
                     hours_of_operation = ""
@@ -207,9 +220,21 @@ def fetch_data_us_ca():
             logger.info(f"[{idx}]  Phone: {phone}")
 
             # Location Type
-            location_type = data[0]["@type"]
+            locname = location_name.lower()
+            location_type = ""
+            if "outlet" in locname:
+                location_type = "OUTLET"
+            elif "retailer" in locname:
+                location_type = "RETAILER"
+            elif "store" in locname:
+                location_type = "STORE"
+            else:
+                location_type = location_name
             location_type = location_type if location_type else MISSING
             logger.info(f"[{idx}] location_type: {location_type}")
+
+            # Custom Location Name
+            location_name = get_custom_location_name(location_type)
 
             # Latitude
             latitude = data[0]["geo"]["latitude"]

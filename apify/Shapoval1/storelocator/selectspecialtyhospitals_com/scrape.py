@@ -55,6 +55,27 @@ def fetch_data(sgw: SgWriter):
         except:
             latitude, longitude = "<MISSING>", "<MISSING>"
 
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        hooco = "".join(tree.xpath('//div[@class="field-businesshours"]/p/a/@href'))
+        hours_of_operation = "<MISSING>"
+        if hooco:
+            session = SgRequests()
+            r = session.get(hooco, headers=headers)
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//p[contains(text(), "Hours:")]/text() | //strong[contains(text(), "hours")]/text()'
+                    )
+                )
+                .replace("Hours:", "")
+                .replace("Visiting hours:", "")
+                .strip()
+                or "<MISSING>"
+            )
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -69,7 +90,7 @@ def fetch_data(sgw: SgWriter):
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)

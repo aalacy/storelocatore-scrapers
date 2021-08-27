@@ -46,6 +46,11 @@ def fetch_data(sgw: SgWriter):
         base = BeautifulSoup(req.text, "lxml")
 
         location_name = base.h1.text.strip()
+        try:
+            if "coming soon" in base.find(class_="relative image-label").text.lower():
+                continue
+        except:
+            pass
 
         try:
             zip_code = (
