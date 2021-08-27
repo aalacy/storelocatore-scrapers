@@ -1,4 +1,4 @@
-import tabula as tb
+import tabula as tb #noqa
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
