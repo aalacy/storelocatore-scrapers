@@ -159,7 +159,6 @@ def fetch_data():
                             .replace("%28", "")
                             .replace("%29", "")
                         )
-                        print(lurl)
                         if lurl not in locs:
                             locs.append(lurl)
     for loc in locs:
