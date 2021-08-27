@@ -135,6 +135,13 @@ CITIES = [
     "Dunstable",
     "Rainham",
     "Snodland",
+    "Stampford",
+    "STAMFORD HILL",
+    "Walthamstow",
+    "Horley",
+    "Blackheath",
+    "Battersea",
+    "Hammersmith",
 ]
 
 
@@ -191,7 +198,17 @@ def get_latlong(url):
 def wait_load(driver):
     try:
         WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="findstore-postcode"]'))
+            lambda driver: driver.execute_script("return jQuery.active == 0")
+        )
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="ajx-storefinder"]/script')
+            )
+        )
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="ajx-storefinder"]/div/div[1]/div[2]')
+            )
         )
     except:
         driver.refresh()
@@ -204,19 +221,34 @@ def fetch_data():
     driver.get(
         "https://favorite.co.uk/store-finder?postcode=london&delivery=0&lat=51.5073509&lng=-0.1277583"
     )
-    for city in CITIES:
+    for city_list in CITIES:
         driver = wait_load(driver)
         driver.find_element_by_xpath('//*[@id="findstore-postcode"]').clear()
-        driver.find_element_by_xpath('//*[@id="findstore-postcode"]').send_keys(city)
+        driver.find_element_by_xpath('//*[@id="findstore-postcode"]').send_keys(
+            city_list
+        )
         driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
-        time.sleep(1)
+        time.sleep(0.5)
+        driver = wait_load(driver)
+        script_element = driver.find_element_by_xpath(
+            '//*[@id="ajx-storefinder"]/script'
+        ).get_attribute("innerHTML")
+        latlong = re.findall(
+            r".*\?daddr=(\-?[0-9]+\.[0-9]+,\-?[0-9]+\.[0-9]+)", script_element
+        )
         soup = bs(driver.page_source, "lxml")
-        main = soup.find("div", {"class": "row row-store mb0"})
-        if not main or len(main) > 50:
-            continue
+        main = soup.find("div", {"id": "ajx-storefinder"}).find_all(
+            "div", {"class": "row row-store mb0"}
+        )
+        if not main:
+            log.info(f"({city_list}) Element Not Found! trying to refresh...")
+            driver = wait_load(driver)
+            soup = bs(driver.page_source, "lxml")
+            main = soup.find_all("div", {"class": "row row-store mb0"})
+        index = 0
         for row in main:
             page_url = driver.current_url
-            content = main.find("div", {"class": "col-12 mb0"})
+            content = row.find("div", {"class": "col-12 mb0"})
             location_name = (
                 content.find("div", {"class": "store-name"})
                 .get_text(strip=True, separator=",")
@@ -226,8 +258,11 @@ def fetch_data():
                 content.find("div", {"class": "store-name"})
                 .get_text(strip=True, separator=",")
                 .split(",")[2:]
-            )
+            ).replace("\n", " ")
             street_address, city, state, zip_postal = getAddress(raw_address)
+            if "4 Broadwalk" in raw_address:
+                street_address = "4 Broadwalk"
+                city = "Crawley"
             country_code = "UK"
             store_number = "<MISSING>"
             phone = soup.find(
@@ -257,8 +292,11 @@ def fetch_data():
                 .replace("Delivery, ", "")
                 .strip()
             )
-            latitude, longitude = get_latlong(page_url)
-            log.info("Found Location{} => {}".format(location_name, street_address))
+            latitude = latlong[index].split(",")[0]
+            longitude = latlong[index].split(",")[1]
+            log.info(
+                f"Found Location ({city_list}) {location_name} => {raw_address} ({latitude}, {longitude})"
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -276,7 +314,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-            time.sleep(1)
+            index += 1
     driver.quit()
 
 
@@ -289,7 +327,7 @@ def scrape():
                 {
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
-                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
                 }
             )
         )

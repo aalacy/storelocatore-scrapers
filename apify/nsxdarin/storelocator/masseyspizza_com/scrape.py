@@ -1,37 +1,13 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -54,6 +30,52 @@ def fetch_data():
     typ = "Restaurant"
     zc = ""
     hours = ""
+    name = "SULLIVANT AVE."
+    add = "2970 Sullivant Avenue"
+    city = "Columbus"
+    state = "OH"
+    zc = "<MISSING>"
+    phone = "(614) 358-3333"
+    hours = "Sun-Thu: 11am-10pm; Fri & Sat: 11am-11pm"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
+    name = "BEECHCROFT/RT. 161"
+    add = "1951 E. Dublin-Granville Rd."
+    city = "Columbus"
+    state = "OH"
+    zc = "<MISSING>"
+    phone = "(614) 888-0022"
+    hours = "11am-10pm Everyday"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
     for line in lines:
         if "South Carolina</span>" in line:
             state = "SC"
@@ -111,22 +133,23 @@ def fetch_data():
                 if "Willbrook" in add:
                     lat = "33.4838211"
                     lng = "-79.0983286"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                if add != "":
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
         if "google.com/maps" in line and "/@" in line:
             lat = line.split("/@")[1].split(",")[0]
             lng = line.split("/@")[1].split(",")[1]
@@ -185,8 +208,12 @@ def fetch_data():
                 hours = hours + "; " + hrs
             hours = hours.replace("&amp;", "&")
         if "/@" in line:
-            lat = line.split("/@")[1].split(",")[0]
-            lng = line.split("/@")[1].split(",")[1]
+            try:
+                lat = line.split("/@")[1].split(",")[0]
+                lng = line.split("/@")[1].split(",")[1]
+            except:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
             if ",+OH+" in line:
                 zc = line.split(",+OH+")[1].split("/")[0]
         if '<a href="tel:+' in line:
@@ -194,8 +221,12 @@ def fetch_data():
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
