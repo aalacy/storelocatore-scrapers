@@ -66,6 +66,12 @@ def get_data():
             zipp = city_state_zipp.split(", ")[1].split(" ")[1]
         except Exception:
             if "Mexico" in city_state_zipp:
+                city_parts = city.split(" ")[:-1]
+                city = ""
+                for part in city_parts:
+                    city = city + " " + part
+
+                city = city.strip()
                 state = "<MISSING>"
                 zipp = city_state_zipp.split("Mexico")[0].split(" ")[-1]
 
@@ -105,7 +111,13 @@ def get_data():
             try:
                 phone = div.find("a")["href"].replace("tel:", "")
             except Exception:
-                phone = "<MISSING>"
+                try:
+                    phone = soup.find(
+                        "div", attrs={"class": "col-md-6 pm-custom-section-col"}
+                    ).find_all("a")[-1]["href"]
+
+                except Exception:
+                    phone = "<MISSING>"
 
             if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"
