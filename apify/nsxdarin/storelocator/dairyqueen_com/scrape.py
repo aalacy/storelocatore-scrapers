@@ -156,7 +156,7 @@ def fetch_data():
                     longitude=lng,
                     hours_of_operation=hours,
                 )
-            if count >= 4:
+            if count >= 8:
                 PFound = True
 
 
