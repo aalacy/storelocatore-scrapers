@@ -120,5 +120,5 @@ if __name__ == "__main__":
         pass
     else:
         ssl._create_default_https_context = _create_unverified_https_context
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
