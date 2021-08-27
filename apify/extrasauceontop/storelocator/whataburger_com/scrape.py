@@ -83,9 +83,9 @@ def get_data():
         latitude = soup.find("meta", attrs={"itemprop": "latitude"})["content"]
         longitude = soup.find("meta", attrs={"itemprop": "longitude"})["content"]
 
-        hour_sections = soup.find("div", attrs={"class": "HoursToday-dineIn"}).find("span")[
-            "data-days"
-        ]
+        hour_sections = soup.find("div", attrs={"class": "HoursToday-dineIn"}).find(
+            "span"
+        )["data-days"]
         hour_sections = json.loads(hour_sections)
 
         hours = ""
@@ -117,6 +117,7 @@ def get_data():
             "hours": hours,
             "country_code": country_code,
         }
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
