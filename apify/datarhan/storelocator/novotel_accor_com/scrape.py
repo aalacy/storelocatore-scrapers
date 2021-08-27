@@ -12,7 +12,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    domain = "nothingbundtcakes.com"
+    domain = "novotel.accor.com"
     start_url = "https://novotel.accor.com/gb/world/hotels-novotel-monde.shtml"
 
     all_locations = []
