@@ -18,6 +18,7 @@ def fetch_loc(loc):
     session = SgRequests()
     return session.get(loc, headers=headers)
 
+
 def fetch_data():
     locs = []
     url = "https://www.costco.com/sitemap_l_001.xml"
