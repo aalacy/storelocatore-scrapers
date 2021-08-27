@@ -1,7 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
@@ -22,16 +21,28 @@ def fetch_data():
         for _ in locations:
             href = _.select_one(".restaurant-location__title a")["href"]
             page_url = locator_domain + href
-            _aa = _.select_one(".restaurant-location__address").text.strip().split("\n")
-            if len(_aa) == 1:
-                _aa = _aa[0].split(",")
-            raw_address = " ".join(_aa)
-            addr = parse_address_intl(raw_address + ", Cyprus")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            if street_address.isdigit():
-                street_address = _aa[0].strip()
+            raw_address = (
+                " ".join(_.select_one(".restaurant-location__address").stripped_strings)
+                .replace("\n", " ")
+                .replace("\r", "")
+                .replace(",", " ")
+                .replace("Cyprus", "")
+                .strip()
+            )
+            street_address = city = zip_postal = ""
+            _addr = [aa.strip() for aa in raw_address.split(" ") if aa.strip()][::-1]
+            for xx, addr in enumerate(_addr):
+                if addr.isdigit():
+                    zip_postal = addr
+                    city = " ".join(_addr[:xx][::-1])
+                    break
+            if city:
+                x = raw_address.find(zip_postal)
+                street_address = raw_address[:x].strip()
+            if not city:
+                city = _addr[xx + 1]
+                x = raw_address.find(city)
+                street_address = raw_address[:x].strip()
             hours = []
             for hh in _.select_one(
                 "div.restaurant-location__hours-set div.hours-table"
@@ -53,14 +64,14 @@ def fetch_data():
             phone = ""
             if _.select_one("a.phone"):
                 phone = _.select_one("a.phone").text.strip()
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=href.split("key=")[-1],
                 location_name=_.select_one(".restaurant-location__title").text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=city,
+                zip_postal=zip_postal,
                 latitude=coord[0],
                 longitude=coord[1],
                 country_code="Cyprus",
