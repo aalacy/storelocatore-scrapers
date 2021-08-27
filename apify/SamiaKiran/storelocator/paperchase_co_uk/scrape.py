@@ -19,6 +19,7 @@ headers = {
 DOMAIN = "https://www.paperchase.com/en_gb/"
 MISSING = SgRecord.MISSING
 
+
 def parse_address(address):
     pa = parse_address_intl(address)
 
@@ -81,7 +82,13 @@ def fetch_data():
                         location_name = loc["name"]
                     except:
                         location_name = MISSING
-                    raw_address = address["streetAddress"]+" "+address["addressLocality"]+" "+address["postalCode"]
+                    raw_address = (
+                        address["streetAddress"]
+                        + " "
+                        + address["addressLocality"]
+                        + " "
+                        + address["postalCode"]
+                    )
                     street_address, city, state, zip_postal = parse_address(raw_address)
                     country_code = address["addressCountry"]
                     phone = loc["telephone"]
@@ -123,7 +130,7 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=hours_of_operation,
-                    raw_address = raw_address.replace("\n", " ").strip()
+                    raw_address=raw_address.replace("\n", " ").strip(),
                 )
 
 
