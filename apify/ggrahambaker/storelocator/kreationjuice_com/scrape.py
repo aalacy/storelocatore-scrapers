@@ -32,7 +32,6 @@ def fetch_data(sgw: SgWriter):
         for store in stores:
             cont = list(store.stripped_strings)
             if len(cont) == 1:
-                print(cont)
                 continue
             else:
                 location_name = cont[0]
