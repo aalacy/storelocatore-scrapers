@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -16,26 +17,15 @@ def get_urls():
     )
 
 
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-
-    return latitude, longitude
-
-
 def get_data(page_url, sgw: SgWriter):
     if page_url.startswith("/"):
         page_url = f"https://www.trejostacos.com{page_url}"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
+    j = json.loads("".join(tree.xpath("//div[@data-block-json]/@data-block-json")))[
+        "location"
+    ]
     location_name = tree.xpath("//title/text()")[0].strip()
     line = tree.xpath("//h2/a[not(contains(@href, 'tel'))]/text()")
     line = list(filter(None, [l.strip() for l in line]))
@@ -65,8 +55,8 @@ def get_data(page_url, sgw: SgWriter):
             )
     except IndexError:
         phone = SgRecord.MISSING
-    text = "".join(tree.xpath("//h2/a[not(contains(@href, 'tel'))]/@href"))
-    latitude, longitude = get_coords_from_google_url(text)
+    latitude = j.get("markerLat")
+    longitude = j.get("markerLng")
 
     hours_of_operation = (
         " ".join(tree.xpath("//h2[./a]/following-sibling::h2[1]/text()"))
