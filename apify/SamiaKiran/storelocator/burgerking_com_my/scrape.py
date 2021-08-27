@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -24,7 +25,7 @@ def fetch_data():
         for link in range(1, 50):
             url = "https://burgerking.com.my/Locator?page=" + str(link)
             log.info(f"Page No {link}")
-            main_r = session.get(url, headers=headers)
+            main_r = session.get(url, headers=headers, timeout=180)
             soup = BeautifulSoup(main_r.text, "html.parser")
             loclist = soup.find("div", {"id": "locationsList"}).findAll(
                 "div", {"class": "location"}
@@ -57,9 +58,11 @@ def fetch_data():
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
-                raw_address = soup.find(
-                    "span", {"itemprop": "streetAddress"}
-                ).text.replace("\n", "")
+                raw_address = (
+                    soup.find("span", {"itemprop": "streetAddress"})
+                    .text.replace("\n", " ")
+                    .replace("                                   ", " ")
+                )
                 pa = parse_address_intl(raw_address)
                 street_address = pa.street_address_1
                 street_address = street_address if street_address else MISSING
