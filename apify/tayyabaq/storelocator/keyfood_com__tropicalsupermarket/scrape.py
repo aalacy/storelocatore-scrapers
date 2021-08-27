@@ -1,4 +1,5 @@
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -41,11 +42,18 @@ def fetch_data():
             state = store_data["state"]
             zip_postal = zip_code
             country_code = "US"
-            location_name = store_data["name"]
             phone = store_data["phone"] if store_data["phone"] else "<MISSING>"
             page_url = store_data["siteUrl"] + store_data["url"].split("?")[0]
             latitude = store_data["latitude"]
             longitude = store_data["longitude"]
+            req = session.get(page_url, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            try:
+                location_type = base.find(class_="banner__component simple-banner").img[
+                    "title"
+                ]
+            except:
+                location_type = MISSING
             try:
                 hours = ""
                 for hour in store_data["openings"]:
@@ -65,7 +73,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,

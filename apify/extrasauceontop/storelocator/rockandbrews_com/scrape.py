@@ -111,7 +111,13 @@ def get_data():
             try:
                 phone = div.find("a")["href"].replace("tel:", "")
             except Exception:
-                phone = "<MISSING>"
+                try:
+                    phone = soup.find(
+                        "div", attrs={"class": "col-md-6 pm-custom-section-col"}
+                    ).find_all("a")[-1]["href"]
+
+                except Exception:
+                    phone = "<MISSING>"
 
             if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"
