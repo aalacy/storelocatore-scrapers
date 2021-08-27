@@ -22,7 +22,14 @@ MISSING = SgRecord.MISSING
 def store_data(soup):
     location_name = soup.find("h2", {"class": "Core-title"}).text
     phone = soup.find("div", {"itemprop": "telephone"}).text
-    street_address = soup.find("span", {"class": "c-address-street-1"}).text
+    try:
+        street_address = (
+            soup.find("span", {"class": "c-address-street-1"}).text
+            + " "
+            + soup.find("span", {"class": "c-address-street-2"}).text
+        )
+    except:
+        street_address = soup.find("span", {"class": "c-address-street-1"}).text
     city = soup.find("span", {"class": "c-address-city"}).text
     state = soup.find("abbr", {"class": "c-address-state"}).text
     zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
