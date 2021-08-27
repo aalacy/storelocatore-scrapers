@@ -43,7 +43,7 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .split("|")
             )
-            street_address = address[0]
+            street_address = address[0].replace(",", "")
             address = address[1].split(",")
             city = address[0]
             address = address[1].split()
