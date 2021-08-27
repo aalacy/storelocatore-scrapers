@@ -865,7 +865,9 @@ def scrape():
             is_required=False,
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["hours_of_operation"], is_required=False
+            mapping=["hours_of_operation"],
+            is_required=False,
+            value_transform=lambda x: x.replace("\n", " ").replace("\r", " "),
         ),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
         raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
