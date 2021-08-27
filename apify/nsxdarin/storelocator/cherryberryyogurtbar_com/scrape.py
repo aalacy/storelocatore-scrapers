@@ -14,13 +14,13 @@ logger = SgLogSetup().get_logger("cherryberryyogurtbar_com")
 
 
 def fetch_data():
-    for x in range(0, 5):
+    for x in range(0, 10):
         url = "https://www.cherryberryyogurtbar.com/find-a-location?page=" + str(x)
         r = session.get(url, headers=headers)
         website = "cherryberryyogurtbar.com"
         typ = "<MISSING>"
         country = "US"
-        loc = "<MISSING>"
+        loc = "https://www.cherryberryyogurtbar.com/find-a-location"
         name = "Cherry Berry"
         logger.info("Pulling Stores")
         lines = r.iter_lines()

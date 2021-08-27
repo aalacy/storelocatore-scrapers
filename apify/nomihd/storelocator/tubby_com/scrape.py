@@ -54,6 +54,10 @@ def fetch_data():
         city = add_list[1]
         state_zip = add_list[2].replace(",", "").strip()
         state = state_zip.split(" ")[0].strip()
+        if state == "City":
+            state = "MI"
+            city = "Imlay City"
+
         zip = state_zip.split(" ")[-1].strip()
         country_code = "US"
 
@@ -78,9 +82,19 @@ def fetch_data():
                 hours_list.append("".join(hour.xpath(".//text()")).strip())
 
         hours_of_operation = (
-            "; ".join(hours_list).strip().replace("; ; ", "").replace(":;", ":").strip()
+            "; ".join(hours_list)
+            .strip()
+            .replace("; ; ", "")
+            .replace(":;", ":")
+            .strip()
+            .replace("; AM", "AM;")
+            .replace("-;", "-")
+            .strip()
+            .replace("; -", "-")
+            .replace(";;", ";")
+            .strip()
+            .replace("; PM", "PM")
         )
-
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
