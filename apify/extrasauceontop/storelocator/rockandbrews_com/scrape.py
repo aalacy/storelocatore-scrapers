@@ -63,14 +63,26 @@ def get_data():
         city = city_state_zipp.split(", ")[0]
         try:
             state = city_state_zipp.split(", ")[1].split(" ")[0]
+            zipp = city_state_zipp.split(", ")[1].split(" ")[1]
         except Exception:
-            continue
-        zipp = city_state_zipp.split(", ")[1].split(" ")[1]
+            if "Mexico" in city_state_zipp:
+                city_parts = city.split(" ")[:-1]
+                city = ""
+                for part in city_parts:
+                    city = city + " " + part
+
+                city = city.strip()
+                state = "<MISSING>"
+                zipp = city_state_zipp.split("Mexico")[0].split(" ")[-1]
 
         if len(state) < 2:
             pass
         else:
-            country_code = "US"
+            if state == "<MISSING>":
+                country_code = "MX"
+
+            else:
+                country_code = "US"
 
             store_number = "<MISSING>"
 
@@ -79,9 +91,15 @@ def get_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            hour = grid.find("div", attrs={"class": "hours"}).text
+            hour = (
+                grid.find("div", attrs={"class": "hours"})
+                .text.split(" Happy")[0]
+                .split(" Kitchen")[0]
+            )
 
-            location_url_format = name.replace(" ", "-").replace("&", "-and-")
+            location_url_format = (
+                name.replace(" ", "-").replace("&", "-and-").replace(".", "").lower()
+            )
             page_url = "https://www.rockandbrews.com/" + location_url_format
 
             driver.get(page_url)
@@ -93,7 +111,13 @@ def get_data():
             try:
                 phone = div.find("a")["href"].replace("tel:", "")
             except Exception:
-                phone = "<MISSING>"
+                try:
+                    phone = soup.find(
+                        "div", attrs={"class": "col-md-6 pm-custom-section-col"}
+                    ).find_all("a")[-1]["href"]
+
+                except Exception:
+                    phone = "<MISSING>"
 
             if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"
