@@ -38,7 +38,6 @@ def get_data(coords, sgw: SgWriter):
             d.xpath('.//div[@class="bk-location-title"]/text()')
         ).strip()
         street_address = "".join(d.xpath('.//div[@class="bk-address1"]/text()')).strip()
-        print(street_address)
         state = "".join(d.xpath('.//div[@class="bk-province-name"]/text()'))
         postal = "".join(d.xpath('.//div[@class="bk-zip"]/text()'))
         if postal == "-":
