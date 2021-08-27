@@ -9,6 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from sglogging import SgLogSetup
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("taxassist")
 
@@ -63,12 +64,17 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         hours_of_operation = "; ".join(hours)
         if re.search(r"please contact", hours_of_operation, re.IGNORECASE):
             hours_of_operation = ""
+        raw_address = ""
+        addr = parse_address_intl(raw_address + ", uk")
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
         yield SgRecord(
             page_url=page_url,
             location_type=location["@type"],
             location_name=location["name"],
-            street_address=location["address"]["streetAddress"],
-            city=location["address"]["addressLocality"],
+            street_address=street_address,
+            city=addr.city,
             zip_postal=location["address"]["postalCode"],
             country_code="uk",
             latitude=location["geo"]["latitude"],
