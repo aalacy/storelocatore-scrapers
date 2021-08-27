@@ -21,7 +21,7 @@ MISSING = SgRecord.MISSING
 
 
 def parse_address(address):
-    pa = parse_address_intl(address.replace("\n", " "))
+    pa = parse_address_intl(address)
 
     street_address = pa.street_address_1
     street_address = street_address if street_address else MISSING
@@ -130,7 +130,7 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
+                    raw_address=raw_address.replace("\n", " ").strip(),
                 )
 
 
