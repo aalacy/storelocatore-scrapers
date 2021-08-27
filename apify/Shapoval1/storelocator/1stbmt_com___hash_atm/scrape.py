@@ -15,9 +15,14 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     js = r.json()
     for j in js["atms"]:
-
+        net_name = j.get("networkName")
         page_url = "https://www.1stbmt.com/locations"
-        location_name = j.get("name")
+        location_name = "".join(j.get("name"))
+        if (
+            net_name == "First Bank of Montana ATMs"
+            and location_name.find("First Bank of Montana") == -1
+        ):
+            location_name = "First Bank of Montana" + " " + location_name
         location_type = "ATM"
         street_address = "".join(j.get("address"))
         if street_address.find("\n") != -1:

@@ -15,9 +15,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//a[contains(text(), "Google Maps")] | //div[@class="entry-content clear"]/p[2]'
-    )
+    div = tree.xpath('//a[contains(text(), "Google Maps")]')
     for d in div:
 
         page_url = "http://www.atlanticwireless.com/store-locator/"
@@ -86,8 +84,14 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
-        if hours_of_operation.find("Corporate") != -1:
-            hours_of_operation = "<MISSING>"
+        if street_address.find("17230") != -1:
+            hours_of_operation = (
+                hours_of_operation
+                + " "
+                + "".join(d.xpath(".//following::p[1]/text()"))
+                .replace("\n", "")
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

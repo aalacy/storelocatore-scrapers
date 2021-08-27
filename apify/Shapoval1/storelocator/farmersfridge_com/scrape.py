@@ -58,6 +58,9 @@ def fetch_data(sgw: SgWriter):
             location_type = "".join(b.get("accessTo")) + " " + "".join(j.get("type"))
         except:
             location_type = "".join(j.get("type"))
+
+        if location_type == "DELIVERY":
+            continue
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
@@ -118,6 +121,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.farmersfridge.com/"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         fetch_data(writer)

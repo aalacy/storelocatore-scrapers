@@ -1,110 +1,61 @@
-import csv
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+
+    api_url = "https://api.freshop.com/1/stores?app_key=unfi_great_value&has_address=true&limit=-1&token=66eb4394f1a6953baba7ce1157cdfed1"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["items"]
+    for j in js:
+
+        page_url = j.get("url")
+        location_name = j.get("name")
+        street_address = j.get("address_1")
+        state = j.get("state")
+        postal = j.get("postal_code")
+        country_code = "USA"
+        city = j.get("city")
+        store_number = j.get("id")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        phone = "".join(j.get("phone_md"))
+        if phone.find("\n") != -1:
+            phone = phone.split("\n")[0].strip()
+        phone = phone.replace("Phone:", "").strip()
+        hours_of_operation = "".join(j.get("hours_md")).replace("\n", " ").strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get(
-        "https://www.greatvalu.com/stores/store-search-results.html?displayCount=18&zipcode=18014"
-    )
-    tree = html.fromstring(r.text)
-    return tree.xpath("//a[@class='store-detail']/@href")
-
-
-def get_data(url):
-    locator_domain = "https://www.greatvalu.com"
-    page_url = f"{locator_domain}{url}"
-    session = SgRequests()
-
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    street_address = "".join(tree.xpath('//span[@itemprop="streetAddress"]/text()'))
-    city = "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
-    state = "".join(tree.xpath('//span[@itemprop="addressRegion"]/text()'))
-    postal = "".join(tree.xpath('//span[@itemprop="postalCode"]/text()'))
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_name = "".join(tree.xpath('//h2[@class="storeName"]/text()'))
-    phone = "".join(tree.xpath('//a[@class="phoneNumber"]/text()'))
-    ll = "".join(tree.xpath('//script[contains(text(), "storeLat")]/text()'))
-    latitude = ll.split('var storeLat = "')[1].split('";')[0]
-    longitude = "-" + ll.split('var storeLng = "')[1].split('";')[0].split("2D")[1]
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        " ".join(tree.xpath("//*[contains(text(), 'Hours')]/following::ul[1]//text()"))
-        .replace("\n", "")
-        .strip()
-        or "<MISSING>"
-    )
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.greatvalu.com"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
