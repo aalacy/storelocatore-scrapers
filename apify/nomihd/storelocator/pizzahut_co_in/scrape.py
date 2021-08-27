@@ -54,7 +54,9 @@ def fetch_data():
                     store_json = js
 
                     locator_domain = website
-                    location_name = store_json["alternateName"]
+                    location_name = "Pizza Hut"
+                    if "alternateName" in store_json:
+                        location_name = store_json["alternateName"]
                     street_address = store_json["address"]["streetAddress"]
                     city = store_json["address"]["addressLocality"]
                     state = store_json["address"]["addressRegion"]

@@ -96,6 +96,12 @@ def fetch_data():
         for item in items:
             if "-Shi" in item or "-shi" in item:
                 city = item.strip()
+        if int(lat.split(".")[0]) < -90 or int(lat.split(".")[0]) > 90:
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if lng == "-99":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
