@@ -1,4 +1,3 @@
-import json
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
