@@ -69,8 +69,6 @@ def get_custom_location_name(location_type):
         location_name = "Levi's Outlet"
     elif location_type == "RETAILER":
         location_name = "Levi's Retail Partner"
-    elif location_type == "ClothingStore":
-        location_name = "Levi's Store"
     elif location_type == "STORE":
         location_name = "Levi's Store"
     else:
@@ -222,7 +220,16 @@ def fetch_data_us_ca():
             logger.info(f"[{idx}]  Phone: {phone}")
 
             # Location Type
-            location_type = data[0]["@type"]
+            locname = location_name.lower()
+            location_type = ""
+            if "outlet" in locname:
+                location_type = "OUTLET"
+            elif "retailer" in locname:
+                location_type = "RETAILER"
+            elif "store" in locname:
+                location_type = "STORE"
+            else:
+                location_type = location_name
             location_type = location_type if location_type else MISSING
             logger.info(f"[{idx}] location_type: {location_type}")
 
