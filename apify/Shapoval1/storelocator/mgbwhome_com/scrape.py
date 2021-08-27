@@ -56,6 +56,17 @@ def get_info(page_url):
     hours_of_operations = (
         "".join(hours_of_operations).replace("pm", "pm;") or "<MISSING>"
     )
+    if hours_of_operations == "<MISSING>":
+        hours_of_operations = tree.xpath(
+            '//h3[contains(text(), "HOURS")]/following-sibling::text()'
+        )
+        hours_of_operations = list(
+            filter(None, [a.strip() for a in hours_of_operations])
+        )
+        hours_of_operations = (
+            "".join(hours_of_operations).replace("pm", "pm;") or "<MISSING>"
+        )
+
     if hours_of_operations.find("pickup") != -1:
         hours_of_operations = hours_of_operations.split("pickup.")[1]
     return phone, latitude, longitude, hours_of_operations
@@ -103,6 +114,7 @@ def fetch_data():
             )
             if page_url != "<MISSING>":
                 phone, latitude, longitude, hours_of_operation = get_info(page_url)
+
             else:
                 phone, latitude, longitude, hours_of_operation = (
                     "<MISSING>",

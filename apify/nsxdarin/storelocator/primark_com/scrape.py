@@ -47,20 +47,21 @@ def fetch_data():
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
             if (
-                'hreflang="en_US" href="https://stores.primark.com/en_us/canada/'
+                'hreflang="en-US" href="https://stores.primark.com/en_us/canada/'
                 in line
             ):
                 locs.append(line.split('href="')[1].split('"')[0])
             if (
-                'hreflang="en_US" href="https://stores.primark.com/en_us/united-states/'
+                'hreflang="en-US" href="https://stores.primark.com/en_us/united-states/'
                 in line
             ):
                 locs.append(line.split('href="')[1].split('"')[0])
             if (
-                'hreflang="en_US" href="https://stores.primark.com/en_us/united-kingdom/'
+                'hreflang="en-US" href="https://stores.primark.com/en_us/united-kingdom/'
                 in line
             ):
                 locs.append(line.split('href="')[1].split('"')[0])
+
     for loc in locs:
         typ = "<MISSING>"
         website = "primark.com"

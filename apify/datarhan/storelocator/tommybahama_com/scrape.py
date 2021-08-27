@@ -4,8 +4,7 @@ from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-DOMAIN = "thelittlegym.com"
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -46,69 +45,51 @@ def fetch_data():
     session = SgRequests()
 
     DOMAIN = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=false&searchOutlets=true&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
+    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=true&searchOutlets=true&searchInternational=false"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@id="store-search-results-state"]//a/@href')
+
+    all_locations = dom.xpath('//a[@class="store-finder-results-title"]/@href')
     next_page = dom.xpath('//a[contains(text(), "Next")]/@href')
     while next_page:
         page_url = "https://www.tommybahama.com" + next_page[0]
         page_response = session.get(page_url)
         page_dom = etree.HTML(page_response.text)
         all_locations += page_dom.xpath(
-            '//div[@id="store-search-results-state"]//a/@href'
+            '//a[@class="store-finder-results-title"]/@href'
         )
         next_page = page_dom.xpath('//a[contains(text(), "Next")]/@href')
 
     for url in list(set(all_locations)):
-        if "restaurants" in url:
-            continue
-        if "#" in url:
-            continue
         store_url = urljoin(start_url, url.split("?")[0])
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-        if not store_dom.xpath('//script[contains(text(), "storeaddressline")]/text()'):
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        if loc_dom.xpath('//a/img[contains(@alt, "taken you slightly off course")]'):
             continue
 
-        raw_data = (
-            store_dom.xpath('//script[contains(text(), "storeaddressline1")]/text()')[0]
-            .replace("\n", "")
-            .replace("\t", "")
-        )
-        location_name = store_dom.xpath('//div[@class="store-locator-header"]/text()')
-        location_name = (
-            location_name[0].strip() if location_name[0].strip() else "<MISSING>"
-        )
-        street_address = re.findall("storeaddressline1 = '(.+?)';", raw_data)
-        street_address = street_address[0] if street_address else "<MISSING>"
-        if ";var" in street_address:
-            street_address = re.findall("storeaddressline2 = '(.+?)';", raw_data)[0]
-        city = re.findall("storeaddresstown = '(.+?)';", raw_data)
-        city = city[0] if city else "<MISSING>"
-        state = store_dom.xpath(
+        raw_address = loc_dom.xpath(
             '//div[contains(text(), "Address")]/following-sibling::div/text()'
         )
-        state = (
-            state[-1].strip().split(",")[-1].strip().split()[0]
-            if state
-            else "<MISSING>"
+        raw_address = [e.replace("\xa0", " ").strip() for e in raw_address if e.strip()]
+        addr = parse_address_intl(" ".join(raw_address))
+        location_name = loc_dom.xpath('//h1[@class="page-title"]/text()')[0]
+        street_address = raw_address[0]
+        city = addr.city
+        state = addr.state
+        zip_code = addr.postcode
+        country_code = re.findall(
+            "storeaddresscountryname = '(.+?)';", loc_response.text
         )
-        zip_code = re.findall("storeaddresspostalCode = '(.+?)';", raw_data)
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = re.findall("storeaddresscountryname = '(.+?)';", raw_data)
         country_code = country_code[0] if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = store_dom.xpath(
-            '//div[contains(text(), "Phone #")]/following-sibling::div/text()'
-        )
-        phone = phone[0].split(":")[-1] if phone else "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="store-details-container"]//a/text()')
+        phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = re.findall("storelatitude = '(.+?)';", raw_data)
+        latitude = re.findall("storelatitude = '(.+?)';", loc_response.text)
         latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = re.findall("storelongitude = '(.+?)';", raw_data)
+        longitude = re.findall("storelongitude = '(.+?)';", loc_response.text)
         longitude = longitude[0] if longitude else "<MISSING>"
-        hoo = store_dom.xpath(
+        hoo = loc_dom.xpath(
             '//div[contains(text(), "Store Hours")]/following-sibling::div/text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
@@ -116,6 +97,11 @@ def fetch_data():
         hours_of_operation = (
             hoo.split("Open to a limited")[0].strip() if hoo else "<MISSING>"
         )
+        hours_of_operation = hours_of_operation.split(" Happy")[0]
+        hours_of_operation = hours_of_operation.split(" Seating")[0]
+        if "temporarily" in hours_of_operation:
+            hours_of_operation = "Temporarily Closed"
+        hours_of_operation = hours_of_operation.replace("|", "").replace(">br>", "")
 
         item = [
             DOMAIN,

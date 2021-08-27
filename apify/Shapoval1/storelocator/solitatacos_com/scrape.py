@@ -63,10 +63,18 @@ def fetch_data():
 
         street_address = adr.split(",")[0].strip()
         phone = "".join(tree.xpath('//p//a[contains(@href, "tel")]/text()'))
-        state = adr.split(",")[2].split()[0]
-        postal = adr.split(",")[2].split()[-1]
-        country_code = "USA"
-        city = adr.split(",")[1].strip()
+        try:
+            state = adr.split(",")[2].split()[0]
+            postal = adr.split(",")[2].split()[-1]
+            country_code = "USA"
+            city = adr.split(",")[1].strip()
+        except:
+            state = "<MISSING>"
+            postal = "<MISSING>"
+            country_code = "US"
+            city = "<MISSING>"
+            street_address = "<MISSING>"
+            phone = "<MISSING>"
         store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
@@ -79,6 +87,13 @@ def fetch_data():
             .replace("\n", "")
             .strip()
         )
+        cms = "".join(
+            tree.xpath(
+                '//h3[text()="COMING SOON"]/text() | //h3[text()="Coming Soon"]/text()'
+            )
+        )
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

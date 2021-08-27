@@ -6,6 +6,7 @@ from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 from bs4 import BeautifulSoup as bs
 import json
+import os
 
 logger = SgLogSetup().get_logger("comerica_com")
 
@@ -15,14 +16,33 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=None,
+    expected_search_radius_miles=50,
+    use_state=False,
 )
+
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "https://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
 
 
 def api_get(start_url, headers, timeout, attempts, maxRetries):
     error = False
     session = SgRequests()
+    session.proxies = set_proxies()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
     except exceptions.RequestException as requestsException:
@@ -56,6 +76,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
+    session.proxies = set_proxies()
     maxZ = search.items_remaining()
     total = 0
     for code in search:
@@ -78,14 +99,16 @@ def fetch_data():
                 logger.info("Proxy not working")
                 break
             soup = bs(res, "lxml")
-            r2 = json.loads(
-                res.split("var results = ")[1].strip().split("var map;")[0].strip()[:-1]
-            )
-            for _ in r2:
-                search.found_location_at(
-                    _["location"]["lat"],
-                    _["location"]["lng"],
+            try:
+                r2 = json.loads(
+                    res.split("var results = ")[1]
+                    .strip()
+                    .split("var map;")[0]
+                    .strip()[:-1]
                 )
+            except:
+                break
+            for _ in r2:
                 for store in _["location"]["entities"]:
                     store["state"] = _["location"]["province"]
                     store["city"] = _["location"]["city"]
@@ -136,6 +159,7 @@ def fetch_data():
                                 store["hours"] = "Temporarily closed"
                         except:
                             pass
+
                     yield store
                     found += 1
             total += found
@@ -143,19 +167,15 @@ def fetch_data():
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
 
-            cur_page = 0
-            if soup.select_one("ul.pager li.pager-current span"):
-                cur_page = int(
-                    soup.select_one("ul.pager li.pager-current span")
-                    .text.split("of")[-1]
-                    .strip()
-                )
-
             logger.info(
                 f"{code} | page {page} | found: {found} | total: {total} | progress: {progress}"
             )
-            page += 1
-            if page > cur_page:
+
+            if soup.select_one("ul.pager li.next a"):
+                page = int(
+                    soup.select_one("ul.pager li.next a")["href"].split("page=")[-1]
+                )
+            else:
                 break
 
 
@@ -221,9 +241,7 @@ def scrape():
             mapping=["id"],
             part_of_record_identity=True,
         ),
-        hours_of_operation=sp.MappingField(
-            mapping=["open_hours_formatted"], raw_value_transform=human_hours
-        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"]),
         location_type=sp.MappingField(
             mapping=["type"],
             part_of_record_identity=True,

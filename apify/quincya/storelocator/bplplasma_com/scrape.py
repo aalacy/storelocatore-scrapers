@@ -54,7 +54,12 @@ def fetch_data():
 
     for item in items:
 
+        if "Coming Soon" in str(list(item.stripped_strings)):
+            continue
         location_name = "BPL Plasma - " + item.h3.text.strip()
+
+        # if "generated location" in location_name.lower():
+        #     continue
 
         raw_address = item.find_all(class_="field__item")[1].text.strip().split(",")
         street_address = " ".join(raw_address[:-2]).strip()

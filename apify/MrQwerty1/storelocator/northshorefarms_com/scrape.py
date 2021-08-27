@@ -1,9 +1,8 @@
 import csv
-import time
 import usaddress
 
 from lxml import html
-from sgselenium import SgFirefox
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -76,14 +75,10 @@ def get_address(line):
     return street_address, city, state, postal
 
 
-def get_coords_from_google_url(url):
+def get_coords_from_embed(text):
     try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
     except IndexError:
         latitude, longitude = "<MISSING>", "<MISSING>"
 
@@ -94,24 +89,18 @@ def fetch_data():
     out = []
     locator_domain = "http://northshorefarms.com/"
     page_url = "http://northshorefarms.com/contact-us/"
-    coords = []
 
-    with SgFirefox() as fox:
-        fox.get(page_url)
-        time.sleep(10)
-        source = fox.page_source
-        iframes = fox.find_elements_by_xpath("//div[@class='map']/iframe")
-        for iframe in iframes:
-            fox.switch_to.frame(iframe)
-            root = html.fromstring(fox.page_source)
-            coords.append(
-                get_coords_from_google_url(
-                    "".join(root.xpath("//a[contains(@href, 'll=')]/@href"))
-                )
-            )
-            fox.switch_to.default_content()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+    }
 
-    tree = html.fromstring(source)
+    session = SgRequests()
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@class='indent1']/table")
 
     for d in divs:
@@ -127,13 +116,13 @@ def fetch_data():
             "".join(d.xpath(".//tr[./td/span[text()='Phone Number']]/td/text()"))
             or "<MISSING>"
         )
-        latitude, longitude = coords.pop(0)
+
+        text = "".join(d.xpath("./preceding-sibling::div[@class='map'][1]/iframe/@src"))
+        latitude, longitude = get_coords_from_embed(text)
         location_type = "<MISSING>"
+        text = "".join(tree.xpath("//div[@class='entry-content']/text()"))
         hours_of_operation = (
-            "".join(tree.xpath("//h6/span[@style='color: #800000;']/text()"))
-            .split("are")[-1]
-            .replace(".", "")
-            .strip()
+            text.split("between")[1].split("!")[0].replace("and", "-").strip()
         )
 
         row = [

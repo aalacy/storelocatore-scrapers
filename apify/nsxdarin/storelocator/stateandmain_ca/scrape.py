@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://stateandmain.ca"
+    url = "https://spreadsheets.google.com/feeds/list/1MUyodpsytUuuYhHJTepJOHdD-uTgd0X5yzZJZqFtYSo/1/public/values?alt=json"
     r = session.get(url, headers=headers)
     website = "stateandmain.ca"
     typ = "<MISSING>"
@@ -46,63 +46,62 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '"city": "' in line:
-            city = line.split('"city": "')[1].split('"')[0]
-            state = ""
-            zc = ""
-            loc = ""
-            name = ""
-            lat = ""
-            lng = ""
-            hours = ""
-            phone = ""
-            add = ""
-            store = "<MISSING>"
-        if '"postalCode": "' in line:
-            zc = line.split('"postalCode": "')[1].split('"')[0]
-        if '"province": "' in line:
-            state = line.split('"province": "')[1].split('"')[0]
-        if '"Title": "' in line:
-            name = line.split('"Title": "')[1].split('"')[0]
-        if '"slug": "' in line:
-            loc = (
-                "https://stateandmain.ca/home/"
-                + line.split('"slug": "')[1].split('"')[0]
-            )
-        if '"geo": "' in line:
-            lat = line.split('"geo": "')[1].split(",")[0]
-            lng = line.split('"geo": "')[1].split(",")[1].split('"')[0]
-        if '"telephone": "' in line:
-            phone = line.split('"telephone": "')[1].split('"')[0]
-        if '"streetAddress": "' in line:
-            add = line.split('"streetAddress": "')[1].split('"')[0]
-        if 'PM",' in line or 'OM",' in line or 'AM",' in line or 'Closed",' in line:
-            hrs = line.split(",")[0].strip().replace("\t", "").replace('"', "")
-            if hours == "":
-                hours = hrs
-            else:
-                hours = hours + "; " + hrs
-        if '"holidayHours": {' in line and city != "undefined":
-            name = name.replace("&amp;", "&")
-            hours = hours.replace("Temporarily : Closed", "Temporarily Closed").replace(
-                "::", ":"
-            )
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if '"content":{"type":"text","$t":"storename:' in line:
+            items = line.split('"content":{"type":"text","$t":"storename:')
+            for item in items:
+                if (
+                    '{"version":"1.0"' not in item
+                    and "When no location selected" not in item
+                ):
+                    name = item.split(",")[0].strip()
+                    lat = item.split("latitude:")[1].split(",")[0].strip()
+                    lng = item.split("longitude:")[1].split(",")[0].strip()
+                    try:
+                        add = item.split("unit:")[1].split(",")[0].strip()
+                    except:
+                        add = ""
+                    add = (
+                        add + " " + item.split("streetnumber:")[1].split(",")[0].strip()
+                    )
+                    add = add.strip()
+                    add = add + " " + item.split("street:")[1].split(",")[0].strip()
+                    city = item.split("city:")[1].split(",")[0].strip()
+                    state = item.split("province:")[1].split(",")[0].strip()
+                    zc = item.split("postalcode:")[1].split(",")[0].strip()
+                    phone = item.split("phonenumber:")[1].split(",")[0].strip()
+                    hours = item.split('"gsx$hours":{"$t":"')[1].split('"},"')[0]
+                    store = item.split('"gsx$storenumber":{"$t":"')[1].split('"')[0]
+                    loc = "<MISSING>"
+                    hours = (
+                        hours.replace("\\u003cbr\\u003e\\n", "; ")
+                        .replace("\\u0026", "&")
+                        .replace(" ;", ";")
+                        .replace("\\u003cbr\\u003e", "; ")
+                    )
+                    if "; \\u" in hours:
+                        hours = hours.split("; \\u")[0].strip()
+                    if "\\u003cb" in hours:
+                        hours = hours.split("\\u003cb")[0].strip()
+                    hours = hours.replace("\\n", "")
+                    hours = hours.strip()
+                    if hours[-1:] == ";":
+                        hours = hours[0 : len(hours) - 1]
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

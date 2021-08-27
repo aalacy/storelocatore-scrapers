@@ -63,6 +63,16 @@ def fetch_data():
             state = addinfo.split(",")[2].strip()
         zc = "<MISSING>"
         phone = "<MISSING>"
+        ueurl = item["extra"].replace("\\", "")
+        logger.info(store)
+        try:
+            r2 = session.get(ueurl, headers=headers)
+            for line in r2.iter_lines():
+                line = str(line.decode("utf-8"))
+                if '"streetAddress":"' in line:
+                    add = line.split('"streetAddress":"')[1].split('"')[0]
+        except:
+            pass
         yield [
             website,
             loc,

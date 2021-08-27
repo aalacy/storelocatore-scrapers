@@ -49,6 +49,9 @@ def fetch_data():
                 )
             )
 
+            if len(address_info) <= 0:
+                log.info("different url format")
+                continue
             street_address = address_info[0].strip()
 
             city = address_info[1].strip().split(" ")[0].strip(" ,")

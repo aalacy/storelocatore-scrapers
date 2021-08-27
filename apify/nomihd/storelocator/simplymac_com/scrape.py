@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 import us
+from sgscrape import sgpostal as parser
 
 website = "simplymac.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -37,6 +38,7 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
+                "raw_address",
             ]
         )
         # Body
@@ -74,21 +76,16 @@ def fetch_data():
             if location_name == "":
                 location_name = "<MISSING>"
 
-            address = store["streetaddress"]
-            if len(address.split(",")) == 4:
-                street_address = ", ".join(address.split(",")[:-2]).strip()
-                city = address.split(",")[-2].strip()
-                state = address.split(",")[-1].strip().split(" ")[0].strip()
-                zip = address.split(",")[-1].strip().split(" ")[1].strip()
-            else:
-                street_address = " ".join(
-                    ", ".join(address.split(",")[:-1]).strip().split(" ")[:-1]
-                ).strip()
-                city = "".join(
-                    ", ".join(address.split(",")[:-1]).strip().split(" ")[-1]
-                ).strip()
-                state = address.split(",")[-1].strip().split(" ")[0].strip()
-                zip = address.split(",")[-1].strip().split(" ")[1].strip()
+            raw_address = store["streetaddress"]
+            formatted_addr = parser.parse_address_usa(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
+
             country_code = "<MISSING>"
             if us.states.lookup(state):
                 country_code = "US"
@@ -175,6 +172,7 @@ def fetch_data():
                 latitude,
                 longitude,
                 hours_of_operation,
+                raw_address,
             ]
             loc_list.append(curr_list)
     else:

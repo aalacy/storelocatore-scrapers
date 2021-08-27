@@ -1,7 +1,6 @@
 import csv
-import json
 
-from lxml import html
+from concurrent import futures
 from sgrequests import SgRequests
 
 
@@ -34,75 +33,112 @@ def write_output(data):
             writer.writerow(row)
 
 
-def clean_hours(text):
-    text = text.replace(".", ":")
-    amount = text.count(":")
-    while amount != 1:
-        text = text.rsplit(":", 1)[0]
-        amount = text.count(":")
+def get_ids():
+    ids = []
+    api_url = "https://api.flipdish.co/Restaurant/PickupPhysicalRestaurantSummariesFromCoordinates"
 
-    return text
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Flipdish-White-Label-Id": "caspianpizza",
+        "X-Coordinates": "27.9475,-82.4584,4",
+        "Flipdish-App-Type": "Web",
+        "Origin": "https://caspian.pizza",
+        "Connection": "keep-alive",
+        "Referer": "https://caspian.pizza/",
+        "TE": "Trailers",
+    }
+
+    params = (
+        ("Latitude", "27.9475"),
+        ("Longitude", "-82.4584"),
+        ("skip", "0"),
+        ("count", "1000"),
+    )
+
+    session = SgRequests()
+    r = session.get(api_url, headers=headers, params=params)
+    js = r.json()["Data"]
+    for j in js:
+        ids.append(j.get("PhysicalRestaurantId"))
+
+    return ids
+
+
+def get_data(_id):
+    locator_domain = "https://caspian.pizza/"
+    page_url = "https://caspian.pizza/order-online-2/#/collection"
+    api_url = f"https://api.flipdish.co/Restaurant/PickupRestaurantDetails/{_id}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Flipdish-White-Label-Id": "caspianpizza",
+        "Flipdish-App-Type": "Web",
+        "Origin": "https://caspian.pizza",
+        "Connection": "keep-alive",
+        "Referer": "https://caspian.pizza/",
+        "TE": "Trailers",
+    }
+
+    session = SgRequests()
+    r = session.get(api_url, headers=headers)
+    j = r.json()["Data"]
+
+    location_name = j.get("RestaurantName")
+    line = j.get("PhysicalRestaurantAddress").split(",")
+    line = list(filter(None, line))
+
+    street_address = line.pop(0).strip()
+    city = line[0].strip()
+    postal = line[-1].strip()
+    if city.startswith("LN1"):
+        city = line[-1].strip()
+        postal = line[-2].strip()
+    if " " not in postal:
+        postal = "<MISSING>"
+        city = line[-1].strip()
+    state = "<MISSING>"
+    country_code = "GB"
+    store_number = "<MISSING>"
+    phone = j.get("DisplayPhoneNumber") or "<MISSING>"
+    latitude = j.get("Latitude") or "<MISSING>"
+    longitude = j.get("Longitude") or "<MISSING>"
+    location_type = "<MISSING>"
+    hours_of_operation = "<MISSING>"
+
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
+
+    return row
 
 
 def fetch_data():
     out = []
-    locator_domain = "https://caspianpizza.co.uk/"
-    page_url = "https://caspianpizza.co.uk/contact.html"
+    ids = get_ids()
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'schema.org')]/text()"))
-    js = json.loads(text)
-
-    for j in js:
-        a = j.get("address")
-        street_address = a.get("streetAddress") or "<MISSING>"
-        city = a.get("postalCode") or "<MISSING>"
-        state = "<MISSING>"
-        postal = a.get("addressLocality").strip() or "<MISSING>"
-        if " " not in postal:
-            state = postal
-            postal = "<MISSING>"
-        if "," in postal:
-            state = postal.split(",")[0].strip()
-            postal = postal.split(",")[-1].strip()
-        country_code = a.get("addressCountry") or "<MISSING>"
-        store_number = "<MISSING>"
-        location_name = j.get("name")
-        phone = j.get("telephone") or "<MISSING>"
-        loc = j.get("geo")
-        latitude = loc.get("latitude") or "<MISSING>"
-        longitude = loc.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-
-        _tmp = []
-        hours = j.get("openingHoursSpecification") or []
-        for h in hours:
-            day = h.get("dayOfWeek").split("/")[-1]
-            start = clean_hours(h.get("opens"))
-            end = clean_hours(h.get("closes"))
-            _tmp.append(f"{day}: {start} - {end}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
+        for future in futures.as_completed(future_to_url):
+            row = future.result()
+            if row:
+                out.append(row)
 
     return out
 

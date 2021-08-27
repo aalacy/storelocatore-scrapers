@@ -31,6 +31,57 @@ def write_output(data):
             writer.writerow(row)
 
 
+def clean_hours(text):
+    _tmp = []
+    text = (
+        text.replace(", ", "|")
+        .replace(": ", "|")
+        .replace(" to ", " - ")
+        .lower()
+        .split("|")
+    )
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    for t in text:
+        t = (
+            t.replace("patio open", "")
+            .replace("delivery and takeout available", "")
+            .replace("open for delivery and takeout", "")
+            .replace("open for delivery and pick-up", "")
+            .replace("delivery and pick-up", "")
+            .strip()
+        )
+        if "-" in t and "dine-in" not in t:
+            _tmp.append(t)
+            continue
+        if "temporarily" in t:
+            _tmp.append(t)
+            continue
+
+        for d in days:
+            if d in t:
+                _tmp.append(t)
+                break
+
+    text = ";".join(_tmp)
+    separators = [";delivery", ". delivery", "  delivery", ";monday", "until"]
+    for sep in separators:
+        if sep in text:
+            text = text.split(sep)[0].strip()
+
+    if text.endswith("."):
+        text = text[:-1]
+
+    return text.replace(";", " ")
+
+
 def fetch_data():
     out = []
     locator_domain = "https://joeyrestaurants.com/"
@@ -60,6 +111,7 @@ def fetch_data():
         location_type = "<MISSING>"
         hours_of_operation = j.get("hours") or "<MISSING>"
         hours_of_operation = hours_of_operation.replace("<br />", " ")
+        hours_of_operation = clean_hours(hours_of_operation)
 
         row = [
             locator_domain,

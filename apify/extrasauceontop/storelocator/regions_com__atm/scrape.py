@@ -3,7 +3,7 @@ import json
 from sgrequests import SgRequests
 import pandas as pd
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 
 def extract_json(html_string):
@@ -40,9 +40,7 @@ def extract_json(html_string):
 def get_data():
 
     session = SgRequests()
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_results=25
-    )
+    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=30)
 
     locator_domains = []
     page_urls = []
@@ -68,7 +66,6 @@ def get_data():
         response = session.get(url).text
 
         json_objects = extract_json(response)
-
         for location in json_objects:
             if "title" not in location.keys():
                 continue
@@ -108,8 +105,6 @@ def get_data():
             latitudes.append(latitude)
             longitudes.append(longitude)
             store_numbers.append(store_number)
-
-            search.found_location_at(latitude, longitude)
 
         soup = bs(response, "html.parser")
 

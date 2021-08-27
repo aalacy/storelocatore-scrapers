@@ -4,6 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape import sgpostal as parser
 
 website = "dintaifungusa.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -95,48 +96,77 @@ def fetch_data():
         )
 
     """ UK LOCATIONS """
-    search_url = "https://www.dintaifung.com.tw/eng/store_list.php?cid=18"
-    stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="info"]')
+    global_loc_req = session.get(
+        "https://www.dintaifung.com.tw/eng/store_world.php", headers=headers
+    )
+    global_sel = lxml.html.fromstring(global_loc_req.text)
+    countries = global_sel.xpath('//a[contains(@class,"worldname ")]')
+    for country in countries:
+        search_url = "https://www.dintaifung.com.tw/eng/" + "".join(
+            country.xpath("@href")
+        ).strip().replace("store_world", "store_list")
+        log.info(search_url)
+        country_code = "".join(country.xpath("text()")).strip()
 
-    for store in stores:
-        page_url = search_url
-        locator_domain = website
-        location_name = "".join(store.xpath('div[@class="name"]/text()')).strip()
+        stores_req = session.get(search_url, headers=headers)
+        stores_sel = lxml.html.fromstring(stores_req.text)
+        stores = stores_sel.xpath('//div[@class="info"]')
 
-        address = "".join(store.xpath('.//div[@class="addr"]//text()')).strip()
-        street_address = ", ".join(address.split(",")[:-1]).strip()
-        city = address.split(",")[-1].strip().split(" ", 1)[0].strip()
-        state = "<MISSING>"
-        zip = address.split(",")[-1].strip().split(" ", 1)[-1].strip()
-        country_code = "GB"
+        for store in stores:
+            page_url = search_url
+            locator_domain = website
+            location_name = "".join(store.xpath('div[@class="name"]/text()')).strip()
 
-        phone = "".join(store.xpath('.//div[@class="line"][2]/div/text()')).strip()
+            address = "".join(store.xpath('.//div[@class="addr"]//text()')).strip()
+            street_address = ""
+            city = ""
+            state = ""
+            zip = ""
+            raw_address = "<MISSING>"
+            if country_code == "United Kingdom":
+                street_address = ", ".join(address.split(",")[:-1]).strip()
+                city = address.split(",")[-1].strip().split(" ", 1)[0].strip()
+                state = "<MISSING>"
+                zip = address.split(",")[-1].strip().split(" ", 1)[-1].strip()
+            else:
+                raw_address = address
+                formatted_addr = parser.parse_address_intl(address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
+                city = formatted_addr.city
+                state = formatted_addr.state
+                zip = formatted_addr.postcode
 
-        hours_of_operation = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+            phone = "".join(store.xpath('.//div[@class="line"][2]/div/text()')).strip()
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            store_number = "<MISSING>"
+            location_type = "<MISSING>"
+
+            hours_of_operation = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

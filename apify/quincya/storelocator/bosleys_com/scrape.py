@@ -10,6 +10,7 @@ log = sglog.SgLogSetup().get_logger(logger_name="petvalu.com")
 
 session = SgRequests()
 
+
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -52,13 +53,15 @@ def parse_hours(store):
 
 
 def fetch_data():
+
     headers = {
         "authority": "store.petvalu.com",
         "accept": "application/json, text/javascript, */*; q=0.01",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "origin": "https://store.petvalu.com",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
     }
+
     base_url = "petvalu.com"
     keys = set()
 
@@ -88,12 +91,13 @@ def fetch_data():
         )
         for store in stores:
             location_name = store["na"]
+            latitude = store["lat"]
+            longitude = store["lng"]
+            search.found_location_at(float(latitude), float(longitude))
             if "bosley" not in location_name.lower():
                 continue
             store_number = store["ID"]
-            street_address = store["st"]
-            if "<" in street_address:
-                street_address = street_address.split("<")[0].strip()
+            street_address = store["st"].replace("<br>", " ").strip()
             city = store["ct"].strip()
             state = store["rg"].strip()
             zipp = store["zp"].strip()
@@ -107,9 +111,6 @@ def fetch_data():
                 keys.add(key)
             phone = store["te"] if "te" in store else "<MISSING>"
             location_type = "<MISSING>"
-            latitude = store["lat"]
-            longitude = store["lng"]
-            search.found_location_at(latitude, longitude)
             page_url = store["gu"]
             hours = parse_hours(store)
             res = [base_url]

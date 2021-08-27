@@ -3,21 +3,33 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('amazinglashstudio_com')
-
-
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,39 +39,41 @@ session = SgRequests()
 
 
 def fetch_data():
-    # Your scraper here
 
     res = session.get("https://www.amazinglashstudio.com/find-a-studio?searchVal=54000")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    #logger.info(soup)
+    soup = BeautifulSoup(res.text, "html.parser")
 
     data = re.findall('(studioArray.*)"};', str(soup), re.DOTALL)[0]
     urls = data.split('"};')
-    # logger.info(urls)
-    ids = re.findall('\["([\d]+)"\]', data)
+
+    ids = re.findall('\\["([\\d]+)"\\]', data)
 
     all = []
     for yrl in urls:
 
-        url = "https://www.amazinglashstudio.com" + re.findall('(/studios/.*)', yrl)[0]
-        logger.info(url)
-        if url == 'https://www.amazinglashstudio.com/studios/tx/beaumont/beaumont': #redirects
+        url = "https://www.amazinglashstudio.com" + re.findall("(/studios/.*)", yrl)[0]
+
+        if url == "https://www.amazinglashstudio.com/studios/tx/beaumont/beaumont":
             continue
         res = session.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        if 'coming soon' in str(soup).lower():
-            logger.info('coming soon')
+        soup = BeautifulSoup(res.text, "html.parser")
+        if "coming soon" in str(soup).lower():
+
             continue
-        
-        jss = soup.find_all('script', {"type": "application/ld+json"})
+
+        jss = soup.find_all("script", {"type": "application/ld+json"})
         if len(jss) == 1:
             jss = jss[0]
         elif len(jss) == 2:
             jss = jss[1]
         else:
-            logger.info("lllllllllllllllllllllllllllllllllllllllllllllllll")
-        # break
-        js = jss.contents
+
+            continue
+
+        try:
+            js = jss.contents
+        except:
+            continue
         js = json.loads("".join(js), strict=False)
         addr = js["address"]
         p = js["telephone"]
@@ -75,24 +89,27 @@ def fetch_data():
         if s == "TBD":
             s = "<MISSING>"
         if "openingHours" in js:
-            tim = ' '.join(js["openingHours"])
+            tim = " ".join(js["openingHours"])
         else:
             tim = "<MISSING>"
-        all.append([
-            "https://www.amazinglashstudio.com",
-            js["name"],
-            s,
-            addr["addressLocality"],
-            addr["addressRegion"],
-            addr["postalCode"].split("-")[0],
-            'US',
-            ids[urls.index(yrl)],  # store #
-            p,  # phone
-            js["@type"],  # type
-            lat,  # lat
-            long,  # long
-            tim,  # timing
-            url])
+        all.append(
+            [
+                "https://www.amazinglashstudio.com",
+                js["name"],
+                s,
+                addr["addressLocality"],
+                addr["addressRegion"],
+                addr["postalCode"].split("-")[0],
+                "US",
+                ids[urls.index(yrl)],
+                p,  # phone
+                js["@type"],
+                lat,
+                long,
+                tim,
+                url,
+            ]
+        )
 
     return all
 

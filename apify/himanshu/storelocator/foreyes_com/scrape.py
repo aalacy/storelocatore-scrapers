@@ -41,7 +41,7 @@ def fetch_data():
             time = hour[1].text + "-" + hour[2].text
             hours_of_operation = hours_of_operation + day + " " + time + " "
         yield SgRecord(
-            locator_domain="https://www.gretchenscottdesigns.com/",
+            locator_domain="https://foreyes.com/",
             page_url=page_url,
             location_name=location_name,
             street_address=street_address.strip(),

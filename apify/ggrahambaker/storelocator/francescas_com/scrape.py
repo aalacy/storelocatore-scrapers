@@ -1,103 +1,81 @@
-import csv
-import os
-from sgselenium import SgSelenium
-from selenium.common.exceptions import NoSuchElementException
-import json
-import time
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
+    api_url = "https://www.francescas.com/api/commerce/storefront/locationUsageTypes/SP/locations/?startIndex=0&pageSize=453&filter=geo%20near(39.0718795%2C-94.9143239%2C10000000)&includeAttributeDefinition=true"
+    session = SgRequests()
 
-def fetch_data():    
-    locator_domain = 'https://www.francescas.com/'
-    ext = 'store-locator/all-stores.do'
+    cookies = {
+        "sb-sf-at-prod": "at=9AQlj%2FOkUGeF9XjLQn9yvUmCG9bZXk2y5hrW1x6%2F1zrazXNN9Mb3dg5AtCEl4GTZ%2BhGxre7SCMpGrWKFsYSmxRulELnh8APVsg1gS6AlJRODziLZSgLmQiycmIByx8nlscHyvl8NZMpGbHrj95je2ctn8mwlDGqYex1GN1la4rttbfHnjIjWcUunOtxCgnIds8vK3b1hrN4PLL6qSt2lJi6BvBs7VLA0gRw6ujPtt7PCwE4MK6zsxkyHi%2BwjCtZYjfQaqmhnrR%2BKZePX2l%2BatujtwY%2F0Jhj5KaN4Xutb5tJBaqTqD2FMgVi5Exc7B8m4qxoylOErFEVq2yN9ISbymw%3D%3D",
+    }
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    }
+    r = session.get(api_url, headers=headers, cookies=cookies)
 
-    link_list = []
-    locs = driver.find_elements_by_css_selector('div.eslStore.ml-storelocator-headertext')
-    for loc in locs:
-        link = loc.find_element_by_css_selector('a').get_attribute('href')
-        
-        if link == '':
-            continue
-        
-        if link in link_list:
-            continue
-            
-        link_list.append(link)
-        
-    all_store_data = []
-    dup_tracker = set()
-    for i, link in enumerate(link_list):
-        driver.get(link)
-        driver.implicitly_wait(10)
-        time.sleep(3)
+    js = r.json()
+    for j in js["items"]:
 
-        try:
-            location_name = driver.find_element_by_xpath('//span[@itemprop="name"]').text
-        
-        except NoSuchElementException:
-            continue
+        a = j.get("address")
+        location_name = j.get("name")
+        street_address = f"{a.get('address1')} {a.get('address2')}".strip()
+        state = a.get("stateOrProvince") or "<MISSING>"
+        postal = a.get("postalOrZipCode") or "<MISSING>"
+        country_code = "US"
+        city = a.get("cityOrTown") or "<MISSING>"
+        store_number = j.get("code") or "<MISSING>"
+        slug = "".join(location_name).split("#")[0].strip().lower().replace(" ", "-")
+        page_url = f"https://www.francescas.com/store-details/{store_number}/{slug}"
+        latitude = j.get("geo").get("lat") or "<MISSING>"
+        longitude = j.get("geo").get("lng") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        tmp = []
+        days = [
+            "sunday",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+        ]
+        for d in days:
+            day = d
+            times = j.get("regularHours").get(f"{d}").get("label")
+            line = f"{day} {times}"
+            tmp.append(line)
+        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        if "".join(location_name).find("francescascollections") != -1:
+            page_url = "https://www.francescas.com/store-details/francescascollections/"
+            store_number = "<MISSING>"
 
-        if len(location_name.split('#')) == 2:
-            store_number = location_name.split('#')[1].split('-')[0].strip()
-        else:
-            store_number = '<MISSING>'
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text.replace('\n', ' ')
-        if street_address not in dup_tracker:
-            dup_tracker.add(street_address)
-        else:
-            continue
-        city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text
-        state = driver.find_element_by_xpath('//span[@itemprop="addressRegion"]').text
-        zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
-        if len(zip_code) == 4:
-            zip_code = '0' + zip_code
-        hours = driver.find_element_by_css_selector('span.ml-storelocator-hours-details').text.replace('\n', ' ')
+        sgw.write_row(row)
 
-        try:
-            phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
-        except NoSuchElementException:
-            phone_number = '<MISSING>'
 
-        loc_j = driver.find_elements_by_xpath('//script[@type="text/javascript"]')
-        for i, loc in enumerate(loc_j):
-            if 'MarketLive.StoreLocator.storeLocatorDetailPageReady' in loc.get_attribute('innerHTML'):
-                text = loc.get_attribute('innerHTML')
-                start = text.find('location')
-                text_2 = text[start-1:]
-                
-                end = text_2.find('}')
-                
-                coords = json.loads(text_2[text_2.find(':') + 1:end + 1])
-                
-                lat = coords['latitude']
-                longit = coords['longitude']
-        
-        country_code = 'US'
-        location_type = '<MISSING>'
-        page_url = link
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
-        
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    locator_domain = "https://www.francescas.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
