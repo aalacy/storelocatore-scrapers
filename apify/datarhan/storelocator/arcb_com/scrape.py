@@ -87,7 +87,6 @@ def fetch_data():
             '//h4[contains(text(), "Phone Number")]/following-sibling::div/text()'
         )
         phone = phone[0] if phone else ""
-        print(page_url)
         geo = re.findall(r"LatLng\((.+?)\);", loc_response.text)
         if not geo:
             continue
