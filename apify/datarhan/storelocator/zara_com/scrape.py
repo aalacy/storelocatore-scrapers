@@ -13,8 +13,10 @@ identities = set()
 
 def record_transformer(poi):
     domain = "zara.com"
-    location_name = poi["addressLines"][0]
     street_address = poi["addressLines"][0]
+    location_name = poi.get("name")
+    if not location_name:
+        location_name = street_address
     city = poi["city"]
     city = city if city else "<MISSING>"
     state = poi.get("state")
@@ -25,6 +27,8 @@ def record_transformer(poi):
     store_number = poi["id"]
     phone = poi["phones"]
     phone = phone[0] if phone else "<MISSING>"
+    if phone == "--":
+        phone = SgRecord.MISSING
     location_type = poi["datatype"]
     latitude = poi["latitude"]
     latitude = latitude if latitude else "<MISSING>"
