@@ -76,6 +76,8 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             SerializableRequest(url=url, context={"country": country["value"]})
         )
 
+    return True
+
 
 def fetch_records_by_option(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
