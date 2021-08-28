@@ -217,7 +217,7 @@ def wait_load(driver):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
+    driver = SgSelenium(is_headless=False).chrome()
     driver.get(
         "https://favorite.co.uk/store-finder?postcode=london&delivery=0&lat=51.5073509&lng=-0.1277583"
     )
@@ -228,7 +228,7 @@ def fetch_data():
             city_list
         )
         driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
-        time.sleep(0.5)
+        time.sleep(1)
         driver = wait_load(driver)
         script_element = driver.find_element_by_xpath(
             '//*[@id="ajx-storefinder"]/script'
