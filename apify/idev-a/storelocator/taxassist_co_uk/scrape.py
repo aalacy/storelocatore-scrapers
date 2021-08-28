@@ -64,7 +64,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         hours_of_operation = "; ".join(hours)
         if re.search(r"please contact", hours_of_operation, re.IGNORECASE):
             hours_of_operation = ""
-        raw_address = ""
+        raw_address = " ".join(sp2.address.stripped_strings)
         addr = parse_address_intl(raw_address + ", uk")
         street_address = addr.street_address_1
         if addr.street_address_2:
@@ -82,6 +82,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             phone=location["telephone"],
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
