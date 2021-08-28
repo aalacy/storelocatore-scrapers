@@ -16,7 +16,6 @@ def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
-    addressess = []
     locator_domain = "https://unikwax.com"
     r = session.get(
         "https://unikwax.com/studio-locations/?address%5B0%5D&tax%5Bregion%5D%5B0%5D&post%5B0%5D=location&distance=300&form=1&per_page=50&units=imperial&lat&lng",
