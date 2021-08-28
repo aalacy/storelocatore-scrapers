@@ -7,17 +7,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def get_hours(hours) -> str:
-    tmp = []
-    for h in hours:
-        day = h.get("weekday")
-        times = h.get("text")
-        line = f"{day} {times}"
-        tmp.append(line)
-    hours_of_operation = "; ".join(tmp)
-    return hours_of_operation
-
-
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://mcdonalds.be/"
@@ -57,10 +46,10 @@ def fetch_data(sgw: SgWriter):
         hourss = j.get("opening_hours_en")
         a = html.fromstring(hourss)
         cms = " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
-        hours_of_operation = "<MISSING>"
-        hours = j.get("opening_hours") or "<MISSING>"
-        if hours != "<MISSING>":
-            hours_of_operation = get_hours(hours)
+        hours_of_operation = j.get("opening_hours_en")
+        a = html.fromstring(hours_of_operation)
+        hours_of_operation = " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+
         if (
             cms.find("Opening Soon") != -1
             or cms.find("OPENING SOON") != -1
