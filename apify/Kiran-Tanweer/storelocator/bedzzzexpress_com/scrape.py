@@ -1,136 +1,87 @@
+import json
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import time
-from sgscrape import sgpostal as parser
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("bedzzzexpress_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
+website = "mrgas_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://www.mrgas.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    url = "https://bedzzzexpress.com/stores/"
-    r = session.get(url, headers=headers, verify=False)
-    soups = BeautifulSoup(r.text, "html.parser")
-    scripts = soups.findAll("script")[15]
-    scripts = str(scripts)
-    scripts = scripts.lstrip(
-        '<script type="text/javascript">\n  // <![CDATA[\n jQuery(document).ready(\n   function()\n     {\n       jQuery("#map1").dmxGoogleMaps(\n         {"dataSource": "", "dataSourceType": "dynamic", "zoom": 6, "markers": [ {'
-    )
-    coords = scripts.split('"latitude": ')
-    linklist = soups.find("div", {"id": "StoreList"})
-    sections = linklist.findAll("div", {"class": "fgm-section"})
-    for sec in sections:
-        info = sec.find("a", {"class": "sot_store_header_link"})
-        link = "https://bedzzzexpress.com" + info["href"]
-        title = info.text
-        allinfo = sec.findAll("p")
-        storeid = allinfo[0].find("input")["value"]
-        address = str(allinfo[1])
-        address = address.lstrip("<p>")
-        address = address.rstrip("</p>")
-        address = address.strip()
-        address = address.replace("<br/>", " ")
-        address = address.replace(",", "")
-        phone = allinfo[2].find("a").text
-        hours = allinfo[5].text.strip()
-        hours = hours.replace("pmS", "pm S")
-        if (
-            hours
-            == "This is a Bedzzz Central Warehouse and Corporate Offices  Customer Pick Up Only"
-        ):
-            hours = "<MISSING>"
-        parsed = parser.parse_address_usa(address)
-        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-        street = (
-            (street1 + ", " + parsed.street_address_2)
-            if parsed.street_address_2
-            else street1
-        )
-        city = parsed.city if parsed.city else "<MISSING>"
-        state = parsed.state if parsed.state else "<MISSING>"
-        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-        search = '"' + storeid + '"'
-        for c in coords:
-            if c.find(search) != -1:
-                lat = c.split(",")[0]
-                lng = c.split('"longitude":')[1].split(",")[0]
-
-        data.append(
-            [
-                "https://bedzzzexpress.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                storeid,
-                phone,
-                "<MISSING>",
-                lat,
-                lng,
-                hours,
-            ]
-        )
-    return data
+    if True:
+        url = "https://bedzzzexpress.com/stores/"
+        r = session.get(url, headers=headers)
+        coord_list = r.text.split('"markers":')[1].split(", ]}")[0] + "]"
+        coord_list = json.loads(coord_list)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "fgm-section pdiv"})
+        for loc in loclist:
+            temp = loc.find("h2").find("a")
+            page_url = "https://bedzzzexpress.com" + temp["href"]
+            log.info(page_url)
+            location_name = temp.text
+            loc = loc.findAll("p")
+            address = loc[0].get_text(separator="|", strip=True).split("|")
+            street_address = address[0]
+            address = address[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            phone = loc[1].text
+            hours_of_operation = (
+                loc[2].get_text(separator="|", strip=True).replace("|", " ")
+            )
+            for coord in coord_list:
+                if phone in coord["html"]:
+                    latitude = coord["latitude"]
+                    longitude = coord["longitude"]
+                    break
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
