@@ -27,7 +27,6 @@ def fetch_data():
         page_limit = (
             soup.find("a", {"title": "Go to last page"}).findAll("span")[-1].text
         )
-        count = 1
         for link in range(int(page_limit)):
             url = "https://www.barnardos.org.uk/shops/our-shops?page=" + str(link)
             log.info(f"Fetching locations from Page No {link}")
@@ -37,8 +36,6 @@ def fetch_data():
             for loc in loclist:
                 page_url = "https://www.barnardos.org.uk" + loc.find("a")["href"]
                 log.info(page_url)
-                print(count)
-                count = count + 1
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 temp = soup.findAll("div", {"class": "shop-entity__content"})
