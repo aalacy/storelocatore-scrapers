@@ -10,7 +10,7 @@ _headers = {
 }
 
 locator_domain = "https://mcdonalds.by"
-base_url = "https://mcdonalds.by/by/restaurants.html"
+base_url = "https://mcdonalds.by/en/restaurants.html"
 
 
 def fetch_data():
