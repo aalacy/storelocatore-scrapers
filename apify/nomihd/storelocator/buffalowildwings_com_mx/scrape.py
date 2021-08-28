@@ -57,15 +57,15 @@ def fetch_data():
         page_url = search_url
         locator_domain = website
 
-        location_name = " ".join(
-            store.xpath('div[@class="title-div-sucursal-item"]/h3[2]/text()')
+        location_name = "".join(
+            store.xpath('div[@class="title-div-sucursal-item"]/h3[1]/text()')
         ).strip()
 
         street_address = ", ".join(
             store.xpath('.//h4[@class="direccionsucursal"]/text()')
         ).strip()
         city = "".join(
-            store.xpath('div[@class="title-div-sucursal-item"]//text()')
+            store.xpath('div[@class="title-div-sucursal-item"]/h3[2]/text()')
         ).strip()
         state = "<MISSING>"
         zip = "<MISSING>"
@@ -79,10 +79,27 @@ def fetch_data():
             .strip()
             .split("y")[0]
             .strip()
+            .split("\n")[0]
+            .strip()
         )
 
         hours = store.xpath('.//div[@class="accordion-content"]//p/text()')
-        hours_of_operation = "; ".join(hours).strip()
+        hours_list = []
+        for hour in hours:
+            if (
+                len(
+                    "".join(hour)
+                    .strip()
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "")
+                    .strip()
+                )
+                > 0
+            ):
+                hours_list.append("".join(hour).strip())
+
+        hours_of_operation = "; ".join(hours_list).strip()
         map_link = "".join(
             store.xpath('.//a[@class="google-maps-button w-button"]/@href')
         ).strip()
