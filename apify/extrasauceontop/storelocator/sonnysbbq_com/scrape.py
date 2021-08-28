@@ -38,7 +38,6 @@ def get_driver(url, driver=None):
 
 
 def get_data():
-    class_name = "location-view"
     url = "https://api.sonnysbbq.com/api/v1/locations.bystate"
     driver = get_driver(url)
 
