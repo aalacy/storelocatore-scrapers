@@ -34,6 +34,7 @@ def fetch_data():
             soup = BeautifulSoup(main_r.text, "html.parser")
             loclist = soup.find("ul", {"class": "teaser-list__teasers"}).findAll("li")
             for loc in loclist:
+                location_type = loc.find("span", {"class": "teaser__type"}).text
                 page_url = "https://www.barnardos.org.uk" + loc.find("a")["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
@@ -77,7 +78,7 @@ def fetch_data():
                     country_code=country_code,
                     store_number=MISSING,
                     phone=phone.strip(),
-                    location_type=MISSING,
+                    location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
