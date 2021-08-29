@@ -23,7 +23,6 @@ def fetch_data():
     for store_url in all_locations:
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
 
         location_name = loc_dom.xpath('//h3[@itemprop="headline"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
