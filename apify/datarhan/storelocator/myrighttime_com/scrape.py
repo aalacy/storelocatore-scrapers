@@ -23,7 +23,6 @@ def fetch_data():
     for store_url in all_locations:
         if "http" not in store_url:
             store_url = urljoin("https://www.myrighttime.com/", store_url)
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
