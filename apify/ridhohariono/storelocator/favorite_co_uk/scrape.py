@@ -228,7 +228,7 @@ def fetch_data():
             city_list
         )
         driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
-        time.sleep(0.5)
+        time.sleep(1)
         driver = wait_load(driver)
         script_element = driver.find_element_by_xpath(
             '//*[@id="ajx-storefinder"]/script'

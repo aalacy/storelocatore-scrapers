@@ -91,7 +91,15 @@ def process_record(raw_results_from_one_coordinate):
             pass
 
         latitude = store.get("latitude", "<MISSING>")
+        try:
+            latitude = str(latitude)
+        except:
+            pass
         longitude = store.get("longitude", "<MISSING>")
+        try:
+            longitude = str(longitude)
+        except:
+            pass
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -162,13 +170,13 @@ def scrape():
         for country in countries:
             try:
                 search = DynamicGeoSearch(
-                    expected_search_radius_miles=100, country_codes=[country]
+                    expected_search_radius_miles=50, country_codes=[country]
                 )
                 results = parallelize(
                     search_space=[
                         (
                             coord,
-                            search.current_country(),
+                            country,
                             str(f"{currentCountryCount}/{totalCountries}"),
                         )
                         for coord in search
