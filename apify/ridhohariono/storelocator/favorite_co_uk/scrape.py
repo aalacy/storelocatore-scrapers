@@ -195,11 +195,9 @@ def get_latlong(url):
     return latlong.group(1), latlong.group(2)
 
 
-def wait_load(driver):
+def wait_load(driver, number=0):
+    number += 1
     try:
-        WebDriverWait(driver, 5).until(
-            lambda driver: driver.execute_script("return jQuery.active == 0")
-        )
         WebDriverWait(driver, 5).until(
             EC.presence_of_element_located(
                 (By.XPATH, '//*[@id="ajx-storefinder"]/script')
@@ -210,8 +208,16 @@ def wait_load(driver):
                 (By.XPATH, '//*[@id="ajx-storefinder"]/div/div[1]/div[2]')
             )
         )
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="header"]/div[2]/div/div[2]/form/input')
+            )
+        )
     except:
         driver.refresh()
+        if number < 3:
+            log.info(f"Try to Refresh for ({number}) times")
+            return wait_load(driver, number)
     return driver
 
 
@@ -223,12 +229,16 @@ def fetch_data():
     )
     for city_list in CITIES:
         driver = wait_load(driver)
-        driver.find_element_by_xpath('//*[@id="findstore-postcode"]').clear()
-        driver.find_element_by_xpath('//*[@id="findstore-postcode"]').send_keys(
-            city_list
-        )
-        driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
-        time.sleep(0.5)
+        driver.find_element_by_xpath(
+            '//*[@id="header"]/div[2]/div/div[2]/form/input'
+        ).clear()
+        driver.find_element_by_xpath(
+            '//*[@id="header"]/div[2]/div/div[2]/form/input'
+        ).send_keys(city_list)
+        driver.find_element_by_xpath(
+            '//*[@id="header"]/div[2]/div/div[2]/form/button'
+        ).click()
+        time.sleep(1)
         driver = wait_load(driver)
         script_element = driver.find_element_by_xpath(
             '//*[@id="ajx-storefinder"]/script'
