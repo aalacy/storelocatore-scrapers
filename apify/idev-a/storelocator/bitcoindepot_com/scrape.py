@@ -64,8 +64,12 @@ def fetch_data():
             country_code = "US"
             if _["state"] in ca_provinces_codes:
                 country_code = "CA"
+            slug = (
+                _["address"].replace(",", "").replace(".", "").strip().replace(" ", "-")
+            )
+            page_url = f"https://bitcoindepot.com/locations/{slug}-bitcoin-atm/"
             yield SgRecord(
-                page_url="https://bitcoindepot.com/locations/",
+                page_url=page_url,
                 location_name=_["name"],
                 street_address=_["address"].replace(",", ""),
                 city=_["city"],
@@ -87,6 +91,8 @@ if __name__ == "__main__":
                 {
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
                 }
             )
         )
