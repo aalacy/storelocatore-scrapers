@@ -96,7 +96,12 @@ def fetch_data(sgw: SgWriter):
             longitude = store["map_start_lng"]
         except:
             try:
-                raw_data = base.find_all("h4")[1].text.replace("\xa0", "").split("\n")
+                raw_data = (
+                    base.find_all("h4")[1]
+                    .text.replace("\xa0", "")
+                    .replace("St.Elko", "St.\nElko")
+                    .split("\n")
+                )
                 location_name = base.h2.text.strip()
                 try:
                     phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(base))[0]
