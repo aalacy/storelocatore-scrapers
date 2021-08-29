@@ -71,34 +71,31 @@ def fetch_data():
                     )
                 )
                 sp1 = bs(driver.page_source, "lxml")
-                try:
-                    raw_address = (
-                        sp1.select("input.tactile-searchbox-input")[-1]["aria-label"]
-                        .replace("Destination", "")
-                        .strip()
-                    )
-                    addr = parse_address_intl(raw_address)
-                    street_address = addr.street_address_1
-                    if addr.street_address_2:
-                        street_address += ", " + addr.street_address_2
-                    yield SgRecord(
-                        location_name=location_name,
-                        street_address=street_address.replace("Kuwait", ""),
-                        city=addr.city,
-                        state=addr.state,
-                        zip_postal=addr.postcode,
-                        country_code="Kuwait",
-                        phone=phone,
-                        latitude=latitude,
-                        longitude=longitude,
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours).replace("\\n", " ").strip(),
-                        raw_address=raw_address,
-                    )
-                except:
-                    import pdb
-
-                    pdb.set_trace()
+                raw_address = (
+                    sp1.select("input.tactile-searchbox-input")[-1]["aria-label"]
+                    .replace("Destination", "")
+                    .strip()
+                )
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += ", " + addr.street_address_2
+                if street_address:
+                    street_address = street_address.replace("Kuwait", "")
+                yield SgRecord(
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=addr.city,
+                    state=addr.state,
+                    zip_postal=addr.postcode,
+                    country_code="Kuwait",
+                    phone=phone,
+                    latitude=latitude,
+                    longitude=longitude,
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours).replace("\\n", " ").strip(),
+                    raw_address=raw_address,
+                )
 
 
 if __name__ == "__main__":
