@@ -11,7 +11,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 
 
-
 DOMAIN = "petsmart.com"
 logger = SgLogSetup().get_logger(logger_name="partycity_com")
 headers = {
@@ -27,15 +26,15 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     store_url_list = []
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    state_list = ( soup.find("ul", {"class": "row states-list-content"}).findAll("a"))
+    state_list = soup.find("ul", {"class": "row states-list-content"}).findAll("a")
     for idx1, state_url in enumerate(state_list):
         logger.info(f"Fetching locations for {state_url.text}")
-        state_url = state_url['href']
+        state_url = state_url["href"]
         r2 = session.get(state_url, headers=headers, timeout=180)
         soup2 = BeautifulSoup(r2.text, "html.parser")
         loclist = soup2.findAll("a", {"class": "store-details-link"})
         for loc in loclist:
-            loc = "https://www.petsmart.com/stores/us/"+loc['href']
+            loc = "https://www.petsmart.com/stores/us/" + loc["href"]
             store_url_list.append(loc)
             logger.info(loc)
             state.push_request(SerializableRequest(url=loc))
@@ -53,8 +52,13 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         location_name = soup.find("h1").text
         if "Closed" in location_name:
             continue
-        raw_address = soup.find("p", {"class": "store-page-details-address"}).findAll("span")[1].get_text(separator='|', strip=True).replace('|'," ")
-        address = raw_address.replace(','," ")
+        raw_address = (
+            soup.find("p", {"class": "store-page-details-address"})
+            .findAll("span")[1]
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+        address = raw_address.replace(",", " ")
         address = usaddress.parse(address)
         i = 0
         street_address = ""
@@ -83,41 +87,43 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         country_code = "US"
         phone = soup.find("p", {"class": "store-page-details-phone"}).text
         try:
-            hours_of_operation =soup.find("div", {"class": "store-page-details-hours-container"}).get_text(separator='|', strip=True).replace('|'," ")
+            hours_of_operation = (
+                soup.find("div", {"class": "store-page-details-hours-container"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         except:
             hours_of_operation = MISSING
         latitude, longitude = re.findall(
-                r"center=([\d\.]+),([\-\d\.]+)",
-                soup.find("div", class_="store-page-map mapViewstoredetail")
-                .find("img")
-                .get("src"),
-            )[0]
+            r"center=([\d\.]+),([\-\d\.]+)",
+            soup.find("div", class_="store-page-map mapViewstoredetail")
+            .find("img")
+            .get("src"),
+        )[0]
         yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address = raw_address
-            )
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
     logger.info("Started")
     state = CrawlStateSingleton.get_instance()
     count = 0
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         with SgRequests() as session:
             state.get_misc_value(
                 "init", default_factory=lambda: record_initial_requests(session, state)
