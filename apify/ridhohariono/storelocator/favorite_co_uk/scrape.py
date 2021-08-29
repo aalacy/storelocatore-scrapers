@@ -248,7 +248,6 @@ def fetch_data():
                 ).get_attribute("innerHTML")
                 staleElement = False
             except:
-                log.info("Stale element = True")
                 staleElement = True
         latlong = re.findall(
             r".*\?daddr=(\-?[0-9]+\.[0-9]+,\-?[0-9]+\.[0-9]+)", script_element
