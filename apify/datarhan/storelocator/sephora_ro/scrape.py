@@ -8,6 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -28,9 +29,10 @@ def fetch_data():
         page_url = urljoin(start_url, poi["url"])
         city = poi["city"]
         city = city if "Sector" not in city else poi["state"]
-        street_address = poi["address"].split(city)[0].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
+        addr = parse_address_intl(poi["address"])
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
 
         phone = poi["phone1"]
         if not phone:
