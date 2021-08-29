@@ -34,7 +34,6 @@ def fetch_data():
                 continue
             url = l.xpath("@href")[0]
             store_url = urljoin(start_url, url)
-            print(store_url)
             driver.get(store_url)
             sleep(10)
             loc_dom = etree.HTML(driver.page_source)
