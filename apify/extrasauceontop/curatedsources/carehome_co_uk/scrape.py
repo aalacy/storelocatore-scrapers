@@ -8,6 +8,7 @@ from sglogging import sglog
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
+import json
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
