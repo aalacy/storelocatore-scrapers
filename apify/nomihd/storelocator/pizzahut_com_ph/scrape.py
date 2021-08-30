@@ -59,8 +59,6 @@ def fetch_records_for(coords):
 def process_record(raw_results_from_one_coordinate):
     stores = raw_results_from_one_coordinate
     for store in stores:
-        if store["active"] != 1:
-            continue
         page_url = "<MISSING>"
         locator_domain = website
         location_name = store["name"]
