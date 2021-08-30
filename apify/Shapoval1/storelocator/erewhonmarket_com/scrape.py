@@ -68,7 +68,7 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<INACCESSIBLE>"
             session = SgRequests()
             r = session.get(
-                "https://www.erewhonmarket.com/_nuxt/static/1628897867/locations/state.js"
+                "https://www.erewhonmarket.com/_nuxt/static/1630045247/locations/state.js"
             )
 
             latitude = (
