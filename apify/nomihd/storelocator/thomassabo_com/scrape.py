@@ -84,7 +84,7 @@ def process_record(raw_results_from_one_coordinate):
         try:
             hours = BeautifulSoup(store["storeHours"], "lxml")
             list_hours = list(hours.stripped_strings)
-            hours_of_operation = " ".join(list_hours).strip()
+            hours_of_operation = " ".join(list_hours).strip().replace("\n", " ").strip()
         except:
             pass
 
