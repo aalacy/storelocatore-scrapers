@@ -17,6 +17,9 @@ def fetch_data():
 
     all_locations = response["stores"]
     for poi in all_locations:
+        hoo = poi["openingHours"]
+        if hoo == "Mo-So - closed":
+            continue
 
         item = SgRecord(
             locator_domain=domain,
@@ -32,7 +35,7 @@ def fetch_data():
             location_type=poi["storeType"],
             latitude=poi["latitude"],
             longitude=poi["longitude"],
-            hours_of_operation=poi["openingHours"],
+            hours_of_operation=hoo,
         )
 
         yield item
