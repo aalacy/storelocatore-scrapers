@@ -44,7 +44,7 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=addr.city,
-            state=SgRecord.MISSING,
+            state=addr.state,
             zip_postal=zip_code,
             country_code="MX",
             store_number=SgRecord.MISSING,
