@@ -19,7 +19,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["store_id"],
-                location_name='7-ELEVEN',
+                location_name="7-ELEVEN",
                 street_address=_["address"],
                 city=_["city"],
                 zip_postal=_["zipcode"],
