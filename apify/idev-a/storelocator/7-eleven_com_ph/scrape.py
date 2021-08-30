@@ -1,8 +1,12 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
+from typing import Iterable
+
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgrequests.sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
 
@@ -11,12 +15,13 @@ _headers = {
 }
 
 locator_domain = "https://www.7-eleven.com.ph"
-base_url = "https://www.7-eleven.com.ph/wp-admin/admin-ajax.php?action=store_search&lat=14.55473&lng=121.02445&max_results=1000&search_radius=5000&autoload=1"
+base_url = "https://www.7-eleven.com.ph/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=1000&search_radius=500&autoload=1"
 
 
-def fetch_data():
-    with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()
+def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
+    state = CrawlStateSingleton.get_instance()
+    for lat, lng in search:
+        locations = http.get(base_url.format(lat, lng), headers=_headers).json()
         for _ in locations:
             street_address = _["address"].split("]")[-1]
             if _["address2"]:
@@ -25,6 +30,8 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            if not street_address:
+                street_address = _["address"].split("]")[-1]
             hours = []
             for hh in bs(_["hours"], "lxml").select("tr"):
                 hours.append(f"{': '.join(hh.stripped_strings)}")
@@ -46,7 +53,12 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    search = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, granularity=Grain_8()
+    )
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        with SgRequests() as http:
+            for rec in fetch_records(http, search):
+                writer.write_row(rec)
