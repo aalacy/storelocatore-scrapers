@@ -50,6 +50,13 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         if res.status_code != 200:
             continue
         sp2 = bs(res.text, "lxml")
+        raw_address = " ".join(sp2.address.stripped_strings)
+        if "coming soon" in raw_address.lower():
+            continue
+        addr = parse_address_intl(raw_address + ", uk")
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
         location = json.loads(
             _fix(sp2.find("script", type="application/ld+json").string.strip())
         )
@@ -64,11 +71,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         hours_of_operation = "; ".join(hours)
         if re.search(r"please contact", hours_of_operation, re.IGNORECASE):
             hours_of_operation = ""
-        raw_address = ""
-        addr = parse_address_intl(raw_address + ", uk")
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
+
         yield SgRecord(
             page_url=page_url,
             location_type=location["@type"],
@@ -82,6 +85,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             phone=location["telephone"],
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

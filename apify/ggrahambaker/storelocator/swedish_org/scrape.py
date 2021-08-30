@@ -1,51 +1,19 @@
-import csv
 import json
 import re
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 session = SgRequests()
 
-headers = {
-    "Host": "www.swedish.org",
-    "Accept-Encoding": "gzip, deflate",
-    "Accept": "*/*",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "connection": "Keep-Alive",
-}
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "location_type",
-                "store_number",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "latitude",
-                "longitude",
-                "phone",
-                "hours_of_operation",
-            ]
-        )
-
-        # Body
-        for row in data:
-            writer.writerow(row)
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
 
 
 def create_url(loctype):
@@ -110,72 +78,6 @@ def fetch_loctype_urls():
     return urls
 
 
-def fetch_data():
-
-    found = []
-    location_map = fetch_populated_location_map()
-
-    for key in location_map:
-        location = location_map[key]
-        page_url = location.get("page_url")
-
-        if ".providence.org" in page_url:
-            page_url = page_url.replace("https://www.swedish.org", "")
-
-        r = session.get(page_url)
-        soup = BeautifulSoup(r.text, "html.parser")
-
-        if ".providence.org" in page_url:
-            phoneNumber = soup.find(class_="loc-phone").text.strip()
-            hours_of_operation = " ".join(
-                list(soup.find(class_="hours-text").stripped_strings)
-            )
-        else:
-            phone = soup.find(class_="mobile-only-phone")
-            phoneNumber = clean_phone(phone)
-            if not phoneNumber:
-                try:
-                    phoneNumber = re.findall(
-                        r"[\d]{3}-[\d]{3}-[\d]{4}",
-                        str(soup.find(id="main-content").text),
-                    )[0]
-                except:
-                    pass
-
-            hours = soup.select_one(
-                "#main_0_rightpanel_0_pnlOfficeHours .option-content"
-            )
-            hours_of_operation = (
-                hours.text.replace("\n", " ").strip()
-                if hours and hours.text != ""
-                else None
-            )
-
-        location_map[key]["phone"] = phoneNumber or "<MISSING>"
-        location_map[key]["hours_of_operation"] = hours_of_operation or "<MISSING>"
-
-        if location.get("location_name") + location.get("street_address") in found:
-            continue
-        found.append(location.get("location_name") + location.get("street_address"))
-
-        yield [
-            location.get("locator_domain"),
-            page_url,
-            location.get("location_name"),
-            "<MISSING>",
-            location.get("store_number"),
-            location.get("street_address"),
-            location.get("city"),
-            location.get("state"),
-            location.get("zip"),
-            location.get("country_code"),
-            location.get("latitude"),
-            location.get("longitude"),
-            location.get("phone"),
-            location.get("hours_of_operation"),
-        ]
-
-
 def fetch_json_data(content):
     match = re.search(r"locationsList\s*=\s*[\'|\"](.*?)[\'|\"];", content)
     data = json.loads(match.group(1))
@@ -212,9 +114,73 @@ def clean_phone(phone):
     return phoneNumber
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+
+    location_map = fetch_populated_location_map()
+    found = []
+
+    for key in location_map:
+        location = location_map[key]
+        page_url = location.get("page_url")
+
+        if ".providence.org" in page_url:
+            page_url = page_url.replace("https://www.swedish.org", "")
+
+        r = session.get(page_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        if ".providence.org" in page_url:
+            phoneNumber = soup.find(class_="loc-phone").text.strip()
+            hours_of_operation = " ".join(
+                list(soup.find(class_="hours-text").stripped_strings)
+            )
+        else:
+            phone = soup.find(class_="mobile-only-phone")
+            phoneNumber = clean_phone(phone)
+            if not phoneNumber:
+                try:
+                    phoneNumber = re.findall(
+                        r"[\d]{3}-[\d]{3}-[\d]{4}",
+                        str(soup.find(id="main-content").text),
+                    )[0]
+                except:
+                    pass
+
+            hours = soup.select_one(
+                "#main_0_rightpanel_0_pnlOfficeHours .option-content"
+            )
+            hours_of_operation = (
+                hours.text.replace("\n", " ").strip()
+                if hours and hours.text != ""
+                else None
+            )
+
+        location_map[key]["phone"] = phoneNumber or "<MISSING>"
+        location_map[key]["hours_of_operation"] = hours_of_operation or "<MISSING>"
+
+        if location.get("location_name") + location.get("street_address") in found:
+            continue
+        found.append(location.get("location_name") + location.get("street_address"))
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=location.get("locator_domain"),
+                page_url=page_url,
+                location_name=location.get("location_name"),
+                street_address=location.get("street_address"),
+                city=location.get("city"),
+                state=location.get("state"),
+                zip_postal=location.get("zip"),
+                country_code=location.get("country_code"),
+                store_number=location.get("store_number"),
+                phone=location.get("phone"),
+                location_type="<MISSING>",
+                latitude=location.get("latitude"),
+                longitude=location.get("longitude"),
+                hours_of_operation=location.get("hours_of_operation"),
+            )
+        )
 
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
