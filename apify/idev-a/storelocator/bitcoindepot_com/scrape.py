@@ -93,6 +93,7 @@ if __name__ == "__main__":
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
                 }
             )
         )

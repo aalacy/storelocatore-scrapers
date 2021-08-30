@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -17,6 +18,7 @@ def fetch_data():
     for x in range(-55, -140, -1):
         for y in range(41, 71):
             session = SgRequests()
+            time.sleep(1)
             logger.info(str(x) + "-" + str(y))
             url = (
                 "https://virgin.know-where.com/virginplus/cgi/selection?place=&lang=en&ll="
