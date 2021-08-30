@@ -23,13 +23,59 @@ def fetch_data():
     country = "US"
     store = "<MISSING>"
     phone = ""
-    loc = "<MISSING>"
+    loc = "https://www.masseyspizza.com/locations/ "
     lat = "<MISSING>"
     lng = "<MISSING>"
     website = "masseyspizza.com"
     typ = "Restaurant"
     zc = ""
     hours = ""
+    name = "HEATH"
+    add = "771 South 30th St Unit 121"
+    city = "Columbus"
+    state = "OH"
+    zc = "<MISSING>"
+    phone = "(740) 344-0444"
+    hours = "Sun-Thu: 11am-10pm; Fri & Sat: 11am-11pm"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
+    name = "GROVE CITY"
+    add = "4015 Parkmead Dr."
+    city = "Columbus"
+    state = "OH"
+    zc = "<MISSING>"
+    phone = "(614) 277-3200"
+    hours = "Sun-Thu: 11am-10pm; Fri & Sat: 11am-11pm"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
     name = "SULLIVANT AVE."
     add = "2970 Sullivant Avenue"
     city = "Columbus"
@@ -133,6 +179,20 @@ def fetch_data():
                 if "Willbrook" in add:
                     lat = "33.4838211"
                     lng = "-79.0983286"
+                if "CANAL WINCHESTER" in name:
+                    state = "OH"
+                if "152 Grace" in add:
+                    name = "GRACELAND SHOPPING CENTER CLINTONVILLE/WORTHINGTON"
+                    city = "COLUMBUS"
+                    state = "OH"
+                if "GAHANNA" in name:
+                    city = "GAHANNA"
+                if "2970" in add:
+                    lat = "39.9438144"
+                    lng = "-83.0800593"
+                if "1229" in add:
+                    lat = "39.7274719"
+                    lng = "-82.6146089"
                 if add != "":
                     yield SgRecord(
                         locator_domain=website,
