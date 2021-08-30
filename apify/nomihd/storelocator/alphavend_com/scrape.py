@@ -44,53 +44,40 @@ def get_latlng(map_link):
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.alphavend.com/index.html"
+    search_url = "https://www.alphavend.com/"
     states_req = session.get(search_url, headers=headers)
     states_sel = lxml.html.fromstring(states_req.text)
     states = states_sel.xpath('//a[contains(text(),"More information...")]/@href')
 
     for store_url in states:
-        page_url = "https://www.alphavend.com/" + store_url
+        page_url = "https://www.alphavend.com" + store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         stores_sel = lxml.html.fromstring(store_req.text)
-        stores = stores_sel.xpath('//div[@class="row main-row"]')
+        stores = stores_sel.xpath(
+            '//section[contains(@class,"elementor-section elementor-inner-section elementor-element elementor-element-")]'
+        )
         for store in stores:
-            location_name = "".join(store.xpath("div[1]/h2/text()")).strip()
+            location_name = "".join(
+                store.xpath(
+                    ".//p[@class='elementor-heading-title elementor-size-default']/text()"
+                )
+            ).strip()
             location_type = "<MISSING>"
             locator_domain = website
 
-            first_part = "".join(store.xpath("div[1]/h3/text()")).strip()
-            if len(first_part) > 0:
-                raw_address = (
-                    first_part
-                    + ","
-                    + "".join(store.xpath("div[1]/h3/div[not (strong)]/text()"))
-                    .strip()
-                    .replace("United Kingdom", "")
-                    .strip()
-                    .replace("United Kingdon", "")
-                    .strip()
+            raw_address = (
+                ", ".join(
+                    store.xpath(
+                        './/div[@class="elementor-widget-container"]/p[1]/text()'
+                    )
                 )
-            else:
-                raw_address = (
-                    "".join(store.xpath("div[1]/h3/div[not (strong)]/text()"))
-                    .strip()
-                    .replace("United Kingdom", "")
-                    .strip()
-                    .replace("United Kingdon", "")
-                    .strip()
-                )
-
-            if len(raw_address) <= 0:
-                raw_address = (
-                    "".join(store.xpath("div[1]/h3//div/div[not (strong)]/text()"))
-                    .strip()
-                    .replace("United Kingdom", "")
-                    .strip()
-                    .replace("United Kingdon", "")
-                    .strip()
-                )
+                .strip()
+                .replace(",,", ",")
+                .strip()
+                .replace(", ,", ",")
+                .strip()
+            )
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
@@ -103,12 +90,17 @@ def fetch_data():
             country_code = "GB"
             store_number = "<MISSING>"
             phone = "<MISSING>"
-            hours_list = store.xpath("div[1]//div[strong]//text()")
-            hours_of_operation = (
-                " ".join(hours_list).strip().split("Live updates")[0].strip()
+            hours_list = store.xpath(
+                './/div[@class="elementor-widget-container"]/p[2]//text()'
             )
-            map_link = "".join(store.xpath("div[2]/a/@href")).strip()
-            latitude, longitude = get_latlng(map_link)
+            hours_of_operation = (
+                (" ".join(hours_list).strip().split("Live updates")[0].strip())
+                .encode("ascii", "replace")
+                .decode("utf-8")
+                .replace("?", "-")
+                .strip()
+            )
+            latitude, longitude = "<MISSING>", "<MISSING>"
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

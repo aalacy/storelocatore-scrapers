@@ -1,87 +1,125 @@
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "fresh_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-session = SgRequests()
+
+DOMAIN = "https://fresh.com/"
+MISSING = SgRecord.MISSING
+
 headers = {
     "authority": "www.fresh.com",
     "method": "GET",
-    "path": "/us/customer-service/USShops.html",
+    "path": "/us/stores",
     "scheme": "https",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "accept-encoding": "gzip, deflate, br",
     "accept-language": "en-US,en;q=0.9",
     "cache-control": "max-age=0",
-    "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
     "sec-ch-ua-mobile": "?0",
     "sec-fetch-dest": "document",
     "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "none",
+    "sec-fetch-site": "cross-site",
     "sec-fetch-user": "?1",
     "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
 }
+
+
+def parse_address(address):
+    address = address.replace(",", " ")
+    address = usaddress.parse(address)
+    i = 0
+    street_address = ""
+    city = ""
+    state = ""
+    zip_postal = ""
+    while i < len(address):
+        temp = address[i]
+        if (
+            temp[1].find("Address") != -1
+            or temp[1].find("Street") != -1
+            or temp[1].find("Recipient") != -1
+            or temp[1].find("Occupancy") != -1
+            or temp[1].find("BuildingName") != -1
+            or temp[1].find("USPSBoxType") != -1
+            or temp[1].find("USPSBoxID") != -1
+        ):
+            street_address = street_address + " " + temp[0]
+        if temp[1].find("PlaceName") != -1:
+            city = city + " " + temp[0]
+        if temp[1].find("StateName") != -1:
+            state = state + " " + temp[0]
+        if temp[1].find("ZipCode") != -1:
+            zip_postal = zip_postal + " " + temp[0]
+        i += 1
+    return street_address, city, state, zip_postal
 
 
 def fetch_data():
     if True:
-        url = "https://www.fresh.com/us/customer-service/USShops.html"
-        r = session.get(url, headers=headers, verify=False)
+        url = "https://www.fresh.com/us/stores"
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "col-10 col-lg-12 mx-auto text-left"})
+        loclist = soup.findAll("div", {"data-store-type": "FreshBoutique"})
         for loc in loclist:
-            if len(loc) < 5:
+            try:
+                latitude, longitude = loc.find("div", {"class": "show-in-map"})[
+                    "data-store-coord"
+                ].split(",")
+            except:
                 continue
-            else:
-                location_name = loc.find(
-                    "p", {"class": "subheader1 privacy-info-question"}
-                )
-                page_url = location_name.find("a")["href"]
-                log.info(page_url)
-                location_name = location_name.text
-                address = (
-                    loc.findAll("div")[1].get_text(separator="|", strip=True).split("|")
-                )
-                street_address = address[0]
-                phone = address[-1]
-                address = address[1].split(",")
-                city = address[0]
-                address = address[1].split()
-                state = address[0]
-                zip_postal = address[1]
-                hours_of_operation = "<INACCESSIBLE>"
-                r = session.get(page_url, headers=headers, verify=False)
-                coords = r.text.split("center=")[1].split("&amp;", 1)[0]
-                latitude = coords.split("%2C")[0]
-                longitude = coords.split("%2C")[1]
-                yield SgRecord(
-                    locator_domain="https://www.fresh.com/",
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=zip_postal.strip(),
-                    country_code="US",
-                    store_number="<MISSING>",
-                    phone=phone.strip(),
-                    location_type="<MISSING>",
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+            temp = loc.get_text(separator="|", strip=True).split("|")
+            location_name = temp[0]
+            log.info(location_name)
+            hours_of_operation = temp[1]
+            if "Boston" in hours_of_operation:
+                hours_of_operation = MISSING
+            address = (
+                loc.find("div", {"class": "show-in-map"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            street_address, city, state, zip_postal = parse_address(address)
+            if not state or len(state) > 3 or "UK" in state:
+                continue
+            try:
+                phone = loc.select_one("a[href*=tel]")["href"].replace("tel:", "")
+            except:
+                phone = MISSING
+            country_code = "USA"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
