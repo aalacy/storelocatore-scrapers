@@ -74,7 +74,7 @@ def process_record(raw_results_from_one_coordinate):
         zip = formatted_addr.postcode
 
         country_code = "PH"
-        store_number = store["id"]
+        store_number = str(store["id"])
         phone = store.get("phone", "<MISSING>")
 
         location_type = "<MISSING>"
@@ -88,8 +88,8 @@ def process_record(raw_results_from_one_coordinate):
             )
         except:
             pass
-        latitude = store["lat"]
-        longitude = store["long"]
+        latitude = str(store["lat"])
+        longitude = str(store["long"])
 
         yield SgRecord(
             locator_domain=locator_domain,
