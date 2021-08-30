@@ -19,7 +19,6 @@ base_url = "https://www.7-eleven.com.ph/wp-admin/admin-ajax.php?action=store_sea
 
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
-    state = CrawlStateSingleton.get_instance()
     for lat, lng in search:
         locations = http.get(base_url.format(lat, lng), headers=_headers).json()
         for _ in locations:
