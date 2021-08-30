@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import re
 
 base_url = "https://www.machinemart.co.uk/customactions/storefindersurface/GetStores/"
 locator_domain = "https://www.machinemart.co.uk"
@@ -16,7 +17,9 @@ def fetch_data():
             page_url = "https://www.machinemart.co.uk/stores/" + store["id"]
             sp1 = bs(session.get(page_url).text, "lxml")
             hours = sp1.select_one("div.times p").contents[2:]
-            hours = [x.string for x in hours if x.string is not None]
+            _hr = sp1.find("u", string=re.compile(r"Normal Opening Times"))
+            if _hr:
+                hours = list(_hr.find_parent().stripped_strings)[1:]
 
             yield SgRecord(
                 page_url=page_url,
