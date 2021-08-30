@@ -4,8 +4,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -56,14 +56,19 @@ def fetch_data():
         "ae",
         "gb",
         "us",
+        "al",
+        "dz",
     ]
     for cc in countries:
         page = 1
+        session = SgRequests()
+        time.sleep(5)
         url = "https://store.tagheuer.com/" + cc + "?page=" + str(page)
         r = session.get(url, headers=headers)
         website = "tagheuer.com"
         country = cc.upper()
         logger.info("Pulling %s..." % cc)
+        pages = "1"
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
             if '<span class="sr-only">Pagination"</span>' in line:
@@ -80,8 +85,10 @@ def fetch_data():
             name = ""
             logger.info("%s, Page %s..." % (cc, str(x)))
             purl = "https://store.tagheuer.com/" + cc + "?page=" + str(x)
+            session = SgRequests()
             r2 = session.get(purl, headers=headers)
             lines = r2.iter_lines()
+            time.sleep(5)
             AFound = False
             for line2 in lines:
                 line2 = str(line2.decode("utf-8"))
@@ -167,8 +174,7 @@ def fetch_data():
                             + phone
                         )
                 if (
-                    '<div class="components-outlet-item-search-result-basic"' in line2
-                    and '<div class="search-full__pan__results-container__results__infos">'
+                    '<div class="search-full__pan__results-container__results__infos">'
                     in line2
                 ):
                     infos.append(
