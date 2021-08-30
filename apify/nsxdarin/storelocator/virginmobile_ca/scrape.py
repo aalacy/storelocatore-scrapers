@@ -95,7 +95,6 @@ def fetch_data():
                     )
                 if "Services</h4>" in line:
                     if store not in ids:
-                        print(store)
                         ids.append(store)
                         lat = "<MISSING>"
                         lng = "<MISSING>"
