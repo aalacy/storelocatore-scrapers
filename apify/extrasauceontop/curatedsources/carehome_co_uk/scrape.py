@@ -12,6 +12,34 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                    if "longitude" in json.loads(html_string[start : end + 1]).keys():
+                        break
+
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
+
+
 def get_driver(url, class_name, driver=None):
     if driver is not None:
         driver.quit()
