@@ -11,11 +11,24 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from sglogging import SgLogSetup
+import ssl
+import re
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("pizzahut")
 
 
 locator_domain = "https://www.pizzahut.mu"
+contact_us_url = "https://www.pizzahut.mu/contact-us/"
 base_url = "https://www.google.com/maps/d/embed?mid=1ij51KPJm6MFRzgzBNbbI-agwyuma8p81"
 map_url = "https://www.google.com/maps/dir//{},{}/@{},{}z"
 
@@ -29,6 +42,14 @@ def _headers():
 def fetch_data():
     with SgChrome() as driver:
         with SgRequests() as session:
+            phone = (
+                bs(session.get(contact_us_url, headers=_headers()).text, "lxml")
+                .find("strong", string=re.compile(r"Phone Number", re.I))
+                .text.split(":")[-1]
+                .replace("Phone Number", "")
+                .strip()
+            )
+
             res = session.get(base_url, headers=_headers())
             cleaned = (
                 res.text.replace("\\\\u003d", "=")
@@ -72,6 +93,7 @@ def fetch_data():
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code="Mauritius",
+                    phone=phone,
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=locator_domain,
