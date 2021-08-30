@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("napaonline_com")
+logger = SgLogSetup().get_logger("pizzahutpr_com")
 
 
 def write_output(data):
@@ -30,7 +30,7 @@ def fetch_pdf():
 
         dfs = tb.read_pdf(
             file,
-            pages="all",
+            pages=1,
         )
 
     return dfs[0]
