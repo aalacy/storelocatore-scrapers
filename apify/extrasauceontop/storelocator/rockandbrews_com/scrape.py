@@ -66,6 +66,12 @@ def get_data():
             zipp = city_state_zipp.split(", ")[1].split(" ")[1]
         except Exception:
             if "Mexico" in city_state_zipp:
+                city_parts = city.split(" ")[:-1]
+                city = ""
+                for part in city_parts:
+                    city = city + " " + part
+
+                city = city.strip()
                 state = "<MISSING>"
                 zipp = city_state_zipp.split("Mexico")[0].split(" ")[-1]
 
@@ -97,6 +103,11 @@ def get_data():
             page_url = "https://www.rockandbrews.com/" + location_url_format
 
             driver.get(page_url)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "pm-custom-section-heading")
+                )
+            )
 
             html = driver.page_source
             soup = bs(html, "html.parser")
@@ -105,7 +116,10 @@ def get_data():
             try:
                 phone = div.find("a")["href"].replace("tel:", "")
             except Exception:
-                phone = "<MISSING>"
+                a_tags = soup.find_all("a")
+                for tag in a_tags:
+                    if "tel:" in tag["href"]:
+                        phone = tag["href"].replace("tel:", "")
 
             if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"

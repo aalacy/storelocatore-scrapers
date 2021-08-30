@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("costco_com")
 
@@ -10,34 +13,7 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-@retry(stop=stop_after_attempt(7))
+@retry(stop=stop_after_attempt(10))
 def fetch_loc(loc):
     session = SgRequests()
     return session.get(loc, headers=headers)
@@ -114,22 +90,22 @@ def fetch_data():
             phone = "<MISSING>"
         if add != "":
             loc = loc.replace("/ ", "/").replace(" ", "-")
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
     caids = []
     for x in range(40, 65, 5):
         for y in range(-70, -120, -5):
@@ -175,22 +151,22 @@ def fetch_data():
                             )
                             if store not in caids:
                                 caids.append(store)
-                                yield [
-                                    website,
-                                    loc,
-                                    name,
-                                    add,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                                yield SgRecord(
+                                    locator_domain=website,
+                                    page_url=loc,
+                                    location_name=name,
+                                    street_address=add,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zc,
+                                    country_code=country,
+                                    phone=phone,
+                                    location_type=typ,
+                                    store_number=store,
+                                    latitude=lat,
+                                    longitude=lng,
+                                    hours_of_operation=hours,
+                                )
     url = "https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=50&hasGas=false&hasTires=false&hasFood=false&hasHearing=false&hasPharmacy=false&hasOptical=false&hasBusiness=false&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&latitude=53.500152587890625&longitude=-0.12623600661754608&countryCode=GB"
     session = SgRequests()
     r = session.get(url, headers=headers)
@@ -224,22 +200,22 @@ def fetch_data():
                         .replace('","', "; ")
                         .replace('"', "")
                     )
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
     countries = []
     session = SgRequests()
     url = "https://www.costco.com"
@@ -327,27 +303,29 @@ def fetch_data():
                 if state == "":
                     state = "<MISSING>"
                 loc = loc.replace("/ ", "/").replace(" ", "-")
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -6,6 +6,8 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "annabella.ca"
 
@@ -13,8 +15,8 @@ website = "https://annabella.ca"
 MISSING = "<MISSING>"
 
 
-session = SgRequests().requests_retry_session()
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
@@ -44,7 +46,9 @@ def fetchStores():
 
     location_names = mainDiv.xpath('//div[contains(@class, "PageContent")]/h4/text()')
     map_links = mainDiv.xpath('//div[contains(@class, "PageContent")]/p/a/@href')
-    p1s = mainDiv.xpath('//div[contains(@class, "PageContent")]/p/text()')
+    p1s = mainDiv.xpath(
+        '//div[contains(@class, "PageContent")]/p/text() | //div[contains(@class, "PageContent")]/p/span/text()'
+    )
 
     allPs = []
     ps = []
@@ -121,7 +125,7 @@ def scrape():
     count = 0
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1
