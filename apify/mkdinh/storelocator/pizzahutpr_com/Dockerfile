@@ -15,7 +15,7 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 RUN export java=usr/lib/java
 
-export _JAVA_OPTIONS="-Xmx1g"
+RUN export _JAVA_OPTIONS="-Xmx1g"
 
 RUN pip3.8 install -r requirements.txt
 
