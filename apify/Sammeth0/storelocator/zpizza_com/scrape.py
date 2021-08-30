@@ -1,67 +1,78 @@
-import csv
 import json
 from sgrequests import SgRequests
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium import SgSelenium
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 session = SgRequests()
+DOMAIN = "zpizza.com"
+BASE_URL = "https://www.zpizza.com/"
+LOCATION_URL = "https://www.zpizza.com/locations"
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "Accept": "*/*",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
 }
 
+MISSING = "<MISSING>"
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+
+def wait_load(driver, number=0):
+    number += 1
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+    try:
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.ID, "locations"))
         )
-        # Body
-        for row in data:
-            writer.writerow(row)
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="locations"]/div[2]/div')
+            )
+        )
+    except:
+        driver.refresh()
+        if number < 3:
+            log.info(f"Try to Refresh for ({number}) times")
+            return wait_load(driver, number)
 
 
 def fetch_data():
-    data = []
-    url = "https://www.zpizza.com/locations"
-    p = 0
-    r = session.get(url, headers=headers, verify=False)
-    r = r.text.split(
+    driver = SgSelenium().chrome()
+    driver.get("https://www.zpizza.com/locations")
+    wait_load(driver)
+    content_script = driver.find_element_by_xpath("/html/body/script[2]").get_attribute(
+        "innerHTML"
+    )
+    driver.quit()
+    info = content_script.split(
         '"galleryImages":[],"giftCardImages":[],"giftCardShopItem":null,"locations":'
     )[3].split(',"socialHandles":[]}],"menus":[]', 1)[0]
-    r = r + ',"socialHandles":[]}]'
-    loclist = json.loads(r)
+    info = info + ',"socialHandles":[]}]'
+    p = 0
+    loclist = json.loads(info)
     for loc in loclist:
-        store = loc["id"]
+        page_url = "https://www.zpizza.com/" + loc["slug"]
+        if page_url.find("bend-tap-room") > -1:
+            page_url = page_url.split("-")[0]
+        location_name = loc["name"]
+        store_number = loc["id"]
+        street_address = loc["streetAddress"]
         state = loc["state"]
         city = loc["city"]
-        ccode = loc["country"]
-        pcode = loc["postalCode"]
-        lat = loc["lat"]
-        longt = loc["lng"]
-        street = loc["streetAddress"]
+        zip_postal = loc["postalCode"]
+        country_code = loc["country"]
+        latitude = loc["lat"]
+        longitude = loc["lng"]
         hourlist = loc["schemaHours"]
-        title = loc["name"]
-        link = "https://www.zpizza.com/" + loc["slug"]
-        if link.find("bend-tap-room") > -1:
-            link = link.split("-")[0]
         phone = (
             loc["phone"][0:3]
             + "-"
@@ -69,7 +80,8 @@ def fetch_data():
             + "-"
             + loc["phone"][6 : len(loc["phone"])]
         )
-        hours = ""
+        location_type = "zpizza"
+        hours_of_operation = ""
         hourd = []
         hourd.append("none")
         try:
@@ -82,12 +94,17 @@ def fetch_data():
                     day = (int)(hr.split("-")[1].split(":")[0])
                     if day > 12:
                         day = day - 12
-                    hours = (
-                        hours + hr.split("-")[0] + " am " + " - " + str(day) + ":00 PM"
+                    hours_of_operation = (
+                        hours_of_operation
+                        + hr.split("-")[0]
+                        + " am "
+                        + " - "
+                        + str(day)
+                        + ":00 PM"
                     )
-                    hours = hours + " "
-            hours = (
-                hours.replace("Su", "Sunday")
+                    hours_of_operation = hours_of_operation + " "
+            hours_of_operation = (
+                hours_of_operation.replace("Su", "Sunday")
                 .replace("Mo", "Monday")
                 .replace("Tu", "Tuesday")
                 .replace("We", "Wednesday")
@@ -96,34 +113,49 @@ def fetch_data():
                 .replace("Sa", "Saturday")
             )
         except:
-            hours = "<MISSING>"
-        data.append(
-            [
-                "https://www.zpizza.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
-        )
+            hours_of_operation = MISSING
 
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {state} {zip_postal}",
+        )
         p += 1
-    return data
 
 
 def scrape():
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-    data = fetch_data()
-    write_output(data)
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

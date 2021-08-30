@@ -26,6 +26,7 @@ def fetch_data():
         sel2 = html.fromstring(json_data["block"], "lxml")
         purls = sel2.xpath('//a[contains(text(), " Store Details")]/@href')
         purls = ["https://www.sleepworld.com" + pu for pu in purls]
+        location_names = sel2.xpath('//div[@class="amlocator-title"]/text()')
 
         for idx, d in enumerate(json_data["items"][0:]):
             locator_domain = DOMAIN
@@ -35,8 +36,12 @@ def fetch_data():
             page_url = page_url if page_url else MISSING
             logger.info(f"[{idx}] Page URL: {page_url}")
 
-            location_name = "Mancini's Sleepworld"
-            location_name = location_name if location_name else MISSING
+            location_name = location_names[idx]
+            if location_name:
+                location_name = " ".join(location_name.split())
+            else:
+                location_name = MISSING
+
             logger.info(f"[{idx}] Location Name: {location_name}")
 
             address_raw = sel.xpath("//div[@class='map-add-text']/text()")
