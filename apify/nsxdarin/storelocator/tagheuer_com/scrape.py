@@ -56,6 +56,8 @@ def fetch_data():
         "ae",
         "gb",
         "us",
+        "al",
+        "dz",
     ]
     for cc in countries:
         page = 1
@@ -66,6 +68,7 @@ def fetch_data():
         website = "tagheuer.com"
         country = cc.upper()
         logger.info("Pulling %s..." % cc)
+        pages = "1"
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
             if '<span class="sr-only">Pagination"</span>' in line:
@@ -171,8 +174,7 @@ def fetch_data():
                             + phone
                         )
                 if (
-                    '<div class="components-outlet-item-search-result-basic"' in line2
-                    and '<div class="search-full__pan__results-container__results__infos">'
+                    '<div class="search-full__pan__results-container__results__infos">'
                     in line2
                 ):
                     infos.append(
