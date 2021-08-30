@@ -56,7 +56,7 @@ def fetch_data():
                 city=city,
                 state=SgRecord.MISSING,
                 zip_postal=zip_code,
-                country_code=poi["countryCode"],
+                country_code=poi["countryCode"].split("-")[-1].upper(),
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,
                 location_type=SgRecord.MISSING,
