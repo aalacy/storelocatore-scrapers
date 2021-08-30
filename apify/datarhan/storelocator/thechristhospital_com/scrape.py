@@ -65,8 +65,6 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        if "1955 Dixie Highway" in street_address:
-            print(poi_html)
 
         item = SgRecord(
             locator_domain=domain,
