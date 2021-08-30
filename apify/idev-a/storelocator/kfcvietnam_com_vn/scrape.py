@@ -28,9 +28,9 @@ header1 = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-base_url = "https://kfcvietnam.com.vn/en/find-a-kfc.html"
+base_url = "https://kfcvietnam.com.vn/vi/find-a-kfc.html"
 locator_domain = "https://kfcvietnam.com.vn"
-detail_url = "https://kfcvietnam.com.vn/en/load_restaurant"
+detail_url = "https://kfcvietnam.com.vn/vi/load_restaurant"
 session = SgRequests().requests_retry_session()
 max_workers = 2
 
@@ -113,7 +113,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter() as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
