@@ -58,6 +58,21 @@ def fetch_data(sgw: SgWriter):
             latitude = SgRecord.MISSING
             longitude = SgRecord.MISSING
 
+        try:
+            text = (
+                html.tostring(d).decode("utf8").split("<!--<p>")[1].split("</p>-->")[0]
+            )
+            root = html.fromstring(text)
+            hours_of_operation = (
+                " ".join("".join(root.xpath("//text()")).split())
+                .replace("Horaires d’ouverture :", "")
+                .strip()
+            )
+            if "-->" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("-->")[0].strip()
+        except IndexError:
+            hours_of_operation = SgRecord.MISSING
+
         row = SgRecord(
             page_url="https://www.mcdonalds.ma/nos-restaurants/r%C3%A9seau-maroc",
             location_name=location_name,
@@ -72,7 +87,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
