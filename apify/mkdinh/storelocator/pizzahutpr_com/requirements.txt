@@ -3,3 +3,4 @@
 tabula-py==2.2.0
 sglogging==0.0.4
 sgscrape==0.1.13
+sgrequests==0.1.13
