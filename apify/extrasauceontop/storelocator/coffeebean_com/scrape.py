@@ -1,14 +1,12 @@
 from sgrequests import SgRequests
 import pandas as pd
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
 import us
 
 
 def get_data():
     session = SgRequests()
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
     base_url = "https://www.coffeebean.com/store-locator"
 
