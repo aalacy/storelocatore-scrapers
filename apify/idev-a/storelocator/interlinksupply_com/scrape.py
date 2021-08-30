@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("interlinksupply")
 
@@ -45,13 +47,22 @@ def fetch_data():
 
         locations = soup.select("div.mapListingContainer .col-25-percent")
         logger.info(f"{len(locations)} locations  found")
-        for x, _ in enumerate(locations):
+        for _ in locations:
             block = list(_.stripped_strings)
-            addr = parse_address_intl(" ".join(block[2:4]))
+            latitude = longitude = phone = ""
+            raw_address = ""
+            for x, bb in enumerate(block):
+                if bb.startswith("Ph:"):
+                    phone = bb.split(":")[-1].replace("Ph", "").strip()
+                    if coords.get(phone):
+                        latitude = coords[phone][0]
+                        longitude = coords[phone][1]
+                    raw_address = " ".join(block[1:x])
+                    break
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            phone = block[4].split(":")[-1].replace("Ph", "").strip()
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],
@@ -60,15 +71,20 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="US",
-                phone=block[4].split(":")[-1].replace("Ph", "").strip(),
+                phone=phone,
                 locator_domain=locator_domain,
-                latitude=coords[phone][0],
-                longitude=coords[phone][1],
+                latitude=latitude,
+                longitude=longitude,
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.PHONE})
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
