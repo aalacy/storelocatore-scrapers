@@ -41,8 +41,8 @@ def fetch_data(sgw: SgWriter):
         country_code = "RU"
         city = "".join(js.get("city").get("name"))
         store_number = j.get("id")
-        latitude = js.get("location").get("coordinates")[0]
-        longitude = js.get("location").get("coordinates")[1]
+        latitude = js.get("location").get("coordinates")[1]
+        longitude = js.get("location").get("coordinates")[0]
         if latitude == "0":
             latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = js.get("schedule")
