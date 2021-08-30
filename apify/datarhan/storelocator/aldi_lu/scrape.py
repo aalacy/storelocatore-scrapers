@@ -9,18 +9,6 @@ from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-# def pass_captcha(dom, session, url):
-#     captcha = dom.xpath('//imf[@alt="Captcha"]')
-#     while captcha:
-#         session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-#         response = session.get(url)
-#         dom = etree.HTML(response.text.replace('<?xml version="1.0" encoding="utf-8"?>', ""))
-#         captcha = dom.xpath('//imf[@alt="Captcha"]')
-#         print('-----RETRY-----')
-
-#     return dom
-
-
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
