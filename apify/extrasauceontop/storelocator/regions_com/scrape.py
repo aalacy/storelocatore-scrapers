@@ -106,6 +106,7 @@ def get_data():
                         try:
                             phone = item["telephone"].replace("+", "")
                         except Exception:
+                            phone = "<MISSING>"
                             pass
 
                         hours = ""
@@ -126,6 +127,7 @@ def get_data():
                                         )
 
                         except Exception:
+                            hours = "<MISSING>"
                             pass
 
                 page_urls.append(page_url)
