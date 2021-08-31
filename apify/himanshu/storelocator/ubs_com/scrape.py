@@ -207,7 +207,7 @@ def fetch_data():
                     hours_of_operation=hours_of_operation,
                 )
     except:
-        raise
+        pass
 
 
 def scrape():
