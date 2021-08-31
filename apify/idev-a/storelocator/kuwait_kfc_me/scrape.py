@@ -53,6 +53,9 @@ def fetch_data():
                 phone = _.select("span")[-1].text.strip()
                 if not _p(phone):
                     phone = ""
+                import pdb
+
+                pdb.set_trace()
                 yield SgRecord(
                     location_name=_.select_one("div.store-name").text.strip(),
                     street_address=_.select_one("div.store-address").text.strip(),
@@ -60,7 +63,9 @@ def fetch_data():
                     country_code="Kuwait",
                     phone=phone,
                     locator_domain=locator_domain,
-                    hours_of_operation=_.select_one("div.store-time").text.strip(),
+                    hours_of_operation=" ".join(
+                        list(_.select_one("div.store-time").stripped_strings)[:-1]
+                    ),
                 )
 
 
