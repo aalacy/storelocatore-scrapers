@@ -107,7 +107,7 @@ def fetch_data():
                         "table",
                         {"class": "loFi-poi__location__details__schedule__hours"},
                     )
-                    if hours != None:
+                    if hours:
                         hours_of_operation = " ".join(list(hours.stripped_strings)[0:])
                     else:
                         hours_of_operation = "<MISSING>"
@@ -168,11 +168,8 @@ def fetch_data():
                         r3 = session.get(href)
                         soup = BeautifulSoup(r3.text, "lxml")
                         phone = "<MISSING>"
-                        if (
-                            soup.find(
-                                "dd", {"class": "loFi-details__detail__info__phone"}
-                            )
-                            != None
+                        if soup.find(
+                            "dd", {"class": "loFi-details__detail__info__phone"}
                         ):
                             phone = soup.find(
                                 "dd", {"class": "loFi-details__detail__info__phone"}
@@ -183,7 +180,7 @@ def fetch_data():
                             "table",
                             {"class": "loFi-poi__location__details__schedule__hours"},
                         )
-                        if hours != None:
+                        if hours:
                             hours_of_operation = " ".join(
                                 list(hours.stripped_strings)[0:]
                             )
