@@ -77,7 +77,9 @@ def fetch_data():
             hours_of_operation=tim.replace("Sunday", " Sunday").strip(),
         )
 
+
 def scrape():
     write_output(fetch_data())
+
 
 scrape()
