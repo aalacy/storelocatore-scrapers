@@ -64,8 +64,49 @@ def get_data():
             except Exception:
                 page_url = "<MISSING>"
             
-            
+            location_name = location["title"]
+            latitude = location["lat"]
+            longitude = location["lng"]
+            address = location["address"].split("<br />")[0]
+            if bool(re.search("[a-zA-Z]", address)) is False:
+                address = "<MISSING>"
+            city = location["address"].split("<br />")[1].split(",")[0]
 
+            state_parts = (
+                location["address"].split("<br />")[1].split(",")[1].split(" ")
+            )
+            state = ""
+            for item in range(len(state_parts) - 1):
+                state = state + state_parts[item] + " "
+
+            state = state.strip()
+
+            zipp = location["address"].split("<br />")[1].split(",")[1].split(" ")[-1]
+            country_code = "US"
+            store_number = location["itemId"]
+            location_type = location["type"]
+
+            if page_url != "<MISSING>":
+                if page_url in page_urls or "-atm-" in page_url:
+                    continue
+                    
+                response = session.get("https://" + page_url).text
+                json_objects = extract_json(response)
+                for item in json_objects:
+                    if "name" not in item.keys():
+                        continue
+                    else:
+                        try:
+                            phone = item["telephone"].replace("+", "")
+                        except Exception:
+                            phone = "<MISSING>"
+                            pass
+                    
+                    
+                
+            else:
+                phone = "<MISSING>"
+                hours = "<MISSING>"
 
 
             yield {
