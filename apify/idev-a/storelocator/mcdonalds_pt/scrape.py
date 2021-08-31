@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
+import dirtyjson as json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import math
@@ -18,7 +18,7 @@ _headers = {
 
 locator_domain = "https://www.mcdonalds.pt"
 base_url = "https://www.mcdonalds.pt/restaurantes?t=&d="
-max_workers = 32
+max_workers = 16
 session = SgRequests().requests_retry_session()
 
 
@@ -67,15 +67,19 @@ def fetch_data():
                 if "Véspera Feriado" in hh.text:
                     continue
                 hours.append(": ".join(hh.stripped_strings))
+            ss = json.loads(sp1.find("script", type="application/ld+json").string)
+            addr = ss["address"]
             yield SgRecord(
                 page_url=page_url,
-                location_name=_["Name"],
-                street_address=_["Location"],
-                city=_["City"],
-                zip_postal=_["PostalCode"],
+                location_name=ss["name"],
+                street_address=addr["streetAddress"],
+                city=addr["addressLocality"].replace("&#170;", "å"),
+                state=addr["addressRegion"],
+                zip_postal=addr["postalCode"],
                 latitude=_["Lat"],
                 longitude=_["Lng"],
                 country_code="Portugal",
+                phone=ss.get("telephone"),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
