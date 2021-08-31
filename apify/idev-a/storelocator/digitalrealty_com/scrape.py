@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
-import dirtyjson as json
 from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("digitalrealty")
