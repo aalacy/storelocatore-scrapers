@@ -49,21 +49,12 @@ def fetch_data():
                 HFound = True
             if HFound and '<div class="panel panel-default">' in line2:
                 HFound = False
-            if HFound and '<time itemprop="openingHours" datetime="' in line2:
-                text = line2.split('<time itemprop="openingHours" datetime="')[1].split(
-                    '"'
-                )[0]
-                if "am" in text or "pm" in text:
-                    hrs = text.strip()
-                    allhrs = day + ": " + hrs
+            if HFound and 'itemprop="openingHours" datetime="' in line2:
+                hrs = line2.split('itemprop="openingHours" datetime="')[1].split('"')[0]
+                if hours == "":
+                    hours = hrs
                 else:
-                    day = text.strip()
-                    allhrs = ""
-                if allhrs != "":
-                    if hours == "":
-                        hours = allhrs
-                    else:
-                        hours = hours + "; " + allhrs
+                    hours = hours + "; " + hrs
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
             if 'itemprop="longitude" content="' in line2:
