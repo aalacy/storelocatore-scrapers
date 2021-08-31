@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
-import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
