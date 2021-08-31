@@ -53,9 +53,6 @@ def fetch_data():
                 phone = _.select("span")[-1].text.strip()
                 if not _p(phone):
                     phone = ""
-                import pdb
-
-                pdb.set_trace()
                 yield SgRecord(
                     location_name=_.select_one("div.store-name").text.strip(),
                     street_address=_.select_one("div.store-address").text.strip(),
