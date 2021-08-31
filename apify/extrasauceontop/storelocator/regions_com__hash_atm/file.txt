@@ -1,0 +1,428 @@
+[
+    {
+        "lat": "35.848655",
+        "lng": "-78.614109",
+        "title": "Raleigh Northpark",
+        "address": "4900 Falls of Neuse Road, Suite 100<br />Raleigh, NC 27609",
+        "markerNumber": "1",
+        "distance": "1.1",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "NC1790",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "35.830883",
+        "lng": "-78.66632",
+        "title": "Glenwood",
+        "address": "3700 Glenwood Avenue, Suite 100<br />Raleigh, NC 27612",
+        "markerNumber": "2",
+        "distance": "4.2",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "NC0179",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "35.221073",
+        "lng": "-80.846859",
+        "title": "Charlotte Uptown",
+        "address": "615 S. College Street<br />Charlotte, NC 28202",
+        "markerNumber": "3",
+        "distance": "171.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Walk-up Video Banking Machine, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "NC8293",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "35.221475",
+        "lng": "-80.847539",
+        "title": "Charlotte Light Rails",
+        "address": "615 South College St<br />Charlotte, NC 28202",
+        "markerNumber": "4",
+        "distance": "171.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Walk-up ATM",
+            "x": "y"
+        },
+        "itemId": "NC8293",
+        "type": "atm",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "35.478084",
+        "lng": "-80.890727",
+        "title": "Cornelius",
+        "address": "19430 W. Catawba Avenue<br />Cornelius, NC 28031",
+        "markerNumber": "5",
+        "distance": "172.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "NC1752",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "35.1946",
+        "lng": "-80.825724",
+        "title": "Eastover",
+        "address": "1045 Providence Road<br />Charlotte, NC 28207",
+        "markerNumber": "6",
+        "distance": "172.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "NC1751",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "35.138023",
+        "lng": "-80.934013",
+        "title": "Ayrsley",
+        "address": "2131 Ayrsley Town Boulevard, Suite 100<br />Charlotte, NC 28273",
+        "markerNumber": "7",
+        "distance": "178.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "NC1754",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "34.000182",
+        "lng": "-81.036254",
+        "title": "Gervais St Main",
+        "address": "1010 Gervais Street<br />Columbia, SC 29201",
+        "markerNumber": "8",
+        "distance": "230.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4074",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.351135",
+        "lng": "-82.220342",
+        "title": "Elizabethton",
+        "address": "301 Broad Street<br />Elizabethton, TN 37643",
+        "markerNumber": "9",
+        "distance": "235.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5322",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "34.949442",
+        "lng": "-81.916418",
+        "title": "Spartanburg Main",
+        "address": "235 S. Pine Street<br />Spartanburg, SC 29302",
+        "markerNumber": "10",
+        "distance": "240.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4141",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.333491",
+        "lng": "-82.343031",
+        "title": "East Watauga",
+        "address": "1212 E .Watauga Avenue<br />Johnson City, TN 37601",
+        "markerNumber": "11",
+        "distance": "244.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5321",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.30348",
+        "lng": "-82.374245",
+        "title": "University Johnson City",
+        "address": "1408 W. State Of Franklin<br />Johnson City, TN 37604",
+        "markerNumber": "12",
+        "distance": "247.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5326",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.3105",
+        "lng": "-82.3733",
+        "title": "VA Med Ctr",
+        "address": "LaMonte at Sidney<br />Mountain Home, TN 37684",
+        "markerNumber": "13",
+        "distance": "247.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Walk-up ATM",
+            "x": "y"
+        },
+        "itemId": "VAMED",
+        "type": "atm",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.34227",
+        "lng": "-82.378772",
+        "title": "North Johnson City",
+        "address": "208 Sunset Drive<br />Johnson City, TN 37604",
+        "markerNumber": "14",
+        "distance": "249.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Walk-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5320",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.304064",
+        "lng": "-82.45136",
+        "title": "Jonesborough 11E",
+        "address": "1460 E. Jackson Boulevard<br />Jonesborough, TN 37659",
+        "markerNumber": "15",
+        "distance": "252.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5323",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "34.807626",
+        "lng": "-82.23315",
+        "title": "Simpsonville",
+        "address": "2565 Woodruff Road<br />Simpsonville, SC 29681",
+        "markerNumber": "16",
+        "distance": "259.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM",
+            "x": "y"
+        },
+        "itemId": "SC4159",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "33.018577",
+        "lng": "-80.17574",
+        "title": "Summerville Sc",
+        "address": "201 S. Main Street<br />Summerville, SC 29483",
+        "markerNumber": "17",
+        "distance": "262.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4047",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.594544",
+        "lng": "-82.188331",
+        "title": "Bristol Central",
+        "address": "840 State Street<br />Bristol, TN 37620",
+        "markerNumber": "18",
+        "distance": "264.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5310",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "34.836998",
+        "lng": "-82.367029",
+        "title": "Greenville Sc Main",
+        "address": "290 S. Pleasantburg Drive<br />Greenville, SC 29607",
+        "markerNumber": "19",
+        "distance": "265.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4071",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "34.850618",
+        "lng": "-82.397694",
+        "title": "Washington St",
+        "address": "101 E. Washington Street<br />Greenville, SC 29601",
+        "markerNumber": "20",
+        "distance": "266.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4160",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.546133",
+        "lng": "-82.515647",
+        "title": "Kingsport Mall",
+        "address": "1717 E. Stone Drive<br />Kingsport, TN 37660",
+        "markerNumber": "21",
+        "distance": "282.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Walk-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5335",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "36.485155",
+        "lng": "-82.50229",
+        "title": "Colonial Heights",
+        "address": "4105 Fort Henry Drive<br />Kingsport, TN 37663",
+        "markerNumber": "22",
+        "distance": "283.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "TN5340",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "32.779681",
+        "lng": "-79.931218",
+        "title": "Charleston Meeting St Main",
+        "address": "170 Meeting Street<br />Charleston, SC 29401",
+        "markerNumber": "23",
+        "distance": "283.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4029",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "32.831097",
+        "lng": "-79.823193",
+        "title": "Mt Pleasant Towne Centre",
+        "address": "1200 Two Island Court, Suite B<br />Mount Pleasant, SC 29466",
+        "markerNumber": "24",
+        "distance": "288.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Drive-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4048",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {
+        "lat": "32.794761",
+        "lng": "-79.861305",
+        "title": "Mount Pleasant",
+        "address": "1210 Ben Sawyer Boulevard<br />Mount Pleasant, SC 29464",
+        "markerNumber": "25",
+        "distance": "288.0",
+        "openState": "OPEN",
+        "hours": "",
+        "services": {
+            "label": "Walk-up ATM, Mortgage Lender",
+            "x": "y"
+        },
+        "itemId": "SC4065",
+        "type": "branch",
+        "geolocation": "27609"
+    },
+    {}
+]
