@@ -60,7 +60,9 @@ def fetch_data():
                     country_code="Kuwait",
                     phone=phone,
                     locator_domain=locator_domain,
-                    hours_of_operation=_.select_one("div.store-time").text.strip(),
+                    hours_of_operation=" ".join(
+                        list(_.select_one("div.store-time").stripped_strings)[:-1]
+                    ),
                 )
 
 
