@@ -87,6 +87,17 @@ def fetch_data():
             name = "AMC Oakbrook Center 4"
             lat = "41.850415"
             lng = "-87.952809"
+        if "miami-ft-lauderdale/amc-hialeah-12" in loc:
+            city = "Hialeah"
+            state = "FL"
+            zc = "33012"
+            name = "AMC Hialeah 12"
+            store = "4172"
+            add = "780 W 49th St"
+            lat = "25.865364"
+            lng = "-80.297871"
+        name = name.replace("&amp;", "&")
+        add = add.replace("&amp;", "&")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
