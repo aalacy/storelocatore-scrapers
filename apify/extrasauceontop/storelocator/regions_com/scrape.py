@@ -1,7 +1,6 @@
 import re
 import json
 from sgrequests import SgRequests
-import pandas as pd
 from bs4 import BeautifulSoup as bs
 from sgzip.static import static_zipcode_list, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
