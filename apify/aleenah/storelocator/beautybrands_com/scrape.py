@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -14,6 +14,9 @@ def write_output(data):
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
             writer.write_row(row)
+
+
+session = SgRequests()
 
 
 def fetch_data():
@@ -34,7 +37,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
     }
 
-    res = requests.get(
+    res = session.get(
         "https://www.beautybrands.com/store-locator/all-stores.do", headers=headers
     )
     soup = BeautifulSoup(res.text, "html.parser")
@@ -43,7 +46,7 @@ def fetch_data():
         a = a.find("a")
         url = "https://www.beautybrands.com/" + a.get("href")
         logger.info(url)
-        res = requests.get(url, headers=headers)
+        res = session.get(url, headers=headers)
         soup = BeautifulSoup(res.text, "html.parser")
         ph = soup.find("div", {"class": "eslPhone"}).text.strip()
         if ph == "":
