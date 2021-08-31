@@ -127,6 +127,7 @@ def get_data():
                                         )
 
                         except Exception:
+                            hours = "<MISSING>"
                             pass
 
                 page_urls.append(page_url)
