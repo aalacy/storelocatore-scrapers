@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgzip.static import static_zipcode_list, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
 
+
 def extract_json(html_string):
     html_string = (
         html_string.replace("\n", "")
@@ -41,13 +42,14 @@ def get_data():
     session = SgRequests()
     search = static_zipcode_list(country_code=SearchableCountries.USA, radius=30)
 
-    x = 0
     for search_code in search:
+
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
             + search_code
             + "&type=branch"
         )
+
         response = session.get(url).text
 
         first_objects = extract_json(response)
@@ -56,15 +58,20 @@ def get_data():
 
         x = 0
         for location in first_objects:
+            other_check = "failing"
+            try:
+                location_name = location["title"]
+            except Exception:
+                continue
+
             locator_domain = "regions.com"
 
             a_tag = grids[x].find("a")
+            x = x + 1
             try:
                 page_url = "regions.com" + a_tag["href"]
             except Exception:
                 page_url = "<MISSING>"
-            
-            location_name = location["title"]
             latitude = location["lat"]
             longitude = location["lng"]
             address = location["address"].split("<br />")[0]
@@ -84,14 +91,22 @@ def get_data():
             zipp = location["address"].split("<br />")[1].split(",")[1].split(" ")[-1]
             country_code = "US"
             store_number = location["itemId"]
-            location_type = location["type"]
+            location_type = "atm"
+            location_type_check = location["type"]
 
             if page_url != "<MISSING>":
-                if page_url in page_urls or "-atm-" in page_url:
+                if page_url in page_urls:
                     continue
-                    
+
                 response = session.get("https://" + page_url).text
+                if (
+                    "ATM Location and Features" not in response
+                    and "-atm-" not in page_url
+                ):
+                    continue
+                other_check = "passing"
                 json_objects = extract_json(response)
+
                 for item in json_objects:
                     if "name" not in item.keys():
                         continue
@@ -101,13 +116,20 @@ def get_data():
                         except Exception:
                             phone = "<MISSING>"
                             pass
-                    
-                    
-                
+
+                hours_soup = bs(response, "html.parser")
+                lis = hours_soup.find_all("li")
+
+                for li in lis:
+                    if "ATM Hours" in li.text.strip():
+                        hours = li.text.strip().replace("ATM Hours: ", "")
             else:
                 phone = "<MISSING>"
                 hours = "<MISSING>"
 
+            page_urls.append(page_url)
+            if location_type_check != "atm" and other_check != "passing":
+                continue
 
             yield {
                 "locator_domain": locator_domain,
@@ -125,6 +147,7 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -165,4 +188,4 @@ def scrape():
     pipeline.run()
 
 
-get_data()
+scrape()
