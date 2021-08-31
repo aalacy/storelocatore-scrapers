@@ -1,37 +1,13 @@
-import csv
 import json
 
 from lxml import html
+
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_hours(page_url):
@@ -65,11 +41,15 @@ def get_hours(page_url):
     except IndexError:
         latitude, longitude = "<MISSING>", "<MISSING>"
 
+    try:
+        hoo = tree.xpath("//b[contains(text(), 'OPENING SOON')]//text()")[0]
+    except:
+        pass
+
     return latitude, longitude, hoo, r.url
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     locator_domain = "https://jerrysartarama.com/"
     api_url = "https://www.jerrysretailstores.com/locations/"
 
@@ -90,36 +70,35 @@ def fetch_data():
         page_url = j.get("url").replace("/store-location", "")
         if page_url.find("greensboro") != -1:
             page_url = "https://www.jerryswholesalestores.com/greensboro-nc/"
+        if "wholesale-club-of-jacksonville" in page_url:
+            page_url = "https://www.jerryswholesalestores.com/jacksonville-fl/"
         location_name = j.get("name").replace("&#8217;", "'")
         location_type = "<MISSING>"
         phone = a.get("telephone") or "<MISSING>"
         latitude, longitude, hours_of_operation, page_url = get_hours(page_url)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        if "OPENING SOON" in hours_of_operation:
+            continue
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-if __name__ == "__main__":
-    scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
