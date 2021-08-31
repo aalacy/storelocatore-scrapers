@@ -59,17 +59,22 @@ def fetch_data(sgw: SgWriter):
             longitude = SgRecord.MISSING
 
         try:
-            text = (
-                html.tostring(d).decode("utf8").split("<!--<p>")[1].split("</p>-->")[0]
-            )
-            root = html.fromstring(text)
-            hours_of_operation = (
-                " ".join("".join(root.xpath("//text()")).split())
-                .replace("Horaires d’ouverture :", "")
-                .strip()
-            )
-            if "-->" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("-->")[0].strip()
+            source = "<b>".join(html.tostring(d).decode("utf8").split("<b>")[1:]).split(
+                "-->"
+            )[0]
+            root = html.fromstring(source)
+            text = "".join(root.xpath("//text()"))
+            text = " ".join(text.split()).lower()
+            if "dimanche" not in text:
+                hours_of_operation = text.split("7j/7 :")[1].strip()
+                if "_" in text:
+                    hours_of_operation = hours_of_operation.split("_")[0].strip()
+                else:
+                    hours_of_operation = hours_of_operation.split("m")[0].strip()
+            else:
+                hours_of_operation = " ".join(
+                    ";".join(text.split("ventes à emporter")[1:]).split()
+                )
         except IndexError:
             hours_of_operation = SgRecord.MISSING
 

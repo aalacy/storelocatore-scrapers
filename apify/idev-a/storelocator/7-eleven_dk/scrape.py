@@ -16,6 +16,10 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
+            if _["open"]:
+                hours_of_operation = _["open"].replace(",", ";")
+            else:
+                hours_of_operation = "Døgnåbent "
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["store_id"],
@@ -28,7 +32,7 @@ def fetch_data():
                 country_code="Denmark",
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation=_["open"].replace(",", ";"),
+                hours_of_operation=hours_of_operation,
             )
 
 
