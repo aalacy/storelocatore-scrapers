@@ -30,7 +30,7 @@ def fetch_pdf():
 
         dfs = tb.read_pdf(
             file,
-            pages=1,
+            pages="all",
         )
 
     return dfs[0]
