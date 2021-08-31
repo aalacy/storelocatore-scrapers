@@ -21,8 +21,6 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
     items = base.find_all(class_="stores-page-box")
     locator_domain = "howards.com"
 
