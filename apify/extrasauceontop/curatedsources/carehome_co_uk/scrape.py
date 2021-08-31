@@ -111,7 +111,7 @@ def get_data():
             response_text = new_sess[2]
             break
         except Exception:
-            breaker = breaker+1
+            breaker = breaker + 1
             if breaker == 10:
                 raise Exception
 
