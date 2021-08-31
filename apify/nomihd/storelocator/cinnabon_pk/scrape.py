@@ -26,7 +26,7 @@ def fetch_data():
     stores = json.loads(stores_req.text)
 
     for store in stores:
-        page_url = store["url"]
+        page_url = "https://www.cinnabon.pk/stores/"
         locator_domain = website
         location_name = store["store"]
         street_address = store["address"]
