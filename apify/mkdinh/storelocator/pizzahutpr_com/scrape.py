@@ -18,12 +18,14 @@ def write_output(data):
 
 
 MISSING = "<MISSING>"
+locator_domain = "pizzahutpr.com"
+page_url = "https://static.phdvasia.com/pr/pdf/locations_v2.pdf"
 
 
 def fetch_pdf():
     with SgRequests() as session:
         response = session.get(
-            "https://static.phdvasia.com/pr/pdf/locations_v2.pdf",
+            page_url,
             headers={"User-Agent": "PostmanRuntime/7.19.0"},
         )
         file = BytesIO(response.content)
@@ -49,11 +51,24 @@ def fetch_data():
         if name.isupper():
             current_city = name
             if phone:
-                locations.append(SgRecord(city=current_city, phone=phone))
+                locations.append(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        city=current_city,
+                        phone=phone,
+                    )
+                )
         else:
             location_name = name
             locations.append(
-                SgRecord(city=current_city, phone=phone, location_name=location_name)
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    city=current_city,
+                    phone=phone,
+                    location_name=location_name,
+                )
             )
 
     yield from locations
