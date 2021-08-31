@@ -7,6 +7,17 @@ from sglogging import SgLogSetup
 import json
 from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("bk")
 
@@ -46,15 +57,20 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             zip_postal = addr.postcode
-            if not zip_postal.isdigit():
+            if zip_postal and not zip_postal.isdigit():
                 zip_postal = ""
+            city = addr.city
+            if city:
+                city = (
+                    city.replace("Guatemala", "")
+                    .replace(".", "")
+                    .replace("Cuesta Blanca", "")
+                )
             yield SgRecord(
                 page_url=page_url,
                 location_name=link["title"],
                 street_address=street_address,
-                city=addr.city.replace("Guatemala", "")
-                .replace(".", "")
-                .replace("Cuesta Blanca", ""),
+                city=city,
                 state=addr.state,
                 zip_postal=zip_postal,
                 latitude=link["latitud"],

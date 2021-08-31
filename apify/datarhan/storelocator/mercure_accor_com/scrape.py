@@ -1,6 +1,6 @@
 import json
 from lxml import etree
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlencode
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -8,10 +8,37 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
+session = SgRequests()
+
+
+def parse_ids(dom):
+    ent_list = []
+    ids = dom.xpath('//script[@id="paginator-ids-core"]/text()')
+    urls = []
+    if ids:
+        ids = json.loads(ids[0])
+        for e in ids:
+            ent_list.append({"meta.id": {"$eq": e}})
+
+        params = {
+            "api_key": "f60a800cdb7af0904b988d834ffeb221",
+            "v": "20160822",
+            "filter": {"$or": ent_list},
+            "languages": "en_GB",
+            "limit": "50",
+        }
+        params = urlencode(params)
+        url = "https://liveapi.yext.com/v2/accounts/1624327134898036854/entities?"
+
+        urls = []
+        data = session.get(url + params).json()
+        for e in data["response"]["entities"]:
+            urls.append(e["c_pageDestinationURL"])
+
+    return urls
+
 
 def fetch_data():
-    session = SgRequests()
-
     domain = "accor.com"
     start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
 
@@ -27,6 +54,10 @@ def fetch_data():
             response = session.get(urljoin(start_url, url))
             dom = etree.HTML(response.text)
             all_cities = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
+            all_cities += parse_ids(dom)
+            all_locations += dom.xpath(
+                '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
+            )
             for url in all_cities:
                 response = session.get(urljoin(start_url, url))
                 dom = etree.HTML(response.text)
@@ -36,6 +67,7 @@ def fetch_data():
                 all_subs = dom.xpath(
                     '//div[@class="Teaser Teaser--geography"]//a/@href'
                 )
+                all_subs += parse_ids(dom)
                 for url in all_subs:
                     response = session.get(urljoin(start_url, url))
                     dom = etree.HTML(response.text)
@@ -45,6 +77,7 @@ def fetch_data():
                     all_ss = dom.xpath(
                         '//div[@class="Teaser Teaser--geography"]//a/@href'
                     )
+                    all_ss += parse_ids(dom)
                     for url in all_ss:
                         response = session.get(urljoin(start_url, url))
                         dom = etree.HTML(response.text)
@@ -56,6 +89,8 @@ def fetch_data():
         store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+        if not loc_dom.xpath('//img[contains(@src, "/mer.svg")]'):
+            continue
         poi = loc_dom.xpath(
             '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
         )
