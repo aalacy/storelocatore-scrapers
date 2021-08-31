@@ -106,6 +106,7 @@ def get_data():
                         try:
                             phone = item["telephone"].replace("+", "")
                         except Exception:
+                            phone = "<MISSING>"
                             pass
 
                         hours = ""
