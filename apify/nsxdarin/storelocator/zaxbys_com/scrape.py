@@ -66,7 +66,7 @@ def fetch_data():
                     name = add
             if "ae/quebec/" in loc:
                 country = "CA"
-            if city != "":
+            if city != "" and "q;Website&" not in hours:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

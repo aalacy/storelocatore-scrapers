@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "onpointcu.com"
@@ -36,13 +38,14 @@ def fetch_data():
 
     for store in store_list:
 
-        page_url = store["customAtmInfo"]
+        page_url = store.get("customAtmInfo", None)
         if page_url:
             page_url = page_url.split('href="')[1].split('"')[0]
         locator_domain = website
 
         location_name = store["name"]
-
+        if "opening" in location_name:
+            continue
         street_address = store["address"]["street"]
 
         city = store["address"]["city"]
@@ -100,7 +103,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

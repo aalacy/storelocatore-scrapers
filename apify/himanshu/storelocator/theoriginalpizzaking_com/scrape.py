@@ -1,5 +1,8 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -7,41 +10,9 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
 
-    data = []
     url = "https://api.storerocket.io/api/user/3MZpoQ2JDN/locations?radius=250&units=miles"
-    p = 0
     loclist = session.get(url, headers=headers, verify=False).json()["results"][
         "locations"
     ]
@@ -51,9 +22,15 @@ def fetch_data():
         lat = loc["lat"]
         longt = loc["lng"]
         street = loc["address_line_1"]
-        city = loc["city"]
-        state = loc["state"]
-        pcode = loc["postcode"]
+        try:
+            city = loc["city"].strip()
+            state = loc["state"]
+            pcode = loc["postcode"]
+        except:
+            street, city, state, pcode = loc["address"].split(", ")
+        link = str(loc["url"])
+        if len(link) < 6:
+            link = "<MISSING>"
         ccode = "US"
         if str(street) == "None":
             street, city, state, pcode = loc["address"].split(", ")
@@ -69,33 +46,32 @@ def fetch_data():
             state = "IN"
         elif "Illinois" in state:
             state = "IL"
-        data.append(
-            [
-                "https://theoriginalpizzaking.com/",
-                "https://theoriginalpizzaking.com/additional-pizza-king-locations/?location=Y287W2qN8A",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                "<MISSING>",
-            ]
+        yield SgRecord(
+            locator_domain="https://theoriginalpizzaking.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode,
+            country_code=ccode,
+            store_number=store,
+            phone=phone.strip(),
+            location_type="<MISSING>",
+            latitude=lat,
+            longitude=longt,
+            hours_of_operation="<MISSING>",
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

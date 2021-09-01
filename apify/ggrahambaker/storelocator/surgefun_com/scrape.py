@@ -45,7 +45,7 @@ def scroll_until_loaded(driver):
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         try:
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 2).until(
                 lambda driver: driver.execute_script(
                     "return document.body.scrollHeight;"
                 )
@@ -54,6 +54,27 @@ def scroll_until_loaded(driver):
             check_height = driver.execute_script("return document.body.scrollHeight;")
         except TimeoutException:
             break
+
+
+def load_data(driver, page_url, count, load=False):
+    if load:
+        driver.get(page_url)
+    driver.find_element_by_xpath("/html/body/div[2]/div/div/section[2]").click()
+    scroll_until_loaded(driver)
+    try:
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "div#locInfo > div.container")
+            )
+        )
+    except TimeoutException:
+        if count < 15:
+            count += 1
+            load_data(driver, page_url, count, True)
+            log.info("Website load not complete, Try to reload")
+        else:
+            pass
+    return driver
 
 
 def fetch_data():
@@ -66,7 +87,7 @@ def fetch_data():
             "a", {"class": "elementor-button-link elementor-button elementor-size-sm"}
         )
     )
-    driver = SgSelenium().chrome()
+    driver = SgSelenium(is_headless=True).chrome()
     for row in store_urls:
         page_url = row["href"]
         driver.get(page_url)
@@ -78,13 +99,7 @@ def fetch_data():
             continue
         except:
             pass
-        driver.find_element_by_xpath("/html/body/div[2]/div/div/section[2]").click()
-        scroll_until_loaded(driver)
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "div#locInfo > div.container")
-            )
-        )
+        driver = load_data(driver, page_url, 0, False)
         content = driver.find_element_by_id("locInfo")
         location_name = content.find_element_by_css_selector(
             "div.col-md-4.text-left > h4"
