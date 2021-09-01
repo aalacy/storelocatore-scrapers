@@ -1,5 +1,7 @@
 from lxml import etree
 from urllib.parse import urljoin
+from time import sleep
+from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -20,6 +22,7 @@ def fetch_data():
         country_codes=[SearchableCountries.FRANCE], expected_search_radius_miles=100
     )
     for code in all_codes:
+        sleep(uniform(0, 5))
         response = session.get(search_url.format(code))
         session_id = response.url.split("=")[-1]
         hdr = {
@@ -46,6 +49,7 @@ def fetch_data():
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
         next_page = dom.xpath('//a[@title="page suivante"]/@href')
         while next_page:
+            sleep(uniform(0, 5))
             response = session.get(urljoin(start_url, next_page[0]))
             dom = etree.HTML(
                 response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
@@ -71,7 +75,7 @@ def fetch_data():
                 city=" ".join(raw_adr[1].split()[1:]),
                 state=SgRecord.MISSING,
                 zip_postal=raw_adr[1].split()[0],
-                country_code="FR",
+                country_code=SgRecord.MISSING,
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,
                 location_type=SgRecord.MISSING,
