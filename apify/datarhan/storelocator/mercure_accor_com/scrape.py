@@ -17,6 +17,7 @@ def parse_ids(dom):
     urls = []
     if ids:
         ids = json.loads(ids[0])
+        print(len(ids))
         for e in ids:
             ent_list.append({"meta.id": {"$eq": e}})
 
@@ -41,17 +42,34 @@ def parse_ids(dom):
 def fetch_data():
     domain = "accor.com"
     start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
+    session = SgRequests()
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    }
 
     all_locations = []
-    response = session.get(start_url)
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_directions = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
     for url in all_directions:
-        response = session.get(urljoin(start_url, url))
+        url = urljoin(start_url, url)
+        response = session.get(url, headers=hdr)
+        code = response.status_code
+        while code != 200:
+            session = SgRequests()
+            response = session.get(url, headers=hdr)
+            code = response.status_code
         dom = etree.HTML(response.text)
         all_countries = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
         for url in all_countries:
-            response = session.get(urljoin(start_url, url))
+            url = urljoin(start_url, url)
+            response = session.get(url, headers=hdr)
+            code = response.status_code
+            while code != 200:
+                session = SgRequests()
+                response = session.get(url, headers=hdr)
+                code = response.status_code
             dom = etree.HTML(response.text)
             all_cities = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
             all_cities += parse_ids(dom)
@@ -59,7 +77,13 @@ def fetch_data():
                 '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
             )
             for url in all_cities:
-                response = session.get(urljoin(start_url, url))
+                url = urljoin(start_url, url)
+                response = session.get(url, headers=hdr)
+                code = response.status_code
+                while code != 200:
+                    session = SgRequests()
+                    response = session.get(url, headers=hdr)
+                    code = response.status_code
                 dom = etree.HTML(response.text)
                 all_locations += dom.xpath(
                     '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
@@ -69,7 +93,13 @@ def fetch_data():
                 )
                 all_subs += parse_ids(dom)
                 for url in all_subs:
-                    response = session.get(urljoin(start_url, url))
+                    url = urljoin(start_url, url)
+                    response = session.get(url, headers=hdr)
+                    code = response.status_code
+                    while code != 200:
+                        session = SgRequests()
+                        response = session.get(url, headers=hdr)
+                        code = response.status_code
                     dom = etree.HTML(response.text)
                     all_locations += dom.xpath(
                         '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
@@ -79,7 +109,13 @@ def fetch_data():
                     )
                     all_ss += parse_ids(dom)
                     for url in all_ss:
-                        response = session.get(urljoin(start_url, url))
+                        url = urljoin(start_url, url)
+                        response = session.get(url, headers=hdr)
+                        code = response.status_code
+                        while code != 200:
+                            session = SgRequests()
+                            response = session.get(url, headers=hdr)
+                            code = response.status_code
                         dom = etree.HTML(response.text)
                         all_locations += dom.xpath(
                             '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
