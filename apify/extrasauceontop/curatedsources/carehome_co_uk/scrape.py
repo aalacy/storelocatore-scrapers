@@ -197,7 +197,7 @@ def get_data():
             count = count + 1
 
     for location_url in location_urls:
-        x = x+1
+        x = x + 1
         if "searchazref" not in location_url:
             continue
 
@@ -208,7 +208,7 @@ def get_data():
 
         if "404 - Page Missing" in response_text:
             continue
-        
+
         if len(response_text.split("div")) > 2:
             pass
         else:
