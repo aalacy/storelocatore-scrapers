@@ -24,13 +24,14 @@ def fetch_data(sgw: SgWriter):
         page_url = f"https://ultrastarus.com{slug}"
         if page_url.count("https") > 1:
             continue
-        location_name = "".join(d.xpath(".//text()")).strip()
+        location_name = "".join(d.xpath(".//preceding::h1[1]//text()")).strip()
         if page_url.find("valleyriver") != -1:
             page_url = page_url.replace("valleyriver", "valley-river")
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         ad = "".join(tree.xpath("//p[./span/em]//em/text()"))
+
         street_address = " ".join(ad.split(",")[0].split()[:-1]).strip()
         phone = "".join(
             tree.xpath(
