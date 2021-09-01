@@ -33,9 +33,7 @@ class ExampleSearchIteration(SearchIteration):
 
         self._http.clear_cookies()
         # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
-        res = self._http.get(
-            base_url.format(coord[0], coord[1]), headers=_headers
-        )
+        res = self._http.get(base_url.format(coord[0], coord[1]), headers=_headers)
         if res.status_code == 200:
             locations = res.json()["stores"]
             logger.info(f"[{current_country}] found: {len(locations)}")
@@ -48,18 +46,18 @@ class ExampleSearchIteration(SearchIteration):
                 if store.get("address2"):
                     street_address += " " + store["address2"]
                 page_url = f'https://www.intimissimi.com/world/stores/{store["name"].lower().replace(" ","_")}/{store["ID"]}.html'
-                city = store.get("city",'')
+                city = store.get("city", "")
                 if city:
-                    street_address=street_address.replace(city, "")
+                    street_address = street_address.replace(city, "")
                 zip_postal = store.get("postalCode", "")
                 if zip_postal:
-                    street_address=street_address.replace(zip_postal, "")
+                    street_address = street_address.replace(zip_postal, "")
                 yield SgRecord(
                     page_url=page_url,
                     store_number=store["ID"],
                     location_name=store["name"],
                     street_address=street_address.replace(",", "")
-                    .replace('&apos;', "'")
+                    .replace("&apos;", "'")
                     .strip(),
                     city=city,
                     zip_postal=zip_postal,
