@@ -1,6 +1,7 @@
 import json
 from lxml import etree
 from urllib.parse import urljoin, urlencode
+from requests.sessions import session
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -9,7 +10,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
 
-def parse_ids(dom):
+def parse_ids(dom, session):
     ent_list = []
     ids = dom.xpath('//script[@id="paginator-ids-core"]/text()')
     urls = []
@@ -107,7 +108,7 @@ def parse_locations_urls(url):
         code = response.status_code
     dom = etree.HTML(response.text)
     urls_to_parse = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-    urls_to_parse += parse_ids(dom)
+    urls_to_parse += parse_ids(dom, session)
     for url in urls_to_parse:
         yield url
     all_locations += dom.xpath(
