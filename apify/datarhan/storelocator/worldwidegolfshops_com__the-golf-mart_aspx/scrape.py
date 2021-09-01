@@ -9,6 +9,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
@@ -43,8 +46,9 @@ def fetch_data():
         for url in all_locations:
             page_url = urljoin(start_url, url)
             driver.get(page_url)
+            sleep(10)
             loc_dom = etree.HTML(driver.page_source)
-            poi = loc_dom.xpath('//script[contains(text(), "postal")]/text()')[0]
+            poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
             poi = json.loads(poi)
             location_name = loc_dom.xpath(
                 '//h1[@class="vtex-yext-store-locator-0-x-storeTitle tc"]/text()'
