@@ -27,7 +27,7 @@ city_url = "https://emap.pcsc.com.tw/EMapSDK.aspx"
 
 def _c(v):
     _v = v.split(".")[0]
-    return _v[:-6] + "." + _v[-6:] + v.split(".")[1]
+    return _v[:-6] + "." + _v[-6:]
 
 
 def fetch_data():
