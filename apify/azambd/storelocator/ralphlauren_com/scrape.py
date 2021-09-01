@@ -153,51 +153,53 @@ def fetch_data(http):
         longitude = get_JSON_object_variable(store, "longitude")
 
         if location_name == MISSING:
-            log.debug(f"Fetching page_url {page_url} ...")
+            log.info(f"Fetching page_url {page_url} ...")
             time.sleep(5)
             response = http.get(f"{page_url}", headers=headers)
             body = html.fromstring(response.text, "lxml")
-            jsonData = body.xpath(
-                '//script[contains(@type, "application/ld+json")]/text()'
-            )[3].strip()
-            data = ast.literal_eval(jsonData)
-            location_name = data["name"]
-            location_name = location_name.split("-")[0].strip()
-            log.info(f"Location Name: {location_name}")
-            street_address = data["address"]["streetAddress"]
-            log.info(f"Street Address: {street_address}")
-            address2 = data["address"]["addressLocality"]
-            raw_address = f"{street_address}, {address2}"
+            try:
+                jsonData = body.xpath(
+                    '//script[contains(@type, "application/ld+json")]/text()'
+                )[3].strip()
+                data = ast.literal_eval(jsonData)
+                location_name = data["name"]
+                location_name = location_name.split("-")[0].strip()
+                log.info(f"Location Name: {location_name}")
+                street_address = data["address"]["streetAddress"]
+                log.info(f"Street Address: {street_address}")
+                address2 = data["address"]["addressLocality"]
+                raw_address = f"{street_address}, {address2}"
 
-            street_address, city, state = get_address(raw_address)
-            log.info(f"street_address: {street_address} city:{city}, state:{state}")
-            hoo = []
-            hoos = body.xpath('//tr[@class="store-hourrow"]')
-            if len(hoos) > 1:
-                for h in hoos:
-                    day = (
-                        h.xpath('./td[@class="store-hours-day"]/text()')[0]
-                        .strip()
-                        .replace(">", "")
-                    )
-                    try:
-                        hrs = h.xpath('./td[@class="store-hours-open"]/text()')[0]
-                        hoo.append(f"{day}:{hrs}")
-                    except:
+                street_address, city, state = get_address(raw_address)
+
+                hoo = []
+                hoos = body.xpath('//tr[@class="store-hourrow"]')
+                if len(hoos) > 1:
+                    for h in hoos:
+                        day = (
+                            h.xpath('./td[@class="store-hours-day"]/text()')[0]
+                            .strip()
+                            .replace(">", "")
+                        )
+                        try:
+                            hrs = h.xpath('./td[@class="store-hours-open"]/text()')[0]
+                            hoo.append(f"{day}:{hrs}")
+                        except:
+                            hoo.append(f"{day}")
+                            pass
+
+                else:
+                    for h in hoos:
+                        day = (
+                            "".join(h.xpath('./td[@class="store-hours-day"]/text()'))
+                            .strip()
+                            .replace("\n", ",")
+                        )
                         hoo.append(f"{day}")
-                        pass
 
-            else:
-                for h in hoos:
-                    day = (
-                        "".join(h.xpath('./td[@class="store-hours-day"]/text()'))
-                        .strip()
-                        .replace("\n", ",")
-                    )
-                    hoo.append(f"{day}")
-
-            hours_of_operation = ";".join(hoo)
-            log.info(f"HOO: {hours_of_operation}")
+                hours_of_operation = ";".join(hoo)
+            except Exception as e:
+                log.debug(f"Failed loading page, {e}")
 
         yield SgRecord(
             locator_domain=DOMAIN,

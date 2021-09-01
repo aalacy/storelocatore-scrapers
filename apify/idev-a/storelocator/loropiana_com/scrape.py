@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import json
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("loropiana")
 
@@ -49,12 +51,7 @@ def fetch_data():
                     times = []
                     for x in range(len(_h(hr["opens"]))):
                         times.append(f"{hr['opens'][x]}-{hr['closes'][x]}")
-                    try:
-                        hours.append(f"{day}: {','.join(times)}")
-                    except:
-                        import pdb
-
-                        pdb.set_trace()
+                    hours.append(f"{day}: {','.join(times)}")
 
                 zip_postal = _["address"]["postalCode"]
                 if zip_postal.lower() == "no zip code":
@@ -94,9 +91,9 @@ def fetch_data():
                         city = _["address"]["addressLocality"]
                 latitude = _["geo"]["latitude"]
                 longitude = _["geo"]["longitude"]
-                if latitude == "0":
+                if latitude == "0.0":
                     latitude = ""
-                if longitude == "0":
+                if longitude == "0.0":
                     longitude = ""
                 yield SgRecord(
                     page_url=page_url,
@@ -116,7 +113,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
