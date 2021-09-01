@@ -49,12 +49,7 @@ def fetch_data():
                     times = []
                     for x in range(len(_h(hr["opens"]))):
                         times.append(f"{hr['opens'][x]}-{hr['closes'][x]}")
-                    try:
-                        hours.append(f"{day}: {','.join(times)}")
-                    except:
-                        import pdb
-
-                        pdb.set_trace()
+                    hours.append(f"{day}: {','.join(times)}")
 
                 zip_postal = _["address"]["postalCode"]
                 if zip_postal.lower() == "no zip code":
@@ -94,9 +89,9 @@ def fetch_data():
                         city = _["address"]["addressLocality"]
                 latitude = _["geo"]["latitude"]
                 longitude = _["geo"]["longitude"]
-                if latitude == "0":
+                if latitude == "0.0":
                     latitude = ""
-                if longitude == "0":
+                if longitude == "0.0":
                     longitude = ""
                 yield SgRecord(
                     page_url=page_url,
