@@ -19,7 +19,6 @@ base_url = "https://www.firstwatch.com/api/get_locations.php?latitude={}&longitu
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles=50,
 )
 
 
