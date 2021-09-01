@@ -161,7 +161,7 @@ def fetch_data():
             zip_postal=zip_postal,
             state=state,
             phone=phone,
-            country_code="CA",
+            country_code=country_code,
             latitude=latitude,
             longitude=longitude,
             raw_address=raw_address,
