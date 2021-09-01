@@ -1,11 +1,11 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import json
 
-logger = SgLogSetup().get_logger("comerica_com")
+logger = SgLogSetup().get_logger("golftec")
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -15,14 +15,13 @@ locator_domain = "https://www.golftec.com"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-    max_radius_miles=None,
-    max_search_results=None,
+    granularity=Grain_8(),
 )
 
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
+    session = SgRequests(proxy_country="us", proxy_rotation_failure_threshold=20)
     maxZ = search.items_remaining()
     total = 0
     for lat, lng in search:
