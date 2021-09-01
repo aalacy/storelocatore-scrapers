@@ -1,4 +1,4 @@
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from lxml import html
 import time
 import json
@@ -15,6 +15,8 @@ from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+
+from sgscrape.pause_resume import CrawlStateSingleton
 
 import ssl
 
@@ -252,6 +254,7 @@ def fetchData():
         phone = getReviewedPath(jsonData, "itemReviewed.telephone.0")
         latitude = getReviewedPath(jsonData, "itemReviewed.geo.latitude")
         longitude = getReviewedPath(jsonData, "itemReviewed.geo.longitude")
+        log.info(f"{latitude}, {longitude}")
         hours_of_operation = MISSING
         city = getJSObject(response, "addressLocality")
 
@@ -328,6 +331,32 @@ def fetchData():
         else:
             country_code = "US"
 
+        if "28.361397" in str(latitude):
+            height = driver.execute_script("return document.body.scrollHeight")
+            driver.implicitly_wait(10)
+            driver.execute_script("window.scrollTo(0, 0)")
+            for i in range(0, height, 60):
+                # load content
+                driver.execute_script("window.scrollTo(0, " + str(i) + ")")
+                time.sleep(0.4)
+            iframe = driver.find_element_by_xpath('//div[@class="map"]/iframe')
+            driver.switch_to.frame(iframe)
+            htmlmarkups = driver.page_source
+            body = html.fromstring(htmlmarkups, "lxml")
+            map_link = body.xpath('//div[@class="google-maps-link"]/a/@href')[0]
+            log.info(f"MAPS LINK: {map_link}")
+            try:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", map_link)[
+                    0
+                ].split(",")
+            except:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{1,3}\.[0-9]+", map_link)[
+                    0
+                ].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+            log.info(f"Pulled From Map: {latitude},{longitude}")
+
         yield SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,
@@ -351,10 +380,10 @@ def fetchData():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     start = time.time()
-    result = fetchData()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in result:
+        for rec in fetchData():
             writer.write_row(rec)
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
