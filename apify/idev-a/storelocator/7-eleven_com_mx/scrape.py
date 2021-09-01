@@ -1,4 +1,3 @@
-from pandas.core import base
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
