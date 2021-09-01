@@ -8,9 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
-session = SgRequests()
-all_locations = []
-
 
 def parse_ids(dom):
     ent_list = []
