@@ -11,6 +11,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
