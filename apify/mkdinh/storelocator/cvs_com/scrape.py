@@ -90,9 +90,6 @@ def enqueue_links(url, selectors):
         lurl = urljoin(base_url, link["href"])
         urls.append(lurl)
 
-    if selector == ".directions-link a" and not len(urls):
-        print(url)
-
     return urls
 
 
