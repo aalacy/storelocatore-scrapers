@@ -67,19 +67,24 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = " ".join(data[3:-2])
         else:
             try:
-                data = soup1.find_all("img", {"class": "grpelem"})[1]["alt"]
+                raw_data = soup1.find_all("img", {"class": "grpelem"})[1]["alt"]
             except:
-                data = soup1.find("img", {"class": "colelem"})["alt"]
-            if "Telephone" in data:
-                phone = data.split("Telephone :")[1].strip()
+                raw_data = soup1.find("img", {"class": "colelem"})["alt"]
+            if "Telephone" in raw_data:
+                phone = raw_data.split("Telephone :")[1].strip()
                 hours_of_operation = (
-                    "Hours:" + " " + data.split("Hours:")[1].split("Contact")[0].strip()
+                    "Hours:"
+                    + " "
+                    + raw_data.split("Hours:")[1].split("Contact")[0].strip()
                 )
                 street_address = (
-                    data.split("Hours:")[0].split(",")[0].split("Address:")[1].strip()
+                    raw_data.split("Hours:")[0]
+                    .split(",")[0]
+                    .split("Address:")[1]
+                    .strip()
                 )
                 city = (
-                    data.split("Hours:")[0]
+                    raw_data.split("Hours:")[0]
                     .split(",")[0]
                     .split("Address:")[1]
                     .split(" ")[-1]
@@ -89,25 +94,25 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                 )
 
-                state = data.split("Hours:")[0].split(",")[-1].split()[0].strip()
-                zipp = data.split("Hours:")[0].split(",")[-1].split()[1].strip()
+                state = raw_data.split("Hours:")[0].split(",")[-1].split()[0].strip()
+                zipp = raw_data.split("Hours:")[0].split(",")[-1].split()[1].strip()
             else:
                 phone = "<MISSING>"
-                hours_of_operation = "Hours:" + " " + data.split("Hours:")[1]
+                hours_of_operation = "Hours:" + " " + raw_data.split("Hours:")[1]
                 street_address = " ".join(
-                    data.split("Hours:")[0]
+                    raw_data.split("Hours:")[0]
                     .split(",")[0]
                     .split("Address:")[1]
                     .split(" ")[:-1]
                 )
                 city = (
-                    data.split("Hours:")[0]
+                    raw_data.split("Hours:")[0]
                     .split(",")[0]
                     .split("Address:")[1]
                     .split(" ")[-1]
                 )
-                state = data.split("Hours:")[0].split(",")[1].split(" ")[1]
-                zipp = data.split("Hours:")[0].split(",")[1].split(" ")[2]
+                state = raw_data.split("Hours:")[0].split(",")[1].split(" ")[1]
+                zipp = raw_data.split("Hours:")[0].split(",")[1].split(" ")[2]
 
         street_address = street_address.replace(",", "").replace(city, "").strip()
 
