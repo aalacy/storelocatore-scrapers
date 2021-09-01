@@ -16,15 +16,16 @@ _headers = {
     "accept-language": "en-US,en;q=0.9,ko;q=0.8",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.gucci.com"
+base_url = "https://www.gucci.com/int/en/store"
 
 
 def fetch_data():
-    locator_domain = "https://www.gucci.com"
-    base_url = "https://www.gucci.com/int/en/store"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("ol.search-results li.store-item")
         logger.info(f"[********] {len(locations)} found in {base_url}")
+
         for _ in locations:
             page_url = locator_domain + _.h3.a["href"]
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
@@ -76,6 +77,7 @@ def fetch_data():
             if phone == "n/a":
                 phone = ""
             logger.info(f"[{aa['addressCountry']}] {page_url}")
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["data-store-code"],
