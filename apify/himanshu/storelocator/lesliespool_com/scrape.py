@@ -14,7 +14,6 @@ session = SgRequests()
 
 
 def fetch_data(sgw: SgWriter):
-    addresses = []
     headers = {
         "authority": "lesliespool.com",
         "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
