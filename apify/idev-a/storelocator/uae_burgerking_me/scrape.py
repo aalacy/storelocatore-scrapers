@@ -46,7 +46,7 @@ def fetch_data():
                 page_url=base_url,
                 store_number=_["id"].replace("Modal", ""),
                 location_name=_.a.text.strip(),
-                street_address=street_address.replace("UAE", ""),
+                street_address=street_address.replace("UAE", "").replace("Uae", ""),
                 city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
