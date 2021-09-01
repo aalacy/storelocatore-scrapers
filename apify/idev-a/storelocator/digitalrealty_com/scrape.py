@@ -119,9 +119,6 @@ def fetch_data():
                 yield _d(page_url, sp3)
 
         if not states:
-            import pdb
-
-            pdb.set_trace()
             states1 = sp1.select("main a.uk-link-reset")
             for url, sp4 in fetchConcurrentList(states1):
                 links1 = sp4.select("main a.uk-link-reset")
