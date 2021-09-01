@@ -1,40 +1,19 @@
-import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("smashburger_com")
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 session = SgRequests()
@@ -67,17 +46,17 @@ def fetch_data():
     )
     dic = {"CA": ca, "US": us}
     for country in dic:
-        cities = dic[country]
-        for city in cities:
-            url = city.get("href")
+        states = dic[country]
+        for state in states:
+            url = state.get("href")
             logger.info(url)
             res = session.get(url, headers=headers)
             soup = BeautifulSoup(res.text, "html.parser")
-            stores = soup.find("h3", {"class": "store-title"})
+            stores = soup.find_all("h3", {"class": "store-title"})
 
             for store in stores:
 
-                url = store.get("href")
+                url = store.find("a").get("href")
                 logger.info(url)
                 res = session.get(url, headers=headers)
                 soup = BeautifulSoup(res.text, "html.parser")
@@ -117,24 +96,23 @@ def fetch_data():
                         + " "
                     )
                 logger.info(tim)
-                all.append(
-                    [
-                        "https://smashburger.com",
-                        loc,
-                        street,
-                        city,
-                        state,
-                        zip,
-                        country,
-                        id,  # store #
-                        phone,  # phone
-                        type,  # type
-                        lat,  # lat
-                        long,  # long
-                        tim.strip(),  # timing
-                        url,
-                    ]
+                yield SgRecord(
+                    locator_domain="https://smashburger.com",
+                    page_url=url,
+                    location_name=loc,
+                    street_address=street,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country,
+                    store_number=id,
+                    phone=phone,
+                    location_type=type,
+                    latitude=lat,
+                    longitude=long,
+                    hours_of_operation=tim.strip(),
                 )
+
     return all
 
 
