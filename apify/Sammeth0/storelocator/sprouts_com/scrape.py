@@ -134,7 +134,7 @@ def fetch_data(sgw: SgWriter):
                 phone=phone,
                 location_type=location_type,
                 latitude=latitude,
-                longitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
         )
