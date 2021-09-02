@@ -44,16 +44,16 @@ def fetch_data():
         })
         .then(r => r.json())
     """
-    driver = SgSelenium(is_headless=True).chrome()
+    driver = SgSelenium().chrome()
     driver.get("https://www.zpizza.com/locations")
     info = driver.execute_script(script)
     driver.quit()
     store_info = info["data"]["restaurant"]["pageContent"]["sections"][0]["locations"]
     for row in store_info:
-        if "moreno-valley-tap-room" in row["slug"]:
-            continue
-        location_name = row["name"]
         page_url = "https://www.zpizza.com/" + row["slug"]
+        if "moreno-valley-tap-room" in row["slug"]:
+            page_url = page_url = "https://www.zpizza.com/moreno-valley-ca"
+        location_name = row["name"]
         if page_url.find("bend-tap-room") > -1:
             page_url = page_url.split("-")[0]
         raw_address = row["fullAddress"]
