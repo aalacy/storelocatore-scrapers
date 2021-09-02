@@ -55,7 +55,7 @@ def fetch_data():
 
         location_name = store["name"]
 
-        phone = store["location"]["phone"]
+        phone = store["location"]["phone"].split("[")[0].strip()
         store_number = store["store_id"]
 
         location_type = "<MISSING>"
