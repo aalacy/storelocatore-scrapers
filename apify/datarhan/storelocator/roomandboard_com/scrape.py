@@ -1,3 +1,4 @@
+import ssl
 import json
 from lxml import etree
 from urllib.parse import urljoin
@@ -8,6 +9,15 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 def fetch_data():
     domain = "roomandboard.com"
@@ -15,8 +25,11 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
-        driver.find_element_by_xpath('//button[contains(text(), "See")]').click()
-        driver.find_element_by_xpath('//button[@id="submit"]').click()
+        try:
+            driver.find_element_by_xpath('//button[contains(text(), "See")]').click()
+            driver.find_element_by_xpath('//button[@id="submit"]').click()
+        except Exception:
+            pass
         dom = etree.HTML(driver.page_source)
 
         all_locations = dom.xpath(
