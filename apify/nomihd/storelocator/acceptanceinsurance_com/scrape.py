@@ -36,7 +36,6 @@ def fetch_data():
         .split(",")
     )
     states = [x.strip(' "') for x in states]
-    states = ["https://locations.acceptanceinsurance.com/georgia"]
     for stat in states:
         log.info(stat)
         state_res = session.get(stat, headers=headers)
@@ -55,7 +54,7 @@ def fetch_data():
                 temp_url = store.replace(
                     "https://locations.acceptanceinsurance.com", ""
                 ).strip()
-                page_url = stat + "/" + temp_url.split("/")[2].strip()
+                page_url = stat + temp_url.split("/")[2].strip()
                 log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(store_req.text)

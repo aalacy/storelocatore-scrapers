@@ -122,6 +122,7 @@ def fetch_data():
                 longitude=lng,
                 hours_of_operation=hours,
             )
+
     url = "https://hosted.where2getit.com/timberland/timberlandeu/rest/locatorsearch?like=0.9297644562205771&lang=en_US"
     payload = {
         "request": {
@@ -134,19 +135,19 @@ def fetch_data():
                 "geolocs": {
                     "geoloc": [
                         {
-                            "addressline": "Liverpool",
+                            "addressline": "RM20",
                             "country": "UK",
-                            "latitude": 51.475,
-                            "longitude": 0.33,
+                            "latitude": 51.4778987,
+                            "longitude": 0.2760807,
                             "state": "",
-                            "province": "Merseyside",
-                            "city": "Liverpool",
+                            "province": "Thurrock",
+                            "city": "",
                             "address1": "",
-                            "postalcode": "",
+                            "postalcode": "RM20",
                         }
                     ]
                 },
-                "searchradius": "1000",
+                "searchradius": "250",
                 "radiusuom": "km",
                 "order": "retail_store,outletstore,authorized_reseller,_distance",
                 "where": {
@@ -180,6 +181,33 @@ def fetch_data():
     typ = "<MISSING>"
     country = "GB"
     loc = "<MISSING>"
+    add = "332 Upper Level 114 West Thurrock Way"
+    city = "Grays"
+    zc = "RM20 2ZP"
+    state = "<MISSING>"
+    store = "<MISSING>"
+    loc = "<MISSING>"
+    name = "TIMBERLAND - LAKESIDE"
+    phone = "01708 862692"
+    lat = "51.489"
+    lng = "0.2836034"
+    hours = "<MISSING>"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
     logger.info("Pulling Stores")
     for item in json.loads(r.content)["response"]["collection"]:
         phone = item["phone"]

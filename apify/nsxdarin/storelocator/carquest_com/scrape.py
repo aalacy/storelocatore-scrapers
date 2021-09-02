@@ -226,6 +226,9 @@ def fetch_data():
             .replace("1:000AM", "10:00AM")
             .replace("2:000PM", "20:00PM")
         )
+        name = name.replace("\\u0026amp;", "&")
+        if "885-us-highway-27-s" in loc:
+            store = "4356"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

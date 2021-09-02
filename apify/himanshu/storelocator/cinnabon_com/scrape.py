@@ -1,5 +1,6 @@
 import re
 import ssl
+import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -56,14 +57,33 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         if store_url == "https://locations.cinnabon.com/":
             continue
+        if url.endswith(".") and not store_url.endswith("."):
+            store_url += "."
         loc_response = session.get(store_url, headers=hdr)
-        if loc_response.status_code != 200:
-            continue
         loc_dom = etree.HTML(loc_response.text)
         phone = loc_dom.xpath(
             '//div[@class="Core-infoContent"]//div[@itemprop="telephone"]/text()'
         )
         phone = phone[0] if phone else SgRecord.MISSING
+        location_type = SgRecord.MISSING
+        temp = loc_dom.xpath('//h2[@class="Core-title"]/text()')
+        if temp and "Temporarily Closed" in temp[0]:
+            location_type = "Temporarily Closed"
+        hoo = loc_dom.xpath('//script[@class="js-hours-config"]/text()')
+        hours = []
+        if hoo:
+            hoo = json.loads(hoo[0])
+            for e in hoo["hours"]:
+                day = e["day"]
+                if e["isClosed"]:
+                    hours.append(f"{day} closed")
+                else:
+                    opens = str(e["intervals"][0]["start"])
+                    opens = opens[:-2] + ":" + opens[-2:]
+                    closes = str(e["intervals"][0]["end"])
+                    closes = closes[:-2] + ":" + closes[-2:]
+                    hours.append(f"{day} {opens} - {closes}")
+        hours = " ".join(hours) if hours else SgRecord.MISSING
 
         item = SgRecord(
             locator_domain=domain,
@@ -82,10 +102,10 @@ def fetch_data():
             )[0],
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0],
             longitude=loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0],
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours,
         )
 
         yield item

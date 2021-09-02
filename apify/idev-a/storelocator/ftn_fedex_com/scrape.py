@@ -34,8 +34,7 @@ json_url = "https://ftn.fedex.com/agents/LocationServer.jsp?x=x&country="
 def _p(val):
     return (
         val.lower()
-        .split("ext")[0]
-        .split("/")[0]
+        .replace("Air", "")
         .replace("(", "")
         .replace(")", "")
         .replace("+", "")
@@ -79,13 +78,16 @@ def fetch_data():
                                 phone = (
                                     bb.lower()
                                     .split(":")[-1]
-                                    .replace("Phone", "")
+                                    .replace("phone", "")
+                                    .split(",")[0]
                                     .split("ext")[0]
+                                    .split("&")[0]
                                     .split("/")[0]
+                                    .split("(air")[0]
                                     .strip()
                                 )
-                                if _p(phone):
-                                    _addr = blocks[:x]
+                                if "phone" in bb.lower() and _p(phone):
+                                    _addr = blocks[1:x]
                                     break
                                 else:
                                     phone = ""
@@ -94,17 +96,19 @@ def fetch_data():
                                 if (
                                     "FedEx" in aa
                                     or "corporation" in aa.lower()
+                                    or "posta" in aa.lower()
                                     or "company" in aa.lower()
                                     or "ltd" in aa.lower()
                                     or "llc" in aa.lower()
-                                    or "center" in aa.lower()
+                                    or "international center" in aa.lower()
+                                    or "fortune center" in aa.lower()
                                 ):
                                     continue
                                 temp.append(aa)
                             _addr = temp
                             street_address = state = city = zip_postal = ""
                             if _addr:
-                                _address = " ".join(_addr)
+                                _address = ", ".join(_addr)
                                 addr = parse_address_intl(_address)
                                 street_address = addr.street_address_1
                                 if addr.street_address_2:

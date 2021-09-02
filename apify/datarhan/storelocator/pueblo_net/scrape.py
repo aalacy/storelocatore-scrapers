@@ -49,6 +49,13 @@ def fetch_data():
         zip_code = poi["infoAddress"].split()[-1]
         if not zip_code.isdigit():
             zip_code = SgRecord.MISSING
+        hoo = etree.HTML(poi["infoDescription"]).xpath("//text()")
+        hoo = [e.strip() for e in hoo if e.strip() and "Tel" not in e]
+        hoo = (
+            " ".join(hoo).split("Horario:")[-1].split(poi["infoPhone"])[0].strip()
+            if hoo
+            else SgRecord.MISSING
+        )
 
         item = SgRecord(
             locator_domain=domain,
@@ -64,7 +71,8 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=poi["coordinates"].split(", ")[0],
             longitude=poi["coordinates"].split(", ")[-1],
-            hours_of_operation=etree.HTML(poi["infoDescription"]).xpath("//text()")[1],
+            hours_of_operation=hoo,
+            raw_address=poi["infoAddress"],
         )
 
         yield item
