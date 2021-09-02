@@ -1,41 +1,15 @@
-import csv
 import usaddress
 import re
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://hokuliashaveice.com"
     session = SgRequests()
     tag = {
@@ -96,7 +70,6 @@ def fetch_data():
         street_address = " ".join(ad.xpath("//*//text()[2]"))
 
         csz = " ".join(ad.xpath("//*//text()[3]")).replace("sdfasdf", "") or "<MISSING>"
-
         if (
             location_name.find("Desert Hills") != -1
             or location_name.find("Parker") != -1
@@ -131,6 +104,10 @@ def fetch_data():
             city = a.get("city") or "<MISSING>"
             state = a.get("state") or "<MISSING>"
             postal = a.get("postal") or "<MISSING>"
+        if location_name.find("Hokulia Cedar Hills") != -1:
+            csz = " ".join(ad.xpath("//*//text()[4]"))
+            city = csz.split(",")[0].strip()
+            state = csz.split(",")[1].strip()
 
         if street_address.find("135 E Main St. ") != -1:
             city = "Am Fork"
@@ -174,7 +151,6 @@ def fetch_data():
             ll = b[1]
         except:
             ll = "<MISSING>"
-        store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if ll != "<MISSING>":
@@ -265,31 +241,33 @@ def fetch_data():
         if tmpcls == "Closed for the season":
             hours_of_operation = "Temporarily closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
