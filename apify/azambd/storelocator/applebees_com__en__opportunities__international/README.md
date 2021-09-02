@@ -11,3 +11,19 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+
+
+### MISSING Fieds:
+
+- store_number
+- location_type
+- latitude
+- longitude
+- hours_of_operation
+
+### Info:
+
+- single page for data source
+- CloudFlare Restricted
+- there are 2 locations with no information , country: Lebanon & Honduras , I skipped these
+- total locations 148 as of sep 2, 2021
