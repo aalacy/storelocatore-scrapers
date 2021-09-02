@@ -89,7 +89,7 @@ def fetchStores():
                         "return document.body.scrollHeight;"
                     )
                     if screen_height != new_screen_height:
-                        log.debug(f"scrapping page={pages}")
+                        log.info(f"scrapping page={pages}")
                         driver.execute_script(
                             "window.scrollTo(0, document.body.scrollHeight);"
                         )
@@ -108,7 +108,7 @@ def fetchStores():
             resort_divs = body.xpath(
                 '//div[contains(@class, "resort-cardV2__content")]'
             )
-            log.debug(f"Total resorts divs = {len(resort_divs)}")
+            log.info(f"Total resorts divs = {len(resort_divs)}")
             stores = []
             for resort_div in resort_divs:
                 title = resort_div.xpath('.//div[@class="resort-cardV2__name"]/a')[0]
@@ -229,7 +229,7 @@ def fetchData():
         page_url = store["page_url"]
         location_name = store["location_name"]
 
-        log.debug(f"{noStore}. Scrapping {page_url} ...")
+        log.info(f"{noStore}. Scrapping {page_url} ...")
         response = fetchSingleStore(driver, page_url)
         if response is None:
             error = error + 1
