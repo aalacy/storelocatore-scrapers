@@ -10,7 +10,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -47,7 +46,6 @@ def initiateDriver(driver=None):
     return SgChrome(
         is_headless=True,
         user_agent=user_agent,
-        executable_path=ChromeDriverManager().install(),
     ).driver()
 
 
@@ -140,7 +138,7 @@ def fetchSingleStore(driver, page_url):
     driver.get(page_url)
     delay = 0
     driverSleep(driver)
-    while delay < 30:
+    while delay < 15:
         if "Sorry!" in driver.page_source:
             return None
         if '"latitude"' in driver.page_source:

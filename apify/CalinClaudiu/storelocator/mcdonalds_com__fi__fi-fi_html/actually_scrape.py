@@ -118,8 +118,8 @@ def getLocsPage(session, country):
             "href": True,
             "class": True,
             "target": True,
-            "data-at": lambda x: x and "estaurant" in x,
-            "data-track": lambda x: x and "eader" in x,
+            "data-at": lambda x: x and "avintol" in x,
+            "data-track": lambda x: x and "topLinks" in x,
         },
     )
     return locsPage["href"] if locsPage else locsPage
