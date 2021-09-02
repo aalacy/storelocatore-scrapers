@@ -94,10 +94,9 @@ def fetch_data():
                     if _p(hours[-1]):
                         phone = hours[-1]
                         del hours[-1]
-
                 yield SgRecord(
                     page_url=page_url,
-                    store_number=_.select_one(".store-selectionbtn")["data-location"],
+                    store_number=_.select_one(".store-sel-btn")["data-location"],
                     location_name=_.select_one(".store-name").text.strip(),
                     street_address=_.select_one(".store-address").text.strip(),
                     city=city["CityName"],
