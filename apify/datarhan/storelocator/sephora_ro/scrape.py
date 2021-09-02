@@ -27,11 +27,9 @@ def fetch_data():
     for poi in all_locations:
         page_url = urljoin(start_url, poi["url"])
         city = poi["city"]
-        city = city if "Sector" not in city else poi["state"]
-        street_address = poi["address"].split(city)[0].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-
+        city = city if "Sector" not in city else poi["cityname"]
+        if "Sector" in city:
+            city = "Bucuresti"
         phone = poi["phone1"]
         if not phone:
             phone = poi["phone2"]
@@ -47,10 +45,10 @@ def fetch_data():
             locator_domain=domain,
             page_url=page_url,
             location_name=poi["name"],
-            street_address=street_address,
+            street_address=poi["address"],
             city=city,
             state=SgRecord.MISSING,
-            zip_postal=poi["code"],
+            zip_postal=poi["zipcode"],
             country_code="RO",
             store_number=poi["storeid"],
             phone=phone,
