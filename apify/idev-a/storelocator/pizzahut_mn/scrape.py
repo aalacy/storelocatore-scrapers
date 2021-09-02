@@ -17,7 +17,7 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            addr = parse_address_intl(_["address"] + ", Mongolia")
+            addr = parse_address_intl(_["address"].strip() + ", Mongolia")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -34,7 +34,7 @@ def fetch_data():
                 country_code="Mongolia",
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
-                raw_address=_["address"],
+                raw_address=_["address"].strip(),
             )
 
 
