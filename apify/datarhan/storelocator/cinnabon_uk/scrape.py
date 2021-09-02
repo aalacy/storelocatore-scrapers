@@ -1,8 +1,6 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 from time import sleep
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -11,13 +9,8 @@ from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
     start_url = "https://www.cinnabon.uk/stores"
     domain = "cinnabon.uk"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
     with SgFirefox() as driver:
         driver.get(start_url)
         sleep(10)
