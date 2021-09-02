@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 import re
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
@@ -35,7 +35,7 @@ def record_initial_requests(http: SgRequests):
             for url in details:
                 yield fetch_records(http, url)
         else:
-            yield fetch_records(http, url)
+            yield fetch_records(http, page_url)
 
 
 def fetch_records(http, page_url):
@@ -91,7 +91,17 @@ def fetch_records(http, page_url):
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         with SgRequests() as http:
             results = record_initial_requests(http)
             for rec in results:
