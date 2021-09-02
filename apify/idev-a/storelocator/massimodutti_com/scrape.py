@@ -1,11 +1,10 @@
-from typing import Iterable, Tuple, Callable
+from typing import Iterable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_2
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("massimodutti")
@@ -29,25 +28,14 @@ days = [
 ]
 
 
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self._http = http
-
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
-
-        self._http.clear_cookies()
-        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
-        locations = self._http.get(
-            base_url.format(coord[0], coord[1]), headers=_headers
-        ).json()["closerStores"]
-        logger.info(f"[{current_country}] found: {len(locations)}")
+def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
+    for lat, lng in search:
+        http.clear_cookies()
+        res = http.get(base_url.format(lat, lng), headers=_headers)
+        if res.status_code != 200:
+            continue
+        locations = res.json()["closerStores"]
+        logger.info(f"{len(locations)}")
         for store in locations:
             hours = []
             for hr in store.get("openingHours", {}).get("schedule", []):
@@ -91,21 +79,8 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        use_state=False, search_type="DynamicGeoSearch", granularity=Grain_2()
-    )
-
+    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests(
-            proxy_country="us", proxy_rotation_failure_threshold=15
-        ) as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-                max_threads=1,
-            )
-
-            for rec in par_search.run():
+        with SgRequests(proxy_country="us") as http:
+            for rec in fetch_records(http, search):
                 writer.write_row(rec)

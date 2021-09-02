@@ -60,7 +60,7 @@ def fetch_data():
         "https://www.canadagoose.com/us/en/find-a-retailer/find-a-retailer.html"
     )
 
-    with Chrome(options=options) as driver:
+    with Chrome(options=options, executable_path="/bin/chromedriver") as driver:
         driver.get(search_url)
         time.sleep(30)
         search_sel = lxml.html.fromstring(driver.page_source)
