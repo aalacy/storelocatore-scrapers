@@ -12,7 +12,6 @@ logger = SgLogSetup().get_logger("thebiermarkt_com")
 
 
 def fetch_data():
-    locs = []
     website = "thebiermarkt.com"
     typ = "<MISSING>"
     country = "CA"
