@@ -130,8 +130,8 @@ def fetch_data(sgw: SgWriter):
                 store_number=output[8],
                 phone=output[9],
                 location_type=output[10],
-                latitude=output[11],
-                longitude=output[12],
+                latitude=output[12],
+                longitude=output[11],
                 hours_of_operation=output[13],
             )
         )

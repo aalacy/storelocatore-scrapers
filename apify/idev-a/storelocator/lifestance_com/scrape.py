@@ -19,7 +19,7 @@ _headers = {
 
 max_workers = 8
 
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/"
 
 
 def set_proxies():

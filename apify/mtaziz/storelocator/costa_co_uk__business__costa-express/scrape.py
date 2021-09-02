@@ -3,9 +3,10 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from typing import Iterable
+from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 import json
 import time
 
@@ -14,35 +15,42 @@ logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 DOMAIN = "https://www.costa.co.uk/business/costa-express"
 MISSING = "<MISSING>"
 
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.BRITAIN],
-    max_search_distance_miles=5,
-    max_search_results=500,
-    granularity=Grain_8(),
-)
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
 }
 
 
-def fetch_data():
-    with SgRequests() as session:
-        total = 0
-        for lat, lng in search:
-            x = lat
-            y = lng
-            url = (
-                "https://www.costa.co.uk/api/locations/stores?latitude="
-                + str(x)
-                + "&longitude="
-                + str(y)
-                + "&maxrec=500"
-            )
+def record_initial_requests(
+    http: SgRequests, state: CrawlState, search: DynamicGeoSearch
+) -> bool:
+    c = 0
+    for lat, lng in search:
+        x = lat
+        y = lng
+        logger.info(f"[{c}] (latitude, longitude) : ({lat, lng}) to be searched")
+        url = (
+            "https://www.costa.co.uk/api/locations/stores?latitude="
+            + str(x)
+            + "&longitude="
+            + str(y)
+            + "&maxrec=500"
+        )
 
-            logger.info(f"Pulling the data for (latitude, longitude) : ({lat, lng}) ")
-            r = session.get(url, headers=headers, verify=False, timeout=500)
-            logger.info(f"Pulling the data from : {url} ")
+        logger.info(url)
+        state.push_request(SerializableRequest(url=url))
+        c += 1
+    return True
+
+
+def fetch_records(
+    http: SgRequests, state: CrawlState, search: DynamicGeoSearch
+) -> Iterable[SgRecord]:
+    total = 0
+    for url_request in state.request_stack_iter():
+        r = http.get(url_request.url, headers=headers, verify=False, timeout=500)
+        logger.info(f"Pulling the data from : {url_request.url} ")
+        if json.loads(r.content)["stores"]:
             total += len(json.loads(r.content)["stores"])
             for item in json.loads(r.content)["stores"]:
                 locator_domain = DOMAIN
@@ -174,18 +182,32 @@ def fetch_data():
             logger.info(
                 f'Number of items found: {len(json.loads(r.content)["stores"])} : Total: {total}'
             )
+        else:
+            continue
 
 
 def scrape():
-    logger.info("Started")
     count = 0
+    logger.info("Started")
+    state = CrawlStateSingleton.get_instance()
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN],
+        max_search_distance_miles=10,
+        max_search_results=500,
+        granularity=Grain_8(),
+    )
+
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+        with SgRequests(proxy_country="us") as http:
+            state.get_misc_value(
+                "init",
+                default_factory=lambda: record_initial_requests(http, state, search),
+            )
+            for rec in fetch_records(http, state, search):
+                writer.write_row(rec)
+                count = count + 1
 
     logger.info(f"No of records being processed: {count}")
     logger.info("Finished")
