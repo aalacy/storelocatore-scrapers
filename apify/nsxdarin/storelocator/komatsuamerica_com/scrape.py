@@ -12,6 +12,7 @@ headers = {
 
 
 def fetch_data():
+    locs = []
     url = "https://www.komatsu.com/api/getlocations?latitude=44.9951298&longitude=-93.4352207&radius=10000&language=en"
     r = session.get(url, headers=headers)
     if r.encoding is None:
@@ -30,8 +31,18 @@ def fetch_data():
                         loc = "<MISSING>"
                     if loc == "":
                         loc = "<MISSING>"
-                    lng = item.split('"Longitude":')[1].split(",")[0].strip()
-                    lat = item.split('"Latitude":')[1].split(",")[0].strip()
+                    lng = (
+                        item.split('"Longitude":')[1]
+                        .split(",")[0]
+                        .strip()
+                        .replace("}", "")
+                    )
+                    lat = (
+                        item.split('"Latitude":')[1]
+                        .split(",")[0]
+                        .strip()
+                        .replace("}", "")
+                    )
                     add = item.split('"Address":"')[1].split('"')[0].strip()
                     try:
                         typ = (
