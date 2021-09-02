@@ -15,7 +15,6 @@ headers = {
 
 def fetch_data():
     stnames = []
-    ids = []
     states = []
     url = "https://bananarepublic.gap.com/stores/"
     website = "bananarepublic.com"
