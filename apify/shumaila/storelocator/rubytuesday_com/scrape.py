@@ -1,4 +1,3 @@
-import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -21,8 +20,6 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     link = "https://rubytuesday.com/locations?address=AL"
     count = 1
     while True:
