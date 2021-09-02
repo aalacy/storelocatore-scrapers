@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 DOMAIN = "omahasupermercado.com"
 BASE_URL = "https://www.omahasupermercado.com"
@@ -31,6 +32,15 @@ def handle_missing(field):
     return field.strip()
 
 
+def get_latlong(gmap_url):
+    try:
+        pattern = r"(-?[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)"
+        latlong = re.search(pattern, gmap_url)
+    except:
+        return MISSING, MISSING
+    return latlong.group(2), latlong.group(1)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -53,12 +63,11 @@ def fetch_data():
         state = content[2].split()[0].strip()
         zip_code = content[2].split()[1].strip()
         phone = content[3].strip()
-        hours_of_operation = content[4].strip()
+        hours_of_operation = " ".join(content[4:]).strip()
         store_number = MISSING
         country_code = "US"
         location_type = "omahasupermercado"
-        latitude = MISSING
-        longitude = MISSING
+        latitude, longitude = get_latlong(soup.find("iframe")["src"])
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -74,7 +83,7 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation.strip(),
+            hours_of_operation=hours_of_operation,
             raw_address=f"{street_address}, {city}, {state} {zip_code} ",
         )
 

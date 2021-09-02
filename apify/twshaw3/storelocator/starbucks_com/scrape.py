@@ -1,132 +1,180 @@
-import csv
-from sgrequests import SgRequests
-import sgzip
-import datetime
-import json
-from tenacity import *
-from sglogging import SgLogSetup
+from typing import Iterable, Tuple, Callable
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgrequests.sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sglogging import sglog
+import random
 
-logger = SgLogSetup().get_logger('starbucks_com')
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-session = SgRequests()
-HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'accept': 'application/json',
-           'x-requested-with': 'XMLHttpRequest'
-           }
-
-URL_TEMPLATE = 'https://www.starbucks.com/bff/locations?lat={}&lng={}'
-MAX_DISTANCE = 30.0
-
-search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize(country_codes = ['us', 'ca'])
-
-def handle_missing(field):
-    if field == None or (type(field) == type('x') and len(field.strip()) == 0):
-        return '<MISSING>'
-    return field
-
-def parse_hours(store):
+def fix_comma(x):
+    h = []
     try:
-        schedule = store['schedule']
-        translate = {}
-        day_idx = -1
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] * 2
-        for day in [x['dayName'] for x in schedule] * 2:
-            if day_idx == -1 and day in days:
-                day_idx = days.index(day)
-            if day_idx >= 0:
-                translate[day] = days[day_idx]
-                day_idx += 1
-        day_hours = []
-        for day_schedule in schedule:
-            day_name = translate.get(day_schedule['dayName'], day_schedule['dayName'])
-            times = day_schedule['hours']
-            day_hours.append(day_name + ': ' + times)
-        hours = ', '.join(day_hours)
-        return handle_missing(hours)
-    except:
-        return '<MISSING>'
+        for i in x.split(","):
+            if len(i.strip()) >= 1:
+                h.append(i)
+        return ", ".join(h)
+    except Exception:
+        return x
 
-def parse(store):
-    website = 'starbucks.com'
-    store_id = handle_missing(store['storeNumber'])
-    name = handle_missing(store['name'])
-    phone = handle_missing(store['phoneNumber'])
-    lat = handle_missing(store['coordinates']['latitude'])
-    lng = handle_missing(store['coordinates']['longitude'])
-    add = store['address']['streetAddressLine1']
-    try:
-        add = add + ' ' + store['address']['streetAddressLine2']
-    except:
-        pass
-    try:
-        add = add + ' ' + store['address']['streetAddressLine3']
-    except:
-        pass
-    address = handle_missing(add.strip())
-    city = handle_missing(store['address']['city'])
-    state = handle_missing(store['address']['countrySubdivisionCode'])
-    country = handle_missing(store['address']['countryCode'])
-    zc = handle_missing(store['address']['postalCode'])
-    typ = handle_missing(store['brandName'])
-    weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-    hours = parse_hours(store)
-    if country == 'PR':
-        country = 'US'
-    page_url = '<MISSING>'
-    if 'id' in store and 'slug' in store:
-        page_url = "starbucks.com/store-locator/store/{}/{}".format(store['id'], store['slug'])
-    return [website, page_url, name, add, city, state, zc, country, store_id, phone, typ, lat, lng, hours]
 
-def get_result_coords(stores):
-    result_coords = []
-    for store in stores:
-        result_coords.append((store['coordinates']['latitude'], store['coordinates']['longitude']))
-    return result_coords
+class ExampleSearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
 
-@retry(stop=stop_after_attempt(10))
-def query_locator(query_coord):
-    lat, lng = query_coord[0], query_coord[1]
-    url = URL_TEMPLATE.format(lat, lng)
-    response = session.get(url, headers=HEADERS)
-    stores = response.json()['stores']
-    return stores
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
 
-def fetch_data():
-    query_coord = search.next_coord()
-    locations = []
-    ids = set()
-    while query_coord:
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        stores = query_locator(query_coord)
-        if len(stores) == 0:
-            search.max_distance_update(MAX_DISTANCE)
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        """
+        This method gets called on each iteration of the search.
+        It provides you with all the data you could get from the search instance, as well as
+        a method to register found locations.
+
+        :param coord: The current coordinate (lat, long)
+        :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
+        :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
+        :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
+        :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
+        """
+
+        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
+        lat, lng = coord
+        # just some clever accounting of locations/country:
+        found = 0
+        url = str(f"https://www.starbucks.com/bff/locations?lat={lat}&lng={lng}")
+        headers = {}
+        headers["x-requested-with"] = "XMLHttpRequest"
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        try:
+            locations = http.get(url, headers=headers).json()
+            errorName = None
+        except Exception as e:
+            logzilla.error(f"{e}")
+            locations = {"paging": {"total": 0}}
+            errorName = str(e)
+        if locations["paging"]["total"] > 0:
+            for record in locations["stores"]:
+                try:
+                    try:
+                        found_location_at(
+                            record["coordinates"]["latitude"],
+                            record["coordinates"]["longitude"],
+                        )
+                    except Exception:
+                        pass
+                    yield SgRecord(
+                        page_url="https://www.starbucks.com/store-locator/store/{}/{}".format(
+                            str(record["id"]), str(record["slug"])
+                        ),
+                        location_name=str(record["name"]),
+                        street_address=fix_comma(
+                            str(
+                                str(record["address"]["streetAddressLine1"])
+                                + ","
+                                + str(record["address"]["streetAddressLine2"])
+                                + ","
+                                + str(record["address"]["streetAddressLine3"])
+                            )
+                        ),
+                        city=str(record["address"]["city"]),
+                        state=str(record["address"]["countrySubdivisionCode"]),
+                        zip_postal=str(record["address"]["postalCode"]),
+                        country_code=str(record["address"]["countryCode"]),
+                        store_number=str(record["id"]),
+                        phone=str(record["phoneNumber"]),
+                        location_type=str(
+                            str(record["brandName"])
+                            + " - "
+                            + str(record["ownershipTypeCode"])
+                        ),
+                        latitude=str(record["coordinates"]["latitude"]),
+                        longitude=str(record["coordinates"]["longitude"]),
+                        locator_domain="https://www.starbuck.com/",
+                        hours_of_operation=str(record["schedule"]),
+                        raw_address=errorName if errorName else SgRecord.MISSING,
+                    )
+                    found += 1
+                except KeyError:
+                    yield SgRecord(
+                        page_url=SgRecord.MISSING,
+                        location_name=SgRecord.MISSING,
+                        street_address=SgRecord.MISSING,
+                        city=SgRecord.MISSING,
+                        state=SgRecord.MISSING,
+                        zip_postal=SgRecord.MISSING,
+                        country_code=SgRecord.MISSING,
+                        store_number=str(record["id"]),
+                        phone=SgRecord.MISSING,
+                        location_type=SgRecord.MISSING,
+                        latitude=SgRecord.MISSING,
+                        longitude=SgRecord.MISSING,
+                        locator_domain=SgRecord.MISSING,
+                        hours_of_operation=SgRecord.MISSING,
+                        raw_address=errorName if errorName else str(record),
+                    )
+                    found += 1
+                progress = "??.?%"
+                logzilla.info(
+                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: ??|prog: {progress}|\nRemaining: {items_remaining}"
+                )
         else:
-            for store in stores:
-                store_id = store['storeNumber']
-                if store_id not in ids:
-                    ids.add(store_id)
-                    locations.append(parse(store))
-            result_coords = get_result_coords(stores)
-            search.max_count_update(result_coords)
-        query_coord = search.next_coord()
-    for loc in locations:
-        yield loc
+            yield SgRecord(
+                page_url=SgRecord.MISSING,
+                location_name=SgRecord.MISSING,
+                street_address=SgRecord.MISSING,
+                city=SgRecord.MISSING,
+                state=SgRecord.MISSING,
+                zip_postal=SgRecord.MISSING,
+                country_code=SgRecord.MISSING,
+                store_number=random.random(),
+                phone=SgRecord.MISSING,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                locator_domain=SgRecord.MISSING,
+                hours_of_operation=SgRecord.MISSING,
+                raw_address=errorName,
+            )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
-scrape()
+if __name__ == "__main__":
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_8()
+    )
+
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
+    ) as writer:
+        with SgRequests() as http:
+            search_iter = ExampleSearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=SearchableCountries.ALL,
+                max_threads=8,
+            )
+
+            for rec in par_search.run():
+                writer.write_row(rec)
