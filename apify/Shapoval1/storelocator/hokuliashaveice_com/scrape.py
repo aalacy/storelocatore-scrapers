@@ -100,10 +100,10 @@ def fetch_data(sgw: SgWriter):
         postal = "<MISSING>"
 
         if csz != "<MISSING>":
-            a = usaddress.tag(csz, tag_mapping=tag)[0]
-            city = a.get("city") or "<MISSING>"
-            state = a.get("state") or "<MISSING>"
-            postal = a.get("postal") or "<MISSING>"
+            aa = usaddress.tag(csz, tag_mapping=tag)[0]
+            city = aa.get("city") or "<MISSING>"
+            state = aa.get("state") or "<MISSING>"
+            postal = aa.get("postal") or "<MISSING>"
         if location_name.find("Hokulia Cedar Hills") != -1:
             csz = " ".join(ad.xpath("//*//text()[4]"))
             city = csz.split(",")[0].strip()
