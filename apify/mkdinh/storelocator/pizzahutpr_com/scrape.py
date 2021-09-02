@@ -123,9 +123,6 @@ def fetch_data():
 
             hours_of_operation = fetch_hours_of_operation(store_number, session)
 
-            if "Carr" in full_address:
-                print(street_address)
-
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
