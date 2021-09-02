@@ -1,10 +1,12 @@
 import json
-import csv
 import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 DOMAIN = "gonavis.com"
 BASE_URL = "https://www.gonavis.com"
@@ -18,34 +20,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+MISSING = "<MISSING>"
 
 
 def pull_content(url):
@@ -59,15 +34,8 @@ def pull_content(url):
 
 def handle_missing(field):
     if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
+        return MISSING
     return field
-
-
-def is_duplicate(list, filter):
-    for x in list:
-        if filter in x:
-            return True
-    return False
 
 
 def get_lat_long(soup):
@@ -91,7 +59,7 @@ def get_lat_long(soup):
 
 def parse_hours(hours):
     if not any(char.isdigit() for char in hours):
-        return "<MISSING>"
+        return MISSING
     return hours
 
 
@@ -117,12 +85,10 @@ def fetch_store_urls():
 def fetch_data():
     log.info("Fetching store_locator data")
     store_info = fetch_store_urls()
-    locations = []
     for page_url in store_info["link"]:
-        locator_domain = DOMAIN
         data = pull_content(page_url)
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        country_code = MISSING
+        store_number = MISSING
         if data == 404:
             for row in store_info["details"]:
                 if page_url in row:
@@ -132,10 +98,10 @@ def fetch_data():
                     city = details[1].strip()
                     state = details[2].strip()
                     phone = details[3].strip()
-                    zip_code = "<MISSING>"
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
+                    zip_code = MISSING
+                    latitude = MISSING
+                    longitude = MISSING
+                    hours_of_operation = MISSING
         else:
             container = (
                 data.find("div", {"class": "main-container"})
@@ -157,7 +123,7 @@ def fetch_data():
             address = content.find("ul", {"class": "list-group"}).find("li")
             address_details = address.find("div", {"style": "margin-left:25px;"})
             street_address = handle_missing(
-                address.find("i", {"class": "fa fa-map-marker"}).next_sibling
+                address.find("i", {"class": "fas fa-map-marker-alt"}).next_sibling
             )
             city = handle_missing(address_details.text.split(",")[0])
             state = handle_missing(
@@ -166,57 +132,62 @@ def fetch_data():
             zip_code = handle_missing(
                 address_details.text.split(",")[1].replace(state, "").strip()
             )
-            phone = content.find("i", {"class": "fa fa-phone"}).next_sibling.text
-            location_type = "<MISSING>"
+            phone = content.find("i", {"class": "fas fa-phone"}).next_sibling.text
             hours_of_operation = parse_hours(
-                content.find("i", {"class": "fa fa-clock-o"}).next_sibling
+                content.find("i", {"class": "far fa-clock"}).next_sibling
             )
             lat_long = get_lat_long(data)
             if lat_long:
                 latitude = lat_long["lat"]
                 longitude = lat_long["lon"]
             else:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+                latitude = MISSING
+                longitude = MISSING
             log.info(
                 "Append info to locations => {}:{} => {}".format(
                     latitude, longitude, street_address
                 )
             )
-            if is_duplicate(locations, latitude):
-                log.info(
-                    "Found duplicate => {}:{} => {}".format(
-                        latitude, longitude, street_address
-                    )
-                )
-                continue
-        locations.append(
-            [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        location_type = MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {state} {zip_code}",
         )
-    return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()
