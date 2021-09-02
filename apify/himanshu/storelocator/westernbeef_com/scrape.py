@@ -115,6 +115,9 @@ def fetch_data(sgw: SgWriter):
                 zipp = raw_data.split("Hours:")[0].split(",")[1].split(" ")[2]
 
         street_address = street_address.replace(",", "").replace(city, "").strip()
+        hours_of_operation = (
+            hours_of_operation.replace("Hours:", "").split("Deli")[0].strip()
+        )
 
         sgw.write_row(
             SgRecord(

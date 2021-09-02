@@ -10,7 +10,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -47,7 +46,6 @@ def initiateDriver(driver=None):
     return SgChrome(
         is_headless=True,
         user_agent=user_agent,
-        executable_path=ChromeDriverManager().install(),
     ).driver()
 
 
@@ -91,7 +89,7 @@ def fetchStores():
                         "return document.body.scrollHeight;"
                     )
                     if screen_height != new_screen_height:
-                        log.debug(f"scrapping page={pages}")
+                        log.info(f"scrapping page={pages}")
                         driver.execute_script(
                             "window.scrollTo(0, document.body.scrollHeight);"
                         )
@@ -110,7 +108,7 @@ def fetchStores():
             resort_divs = body.xpath(
                 '//div[contains(@class, "resort-cardV2__content")]'
             )
-            log.debug(f"Total resorts divs = {len(resort_divs)}")
+            log.info(f"Total resorts divs = {len(resort_divs)}")
             stores = []
             for resort_div in resort_divs:
                 title = resort_div.xpath('.//div[@class="resort-cardV2__name"]/a')[0]
@@ -140,7 +138,7 @@ def fetchSingleStore(driver, page_url):
     driver.get(page_url)
     delay = 0
     driverSleep(driver)
-    while delay < 30:
+    while delay < 15:
         if "Sorry!" in driver.page_source:
             return None
         if '"latitude"' in driver.page_source:
@@ -231,7 +229,7 @@ def fetchData():
         page_url = store["page_url"]
         location_name = store["location_name"]
 
-        log.debug(f"{noStore}. Scrapping {page_url} ...")
+        log.info(f"{noStore}. Scrapping {page_url} ...")
         response = fetchSingleStore(driver, page_url)
         if response is None:
             error = error + 1
