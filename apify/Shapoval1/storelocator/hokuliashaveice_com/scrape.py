@@ -61,8 +61,8 @@ def fetch_data(sgw: SgWriter):
     block = eval(block)
 
     for b in block:
-        ad = b[0]
-        ad = html.fromstring(ad)
+        a = b[0]
+        ad = html.fromstring(a)
         location_name = " ".join(ad.xpath("//*//text()[1]"))
         if location_name == "Year Round Catering":
             continue
