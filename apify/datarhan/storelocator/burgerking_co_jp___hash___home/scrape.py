@@ -43,7 +43,7 @@ def fetch_data():
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo)
         phone = poi_html.xpath(
-            './/dt[contains(text(), "電話番号")]/following-sibling::dd/text()'
+            './/dt[contains(text(), "電話番号")]/following-sibling::dd//span/text()'
         )
         phone = phone[0] if phone else ""
 
