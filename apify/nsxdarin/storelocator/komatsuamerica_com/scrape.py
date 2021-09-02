@@ -12,7 +12,6 @@ headers = {
 
 
 def fetch_data():
-    locs = []
     url = "https://www.komatsu.com/api/getlocations?latitude=44.9951298&longitude=-93.4352207&radius=10000&language=en"
     r = session.get(url, headers=headers)
     if r.encoding is None:
