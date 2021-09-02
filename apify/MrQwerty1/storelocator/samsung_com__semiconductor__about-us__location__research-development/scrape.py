@@ -42,6 +42,13 @@ def fetch_data(sgw: SgWriter):
         raw_address = ", ".join(_tmp).replace(",,", ",")
         street_address, city, state, postal = get_international(raw_address)
 
+        if state:
+            if state[0].isdigit():
+                postal, state = state, SgRecord.MISSING
+
+        if not city:
+            city = location_name
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,
