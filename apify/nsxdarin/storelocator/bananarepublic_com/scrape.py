@@ -15,7 +15,6 @@ headers = {
 
 def fetch_data():
     stnames = []
-    ids = []
     states = []
     url = "https://bananarepublic.gap.com/stores/"
     website = "bananarepublic.com"
@@ -130,8 +129,7 @@ def fetch_data():
                 name = "Banana Republic"
                 if Outlet:
                     name = "Banana Republic Outlet"
-                if store not in ids and name != "":
-                    ids.append(store)
+                if name != "":
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
