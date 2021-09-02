@@ -8,8 +8,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-
-
 website = "rubytuesday_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -22,33 +20,35 @@ DOMAIN = "https://rubytuesday.com/"
 MISSING = SgRecord.MISSING
 
 
-
-def fetch_data():    
-    pattern = re.compile(r'\s\s+')
-    cleanr = re.compile(r'<[^>]+>')
-    link = 'https://rubytuesday.com/locations?address=AL'
+def fetch_data():
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    link = "https://rubytuesday.com/locations?address=AL"
     count = 1
-    while True:        
-        r = session.get(link)        
-        soup =BeautifulSoup(r.text, "html.parser")
-        divlist = soup.findAll('div',{'class':'restaurant-location-item'})
+    while True:
+        r = session.get(link)
+        soup = BeautifulSoup(r.text, "html.parser")
+        divlist = soup.findAll("div", {"class": "restaurant-location-item"})
         for div in divlist:
-            location_name = div.find('h1').text
+            location_name = div.find("h1").text
             log.info(location_name)
-            address = div.find('address').text.lstrip().splitlines()
+            address = div.find("address").text.lstrip().splitlines()
             street_address = address[0]
-            city = address[1].lstrip().replace(',','')
+            city = address[1].lstrip().replace(",", "")
             state = address[2].lstrip()
-            zip_postal = address[3].lstrip()            
-            phone = div.find('a').text.strip()
-            if phone.find('-') == -1:
-                phone = phone[0:3]+'-'+phone[3:6]+'-'+phone[6:10]
-            hourlist = div.find('table').findAll('tr',{'class':'hourstr'})
-            hours_of_operation = " ".join( x.get_text(separator='|', strip=True).replace('|'," ") for x in hourlist)
-            store_number = div['id'].split('-')[1]
-            coord = div.find('div',{'class':"map_info"})
-            latitude = coord['data-lat']
-            longitude = coord['data-lng']
+            zip_postal = address[3].lstrip()
+            phone = div.find("a").text.strip()
+            if phone.find("-") == -1:
+                phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+            hourlist = div.find("table").findAll("tr", {"class": "hourstr"})
+            hours_of_operation = " ".join(
+                x.get_text(separator="|", strip=True).replace("|", " ")
+                for x in hourlist
+            )
+            store_number = div["id"].split("-")[1]
+            coord = div.find("div", {"class": "map_info"})
+            latitude = coord["data-lat"]
+            longitude = coord["data-lng"]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -67,8 +67,8 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
             )
         try:
-            nextlink = soup.find('ul',{'class':'pages'}).findAll('a')[-1]
-            link = nextlink['href']
+            nextlink = soup.find("ul", {"class": "pages"}).findAll("a")[-1]
+            link = nextlink["href"]
             count = count + 1
         except:
             break
