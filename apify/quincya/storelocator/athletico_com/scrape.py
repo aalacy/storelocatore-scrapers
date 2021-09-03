@@ -38,9 +38,11 @@ def fetch_data(sgw: SgWriter):
         zip_code = store["zip"]
 
         try:
-            digit = re.search(r"\d", street_address).start(0)
-            if digit != 0:
-                street_address = street_address[digit:]
+            dig = re.search(r"\d", street_address)
+            if dig:
+                digit = re.search(r"\d", street_address).start(0)
+                if digit != 0:
+                    street_address = street_address[digit:]
         except:
             if "," in city:
                 street_address = city.split(",")[0].strip()
