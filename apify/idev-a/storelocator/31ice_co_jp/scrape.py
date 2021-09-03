@@ -38,7 +38,8 @@ def _cs(_states, addr):
     return street_address, city, _state
 
 
-def record_initial_requests(http: SgRequests, state: CrawlState, _states: dict) -> bool:
+def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
+    _states = {}
     for ss in bs(http.get(base_url, headers=_headers).text, "lxml").select(
         "ul#w_7_areamap_1_1-region > li"
     ):
@@ -102,10 +103,9 @@ if __name__ == "__main__":
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
         with SgRequests() as http:
-            _states = {}
             state.get_misc_value(
                 "init",
-                default_factory=lambda: record_initial_requests(http, state, _states),
+                default_factory=lambda: record_initial_requests(http, state),
             )
             for rec in fetch_records(http, state):
                 writer.write_row(rec)
