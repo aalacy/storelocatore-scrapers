@@ -14,7 +14,6 @@ logger = SgLogSetup().get_logger("virginmobile_ca")
 
 
 def fetch_data():
-    ids = []
     for x in range(-55, -140, -1):
         for y in range(41, 71):
             session = SgRequests()
@@ -94,30 +93,28 @@ def fetch_data():
                         .replace("  ", " ")
                     )
                 if "Services</h4>" in line:
-                    if store not in ids:
-                        ids.append(store)
-                        lat = "<MISSING>"
-                        lng = "<MISSING>"
-                        if hours == "":
-                            hours = "<MISSING>"
-                        if phone == "":
-                            phone = "<MISSING>"
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=loc,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
+                    if hours == "":
+                        hours = "<MISSING>"
+                    if phone == "":
+                        phone = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
