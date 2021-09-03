@@ -200,8 +200,6 @@ def get_data():
 
     for location_url in location_urls:
         x = x + 1
-        if x == 100:
-            break
         if "searchazref" not in location_url:
             continue
 
