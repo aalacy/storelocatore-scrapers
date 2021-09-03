@@ -173,6 +173,8 @@ def get_data():
                 y = 0
                 while True:
                     y = y + 1
+                    if y == 10:
+                        raise Exception
                     log.info("page_url_fail: " + str(y))
                     try:
                         new_sess = reset_sessions(search_url)
@@ -208,6 +210,8 @@ def get_data():
 
     for location_url in location_urls:
         x = x + 1
+        if x == 100:
+            break
         if "searchazref" not in location_url:
             continue
 
@@ -240,11 +244,23 @@ def get_data():
 
         locator_domain = "carehome.co.uk"
         page_url = location_url
-        location_name = soup.find(
-            "div", attrs={"class": "profile-header-left"}
-        ).text.strip()
-        if len(location_name.split("\n")) > 1:
+        location_name = (
+            soup.find("div", attrs={"class": "profile-header-left"})
+            .find("h1")
+            .text.strip()
+        )
+
+        try:
+            check = (
+                soup.find("div", attrs={"class": "profile-header-left"})
+                .find("small")
+                .text.strip()
+            )
+            check = check
             continue
+
+        except Exception:
+            pass
 
         address_parts = soup.find("meta", attrs={"property": "og:title"})[
             "content"
@@ -321,7 +337,6 @@ def get_data():
             location_type = "<MISSING>"
 
         phone = phone.split("ext")[0].strip()
-
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
