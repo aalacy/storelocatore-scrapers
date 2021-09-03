@@ -19,6 +19,7 @@ def fetch_locations(postal, session):
 
     response = session.get(url)
     data = response.json()
+    print(data)
     dealers = data.get("dealers", [])
 
     pois = []
@@ -80,7 +81,7 @@ def fetch_locations(postal, session):
             for day in hours_of_operation:
                 day_text = day["dayText"]
 
-                if day["isClosed"]:
+                if day["isClosed"] == "Y":
                     hours.append(f"{day_text}: Closed")
                 else:
                     hours.append(f'{day_text}: {day["openHour"]}-{day["closeHour"]}')
