@@ -37,16 +37,15 @@ def fetch_data(sgw: SgWriter):
         state = store["state"]
         zip_code = store["zip"]
 
-        try:
-            dig = re.search(r"\d", street_address)
-            if dig:
+        if not street_address[:1].isdigit():
+            try:
                 digit = re.search(r"\d", street_address).start(0)
                 if digit != 0:
                     street_address = street_address[digit:]
-        except:
-            if "," in city:
-                street_address = city.split(",")[0].strip()
-                city = city.split(",")[1].strip()
+            except:
+                if "," in city:
+                    street_address = city.split(",")[0].strip()
+                    city = city.split(",")[1].strip()
 
         country_code = "US"
         store_number = store["id"]
