@@ -163,6 +163,8 @@ def get_data():
                 y = 0
                 while True:
                     y = y + 1
+                    if y == 10:
+                        raise Exception
                     log.info("page_url_fail: " + str(y))
                     try:
                         new_sess = reset_sessions(search_url)
