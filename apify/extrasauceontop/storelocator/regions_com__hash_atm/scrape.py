@@ -40,7 +40,9 @@ def extract_json(html_string):
 def get_data():
     page_urls = []
     session = SgRequests()
-    search = DynamicZipSearch(country_codes=[SearchableCountries.USA], granularity=Grain_2())
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_2()
+    )
 
     for search_code in search:
 
