@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from datetime import datetime
+from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -25,12 +26,15 @@ def fetch_data():
             for hh in _.get("storeTimings", {}).get("HomeDelivery", []):
                 day = datetime.strptime(hh["date"], "%Y-%m-%d").strftime("%A")
                 hours.append(f"{day}: {_t(hh['onTime'])} PM - {_t(hh['offTime'])} AM")
+            addr = parse_address_intl(
+                f'{_["address"].strip()}, {_["city"]["name"].strip()}, {_["state"]["name"].strip()}, Egypt'
+            )
             yield SgRecord(
                 page_url="https://www.egypt.pizzahut.me/en/search-location",
                 store_number=_["id"],
                 location_name=_["name"].strip(),
                 street_address=_["address"].strip(),
-                city=_["city"]["name"].strip(),
+                city=addr.city,
                 state=_["state"]["name"].strip(),
                 latitude=_["locationDetail"]["latitude"],
                 longitude=_["locationDetail"]["longitude"],
