@@ -134,7 +134,8 @@ def fetchStores():
     return driver, []
 
 
-def fetchSingleStore(driver, page_url):
+def fetchSingleStore(page_url):
+    driver = initiateDriver()
     driver.get(page_url)
     delay = 0
     driverSleep(driver)
@@ -230,7 +231,7 @@ def fetchData():
         location_name = store["location_name"]
 
         log.info(f"{noStore}. Scrapping {page_url} ...")
-        response = fetchSingleStore(driver, page_url)
+        response = fetchSingleStore(page_url)
         if response is None:
             error = error + 1
             log.error(f"ERROR #{error}. can't load: {location_name} , {page_url}")
