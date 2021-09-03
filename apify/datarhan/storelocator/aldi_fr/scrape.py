@@ -9,6 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -69,6 +70,8 @@ def fetch_data():
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
             raw_adr = poi_html.xpath(".//address/text()")
             raw_adr = [e.strip() for e in raw_adr]
+            addr = parse_address_intl(" ".join(raw_adr))
+
             hoo = poi_html.xpath('.//td[contains(@class,"OpeningHours")]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
@@ -77,9 +80,9 @@ def fetch_data():
                 page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
                 location_name=location_name,
                 street_address=raw_adr[0],
-                city=" ".join(raw_adr[1].split()[1:]),
+                city=addr.city,
                 state=SgRecord.MISSING,
-                zip_postal=raw_adr[1].split()[0],
+                zip_postal=addr.postcode,
                 country_code=SgRecord.MISSING,
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,
