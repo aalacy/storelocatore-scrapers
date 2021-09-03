@@ -137,11 +137,21 @@ def get_data():
         if len(response_text.split("div")) > 2:
             pass
         else:
-            new_sess = reset_sessions(country_url)
+            breaker = 0
+            while True:
+                try:
+                    new_sess = reset_sessions(country_url)
 
-            s = new_sess[0]
-            headers = new_sess[1]
-            response_text = new_sess[2]
+                    s = new_sess[0]
+                    headers = new_sess[1]
+                    response_text = new_sess[2]
+                    break
+
+                except Exception:
+                    breaker = breaker + 1
+                    if breaker == 10:
+                        raise Exception
+                    continue
 
         soup = bs(response_text, "html.parser")
         search_length = int(
@@ -197,6 +207,7 @@ def get_data():
             count = count + 1
 
     for location_url in location_urls:
+        x = x + 1
         if "searchazref" not in location_url:
             continue
 
@@ -204,6 +215,10 @@ def get_data():
         response_text = response.text
         log.info("URL " + str(x) + "/" + str(len(location_urls)))
         log.info(location_url)
+
+        if "404 - Page Missing" in response_text:
+            continue
+
         if len(response_text.split("div")) > 2:
             pass
         else:
