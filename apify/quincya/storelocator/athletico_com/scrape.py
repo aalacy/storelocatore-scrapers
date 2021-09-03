@@ -52,7 +52,6 @@ def fetch_data(sgw: SgWriter):
         phone = store["phone"]
         latitude = store["Latitude"]
         longitude = store["Longitude"]
-        raw_hours = store["hours"]
         hours_of_operation = " ".join(
             list(BeautifulSoup(store["hours"], "lxml").stripped_strings)
         )
