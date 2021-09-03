@@ -18,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get("https://www.theshuckinshack.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
+
     for state in soup.find_all("div", {"class": "location-wrapper"}):
         current_state = state.find("h2").text.strip()
         for location in state.find_all("a"):
