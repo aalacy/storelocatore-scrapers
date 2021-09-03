@@ -24,21 +24,24 @@ def fetch_data():
         url = "https://www.charlesclinkard.co.uk/map"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll(
-            "div", {"class": "col l-col-16 s-text-align-center"}
-        )
+        loclist = soup.findAll("div", {"class": "col l-col-16 s-text-align-center"})
         for loc in loclist[:-1]:
             temp = loc.find("a")
             location_name = temp.find("strong").text
-            page_url = "https://www.charlesclinkard.co.uk"+ temp["href"]
+            page_url = "https://www.charlesclinkard.co.uk" + temp["href"]
             log.info(page_url)
             temp = loc.find("div", {"class": "row store-locator__store__info"})
             try:
                 phone = temp.select_one("a[href*=tel]").text
             except:
                 phone = MISSING
-            raw_address = temp.find("p").get_text(separator='|', strip=True).replace('|'," ").replace('Lakeland (Concession within)',"")
-          
+            raw_address = (
+                temp.find("p")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Lakeland (Concession within)", "")
+            )
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -52,7 +55,11 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            hours_of_operation = loc.find("table", {"class": "MsoTableGrid"}).get_text(separator='|', strip=True).replace('|'," ")
+            hours_of_operation = (
+                loc.find("table", {"class": "MsoTableGrid"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
             country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -69,7 +76,7 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
-                raw_address=raw_address
+                raw_address=raw_address,
             )
 
 
