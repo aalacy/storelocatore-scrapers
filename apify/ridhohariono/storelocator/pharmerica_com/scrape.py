@@ -105,7 +105,6 @@ def scrape():
             SgRecordID(
                 {
                     SgRecord.Headers.PAGE_URL,
-                    SgRecord.Headers.STREET_ADDRESS,
                 }
             )
         )
