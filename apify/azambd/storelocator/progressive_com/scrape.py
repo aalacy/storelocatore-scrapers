@@ -29,7 +29,7 @@ def fetch_stores(http: SgRequests, state: CrawlState) -> bool:
     stateUrls = body.xpath("//ul[@class='state-list']/li/a/@href")
     log.info(f"total states = {len(stateUrls)}")
 
-    cityUrls = []
+    cityUrls = []  # type: ignore
     for stateUrl in stateUrls:
         response = http.get(stateUrl, headers=headers)
         body = html.fromstring(response.text, "lxml")
@@ -44,6 +44,8 @@ def fetch_stores(http: SgRequests, state: CrawlState) -> bool:
             state.push_request(SerializableRequest(url=page_url))
             count = count + 1
     log.info(f"total stores = {count}")
+
+    return True
 
 
 def get_address(raw_address):
@@ -100,7 +102,7 @@ def fetch_data(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         hours = body.xpath(
             "//div[./h2[text()='Office Hours']]/following-sibling::div[1]//dl/div"
         )
-        hoo = []
+        hoo = []  # type: ignore
         for hour in hours:
             day = "".join(hour.xpath("./dt/text()")).strip()
             time = "".join(hour.xpath("./dd/text()")).strip()
