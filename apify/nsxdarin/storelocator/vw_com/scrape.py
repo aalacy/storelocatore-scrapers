@@ -19,7 +19,6 @@ def fetch_locations(postal, session):
 
     response = session.get(url)
     data = response.json()
-    print(data)
     dealers = data.get("dealers", [])
 
     pois = []
