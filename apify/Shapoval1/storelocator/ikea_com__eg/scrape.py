@@ -1,22 +1,25 @@
 from lxml import html
+from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://tapsfishhouse.com/locations/"
+    locator_domain = "https://www.ikea.com/eg/"
+    api_url = "https://www.ikea.com/eg/en/stores/"
+    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    session = SgRequests()
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[@class="av-screen-reader-only"]')
+    div = tree.xpath(
+        '//a[@class="pub__card pub__card--compact pub__card--trailing-image"]'
+    )
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -25,22 +28,29 @@ def fetch_data(sgw: SgWriter):
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = (
-            " ".join(tree.xpath('//h2[@class="av-special-heading-tag "]/text()'))
+        location_name = "".join(tree.xpath("//h1//text()")).strip()
+        ad = (
+            " ".join(tree.xpath('//div[./p/a[contains(@href, "maps")]]/p[1]/text()'))
             .replace("\n", "")
             .strip()
         )
-
-        country_code = "US"
-        ad = "".join(tree.xpath("//div[./h2]/following-sibling::div[1]//a/text()"))
-        a = parse_address(USA_Best_Parser(), ad)
+        a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
-        city = a.city or "<MISSING>"
+        if location_name.find("IKEA Cairo store") != -1:
+            street_address = (
+                " ".join(
+                    tree.xpath('//div[./p/a[contains(@href, "maps")]]/p[1]/text()[2]')
+                )
+                .replace("\n", "")
+                .strip()
+            )
+        country_code = "Egypt"
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
-        text = "".join(tree.xpath("//div[./h2]/following-sibling::div[1]//a/@href"))
+        city = a.city or "<MISSING>"
+        text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
         try:
             if text.find("ll=") != -1:
                 latitude = text.split("ll=")[1].split(",")[0]
@@ -50,19 +60,17 @@ def fetch_data(sgw: SgWriter):
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
-        phone = "".join(tree.xpath("//div[./h2]/following-sibling::div[2]//a/text()"))
-        hours_of_operation = tree.xpath(
-            '//div[@id="av_section_5"]//div[./div[contains(@class, "flex_column av_one_fifth")]]/div//text()'
-        )
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
         hours_of_operation = (
-            " ".join(hours_of_operation[0:6])
-            + " "
-            + " ".join(hours_of_operation[13:18])
+            " ".join(
+                tree.xpath(
+                    '//strong[contains(text(), "Store")]/following-sibling::text()'
+                )
+            )
+            .replace("\n", "")
+            .replace(": ", "")
+            .strip()
         )
-        if location_name.find("Opening Soon") != -1:
-            hours_of_operation = "Coming Soon"
-            location_name = location_name.replace("Opening Soon", "").strip()
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -73,7 +81,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=postal,
             country_code=country_code,
             store_number=SgRecord.MISSING,
-            phone=phone,
+            phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
@@ -85,6 +93,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://tapsfishhouse.com"
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
