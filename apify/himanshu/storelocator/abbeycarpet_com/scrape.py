@@ -420,7 +420,7 @@ def fetch_data(sgw: SgWriter):
                     got_src = False
                     try:
                         test_src = iframe["src"]
-                        if len test_src > 10:
+                        if len(test_src) > 10:
                             got_src = True
                     except:
                         pass
@@ -429,10 +429,14 @@ def fetch_data(sgw: SgWriter):
                         fin_src = iframe["src"]
                         if "!3d" in fin_src:
                             longitude = fin_src.split("!2d")[1].split("!3d")[0]
-                            latitude = fin_src.split("!2d")[1].split("!3d")[1].split("!")[0]
+                            latitude = (
+                                fin_src.split("!2d")[1].split("!3d")[1].split("!")[0]
+                            )
                         elif "place?zoom" in fin_src:
                             latitude = fin_src.split("=")[2].split(",")[0]
-                            longitude = fin_src.split("=")[2].split(",")[1].split("&")[0]
+                            longitude = (
+                                fin_src.split("=")[2].split(",")[1].split("&")[0]
+                            )
                         elif "!3f" in fin_src:
                             longitude = fin_src.split("!2d")[1].split("!3f")[0]
                             latitude = (
