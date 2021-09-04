@@ -419,8 +419,8 @@ def fetch_data(sgw: SgWriter):
                     try:
                         src = iframe["src"]
                     except:
-                        src = None
-                    if src is not None and src != []:
+                        src = ""
+                    if src and src != []:
                         if "!3d" in src:
                             longitude = src.split("!2d")[1].split("!3d")[0]
                             latitude = src.split("!2d")[1].split("!3d")[1].split("!")[0]
