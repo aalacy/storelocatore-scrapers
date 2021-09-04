@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 from sgselenium import SgChrome
 import time
 import ssl
@@ -137,9 +137,10 @@ def fetch_data():
                 .strip()
             )
 
-            map_link = (
-                driver.page_source.split('<small><a href="')[1].split('"')[0].strip()
-            )
+            map_link = "".join(
+                store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
+            ).strip()
+
             latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(

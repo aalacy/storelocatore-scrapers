@@ -14,7 +14,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://thedynamicfitness.com/"
+DOMAIN = "https://soelbergsmarket.com/"
 MISSING = "<MISSING>"
 
 
@@ -38,7 +38,7 @@ def fetch_data(sgw: SgWriter):
             )
             street_address = loc["store_address"]
             city = loc["store_city"]
-            page_url = "https://soelbergsmarket.com/" + city.replace(" ", "-").lower()
+            page_url = "https://soelbergsmarket.com/" + city.replace(" ", "_").lower()
             log.info(page_url)
             zip_postal = loc["store_zip"]
             country_code = "US"
