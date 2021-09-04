@@ -43,13 +43,14 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        city = addr.city.replace("Г.", "").replace("г.", "") if addr.city else ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=store_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city.replace("Г.", "").replace("г.", ""),
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code="RU",
