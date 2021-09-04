@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -14,14 +15,15 @@ logger = SgLogSetup().get_logger("dairyqueen_com")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA],
-    max_search_distance_miles=25,
-    max_search_results=None,
+    max_search_distance_miles=None,
+    max_search_results=50,
 )
 
 
 def fetch_data():
     locs = []
     for lat, lng in search:
+        time.sleep(1)
         url = (
             "https://prod-dairyqueen.dotcmscloud.com/api/vtl/locations?country=ca&lat="
             + str(lat)
@@ -61,7 +63,6 @@ def fetch_data():
             add = ""
             city = ""
             state = ""
-            country = "US"
             zc = ""
             store = loc.rsplit("/", 2)[1]
             phone = ""
@@ -145,7 +146,7 @@ def fetch_data():
                     longitude=lng,
                     hours_of_operation=hours,
                 )
-            if count >= 8:
+            if count >= 3:
                 PFound = True
 
 
