@@ -360,7 +360,6 @@ def fetch_data(sgw: SgWriter):
                             hours_of_operation = "<MISSING>"
 
                     iframe = ""
-                    src = None
                     if i == 0:
                         if page_soup.find("div", {"class": "mapWrapper"}) is not None:
                             iframe = page_soup.find(
