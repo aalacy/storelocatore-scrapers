@@ -359,7 +359,6 @@ def fetch_data(sgw: SgWriter):
                         except:
                             hours_of_operation = "<MISSING>"
 
-                    iframe = ""
                     if i == 0:
                         if page_soup.find("div", {"class": "mapWrapper"}) is not None:
                             iframe = page_soup.find(
@@ -416,31 +415,21 @@ def fetch_data(sgw: SgWriter):
                                     "div",
                                     {"class": "col-xs-12 col-sm-12 col-md-4 col-lg-4"},
                                 )[i].find("iframe")
-
-                    got_src = False
                     try:
-                        test_src = iframe["src"]
-                        if len(test_src) > 10:
-                            got_src = True
+                        src = iframe["src"]
                     except:
-                        pass
-
-                    if got_src:
-                        fin_src = iframe["src"]
-                        if "!3d" in fin_src:
-                            longitude = fin_src.split("!2d")[1].split("!3d")[0]
+                        src = None
+                    if src is not None and src != []:
+                        if "!3d" in src:
+                            longitude = src.split("!2d")[1].split("!3d")[0]
+                            latitude = src.split("!2d")[1].split("!3d")[1].split("!")[0]
+                        elif "place?zoom" in src:
+                            latitude = src.split("=")[2].split(",")[0]
+                            longitude = src.split("=")[2].split(",")[1].split("&")[0]
+                        elif "!3f" in src:
+                            longitude = src.split("!2d")[1].split("!3f")[0]
                             latitude = (
-                                fin_src.split("!2d")[1].split("!3d")[1].split("!")[0]
-                            )
-                        elif "place?zoom" in fin_src:
-                            latitude = fin_src.split("=")[2].split(",")[0]
-                            longitude = (
-                                fin_src.split("=")[2].split(",")[1].split("&")[0]
-                            )
-                        elif "!3f" in fin_src:
-                            longitude = fin_src.split("!2d")[1].split("!3f")[0]
-                            latitude = (
-                                fin_src.split("!2d")[1].split("!3f")[1].split("!4f")[0]
+                                src.split("!2d")[1].split("!3f")[1].split("!4f")[0]
                             )
                         else:
                             latitude = ""
