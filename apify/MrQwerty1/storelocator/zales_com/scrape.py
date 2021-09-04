@@ -17,10 +17,11 @@ def fetch_data(_zip, sgw: SgWriter):
             return
 
         for j in js:
+            _type = j.get("baseStore") or ""
             location_name = "Zales"
             location_type = "Zales"
             slug = j.get("url")
-            page_url = f"https://www.zales.com{slug}"
+            page_url = f"https://www.zales.com{slug}?baseStore={_type}"
             if page_url.endswith("/null"):
                 page_url = SgRecord.MISSING
 
@@ -33,7 +34,6 @@ def fetch_data(_zip, sgw: SgWriter):
             latitude = j.get("latitude")
             longitude = j.get("longitude")
             store_number = j.get("name")
-            _type = j.get("baseStore") or ""
             if _type == "zalesoutlet":
                 location_name = "Zales Outlet"
                 location_type = "Outlet"
