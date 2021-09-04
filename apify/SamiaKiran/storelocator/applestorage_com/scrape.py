@@ -49,7 +49,8 @@ def fetch_data():
                 hours_of_operation = (
                     soup.find("div", {"class": "office-hours-condensed"})
                     .get_text(separator="|", strip=True)
-                    .replace("|", " ").replace('Office Hours',"")
+                    .replace("|", " ")
+                    .replace("Office Hours", "")
                 )
             except:
                 hours_of_operation = MISSING
