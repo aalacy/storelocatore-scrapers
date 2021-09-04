@@ -26,7 +26,17 @@ def fetch_data():
             page_url = urljoin(start_url, url)
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
-            location_name = loc_dom.xpath('//p[@itemprop="name"]/text()')[0]
+            more_locations = loc_dom.xpath(
+                '//div[@class="mod-stores__overview"]//a/@href'
+            )
+            if more_locations:
+                all_locations += more_locations
+                continue
+
+            location_name = loc_dom.xpath('//p[@itemprop="name"]/text()')
+            if not location_name:
+                location_name = loc_dom.xpath("//h1/text()")[0].split(" - ")
+            location_name = location_name[0] if location_name else ""
             street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[
                 0
             ]
