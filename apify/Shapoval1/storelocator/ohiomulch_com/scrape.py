@@ -23,7 +23,6 @@ def fetch_data(sgw: SgWriter):
         location_name = (
             "".join(d.xpath('.//span[@class="name"]/text()')).strip() or "<MISSING>"
         )
-        location_type = "<MISSING>"
         street_address = (
             "".join(d.xpath('.//span[@class="address"]/text()')).strip() or "<MISSING>"
         )
@@ -37,7 +36,6 @@ def fetch_data(sgw: SgWriter):
         )
         country_code = "US"
         city = "".join(d.xpath('.//span[@class="city"]/text()')).strip() or "<MISSING>"
-        store_number = "<MISSING>"
         latitude = (
             "".join(
                 d.xpath(
