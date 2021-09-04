@@ -29,7 +29,11 @@ def fetch_data():
         locations = session.post(base_url, headers=_headers, json=data).json()["data"]
         total += len(locations)
         for store in locations:
-            store["street"] = store["address"].replace(store["province"], "").strip()
+            store["street"] = store["address"]
+            if store.get("province"):
+                store["street"] = (
+                    store["address"].replace(store["province"], "").strip()
+                )
             store["phone"] = (
                 store["tel"].split()[0] if store.get("tel") else SgRecord.MISSING
             )
