@@ -6,7 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
-from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("cardfactory")
