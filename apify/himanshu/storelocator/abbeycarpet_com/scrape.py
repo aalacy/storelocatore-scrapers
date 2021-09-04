@@ -416,21 +416,27 @@ def fetch_data(sgw: SgWriter):
                                     "div",
                                     {"class": "col-xs-12 col-sm-12 col-md-4 col-lg-4"},
                                 )[i].find("iframe")
+
+                    got_src = False
                     try:
-                        src = str(iframe["src"])
+                        test_src = iframe["src"]
+                        if len test_src > 10:
+                            got_src = True
                     except:
-                        src = ""
-                    if src and src != "[]":
-                        if "!3d" in src:
-                            longitude = src.split("!2d")[1].split("!3d")[0]
-                            latitude = src.split("!2d")[1].split("!3d")[1].split("!")[0]
-                        elif "place?zoom" in src:
-                            latitude = src.split("=")[2].split(",")[0]
-                            longitude = src.split("=")[2].split(",")[1].split("&")[0]
-                        elif "!3f" in src:
-                            longitude = src.split("!2d")[1].split("!3f")[0]
+                        pass
+
+                    if got_src:
+                        fin_src = iframe["src"]
+                        if "!3d" in fin_src:
+                            longitude = fin_src.split("!2d")[1].split("!3d")[0]
+                            latitude = fin_src.split("!2d")[1].split("!3d")[1].split("!")[0]
+                        elif "place?zoom" in fin_src:
+                            latitude = fin_src.split("=")[2].split(",")[0]
+                            longitude = fin_src.split("=")[2].split(",")[1].split("&")[0]
+                        elif "!3f" in fin_src:
+                            longitude = fin_src.split("!2d")[1].split("!3f")[0]
                             latitude = (
-                                src.split("!2d")[1].split("!3f")[1].split("!4f")[0]
+                                fin_src.split("!2d")[1].split("!3f")[1].split("!4f")[0]
                             )
                         else:
                             latitude = ""
