@@ -21,7 +21,6 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     locator_domain = "qualitymartnc.com"
 
     js = str(base).split('places":')[1].split("]}]")[0] + "]}]"
