@@ -40,6 +40,9 @@ def fetch_data():
                 items = line.split('{"distance":')
                 for item in items:
                     if ',"myDistance":' in item:
+                        HasATM = False
+                        if "Internal ATM" in item or "External ATM" in item:
+                            HasATM = True
                         store = item.split('"outletId":"')[1].split('"')[0]
                         typ = item.split('"type":"')[1].split('"')[0]
                         lat = item.split('"latitude":')[1].split(",")[0]
@@ -119,7 +122,7 @@ def fetch_data():
                         )
                         hours = hours.replace("00:00-00:00", "Closed")
                         if store not in ids:
-                            loc = "<MISSING>"
+                            loc = "https://www.barclays.co.uk/branch-finder"
                             country = "GB"
                             ids.append(store)
                             add = (
@@ -132,6 +135,10 @@ def fetch_data():
                             add = add.replace(",", "").strip()
                             add = add.replace("&#x2f;", "/")
                             name = name.replace("&#x2f;", "/")
+                            if typ == "ATM":
+                                phone = "<MISSING>"
+                            if typ == "BRANCH" and HasATM is True:
+                                typ = "BRANCH and ATM"
                             yield SgRecord(
                                 locator_domain=website,
                                 page_url=loc,

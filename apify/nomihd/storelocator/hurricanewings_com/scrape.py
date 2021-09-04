@@ -62,7 +62,7 @@ def fetch_data():
             latitude = store["store_info"]["latitude"]
             longitude = store["store_info"]["longitude"]
             hours = store["store_info"]["store_hours"]
-            hours_of_operation = ""
+            hours_list = []
             if len(hours) > 0:
                 hours = hours.split(";")
                 for index in range(0, len(hours) - 1):
@@ -83,14 +83,22 @@ def fetch_data():
                     if day_val == "7":
                         day = "Sunday:"
 
-                    hours_of_operation = (
-                        hours_of_operation
-                        + day
-                        + hours[index].split(",", 1)[1].replace(",", " - ").strip()
-                        + " "
-                    )
+                    time = hours[index].split(",", 1)[1].replace(",", " - ").strip()
+                    try:
+                        time = (
+                            time.split("-")[0].strip()[:2]
+                            + ":"
+                            + time.split("-")[0].strip()[2:]
+                            + " - "
+                            + time.split("-")[-1].strip()[:2]
+                            + ":"
+                            + time.split("-")[-1].strip()[2:]
+                        )
+                    except:
+                        pass
+                    hours_list.append(day + time)
 
-            hours_of_operation = hours_of_operation.strip()
+            hours_of_operation = "; ".join(hours_list).strip()
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

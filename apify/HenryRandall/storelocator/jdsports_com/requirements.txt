@@ -6,5 +6,5 @@ python-dateutil==2.8.1
 pytz==2021.1
 geopy==2.0.0
 sgzip==0.8.1
-sgrequests==0.1.12
+sgrequests==0.1.13
 sgscrape==0.1.11
