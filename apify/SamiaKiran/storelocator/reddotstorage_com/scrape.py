@@ -21,7 +21,7 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         url = "https://inventory.g5marketingcloud.com/api/v3/client_search_data?client_urns=g5-c-5mhm4maph-red-dot-storage"
-        log.info(f"Fetching Clients Id...")
+        log.info("Fetching Clients Id...")
         r = session.get(url, headers=headers)
         client_id = r.text.split('"client_id":[')[1].split("]")[0]
         url = (
