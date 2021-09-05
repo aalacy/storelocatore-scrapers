@@ -10,21 +10,16 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 
+from sgscrape.pause_resume import CrawlStateSingleton
+
 import ssl
 
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-
+ssl._create_default_https_context = ssl._create_unverified_context
 
 DOMAIN = "wyndhamdestinations.com"
 website = "https://worldmark.wyndhamdestinations.com"
@@ -35,7 +30,7 @@ user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 )
 
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def initiateDriver(driver=None):
@@ -45,7 +40,6 @@ def initiateDriver(driver=None):
     return SgChrome(
         is_headless=True,
         user_agent=user_agent,
-        executable_path=ChromeDriverManager().install(),
     ).driver()
 
 
@@ -89,7 +83,7 @@ def fetchStores():
                         "return document.body.scrollHeight;"
                     )
                     if screen_height != new_screen_height:
-                        log.debug(f"scrapping page={pages}")
+                        log.info(f"scrapping page={pages}")
                         driver.execute_script(
                             "window.scrollTo(0, document.body.scrollHeight);"
                         )
@@ -108,7 +102,7 @@ def fetchStores():
             resort_divs = body.xpath(
                 '//div[contains(@class, "resort-cardV2__content")]'
             )
-            log.debug(f"Total resorts divs = {len(resort_divs)}")
+            log.info(f"Total resorts divs = {len(resort_divs)}")
             stores = []
             for resort_div in resort_divs:
                 title = resort_div.xpath('.//div[@class="resort-cardV2__name"]/a')[0]
@@ -229,7 +223,7 @@ def fetchData():
         page_url = store["page_url"]
         location_name = store["location_name"]
 
-        log.debug(f"{noStore}. Scrapping {page_url} ...")
+        log.info(f"{noStore}. Scrapping {page_url} ...")
         response = fetchSingleStore(driver, page_url)
         if response is None:
             error = error + 1
@@ -250,6 +244,9 @@ def fetchData():
         raw_address = None
 
         phone = getReviewedPath(jsonData, "itemReviewed.telephone.0")
+        latitude = getReviewedPath(jsonData, "itemReviewed.geo.latitude")
+        longitude = getReviewedPath(jsonData, "itemReviewed.geo.longitude")
+        log.info(f"{latitude}, {longitude}")
         hours_of_operation = MISSING
         city = getJSObject(response, "addressLocality")
 
@@ -326,32 +323,6 @@ def fetchData():
         else:
             country_code = "US"
 
-        height = driver.execute_script("return document.body.scrollHeight")
-        driver.implicitly_wait(10)
-        driver.execute_script("window.scrollTo(0, 0)")
-        for i in range(0, height, 60):
-            # load content
-            driver.execute_script("window.scrollTo(0, " + str(i) + ")")
-            time.sleep(0.4)
-        iframe = driver.find_element_by_xpath('//div[@class="map"]/iframe')
-
-        driver.switch_to.frame(iframe)
-        htmlmarkups = driver.page_source
-        body = html.fromstring(htmlmarkups, "lxml")
-        map_link = body.xpath('//div[@class="google-maps-link"]/a/@href')[0]
-        log.info(f"MAPS LINK: {map_link}")
-        try:
-            geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", map_link)[
-                0
-            ].split(",")
-        except:
-            geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{1,3}\.[0-9]+", map_link)[0].split(
-                ","
-            )
-        latitude = geo[0]
-        longitude = geo[1]
-        log.info(f"{latitude},{longitude}")
-
         yield SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,
@@ -375,10 +346,10 @@ def fetchData():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     start = time.time()
-    result = fetchData()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in result:
+        for rec in fetchData():
             writer.write_row(rec)
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
