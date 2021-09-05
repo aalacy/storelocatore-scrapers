@@ -60,11 +60,12 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter(
+    deduper = SgRecordDeduper(
         SgRecordID(
             {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
         )
-    ) as writer:
+    )
+    with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
