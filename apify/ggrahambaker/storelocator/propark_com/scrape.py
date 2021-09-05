@@ -133,7 +133,7 @@ def fetch_data():
                 .find("ul")
                 .get_text(strip=True, separator=",")
             )
-            store_number = MISSING
+            store_number = row
             country_code = "US"
             location_type = "propark"
             latlong = soup.find("article", {"class": "card"})
@@ -167,6 +167,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.STORE_NUMBER,
                     SgRecord.Headers.RAW_ADDRESS,
                 }
             )
