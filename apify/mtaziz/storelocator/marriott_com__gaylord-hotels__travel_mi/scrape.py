@@ -66,7 +66,7 @@ def get__regions_submit_search_urls():
     # non-API-based marriottBrands include EB,RZ,BG,BR,GE,PR,ER".
     # non-API-based 4 brands has the tickets, these 4 brands include BR, EB, GE, RZ.
 
-    # NOTE: Please initially the scrape for 7 brands were merged in a sinlge crawler, later
+    # NOTE: Initially the scrape for 7 brands were merged in a sinlge crawler, later on,
     # it was decided to build the scrape for each brand, in this case, for Gaylord Hotel; that means,
     # This scrape returns the data for Gaylord Hotel accross the world. Above information are kept as a reference
     # to the earlier merged crawler.
