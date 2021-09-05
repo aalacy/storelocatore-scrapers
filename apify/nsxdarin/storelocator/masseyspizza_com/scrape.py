@@ -23,7 +23,7 @@ def fetch_data():
     country = "US"
     store = "<MISSING>"
     phone = ""
-    loc = "https://www.masseyspizza.com/locations/ "
+    loc = "https://www.masseyspizza.com/locations/"
     lat = "<MISSING>"
     lng = "<MISSING>"
     website = "masseyspizza.com"
@@ -32,11 +32,13 @@ def fetch_data():
     hours = ""
     name = "HEATH"
     add = "771 South 30th St Unit 121"
-    city = "Columbus"
+    city = "Heath"
     state = "OH"
-    zc = "<MISSING>"
+    zc = "43056"
     phone = "(740) 344-0444"
     hours = "Sun-Thu: 11am-10pm; Fri & Sat: 11am-11pm"
+    lat = "40.031882"
+    lng = "-82.448465"
     yield SgRecord(
         locator_domain=website,
         page_url=loc,
@@ -55,10 +57,12 @@ def fetch_data():
     )
     name = "GROVE CITY"
     add = "4015 Parkmead Dr."
-    city = "Columbus"
+    city = "Grove City"
     state = "OH"
-    zc = "<MISSING>"
+    zc = "43123"
     phone = "(614) 277-3200"
+    lat = "39.8810928"
+    lng = "-83.0656257"
     hours = "Sun-Thu: 11am-10pm; Fri & Sat: 11am-11pm"
     yield SgRecord(
         locator_domain=website,
@@ -80,9 +84,11 @@ def fetch_data():
     add = "2970 Sullivant Avenue"
     city = "Columbus"
     state = "OH"
-    zc = "<MISSING>"
+    zc = "43204"
     phone = "(614) 358-3333"
     hours = "Sun-Thu: 11am-10pm; Fri & Sat: 11am-11pm"
+    lat = "39.9438144"
+    lng = "-83.0800593"
     yield SgRecord(
         locator_domain=website,
         page_url=loc,
@@ -103,9 +109,11 @@ def fetch_data():
     add = "1951 E. Dublin-Granville Rd."
     city = "Columbus"
     state = "OH"
-    zc = "<MISSING>"
+    zc = "43229"
     phone = "(614) 888-0022"
     hours = "11am-10pm Everyday"
+    lat = "40.0903889"
+    lng = "-82.9694044"
     yield SgRecord(
         locator_domain=website,
         page_url=loc,
@@ -123,6 +131,8 @@ def fetch_data():
         hours_of_operation=hours,
     )
     for line in lines:
+        if "+OH+" in line:
+            zc = line.split("+OH+")[1].split("!")[0].strip()
         if "South Carolina</span>" in line:
             state = "SC"
         if ">Ohio Sports Bars" in line:
@@ -146,7 +156,7 @@ def fetch_data():
                     add = "115 Willbrook Blvd Unit O"
                     city = "Pawleys Island"
                     state = "SC"
-                    zc = "<MISSING>"
+                    zc = "29585"
                     hours = "Tue: Closed; Mon, Wed & Thurs: 4pm-8pm; Fri, Sat & Sun: 11am-9pm"
                 if "261 Lincoln" in add:
                     hours = "Sun-Thu: 11am-10pm; Fri-Sat: 11am-MIDNIGHT"
@@ -187,6 +197,7 @@ def fetch_data():
                     state = "OH"
                 if "GAHANNA" in name:
                     city = "GAHANNA"
+                    zc = "43230"
                 if "2970" in add:
                     lat = "39.9438144"
                     lng = "-83.0800593"
@@ -194,6 +205,41 @@ def fetch_data():
                     lat = "39.7274719"
                     lng = "-82.6146089"
                 if add != "":
+                    if "WHITEHALL" in name:
+                        zc = "43213"
+                    if "1229 N" in add:
+                        zc = "43130"
+                    if "399 S" in add:
+                        zc = "43081"
+                    if "440 E." in add:
+                        zc = "43062"
+                    if "9838" in add:
+                        zc = "43065"
+                    if "7070" in add:
+                        zc = "43068"
+                    if "219 S" in add:
+                        zc = "43015"
+                    if "771 South" in add:
+                        lat = "40.031882"
+                        lng = "-82.448465"
+                    if "4015" in add:
+                        lat = "39.8810928"
+                        lng = "-83.0656257"
+                    if "2970" in add:
+                        lat = "39.9438144"
+                        lng = "-83.0800593"
+                    if "1951" in add:
+                        lat = "40.0903889"
+                        lng = "-82.9694044"
+                    if "4464" in add:
+                        lat = "39.9556777"
+                        lng = "-82.8808675"
+                    if "7070" in add:
+                        lat = "39.9553789"
+                        lng = "-82.8109749"
+                    if "219 S" in add:
+                        lat = "40.2918286"
+                        lng = "-83.0690694"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -211,6 +257,8 @@ def fetch_data():
                         hours_of_operation=hours,
                     )
         if "google.com/maps" in line and "/@" in line:
+            if "+OH+" in line:
+                zc = line.split("+OH+")[1].split("!")[0]
             lat = line.split("/@")[1].split(",")[0]
             lng = line.split("/@")[1].split(",")[1]
         if '<div class="et_pb_text_inner"><p>' in line:
@@ -229,6 +277,8 @@ def fetch_data():
             if "google.com/maps" in g and "/@" in g:
                 lat = g.split("/@")[1].split(",")[0]
                 lng = g.split("/@")[1].split(",")[1]
+            if "+OH+" in g:
+                zc = g.split("+OH+")[1].split("!")[0]
             if "771 South" in g:
                 hours = "SUN-THUR 11am-11pm; FRI &amp; SAT 11am-Midnight"
             elif "4015 Parkmead" in g:
@@ -245,11 +295,11 @@ def fetch_data():
                     .replace("<br />", "; ")
                 )
             country = "US"
-            zc = "<MISSING>"
+            zc = ""
             phone = g.split('<a href="tel:+1')[1].split('"')[0]
             website = "masseyspizza.com"
             typ = "Restaurant"
-            loc = "<MISSING>"
+            loc = "https://www.masseyspizza.com/locations/"
             lat = "<MISSING>"
             lng = "<MISSING>"
             if name == "DELAWARE":
