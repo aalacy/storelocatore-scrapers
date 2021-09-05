@@ -1,4 +1,3 @@
-import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -44,7 +43,6 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
-        data = []
         hrs = ""
         url = "https://mmfoodmarket.com/en/store-locator"
         state_list = [
