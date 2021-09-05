@@ -268,6 +268,7 @@ def get_data():
         store_number = location_url.split("/")[-1]
 
         try:
+            phone = ""
             phone_link = soup.find("button", attrs={"id": "brochure_phone"})["href"]
             phone_response = s.get(phone_link, headers=headers).text
             if len(phone_response.split("div")) > 2:
@@ -285,6 +286,9 @@ def get_data():
                         phone_response = new_sess[2]
                         break
                     except Exception:
+                        if y == 5:
+                            phone == "<INACCESSIBLE>"
+                            raise Exception
                         continue
             response_soup = bs(phone_response, "html.parser")
             phone = (
@@ -293,7 +297,10 @@ def get_data():
                 .text.strip()
             )
         except Exception:
-            phone = "<MISSING>"
+            if phone == "<INACCESSIBLE>":
+                pass
+            else:
+                phone = "<MISSING>"
 
         geo_json = extract_json(response_text.split('geo":')[1].split("reviews")[0])[0]
         latitude = geo_json["latitude"]
