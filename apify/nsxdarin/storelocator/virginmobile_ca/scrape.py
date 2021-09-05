@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import time
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -14,11 +13,9 @@ logger = SgLogSetup().get_logger("virginmobile_ca")
 
 
 def fetch_data():
-    ids = []
     for x in range(-55, -140, -1):
         for y in range(41, 71):
             session = SgRequests()
-            time.sleep(1)
             logger.info(str(x) + "-" + str(y))
             url = (
                 "https://virgin.know-where.com/virginplus/cgi/selection?place=&lang=en&ll="
@@ -94,30 +91,28 @@ def fetch_data():
                         .replace("  ", " ")
                     )
                 if "Services</h4>" in line:
-                    if store not in ids:
-                        ids.append(store)
-                        lat = "<MISSING>"
-                        lng = "<MISSING>"
-                        if hours == "":
-                            hours = "<MISSING>"
-                        if phone == "":
-                            phone = "<MISSING>"
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=loc,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+                    lat = "<MISSING>"
+                    lng = "<MISSING>"
+                    if hours == "":
+                        hours = "<MISSING>"
+                    if phone == "":
+                        phone = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
