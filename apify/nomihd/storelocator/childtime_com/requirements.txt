@@ -1,6 +1,7 @@
-sgrequests
-sglogging
-lxml==4.5.0
-us
-# uncomment if you use selenium
-# selenium==3.141.0
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.1.14
+lxml==4.6.2
+sgvalidator==0.0.70
+us==1.0.0
+sgrequests==0.1.13
+sglogging==0.0.4

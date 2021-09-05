@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import json
 
 logger = SgLogSetup().get_logger("johnsonfinancialgroup")
 
@@ -13,49 +14,49 @@ _headers = {
 }
 
 locator_domain = "https://www.johnsonfinancialgroup.com"
-base_url = "https://johnsonbank.locatorsearch.com/GetItems.aspx"
+base_url = "https://www.johnsonfinancialgroup.com/locations/"
 
 
 def fetch_data():
     with SgRequests() as session:
-        data = {
-            "lat": "42.89130379703694",
-            "lng": "-88.55598999999998",
-            "searchby": "FCS|DRIVEUP|",
-            "SearchKey": "",
-            "rnd": "1628616152564",
-        }
         soup = bs(
-            session.post(base_url, headers=_headers, data=data)
-            .text.replace("<![CDATA[", "")
-            .replace("]]>", ""),
+            session.get(base_url, headers=_headers).text,
             "lxml",
         )
-        locations = soup.select("marker")
-        for _ in locations:
-            addr = list(_.add2.stripped_strings)
-            hours = [
-                " ".join(hh.stripped_strings)
-                for hh in _.select("table")[0].select("tr")
-            ]
+        locations = soup.select("a.link-arrow")
+        for link in locations:
+            page_url = link["href"]
+            logger.info(page_url)
+            sp1 = bs(
+                session.get(page_url, headers=_headers).text,
+                "lxml",
+            )
+            _ = json.loads(sp1.find("script", type="application/ld+json").string)
+            coord = (
+                sp1.select_one("div.container iframe")["src"]
+                .split("coord=")[1]
+                .split("&amp;")[0]
+                .split("&")[0]
+                .split(",")
+            )
             yield SgRecord(
-                page_url=base_url,
-                location_name=_.title.text.strip(),
-                street_address=_.add1.text.strip(),
-                city=addr[0].split(",")[0].strip(),
-                state=addr[0].split(",")[1].strip().split(" ")[0],
-                zip_postal=" ".join(addr[0].split(",")[1].strip().split(" ")[1:]),
-                country_code="US",
-                phone=addr[-1],
-                latitude=_["lat"],
-                longitude=_["lng"],
+                page_url=page_url,
+                location_name=_["name"],
+                street_address=_["address"]["streetAddress"],
+                city=_["address"]["addressLocality"],
+                state=_["address"]["addressRegion"],
+                zip_postal=_["address"]["postalCode"],
+                country_code=_["address"]["addressCountry"],
+                phone=_["telephone"],
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation=_["openingHours"].replace(",", "; "),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
