@@ -5,7 +5,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("bitcoindepot")
+logger = SgLogSetup().get_logger("bitcoindepot.com")
 
 ca_provinces_codes = {
     "AB",
@@ -68,6 +68,7 @@ def fetch_data():
                 _["address"].replace(",", "").replace(".", "").strip().replace(" ", "-")
             )
             page_url = f"https://bitcoindepot.com/locations/{slug}-bitcoin-atm/"
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
