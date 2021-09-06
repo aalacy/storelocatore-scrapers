@@ -3,7 +3,7 @@ import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -24,13 +24,20 @@ def fetch_data():
 
         r = session.get(slink, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        branchlist = soup.findAll("div", {"class": "viewstoreslist"})
+        branchlist = soup.find("div", {"class": "view-all-stores"}).findAll(
+            "div", {"class": "col-lg-3"}
+        )
 
         pattern = re.compile(r"\s\s+")
-        cleanr = re.compile(r"<[^>]+>")
-        for branch in branchlist:
 
+        for branch in branchlist:
+            try:
+                link = branch.find("a")["href"]
+                title = branch.find("a").text
+            except:
+                continue
             if branch.find("a")["href"].find("/null") == -1:
+
                 link = "https://www.peoplesjewellers.com" + branch.find("a")["href"]
 
                 r = session.get(link, headers=headers, verify=False)
@@ -54,41 +61,19 @@ def fetch_data():
                 hours = hours.replace('"', "").replace("\n", " ").replace("::", " ")
                 hours = re.sub(pattern, " ", hours).lstrip()
             else:
-                det = re.sub(cleanr, "\n", str(branch))
-                det = re.sub(pattern, "\n", det).splitlines()
 
-                i = 1
-                title = det[i]
-                i = i + 1
-                street = det[i]
-                i = i + 1
-                state = ""
-                try:
-                    city, state = det[i].split(", ", 1)
-                except:
-                    street = street + " " + det[i]
-                    i = i + 1
+                street = branch.find("span", {"itemprop": "streetAddress"}).text
+                city = branch.find("span", {"itemprop": "addressLocality"}).text
+                state = branch.find("span", {"itemprop": "addressRegion"}).text
+                pcode = branch.find("span", {"itemprop": "postalCode"}).text
+                phone = branch.find("span", {"itemprop": "telephone"}).text
 
-                    try:
-                        city, state = det[i].split(", ", 1)
-                    except:
-                        city, state = det[-2].split(", ", 1)
-                state, pcode = state.lstrip().replace("\xa0", " ").split(" ", 1)
-
-                i = i + 1
-                try:
-                    phone = det[i]
-                except:
-                    phone = "<MISSING>"
                 store = "<MISSING>"
                 ccode = "CA"
                 lat = "<MISSING>"
                 longt = "<MISSING>"
                 hours = "<MISSING>"
                 link = "<MISSING>"
-            if len(pcode.replace(" ", "")) > 7:
-                temp, pcode = pcode.split(" ", 1)
-                state = state + " " + temp
             yield SgRecord(
                 locator_domain="https://www.peoplesjewellers.com/",
                 page_url=link,
@@ -110,7 +95,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:
