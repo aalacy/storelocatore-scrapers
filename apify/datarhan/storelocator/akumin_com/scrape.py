@@ -12,12 +12,13 @@ from sgselenium.sgselenium import SgFirefox
 
 def fetch_data():
     session = SgRequests()
+
     domain = "akumin.com"
     start_url = "https://akumin.com/locations/"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="location"]/a/@href')
+    all_locations = dom.xpath('//div[contains(@class, "location")]/a/@href')
 
     for store_url in all_locations:
         with SgFirefox() as driver:

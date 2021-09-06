@@ -91,7 +91,7 @@ def get_data():
                 "span", attrs={"class": "Address-field Address-city"}
             ).text.strip()
         except Exception:
-            city = soup.find("span", attrs={"property": "addressLocality"})
+            city = soup.find("span", attrs={"property": "addressLocality"}).text.strip()
         store_number = "<MISSING>"
         try:
             address = soup.find(
@@ -118,7 +118,7 @@ def get_data():
             except Exception:
                 zipp = "<MISSING>"
 
-        phone = soup.find("span", attrs={"itemprop": "telephone"})
+        phone = soup.find("span", attrs={"itemprop": "telephone"}).text.strip()
         if phone == "NULL":
             phone = "<MISSING>"
         location_type = "<MISSING>"
