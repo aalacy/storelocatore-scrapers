@@ -22,7 +22,6 @@ def fetch_data():
         all_locations = dom.xpath('//a[contains(@href, "/stores/")]/@href')
         for url in all_locations:
             page_url = urljoin(start_url, url)
-            print(page_url)
             loc_response = session.get(page_url)
             if loc_response.url == "https://www.ikea.cn/cn/en/stores/":
                 continue
