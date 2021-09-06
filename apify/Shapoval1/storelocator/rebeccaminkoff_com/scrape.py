@@ -41,10 +41,7 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = a.country or "<MISSING>"
         city = a.city or "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
         phone = "".join(d.xpath('.//a[contains(@href, "tel")]//text()')) or "<MISSING>"
-        hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -58,9 +55,9 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
         )
 
         sgw.write_row(row)
