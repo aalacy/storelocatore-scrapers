@@ -1,4 +1,3 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -9,66 +8,391 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.skechers.com/"
+    api_url = "https://hosted.where2getit.com/skechers/rest/getlist?lang=en_US&like=0.5165916742629311"
+    session = SgRequests()
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://hosted.where2getit.com",
+        "Connection": "keep-alive",
+        "Referer": "https://hosted.where2getit.com/skechers/index.html",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
     }
 
-    session = SgRequests()
     data = '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"objectname":"Account::Country"}}}'
-
-    r = session.post(
-        "https://hosted.where2getit.com/skechers/rest/getlist?lang=en_US&like=0.1854421036538354",
-        headers=headers,
-        data=data,
-    )
+    r = session.post(api_url, headers=headers, data=data)
     js = r.json()["response"]["collection"]
-    states = []
     for j in js:
-        state = j.get("name")
-        states.append(state)
-
-    for s in states:
-
-        url = f"https://hosted.where2getit.com/skechers/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8C3F989C-6D95-11E1-9DE0-BB3690553863%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Corder%3Erank%3C%2Forder%3E%3Climit%3E1000%3C%2Flimit%3E%3Cwhere%3E%3Ccountry%3E%3Ceq%3E{s}%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
+        slug = j.get("name")
 
         session = SgRequests()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://hosted.where2getit.com",
+            "Connection": "keep-alive",
+            "Referer": "https://hosted.where2getit.com/skechers/index.html",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+        }
+        data = (
+            '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
+            + slug
+            + '"},"expdate":{"ge":"2021-81"},"authorized":{"distinctfrom":""},"or":{"retail":{"eq":"1"},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
+        )
+        r = session.get(
+            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.019478559849726018&lang=en_US",
+            headers=headers,
+            data=data,
+        )
+        try:
+            js = r.json()["response"]["collection"]
+        except:
+            js = []
+        for j in js:
 
-        r = session.get(url, headers=headers)
-        tree = html.fromstring(r.content)
-        div = tree.xpath("//poi")
-        for d in div:
-
-            street_address = "".join(d.xpath(".//address1/text()")) or "<MISSING>"
-
-            city = "".join(d.xpath(".//city/text()")) or "<MISSING>"
-            postal = "".join(d.xpath(".//postalcode/text()")) or "<MISSING>"
-            state = (
-                "".join(d.xpath(".//state/text()"))
-                or "".join(d.xpath(".//province/text()"))
+            page_url = "https://www.skechers.com/store-locator.html"
+            location_name = "Skechers"
+            street_address = (
+                f"{j.get('address1')} {j.get('address2')}".replace("None", "")
+                .replace("\n", "")
+                .strip()
                 or "<MISSING>"
             )
-            phone = "".join(d.xpath(".//phone/text()")) or "<MISSING>"
-            if phone == "-":
-                phone = "<MISSING>"
-            country_code = "".join(d.xpath(".//country/text()")) or "<MISSING>"
-            if country_code == "CA":
-                state = "".join(d.xpath(".//province/text()")) or "<MISSING>"
-            store_number = "".join(d.xpath(".//storeid/text()")) or "<MISSING>"
-            if not store_number.isdigit():
-                store_number = "<MISSING>"
-            location_name = "".join(d.xpath(".//name/text()")) or "<MISSING>"
-            latitude = "".join(d.xpath(".//latitude/text()")) or "<MISSING>"
-            longitude = "".join(d.xpath(".//longitude/text()")) or "<MISSING>"
+            state = j.get("state") or j.get("province") or "<MISSING>"
+            postal = j.get("postalcode") or "<MISSING>"
+            country_code = j.get("country") or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            store_number = j.get("storeid") or "<MISSING>"
+            latitude = j.get("latitude") or "<MISSING>"
+            if latitude == "<MISSING>":
+                continue
+            longitude = j.get("longitude") or "<MISSING>"
+            phone = j.get("phone") or "<MISSING>"
+            hours_of_operation = (
+                f"Mon {j.get('rmon')} Tue {j.get('rtues')} Wed {j.get('rwed')} Thur {j.get('rthurs')} Fri {j.get('rfri')} Sat {j.get('rsat')} Sun {j.get('rsun')}"
+                or "<MISSING>"
+            )
+            if hours_of_operation.count("None") == 7:
+                hours_of_operation = "<MISSING>"
+            if (
+                hours_of_operation.count("CLOSED") == 7
+                or hours_of_operation.count("Closed") == 7
+            ):
+                hours_of_operation = "Closed"
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+    locator_domain = "https://www.skechers.com/"
+    api_url = "https://hosted.where2getit.com/skechers/rest/getlist?lang=en_US&like=0.5165916742629311"
+    session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://hosted.where2getit.com",
+        "Connection": "keep-alive",
+        "Referer": "https://hosted.where2getit.com/skechers/index.html",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+
+    data = '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"objectname":"Account::Country"}}}'
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()["response"]["collection"]
+    for j in js:
+        slug = j.get("name")
+
+        session = SgRequests()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://hosted.where2getit.com",
+            "Connection": "keep-alive",
+            "Referer": "https://hosted.where2getit.com/skechers/index.html",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+        }
+        data = (
+            '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
+            + slug
+            + '"},"expdate":{"ge":"2021-81"},"authorized":{"distinctfrom":""},"or":{"retail":{"eq":""},"outlet":{"eq":"1"},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
+        )
+        r = session.get(
+            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.019478559849726018&lang=en_US",
+            headers=headers,
+            data=data,
+        )
+        try:
+            js = r.json()["response"]["collection"]
+        except:
+            js = []
+        for j in js:
+
             page_url = "https://www.skechers.com/store-locator.html"
-            days = ["mon", "tues", "wed", "thurs", "fri", "sat", "sun"]
-            tmp = []
-            for da in days:
-                day = da
-                time = "".join(d.xpath(f".//r{da}/text()")) or "<MISSING>"
-                line = f"{day} {time}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
-            if hours_of_operation.count("<MISSING>") == 7:
+            location_name = "Skechers Warehouse Outlet"
+            street_address = (
+                f"{j.get('address1')} {j.get('address2')}".replace("None", "")
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            state = j.get("state") or j.get("province") or "<MISSING>"
+            postal = j.get("postalcode") or "<MISSING>"
+            country_code = j.get("country") or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            store_number = j.get("storeid") or "<MISSING>"
+            latitude = j.get("latitude") or "<MISSING>"
+            if latitude == "<MISSING>":
+                continue
+            longitude = j.get("longitude") or "<MISSING>"
+            phone = j.get("phone") or "<MISSING>"
+            hours_of_operation = (
+                f"Mon {j.get('rmon')} Tue {j.get('rtues')} Wed {j.get('rwed')} Thur {j.get('rthurs')} Fri {j.get('rfri')} Sat {j.get('rsat')} Sun {j.get('rsun')}"
+                or "<MISSING>"
+            )
+            if hours_of_operation.count("None") == 7:
+                hours_of_operation = "<MISSING>"
+            if (
+                hours_of_operation.count("CLOSED") == 7
+                or hours_of_operation.count("Closed") == 7
+            ):
+                hours_of_operation = "Closed"
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+    locator_domain = "https://www.skechers.com/"
+    api_url = "https://hosted.where2getit.com/skechers/rest/getlist?lang=en_US&like=0.5165916742629311"
+    session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://hosted.where2getit.com",
+        "Connection": "keep-alive",
+        "Referer": "https://hosted.where2getit.com/skechers/index.html",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+
+    data = '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"objectname":"Account::Country"}}}'
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()["response"]["collection"]
+    for j in js:
+        slug = j.get("name")
+
+        session = SgRequests()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://hosted.where2getit.com",
+            "Connection": "keep-alive",
+            "Referer": "https://hosted.where2getit.com/skechers/index.html",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+        }
+        data = (
+            '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
+            + slug
+            + '"},"expdate":{"ge":"2021-81"},"authorized":{"distinctfrom":""},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":"1"},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
+        )
+        r = session.get(
+            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.019478559849726018&lang=en_US",
+            headers=headers,
+            data=data,
+        )
+        try:
+            js = r.json()["response"]["collection"]
+        except:
+            js = []
+        for j in js:
+
+            page_url = "https://www.skechers.com/store-locator.html"
+            location_name = "Skechers Factory Outlet"
+            street_address = (
+                f"{j.get('address1')} {j.get('address2')}".replace("None", "")
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            state = j.get("state") or j.get("province") or "<MISSING>"
+            postal = j.get("postalcode") or "<MISSING>"
+            country_code = j.get("country") or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            store_number = j.get("storeid") or "<MISSING>"
+            latitude = j.get("latitude") or "<MISSING>"
+            if latitude == "<MISSING>":
+                continue
+            longitude = j.get("longitude") or "<MISSING>"
+            phone = j.get("phone") or "<MISSING>"
+            hours_of_operation = (
+                f"Mon {j.get('rmon')} Tue {j.get('rtues')} Wed {j.get('rwed')} Thur {j.get('rthurs')} Fri {j.get('rfri')} Sat {j.get('rsat')} Sun {j.get('rsun')}"
+                or "<MISSING>"
+            )
+            if hours_of_operation.count("None") == 7:
+                hours_of_operation = "<MISSING>"
+            if (
+                hours_of_operation.count("CLOSED") == 7
+                or hours_of_operation.count("Closed") == 7
+            ):
+                hours_of_operation = "Closed"
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+    locator_domain = "https://www.skechers.com/"
+    api_url = "https://hosted.where2getit.com/skechers/rest/getlist?lang=en_US&like=0.5165916742629311"
+    session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://hosted.where2getit.com",
+        "Connection": "keep-alive",
+        "Referer": "https://hosted.where2getit.com/skechers/index.html",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+
+    data = '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"objectname":"Account::Country"}}}'
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()["response"]["collection"]
+    for j in js:
+        slug = j.get("name")
+
+        session = SgRequests()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://hosted.where2getit.com",
+            "Connection": "keep-alive",
+            "Referer": "https://hosted.where2getit.com/skechers/index.html",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+        }
+        data = (
+            '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
+            + slug
+            + '"},"expdate":{"ge":"2021-81"},"authorized":{"distinctfrom":""},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
+        )
+        r = session.get(
+            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.019478559849726018&lang=en_US",
+            headers=headers,
+            data=data,
+        )
+        try:
+            js = r.json()["response"]["collection"]
+        except:
+            js = []
+        for j in js:
+
+            page_url = "https://www.skechers.com/store-locator.html"
+            location_name = j.get("name")
+            street_address = (
+                f"{j.get('address1')} {j.get('address2')}".replace("None", "")
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            state = j.get("state") or j.get("province") or "<MISSING>"
+            postal = j.get("postalcode") or "<MISSING>"
+            country_code = j.get("country") or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            store_number = j.get("storeid") or "<MISSING>"
+            latitude = j.get("latitude") or "<MISSING>"
+            if latitude == "<MISSING>":
+                continue
+            longitude = j.get("longitude") or "<MISSING>"
+            phone = j.get("phone") or "<MISSING>"
+            hours_of_operation = (
+                f"Mon {j.get('rmon')} Tue {j.get('rtues')} Wed {j.get('rwed')} Thur {j.get('rthurs')} Fri {j.get('rfri')} Sat {j.get('rsat')} Sun {j.get('rsun')}"
+                or "<MISSING>"
+            )
+            if hours_of_operation.count("None") == 7:
                 hours_of_operation = "<MISSING>"
             if (
                 hours_of_operation.count("CLOSED") == 7
@@ -98,7 +422,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
         fetch_data(writer)
