@@ -26,7 +26,11 @@ def fetch_data(sgw: SgWriter):
         location_name = ""
         street_address = item.p.text.strip()
         city = item.find_all("p")[1].text.split(",")[0]
-        state = item.find_all("p")[1].text.split(",")[1].replace("PEI", "Prince Edward Island")
+        state = (
+            item.find_all("p")[1]
+            .text.split(",")[1]
+            .replace("PEI", "Prince Edward Island")
+        )
         zip_code = ""
 
         if "(" in street_address:
