@@ -148,7 +148,7 @@ def fetch_data():
                 },
                 "security": {"authToken": "", "ts": "", "src": ""},
             }
-            store = link = "<MISSING>"
+            store = lat = longt = link = "<MISSING>"
 
             locnow = session.post(search_url, json=myobj, headers=headers).json()[
                 "payload"
@@ -188,8 +188,8 @@ def fetch_data():
                 store_number=store,
                 phone=phone.strip(),
                 location_type=SgRecord.MISSING,
-                latitude=SgRecord.MISSING,
-                longitude=SgRecord.MISSING,
+                latitude=lat,
+                longitude=longt,
                 hours_of_operation=hours,
             )
 
