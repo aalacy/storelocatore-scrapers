@@ -28,6 +28,8 @@ def fetch_data():
         page_url = urljoin(start_url, poi["url"])
         city = poi["city"]
         city = city if "Sector" not in city else poi["cityname"]
+        if "Sector" in city:
+            city = "Bucuresti"
         phone = poi["phone1"]
         if not phone:
             phone = poi["phone2"]
