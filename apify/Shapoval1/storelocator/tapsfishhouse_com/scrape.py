@@ -16,9 +16,7 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//span[text()="Locations"]/following::ul[1]/li/a[./span[not(contains(text(), "Soon"))][2]]'
-    )
+    div = tree.xpath('//a[@class="av-screen-reader-only"]')
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -27,9 +25,12 @@ def fetch_data(sgw: SgWriter):
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = "".join(
-            tree.xpath('//h2[@class="av-special-heading-tag "]/text()')
+        location_name = (
+            " ".join(tree.xpath('//h2[@class="av-special-heading-tag "]/text()'))
+            .replace("\n", "")
+            .strip()
         )
+
         country_code = "US"
         ad = "".join(tree.xpath("//div[./h2]/following-sibling::div[1]//a/text()"))
         a = parse_address(USA_Best_Parser(), ad)
@@ -54,7 +55,14 @@ def fetch_data(sgw: SgWriter):
             '//div[@id="av_section_5"]//div[./div[contains(@class, "flex_column av_one_fifth")]]/div//text()'
         )
         hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = " ".join(hours_of_operation)
+        hours_of_operation = (
+            " ".join(hours_of_operation[0:6])
+            + " "
+            + " ".join(hours_of_operation[13:18])
+        )
+        if location_name.find("Opening Soon") != -1:
+            hours_of_operation = "Coming Soon"
+            location_name = location_name.replace("Opening Soon", "").strip()
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

@@ -9,16 +9,13 @@ _headers = {
 }
 
 locator_domain = "https://global.diesel.com/"
-base_url = "https://global.diesel.com/on/demandware.store/Sites-DieselNonEcommerce-Site/en_TR/StoreFinder-SearchByBoundaries?latmin=-90&latmax=90&lngmin=-90&lngmax=90"
+base_url = "https://global.diesel.com/on/demandware.store/Sites-DieselNonEcommerce-Site/en_TR/StoreFinder-SearchByBoundaries?latmin=-180&latmax=180&lngmin=-180&lngmax=180"
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["stores"]["stores"]
         for _ in locations:
-            street_address = _["address1"]
-            if _["address2"]:
-                street_address += " " + _["address2"]
             hours = []
             for hh in _.get("working_days", []):
                 times = "closed"
@@ -33,7 +30,7 @@ def fetch_data():
                 page_url=page_url,
                 store_number=_["ID"],
                 location_name=_["name"],
-                street_address=street_address,
+                street_address=_["schema"]["address"]["streetAddress"],
                 city=_["city"],
                 state=_.get("stateCode"),
                 zip_postal=_["postalCode"],
