@@ -180,6 +180,8 @@ def scrape():
     logger.info("Started")
     state = CrawlStateSingleton.get_instance()
 
+    # When expected search radius ( 10 ) we got 322 stores containing bobcat in the location_name.
+    # Country, Canada added
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         granularity=Grain_1_KM(),
