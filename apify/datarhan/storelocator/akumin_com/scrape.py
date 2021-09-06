@@ -12,7 +12,7 @@ from sgselenium.sgselenium import SgFirefox
 
 def fetch_data():
     session = SgRequests()
-    
+
     domain = "akumin.com"
     start_url = "https://akumin.com/locations/"
 
