@@ -148,7 +148,7 @@ def fetch_data():
                 },
                 "security": {"authToken": "", "ts": "", "src": ""},
             }
-            lat = longt = store = link = "<MISSING>"
+            store = link = "<MISSING>"
 
             locnow = session.post(search_url, json=myobj, headers=headers).json()[
                 "payload"
@@ -163,7 +163,7 @@ def fetch_data():
                     .replace(" ", "")
                     .replace(".", "")
                     == div["phone"]
-                ):  # street.lower().replace('.','').replace(',','').strip() == div["address"].lower().replace('.','').replace(',','').strip():
+                ):
                     store = str(div["unitNumber"])
                     link = (
                         "https://www.searshomeapplianceshowroom.com/home/"
@@ -190,7 +190,7 @@ def fetch_data():
                 location_type=SgRecord.MISSING,
                 latitude=SgRecord.MISSING,
                 longitude=SgRecord.MISSING,
-                hours_of_operation=SgRecord.MISSING,
+                hours_of_operation=hours,
             )
 
 
