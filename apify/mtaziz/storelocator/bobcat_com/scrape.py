@@ -112,7 +112,12 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
                 zip_postal = zip_postal if zip_postal else MISSING
                 logger.info(f"[{idx}] Zip Code: {zip_postal}")
 
-                country_code = "US"
+                country_code = ""
+                if " " in zip_postal:
+                    country_code = "CA"
+                else:
+                    country_code = "US"
+
                 #     store_number =
                 store_number = tr.xpath(
                     './/span[contains(@id, "kw-view-product-line")]/@id'
@@ -176,9 +181,9 @@ def scrape():
     state = CrawlStateSingleton.get_instance()
 
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         granularity=Grain_1_KM(),
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=30,
     )
 
     with SgWriter(
