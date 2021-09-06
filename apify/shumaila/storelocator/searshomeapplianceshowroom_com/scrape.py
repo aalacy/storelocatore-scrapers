@@ -1,5 +1,9 @@
 import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
@@ -41,8 +45,6 @@ def write_output(data):
 
 
 def fetch_data():
-    data = []
-    storelist = []
 
     states = [
         "AL",
@@ -103,6 +105,7 @@ def fetch_data():
             "https://api.searshometownstores.com/lps-mygofer/api/v1/mygofer/store/getStoreDetailsByState?state="
             + statenow
         )
+
         loclist = session.get(url, headers=headers).json()["payload"]["stores"]
 
         for loc in loclist:
@@ -173,35 +176,32 @@ def fetch_data():
                     longt = div["storeDetails"]["longitude"]
                     lat = div["storeDetails"]["latitude"]
                     break
-            if phone in storelist:
-                continue
-            storelist.append(phone)
-            data.append(
-                [
-                    "https://www.searshomeapplianceshowroom.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            yield SgRecord(
+                locator_domain="https://www.searshomeapplianceshowroom.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode,
+                country_code="US",
+                store_number=store,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=SgRecord.MISSING,
             )
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()
