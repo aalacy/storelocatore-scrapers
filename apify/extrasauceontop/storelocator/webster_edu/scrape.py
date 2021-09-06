@@ -79,7 +79,7 @@ def get_data():
         location_type = ""
         hours = ""
         country_code = "US"
-
+        print(location_name)
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
