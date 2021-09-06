@@ -36,6 +36,7 @@ def _d(http, link, country="US"):
     street_address = city = state = zip_postal = phone = ""
     res = http.get(url, headers=_headers)
     if res.status_code == 200:
+        url = res.url
         sp1 = bs(res.text, "lxml")
         try:
             coord = (
@@ -46,9 +47,24 @@ def _d(http, link, country="US"):
             )
         except:
             coord = ["", ""]
-        _hr = sp1.find("span", string=re.compile(r"^HOURS$", re.I))
+        _hr = sp1.find("span", string=re.compile(r"^HOURS", re.I))
+        if not _hr:
+            _hr = sp1.find("div", string=re.compile(r"^HOURS", re.I))
+        if not _hr:
+            _hr = sp1.find("span", string=re.compile(r"^Academic HOURS", re.I))
         if _hr:
-            hours = [hh.text.strip() for hh in _hr.find_next_siblings("span")]
+            hours = []
+            for hh in _hr.find_parent().find_parent().stripped_strings:
+                if (
+                    "summer" in hh.lower()
+                    or "love" in hh.lower()
+                    or "through" in hh.lower()
+                    or "sat/act" in hh.lower()
+                ):
+                    break
+                if "Programs" in hh or "hour" in hh.lower() or "now" in hh.lower():
+                    continue
+                hours.append(hh)
         if country == "US":
             if sp1.select_one("span.number"):
                 phone = sp1.select_one("span.number").text.strip()
