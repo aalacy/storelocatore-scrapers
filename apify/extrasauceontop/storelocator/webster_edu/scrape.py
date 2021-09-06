@@ -1,141 +1,151 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import re
 from sgscrape import simple_scraper_pipeline as sp
-import pandas as pd
+import json
 
-# def get_data():
-location_names = []
-phones = []
 
-session = SgRequests()
+def cross_check(location_name, session):
+    
+    response = session.get("https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query=" + location_name + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster").text
+    response = response.replace("\n", "").replace("\t", "").replace("ousearchresults(", "")[:-1]
 
-response = session.get(
-    "https://webster.edu/catalog/current/graduate-catalog/campus-locations.html#.YRbMxIhKi3A"
-).text
+    final = json.loads(response)
 
-response = response.split("Palais Wenkheim, 23 Praterstrasse")[0]
-soup = bs(response, "html.parser")
+    page_url = ""
+    for result in final["results"]:
+        url_to_check = result["url"]
 
-p_tags = soup.find_all("p")
+        if "/locations/" in url_to_check and "/index.php" in url_to_check:
+            page_url = url_to_check
+            break
 
-address_p_list = []
-for tag in p_tags:
-    if "Ph:" in tag.text.strip() in tag.text.strip():
-        address_p_list.append(tag)
+    if page_url == "":
+        for result in final["results"]:
+            url_to_check = result["url"]
 
-name_tags = soup.find_all("strong")
+            if "/locations/" in url_to_check:
+                page_url = url_to_check
+                break
 
-name_s_list = []
-for tag in name_tags:
-    if (
-        "^" in tag.text.strip()
-        or "*" in tag.text.strip()
-        or "Webster University at Southwestern Illinois College" in tag.text.strip()
-        or "University Center of Lake County" in tag.text.strip()
-    ):
-        tag_check = tag.text.strip().replace("^", "")
-        if tag_check == "*":
-            tag = name_tags[name_tags.index(tag) - 1]
-        name_s_list.append(tag)
+    if page_url == "":
+        response = session.get("https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query=" + location_name.split(" ")[0] + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster").text
+        response = response.replace("\n", "").replace("\t", "").replace("ousearchresults(", "")[:-1]
 
-x = 0
-for tag in name_s_list:
-    locator_domain = "webster.edu"
-    page_url = "<MISSING>"
-    location_name = tag.text.strip()
+        final = json.loads(response)
+        for result in final["results"]:
+            url_to_check = result["url"]
 
-    address_parts = str(address_p_list[x]).split("<br/>")
-    address_pieces = []
-    begin = "False"
-    for part in address_parts:
-        if bool(re.search(r"\d", part)) is True:
-            begin = "True"
+            if "/locations/" in url_to_check:
+                page_url = url_to_check
+                break
 
-        if begin == "True":
-            address_pieces.append(part)
+    return page_url
 
-    for piece in address_pieces:
-        if "Ph:" in piece:
-            phone_index = address_pieces.index(piece)
+def get_data():
+    session = SgRequests()
 
-    address = ""
-    for y in range(phone_index + 1):
-        if y <= phone_index - 2:
-            address = address + address_pieces[y].replace("</strong>", "") + " "
+    response = session.get("https://legacy.webster.edu/locations/index.xml").text
+    soup = bs(response, "html.parser")
 
-        elif y == phone_index - 1:
-            city_state = address_pieces[y]
+    placemarks = soup.find_all("placemark")
 
+    for placemark in placemarks:
+        testmark = str(placemark)
+
+        testmark = testmark[:-12]
+        testmark = testmark[11:]
+
+        if "placemark" in testmark.lower():
+            continue
+        
+        locator_domain = "legacy.webster.edu"
+        location_name = placemark.find("name").text.strip().replace("\n", "")
+        latitude = placemark.find("coordinates").text.strip().split(",")[1]
+        longitude = placemark.find("coordinates").text.strip().split(",")[0]
+
+        address_parts = placemark.find("description").text.strip()
+        phone = address_parts.split("Phone: ")[-1].strip()
+        if location_name == "San Antonio":
+            phone = phone.replace(" ", "")
+        if " " in phone or "+" in phone or location_name == address_parts:
+            continue
+
+        address_pieces = address_parts.split("<br/>")
+
+        if len(address_pieces) > 2:
+            address_things = address_pieces[:-2]
+            address = ""
+            for piece in address_things:
+                address = address + piece + " "
+            
+            address = address.strip()
+
+            city = address_pieces[-2].split(", ")[0].strip()
+            state = " " + address_pieces[-2].split(", ")[1].split(" ")[0].strip()
+            zipp = address_pieces[-2].split(", ")[1].split(" ")[1].strip()
+        
         else:
-            phone = address_pieces[y]
+            address = address_pieces[0].split(",")[0].strip()
+            city = address_pieces[0].split(",")[1].strip()
+            state = " " + address_pieces[0].split(",")[2].split(" ")[-2].strip()
+            zipp = address_pieces[0].split(",")[2].split(" ")[-1].strip()
+        
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        hours = "<MISSING>"
+        country_code = "US"
 
-    address = address.strip()
-    phone = phone.replace("Ph: ", "").split(",")[0]
-    city = city_state.split(",")[0]
-    state = city_state.split(", ")[1].split(" ")[0]
-    zipp = city_state.split(", ")[1].split(" ")[1]
+        page_url = cross_check(location_name, session)
+        page_response = session.get(page_url).text
 
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    store_number = ""
-    location_type = ""
-    hours = ""
-    country_code = "US"
-    phones.append(phone)
-    location_names.append(location_name)
-        # yield {
-        #     "locator_domain": locator_domain,
-        #     "page_url": page_url,
-        #     "location_name": location_name.replace("*", "").replace("^", ""),
-        #     "latitude": latitude,
-        #     "longitude": longitude,
-        #     "city": city,
-        #     "store_number": store_number,
-        #     "street_address": address,
-        #     "state": state,
-        #     "zip": zipp[:5],
-        #     "phone": phone,
-        #     "location_type": location_type,
-        #     "hours": hours,
-        #     "country_code": country_code,
-        # }
+        if "permanently closed" in page_response.lower() or "This Webster University location is no longer open" in page_response:
+            continue
 
-    x = x + 1
-df = pd.DataFrame({"location_name": location_names, "phone": phones})
+        yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp[:5],
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
-df = df.drop_duplicates()
-df.to_csv("data.csv", index=False)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"], is_required=False),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-# def scrape():
-#     field_defs = sp.SimpleScraperPipeline.field_definitions(
-#         locator_domain=sp.MappingField(mapping=["locator_domain"], is_required=False),
-#         page_url=sp.MappingField(mapping=["page_url"], is_required=False),
-#         location_name=sp.MappingField(
-#             mapping=["location_name"], part_of_record_identity=True
-#         ),
-#         latitude=sp.MappingField(mapping=["latitude"], is_required=False),
-#         longitude=sp.MappingField(mapping=["longitude"], is_required=False),
-#         street_address=sp.MultiMappingField(
-#             mapping=["street_address"], is_required=False
-#         ),
-#         city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
-#         state=sp.MappingField(mapping=["state"], is_required=False),
-#         zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-#         country_code=sp.MappingField(mapping=["country_code"], is_required=False),
-#         phone=sp.MappingField(mapping=["phone"], is_required=False),
-#         store_number=sp.MappingField(mapping=["store_number"], is_required=False),
-#         hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-#         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
-#     )
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-#     pipeline = sp.SimpleScraperPipeline(
-#         scraper_name="Crawler",
-#         data_fetcher=get_data,
-#         field_definitions=field_defs,
-#         log_stats_interval=15,
-#     )
-#     pipeline.run()
-
-
-# scrape()
+scrape()
