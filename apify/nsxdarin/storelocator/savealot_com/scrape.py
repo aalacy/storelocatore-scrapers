@@ -50,13 +50,12 @@ def fetch_data():
                 city = item["city"]
                 purl = (
                     "https://savealot.com/grocery-stores/"
-                    + city.replace(" ", "-")
+                    + city.replace(" ", "-").replace(".", "")
                     + "-"
                     + zc
                     + "-"
                     + store
                 )
-                purl = purl.lower().replace(".", "")
                 name = "Save A Lot"
                 add = item["street"]
                 country = "US"
@@ -66,6 +65,7 @@ def fetch_data():
                 hours = ""
                 if store not in ids:
                     ids.append(store)
+                    print(purl)
                     r2 = session.get(purl, headers=headers)
                     for line2 in r2.iter_lines():
                         line2 = str(line2.decode("utf-8"))
