@@ -14,6 +14,10 @@ locator_domain = "https://www.baskinrobbins.com.my"
 base_url = "https://www.baskinrobbins.com.my/content/baskinrobbins/en/location.html"
 
 
+def _cz(val):
+    return val.split()[0].strip(), " ".join(val.split()[1:]).strip()
+
+
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
@@ -25,11 +29,34 @@ def fetch_data():
                 .replace("\r", "")
                 .strip()
             )
-            addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            name = list(_.h5.stripped_strings)
+            raw_address = " ".join(
+                [aa.strip() for aa in raw_address.split() if aa.strip()]
+            )
+            state = zip_postal = city = street_address = ""
+            addr = parse_address_intl(raw_address + ", Malaysia")
+            zip_postal = addr.postcode
+            if zip_postal and zip_postal.isdigit():
+                city = addr.city
+                state = addr.state
+            else:
+                addr = raw_address.split(",")
+                if addr[-1].split()[0].isdigit():
+                    zip_postal, city = _cz(addr[-1])
+                elif addr[-2].split()[0].isdigit():
+                    state = addr[-1].strip()
+                    zip_postal, city = _cz(addr[-2])
+                else:
+                    state = addr[-1].strip()
+                    zip_postal, city = _cz(addr[-3])
+            if state:
+                if "Johor Bahru" in state:
+                    city = "Johor Bahru"
+                    state = "Johor"
+                elif "Johor" in state:
+                    state = "Johor"
+            street_address = raw_address.split(zip_postal)[0].strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             _p = list(_.select_one("p.availability").stripped_strings)
             if _p[0] != "Tel:":
                 del _p[0]
@@ -38,11 +65,11 @@ def fetch_data():
                 phone = ""
             yield SgRecord(
                 page_url=base_url,
-                location_name=name[0],
+                location_name=list(_.h5.stripped_strings)[0],
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 country_code="MY",
                 phone=phone,
                 locator_domain=locator_domain,
@@ -52,7 +79,15 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.PHONE, SgRecord.Headers.CITY}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
