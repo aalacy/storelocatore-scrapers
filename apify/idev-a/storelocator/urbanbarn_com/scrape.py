@@ -36,7 +36,9 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 store_number=page_url.split("id=")[-1],
-                location_name=_.select_one("p.ms-font--montserrat-bold").text.strip(),
+                location_name=_.select_one("p.ms-font--montserrat-bold")
+                .text.split("•")[-1]
+                .strip(),
                 street_address=" ".join(addr[:-1]),
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split()[0].strip(),
