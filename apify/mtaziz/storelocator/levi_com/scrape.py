@@ -131,8 +131,17 @@ def fetch_data_global():
                     state_raw = i["state"]
                     zip_postal_raw = i["postcode"]
                     country_raw = i["country"]
+
                     raw_address = f"{addline1}, {addline2}, {city_raw}, {state_raw}, {zip_postal_raw}, {country_raw}"
                     raw_address = raw_address if raw_address else MISSING
+
+                    # Filter out if location type does not match with "OUTLET" or "RETAILER" or "STORE"
+                    lt = location_type
+                    if "OUTLET" in lt or "RETAILER" in lt or "STORE" in lt:
+                        location_type = lt
+                    else:
+                        continue
+
                     yield SgRecord(
                         locator_domain=locator_domain,
                         page_url=page_url,
@@ -238,6 +247,13 @@ def fetch_data_us_ca():
 
             # Custom Location Name
             location_name = get_custom_location_name(location_type, location_name)
+
+            # Filter out if location type does not match with "OUTLET" or "RETAILER" or "STORE"
+            lt = location_type
+            if "OUTLET" in lt or "RETAILER" in lt or "STORE" in lt:
+                location_type = lt
+            else:
+                continue
 
             # Latitude
             latitude = data[0]["geo"]["latitude"]
