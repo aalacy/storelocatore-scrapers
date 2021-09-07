@@ -30,7 +30,6 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    home_req = session.get("https://www.eriksbikeshop.com/stores")
     search_url = "https://www.eriksbikeshop.com/_v/private/graphql/v1"
     params = (
         ("workspace", "master"),
