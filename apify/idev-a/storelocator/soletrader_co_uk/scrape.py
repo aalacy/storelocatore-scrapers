@@ -14,7 +14,6 @@ base_url = "https://www.soletrader.co.uk/modules/staff/ajax.aspx?Longitude=-0.13
 
 def fetch_data():
     with SgRequests() as session:
-        data = ""
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             phone = _["Phone"]
