@@ -118,9 +118,13 @@ def get_data():
             except Exception:
                 zipp = "<MISSING>"
 
-        phone = soup.find("span", attrs={"itemprop": "telephone"}).text.strip()
-        if phone == "NULL":
-            phone = "<MISSING>"
+        try:
+            phone = soup.find("span", attrs={"itemprop": "telephone"}).text.strip()
+            if phone == "NULL":
+                phone = "<MISSING>"
+        except Exception:
+            phone = "MISSING>"
+
         location_type = "<MISSING>"
 
         days = soup.find_all("td", attrs={"class": "c-hours-details-row-day"})
