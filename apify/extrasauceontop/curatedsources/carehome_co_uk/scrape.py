@@ -173,6 +173,8 @@ def get_data():
                 y = 0
                 while True:
                     y = y + 1
+                    if y == 10:
+                        raise Exception
                     log.info("page_url_fail: " + str(y))
                     try:
                         new_sess = reset_sessions(search_url)
@@ -208,8 +210,6 @@ def get_data():
 
     for location_url in location_urls:
         x = x + 1
-        if x == 100:
-            break
         if "searchazref" not in location_url:
             continue
 
@@ -278,6 +278,7 @@ def get_data():
         store_number = location_url.split("/")[-1]
 
         try:
+            phone = ""
             phone_link = soup.find("button", attrs={"id": "brochure_phone"})["href"]
             phone_response = s.get(phone_link, headers=headers).text
             if len(phone_response.split("div")) > 2:
@@ -295,6 +296,9 @@ def get_data():
                         phone_response = new_sess[2]
                         break
                     except Exception:
+                        if y == 5:
+                            phone == "<INACCESSIBLE>"
+                            raise Exception
                         continue
             response_soup = bs(phone_response, "html.parser")
             phone = (
@@ -303,7 +307,10 @@ def get_data():
                 .text.strip()
             )
         except Exception:
-            phone = "<MISSING>"
+            if phone == "<INACCESSIBLE>":
+                pass
+            else:
+                phone = "<MISSING>"
 
         geo_json = extract_json(response_text.split('geo":')[1].split("reviews")[0])[0]
         latitude = geo_json["latitude"]
