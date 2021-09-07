@@ -8,27 +8,27 @@ import json
 
 session = SgRequests()
 
-logger = SgLogSetup().get_logger("ultimatekitchens_ca")
+logger = SgLogSetup().get_logger("originaljoes_ca")
 
 
 def fetch_data():
-    website = "ultimatekitchens.ca"
+    website = "originaljoes.ca"
     typ = "<MISSING>"
     country = "CA"
     logger.info("Pulling Stores")
-    loc = "https://sheets.googleapis.com/v4/spreadsheets/1jG05N75tjYTGsltOPvnu9MXQyrciJBr_zp9k5ujnyfQ/values/1Stores?key=AIzaSyCWzsoRvbqZ_ilWyJ2z88O4nps4oGU5idU"
+    loc = "https://sheets.googleapis.com/v4/spreadsheets/1hlS5TSu2fWJ11Am9yAPmC34HRaplWmhmr-qrpDEquQw/values/1Stores?key=AIzaSyCWzsoRvbqZ_ilWyJ2z88O4nps4oGU5idU"
     headers = {
         "authority": "sheets.googleapis.com",
         "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
         "accept": "application/json, text/javascript, */*; q=0.01",
         "sec-ch-ua-mobile": "?0",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
-        "origin": "https://www.ultimatekitchens.ca",
+        "origin": "https://www.originaljoes.ca",
         "x-client-data": "CJK2yQEIorbJAQjBtskBCKmdygEIjtHKAQjv8ssBCLT4ywEInvnLAQj7+csBCL7+ywEIn//LAQjq/8sBGI6eywE=",
         "sec-fetch-site": "cross-site",
         "sec-fetch-mode": "cors",
         "sec-fetch-dest": "empty",
-        "referer": "https://www.ultimatekitchens.ca/",
+        "referer": "https://www.originaljoes.ca/",
         "accept-language": "en-US,en;q=0.9",
     }
     name = ""
@@ -57,7 +57,7 @@ def fetch_data():
             hours = hours.replace("\n", "").replace("|", "; ").replace(" ;", ";")
             hours = hours.replace("<br>", "").replace("<b>", "")
             purl = (
-                "https://www.ultimatekitchens.ca/en/locations/"
+                "https://www.originaljoes.ca/en/locations/"
                 + store
                 + "/"
                 + city.lower()
@@ -65,6 +65,8 @@ def fetch_data():
                 + item[6].replace(" ", "-").lower()
                 + ".html"
             )
+            if "HAPPY" in hours:
+                hours = hours.split("HAPPY")[0].strip()
             if "permanently closed" not in hours:
                 yield SgRecord(
                     locator_domain=website,
