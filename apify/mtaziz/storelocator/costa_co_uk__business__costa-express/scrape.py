@@ -13,7 +13,7 @@ import time
 
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 DOMAIN = "https://www.costa.co.uk/business/costa-express"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 headers = {
@@ -200,7 +200,7 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="us") as http:
             state.get_misc_value(
                 "init",
                 default_factory=lambda: record_initial_requests(http, state, search),

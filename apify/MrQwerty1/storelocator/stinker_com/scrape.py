@@ -123,7 +123,7 @@ if __name__ == "__main__":
     token = get_token()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=25
         )
         for geo in search:
             fetch_data(geo, writer)
