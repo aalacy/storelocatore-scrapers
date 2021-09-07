@@ -36,7 +36,7 @@ def fetch_data():
         for loc in loclist:
             page_url = loc["web"].replace("\\/", "/")
             log.info(page_url)
-            store_number = loc["id"]
+            store_number = str(loc["id"])
             location_name = loc["name"]
             phone = loc["phone"]
             street_address = loc["address"]
