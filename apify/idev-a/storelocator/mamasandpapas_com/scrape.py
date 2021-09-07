@@ -32,9 +32,12 @@ def fetch_data():
             if _.get("address2"):
                 street_address += " " + _["address2"]
             page_url = _.get("web")
-            if page_url:
-                logger.info(page_url)
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            if not page_url:
+                page_url = f"https://www.mamasandpapas.com/pages/{_['name'].lower().replace(',','').replace(' ','-')}"
+            logger.info(page_url)
+            res = session.get(page_url, headers=_headers)
+            if res.status_code == 200:
+                sp1 = bs(res.text, "lxml")
                 raw_address = list(
                     sp1.select_one("div.storeloc-details-address").stripped_strings
                 )[1:-1]
