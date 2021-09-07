@@ -45,6 +45,9 @@ def fetch_data():
         store_sel = lxml.html.fromstring(store_req.text)
 
         locator_domain = website
+        location_name = "".join(
+            store_sel.xpath('//div[@class="store-info"]/h4/text()')
+        ).strip()
 
         full_address = (
             "".join(
@@ -61,10 +64,6 @@ def fetch_data():
         state = full_address[-2].strip()
         zip = full_address[-1].split("-")[-1].strip()
         country_code = "US"
-
-        location_name = "".join(
-            store_sel.xpath('//div[@class="store-info"]/h4/text()')
-        ).strip()
 
         store_number = "<MISSING>"
 
