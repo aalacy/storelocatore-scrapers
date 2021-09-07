@@ -28,27 +28,20 @@ def fetch_data(sgw: SgWriter):
 
         location_name = "".join(tree.xpath("//h1/text()")).strip()
         ad = (
-            " ".join(
-                tree.xpath(
-                    '//a[contains(@href, "maps")]/preceding::strong[1]/following-sibling::text()'
-                )
+            tree.xpath(
+                '//section[.//a[contains(@href, "pdf")]]//text() | //section[.//strong[contains(text(), "IKEA Nice ")]]//text()'
             )
-            .replace("\n", "")
-            .replace("Entrée :", "")
-            .strip()
             or "<MISSING>"
         )
         if ad == "<MISSING>":
-            ad = (
-                " ".join(
-                    tree.xpath(
-                        '//strong[contains(text(), "IKEA Nice")]/following-sibling::text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        a = parse_address(International_Parser(), ad)
+            ad = tree.xpath('//section[.//a[contains(@href, "maps")]]//text()')
+        if ad[1] == "Adresse":
+            ad = ad[2:]
+        if ad[0] == "\n            ":
+            ad = ad[15:]
+        ad = ad[2:]
+        adr = " ".join(ad).split("\n")[0].strip()
+        a = parse_address(International_Parser(), adr)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
@@ -56,6 +49,10 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "FR"
         city = a.city or "<MISSING>"
+        if page_url == "https://www.ikea.com/fr/fr/stores/grand-parilly/":
+            street_address = "9 rue Simone Veil"
+        if page_url == "https://www.ikea.com/fr/fr/stores/montpellier/":
+            city = "Montpellier"
         text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href')) or "<MISSING>"
         try:
             if text.find("ll=") != -1:
