@@ -46,7 +46,7 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath(
-        '//div[@class="wp-block-columns alignwide locationstext1 has-white-color has-text-color has-background"]/div[1]/h2[1]/a[1]'
+        '//div[@class="wp-block-columns alignwide locationstext1 has-white-color has-text-color has-background"]/div[1]/h2[1]/a'
     )
     for d in div:
         slug = "".join(d.xpath(".//@href"))
