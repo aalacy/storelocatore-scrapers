@@ -34,7 +34,7 @@ def fetch_data():
             r.text.split("locationsRaw:'")[1].split("'},function()")[0]
         )
         for loc in loclist:
-            page_url = loc["web"].replace("\/", "/")
+            page_url = loc["web"].replace("\\/", "/")
             log.info(page_url)
             store_number = loc["id"]
             location_name = loc["name"]
