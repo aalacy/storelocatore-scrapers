@@ -29,6 +29,11 @@ def fetch_data(sgw: SgWriter):
         phone = "".join(d.xpath("./div[1]/div/div[last()]/text()")).strip()
         store_number = "".join(d.xpath("./@id")).split("-")[-1]
         longitude, latitude = get_coords(store_number)
+        city = "".join(
+            tree.xpath(
+                f"//div[contains(@class, 'panel ') and .//a[@data-idsucursal='{store_number}']]//h3/a/text()"
+            )
+        ).strip()
 
         inters = d.xpath("./div[2]/div/div/text()")
         inters = list(filter(None, [inter.strip() for inter in inters]))
@@ -38,6 +43,7 @@ def fetch_data(sgw: SgWriter):
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
+            city=city,
             country_code="EC",
             store_number=store_number,
             phone=phone,
