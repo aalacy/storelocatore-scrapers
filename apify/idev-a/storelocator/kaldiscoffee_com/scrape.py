@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("kaldiscoffee")
 
@@ -35,6 +37,8 @@ def fetch_data():
         links = soup.select("a.home-image-grid__link")
         logger.info(f"{len(links)} found")
         for link in links:
+            if not link["href"].startswith("/pages/"):
+                continue
             page_url = locator_domain + link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
@@ -49,7 +53,7 @@ def fetch_data():
             try:
                 coord = (
                     sp1.select("iframe")[-1]["src"]
-                    .split("ll=")[1]
+                    .split("&sll=")[1]
                     .split("&amp;")[0]
                     .split("&")[0]
                     .split(",")
@@ -204,7 +208,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
