@@ -49,12 +49,12 @@ def get_address(line):
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
     if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<INACCESSIBLE>"
+        street_address = SgRecord.MISSING
+    city = a.get("city")
     if city == "USA":
-        city = "<INACCESSIBLE>"
-    state = a.get("state") or "<INACCESSIBLE>"
-    postal = a.get("postal") or "<INACCESSIBLE>"
+        city = SgRecord.MISSING
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
