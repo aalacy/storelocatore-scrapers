@@ -185,7 +185,6 @@ def fetch_data(search):
                 raw_address=raw_address,
             )
 
-
         if totalZip % 15 == 0:
             driver = initiate_driver(urlForDriver, "zipField", driver=driver)
         log.debug(
