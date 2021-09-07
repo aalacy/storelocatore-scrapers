@@ -56,7 +56,7 @@ def fetch_data():
                     + "-"
                     + store
                 )
-                purl = purl.lower()
+                purl = purl.lower().replace(".", "")
                 name = "Save A Lot"
                 add = item["street"]
                 country = "US"
