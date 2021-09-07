@@ -76,7 +76,7 @@ def get_data():
             location_name = location["title"]
             latitude = location["lat"]
             longitude = location["lng"]
-            search.found_location_at(latitude, longitude)
+
             address = location["address"].split("<br />")[0]
             if bool(re.search("[a-zA-Z]", address)) is False:
                 address = "<MISSING>"
