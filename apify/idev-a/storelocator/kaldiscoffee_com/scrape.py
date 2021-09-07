@@ -49,7 +49,28 @@ def fetch_data():
             else:
                 _hr = sp1.find("h6", string=re.compile(r"Hours"))
                 if _hr:
-                    hours = _hr.find_next_sibling().text.strip()
+                    hours = "; ".join(
+                        [
+                            hh.text.strip()
+                            for hh in _hr.find_next_siblings()
+                            if hh.text.strip()
+                        ]
+                    )
+                else:
+                    _hr = sp1.find("", string=re.compile(r"Fall(.)hours", re.I))
+                    _hp = _hr.find_parent("p")
+                    if not _hp:
+                        _hp = _hr.find_parent("h6")
+                    if _hp:
+                        temp = []
+                        for hh in _hp.find_next_siblings("p"):
+                            _hh = hh.text.lower()
+                            if "phone" in _hh:
+                                break
+                            if "aug" in _hh or "beginning" in _hh:
+                                continue
+                            temp.append("; ".join(hh.stripped_strings))
+                        hours = "; ".join(temp)
             try:
                 coord = (
                     sp1.select("iframe")[-1]["src"]
@@ -203,7 +224,9 @@ def fetch_data():
                 latitude=coord[0],
                 longitude=coord[1],
                 location_type=location_type,
-                hours_of_operation=hours.replace("–", "-"),
+                hours_of_operation=hours.split("Bulk")[0]
+                .replace("–", "-")
+                .replace("\xa0", " "),
             )
 
 
