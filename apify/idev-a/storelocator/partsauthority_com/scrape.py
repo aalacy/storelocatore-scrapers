@@ -27,7 +27,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
         .find_next_sibling("ul")
         .select("a")[1:]
     )
-    logger.info(f"{len(locs)} found")
+    logger.info(f"{len(locs)} locs found")
     for loc in locs:
         page_url = loc["href"]
         state.push_request(SerializableRequest(url=page_url))
