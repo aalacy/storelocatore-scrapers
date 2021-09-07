@@ -64,13 +64,13 @@ def fetch_data():
             if hours == "<MISSING>":
                 hours = "Temporarily Closed"
             if "Esplanade" in name:
-                loc = "https://www.thebiermarkt.com/en/locations/esplanade.html"
+                purl = "https://www.thebiermarkt.com/en/locations/esplanade.html"
             if "Don Mills" in name:
-                loc = "https://www.thebiermarkt.com/en/locations/don-mills.html"
+                purl = "https://www.thebiermarkt.com/en/locations/don-mills.html"
             if "Montreal" in name:
-                loc = "https://www.thebiermarkt.com/en/locations/montreal.html"
+                purl = "https://www.thebiermarkt.com/en/locations/montreal.html"
             if "Ottawa" in name:
-                loc = "https://www.thebiermarkt.com/en/locations/ottawa.html"
+                purl = "https://www.thebiermarkt.com/en/locations/ottawa.html"
             hours = hours.replace("\n", "").replace("|", "; ").replace(" ;", ";")
             if "permanently closed" not in hours:
                 yield SgRecord(
