@@ -21,6 +21,8 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "https://www.ikea.com/dk/da/stores/"
         location_name = "".join(d.xpath(".//h2/text()"))
+        if location_name.find("Studio") != -1:
+            continue
         text = "".join(d.xpath('.//a[text()="her"]/@href'))
 
         country_code = "DA"
@@ -37,13 +39,14 @@ def fetch_data(sgw: SgWriter):
             latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = (
             " ".join(
-                d.xpath('.//h2/following-sibling::p[contains(text(), "-")]//text()')
+                d.xpath(
+                    './/strong[contains(text(), "Varehuset")]/following-sibling::text()'
+                )
             )
             .replace("\n", "")
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
-
         session = SgRequests()
         r = session.get(text, headers=headers)
         tree = html.fromstring(r.text)
@@ -123,7 +126,9 @@ def fetch_data(sgw: SgWriter):
         tree = html.fromstring(r.text)
 
         hours_of_operation = (
-            " ".join(tree.xpath('//p[contains(text(), ":")]//text()'))
+            "".join(
+                tree.xpath('//strong[text()="Aukioloajat"]/following-sibling::text()')
+            )
             .replace("\n", "")
             .strip()
         )

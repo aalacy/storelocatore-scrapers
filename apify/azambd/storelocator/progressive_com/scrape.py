@@ -17,6 +17,9 @@ start_url = "https://www.progressive.com/agent/local-agent"
 
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+}
 
 
 def fetch_stores(http: SgRequests, state: CrawlState) -> bool:
@@ -71,10 +74,11 @@ def get_address(raw_address):
 
 
 def fetch_data(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
+    http = SgRequests()
     for next_r in state.request_stack_iter():
         page_url = next_r.url
         log.info(f"Now Crawling: {page_url}")
-        response = http.get(page_url)
+        response = http.get(page_url, headers=headers)
         body = html.fromstring(response.text, "lxml")
 
         store_number = MISSING
