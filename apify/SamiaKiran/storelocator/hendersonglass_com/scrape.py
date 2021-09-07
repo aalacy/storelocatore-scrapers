@@ -46,6 +46,7 @@ def fetch_data():
             else:
                 address = loc[1]
                 phone = loc[2].replace("Phone:", "")
+                address = address.replace(",", " ")
                 address = usaddress.parse(address)
                 i = 0
                 street_address = ""
