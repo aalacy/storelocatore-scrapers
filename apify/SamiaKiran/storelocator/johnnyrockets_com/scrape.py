@@ -23,7 +23,7 @@ header1 = {
 
 locator_domain = "https://www.johnnyrockets.com/"
 base_url = "https://locations.johnnyrockets.com/site-map/all"
-MISSING =SgRecord.MISSING
+MISSING = SgRecord.MISSING
 hr_obj = {
     "1": "Monday",
     "2": "Tuesday",
