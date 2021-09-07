@@ -5,9 +5,17 @@ import json
 
 
 def cross_check(location_name, session):
-    
-    response = session.get("https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query=" + location_name + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster").text
-    response = response.replace("\n", "").replace("\t", "").replace("ousearchresults(", "")[:-1]
+
+    response = session.get(
+        "https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query="
+        + location_name
+        + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster"
+    ).text
+    response = (
+        response.replace("\n", "")
+        .replace("\t", "")
+        .replace("ousearchresults(", "")[:-1]
+    )
 
     final = json.loads(response)
 
@@ -28,8 +36,16 @@ def cross_check(location_name, session):
                 break
 
     if page_url == "":
-        response = session.get("https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query=" + location_name.split(" ")[0] + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster").text
-        response = response.replace("\n", "").replace("\t", "").replace("ousearchresults(", "")[:-1]
+        response = session.get(
+            "https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query="
+            + location_name.split(" ")[0]
+            + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster"
+        ).text
+        response = (
+            response.replace("\n", "")
+            .replace("\t", "")
+            .replace("ousearchresults(", "")[:-1]
+        )
 
         final = json.loads(response)
         for result in final["results"]:
@@ -40,6 +56,7 @@ def cross_check(location_name, session):
                 break
 
     return page_url
+
 
 def get_data():
     session = SgRequests()
@@ -57,7 +74,7 @@ def get_data():
 
         if "placemark" in testmark.lower():
             continue
-        
+
         locator_domain = "legacy.webster.edu"
         location_name = placemark.find("name").text.strip().replace("\n", "")
         latitude = placemark.find("coordinates").text.strip().split(",")[1]
@@ -77,19 +94,19 @@ def get_data():
             address = ""
             for piece in address_things:
                 address = address + piece + " "
-            
+
             address = address.strip()
 
             city = address_pieces[-2].split(", ")[0].strip()
             state = " " + address_pieces[-2].split(", ")[1].split(" ")[0].strip()
             zipp = address_pieces[-2].split(", ")[1].split(" ")[1].strip()
-        
+
         else:
             address = address_pieces[0].split(",")[0].strip()
             city = address_pieces[0].split(",")[1].strip()
             state = " " + address_pieces[0].split(",")[2].split(" ")[-2].strip()
             zipp = address_pieces[0].split(",")[2].split(" ")[-1].strip()
-        
+
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         hours = "<MISSING>"
@@ -98,25 +115,29 @@ def get_data():
         page_url = cross_check(location_name, session)
         page_response = session.get(page_url).text
 
-        if "permanently closed" in page_response.lower() or "This Webster University location is no longer open" in page_response:
+        if (
+            "permanently closed" in page_response.lower()
+            or "This Webster University location is no longer open" in page_response
+        ):
             continue
 
         yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp[:5],
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp[:5],
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -147,5 +168,6 @@ def scrape():
         log_stats_interval=15,
     )
     pipeline.run()
+
 
 scrape()
