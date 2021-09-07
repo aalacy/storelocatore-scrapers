@@ -13,7 +13,7 @@ import time
 
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 DOMAIN = "https://www.costa.co.uk/business/costa-express"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 headers = {
