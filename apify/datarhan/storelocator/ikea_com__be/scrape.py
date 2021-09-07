@@ -11,53 +11,57 @@ from sgpostal.sgpostal import parse_address_intl
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    start_url = "http://www.bestwirelessus.com/location/"
-    domain = "bestwirelessus.com"
+    start_url = "https://www.ikea.com/be/fr/stores/"
+    domain = "ikea.com/be"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath("//div[address]")[2:]
-    for poi_html in all_locations:
-        location_name = poi_html.xpath(".//h4/text()")[0]
-        raw_address = poi_html.xpath(".//p/text()")
-        raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
-        addr = parse_address_intl(raw_address)
+    all_locations = dom.xpath(
+        '//a[contains(@href, "/stores/") and contains(text(), "IKEA")]/@href'
+    )
+    for page_url in all_locations:
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        raw_adr = loc_dom.xpath(
+            '//h3[strong[contains(text(), "En route pour")]]/following-sibling::p[1]/text()'
+        )
+        if not raw_adr:
+            raw_adr = loc_dom.xpath(
+                '//*[strong[contains(text(), "En route pour")]]/text()'
+            )
+            raw_adr += loc_dom.xpath(
+                '//*[strong[contains(text(), "En route pour")]]/following-sibling::p[1]/text()'
+            )
+        raw_adr = " ".join(raw_adr)
+        addr = parse_address_intl(raw_adr)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        if len(street_address) == 2:
-            street_address = poi_html.xpath(".//p/text()")[0].strip()
-        phone = (
-            poi_html.xpath('.//strong[contains(text(), "Tel")]/text()')[0]
-            .split(":")[-1]
-            .strip()
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "Heures d")]/following-sibling::p[1]/text()'
         )
-        geo = (
-            poi_html.xpath(".//following-sibling::div[1]//iframe/@src")[0]
-            .split("!2d")[-1]
-            .split("!2m")[0]
-            .split("!3d")
-        )
-        city = poi_html.xpath(".//p/text()")[1].split(",")[0].strip()
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
-            state=addr.state,
+            city=addr.city,
+            state="",
             zip_postal=addr.postcode,
             country_code=addr.country,
             store_number="",
-            phone=phone,
+            phone="",
             location_type="",
-            latitude=geo[-1],
-            longitude=geo[0],
-            hours_of_operation="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
+            raw_address=raw_adr,
         )
 
         yield item
