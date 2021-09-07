@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import SgLogSetup
 from sgpostal.sgpostal import parse_address_intl
 from urllib.parse import urlparse
 from lxml import html
