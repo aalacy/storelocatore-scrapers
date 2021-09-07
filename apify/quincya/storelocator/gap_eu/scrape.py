@@ -112,7 +112,9 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             if "opening times.;" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("opening times.;")[1].strip()
+                hours_of_operation = hours_of_operation.split("opening times.;")[
+                    1
+                ].strip()
 
             sgw.write_row(
                 SgRecord(
