@@ -111,6 +111,8 @@ def fetch_location(loc, driver):
         phone = "(859) 441-4820"
     if "skokie/skokie-lincolnwood/5519" in loc:
         phone = "(847) 674-1673"
+    if "chambersburg/5447" in loc:
+        phone = "(717) 261-9701"
     if "Find A R" not in name:
         return SgRecord(
             locator_domain=website,
