@@ -65,7 +65,6 @@ def fetch_data():
                 hours = ""
                 if store not in ids:
                     ids.append(store)
-                    print(purl)
                     r2 = session.get(purl, headers=headers)
                     for line2 in r2.iter_lines():
                         line2 = str(line2.decode("utf-8"))
