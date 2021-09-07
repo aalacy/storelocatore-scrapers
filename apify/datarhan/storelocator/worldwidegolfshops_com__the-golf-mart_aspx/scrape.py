@@ -9,6 +9,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
@@ -52,6 +55,8 @@ def fetch_data():
             )[0]
             hoo = []
             for e in poi["openingHoursSpecification"]:
+                if not e.get("dayOfWeek"):
+                    continue
                 hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
             hours_of_operation = " ".join(hoo)
 
