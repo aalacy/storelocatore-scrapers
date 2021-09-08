@@ -62,7 +62,7 @@ def fetch_data():
             phone = temp["phone_number"]
             address = temp["address"]
             address = BeautifulSoup(address, "html.parser")
-            raw_address = address.get_text(separator='|', strip=True).replace('|'," ")
+            raw_address = address.get_text(separator="|", strip=True).replace("|", " ")
             print(raw_address)
             hour_list = temp["opening_hours_schema"]
             hours_of_operation = ""
