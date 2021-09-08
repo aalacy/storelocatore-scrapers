@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -79,14 +80,25 @@ def fetch_data():
             if not hoo:
                 hoo = loc_dom.xpath('//p[contains(text(), "Store:")]/text()')
             hoo = (
-                hoo[0]
+                " ".join(hoo)
                 .replace("Store Hours:", "")
                 .replace("Store:", "")
                 .split("Hour:")[-1]
+                .split("Restaurant")[0]
                 .strip()
                 if hoo
                 else ""
             )
+            latitude = ""
+            longitude = ""
+            geo = loc_dom.xpath('//*[contains(text(), "window.__NUXT")]')
+            if geo:
+                geo = etree.tostring(geo[0]).decode("utf-8")
+                geo = re.findall(r"start=(.+?)\&", geo)
+                if geo:
+                    geo = geo[0].split(",")
+                    latitude = geo[0]
+                    longitude = geo[1]
 
             item = SgRecord(
                 locator_domain=domain,
@@ -100,8 +112,8 @@ def fetch_data():
                 store_number="",
                 phone="",
                 location_type="",
-                latitude="",
-                longitude="",
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
                 raw_address=raw_adr,
             )
