@@ -7,8 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
-from sgselenium import SgChrome
-import json
 
 logger = SgLogSetup().get_logger("sknclinics")
 
