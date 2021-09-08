@@ -19,7 +19,11 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//div[./p/a[contains(@href, "maps")]]')
     for d in div:
 
-        page_url = "https://www.ikea.com/dk/da/stores/"
+        page_url = "".join(
+            d.xpath(
+                './/following::a[.//span[contains(text(), "Se mere om IKEA")]][1]/@href'
+            )
+        )
         location_name = "".join(d.xpath(".//h2/text()"))
         if location_name.find("Studio") != -1:
             continue
