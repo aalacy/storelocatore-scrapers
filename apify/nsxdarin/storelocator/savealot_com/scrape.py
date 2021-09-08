@@ -15,7 +15,6 @@ headers = {
 
 
 def fetch_data():
-    ids = []
     for x in range(20, 50):
         for y in range(-125, -65):
             logger.info("%s - %s..." % (str(x), str(y)))
