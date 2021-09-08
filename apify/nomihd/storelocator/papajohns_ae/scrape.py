@@ -69,7 +69,7 @@ def fetch_data():
                 'p[./strong[contains(text(),"Delivery:")]]/text()'
             )[-1]
         except:
-            pas
+            pass
 
         latitude = "".join(markers[index].xpath("@lat")).strip()
         longitude = "".join(markers[index].xpath("@lng")).strip()
