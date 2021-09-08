@@ -41,7 +41,7 @@ def _aa(_addr):
     return street_address, addr.city, addr.state, addr.postcode
 
 
-def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
+def fetch_records(http, state):
     for next_r in state.request_stack_iter():
         logger.info(next_r.url)
         sp1 = bs(http.get(next_r.url, headers=_headers).text, "lxml")
