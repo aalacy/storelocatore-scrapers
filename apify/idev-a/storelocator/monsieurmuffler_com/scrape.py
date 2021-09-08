@@ -26,8 +26,11 @@ def fetch_data():
             for day, hh in _.get("schedules", {}).items():
                 times = []
                 for hr in hh:
-                    times.append(f"{hr['start']} - {hr['end']}")
-                hours.append(f"{day}: {times}")
+                    if hr["start"]:
+                        times.append(f"{hr['start']} - {hr['end']}")
+                if not times:
+                    times = ["closed"]
+                hours.append(f"{day}: {','.join(times)}")
             yield SgRecord(
                 page_url=page_url,
                 store_number=loc["id"],
