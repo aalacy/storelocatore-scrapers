@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -25,7 +24,6 @@ def fetch_data():
     all_locations = dom.xpath('//strong/a[contains(@href, "/store/")]/@href')
     for url in all_locations:
         page_url = urljoin(start_url, url).replace("index", "info")
-        print(page_url)
         loc_response = session.get(page_url)
         if loc_response.status_code != 200:
             page_url = urljoin(start_url, url)
