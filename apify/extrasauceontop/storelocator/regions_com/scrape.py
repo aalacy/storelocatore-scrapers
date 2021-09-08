@@ -2,7 +2,7 @@ import re
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
 
 
@@ -41,7 +41,7 @@ def get_data():
     page_urls = []
     session = SgRequests()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_2()
+        country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
     )
 
     x = 0
@@ -52,7 +52,7 @@ def get_data():
             + "&type=branch"
         )
         response = session.get(url).text
-
+        
         first_objects = extract_json(response)
         soup = bs(response, "html.parser")
         grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
@@ -158,8 +158,6 @@ def get_data():
             }
 
         x = x + 1
-        # if x == 5:
-        #     break
 
 
 def scrape():
