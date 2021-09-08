@@ -136,7 +136,7 @@ def fetch_data():
     locs = []
     url = "https://www.longhornsteakhouse.com/locations-sitemap.xml"
     session = SgRequests()
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.longhornsteakhouse.com/locations/" in line:
