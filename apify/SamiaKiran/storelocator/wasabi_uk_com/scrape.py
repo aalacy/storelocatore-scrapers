@@ -102,6 +102,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
