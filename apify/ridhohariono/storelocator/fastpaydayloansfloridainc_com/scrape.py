@@ -6,11 +6,12 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
+import re
 
-DOMAIN = "firstonsite.com"
-BASE_URL = "https://firstonsite.com"
-LOCATION_URL = "https://firstonsite.com/locations/"
-API_URL = "https://firstonsite.com/wp-json/inr/v1/locations"
+DOMAIN = "fastpaydayloansfloridainc.com"
+BASE_URL = "https://fastpaydayloansfloridainc.com"
+LOCATION_URL = "https://fastpaydayloansfloridainc.com/sitemap"
+API_URL = "https://fastpaydayloansfloridainc.com/closest-stores?loan_type=all&zipcode={}&num=1"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -55,45 +56,51 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    store_info = session.get(API_URL, headers=HEADERS).json()
-    for country in store_info["locations"]:
-        for row in store_info["locations"][country]:
-            page_url = LOCATION_URL
-            location_name = row["title"]
-            store_number = row["id"]
-            phone = row["localPhoneNumber"]["e164"]
-            address = row["address"]
-            if address["street2"]:
-                street_address = f'{address["street1"]}, {address["street2"]}'
-            else:
-                street_address = address["street1"]
-            raw_address = f'{street_address}, {address["city"]}, {address["state"]} {address["zip"]}'
-            street_address, city, state, zip_postal = getAddress(raw_address)
-            country_code = row["localPhoneNumber"]["country"]
-            if country_code == "PR":
-                country_code = "US"
-            hours_of_operation = MISSING
-            location_type = "firstonsite"
-            latitude = row["latitude"]
-            longitude = row["longitude"]
-            log.info("Append {} => {}".format(location_name, street_address))
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=f"{street_address}, {city}, {state} {zip_postal}",
+    soup = pull_content(LOCATION_URL)
+    contents = soup.find("div", {"id": "leftcontent"}).find_all(
+        "a",
+        {
+            "href": re.compile(
+                r"https:\/\/fastpaydayloansfloridainc.com\/florida-payday-loan-locations.*"
             )
+        },
+    )
+    for row in contents:
+        url = row["href"]
+        zip_code = url.split("/")[-1]
+        stores = session.get(API_URL.format(zip_code), headers=HEADERS).json()
+        data = stores["locations"][0]
+        store_number = data["store_code"]
+        page_url = stores["storeUrls"][store_number]
+        location_name = data["business_name"]
+        street_address = data["address_line_1"]
+        city = data["locality"]
+        state = data["administrative_area"]
+        zip_postal = data["postal_code"]
+        phone = data["primary_phone"]
+        hours_of_operation = MISSING
+        country_code = "US"
+        location_type = "paydayloans"
+        latitude = data["latitude"]
+        longitude = data["longitude"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {state}, {zip_postal}",
+        )
 
 
 def scrape():
@@ -103,7 +110,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.PAGE_URL,
                 }
             )
         )
