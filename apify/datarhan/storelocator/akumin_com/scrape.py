@@ -12,6 +12,7 @@ from sgselenium.sgselenium import SgFirefox
 
 def fetch_data():
     session = SgRequests()
+
     domain = "akumin.com"
     start_url = "https://akumin.com/locations/"
 
@@ -45,7 +46,7 @@ def fetch_data():
             latitude = poi["geo"]["latitude"]
             longitude = poi["geo"]["longitude"]
         else:
-            location_name = loc_dom.xpath('//h1[@class="center maintitle"]/text()')
+            location_name = loc_dom.xpath('//h1[@class="center maintitle"]/text()')[0]
             raw_adr = loc_dom.xpath(
                 '//div[strong[contains(text(), "Address:")]]/text()'
             )
