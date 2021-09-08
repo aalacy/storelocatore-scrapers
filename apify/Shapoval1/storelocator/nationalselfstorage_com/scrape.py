@@ -108,9 +108,13 @@ def get_data(url, sgw: SgWriter):
         or "<MISSING>"
     )
     if phone == "<MISSING>":
-        phone = tree.xpath('//div[@id="inss_phone"]//*//text()')
-        phone = list(filter(None, [a.strip() for a in phone]))
-        phone = "".join(phone) or "<MISSING>"
+        phone = (
+            "".join(tree.xpath('//div[@id="inss_phone"]//*//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        phone = " ".join(phone.split())
+
     location_type = "<MISSING>"
     hours_of_operation = (
         " ".join(
