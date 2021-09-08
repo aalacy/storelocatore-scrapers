@@ -71,7 +71,6 @@ def fetch_data():
             street_address, city, state, zip_postal = getAddress(raw_address)
             country_code = row["localPhoneNumber"]["country"]
             if country_code == "PR":
-                print(country_code)
                 country_code = "US"
             hours_of_operation = MISSING
             location_type = "firstonsite"
