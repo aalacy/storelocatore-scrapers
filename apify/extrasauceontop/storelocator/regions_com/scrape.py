@@ -52,7 +52,7 @@ def get_data():
             + "&type=branch"
         )
         response = session.get(url).text
-        
+
         first_objects = extract_json(response)
         soup = bs(response, "html.parser")
         grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
