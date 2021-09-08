@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from typing import Iterable
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
@@ -36,7 +35,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     return True
 
 
-def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
+def fetch_records(http, state):
     for next_r in state.request_stack_iter():
         locations = bs(http.get(next_r.url, headers=_headers).text, "lxml").select(
             'div[data-elementor-type="single"] div.elementor-col-25 div.elementor-text-editor'
