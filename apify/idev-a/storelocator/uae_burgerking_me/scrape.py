@@ -23,10 +23,20 @@ def fetch_data():
         locations = soup.select("div.address")
         for _ in locations:
             raw_address = list(_.select_one("p.info").stripped_strings)[0]
-            addr = parse_address_intl(raw_address + ", UAE")
+            addr = parse_address_intl(raw_address + ", United Arab Emirates")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            street_address = (
+                street_address.replace("- Bin Humaidan", "")
+                .split("Near")[0]
+                .split("Next ")[0]
+                .strip()
+            )
+            if not street_address:
+                street_address = raw_address.split(",")[0].strip()
+            if street_address.endswith("Al"):
+                street_address = street_address[:-2]
             city = addr.city
             if city:
                 if (
@@ -46,7 +56,7 @@ def fetch_data():
                 page_url=base_url,
                 store_number=_["id"].replace("Modal", ""),
                 location_name=_.a.text.strip(),
-                street_address=street_address.replace("UAE", ""),
+                street_address=street_address.strip(),
                 city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
