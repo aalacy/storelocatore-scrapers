@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_intl
 
 DOMAIN = "firstonsite.com"
 BASE_URL = "https://firstonsite.com"
@@ -18,6 +19,32 @@ MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
+
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
 
 def pull_content(url):
@@ -40,10 +67,12 @@ def fetch_data():
                 street_address = f'{address["street1"]}, {address["street2"]}'
             else:
                 street_address = address["street1"]
-            city = address["city"]
-            state = address["state"]
-            zip_postal = address["zip"]
+            raw_address = f'{street_address}, {address["city"]}, {address["state"]} {address["zip"]}'
+            street_address, city, state, zip_postal = getAddress(raw_address)
             country_code = row["localPhoneNumber"]["country"]
+            if country_code == "PR":
+                print(country_code)
+                country_code = "US"
             hours_of_operation = MISSING
             location_type = "firstonsite"
             latitude = row["latitude"]
