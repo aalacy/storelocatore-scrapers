@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from typing import Iterable
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
