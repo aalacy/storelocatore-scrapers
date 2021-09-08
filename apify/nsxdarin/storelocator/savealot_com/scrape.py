@@ -50,13 +50,12 @@ def fetch_data():
                 city = item["city"]
                 purl = (
                     "https://savealot.com/grocery-stores/"
-                    + city.replace(" ", "-")
+                    + city.replace(" ", "-").replace(".", "")
                     + "-"
                     + zc
                     + "-"
                     + store
                 )
-                purl = purl.lower().replace(".", "")
                 name = "Save A Lot"
                 add = item["street"]
                 country = "US"
