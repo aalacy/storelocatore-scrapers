@@ -26,11 +26,11 @@ def record_initial_requests(
 ) -> bool:
     c = 0
     for lat, lng in search:
-        x = lat
-        y = lng
+        x = round(lat, 4)
+        y = round(lng, 4)
         logger.info(f"[{c}] (latitude, longitude) : ({lat, lng}) to be searched")
         url = (
-            "https://www.costa.co.uk/api/locations/stores?latitude="
+            "http://www.costa.co.uk/api/locations/stores?latitude="
             + str(x)
             + "&longitude="
             + str(y)
