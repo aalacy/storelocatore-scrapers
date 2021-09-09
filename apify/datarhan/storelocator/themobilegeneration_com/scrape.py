@@ -53,12 +53,18 @@ def fetch_data():
         hoo = " ".join(raw_data).split("Hours:")[-1].strip()
         if loc_dom.xpath('//p[contains(text(), "TEMPORARILY CLOSED")]'):
             hoo = "TEMPORARILY CLOSED"
+        str_2 = loc_dom.xpath(
+            '//strong[span[contains(text(), "Address:")]]/following-sibling::span/text()'
+        )
+        street_address = raw_adr[0]
+        if len(str_2) == 3:
+            street_address += ", " + str_2[1].strip()
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=poi[0],
-            street_address=raw_adr[0],
+            street_address=street_address,
             city=city,
             state=raw_adr[2].split()[0],
             zip_postal=zip_code,
