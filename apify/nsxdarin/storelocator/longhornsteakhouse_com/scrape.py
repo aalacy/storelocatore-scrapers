@@ -10,6 +10,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
@@ -136,7 +139,7 @@ def fetch_data():
     locs = []
     url = "https://www.longhornsteakhouse.com/locations-sitemap.xml"
     session = SgRequests()
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.longhornsteakhouse.com/locations/" in line:

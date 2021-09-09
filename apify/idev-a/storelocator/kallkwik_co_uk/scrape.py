@@ -64,7 +64,11 @@ def fetch_records(http, state):
                     .split("PLEASE")[0]
                     .split("However")[0]
                     .split("Currently")[0]
+                    .split("excluding")[0]
                     .split("(")[0]
+                    .split("- For")[0]
+                    .replace("\n", "")
+                    .replace("\r", " ")
                     .strip()
                 )
         elif sp1.select_one("div.address-line"):
@@ -116,6 +120,7 @@ def fetch_records(http, state):
             )
         else:
             continue
+
         yield SgRecord(
             page_url=next_r.url,
             location_name=next_r.context.get("name"),
