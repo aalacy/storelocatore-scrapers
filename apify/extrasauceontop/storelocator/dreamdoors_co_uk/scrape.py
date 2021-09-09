@@ -88,7 +88,7 @@ def get_data():
             day = days[y]
             y = y + 1
             time = time_part.text.strip()
-            hour = hours + day + " " + time + ", "
+            hours = hours + day + " " + time + ", "
         country_code = "UK"
         hours = hours[:-2]
         if address == "Coming soon":
