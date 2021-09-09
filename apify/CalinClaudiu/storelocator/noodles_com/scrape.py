@@ -1,5 +1,3 @@
-import re
-import usaddress
 from typing import Iterable
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
