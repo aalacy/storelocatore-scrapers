@@ -20,10 +20,10 @@ def fetch_data():
 
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=fr-FR&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=F&Zip={}&Town=&Street=&Radius=100000"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.FRANCE], expected_search_radius_miles=30
+        country_codes=[SearchableCountries.FRANCE], expected_search_radius_miles=10
     )
     for code in all_codes:
-        sleep(uniform(0, 5))
+        sleep(uniform(0, 15))
         response = session.get(search_url.format(code))
         while "Le nombre maximum des demandes de votre IP" in response.text:
             session = SgRequests()
@@ -49,7 +49,9 @@ def fetch_data():
         dom = etree.HTML(
             response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
         )
-
+        if "Le nombre maximum des demandes de votre IP" in response.text:
+            all_codes.append(code)
+            continue
         all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
         next_page = dom.xpath('//a[@title="page suivante"]/@href')

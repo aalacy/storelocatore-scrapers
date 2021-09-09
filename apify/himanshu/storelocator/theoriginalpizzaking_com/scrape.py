@@ -46,6 +46,8 @@ def fetch_data():
             state = "IN"
         elif "Illinois" in state:
             state = "IL"
+        if len(state.strip()) > 3:
+            state, pcode = state.split(" ", 1)
         yield SgRecord(
             locator_domain="https://theoriginalpizzaking.com/",
             page_url=link,
