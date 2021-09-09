@@ -26,8 +26,8 @@ def record_initial_requests(
 ) -> bool:
     c = 0
     for lat, lng in search:
-        x = round( lat , 4 )
-        y = round( lng , 4 )
+        x = round(lat, 4)
+        y = round(lng, 4)
         logger.info(f"[{c}] (latitude, longitude) : ({lat, lng}) to be searched")
         url = (
             "http://www.costa.co.uk/api/locations/stores?latitude="
