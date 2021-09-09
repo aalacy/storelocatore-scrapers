@@ -47,7 +47,9 @@ def fetch_data():
                 page_url=page_url,
                 store_number=_["loc_id"],
                 location_name=info.select_one(".store-name").text.strip(),
-                street_address=" ".join(addr[:-1]),
+                street_address=" ".join(addr[:-1]).replace(
+                    "Centene Community Ice Center", ""
+                ),
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),

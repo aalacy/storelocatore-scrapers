@@ -11,10 +11,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
@@ -115,6 +111,8 @@ def fetch_location(loc, driver):
         phone = "(859) 441-4820"
     if "skokie/skokie-lincolnwood/5519" in loc:
         phone = "(847) 674-1673"
+    if "chambersburg/5447" in loc:
+        phone = "(717) 261-9701"
     if "Find A R" not in name:
         return SgRecord(
             locator_domain=website,
@@ -138,7 +136,7 @@ def fetch_data():
     locs = []
     url = "https://www.longhornsteakhouse.com/locations-sitemap.xml"
     session = SgRequests()
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.longhornsteakhouse.com/locations/" in line:

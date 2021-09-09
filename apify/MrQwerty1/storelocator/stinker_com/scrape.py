@@ -49,12 +49,12 @@ def get_address(line):
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
     if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<INACCESSIBLE>"
+        street_address = SgRecord.MISSING
+    city = a.get("city")
     if city == "USA":
-        city = "<INACCESSIBLE>"
-    state = a.get("state") or "<INACCESSIBLE>"
-    postal = a.get("postal") or "<INACCESSIBLE>"
+        city = SgRecord.MISSING
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     token = get_token()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=25
         )
         for geo in search:
             fetch_data(geo, writer)
