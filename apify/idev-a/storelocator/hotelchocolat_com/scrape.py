@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
-import json as myjson
 import re
 from sgscrape.sgpostal import parse_address_intl
 
