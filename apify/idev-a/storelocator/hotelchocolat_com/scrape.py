@@ -50,9 +50,6 @@ def fetch_data():
         markers = soup.find(
             "script", string=re.compile(r"new google.maps.Marker\(")
         ).string.split("new google.maps.Marker(")[1:]
-        import pdb
-
-        pdb.set_trace()
         for _ in locations:
             raw_address = [
                 aa.text.strip()
@@ -67,7 +64,6 @@ def fetch_data():
                 ": ".join(hh.stripped_strings)
                 for hh in _.select("div.working-hours > p")
             ]
-            print(ss)
             location_type = [
                 lt.text.strip() for lt in _.select("div.locationType div.feature-block")
             ]
