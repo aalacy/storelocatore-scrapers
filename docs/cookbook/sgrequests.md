@@ -1,4 +1,4 @@
-from typing import AsyncGenerator# Using SgRequests
+# Using SgRequests
 
 #### Library version:
 
