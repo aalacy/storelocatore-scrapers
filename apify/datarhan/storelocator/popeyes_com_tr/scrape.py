@@ -12,7 +12,7 @@ def fetch_data():
 
     start_url = "https://www.popeyes.com.tr/Restaurants/GetRestaurants/"
     domain = "popeyes.com.tr"
-    
+
     all_locations = session.get(start_url).json()
     for poi in all_locations:
         page_url = f"https://www.popeyes.com.tr/subeler/{poi['data']['city'].replace(' ', '-')}/{poi['data']['county'].replace(' ', '-')}/{poi['data']['title'].strip().replace(' ', '-')}"
