@@ -91,14 +91,11 @@ def fetch_data():
             )
             latitude = ""
             longitude = ""
-            geo = loc_dom.xpath('//*[contains(text(), "window.__NUXT")]')
+            geo = re.findall(r"&dest=(.+?)\&", loc_response.text)
             if geo:
-                geo = etree.tostring(geo[0]).decode("utf-8")
-                geo = re.findall(r"start=(.+?)\&", geo)
-                if geo:
-                    geo = geo[0].split(",")
-                    latitude = geo[0]
-                    longitude = geo[1]
+                geo = geo[0].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
 
             item = SgRecord(
                 locator_domain=domain,
