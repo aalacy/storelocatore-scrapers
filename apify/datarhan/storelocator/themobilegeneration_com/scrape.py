@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://themobilegeneration.com/wp-json/wpgmza/v1/datatables/base64eJy1kruKwzAQRf9lahV5NurCFmk2xJBAIOtlmVgTW0SWzUg2Cyb-vmPHge3SxN1wde9Rczqoi-rDYQig4ZRsd+dNmu6Qb8SfNkTr8zTdmBZ9RuaIF0egIETkCHqmwJHPYwF6LXeJ9Y81QllIJatcU3phfnVgMOLQ9liSvPcEQs6KAacjN6SgYkP8P3hUQHfQomvGHVNOv6Cv6ALd7+rJnk-IXkzIXk7IXk3IXr+f-T3OBmMe9gzOGCsRYMigr7wGKbhaF4lF3AQZS1Gwk7BqidkaGp3e918dKPZ3eE7-AF9yA7Q"
     domain = "themobilegeneration.com"
@@ -53,12 +53,18 @@ def fetch_data():
         hoo = " ".join(raw_data).split("Hours:")[-1].strip()
         if loc_dom.xpath('//p[contains(text(), "TEMPORARILY CLOSED")]'):
             hoo = "TEMPORARILY CLOSED"
+        str_2 = loc_dom.xpath(
+            '//strong[span[contains(text(), "Address:")]]/following-sibling::span/text()'
+        )
+        street_address = raw_adr[0]
+        if len(str_2) == 3:
+            street_address += ", " + str_2[1].strip()
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=poi[0],
-            street_address=raw_adr[0],
+            street_address=street_address,
             city=city,
             state=raw_adr[2].split()[0],
             zip_postal=zip_code,
