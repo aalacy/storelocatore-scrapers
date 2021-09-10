@@ -3,3 +3,4 @@ sgscrape==0.2.2
 sgselenium==0.1.4
 lxml==4.6.2
 beautifulsoup4==4.9.3
+selenium==3.141.0
