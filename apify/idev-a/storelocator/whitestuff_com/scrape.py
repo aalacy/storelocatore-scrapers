@@ -42,10 +42,13 @@ def fetch_data():
                     hours += f"{_day}: {times};"
             if hours:
                 hours = hours[:-1]
+            street_address = _["address"]
+            if _.get("address2"):
+                street_address += " " + _["address2"]
             yield SgRecord(
                 page_url="https://www.whitestuff.com/action/ViewStoreFinder-Start",
                 location_name=_["name"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["city"],
                 zip_postal=_["postalCode"],
                 latitude=_["customAttributes"]["latitude"],
