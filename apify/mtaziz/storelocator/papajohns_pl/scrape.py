@@ -101,12 +101,12 @@ def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
 
             hoo = _["open"]
 
-            hoo_temp = []
+            daytimes = ""
             for k, v in hoo.items():
-                daytimes = k + " " + v
-                hoo_temp.append(daytimes)
-            hoo_temp = "; ".join(hoo_temp)
-            hours_of_operation = hoo_temp if hoo_temp else MISSING
+                daytimes += k + " " + v + "; "
+
+            daytimes = daytimes.rstrip("; ")
+            hours_of_operation = daytimes if daytimes else MISSING
             logger.info(f"[{idx}] hours_of_operation: {hours_of_operation}")
 
             # Raw Address
