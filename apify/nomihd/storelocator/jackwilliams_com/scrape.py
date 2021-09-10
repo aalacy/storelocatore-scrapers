@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-import httpx
-from sgrequests import SgRequests, SgRequestError
+from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -35,7 +34,6 @@ data = {"currentUrl": "https://jackwilliams.com/default/location"}
 def fetch_data():
     # Your scraper here
     with SgRequests() as session:
-        search_url = "https://jackwilliams.com/default/location"
         search_res = session.post(
             "https://jackwilliams.com/iwd_sa/ajax/addressSearch",
             headers=headers,
