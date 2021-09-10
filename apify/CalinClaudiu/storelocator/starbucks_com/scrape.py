@@ -8,12 +8,12 @@ from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
-import random
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def fix_comma(x):
+    x = x.replace("None", "")
     h = []
     try:
         for i in x.split(","):
@@ -68,93 +68,94 @@ class ExampleSearchIteration(SearchIteration):
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         try:
             locations = http.get(url, headers=headers).json()
-            errorName = None
+            if locations["paging"]["total"] > 0:
+                for record in locations["stores"]:
+                    try:
+                        try:
+                            found_location_at(
+                                record["coordinates"]["latitude"],
+                                record["coordinates"]["longitude"],
+                            )
+                        except Exception:
+                            pass
+                        yield SgRecord(
+                            page_url="https://www.starbucks.com/store-locator/store/{}/{}".format(
+                                str(record["id"]), str(record["slug"])
+                            ),
+                            location_name=str(record["name"]),
+                            street_address=fix_comma(
+                                str(
+                                    str(record["address"]["streetAddressLine1"])
+                                    + ","
+                                    + str(record["address"]["streetAddressLine2"])
+                                    + ","
+                                    + str(record["address"]["streetAddressLine3"])
+                                )
+                            ),
+                            city=str(record["address"]["city"]),
+                            state=str(record["address"]["countrySubdivisionCode"]),
+                            zip_postal=str(record["address"]["postalCode"]),
+                            country_code=str(record["address"]["countryCode"]),
+                            store_number=str(record["id"]),
+                            phone=str(record["phoneNumber"]),
+                            location_type=str(
+                                str(record["brandName"])
+                                + " - "
+                                + str(record["ownershipTypeCode"])
+                            ),
+                            latitude=str(record["coordinates"]["latitude"]),
+                            longitude=str(record["coordinates"]["longitude"]),
+                            locator_domain="https://www.starbuck.com/",
+                            hours_of_operation=str(record["schedule"]),
+                            raw_address=SgRecord.MISSING,
+                        )
+                        rec_count = self.__state.get_misc_value(
+                            current_country, default_factory=lambda: 0
+                        )
+                        self.__state.set_misc_value(current_country, rec_count + 1)
+                        found += 1
+                    except KeyError as e:
+                        yield SgRecord(
+                            page_url=SgRecord.MISSING,
+                            location_name=SgRecord.MISSING,
+                            street_address=SgRecord.MISSING,
+                            city=SgRecord.MISSING,
+                            state=SgRecord.MISSING,
+                            zip_postal=SgRecord.MISSING,
+                            country_code=SgRecord.MISSING,
+                            store_number=str(record),
+                            phone=SgRecord.MISSING,
+                            location_type=SgRecord.MISSING,
+                            latitude=SgRecord.MISSING,
+                            longitude=SgRecord.MISSING,
+                            locator_domain=SgRecord.MISSING,
+                            hours_of_operation=SgRecord.MISSING,
+                            raw_address=str(e),
+                        )
+                        found += 1
+                    progress = "??.?%"
+                    logzilla.info(
+                        f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: ??|prog: {progress}|\nRemaining: {items_remaining}"
+                    )
         except Exception as e:
             logzilla.error(f"{e}")
             locations = {"paging": {"total": 0}}
-            errorName = str(e)
             yield SgRecord(
-                page_url="<ERROR>",
+                page_url=url,
                 location_name="<ERROR>",
                 street_address="<ERROR>",
                 city="<ERROR>",
                 state="<ERROR>",
                 zip_postal="<ERROR>",
                 country_code="<ERROR>",
-                store_number=random.random(),
                 phone="<ERROR>",
                 location_type="<ERROR>",
                 latitude=lat,
                 longitude=lng,
                 locator_domain="<ERROR>",
                 hours_of_operation="<ERROR>",
-                raw_address=errorName,
+                raw_address=str(e),
             )
-        if locations["paging"]["total"] > 0:
-            for record in locations["stores"]:
-                try:
-                    try:
-                        found_location_at(
-                            record["coordinates"]["latitude"],
-                            record["coordinates"]["longitude"],
-                        )
-                    except Exception:
-                        pass
-                    yield SgRecord(
-                        page_url="https://www.starbucks.com/store-locator/store/{}/{}".format(
-                            str(record["id"]), str(record["slug"])
-                        ),
-                        location_name=str(record["name"]),
-                        street_address=fix_comma(
-                            str(
-                                str(record["address"]["streetAddressLine1"])
-                                + ","
-                                + str(record["address"]["streetAddressLine2"])
-                                + ","
-                                + str(record["address"]["streetAddressLine3"])
-                            )
-                        ),
-                        city=str(record["address"]["city"]),
-                        state=str(record["address"]["countrySubdivisionCode"]),
-                        zip_postal=str(record["address"]["postalCode"]),
-                        country_code=str(record["address"]["countryCode"]),
-                        store_number=str(record["id"]),
-                        phone=str(record["phoneNumber"]),
-                        location_type=str(
-                            str(record["brandName"])
-                            + " - "
-                            + str(record["ownershipTypeCode"])
-                        ),
-                        latitude=str(record["coordinates"]["latitude"]),
-                        longitude=str(record["coordinates"]["longitude"]),
-                        locator_domain="https://www.starbuck.com/",
-                        hours_of_operation=str(record["schedule"]),
-                        raw_address=errorName if errorName else SgRecord.MISSING,
-                    )
-                    found += 1
-                except KeyError:
-                    yield SgRecord(
-                        page_url=SgRecord.MISSING,
-                        location_name=SgRecord.MISSING,
-                        street_address=SgRecord.MISSING,
-                        city=SgRecord.MISSING,
-                        state=SgRecord.MISSING,
-                        zip_postal=SgRecord.MISSING,
-                        country_code=SgRecord.MISSING,
-                        store_number=str(record),
-                        phone=SgRecord.MISSING,
-                        location_type=SgRecord.MISSING,
-                        latitude=SgRecord.MISSING,
-                        longitude=SgRecord.MISSING,
-                        locator_domain=SgRecord.MISSING,
-                        hours_of_operation=SgRecord.MISSING,
-                        raw_address=errorName if errorName else "<ERROR>",
-                    )
-                    found += 1
-                progress = "??.?%"
-                logzilla.info(
-                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: ??|prog: {progress}|\nRemaining: {items_remaining}"
-                )
 
 
 if __name__ == "__main__":
@@ -175,7 +176,6 @@ if __name__ == "__main__":
                 search_maker=search_maker,
                 search_iteration=search_iter,
                 country_codes=SearchableCountries.ALL,
-                max_threads=8,
             )
 
             for rec in par_search.run():

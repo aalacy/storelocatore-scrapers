@@ -1,46 +1,16 @@
 import re
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
     start_url = "https://www.congebec.com/index.php/en/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
@@ -57,6 +27,7 @@ def fetch_data():
             poi_html.xpath(".//p/text()")[0]
             .replace("Adress: ", "")
             .replace("\xa0", " ")
+            .replace("Address: ", "")
         )
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
@@ -71,6 +42,8 @@ def fetch_data():
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         raw_data = poi_html.xpath('.//p[contains(text(), "Adress")]/text()')
+        if not raw_data:
+            raw_data = poi_html.xpath('.//p[contains(text(), "Address")]/text()')
         phone = [e.strip() for e in raw_data if "Phone" in e]
         phone = (
             phone[0].split("Phone:")[-1].replace("\xa0", "") if phone else "<MISSING>"
@@ -85,31 +58,36 @@ def fetch_data():
             else "<MISSING>"
         )
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
