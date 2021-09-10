@@ -5,7 +5,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
-from random import randint
 from lxml import html
 import asyncio
 from pyppeteer import launch
