@@ -48,7 +48,7 @@ def fetch_records(
 ) -> Iterable[SgRecord]:
     total = 0
     for url_request in state.request_stack_iter():
-        r = http.get(url_request.url, headers=headers, verify=False, timeout=500)
+        r = http.get(url_request.url, headers=headers)
         logger.info(f"Pulling the data from : {url_request.url} ")
         if json.loads(r.content)["stores"]:
             total += len(json.loads(r.content)["stores"])
