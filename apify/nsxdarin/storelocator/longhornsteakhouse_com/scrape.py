@@ -10,6 +10,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
