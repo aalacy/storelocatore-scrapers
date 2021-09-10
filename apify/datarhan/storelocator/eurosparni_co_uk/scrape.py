@@ -25,9 +25,7 @@ def fetch_data():
         store_url = start_url.format(code)
         response = session.get(store_url)
         dom = etree.HTML(response.text)
-        all_locations = dom.xpath(
-            '//div[@class="owl-item" and div[@class="large-7 large-offset-1 columns"]]'
-        )
+        all_locations = dom.xpath('//*[@class="owl-item"]')
 
         for i, poi_html in enumerate(all_locations):
             store_url = "https://www.eurosparni.co.uk/nearest-store"
@@ -51,8 +49,8 @@ def fetch_data():
             phone = phone[0].split(":")[-1] if phone else "<MISSING>"
             geo = re.findall(r"location\d = (.+?);", response.text)[i]
             geo = demjson.decode(geo)
-            latitude = geo["lat"]
-            longitude = geo["lng"]
+            latitude = str(geo["lat"])
+            longitude = str(geo["lng"])
             hoo = poi_html.xpath(
                 './/h5[contains(text(), "Opening Hours")]/following-sibling::table//text()'
             )
@@ -70,24 +68,19 @@ def fetch_data():
             if street_address.strip() == "121":
                 street_address = "121 Drumaness Road"
 
-            item = SgRecord(
+            yield SgRecord(
                 locator_domain=domain,
                 page_url=store_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
-                state=SgRecord.MISSING,
                 zip_postal=zip_code,
                 country_code=country_code,
-                store_number=SgRecord.MISSING,
                 phone=phone,
-                location_type=SgRecord.MISSING,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
-
-            yield item
 
 
 def scrape():
