@@ -91,7 +91,7 @@ def get_data():
             hours = hours + day + " " + time + ", "
         country_code = "UK"
         hours = hours[:-2]
-        if address == "Coming soon":
+        if "coming soon" in address.lower():
             continue
 
         if city == "Springkerse Industrial Estate":
