@@ -37,6 +37,7 @@ def get_data(slug, sgw: SgWriter):
         tree.xpath("//div[@class='gen-section'][1]/p[1]/text()")
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
+    postal = postal.replace("TK ", "")
 
     text = "".join(
         tree.xpath(

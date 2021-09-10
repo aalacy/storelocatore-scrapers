@@ -13,9 +13,9 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or SgRecord.MISSING
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or SgRecord.MISSING
 
     return street_address, city, state, postal
 
@@ -36,6 +36,15 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//p[./strong[contains(text(), 'IKEA ')]]/text()")
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
+    street_address = raw_address.split(",")[0].strip()
+    if city == SgRecord.MISSING:
+        city = location_name.replace("IKEA ", "")
+
+    if "(" in city:
+        city = city.split("(")[0].strip()
+
+    if postal == SgRecord.MISSING or len(postal) == 4:
+        postal = " ".join(raw_address.split(",")[-1].split()[:2])
 
     text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
     try:
