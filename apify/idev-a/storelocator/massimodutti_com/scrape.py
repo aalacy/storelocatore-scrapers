@@ -39,7 +39,10 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         for store in locations:
             hours = []
             for hr in store.get("openingHours", {}).get("schedule", []):
-                times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['initHour']}"
+                import pdb
+
+                pdb.set_trace()
+                times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['endHour']}"
                 if len(hr["weekdays"]) == 1:
                     hh = hr["weekdays"][0]
                     hours.append(f"{days[hh]}: {times}")
