@@ -1,5 +1,4 @@
 import re
-import csv
 import time
 import random
 from sgrequests import SgRequests
@@ -7,6 +6,13 @@ from sglogging import SgLogSetup
 from sgselenium import SgChrome
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
@@ -21,33 +27,6 @@ headers = {
 
 def sleep():
     time.sleep(random.randint(4, 7))
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch(loc, driver):
@@ -131,30 +110,44 @@ def fetch_location(loc, driver):
         phone = "(352) 372-5715"
     if "4590 Jon" in name or "9150 Cov" in name:
         hours = "Sun-Thu: 11:00AM-10:00PM; Fri-Sat: 11:00AM-11:00PM"
+    if "cold-spring/cold-spring/5198" in loc:
+        phone = "(859) 441-4820"
+    if "skokie/skokie-lincolnwood/5519" in loc:
+        phone = "(847) 674-1673"
+    if "chambersburg/5447" in loc:
+        phone = "(717) 261-9701"
+    if "north-haven/5356" in loc:
+        phone = "(203) 776-4676"
+    if "east-kissimmee-near-old-town/5055" in loc:
+        phone = "(407) 396-9556"
+    if "yonkers/5514" in loc:
+        phone = "(914) 963-3491"
+    if "cranberry-township/5285" in loc:
+        phone = "(724) 776-1500"
     if "Find A R" not in name:
-        return [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        return SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def fetch_data():
     locs = []
     url = "https://www.longhornsteakhouse.com/locations-sitemap.xml"
     session = SgRequests()
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.longhornsteakhouse.com/locations/" in line:
@@ -171,8 +164,10 @@ def fetch_data():
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
