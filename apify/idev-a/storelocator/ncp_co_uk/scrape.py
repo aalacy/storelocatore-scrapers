@@ -30,15 +30,9 @@ def fetch_records(http, search):
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         logger.info(f"[{zip}] [{progress}] [{len(locations)}]")
         for loc in locations:
-            try:
-                _ = json.loads(
-                    loc.split("addMarker(")[0].split("map.fitBounds")[0].strip()[:-2]
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
-
+            _ = json.loads(
+                loc.split("addMarker(")[0].split("map.fitBounds")[0].strip()[:-2]
+            )
             zip_postal = _["postcodePart1"] + _["postcodePart2"]
             url = f"https://www.ncp.co.uk/find-a-car-park/car-parks/{_['urlLink']}"
             street_address = _["addressLine1"] + _["addressLine2"] + _["addressLine3"]
