@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from datetime import datetime, timedelta
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -27,7 +28,17 @@ def fetch_data():
                 times = []
                 for hr in hh:
                     if hr["start"]:
-                        times.append(f"{hr['start']} - {hr['end']}")
+                        if times:
+                            if datetime.strptime(
+                                times[-1].split("-")[-1].strip(), "%H:%M"
+                            ) + timedelta(hours=1) == datetime.strptime(
+                                hr["start"], "%H:%M"
+                            ):
+                                _hh = f"{times[-1].split('-')[0]} - {hr['end']}"
+                                del times[-1]
+                                times.append(_hh)
+                        else:
+                            times.append(f"{hr['start']} - {hr['end']}")
                 if not times:
                     times = ["closed"]
                 hours.append(f"{day}: {','.join(times)}")
