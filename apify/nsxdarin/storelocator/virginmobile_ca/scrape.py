@@ -16,12 +16,12 @@ logger = SgLogSetup().get_logger("virginmobile_ca")
 def fetch_data():
     for x in range(-55, -140, -1):
         for y in range(41, 71):
-            logger.info(str(x) + "-" + str(y))
+            logger.info(str(y) + "-" + str(x))
             url = (
                 "https://virgin.know-where.com/virginplus/cgi/selection?place=&lang=en&ll="
-                + str(x)
-                + "%2C"
                 + str(y)
+                + "%2C"
+                + str(x)
                 + "&stype=ll&async=results"
             )
             r = session.get(url, headers=headers)
