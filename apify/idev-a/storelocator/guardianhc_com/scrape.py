@@ -24,28 +24,30 @@ def fetch_data():
             .text.split("var maplistScriptParamsKo =")[1]
             .split("/* ]]> */")[0]
             .strip()[:-1]
-        )["KOObject"][0]['locations']
+        )["KOObject"][0]["locations"]
         for _ in locations:
-            addr = list(bs(_['description'], 'lxml').select_one('div.address').stripped_strings)
+            addr = list(
+                bs(_["description"], "lxml").select_one("div.address").stripped_strings
+            )
             phone = ""
-            simple = list(bs(_['simpledescription'], 'lxml').stripped_strings)
-            if simple and 'Phone' in simple[0]:
+            simple = list(bs(_["simpledescription"], "lxml").stripped_strings)
+            if simple and "Phone" in simple[0]:
                 phone = simple[1]
             yield SgRecord(
                 page_url=_["locationUrl"],
-                store_number=_["cssClass"].strip().split()[-1].split('-')[-1],
+                store_number=_["cssClass"].strip().split()[-1].split("-")[-1],
                 location_name=_["title"],
-                street_address=' '.join(addr[:-1]),
-                city=addr[-1].split(',')[0].strip(),
-                state=addr[-1].split(',')[1].strip().split(' ')[0].strip(),
-                zip_postal=addr[-1].split(',')[1].strip().split(' ')[-1].strip(),
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 country_code="US",
                 phone=phone,
                 location_type=_["cssClass"].strip().split()[0],
                 locator_domain=locator_domain,
-                raw_address=' '.join(addr)
+                raw_address=" ".join(addr),
             )
 
 
