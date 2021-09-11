@@ -31,6 +31,9 @@ headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
 }
 
+# To fix - certificate verify failed: unable to get local issuer, we have used this library pyppdf
+logger.info(f"pyppdf loaded: {pyppdf.patch_pyppeteer}")
+
 
 def get_store_urls(http: SgRequests):
     res = http.get(LOCATION_URL, headers=headers)
