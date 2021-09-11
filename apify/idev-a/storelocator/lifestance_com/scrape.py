@@ -17,29 +17,9 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-max_workers = 8
+max_workers = 32
 
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/"
-
-
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
-
-
-session = SgRequests().requests_retry_session()
-session.proxies = set_proxies()
+session = SgRequests(proxy_country="us")
 
 
 def fetchConcurrentSingle(data):
@@ -77,15 +57,32 @@ def fetch_data():
         "url loc"
     )
     logger.info(f"{len(locations)} locations found")
+    total_cnt = 0
     for page_url, response in fetchConcurrentList(locations):
         logger.info(f"{page_url}")
         sp1 = bs(response, "lxml")
-        addr = parse_address_intl(
-            " ".join(sp1.select_one("div.self-center div.p").stripped_strings)
-        )
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
+        location_name = sp1.select_one("h1.h1").text.strip()
+        street_address = city = state = zip_postal = ""
+        if sp1.select_one("div.self-center div.p"):
+            total_cnt += 1
+            logger.info(f"[{total_cnt}] in total")
+            raw_address = " ".join(
+                sp1.select_one("div.self-center div.p").stripped_strings
+            )
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            state = addr.state
+            zip_postal = addr.postcode
+        else:
+            ln = location_name.split("–")
+            raw_address = ln[-1].strip() + " " + ln[0].strip()
+            street_address = ln[-1]
+            city = ln[0].split(",")[0].strip()
+            state = ln[0].split(",")[-1].strip()
+
         _hr = sp1.find("h2", string=re.compile(r"Hours Of Operation"))
         hours = []
         if _hr:
@@ -95,24 +92,28 @@ def fetch_data():
         phone = ""
         if sp1.find("a", href=re.compile(r"tel:")):
             phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
-        coord = (
-            sp1.select_one("main figure a img")["data-lazy-src"]
-            .split("false%7C")[1]
-            .split(",+")
-        )
+        try:
+            coord = (
+                sp1.select_one("main figure a img")["data-lazy-src"]
+                .split("false%7C")[1]
+                .split(",+")
+            )
+        except:
+            coord = ["", ""]
         yield SgRecord(
             page_url=page_url,
-            location_name=sp1.select_one("h1.h1").text.strip(),
+            location_name=location_name,
             street_address=street_address,
-            city=addr.city,
-            state=addr.state,
-            zip_postal=addr.postcode,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
             country_code="US",
             phone=phone,
             locator_domain=locator_domain,
             latitude=coord[0],
             longitude=coord[1],
             hours_of_operation="; ".join(hours).replace("–", "-"),
+            raw_address=raw_address,
         )
 
 
@@ -132,3 +133,5 @@ if __name__ == "__main__":
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+
+    del session
