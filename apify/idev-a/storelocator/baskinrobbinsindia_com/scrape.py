@@ -42,6 +42,12 @@ def fetch_data():
                 json_url.format(city["city_id"]), headers=_headers
             ).json()
             for _ in locations:
+                longitude = _["lng"]
+                latitude = _["lat"]
+                if not longitude:
+                    _lat = latitude.split(".")
+                    latitude = ".".join(_lat[:2])
+                    longitude = ".".join(_lat[2:])
                 yield SgRecord(
                     store_number=_["store_id"],
                     location_name=_["name"],
@@ -51,8 +57,8 @@ def fetch_data():
                     country_code=_["country_name"],
                     phone=_["phone"],
                     locator_domain=locator_domain,
-                    latitude=_["lat"],
-                    longitude=_["lng"],
+                    latitude=latitude,
+                    longitude=longitude,
                 )
 
 
