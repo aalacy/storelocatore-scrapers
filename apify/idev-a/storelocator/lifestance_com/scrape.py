@@ -9,7 +9,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
 from sgscrape.sgpostal import parse_address_intl
-import os
 
 logger = SgLogSetup().get_logger("lifestance")
 
