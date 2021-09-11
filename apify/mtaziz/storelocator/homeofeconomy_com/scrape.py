@@ -11,6 +11,7 @@ from pyppeteer import launch
 from pyppeteer_stealth import stealth
 import json
 import ssl
+import pyppdf.patch_pyppeteer
 
 
 try:
@@ -99,7 +100,7 @@ def fetch_record(content, store_url):
 
 
 async def get_response(url):
-    driver = await launch(headless=True)
+    driver = await launch(headless=True, args=["--no-sandbox"])
     page = await driver.newPage()
     await stealth(page)
     await page.goto(url)
