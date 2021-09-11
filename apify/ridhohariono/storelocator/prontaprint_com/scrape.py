@@ -92,7 +92,6 @@ def fetch_data():
         latitude = row["lat"]
         longitude = row["lng"]
         hours_of_operation = get_hoo(page_url)
-        print(hours_of_operation)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
