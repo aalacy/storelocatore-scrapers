@@ -82,7 +82,7 @@ if __name__ == "__main__":
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=5
         )
     ) as writer:
-        with SgRequests(proxy_country="us") as http:
+        with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as http:
             search_iter = ExampleSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
