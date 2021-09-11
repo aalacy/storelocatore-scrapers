@@ -14,7 +14,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.intimissimi.com"
+locator_domain = "https://www.intimissimi.com/"
 base_url = "https://www.intimissimi.com/on/demandware.store/Sites-intimissimi-ww-Site/en_WS/Stores-FindStores?radius=100&lat={}&long={}&geoloc=false"
 
 
@@ -60,11 +60,13 @@ class ExampleSearchIteration(SearchIteration):
                     .replace("&apos;", "'")
                     .strip(),
                     city=city,
+                    state=store.get("state", ""),
                     zip_postal=zip_postal,
                     latitude=store["latitude"],
                     longitude=store["longitude"],
                     phone=store.get("phone"),
                     country_code=store["countryCode"],
+                    locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
                 )
 
