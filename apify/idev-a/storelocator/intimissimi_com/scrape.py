@@ -73,15 +73,16 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        use_state=False,
         search_type="DynamicGeoSearch",
         expected_search_radius_miles=100,
     )
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests(
-            proxy_country="us", proxy_rotation_failure_threshold=15
-        ) as http:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=5
+        )
+    ) as writer:
+        with SgRequests(proxy_country="us") as http:
             search_iter = ExampleSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
