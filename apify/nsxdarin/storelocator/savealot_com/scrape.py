@@ -15,9 +15,8 @@ headers = {
 
 
 def fetch_data():
-    ids = []
-    for x in range(20, 70):
-        for y in range(-130, -65):
+    for x in range(20, 50):
+        for y in range(-125, -65):
             logger.info("%s - %s..." % (str(x), str(y)))
             midlat = str(x)
             midlng = str(y)
@@ -50,13 +49,12 @@ def fetch_data():
                 city = item["city"]
                 purl = (
                     "https://savealot.com/grocery-stores/"
-                    + city.replace(" ", "-")
+                    + city.replace(" ", "-").replace(".", "")
                     + "-"
                     + zc
                     + "-"
                     + store
                 )
-                purl = purl.lower()
                 name = "Save A Lot"
                 add = item["street"]
                 country = "US"
@@ -64,41 +62,39 @@ def fetch_data():
                 lat = item["lat"]
                 lng = item["lng"]
                 hours = ""
-                if store not in ids:
-                    ids.append(store)
-                    r2 = session.get(purl, headers=headers)
-                    for line2 in r2.iter_lines():
-                        line2 = str(line2.decode("utf-8"))
-                        if 'class="day">' in line2:
-                            day = line2.split('class="day">')[1].split("<")[0]
-                        if '<span class="hours">' in line2:
-                            hrs = (
-                                day
-                                + ": "
-                                + line2.split('<span class="hours">')[1].split("<")[0]
-                            )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
-                    if hours == "":
-                        hours = "<MISSING>"
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=purl,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+                r2 = session.get(purl, headers=headers)
+                for line2 in r2.iter_lines():
+                    line2 = str(line2.decode("utf-8"))
+                    if 'class="day">' in line2:
+                        day = line2.split('class="day">')[1].split("<")[0]
+                    if '<span class="hours">' in line2:
+                        hrs = (
+                            day
+                            + ": "
+                            + line2.split('<span class="hours">')[1].split("<")[0]
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+                if hours == "":
+                    hours = "<MISSING>"
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():

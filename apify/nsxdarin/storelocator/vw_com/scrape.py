@@ -75,6 +75,18 @@ def fetch_locations(postal, session):
             else "<MISSING>"
         )
 
+        if isinstance(hours_of_operation, list):
+            hours = []
+            for day in hours_of_operation:
+                day_text = day["dayText"]
+
+                if day["isClosed"] == "Y":
+                    hours.append(f"{day_text}: Closed")
+                else:
+                    hours.append(f'{day_text}: {day["openHour"]}-{day["closeHour"]}')
+
+            hours_of_operation = ", ".join(hours)
+
         pois.append(
             SgRecord(
                 locator_domain="vw.com",
