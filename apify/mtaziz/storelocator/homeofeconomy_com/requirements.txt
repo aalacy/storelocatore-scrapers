@@ -5,3 +5,4 @@ pyppeteer_stealth==2.7.3
 sglogging==0.0.4
 sgscrape==0.2.2
 pyppeteer==0.2.6
+pyppdf==0.1.2
