@@ -22,25 +22,25 @@ def fetch_data():
     if True:
         linklist = []
         url = "https://api-prod.zoomcare.com/v1/schedule/clinics"
-        url = 'https://api-prod.zoomcare.com/v1/schedule/clinics'
+        url = "https://api-prod.zoomcare.com/v1/schedule/clinics"
         stores_req = session.get(url, headers=headers).json()
         for loc in stores_req:
-            street = loc['address']['line1']
-            street2 = loc['address']['line2']
+            street = loc["address"]["line1"]
+            street2 = loc["address"]["line2"]
             if street2 is not None:
-                street = street + ' ' + street2
+                street = street + " " + street2
             else:
                 street = street.strip()
-            city = loc['address']['city']
-            state = loc['address']['state']
-            pcode = loc['address']['postalCode']
-            storeid = loc['clinicId']
-            title = loc['name']
-            lat = loc['address']['latitude']
-            lng = loc['address']['longitude']
-            hours = loc['clinicHoursText']
-            hours = hours.replace('| ', ',')
-        
+            city = loc["address"]["city"]
+            state = loc["address"]["state"]
+            pcode = loc["address"]["postalCode"]
+            storeid = loc["clinicId"]
+            title = loc["name"]
+            lat = loc["address"]["latitude"]
+            lng = loc["address"]["longitude"]
+            hours = loc["clinicHoursText"]
+            hours = hours.replace("| ", ",")
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url="https://www.zoomcare.com/locations",
@@ -63,15 +63,19 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE}, fail_on_empty_id=True)\
-                     .with_truncate(SgRecord.Headers.LATITUDE, 3)
-                     .with_truncate(SgRecord.Headers.LONGITUDE, 3))
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE},
+                fail_on_empty_id=True,
+            )
+            .with_truncate(SgRecord.Headers.LATITUDE, 3)
+            .with_truncate(SgRecord.Headers.LONGITUDE, 3)
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
