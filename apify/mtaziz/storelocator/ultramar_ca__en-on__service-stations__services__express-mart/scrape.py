@@ -1,14 +1,12 @@
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from lxml import html
-from time import sleep
-from random import randint
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from lxml import html
+from time import sleep
+from random import randint
 
 
 BASE_URL = "https://www.ultramar.ca"
