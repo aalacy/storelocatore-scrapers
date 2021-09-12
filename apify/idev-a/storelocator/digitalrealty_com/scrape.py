@@ -8,6 +8,7 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 logger = SgLogSetup().get_logger("digitalrealty")
 
@@ -38,7 +39,7 @@ def _p(val):
 
 def fetchConcurrentSingle(link):
     page_url = link["href"]
-    if "/data-centers/" in page_url:
+    if "/data-centers" in page_url:
         if not page_url.startswith("http"):
             page_url = locator_domain + page_url
         response = request_with_retries(page_url)
@@ -79,7 +80,14 @@ def _d(page_url, sp3):
     city_state = sp3.select_one(
         'h2[data-uk-scrollspy-class="uk-animation-slide-right"]'
     ).text.strip()
-    raw_address = location_name + " " + city_state
+    try:
+        raw_address = (
+            sp3.find("", string=re.compile(r"^Address"))
+            .find_parent("strong")
+            .nextSibling.strip()
+        )
+    except:
+        raw_address = location_name + " " + city_state
     addr = parse_address_intl(raw_address)
     city = addr.city
     zip_postal = addr.postcode
@@ -94,7 +102,7 @@ def _d(page_url, sp3):
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
-        street_address=location_name,
+        street_address=location_name.split("Data Center")[-1].strip(),
         state=addr.state,
         city=city,
         zip_postal=zip_postal,
@@ -110,6 +118,7 @@ def fetch_data():
     countries = soup.select("div.Footer > div > ul > li")[1].select("ul a")
     logger.info(f"{len(countries)} found")
     for country_url, sp1 in fetchConcurrentList(countries):
+        logger.info(country_url)
         states = sp1.select("main div.uk-section div.uk-container ul a")
         logger.info(f"{len(states)} found")
         for state_url, sp2 in fetchConcurrentList(states):
@@ -119,9 +128,6 @@ def fetch_data():
                 yield _d(page_url, sp3)
 
         if not states:
-            import pdb
-
-            pdb.set_trace()
             states1 = sp1.select("main a.uk-link-reset")
             for url, sp4 in fetchConcurrentList(states1):
                 links1 = sp4.select("main a.uk-link-reset")
