@@ -27,13 +27,22 @@ def fetch_data():
             state = loc["state"]
             pcode = loc["postcode"]
         except:
-            street, city, state, pcode = loc["address"].split(", ")
+            try:
+                street, city, state, pcode = (
+                    loc["address"].replace(", United States", "").split(", ")
+                )
+            except:
+                street, city = loc["address"].split(title.replace("Pizza King ", ""), 1)
+                city, state = city.split(", ", 1)
+                state, pcode = state.split(" ", 1)
         link = str(loc["url"])
         if len(link) < 6:
             link = "<MISSING>"
         ccode = "US"
         if str(street) == "None":
-            street, city, state, pcode = loc["address"].split(", ")
+            street, city, state, pcode = (
+                loc["address"].replace(", United States", "").split(", ")
+            )
         phone = (
             loc["phone"]
             .replace("(", "")
@@ -57,7 +66,7 @@ def fetch_data():
             state=state.strip(),
             zip_postal=pcode,
             country_code=ccode,
-            store_number=store,
+            store_number=str(store),
             phone=phone.strip(),
             location_type="<MISSING>",
             latitude=lat,
