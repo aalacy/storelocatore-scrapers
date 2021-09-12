@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape import sgpostal as parser
 
 session = SgRequests()
 website = "zoomcare_com"
@@ -20,7 +19,6 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        linklist = []
         url = "https://api-prod.zoomcare.com/v1/schedule/clinics"
         url = "https://api-prod.zoomcare.com/v1/schedule/clinics"
         stores_req = session.get(url, headers=headers).json()
