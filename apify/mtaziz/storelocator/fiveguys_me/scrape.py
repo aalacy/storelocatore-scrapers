@@ -47,7 +47,6 @@ def fetch_records(http: SgRequests):
     for api_endpoint_url in api_endpoint_urls:
         res_ent = fetch_data(http, api_endpoint_url)
         for idx, _ in enumerate(res_ent):
-            country_name = _["derivedData"]["address"]["countryName"]
             profile = _["profile"]
 
             # locator_domain = ""
@@ -76,7 +75,7 @@ def fetch_records(http: SgRequests):
             elif line1 is not None and line2 is not None:
                 street_address = line1 + " " + line2
             elif line1 is not None and line2 is not None and line3 is not None:
-                street_addres = line1 + " " + line2 + " " + line3
+                street_address = line1 + " " + line2 + " " + line3
             else:
                 street_address = MISSING
             logger.info(f"[{idx}] st_add: {street_address}")
