@@ -49,7 +49,6 @@ def fetch_records(http: SgRequests):
         for idx, _ in enumerate(res_ent):
             profile = _["profile"]
 
-            # locator_domain = ""
             parsed_url = urlparse(api_endpoint_urls[0]).netloc
             locator_domain = parsed_url.replace("restaurants.", "")
             logger.info(f"[{idx}] domain: {locator_domain}")
