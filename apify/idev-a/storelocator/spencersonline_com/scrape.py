@@ -1,13 +1,11 @@
 import math
 from concurrent.futures import ThreadPoolExecutor
 import time
-import os
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from bs4 import BeautifulSoup as bs
-import us
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -18,27 +16,9 @@ website = "https://stores.spencersonline.com"
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
 }
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "https://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
-
-
-session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
-session.proxies = set_proxies()
+session = SgRequests(proxy_country="us")
 log = sglog.SgLogSetup().get_logger("spencersonline")
 
 
@@ -59,7 +39,7 @@ ca_provinces_codes = {
 }
 
 
-max_workers = 1
+max_workers = 8
 
 
 def fetchConcurrentSingle(data):
@@ -87,13 +67,24 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(url):
+    session.clear_cookies()
     return session.get(url, headers=headers)
 
 
 def fetchStates():
     urls = []
-    for state in us.states.STATES:
-        urls.append({"url": f"{website}/{state.name}"})
+    for state in bs(request_with_retries(website).text, "lxml").select("ul.browse a"):
+        urls.append({"url": state["href"]})
+    return urls
+
+
+def fetchCities(obj):
+    urls = []
+    for url, response in fetchConcurrentList(obj):
+        response = request_with_retries(url)
+        for data in bs(response.text, "lxml").select("div.map-list-item a"):
+            urls.append({"url": data["href"]})
+
     return urls
 
 
@@ -101,11 +92,10 @@ def fetchUrls(obj):
     urls = []
     for url, response in fetchConcurrentList(obj):
         response = request_with_retries(url)
-        data = json.loads(
-            response.text.split('"markerData":')[1].split("</script>")[0].strip()[:-2]
-        )
-        for el in data:
-            urls.append({"url": json.loads(bs(el["info"], "lxml").text)["url"]})
+        for data in bs(response.text, "lxml").select(
+            "div.map-list-item div.map-list-item-header a"
+        ):
+            urls.append({"url": data["href"]})
 
     return urls
 
@@ -114,8 +104,7 @@ def fetchData():
     states = fetchStates()
     log.info(f"Total states = {len(states)}")
 
-    urls = fetchUrls(states)
-    city_urls = fetchUrls(urls)
+    city_urls = fetchCities(states)
     page_urls = fetchUrls(city_urls)
 
     log.info(f"{len(page_urls)} found")
