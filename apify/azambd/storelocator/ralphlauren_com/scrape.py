@@ -60,7 +60,7 @@ def fetch_page_cf(driver, url):
 
     if check_if_xpath_exists(driver, xpath_px_captcha) is True:
         try:
-            log.info(f"Dealing with CF ...")
+            log.info("Dealing with CF ...")
             WebDriverWait(driver, EXPLICIT_WAIT_TIME).until(
                 EC.presence_of_element_located((By.ID, "px-captcha"))
             )
