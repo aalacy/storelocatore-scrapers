@@ -94,8 +94,8 @@ def fetch_data():
             geo = re.findall(r"&dest=(.+?)\&", loc_response.text)
             if geo:
                 geo = geo[0].split(",")
-                latitude = geo[0]
-                longitude = geo[1]
+                latitude = geo[1]
+                longitude = geo[0]
 
             item = SgRecord(
                 locator_domain=domain,
