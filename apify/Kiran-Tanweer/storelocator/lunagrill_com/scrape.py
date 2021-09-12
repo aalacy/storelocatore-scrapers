@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape import sgpostal as parser
@@ -22,7 +21,6 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        data = []
         linklist = []
         url = "https://locations.lunagrill.com/site-map/US"
         r = session.get(url, headers=headers, verify=False)
