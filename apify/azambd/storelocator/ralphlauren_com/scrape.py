@@ -87,7 +87,7 @@ def fetch_page_cf(driver, url):
             log.debug(f"Reloading again {url} ...")
             return fetch_page_cf(driver, url)
         except Exception as e:
-            log.debug("Retrying ...")
+            log.debug(f"Retrying ...{e}")
             return fetch_page_cf(driver, url)
     else:
         random_sleep(driver, 5)
