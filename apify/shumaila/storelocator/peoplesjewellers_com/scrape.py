@@ -59,6 +59,8 @@ def fetch_data():
                     .split(",")[-1]
                     .split(":", 1)[1]
                     .replace('"', "")
+                    .replace("\n", " ")
+                    .strip()
                 )
             else:
 
