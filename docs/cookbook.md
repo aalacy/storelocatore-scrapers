@@ -39,7 +39,7 @@
 
 ### Fetching data
 
-- [TODO] Request anything over HTTP
+- [Request anything over HTTP with SgRequests](./cookbook/sgrequests.md)
 - [TODO] Parse JSON results
 - [TODO] Parse XML results
 - [TODO] Parse HTML results
