@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -27,8 +26,6 @@ def fetch_data():
         branchlist = soup.find("div", {"class": "view-all-stores"}).findAll(
             "div", {"class": "col-lg-3"}
         )
-
-        pattern = re.compile(r"\s\s+")
 
         for branch in branchlist:
             try:
