@@ -3,5 +3,5 @@ sgrequests==0.1.13
 sglogging==0.0.4
 beautifulsoup4==4.7.1
 lxml==4.6.2
-sgscrape==0.1.15
+sgscrape==0.1.17
 sgpostal==0.1.0

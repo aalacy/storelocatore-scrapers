@@ -99,7 +99,7 @@ def get_data():
 
             city = address_pieces[-2].split(", ")[0].strip()
             state = " " + address_pieces[-2].split(", ")[1].split(" ")[0].strip()
-            zipp = address_pieces[-2].split(", ")[1].split(" ")[1].strip()
+            zipp = address_pieces[-2].split(", ")[1].split(" ")[-1].strip()
 
         else:
             address = address_pieces[0].split(",")[0].strip()
@@ -107,6 +107,8 @@ def get_data():
             state = " " + address_pieces[0].split(",")[2].split(" ")[-2].strip()
             zipp = address_pieces[0].split(",")[2].split(" ")[-1].strip()
 
+        city = city.replace("Â ", "")
+        zipp = zipp.replace("Â ", "")
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         hours = "<MISSING>"
