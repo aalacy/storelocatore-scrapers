@@ -73,10 +73,8 @@ def get_data():
                 .then(data => done(data))
                 """
                 )
-            print("anywhere")
             break
-        except Exception as e:
-            print(e)
+        except Exception:
             continue
 
     for location in data["Locations"]:
