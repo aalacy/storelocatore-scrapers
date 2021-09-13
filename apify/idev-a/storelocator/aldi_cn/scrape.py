@@ -36,7 +36,15 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
