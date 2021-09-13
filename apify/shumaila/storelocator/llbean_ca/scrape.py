@@ -15,12 +15,12 @@ headers = {
 def fetch_data():
     pattern = re.compile(r"\s\s+")
     url = "https://www.llbean.ca/Retail.html"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     link_list = soup.findAll("div", {"class": "row_intl"})[1].findAll("a")
     for alink in link_list:
         link = alink["href"]
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         divlist = soup.findAll("div", {"class": "color-medium-grey"})
         title = divlist[0].text
