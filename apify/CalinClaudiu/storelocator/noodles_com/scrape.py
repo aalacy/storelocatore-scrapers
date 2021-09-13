@@ -24,31 +24,38 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     store_url_list = []
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    state_list = soup.findAll("a", {"class": "c-directory-list-content-item-link"})
+    state_list = soup.findAll("li", {"class": "c-directory-list-content-item"})
     for idx1, state_url in enumerate(state_list):
         logger.info(f"Fetching locations from State {state_url.text}")
-        state_url = "https://locations.noodles.com/" + state_url["href"]
-        r2 = session.get(state_url, headers=headers, timeout=180)
-        soup2 = BeautifulSoup(r2.text, "html.parser")
-        city_list = soup2.findAll("li", {"class": "c-directory-list-content-item"})
-        for city in city_list:
-            if city.find("span").text == "(1)":
-                temp = "https://locations.noodles.com/" + city.find("a")["href"]
-                store_url_list.append(temp)
-                logger.info(temp)
-                state.push_request(SerializableRequest(url=temp))
-            else:
-                city_url = "https://locations.noodles.com/" + city.find("a")["href"]
-                r4 = session.get(city_url, headers=headers, timeout=180)
-                soup4 = BeautifulSoup(r4.text, "html.parser")
-                loclist = soup4.findAll("div", {"class": "c-location-grid-item"})
-                for loc in loclist:
-                    loc = "https://locations.noodles.com/" + loc.find("a")[
-                        "href"
-                    ].replace("..", "")
-                    store_url_list.append(loc)
-                    logger.info(loc)
-                    state.push_request(SerializableRequest(url=loc))
+        if state_url.find("span").text == "(1)":
+            temp = "https://locations.noodles.com/" + state_url.find("a")["href"]
+            store_url_list.append(temp)
+            logger.info(temp)
+            print("HURAAAAAAAAAAAHHHHHHHHHH")
+            state.push_request(SerializableRequest(url=temp))
+        else:
+            state_url = "https://locations.noodles.com/" + state_url.find("a")["href"]
+            r2 = session.get(state_url, headers=headers, timeout=180)
+            soup2 = BeautifulSoup(r2.text, "html.parser")
+            city_list = soup2.findAll("li", {"class": "c-directory-list-content-item"})
+            for city in city_list:
+                if city.find("span").text == "(1)":
+                    temp = "https://locations.noodles.com/" + city.find("a")["href"]
+                    store_url_list.append(temp)
+                    logger.info(temp)
+                    state.push_request(SerializableRequest(url=temp))
+                else:
+                    city_url = "https://locations.noodles.com/" + city.find("a")["href"]
+                    r4 = session.get(city_url, headers=headers, timeout=180)
+                    soup4 = BeautifulSoup(r4.text, "html.parser")
+                    loclist = soup4.findAll("div", {"class": "c-location-grid-item"})
+                    for loc in loclist:
+                        loc = "https://locations.noodles.com/" + loc.find("a")[
+                            "href"
+                        ].replace("..", "")
+                        store_url_list.append(loc)
+                        logger.info(loc)
+                        state.push_request(SerializableRequest(url=loc))
     return True
 
 
@@ -69,8 +76,8 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             )
         except:
             street_address = soup.find("span", {"class": "c-address-street-1"}).text
-        city = soup.find("span", {"class": "c-address-city"}).text
-        state = soup.find("span", {"itemprop": "addressLocality"}).text
+        city = soup.find("span", {"itemprop": "addressLocality"}).text
+        state = soup.find("abbr", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
         country_code = soup.find("abbr", {"itemprop": "addressCountry"}).text
         phone = soup.find("span", {"itemprop": "telephone"}).text
