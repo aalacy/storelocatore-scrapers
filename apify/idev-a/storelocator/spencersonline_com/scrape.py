@@ -126,6 +126,7 @@ def fetchData():
                 country_code = "CA"
             yield SgRecord(
                 locator_domain=DOMAIN,
+                store_number=page_url.split("-")[-1],
                 page_url=page_url,
                 location_name=sp1.select_one("span.location-name").text.strip(),
                 street_address=_["address"]["streetAddress"],
