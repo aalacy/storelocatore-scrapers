@@ -15,10 +15,8 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-
 base_url = "https://restaurants.subway.com/index.html"
 locator_domain = "https://restaurants.subway.com/"
-session = SgRequests(proxy_rotation_failure_threshold=20).requests_retry_session()
 
 
 def fetchConcurrentList(links, http):
@@ -34,7 +32,11 @@ def fetchConcurrentList(links, http):
 
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
-        sp1 = http.get(next_r.url, headers=_headers)
+        logger.info(next_r.url)
+        res = http.get(next_r.url, headers=_headers)
+        if res.status_code != 200:
+            continue
+        sp1 = bs(res.text, "lxml")
         street_address = ""
         if sp1.select_one(".c-address-street-1"):
             street_address = sp1.select_one(".c-address-street-1").text.strip()

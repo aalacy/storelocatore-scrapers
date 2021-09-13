@@ -7,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-    api_url = "https://www.alivehealthcentre.ca/static/js/14.3d33c14b.chunk.js"
+    api_url = "https://www.alivehealthcentre.ca/static/js/14.5895b00a.chunk.js"
     session = SgRequests()
 
     headers = {
