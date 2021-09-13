@@ -106,8 +106,8 @@ def fetch_data():
                 store_number=store,
                 phone=phone.strip(),
                 location_type=SgRecord.MISSING,
-                latitude=lat,
-                longitude=longt,
+                latitude=str(lat),
+                longitude=str(longt),
                 hours_of_operation=hours,
             )
 
