@@ -13,6 +13,7 @@ headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 }
 
+
 def parse_ids(dom, session):
     ent_list = []
     ids = dom.xpath('//script[@id="paginator-ids-core"]/text()')
@@ -39,6 +40,7 @@ def parse_ids(dom, session):
 
     return urls
 
+
 def fetch_all_locations(session):
     locations = []
     start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
@@ -46,10 +48,11 @@ def fetch_all_locations(session):
 
     return locations
 
+
 def traverse_directory(url, session, locations):
     page = etree.HTML(session.get(url, headers=headers, timeout=180).text)
     sublocations = page.xpath('//*[@class="Teaser-link"]/@href')
-    bookings = [url for url in sublocations if 'index.en.shtml' in url]
+    bookings = [url for url in sublocations if "index.en.shtml" in url]
     if len(bookings):
         for booking in bookings:
             if booking not in locations:
@@ -112,6 +115,7 @@ def write_output(data):
     ) as writer:
         for row in data:
             writer.write_row(row)
+
 
 def scrape():
     data = fetch_data()
