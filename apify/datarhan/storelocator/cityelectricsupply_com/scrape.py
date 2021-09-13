@@ -1,46 +1,16 @@
 import re
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
 
     start_url = "https://www.cityelectricsupply.com/branchLocator"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
@@ -54,52 +24,46 @@ def fetch_data():
 
     for poi in all_locations:
         store_url = "https://www.cityelectricsupply.com/branch/" + poi["BranchId"]
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = poi["BranchName"]
         street_address = poi["Address1"]
         if poi["Address2"]:
             street_address += " " + poi["Address2"]
-        city = poi["City"]
-        state = poi["State"]
-        zip_code = poi["ZipCode"]
-        country_code = "<MISSING>"
-        store_number = poi["BranchId"]
-        phone = poi["Phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["Latitude"]
-        longitude = poi["Longitude"]
-        hoo = loc_dom.xpath('//ul[@class="branch-store-hours-details"]//text()')
+        hoo = loc_dom.xpath('//ul[@class="col-12 branch-store-hours-details"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=SgRecord.MISSING,
+            location_name=poi["BranchName"],
+            street_address=street_address,
+            city=poi["City"],
+            state=poi["State"],
+            zip_postal=poi["ZipCode"],
+            country_code=SgRecord.MISSING,
+            store_number=poi["BranchId"],
+            phone=poi["Phone"],
+            location_type=SgRecord.MISSING,
+            latitude=poi["Latitude"],
+            longitude=poi["Longitude"],
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

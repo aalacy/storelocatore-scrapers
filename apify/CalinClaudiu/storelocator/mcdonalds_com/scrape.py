@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup as b4
 from sgzip.utils import earth_distance
 import json
 import os
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
@@ -209,14 +209,25 @@ class CleanRecord:
                 cleanRecord["locator_domain"], country, locale, identifier
             )
         else:
-            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
-                cleanRecord["locator_domain"],
-                country,
-                locale,
-                badRecord["properties"]["identifiers"]["storeIdentifier"][1][
-                    "identifierValue"
-                ],
-            )
+            try:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                        "identifierValue"
+                    ],
+                )
+            except Exception:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][0][
+                        "identifierValue"
+                    ],
+                )
+
         return cleanRecord
 
     def DEDUPE(badRecord):
@@ -286,7 +297,7 @@ class CleanRecord:
             cleanRecord["raw_address"] = ""
         else:
             newdata = copy
-            parsed = parser.parse_address_intl(
+            parsed = parse_address_intl(
                 newdata.replace(",", " ").replace("\r", "").replace("\n", "")
             )
             cleanRecord = {}
@@ -854,7 +865,9 @@ def scrape():
             is_required=False,
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["hours_of_operation"], is_required=False
+            mapping=["hours_of_operation"],
+            is_required=False,
+            value_transform=lambda x: x.replace("\n", " ").replace("\r", " "),
         ),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
         raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),

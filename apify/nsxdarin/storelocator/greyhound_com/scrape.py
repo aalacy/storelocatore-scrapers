@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("greyhound_com")
 
@@ -12,33 +15,6 @@ headers = {
     "origin": "https://www.greyhound.com",
     "em-api-key": "HeQpRjsFI5xlAaSx2onkjc1HTK0ukqA1IrVvd5fvaMhNtzLTxInTpeYB1MK93pah",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -59,7 +35,7 @@ def fetch_data():
         if '{"name":"' in line:
             items = line.split('{"name":"')
             for item in items:
-                if '"city":{' in item:
+                if '"city":{' in item and "postalCode" in item:
                     name = item.split('"')[0]
                     zc = item.split('"postalCode":"')[1].split('"')[0]
                     add = item.split('"street":"')[1].split('"')[0]
@@ -184,28 +160,34 @@ def fetch_data():
                         phone = "<MISSING>"
                     if loc == "":
                         loc = "<MISSING>"
+                    if "please note" in add:
+                        add = add.split("please note")[0].replace("*", "").strip()
                     if "MEX" not in state and "MEX" not in zc and len(state) == 2:
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

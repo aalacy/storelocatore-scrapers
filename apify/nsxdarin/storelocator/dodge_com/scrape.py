@@ -1,42 +1,23 @@
-import csv
+import time
+from typing import Iterable
+import json
+
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgzip.static import static_zipcode_list
-from sgzip.dynamic import SearchableCountries
-from tenacity import retry, stop_after_attempt
 
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.pause_resume import CrawlStateSingleton
 
-logger = SgLogSetup().get_logger("dodge_com")
+website = "dodge.com"
+MISSING = SgRecord.MISSING
+STORE_JSON_URL = "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode={}"
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+log = SgLogSetup().get_logger("dodge_com")
 
 
 def parse_hours(json_hours):
@@ -68,73 +49,93 @@ def parse_hours(json_hours):
 
 def handle_missing(x):
     if not x:
-        return "<MISSING>"
+        return MISSING
     return x
 
 
-@retry(stop=stop_after_attempt(5))
-def get_url(url):
-    session = SgRequests()
-    return session.get(url, headers=headers).json()
+def fetch_single_store(http, dealer, countryCode):
+    country_code = countryCode
+    store_number = handle_missing(dealer["dealerCode"])
+    typ = "<MISSING>"
+    name = handle_missing(dealer["dealerName"])
+    add = handle_missing(dealer["dealerAddress1"])
+    add2 = dealer["dealerAddress2"]
+    if add2:
+        add = f"add {add2}"
+    state = handle_missing(dealer["dealerState"])
+    city = handle_missing(dealer["dealerCity"])
+    zc = handle_missing(dealer["dealerZipCode"][0:5])
+    purl = handle_missing(dealer["website"])
+    phone = handle_missing(dealer["phoneNumber"])
+    lat = handle_missing(dealer["dealerShowroomLatitude"])
+    lng = handle_missing(dealer["dealerShowroomLongitude"])
+    hours = parse_hours(dealer["departments"]["sales"]["hours"])
+
+    return SgRecord(
+        locator_domain=website,
+        page_url=purl,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country_code,
+        phone=phone,
+        location_type=typ,
+        store_number=store_number,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
 
 
-def fetch_data():
-    ids = set()
-    codes = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
-    for code in codes:
-        logger.info("Pulling Zip Code %s..." % code)
-        url = (
-            "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode="
-            + code
-        )
-        r = get_url(url)
-        if "error" in r:
+def fetch_records(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]:
+    state = CrawlStateSingleton.get_instance()
+
+    for code in search:
+        countryCode = search.current_country()
+        url = STORE_JSON_URL.format(code)
+        response = http.get(url)
+        decoded_data = response.text.encode().decode("utf-8-sig")
+        data = json.loads(decoded_data)
+        if "error" in data:
             continue
-        dealers = r["dealer"]
-        logger.info(f"found {len(dealers)} dealers")
-        for dealer in dealers:
-            store_number = handle_missing(dealer["dealerCode"])
-            if store_number in ids:
-                continue
-            else:
-                ids.add(store_number)
-            website = "dodge.com"
-            typ = "<MISSING>"
-            name = handle_missing(dealer["dealerName"])
-            country = handle_missing(dealer["dealerShowroomCountry"])
-            add = handle_missing(dealer["dealerAddress1"])
-            add2 = dealer["dealerAddress2"]
-            if add2:
-                add = f"add {add2}"
-            state = handle_missing(dealer["dealerState"])
-            city = handle_missing(dealer["dealerCity"])
-            zc = handle_missing(dealer["dealerZipCode"][0:5])
-            purl = handle_missing(dealer["website"])
-            phone = handle_missing(dealer["phoneNumber"])
-            lat = handle_missing(dealer["dealerShowroomLatitude"])
-            lng = handle_missing(dealer["dealerShowroomLongitude"])
-            hours = parse_hours(dealer["departments"]["sales"]["hours"])
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store_number,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        dealers = data["dealer"]
+        log.info(f"found {len(dealers)} dealers")
+
+        for store in dealers:
+            try:
+                yield fetch_single_store(http, store, countryCode.upper())
+                rec_count = state.get_misc_value(countryCode, default_factory=lambda: 0)
+                state.set_misc_value(countryCode, rec_count + 1)
+            except Exception as e:
+                log.error(f"Fat store from  {code}, message={e}")
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info(f"Start scrapping {website} ...")
+    start = time.time()
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+    )
+
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        with SgRequests() as http:
+            for rec in fetch_records(http, search):
+                writer.write_row(rec)
+
+    state = CrawlStateSingleton.get_instance()
+    log.debug("Printing number of records by country-code:")
+    for country_code in SearchableCountries.USA:
+        try:
+            count = state.get_misc_value(country_code, default_factory=lambda: 0)
+            log.debug(f"{country_code}: {count}")
+        except Exception as e:
+            log.info(f"Country codes: {country_code}, message={e}")
+            pass
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
