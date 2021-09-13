@@ -1,6 +1,6 @@
 import json
 from lxml import etree
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -8,6 +8,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
+headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+}
 
 def parse_ids(dom, session):
     ent_list = []
@@ -35,89 +39,70 @@ def parse_ids(dom, session):
 
     return urls
 
+def fetch_all_locations(session):
+    locations = []
+    start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
+    traverse_directory(start_url, session, locations)
+
+    return locations
+
+def traverse_directory(url, session, locations):
+    page = etree.HTML(session.get(url, headers=headers, timeout=180).text)
+    sublocations = page.xpath('//*[@class="Teaser-link"]/@href')
+    bookings = [url for url in sublocations if 'index.en.shtml' in url]
+    if len(bookings):
+        for booking in bookings:
+            if booking not in locations:
+                locations.append(booking)
+    else:
+        for location in sublocations:
+            traverse_directory(location, session, locations)
+
 
 def fetch_data():
     domain = "accor.com"
-    start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
-    session = SgRequests()
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
+    session = SgRequests(proxy_rotation_failure_threshold=3, retry_behavior=None)
 
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-    all_directions = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-    for url in all_directions:
-        all_locations = parse_locations_urls(url)
-        for store_url in all_locations:
-            store_url = urljoin(start_url, store_url)
-            loc_response = session.get(store_url)
-            loc_dom = etree.HTML(loc_response.text)
-            if not loc_dom.xpath('//img[contains(@src, "/mer.svg")]'):
-                continue
-            poi = loc_dom.xpath(
-                '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
-            )
-            if not poi:
-                continue
-            poi = json.loads(poi[0])
+    all_locations = fetch_all_locations(session)
+    for store_url in all_locations:
+        loc_response = session.get(store_url, headers=headers)
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath(
+            '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
+        )
+        if not poi:
+            continue
+        poi = json.loads(poi[0])
 
-            street_address = loc_dom.xpath(
-                '//meta[@property="og:street-address"]/@content'
-            )[0]
-            latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')
-            latitude = latitude[0] if latitude else SgRecord.MISSING
-            longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')
-            longitude = longitude[0] if longitude else SgRecord.MISSING
+        street_address = loc_dom.xpath(
+            '//meta[@property="og:street-address"]/@content'
+        )[0]
+        latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')
+        latitude = latitude[0] if latitude else SgRecord.MISSING
+        longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')
+        longitude = longitude[0] if longitude else SgRecord.MISSING
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=store_url,
-                location_name=poi["name"],
-                street_address=street_address,
-                city=poi["address"].get("addressLocality"),
-                state=SgRecord.MISSING,
-                zip_postal=poi["address"].get("postalCode"),
-                country_code=poi["address"]["addressCountry"],
-                store_number=SgRecord.MISSING,
-                phone=poi.get("telephone"),
-                location_type=poi["@type"],
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=SgRecord.MISSING,
-            )
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=poi["name"],
+            street_address=street_address,
+            city=poi["address"].get("addressLocality"),
+            state=SgRecord.MISSING,
+            zip_postal=poi["address"].get("postalCode"),
+            country_code=poi["address"]["addressCountry"],
+            store_number=SgRecord.MISSING,
+            phone=poi.get("telephone"),
+            location_type=poi["@type"],
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-            yield item
+        yield item
 
 
-def parse_locations_urls(url):
-    all_locations = []
-    session = SgRequests()
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
-    url = urljoin("https://all.accor.com/", url)
-    response = session.get(url, headers=hdr)
-    code = response.status_code
-    while code != 200:
-        session = SgRequests()
-        response = session.get(url, headers=hdr)
-        code = response.status_code
-    dom = etree.HTML(response.text)
-    urls_to_parse = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-    urls_to_parse += parse_ids(dom, session)
-    for url in urls_to_parse:
-        yield url
-    all_locations += dom.xpath(
-        '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
-    )
-
-    return all_locations
-
-
-def scrape():
+def write_output(data):
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -125,8 +110,12 @@ def scrape():
             )
         )
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        for row in data:
+            writer.write_row(row)
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
 
 if __name__ == "__main__":
