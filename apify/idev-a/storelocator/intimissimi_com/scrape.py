@@ -31,7 +31,6 @@ class ExampleSearchIteration(SearchIteration):
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
 
-        self._http.clear_cookies()
         # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
         res = self._http.get(base_url.format(coord[0], coord[1]), headers=_headers)
         if res.status_code == 200:
