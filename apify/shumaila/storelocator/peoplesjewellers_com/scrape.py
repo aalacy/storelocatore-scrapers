@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -28,8 +27,6 @@ def fetch_data():
             "div", {"class": "col-lg-3"}
         )
 
-        pattern = re.compile(r"\s\s+")
-
         for branch in branchlist:
             try:
                 link = branch.find("a")["href"]
@@ -52,14 +49,16 @@ def fetch_data():
                 coord = soup.find("a", {"class": "link-directions"})["href"]
                 lat, longt = coord.split("Location/")[1].split(",", 1)
                 store = link.split("-peo")[1]
-                soup = str(soup)
                 hours = (
-                    soup.split('detailSectionHeadline">Hours</div>')[1]
-                    .split("{", 1)[1]
+                    str(soup)
+                    .split('"openings":', 1)[1]
                     .split("}", 1)[0]
+                    .split(",")[-1]
+                    .split(":", 1)[1]
+                    .replace('"', "")
+                    .replace("\n", " ")
+                    .strip()
                 )
-                hours = hours.replace('"', "").replace("\n", " ").replace("::", " ")
-                hours = re.sub(pattern, " ", hours).lstrip()
             else:
 
                 street = branch.find("span", {"itemprop": "streetAddress"}).text
