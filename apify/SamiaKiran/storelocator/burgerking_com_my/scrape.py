@@ -54,7 +54,7 @@ def fetch_data():
                         .split()
                     )
                 phone = MISSING
-                # log.info(page_url)
+                log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 raw_address = (
