@@ -64,6 +64,9 @@ def fetch_data():
             longitude = geo[1]
         if len(state) > 2:
             state = ""
+        temp_closed = loc_dom.xpath('//strong[@class="center_temp_closed"]')
+        if temp_closed:
+            hoo = "Temporarily Closed"
 
         item = SgRecord(
             locator_domain=domain,
