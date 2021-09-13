@@ -87,6 +87,8 @@ def fetch_data():
                 days = jso["openingHoursSpecification"]
                 tim = ""
                 for day in days:
+                    if not day.get("dayOfWeek"):
+                        continue
                     tim += (
                         day["dayOfWeek"]
                         + ": "
