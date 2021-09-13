@@ -26,7 +26,7 @@ def fetch_data():
                 country_code = "US"
             page_url = _.a["href"]
             logger.info(page_url)
-            addr = _.select_one('div[itemprop="address"]').text.strip()
+            addr = " ".join(_.select_one('div[itemprop="address"]').stripped_strings)
             zip_postal = ""
             if _.select_one('span[itemprop="postalCode"]'):
                 zip_postal = _.select_one('span[itemprop="postalCode"]').text.strip()
