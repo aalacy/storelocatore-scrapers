@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com/ro/ro/stores/"
     domain = "ikea.com/ro"
@@ -58,8 +58,8 @@ def fetch_data():
             store_number="",
             phone="",
             location_type="",
-            latitude=geo[0],
-            longitude=geo[1].split("!")[0],
+            latitude=geo[1].split("!")[0],
+            longitude=geo[0].split("!")[0],
             hours_of_operation=hoo,
         )
 
