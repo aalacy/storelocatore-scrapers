@@ -10,6 +10,10 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from webdriver_manager.chrome import ChromeDriverManager
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 @tenacity.retry(wait=tenacity.wait_fixed(3))
 def get_with_retry(driver, url):

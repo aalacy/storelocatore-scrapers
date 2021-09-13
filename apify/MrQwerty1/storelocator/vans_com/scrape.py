@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgscrape.pause_resume import CrawlStateSingleton
 from sglogging import sglog
 
 
@@ -98,13 +99,17 @@ def fetch_data(la, ln, sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     locator_domain = "https://www.vans.com/"
     log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, max_search_distance_miles=500
+            country_codes=SearchableCountries.ALL, max_search_distance_miles=100
         )
         for lat, lng in search:
+            log.info(
+                f"Coordinates remaining: {search.items_remaining()} For country: {search.current_country()}"
+            )
             log.info(f"Now Checking : {lat},{lng}")
             fetch_data(lat, lng, writer)
