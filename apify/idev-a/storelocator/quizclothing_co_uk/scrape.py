@@ -1,11 +1,10 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, Grain_8
+from sgzip.dynamic import DynamicGeoSearch
 from sgzip.utils import country_names_by_code
 import json
 from bs4 import BeautifulSoup as bs
