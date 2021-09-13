@@ -18,7 +18,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data(_, http: SgRequests):
 
     res = http.request(
-        url="https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token=c5bbce0aec6a506c9e6b9c53d71fc123",
+        url="https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token=384d27726e184470f9e11be758b172f4",
         headers={
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
         },
