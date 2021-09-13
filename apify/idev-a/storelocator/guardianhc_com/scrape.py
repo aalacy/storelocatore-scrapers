@@ -6,7 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import re
 
 logger = SgLogSetup().get_logger("guardianhc")
 
@@ -15,40 +14,40 @@ _headers = {
 }
 
 locator_domain = "https://guardianhc.com"
-base_url = "https://guardianhc.com/locations/?pg=1"
+base_url = "https://guardianhc.com/locations"
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
-            .text.split("var locations =")[1]
-            .split("var ge_location_search")[0]
+            .text.split("var maplistScriptParamsKo =")[1]
+            .split("/* ]]> */")[0]
             .strip()[:-1]
-        )["data"]
+        )["KOObject"][0]["locations"]
         for _ in locations:
-            street_address = _["ge_location_street_address"]
-            if _["ge_location_street_address_2"]:
-                street_address += " " + _["ge_location_street_address_2"]
-            sp1 = bs(session.get(_["permalink"], headers=_headers).text, "lxml")
-            logger.info(_["permalink"])
+            addr = list(
+                bs(_["description"], "lxml").select_one("div.address").stripped_strings
+            )
             phone = ""
-            if sp1.find("a", href=re.compile(r"tel:")):
-                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
+            simple = list(bs(_["simpledescription"], "lxml").stripped_strings)
+            if simple and "Phone" in simple[0]:
+                phone = simple[1]
             yield SgRecord(
-                page_url=_["permalink"],
-                store_number=_["ID"],
-                location_name=_["post_title"],
-                street_address=street_address,
-                city=_["ge_location_city"],
-                state=_["ge_location_state"],
-                zip_postal=_["ge_location_zip_code"],
-                latitude=_["ge_location_lat"],
-                longitude=_["ge_location_lng"],
+                page_url=_["locationUrl"],
+                store_number=_["cssClass"].strip().split()[-1].split("-")[-1],
+                location_name=_["title"],
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                latitude=_["latitude"],
+                longitude=_["longitude"],
                 country_code="US",
                 phone=phone,
-                location_type=_["ge_location_location_type"],
+                location_type=_["cssClass"].strip().split()[0],
                 locator_domain=locator_domain,
+                raw_address=" ".join(addr),
             )
 
 
