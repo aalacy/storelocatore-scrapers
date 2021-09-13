@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgFirefox
-from webdriver_manager.firefox import GeckoDriverManager
 from urllib.parse import urlparse
 from sgpostal.sgpostal import parse_address_intl
 import json
@@ -43,9 +42,7 @@ headers = {
 def fetch_records():
     data_list = []
     data_dict = {}
-    with SgFirefox(
-        executable_path=GeckoDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgFirefox(is_headless=True) as driver:
         for idx1, ste in enumerate(LOCATION_URLS[0:]):
             logger.info(f"Pulling the data from: {ste}")
             driver.get(ste)
@@ -63,7 +60,6 @@ def fetch_records():
                 data_dict = {"country_location_url": ste, "data": data_json}
                 logger.info(f"Country store location URL: {ste}")
                 data_list.append(data_dict)
-                all_keys = data_json[0].keys()
                 logger.info(f"data JSON: {data_json}")
                 for idx, item in enumerate(data_json):
                     locator_domain = netloc.replace("www.", "")
