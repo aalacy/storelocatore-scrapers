@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -128,22 +129,27 @@ def fetch_data():
         hours = hoursarray[x]
         phone = phones[x]
         hours = hours.replace("Abierto de ", "")
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        phone = phone.replace(",", "")
+        hours = hours.replace(",", "")
+        if "Parque Tezontle" in name:
+            lat = "-99.0838208486921"
+        if "cerrada" not in hours:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
