@@ -53,7 +53,6 @@ def get_data():
             .text.strip()
             .split("\n")
         ][1:]
-        print(address_parts)
 
         address = address_parts[0]
         zipp = address_parts[-1]
