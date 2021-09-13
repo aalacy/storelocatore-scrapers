@@ -1,5 +1,3 @@
-from urllib.parse import urljoin
-from lxml import etree
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
