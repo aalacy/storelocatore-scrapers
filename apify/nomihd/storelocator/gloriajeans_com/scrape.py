@@ -32,7 +32,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome() as driver:
         driver.get("https://www.gloriajeans.com/pages/store-locator")
         time.sleep(60)
         stores_sel = lxml.html.fromstring(driver.page_source)

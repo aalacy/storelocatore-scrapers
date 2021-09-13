@@ -36,6 +36,11 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         sp1 = bs(http.get(next_r.url, headers=_headers).text, "lxml")
         _ = json.loads(sp1.find("script", type="application/ld+json").string)
         addr = _["address"]
+        street_address = (
+            addr["streetAddress"].split(addr["addressLocality"].strip())[0].strip()
+        )
+        if street_address.isdigit():
+            street_address = addr["streetAddress"].strip()
         hours = []
         days = [
             dd.text.strip().split()[0] for dd in sp1.select("aside.sidebar h5.date")
@@ -49,9 +54,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         yield SgRecord(
             page_url=next_r.url,
             location_name=_["name"],
-            street_address=addr["streetAddress"]
-            .split(addr["addressLocality"].strip())[0]
-            .strip(),
+            street_address=street_address,
             city=addr["addressLocality"].strip(),
             state=addr["addressRegion"].strip(),
             zip_postal=addr["postalCode"].strip(),
