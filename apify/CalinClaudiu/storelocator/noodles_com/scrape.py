@@ -31,7 +31,6 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             temp = "https://locations.noodles.com/" + state_url.find("a")["href"]
             store_url_list.append(temp)
             logger.info(temp)
-            print("HURAAAAAAAAAAAHHHHHHHHHH")
             state.push_request(SerializableRequest(url=temp))
         else:
             state_url = "https://locations.noodles.com/" + state_url.find("a")["href"]
