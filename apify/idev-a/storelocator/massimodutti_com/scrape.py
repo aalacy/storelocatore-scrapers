@@ -30,7 +30,6 @@ days = [
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     for lat, lng in search:
-        http.clear_cookies()
         res = http.get(base_url.format(lat, lng), headers=_headers)
         if res.status_code != 200:
             continue
@@ -39,9 +38,6 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         for store in locations:
             hours = []
             for hr in store.get("openingHours", {}).get("schedule", []):
-                import pdb
-
-                pdb.set_trace()
                 times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['endHour']}"
                 if len(hr["weekdays"]) == 1:
                     hh = hr["weekdays"][0]
@@ -83,7 +79,11 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=20
+        )
+    ) as writer:
         with SgRequests(proxy_country="us") as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
