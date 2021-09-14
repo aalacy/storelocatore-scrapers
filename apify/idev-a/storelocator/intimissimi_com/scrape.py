@@ -73,7 +73,7 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=500,
     )
 
     with SgWriter(
