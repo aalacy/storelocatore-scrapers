@@ -108,7 +108,7 @@ def get_data():
             "store_number": store_number,
             "street_address": address,
             "state": state,
-            "zip": zipp[:5],
+            "zip": zipp,
             "phone": phone,
             "location_type": location_type,
             "hours": hours,

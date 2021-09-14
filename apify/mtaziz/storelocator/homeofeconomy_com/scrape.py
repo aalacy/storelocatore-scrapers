@@ -11,6 +11,7 @@ from pyppeteer import launch
 from pyppeteer_stealth import stealth
 import json
 import ssl
+import pyppdf.patch_pyppeteer
 
 
 try:
@@ -29,6 +30,9 @@ logger = SgLogSetup().get_logger(logger_name="homeofeconomy_net")
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
 }
+
+# To fix - certificate verify failed: unable to get local issuer, we have used this library pyppdf
+logger.info(f"pyppdf loaded: {pyppdf.patch_pyppeteer}")
 
 
 def get_store_urls(http: SgRequests):
@@ -99,7 +103,7 @@ def fetch_record(content, store_url):
 
 
 async def get_response(url):
-    driver = await launch(headless=True)
+    driver = await launch(headless=True, args=["--no-sandbox"])
     page = await driver.newPage()
     await stealth(page)
     await page.goto(url)
