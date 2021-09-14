@@ -116,6 +116,14 @@ def fetch_location(loc, driver):
         phone = "(847) 674-1673"
     if "chambersburg/5447" in loc:
         phone = "(717) 261-9701"
+    if "north-haven/5356" in loc:
+        phone = "(203) 776-4676"
+    if "east-kissimmee-near-old-town/5055" in loc:
+        phone = "(407) 396-9556"
+    if "yonkers/5514" in loc:
+        phone = "(914) 963-3491"
+    if "cranberry-township/5285" in loc:
+        phone = "(724) 776-1500"
     if "Find A R" not in name:
         return SgRecord(
             locator_domain=website,

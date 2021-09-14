@@ -22,7 +22,7 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         url = "https://hendersonglass.com/locations/"
-        r = session.get(url, headers=headers)
+        r = session.get(url, headers=headers, timeout=180)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "locationsCol"})
         for loc in loclist:

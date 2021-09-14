@@ -91,7 +91,7 @@ def get_data():
             hours = hours + day + " " + time + ", "
         country_code = "UK"
         hours = hours[:-2]
-        if address == "Coming soon":
+        if "coming soon" in address.lower():
             continue
 
         if city == "Springkerse Industrial Estate":
@@ -108,7 +108,7 @@ def get_data():
             "store_number": store_number,
             "street_address": address,
             "state": state,
-            "zip": zipp[:5],
+            "zip": zipp,
             "phone": phone,
             "location_type": location_type,
             "hours": hours,
