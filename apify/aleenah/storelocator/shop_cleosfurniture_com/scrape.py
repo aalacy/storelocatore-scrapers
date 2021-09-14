@@ -1,114 +1,98 @@
-import time
-import csv
-from sgselenium import SgSelenium
-import re
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
+from sglogging import sglog
+from sgselenium import SgChrome
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
-logger = SgLogSetup().get_logger('shop.cleosfurniture_com')
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
+session = SgRequests()
+website = " shop.cleosfurniture_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-driver = SgSelenium().chrome()
+DOMAIN = "https://shop.cleosfurniture.com/"
+MISSING = "<MISSING>"
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
 
-def parse_geo(url):
-    lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
-    lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
-    return lat, lon
 
-def fetch_data():
-    # Your scraper here
+def fetch_data(sgw: SgWriter):
+    with SgChrome() as driver:
+        driver.get("https://shop.cleosfurniture.com/stores/store-info")
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        loclist = soup.findAll("div", {"class": "vc_btn3-container vc_btn3-inline"})
+        for loc in loclist:
+            if "cleosfurniture.com" in loc.find("a")["href"]:
+                page_url = loc.find("a")["href"]
+            else:
+                page_url = "https://shop.cleosfurniture.com" + loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            temp_list = soup.find(
+                "div", {"class": "wpb_text_column wpb_content_element"}
+            ).findAll("p")
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
+            location_name = soup.find("h1").text
+            phone = temp_list[0].get_text(separator="|", strip=True).split("|")[1]
+            address = temp_list[1].get_text(separator="|", strip=True).split("|")
+            street_address = address[1]
+            address = address[2].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            try:
+                zip_postal = address[1]
+            except:
+                zip_postal = MISSING
+            country_code = "US"
+            hours_of_operation = (
+                temp_list[2]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("STORE HOURS:", "")
+            )
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
-    driver.get("https://shop.cleosfurniture.com/stores/store-info")
-    info = driver.find_elements_by_xpath("//div[@class='wpb_text_column wpb_content_element ']")
 
-    locs=[]
-    street = []
-    cities = []
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-
-    del info[0]
-
-    for a in info:
-        data=a.text.split("\n")
-        locs.append(data[0])
-
-        street.append(data[1])
-        phones.append(data[2])
-        timing.append(data[4]+" "+data[5]+" "+data[6])
-    for loc in locs:
-        loc=loc.lower()
-        logger.info(loc)
-        s = loc.split(" ")
-        if len(s)==2:
-            loc=s[0]+"-"+s[1]
-        elif len(s)==3:
-            loc = s[0] + "-" + s[1]+ "-" + s[2]
-        elif len(s)==4:
-            loc=s[0]+"-"+s[1]
-
-        driver.get("https://shop.cleosfurniture.com/stores/"+loc)
-        info = driver.find_elements_by_xpath("//div[@class='wpb_text_column wpb_content_element ']")
-
-        data=info[0].text.split("\n")[4].split(",")
-        cities.append(data[0])
-        try:
-            zips.append(data[1].split(" ")[2])
-        except:
-            zips.append("<MISSING>")
-        """     to access location
-        geomap = driver.find_elements_by_class_name('google-maps-link')
-        logger.info(str(info.text))
-        link=""
-        for a in geomap:
-            logger.info(a.get_attribute("href"))
-            if "maps?ll=" in a.get_attribute("href"):
-                link =a.get_attribute("href")
-
-        #logger.info(link)
-        #lat, lon = parse_geo(str(geomap))
-        #logger.info(str(geomap))
-        #link = driver.find_elements_by_xpath("//div[@class='google-maps-link']")
-        #link2 = driver.find_element_by_css_selector('a').get_attribute('href')
-        
-        """
-        time.sleep(1)
-
-    all = []
-    for i in range(0, len(locs)):
-            row = []
-            row.append("https://www.cleosfurniture.com")
-            row.append(locs[i])
-            row.append(street[i])
-            row.append(cities[i])
-            row.append("Arkansas")
-            row.append(zips[i])
-            row.append("US")
-            row.append("<MISSING>")  # as not available on website
-            row.append(phones[i])
-            row.append("<MISSING>")
-            row.append("<INACCESSIBLE>")
-            row.append("<INACCESSIBLE>")
-            row.append(timing[i])
-
-            all.append(row)
-    return all
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
