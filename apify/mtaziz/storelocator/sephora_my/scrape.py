@@ -12,8 +12,6 @@ from lxml import html
 import ssl
 import re
 
-from webdriver_manager.firefox import GeckoDriverManager
-
 try:
     _create_unverified_https_context = (
         ssl._create_unverified_context
