@@ -39,7 +39,6 @@ def fetch_data():
             if json_data["address"]:
                 latitude = json_data["lat"]
                 longitude = json_data["lng"]
-                markedId = json_data["markedId"]
                 if "Address" in json_data["columnsData"][0]["name"]:
                     street_address = json_data["columnsData"][0]["value"]
 
@@ -58,7 +57,7 @@ def fetch_data():
                     if "Phone" in json_data["columnsData"][6]["name"]:
                         phone_tag = json_data["columnsData"][6]["value"]
                         phone_list = re.findall(
-                            re.compile(".?(\(?\d{3}\D{0,3}\d{3}D{0,3}\d{4}).?"),
+                            re.compile(".?(\\(?\\d{3}\\D{0,3}\\d{3}D{0,3}\\d{4}).?"),
                             str(phone_tag),
                         )
                         if phone_list:
