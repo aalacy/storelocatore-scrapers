@@ -16,7 +16,7 @@ logger = SgLogSetup().get_logger("popeyes_com")
 def fetch_data():
     locs = []
     states = []
-    cities = []
+    cities = ["https://locations.popeyes.com/dc/washington"]
     url = "https://locations.popeyes.com/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
