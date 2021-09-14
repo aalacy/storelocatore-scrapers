@@ -54,7 +54,13 @@ def fetch_data():
                         )
                     except:
                         try:
-                            coord = sp1.select_one('div.store-map iframe')['src'].split('!2d')[1].split('!3m')[0].split('!2m')[0].split('!3d')[::-1]
+                            coord = (
+                                sp1.select_one("div.store-map iframe")["src"]
+                                .split("!2d")[1]
+                                .split("!3m")[0]
+                                .split("!2m")[0]
+                                .split("!3d")[::-1]
+                            )
                         except:
                             pass
             yield SgRecord(
