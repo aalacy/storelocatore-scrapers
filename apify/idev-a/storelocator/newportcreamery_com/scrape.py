@@ -7,6 +7,8 @@ import json
 import time
 from sgscrape.sgpostal import parse_address_intl
 import ssl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 try:
     _create_unverified_https_context = (
@@ -56,7 +58,7 @@ def _hours_phone(temp, street, state):
 def fetch_data():
     locator_domain = "https://www.newportcreamery.com/"
     page_url = "https://www.newportcreamery.com/locations"
-    base_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.addressInputAtlasP"
+    base_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.seoFriendlyDropDownMenu"
     with SgChrome() as driver:
         driver.get(page_url)
         exist = False
@@ -71,63 +73,71 @@ def fetch_data():
                         or "WRchTxt7-t1i" not in _json["props"]["render"]["compProps"]
                     ):
                         continue
-                    exist = True
-                    locations = _json["props"]["render"]["compProps"]
-                    temp = list(
-                        bs(locations["WRchTxt7-t1i"]["html"], "lxml").stripped_strings
-                    )
-                    blocks = []
-                    store = []
-                    for x, tt in enumerate(temp):
-                        if x == len(temp) - 1:
-                            store.append(tt)
-                        if tt == "\u200b" or x == len(temp) - 1:
-                            if store:
-                                blocks.append(store)
-                            store = []
-                            continue
-                        store.append(tt)
-                    logger.info(f"{len(locations)} blocks found")
-                    for key, value in locations.items():
-                        if not key.startswith("comp-"):
-                            continue
-                        if "mapData" not in value:
-                            continue
-                        logger.info(
-                            f'{len(value["mapData"]["locations"])} locations found'
+                    try:
+                        exist = True
+                        locations = _json["props"]["render"]["compProps"]
+                        temp = list(
+                            bs(
+                                locations["WRchTxt7-t1i"]["html"], "lxml"
+                            ).stripped_strings
                         )
-                        for _ in value["mapData"]["locations"]:
-                            addr = parse_address_intl(_["address"])
-                            street_address = addr.street_address_1
-                            if addr.street_address_2:
-                                street_address += " " + addr.street_address_2
-                            if "181 Bellevue Avenue" in street_address:
-                                street_address = "7679 Post Road"
-                            hours, phone, zip_postal, name = _hours_phone(
-                                blocks, street_address, addr.state
+                        blocks = []
+                        store = []
+                        for x, tt in enumerate(temp):
+                            if x == len(temp) - 1:
+                                store.append(tt)
+                            if tt == "\u200b" or x == len(temp) - 1:
+                                if store:
+                                    blocks.append(store)
+                                store = []
+                                continue
+                            store.append(tt)
+                        logger.info(f"{len(locations)} blocks found")
+                        for key, value in locations.items():
+                            if not key.startswith("comp-"):
+                                continue
+                            if "mapData" not in value:
+                                continue
+                            logger.info(
+                                f'{len(value["mapData"]["locations"])} locations found'
                             )
-                            city = name.split(",")[0]
-                            state = name.split(",")[-1].strip()
-                            yield SgRecord(
-                                page_url=page_url,
-                                location_name=f"{name}",
-                                street_address=street_address,
-                                city=city,
-                                state=state,
-                                zip_postal=zip_postal,
-                                country_code="US",
-                                phone=phone,
-                                locator_domain=locator_domain,
-                                latitude=_["latitude"],
-                                longitude=_["longitude"],
-                                hours_of_operation="; ".join(hours).replace("–", "-"),
-                            )
+                            for _ in value["mapData"]["locations"]:
+                                addr = parse_address_intl(_["address"])
+                                street_address = addr.street_address_1
+                                if addr.street_address_2:
+                                    street_address += " " + addr.street_address_2
+                                if "181 Bellevue Avenue" in street_address:
+                                    street_address = "7679 Post Road"
+                                hours, phone, zip_postal, name = _hours_phone(
+                                    blocks, street_address, addr.state
+                                )
+                                city = name.split(",")[0]
+                                state = name.split(",")[-1].strip()
+                                yield SgRecord(
+                                    page_url=page_url,
+                                    location_name=f"{name}",
+                                    street_address=street_address,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zip_postal,
+                                    country_code="US",
+                                    phone=phone,
+                                    locator_domain=locator_domain,
+                                    latitude=_["latitude"],
+                                    longitude=_["longitude"],
+                                    hours_of_operation="; ".join(hours).replace(
+                                        "–", "-"
+                                    ),
+                                )
+                    except:
+                        import pdb
 
+                        pdb.set_trace()
                     break
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

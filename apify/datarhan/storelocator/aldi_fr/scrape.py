@@ -1,5 +1,7 @@
 from lxml import etree
 from urllib.parse import urljoin
+from time import sleep
+from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -7,6 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -17,10 +20,15 @@ def fetch_data():
 
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=fr-FR&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=F&Zip={}&Town=&Street=&Radius=100000"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.FRANCE], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.FRANCE], expected_search_radius_miles=10
     )
     for code in all_codes:
+        sleep(uniform(0, 15))
         response = session.get(search_url.format(code))
+        while "Le nombre maximum des demandes de votre IP" in response.text:
+            session = SgRequests()
+            sleep(uniform(0, 5))
+            response = session.get(search_url.format(code))
         session_id = response.url.split("=")[-1]
         hdr = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -41,12 +49,16 @@ def fetch_data():
         dom = etree.HTML(
             response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
         )
-
+        if "Le nombre maximum des demandes de votre IP" in response.text:
+            all_codes.append(code)
+            continue
         all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
         next_page = dom.xpath('//a[@title="page suivante"]/@href')
         while next_page:
+            sleep(uniform(0, 5))
             response = session.get(urljoin(start_url, next_page[0]))
+            response = session.post(start_url, headers=hdr, data=frm)
             dom = etree.HTML(
                 response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
             )
@@ -60,6 +72,8 @@ def fetch_data():
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
             raw_adr = poi_html.xpath(".//address/text()")
             raw_adr = [e.strip() for e in raw_adr]
+            addr = parse_address_intl(" ".join(raw_adr))
+
             hoo = poi_html.xpath('.//td[contains(@class,"OpeningHours")]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
@@ -68,10 +82,10 @@ def fetch_data():
                 page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
                 location_name=location_name,
                 street_address=raw_adr[0],
-                city=" ".join(raw_adr[1].split()[1:]),
+                city=addr.city,
                 state=SgRecord.MISSING,
-                zip_postal=raw_adr[1].split()[0],
-                country_code="FR",
+                zip_postal=addr.postcode,
+                country_code=SgRecord.MISSING,
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,
                 location_type=SgRecord.MISSING,

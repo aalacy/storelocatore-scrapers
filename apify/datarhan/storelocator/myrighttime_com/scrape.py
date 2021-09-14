@@ -54,6 +54,10 @@ def fetch_data():
                 '//p[font[contains(text(), "To speak to a representative, please call ")]]/text()'
             )
             phone = phone[-1] if phone else ""
+        hoo = loc_dom.xpath(
+            '//h4[contains(text(), "Hours of Operation:")]/following-sibling::h4/text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
@@ -69,7 +73,7 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hoo,
         )
 
         yield item

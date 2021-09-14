@@ -99,6 +99,8 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         if add != "" and IsGas is True:
+            if "; Lab" in hours:
+                hours = hours.split("; Lab")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

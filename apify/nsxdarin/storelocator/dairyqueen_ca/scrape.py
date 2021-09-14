@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -14,14 +15,15 @@ logger = SgLogSetup().get_logger("dairyqueen_com")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA],
-    max_search_distance_miles=25,
-    max_search_results=None,
+    max_search_distance_miles=None,
+    max_search_results=50,
 )
 
 
 def fetch_data():
     locs = []
     for lat, lng in search:
+        time.sleep(1)
         url = (
             "https://prod-dairyqueen.dotcmscloud.com/api/vtl/locations?country=ca&lat="
             + str(lat)
@@ -46,6 +48,7 @@ def fetch_data():
     website = "dairyqueen.ca"
     typ = "<MISSING>"
     country = "CA"
+    locs = ["https://www.dairyqueen.com/en-ca/locations/on/ajax/250-bayly-st-w/1993/"]
     for loc in locs:
         PFound = False
         count = 0
@@ -61,7 +64,6 @@ def fetch_data():
             add = ""
             city = ""
             state = ""
-            country = "US"
             zc = ""
             store = loc.rsplit("/", 2)[1]
             phone = ""
@@ -91,36 +93,32 @@ def fetch_data():
                         phone = line2.split('"phone":"')[1].split('"')[0]
                     except:
                         phone = "<MISSING>"
-                if '{"miniSiteHours":' in line2:
-                    days = line2.split('{"miniSiteHours":')[1].split('","')[0]
-                    try:
-                        hours = "Sun: " + days.split("1:")[1].split(",")[0]
-                    except:
-                        hours = "Sun: Closed"
-                    try:
-                        hours = hours + "; Mon: " + days.split(",2:")[1].split(",")[0]
-                    except:
-                        hours = "Mon: Closed"
-                    try:
-                        hours = hours + "; Tue: " + days.split(",3:")[1].split(",")[0]
-                    except:
-                        hours = "Tue: Closed"
-                    try:
-                        hours = hours + "; Wed: " + days.split(",4:")[1].split(",")[0]
-                    except:
-                        hours = "Wed: Closed"
-                    try:
-                        hours = hours + "; Thu: " + days.split(",5:")[1].split(",")[0]
-                    except:
-                        hours = "Thu: Closed"
-                    try:
-                        hours = hours + "; Fri: " + days.split(",6:")[1].split(",")[0]
-                    except:
-                        hours = "Fri: Closed"
-                    try:
-                        hours = hours + "; Sat: " + days.split(",7:")[1]
-                    except:
-                        hours = "Sat: Closed"
+                if '"miniSite":{"miniSiteHours":"' in line2:
+                    days = (
+                        line2.split('"miniSite":{"miniSiteHours":"')[1]
+                        .split('","')[0]
+                        .split(",")
+                    )
+                    for day in days:
+                        dnum = day.split(":")[0]
+                        if dnum == "1":
+                            hrs = "Sunday: " + day.split(":", 1)[1]
+                        if dnum == "2":
+                            hrs = "Monday: " + day.split(":", 1)[1]
+                        if dnum == "3":
+                            hrs = "Tuesday: " + day.split(":", 1)[1]
+                        if dnum == "4":
+                            hrs = "Wednesday: " + day.split(":", 1)[1]
+                        if dnum == "5":
+                            hrs = "Thursday: " + day.split(":", 1)[1]
+                        if dnum == "6":
+                            hrs = "Friday: " + day.split(":", 1)[1]
+                        if dnum == "7":
+                            hrs = "Saturday: " + day.split(":", 1)[1]
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
             if phone == "":
                 phone = "<MISSING>"
             if hours == "":
@@ -129,6 +127,9 @@ def fetch_data():
             add = add.replace("&amp;", "&").replace("&amp", "&")
             add = add.replace("\\u0026", "&")
             if Closed is False:
+                city = city.replace("\\u0026apos;", "'")
+                add = add.replace("\\u0026apos;", "'")
+                name = name.replace("\\u0026apos;", "'")
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
@@ -145,7 +146,7 @@ def fetch_data():
                     longitude=lng,
                     hours_of_operation=hours,
                 )
-            if count >= 8:
+            if count >= 3:
                 PFound = True
 
 

@@ -19,7 +19,13 @@ def fetch_data():
     for poi in all_locations:
         hoo = poi["openingHours"]
         if hoo == "Mo-So - closed":
-            continue
+            if (
+                poi.get("comment")
+                and "Diese Filiale ist wegen Umbauarbeiten" in poi["comment"]
+            ):
+                hoo = "Temporarily closed"
+            else:
+                continue
 
         item = SgRecord(
             locator_domain=domain,

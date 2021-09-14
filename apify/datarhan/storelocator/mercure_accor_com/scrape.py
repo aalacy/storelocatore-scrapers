@@ -1,6 +1,6 @@
 import json
 from lxml import etree
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -8,10 +8,13 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
-session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+}
 
 
-def parse_ids(dom):
+def parse_ids(dom, session):
     ent_list = []
     ids = dom.xpath('//script[@id="paginator-ids-core"]/text()')
     urls = []
@@ -38,59 +41,35 @@ def parse_ids(dom):
     return urls
 
 
+def fetch_all_locations(session):
+    locations = []
+    start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
+    traverse_directory(start_url, session, locations)
+
+    return locations
+
+
+def traverse_directory(url, session, locations):
+    page = etree.HTML(session.get(url, headers=headers, timeout=180).text)
+    sublocations = page.xpath('//*[@class="Teaser-link"]/@href')
+    bookings = [url for url in sublocations if "index.en.shtml" in url]
+    if len(bookings):
+        for booking in bookings:
+            if booking not in locations:
+                locations.append(booking)
+    else:
+        for location in sublocations:
+            traverse_directory(location, session, locations)
+
+
 def fetch_data():
     domain = "accor.com"
-    start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
+    session = SgRequests(proxy_rotation_failure_threshold=3, retry_behavior=None)
 
-    all_locations = []
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_directions = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-    for url in all_directions:
-        response = session.get(urljoin(start_url, url))
-        dom = etree.HTML(response.text)
-        all_countries = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-        for url in all_countries:
-            response = session.get(urljoin(start_url, url))
-            dom = etree.HTML(response.text)
-            all_cities = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-            all_cities += parse_ids(dom)
-            all_locations += dom.xpath(
-                '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
-            )
-            for url in all_cities:
-                response = session.get(urljoin(start_url, url))
-                dom = etree.HTML(response.text)
-                all_locations += dom.xpath(
-                    '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
-                )
-                all_subs = dom.xpath(
-                    '//div[@class="Teaser Teaser--geography"]//a/@href'
-                )
-                all_subs += parse_ids(dom)
-                for url in all_subs:
-                    response = session.get(urljoin(start_url, url))
-                    dom = etree.HTML(response.text)
-                    all_locations += dom.xpath(
-                        '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
-                    )
-                    all_ss = dom.xpath(
-                        '//div[@class="Teaser Teaser--geography"]//a/@href'
-                    )
-                    all_ss += parse_ids(dom)
-                    for url in all_ss:
-                        response = session.get(urljoin(start_url, url))
-                        dom = etree.HTML(response.text)
-                        all_locations += dom.xpath(
-                            '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
-                        )
-
-    for store_url in list(set(all_locations)):
-        store_url = urljoin(start_url, store_url)
-        loc_response = session.get(store_url)
+    all_locations = fetch_all_locations(session)
+    for store_url in all_locations:
+        loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
-        if not loc_dom.xpath('//img[contains(@src, "/mer.svg")]'):
-            continue
         poi = loc_dom.xpath(
             '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
         )
@@ -126,7 +105,7 @@ def fetch_data():
         yield item
 
 
-def scrape():
+def write_output(data):
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -134,8 +113,13 @@ def scrape():
             )
         )
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        for row in data:
+            writer.write_row(row)
+
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
 
 if __name__ == "__main__":
