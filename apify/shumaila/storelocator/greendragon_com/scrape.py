@@ -38,10 +38,7 @@ def fetch_data():
             temp = soup.find("div", {"class": "location-details"}).findAll("p")
             phone = temp[1].text
             hours_of_operation = (
-                temp[2]
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("Open Every Day", "")
+                temp[2].get_text(separator="|", strip=True).replace("|", " ")
             )
             address = temp[0].text
             address = address.replace(",", " ")

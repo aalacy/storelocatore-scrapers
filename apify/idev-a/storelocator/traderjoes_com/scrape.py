@@ -45,7 +45,9 @@ def fetch_data():
                     )
                     cc = sp2.select_one("p.opening-comments")
                     if cc and (
-                        "coming soon" in cc.text.lower() or "opening" in cc.text.lower()
+                        "coming soon" in cc.text.lower()
+                        or "opening" in cc.text.lower()
+                        or "opens" in cc.text.lower()
                     ):
                         continue
                     addr = list(sp2.select_one("div.addressline").stripped_strings)
