@@ -79,7 +79,11 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=20
+        )
+    ) as writer:
         with SgRequests(proxy_country="us") as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
