@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -33,17 +32,17 @@ def fetch_data():
                 phone = block[-1].split(":")[-1]
                 del block[-1]
 
-            addr = parse_address_intl(" ".join(block))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            addr = block
+            zip_postal = addr[-1].split(",")[1].strip().split(" ")[-1].strip()
+            if not zip_postal.replace("-", "").isdigit():
+                zip_postal = addr[-1].split(",")[-1]
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=zip_postal,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,

@@ -40,11 +40,13 @@ def fetch_data(sgw: SgWriter):
 
         state = "<MISSING>"
         postal = "<MISSING>"
-        country_code = "PK"
+        country_code = "US"
         city = cp
         if cp[0].isdigit():
             postal = cp.split()[0].strip()
             city = " ".join(cp.split()[1:])
+        if city.find("Lahore") != -1:
+            city = city.split()[-1].strip()
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         phone = "<MISSING>"
