@@ -30,7 +30,7 @@ def fetch_data():
         street_address = raw_data[0]
         city = raw_data[1].split(", ")[0]
         state = raw_data[1].split(", ")[-1].split()[0]
-        zip_code = raw_data[1].split(", ")[-1].split()[0]
+        zip_code = raw_data[1].split(", ")[-1].split()[-1]
         phone = (
             poi_html.xpath(".//div[@data-settings]/div/p/text()")[2]
             .split(": ")[-1]
