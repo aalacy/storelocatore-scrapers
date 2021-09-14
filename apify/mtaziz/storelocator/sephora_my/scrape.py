@@ -48,9 +48,7 @@ def fetch_records():
     data_list = []
     data_dict = {}
     # with SgFirefox(is_headless=True) as driver:
-    with SgFirefox(
-        executable_path=GeckoDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgFirefox(is_headless=True) as driver:
         for idx1, ste in enumerate(LOCATION_URLS[0:]):
             logger.info(f"Pulling the data from: {ste}")
             driver.get(ste)
