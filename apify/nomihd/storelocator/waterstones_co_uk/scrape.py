@@ -31,7 +31,7 @@ def fetch_data():
     # Your scraper here
     with SgRequests(dont_retry_status_codes=set([404])) as session:
         scraper = cloudscraper.create_scraper(sess=session)
-        fake_req = scraper.get("https://waterstones.com/", headers=headers)
+        scraper.get("https://waterstones.com/", headers=headers)
 
         search_url = "https://www.waterstones.com/bookshops/findall"
         stores_req = scraper.get(search_url)
