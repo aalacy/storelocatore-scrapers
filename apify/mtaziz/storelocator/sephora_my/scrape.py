@@ -10,7 +10,7 @@ import json
 import time
 from lxml import html
 import ssl
-
+import re
 
 try:
     _create_unverified_https_context = (
@@ -39,9 +39,15 @@ headers = {
 }
 
 
+def remove_tags(text):
+    regex_tag = re.compile(r"<[^>]+>")
+    return regex_tag.sub("", text)
+
+
 def fetch_records():
     data_list = []
     data_dict = {}
+    # with SgFirefox(is_headless=True) as driver:
     with SgFirefox(is_headless=True) as driver:
         for idx1, ste in enumerate(LOCATION_URLS[0:]):
             logger.info(f"Pulling the data from: {ste}")
@@ -168,6 +174,14 @@ def fetch_records():
                             .replace(" **Temporarily Closed due to Covi-19**", "")
                             .strip()
                         )
+
+                    store_message = attr["store-message"]
+                    if store_message is not None:
+                        store_message_clean = remove_tags(store_message)
+                        logger.info(f"[{idx}] store_message: {store_message_clean}")
+                        if store_message_clean:
+                            if "temporarily closed" in store_message_clean.lower():
+                                hours_of_operation = "Templorarily Closed"
 
                     yield SgRecord(
                         locator_domain=locator_domain,
