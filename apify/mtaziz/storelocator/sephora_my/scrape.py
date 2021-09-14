@@ -11,6 +11,7 @@ import time
 from lxml import html
 import ssl
 import re
+from tenacity import retry, stop_after_attempt
 
 try:
     _create_unverified_https_context = (
@@ -44,10 +45,17 @@ def remove_tags(text):
     return regex_tag.sub("", text)
 
 
+@retry(stop=stop_after_attempt(5))
+def get_store_data(driver, url):
+    driver.get(url)
+    time.sleep(10)
+    page_source = driver.page_source
+    return page_source
+
+
 def fetch_records():
     data_list = []
     data_dict = {}
-    # with SgFirefox(is_headless=True) as driver:
     with SgFirefox(is_headless=True) as driver:
         for idx1, ste in enumerate(LOCATION_URLS[0:]):
             logger.info(f"Pulling the data from: {ste}")
@@ -56,8 +64,7 @@ def fetch_records():
             netloc = urlparse(ste).netloc
             api_endpoint_url = f"https://{netloc}/api/booking-services/api/v1/stores?include=services.category,events,beauty-classes,schedules"
             logger.info(f"pulling data from API ENDPOINT URL: {api_endpoint_url}")
-            driver.get(api_endpoint_url)
-            pgsrc = driver.page_source
+            pgsrc = get_store_data(driver, api_endpoint_url)
             sel = html.fromstring(pgsrc, "lxml")
             data_per_country = "".join(sel.xpath("//text()"))
             if "data" in data_per_country:
@@ -70,7 +77,6 @@ def fetch_records():
                 for idx, item in enumerate(data_json):
                     locator_domain = netloc.replace("www.", "")
                     attr = item["attributes"]
-                    # /store-locations/avenue-k
                     slug_url = attr["slug-url"]
                     page_url = f"https://{netloc}/store-locations/{slug_url}"
                     logger.info(f"[{idx}] page_url: {page_url}")
