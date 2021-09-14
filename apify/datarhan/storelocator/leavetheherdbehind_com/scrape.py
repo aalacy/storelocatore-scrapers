@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgselenium import SgFirefox
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
