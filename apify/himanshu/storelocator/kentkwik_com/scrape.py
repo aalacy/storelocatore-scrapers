@@ -1,6 +1,5 @@
 from sgrequests import SgRequests
 import re
-import json
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
