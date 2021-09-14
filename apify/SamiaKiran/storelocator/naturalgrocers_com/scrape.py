@@ -51,7 +51,7 @@ def fetch_data():
                     .replace("|", "")
                 )
                 hours_of_operation = (
-                    loc.find("div", {"class": "office-hours__item"})
+                    loc.find("div", {"class": "office-hours"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
