@@ -9,7 +9,7 @@ import re
 
 log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 headers = {"User-Agent": "PostmanRuntime/7.19.0"}
-session = SgRequests(proxy_country="us")
+session = SgRequests()
 crawl_state = CrawlStateSingleton.get_instance()
 
 
@@ -33,7 +33,7 @@ def get_urls():
                 break
 
             except Exception:
-                session = SgRequests(proxy_country="us")  # noqa
+                session = SgRequests()  # noqa
                 continue
 
         soup = bs(response, "html.parser")
@@ -65,7 +65,7 @@ def get_urls():
 
 
 def get_location(request_url):
-    session = SgRequests(proxy_country="us")
+    session = SgRequests()
     url = request_url.url
     log.info(url)
 
@@ -87,7 +87,7 @@ def get_location(request_url):
 
     except Exception:
         response = session.get(url, headers=headers).text
-        session = SgRequests(proxy_country="uk")
+        session = SgRequests()
 
     if "awaiting verification" in response and "The contact data we hold" in response:
 
@@ -229,7 +229,7 @@ def get_location(request_url):
 
 
 def scrape_loc_urls():
-    url_list = [loc for loc in crawl_state.request_stack_iter()][:100]
+    url_list = [loc for loc in crawl_state.request_stack_iter()]
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in url_list]
         for future in as_completed(futures):
