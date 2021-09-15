@@ -151,7 +151,7 @@ def get_location(request_url):
 
     found_address = "No"
     found_zip = "No"
-    
+
     for part in address_parts:
         try:
             if part[0].isdigit() is True and found_address == "No":
@@ -224,7 +224,7 @@ def get_location(request_url):
         "zip": zipp,
         "phone": phone,
         "location_type": location_type,
-        "hours": hours
+        "hours": hours,
     }
 
 
