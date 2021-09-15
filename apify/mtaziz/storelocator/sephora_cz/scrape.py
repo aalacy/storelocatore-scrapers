@@ -6,11 +6,8 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
-from tenacity import retry, stop_after_attempt
-from urllib.parse import urlparse
 from typing import Iterable
 import json
-import time
 from lxml import html
 import ssl
 
