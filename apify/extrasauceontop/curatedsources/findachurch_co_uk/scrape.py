@@ -223,7 +223,7 @@ def get_location(request_url):
         "zip": zipp,
         "phone": phone,
         "location_type": location_type,
-        "hours": hours,
+        "hours": hours
     }
 
 
