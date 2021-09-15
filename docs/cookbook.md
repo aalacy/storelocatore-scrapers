@@ -27,6 +27,7 @@
 ### Search for Locations Using Zipcodes / Coordinates
 
 - [Our sgzip documentation.](./cookbook/sgzip.md)
+- [Parallel sgzip traversal](./cookbook/sgzip-par.md)
 
 ### Long-Running Crawls
 
@@ -38,7 +39,7 @@
 
 ### Fetching data
 
-- [TODO] Request anything over HTTP
+- [Request anything over HTTP with SgRequests](./cookbook/sgrequests.md)
 - [TODO] Parse JSON results
 - [TODO] Parse XML results
 - [TODO] Parse HTML results
