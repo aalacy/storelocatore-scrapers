@@ -139,14 +139,17 @@ def fetchData():
             except:
                 phone = MISSING
 
+            page_url = website + url
+
             if "securcareselfstorage.com" in str(url):
+                page_url = url
                 hours_of_operation = MISSING
             else:
                 hours_of_operation = getHourOperation(website + url)
 
             yield SgRecord(
                 locator_domain=website,
-                page_url=website + url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
