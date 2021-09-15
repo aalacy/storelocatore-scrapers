@@ -215,8 +215,7 @@ def get_data():
     for request_url in crawl_state.request_stack_iter():
         location_url = request_url.url
         x = x + 1
-        if x == 300:
-            break
+
         if "searchazref" not in location_url:
             continue
 
