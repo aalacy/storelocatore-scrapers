@@ -5,12 +5,13 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.pause_resume import CrawlStateSingleton
 from concurrent import futures
 
 
 def get_data(coord, sgw: SgWriter):
     lat, lng = coord
-    locator_domain = "https://www.citybbq.com/"
+    locator_domain = "https://www.acuonline.org/"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
@@ -122,6 +123,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))

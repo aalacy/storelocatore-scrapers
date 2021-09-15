@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
         location_name = store["title"]
         if "opening soon" in location_name.lower():
             continue
-        raw_address = store["address"].split(",")
+        raw_address = store["address"].replace("Blvd, Su", "Blvd. Su").split(",")
         if "USA" in raw_address[-1].upper():
             raw_address.pop(-1)
 
