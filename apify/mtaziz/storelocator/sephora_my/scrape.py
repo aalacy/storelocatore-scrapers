@@ -5,7 +5,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
 from sgrequests import SgRequests
-import time
 from lxml import html
 import ssl
 import re
