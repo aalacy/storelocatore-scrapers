@@ -21,7 +21,7 @@ search = DynamicGeoSearch(
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://www.dairyqueen.com/en-ca/locations/on/ajax/250-bayly-st-w/1993/"]
     for lat, lng in search:
         time.sleep(1)
         url = (
@@ -48,7 +48,6 @@ def fetch_data():
     website = "dairyqueen.ca"
     typ = "<MISSING>"
     country = "CA"
-    locs = ["https://www.dairyqueen.com/en-ca/locations/on/ajax/250-bayly-st-w/1993/"]
     for loc in locs:
         PFound = False
         count = 0

@@ -10,7 +10,8 @@ import json
 import time
 from lxml import html
 import ssl
-
+import re
+from tenacity import retry, stop_after_attempt
 
 try:
     _create_unverified_https_context = (
@@ -39,6 +40,19 @@ headers = {
 }
 
 
+def remove_tags(text):
+    regex_tag = re.compile(r"<[^>]+>")
+    return regex_tag.sub("", text)
+
+
+@retry(stop=stop_after_attempt(5))
+def get_store_data(driver, url):
+    driver.get(url)
+    time.sleep(10)
+    page_source = driver.page_source
+    return page_source
+
+
 def fetch_records():
     data_list = []
     data_dict = {}
@@ -50,8 +64,7 @@ def fetch_records():
             netloc = urlparse(ste).netloc
             api_endpoint_url = f"https://{netloc}/api/booking-services/api/v1/stores?include=services.category,events,beauty-classes,schedules"
             logger.info(f"pulling data from API ENDPOINT URL: {api_endpoint_url}")
-            driver.get(api_endpoint_url)
-            pgsrc = driver.page_source
+            pgsrc = get_store_data(driver, api_endpoint_url)
             sel = html.fromstring(pgsrc, "lxml")
             data_per_country = "".join(sel.xpath("//text()"))
             if "data" in data_per_country:
@@ -64,7 +77,6 @@ def fetch_records():
                 for idx, item in enumerate(data_json):
                     locator_domain = netloc.replace("www.", "")
                     attr = item["attributes"]
-                    # /store-locations/avenue-k
                     slug_url = attr["slug-url"]
                     page_url = f"https://{netloc}/store-locations/{slug_url}"
                     logger.info(f"[{idx}] page_url: {page_url}")
@@ -168,6 +180,14 @@ def fetch_records():
                             .replace(" **Temporarily Closed due to Covi-19**", "")
                             .strip()
                         )
+
+                    store_message = attr["store-message"]
+                    if store_message is not None:
+                        store_message_clean = remove_tags(store_message)
+                        logger.info(f"[{idx}] store_message: {store_message_clean}")
+                        if store_message_clean:
+                            if "temporarily closed" in store_message_clean.lower():
+                                hours_of_operation = "Templorarily Closed"
 
                     yield SgRecord(
                         locator_domain=locator_domain,
