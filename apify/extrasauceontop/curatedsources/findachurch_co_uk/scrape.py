@@ -29,11 +29,11 @@ def get_urls():
             if y == 10:
                 raise Exception
             try:
-                response = session.get(url).text
+                response = session.get(url).text  # noqa
                 break
 
             except Exception:
-                session = SgRequests()
+                session = SgRequests()  # noqa
                 continue
 
         soup = bs(response, "html.parser")
