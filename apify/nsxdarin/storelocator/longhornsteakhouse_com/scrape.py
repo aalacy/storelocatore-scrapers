@@ -124,6 +124,10 @@ def fetch_location(loc, driver):
         phone = "(914) 963-3491"
     if "cranberry-township/5285" in loc:
         phone = "(724) 776-1500"
+    if "matthews/matthews/5520" in loc:
+        phone = "(704) 844-8922"
+    if "merrillville/merrillville/5263" in loc:
+        phone = "(219) 736-9340"
     if "Find A R" not in name:
         return SgRecord(
             locator_domain=website,
