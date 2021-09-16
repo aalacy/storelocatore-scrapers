@@ -128,7 +128,6 @@ def fetch_data(search):
     driver = initiate_driver(urlForDriver, "zipField")
     totalZip = 0
     count = 0
-    states = CrawlStateSingleton.get_instance()
     for zipCode in search:
         totalZip = totalZip + 1
         data = fetch_single_zip(driver, zipCode)
@@ -186,14 +185,6 @@ def fetch_data(search):
                 raw_address=raw_address,
             )
 
-            try:
-                rec_count = states.get_misc_value(
-                    search.current_country(), default_factory=lambda: 0
-                )
-                states.set_misc_value(search.current_country(), rec_count + 1)
-            except Exception as e:
-                log.error(f"MISE {zipCode}, message={e}")
-
         if totalZip % 15 == 0:
             driver = initiate_driver(urlForDriver, "zipField", driver=driver)
         log.debug(
@@ -206,6 +197,7 @@ def fetch_data(search):
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     start = time.time()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
@@ -216,16 +208,6 @@ def scrape():
     ) as writer:
         for rec in fetch_data(search):
             writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
-    log.debug("Printing number of records by country-code:")
-    for country_code in SearchableCountries.USA:
-        try:
-            count = state.get_misc_value(country_code, default_factory=lambda: 0)
-            log.debug(f"{country_code}: {count}")
-        except Exception as e:
-            log.info(f"Country codes: {country_code}, message={e}")
-            pass
 
     end = time.time()
     log.info(f"Scrape took {end - start} seconds.")

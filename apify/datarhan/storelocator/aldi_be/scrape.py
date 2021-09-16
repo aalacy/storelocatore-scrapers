@@ -42,9 +42,7 @@ def fetch_data():
             ]
             city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
             zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
-            hoo = loc_dom.xpath(
-                '//div[@class="mod-stores__overview-openhours"]//text()'
-            )
+            hoo = loc_dom.xpath('//*[@itemprop="openingHours"]/text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
