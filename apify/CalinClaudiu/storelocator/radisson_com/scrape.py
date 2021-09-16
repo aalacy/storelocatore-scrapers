@@ -323,6 +323,7 @@ def start():
         {"code": "rco", "name": "Radisson Collection"},
     ]
     badrecords = []
+    brands = [brands[3], brands[4]]
     for url in urls:
         for brand in brands:
             start_time = time.monotonic()
@@ -357,14 +358,17 @@ def scrape():
         page_url=sp.MappingField(
             mapping=["sub", "requrl"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
             mapping=["main", "name"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["main", "coordinates", "latitude"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["main", "coordinates", "longitude"],
@@ -373,6 +377,7 @@ def scrape():
         street_address=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "streetAddress"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressLocality"],
@@ -396,6 +401,7 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["main", "code"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
