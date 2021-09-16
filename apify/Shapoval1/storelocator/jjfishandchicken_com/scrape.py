@@ -75,13 +75,13 @@ def fetch_data(sgw: SgWriter):
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
-        js = (
+        j = (
             "".join(tree.xpath('//script[contains(text(), "center_lat")]/text()'))
             .split(".maps(")[1]
             .split(").data")[0]
             .strip()
         )
-        js = json.loads(js)
+        js = json.loads(j)
         latitude = js.get("places")[0].get("location").get("lat")
 
         longitude = js.get("places")[0].get("location").get("lng")
