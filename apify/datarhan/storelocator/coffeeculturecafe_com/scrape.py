@@ -27,9 +27,11 @@ def fetch_data():
         city = location_name.split(",")[0].strip()
         state = location_name.split(",")[-1].strip()
         phone = raw_data[1].split(":")[-1].strip()
-        hoo = poi_html.xpath("p[2]/span/text()")
+        hoo = poi_html.xpath("p[2]//text()")
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else SgRecord.MISSING
+        hours_of_operation = (
+            " ".join(hoo).split(phone)[-1].strip() if hoo else SgRecord.MISSING
+        )
 
         item = SgRecord(
             locator_domain=domain,

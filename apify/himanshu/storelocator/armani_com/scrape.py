@@ -37,7 +37,7 @@ def fetch_data():
         if "location" not in store_data:
             continue
 
-        location_name = store_data["post_title"]
+        location_name = store_data["post_title"].replace("&amp;", "&")
         raw_address = store_data["wpcf-yoox-store-geolocation-address"]
         formatted_addr = parser.parse_address_intl(raw_address)
 

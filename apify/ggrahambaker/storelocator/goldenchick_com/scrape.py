@@ -1,92 +1,135 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import json
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+session = SgRequests()
+website = "goldenchick_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://goldenchick.com/"
+MISSING = "<MISSING>"
+
 
 def fetch_data():
     session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+    HEADERS = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
 
-    locator_domain = 'http://goldenchick.com/' 
-    url = 'http://locations.goldenchick.com/'
-    r = session.get(url, headers = HEADERS)
+    url = "http://locations.goldenchick.com/"
+    r = session.get(url, headers=HEADERS)
 
-    soup = BeautifulSoup(r.content, 'html.parser')
+    soup = BeautifulSoup(r.content, "html.parser")
 
-    loc_links = soup.find('div', {'id': 'parent_container_two'}).previous_sibling.previous_sibling.find_all('a')
+    loc_links = soup.find(
+        "div", {"id": "parent_container_two"}
+    ).previous_sibling.previous_sibling.find_all("a")
 
     state_list = []
     for loc in loc_links:
-        state_list.append(loc['href'])
+        state_list.append(loc)
 
-    city_list = [] 
+    city_list = []
     for link in state_list:
-        r = session.get(link, headers = HEADERS)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        loc_links = soup.find('div', {'id': 'parent_container_two'}).previous_sibling.previous_sibling.find_all('a')
+        r = session.get(link["href"], headers=HEADERS)
+        log.info(f"Fetching {link.text} Locations...")
+        soup = BeautifulSoup(r.content, "html.parser")
+        loc_links = soup.find(
+            "div", {"id": "parent_container_two"}
+        ).previous_sibling.previous_sibling.find_all("a")
 
-        for loc in loc_links:        
-            if len(loc['href'].split('/')) == 6:                
-                city_list.append(loc['href'])
-            
+        for loc in loc_links:
+            if len(loc["href"].split("/")) == 6:
+                city_list.append(loc)
+
     link_list = []
     for link in city_list:
-        r = session.get(link, headers = HEADERS)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        loc_links = soup.find('div', {'id': 'parent_container_two'}).previous_sibling.previous_sibling.find_all('a')
-        
+        r = session.get(link["href"], headers=HEADERS, verify=False, timeout=150)
+        log.info(f"Fetching {link.text} Locations...")
+        soup = BeautifulSoup(r.content, "html.parser")
+        loc_links = soup.find(
+            "div", {"id": "parent_container_two"}
+        ).previous_sibling.previous_sibling.find_all("a")
+
         for loc in loc_links:
-            if len(loc['href'].split('/')) == 7:                
-                link_list.append(loc['href'])
+            if len(loc["href"].split("/")) == 7:
+                link_list.append(loc["href"])
 
-    all_store_data = []
     for link in link_list:
-        r = session.get(link, headers = HEADERS)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        
-        location_name = soup.find('meta', {'property': 'og:title'})['content']
-
-        street_address = soup.find('meta', {'property': 'business:contact_data:street_address'})['content']
-        city = soup.find('meta', {'property': 'business:contact_data:locality'})['content']
-        state = soup.find('meta', {'property': 'business:contact_data:region'})['content']
-        zip_code = soup.find('meta', {'property': 'business:contact_data:postal_code'})['content']
-        country_code = soup.find('meta', {'property': 'business:contact_data:country_name'})['content']
-        phone_number = soup.find('meta', {'property': 'business:contact_data:phone_number'})['content']
-        
-        lat = soup.find('meta', {'property': 'place:location:latitude'})['content']
-        longit = soup.find('meta', {'property': 'place:location:longitude'})['content']
-        
-        hours_divs = soup.find('div', {'id': 'col_one'}).find_all('div')
-        hours = ''
+        r = session.get(link, headers=HEADERS)
+        log.info(link)
+        soup = BeautifulSoup(r.content, "html.parser")
+        location_name = soup.find("meta", {"property": "og:title"})["content"]
+        street_address = soup.find(
+            "meta", {"property": "business:contact_data:street_address"}
+        )["content"]
+        city = soup.find("meta", {"property": "business:contact_data:locality"})[
+            "content"
+        ]
+        state = soup.find("meta", {"property": "business:contact_data:region"})[
+            "content"
+        ]
+        zip_postal = soup.find(
+            "meta", {"property": "business:contact_data:postal_code"}
+        )["content"]
+        country_code = soup.find(
+            "meta", {"property": "business:contact_data:country_name"}
+        )["content"]
+        phone = soup.find("meta", {"property": "business:contact_data:phone_number"})[
+            "content"
+        ]
+        latitude = soup.find("meta", {"property": "place:location:latitude"})["content"]
+        longitude = soup.find("meta", {"property": "place:location:longitude"})[
+            "content"
+        ]
+        hours_divs = soup.find("div", {"id": "col_one"}).find_all("div")
+        hours = ""
         for day in hours_divs:
-            if 'Holiday' in day.text:
+            if "Holiday" in day.text:
                 break
-            hours += day.text.strip() + ' '
+            hours += day.text.strip() + " "
+        hours = " ".join(hours.split())
+        store_number = link.split("/")[-2]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=link,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours,
+        )
 
-        hours = ' '.join( hours.split())
-        store_number = link.split('/')[-2]
-        location_type = '<MISSING>'
-        page_url = link
-        country_code = 'US'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
