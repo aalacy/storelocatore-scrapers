@@ -27,19 +27,18 @@ def fetch_data():
 
     for poi in all_locations:
         hoo = []
-        if not poi["data"].get("hours"):
-            continue
-        for day, hours in poi["data"]["hours"].items():
-            if type(hours) == list:
-                continue
-            if day == "reopenDate":
-                continue
-            if hours.get("openIntervals"):
-                hoo.append(
-                    f'{day} {hours["openIntervals"][0]["start"]} - {hours["openIntervals"][0]["end"]}'
-                )
-            else:
-                hoo.append(f"{day} closed")
+        if poi["data"].get("hours"):
+            for day, hours in poi["data"]["hours"].items():
+                if type(hours) == list:
+                    continue
+                if day == "reopenDate":
+                    continue
+                if hours.get("openIntervals"):
+                    hoo.append(
+                        f'{day} {hours["openIntervals"][0]["start"]} - {hours["openIntervals"][0]["end"]}'
+                    )
+                else:
+                    hoo.append(f"{day} closed")
         hoo = " ".join(hoo)
 
         item = SgRecord(
@@ -68,7 +67,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
             )
         )
     ) as writer:
