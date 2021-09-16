@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -7,8 +8,18 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
+    session = SgRequests()
+    r = session.get("https://www.morningsunhealthfoods.ca/locations")
+    tree = html.fromstring(r.text)
+    key = (
+        "14."
+        + "".join(tree.xpath('//script[contains(text(), "static/js/")]/text()'))
+        .split('14:"')[2]
+        .split('"')[0]
+        .strip()
+    )
 
-    api_url = "https://www.morningsunhealthfoods.ca/static/js/14.5895b00a.chunk.js"
+    api_url = f"https://www.morningsunhealthfoods.ca/static/js/{key}.chunk.js"
     session = SgRequests()
 
     headers = {

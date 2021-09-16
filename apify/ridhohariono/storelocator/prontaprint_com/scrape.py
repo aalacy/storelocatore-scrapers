@@ -84,7 +84,14 @@ def fetch_data():
         page_url = row["linkd"]
         location_name = row["title"]
         raw_address = row["address"]
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        if "1 Station Shops" in raw_address:
+            addr = raw_address.split(",")
+            street_address = addr[0].strip()
+            city = addr[1].strip()
+            state = MISSING
+            zip_postal = addr[-1].strip()
+        else:
+            street_address, city, state, zip_postal = getAddress(raw_address)
         store_number = row["marker_id"]
         phone = re.search(r'"tel:(.*)"><span', row["desc"]).group(1)
         country_code = "UK"

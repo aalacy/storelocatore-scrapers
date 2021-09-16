@@ -1,96 +1,208 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+import re
+from urllib.parse import urljoin, urlparse
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("lithia")
 
+locator_domain = "https://www.lithia.com"
+base_url = "https://www.lithia.com/service-locations/index.htm"
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
-def fetch_data():
-    base_url = "https://www.lithia.com"
-    r = session.get("https://www.lithia.com/locations/service-locations.htm")
-    soup = bs(r.text, "lxml")
+def record_initial_requests(http, state):
+    soup = bs(http.get(base_url, headers=_headers).text, "lxml")
     store_list = soup.select("li.info-window")
-    data = []
-    for s in store_list:
-        page_url = "https://www.lithia.com/locations/service-locations.htm"
-        location_name = s.select_one("span.org").string
-        location_name = location_name.replace("\n", "")
-        try:
-            street_address = s.select_one("span.street-address").string
-            city = s.select_one("span.locality").string
-            zip = s.select_one("span.postal-code").string
-        except:
-            street_address = "<MISSING>"
-            city = "<MISSING>"
-            zip = "<MISSING>"
-
-        state = s.select_one("span.region").string
-        latitude = s.select_one("span.latitude").string
-        longitude = s.select_one("span.longitude").string
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        location_type = "<MISSING>"
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+    for _ in store_list:
+        page_url = _.a["href"]
+        if page_url == "#":
+            continue
+        street_address = city = zip_postal = _state = ""
+        if _.select_one("span.street-address"):
+            street_address = _.select_one("span.street-address").text.strip()
+        if _.select_one("span.locality"):
+            city = _.select_one("span.locality").text.strip()
+        if _.select_one("span.region"):
+            _state = _.select_one("span.region").text.strip()
+        if _.select_one("span.postal-code"):
+            zip_postal = _.select_one("span.postal-code").text.strip()
+        location_name = _.strong.text.strip()
+        latitude = _.select_one("span.latitude").text.strip()
+        longitude = _.select_one("span.longitude").text.strip()
+        store = dict(
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=_state,
+            zip_postal=zip_postal,
+            latitude=latitude,
+            longitude=longitude,
         )
+        state.push_request(SerializableRequest(url=page_url, context={"store": store}))
 
-    return data
+    return True
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def _ddc_hr(sp1):
+    hours = []
+    phone = sp1.select_one("li.phone1 span.value").text.strip()
+    if sp1.select("ul.ddc-hours  li"):
+        hours = [
+            ": ".join(hh.stripped_strings)
+            for hh in sp1.select("ul.ddc-hours")[0].select("li")
+        ]
+
+    return phone, hours
+
+
+def _d(store, phone, hours, page_url):
+    return SgRecord(
+        page_url=page_url,
+        location_name=store["location_name"],
+        street_address=store["street_address"],
+        city=store["city"],
+        state=store["state"],
+        zip_postal=store["zip_postal"],
+        latitude=store["latitude"],
+        longitude=store["longitude"],
+        country_code="US",
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours),
+    )
+
+
+def fetch_records(http, state):
+    for next_r in state.request_stack_iter():
+        store = next_r.context.get("store")
+        phone = ""
+        hours = []
+        page_url = "https://" + urlparse(next_r.url).netloc
+        logger.info(page_url)
+        sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+        if sp1.select("div#hours1-app-root ul li"):
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in sp1.select("div#hours1-app-root ul li")
+            ]
+            phone = sp1.select_one("li.phone1 span.value").text.strip()
+        elif sp1.select_one("a.header-contact__link"):
+            hr_info = bs(
+                sp1.select_one("a.header-contact__link.header-contact__hours-link")[
+                    "data-content"
+                ],
+                "lxml",
+            )
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in hr_info.select("table.schedule-table tr")
+            ]
+            ph_info = bs(
+                sp1.select_one("a.header-contact__link.header-contact__phones-link")[
+                    "data-content"
+                ],
+                "lxml",
+            )
+            phone = ph_info.a.text.strip()
+        else:
+            url = sp1.find("a", string=re.compile(r"^Contact us", re.I))
+            if url:
+                contact_url = url["href"]
+                if not contact_url.startswith("http"):
+                    contact_url = page_url + contact_url
+                logger.info(contact_url)
+                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                if sp2.select_one("li.phone-main a"):
+                    phone = list(sp2.select_one("li.phone-main a").stripped_strings)[0]
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in sp2.select("span.hours-sales ul li")
+                    ]
+                elif sp2.select_one("li.phone1 span.value"):
+                    phone, hours = _ddc_hr(sp2)
+                elif sp2.select_one("span.callNowClass"):
+                    phone = sp2.select_one("span.callNowClass").text.strip()
+                elif sp2.select_one("span.header_phone_number"):
+                    phone = sp2.select_one("span.header_phone_number").text.strip()
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in sp2.select("div.hours-wrapper")[0].select("table tr")
+                    ]
+            elif sp1.select_one("a[data-location='page-schedule-service-button']"):
+                contact_url = sp1.select_one(
+                    "a[data-location='page-schedule-service-button']"
+                )["href"]
+                if not contact_url.startswith("http"):
+                    contact_url = page_url + contact_url
+                logger.info(contact_url)
+                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                if sp2.select_one("li.phone1 span.value"):
+                    phone, hours = _ddc_hr(sp2)
+            elif sp1.select_one('a[data-action="maplinkout"]'):
+                contact_url = sp1.select_one('a[data-action="maplinkout"]')["href"]
+                if not contact_url.startswith("http"):
+                    contact_url = page_url + contact_url
+                logger.info(contact_url)
+                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                if sp2.select_one("li.phone1 span.value"):
+                    phone, hours = _ddc_hr(sp2)
+                elif sp2.select_one('span[itemprop="telephone"]'):
+                    phone = sp2.select_one('span[itemprop="telephone"]').text.strip()
+                if sp2.select_one('dl[itemprop="openingHoursSpecification"]'):
+                    days = [dd.text.strip() for dd in sp2.select("dt")]
+                    times = [" - ".join(dd.stripped_strings) for dd in sp2.select("dd")]
+                    for x in range(len(days)):
+                        hours.append(f"{days[x]}: {times[x]}")
+            elif sp1.find("a", href=re.compile(r"^/hours")):
+                url = page_url + sp1.find("a", href=re.compile(r"^/hours"))["href"]
+                logger.info(url)
+                sp2 = bs(http.get(url, headers=_headers).text, "lxml")
+                phone = sp2.select_one("a.callNowClass span").text.strip()
+                for hh in sp2.select("div#SalesHours table tbody tr"):
+                    td = list(hh.stripped_strings)
+                    hours.append(f"{td[0]}: {td[1]} - {td[2]}")
+            elif sp1.select('div[data-name="section-1-row"] > div'):
+                for loc in sp1.select('div[data-name="section-1-row"] > div'):
+                    url = loc.select_one("div.cta-content a.btn")["href"]
+                    if not url.startswith("http"):
+                        url = page_url + url
+                    if url.endswith("/"):
+                        url = url[:-1]
+                    logger.info(url)
+                    sp2 = bs(http.get(url, headers=_headers).text, "lxml")
+                    if sp2.select_one("p.adr a"):
+                        contact_url = sp2.select_one("p.adr a")["href"]
+                        if not contact_url.startswith("http"):
+                            contact_url = urljoin(url, contact_url)
+                        logger.info(contact_url)
+                        sp3 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                        if sp3.select_one("li.phone1 span.value"):
+                            phone, hours = _ddc_hr(sp3)
+                            yield _d(store, phone, hours, url)
+                            return
+
+        yield _d(store, phone, hours, page_url)
 
 
 if __name__ == "__main__":
-    scrape()
+    state = CrawlStateSingleton.get_instance()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PHONE, SgRecord.Headers.PAGE_URL})
+        )
+    ) as writer:
+        with SgRequests() as http:
+            state.get_misc_value(
+                "init", default_factory=lambda: record_initial_requests(http, state)
+            )
+            for rec in fetch_records(http, state):
+                writer.write_row(rec)

@@ -31,7 +31,6 @@ class ExampleSearchIteration(SearchIteration):
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
 
-        self._http.clear_cookies()
         # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
         res = self._http.get(base_url.format(coord[0], coord[1]), headers=_headers)
         if res.status_code == 200:
@@ -74,12 +73,12 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=500,
     )
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=5
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=15
         )
     ) as writer:
         with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as http:
