@@ -107,7 +107,7 @@ def fetch_data():
                         json=data,
                     ).json()["data"]
                     break
-                except Exception as err:
+                except:
                     pass
 
             total += len(locations)
