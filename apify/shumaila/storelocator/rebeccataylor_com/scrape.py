@@ -25,7 +25,7 @@ def fetch_data():
             link = st["href"]
         else:
             link = "https://www.rebeccataylor.com" + st["href"]
-        r = session.get(link, headers=headers, verify=False, timeout=100)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h2", {"class": "card-title"}).text
         try:

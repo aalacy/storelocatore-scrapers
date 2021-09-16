@@ -16,26 +16,27 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//div[@class="page-content"]/div[1]/div/div/section[.//span[text()="Wi-Fi"]]/div/div/div'
-    )
+    div = tree.xpath('//div[./a[text()="טלפון"]]')
     for d in div:
 
         page_url = "https://www.kfc.co.il/branches/"
         location_name = "".join(
-            d.xpath('.//a[text()="כתובת"]/preceding::p[1]/text()')
-        ).strip()
-        street_address = (
-            "".join(d.xpath('.//a[text()="כתובת"]/following::p[1]/text()')).strip()
-            or "<MISSING>"
+            d.xpath(
+                './/preceding::div[contains(@class, "elementor-column-wrap elementor-element-populated")][1]/following::p[1]//text()'
+            )
         )
-        if street_address == "<MISSING>":
-            continue
+        street_address = " ".join(
+            d.xpath(
+                './/preceding::div[./a[text()="כתובת"]][1]/following::div[1]//p//text()'
+            )
+        )
         country_code = "IL"
-        phone = "".join(d.xpath('.//a[text()="טלפון"]/following::p[1]/text()')).strip()
-        hours_of_operation = "".join(
-            d.xpath('.//a[text()="שעות פתיחה"]/following::p[1]//text()')
-        ).strip()
+        phone = "".join(d.xpath(".//following::div[1]//p/text()"))
+        hours_of_operation = " ".join(
+            d.xpath(
+                './/preceding::div[./a[text()="שעות פתיחה"]][1]/following::div[1]//p//text()'
+            )
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
