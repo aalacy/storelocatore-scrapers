@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
+from sgscrape.pause_resume import CrawlStateSingleton
 
 
 def get_data(_zip, sgw: SgWriter):
@@ -91,7 +92,7 @@ def get_data(_zip, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=20,
+        max_search_distance_miles=30,
         expected_search_radius_miles=1,
         max_search_results=None,
     )
@@ -103,6 +104,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(

@@ -1,105 +1,91 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_urls():
+    urls = []
+    r = session.get("https://locations.jollibeecanada.com/sitemap.xml")
+    tree = html.fromstring(r.content)
+    links = tree.xpath("//loc/text()")
+    for link in links:
+        if link.count("/") == 5:
+            urls.append(link)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return urls
 
 
-def fetch_data():
-    out = []
-    locator_domain = "http://jollibeecanada.com/"
-    page_url = "http://jollibeecanada.com/store-locator/"
+def get_data(page_url, sgw: SgWriter):
+    r = session.get(page_url + ".json")
+    j = r.json()["profile"]
+    a = j.get("address") or {}
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='storeindicont']")
+    location_name = f'{j.get("name")} {j.get("geomodifier") or ""}'.strip()
+    street_address = f'{a.get("line1")} {a.get("line2") or ""}'.strip()
+    city = a.get("city")
+    state = a.get("region")
+    postal = a.get("postalCode")
+    country_code = a.get("countryCode")
+    try:
+        phone = j["mainPhone"]["display"]
+    except KeyError:
+        phone = SgRecord.MISSING
 
-    for d in divs:
-        lines = d.xpath("./p[1]/text()")
-        lines = list(filter(None, [l.strip() for l in lines]))
+    latitude = j["yextDisplayCoordinate"]["lat"]
+    longitude = j["yextDisplayCoordinate"]["long"]
 
-        i = 0
-        for l in lines:
-            if l.startswith("("):
-                break
-            i += 1
+    _tmp = []
+    try:
+        hours = j["hours"]["normalHours"]
+    except KeyError:
+        hours = []
 
-        phone = lines[i]
-        street_address = ", ".join(lines[: i - 1])
-        hours_of_operation = ";".join(lines[i + 1 :]).replace("Hours:", "").strip()
-        if hours_of_operation.startswith(";"):
-            hours_of_operation = hours_of_operation[1:]
-        lines = lines[i - 1]
-        if lines.find(",") == -1:
-            city = lines.split()[0].strip()
-            state = lines.split()[1].strip()
+    for h in hours:
+        day = h.get("day")
+        if h.get("isClosed"):
+            _tmp.append(f"{day}: Closed")
         else:
-            city = lines.split(",")[0].strip()
-            state = lines.split(",")[1].strip().split()[0]
-            if len(state) != 2:
-                state = "<MISSING>"
-        postal = lines.replace(city, "").replace(state, "").replace(",", "").strip()
-        country_code = "CA"
-        store_number = "<MISSING>"
-        location_name = "".join(d.xpath("./h4/text()")).strip()
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+            start = str(h["intervals"][0]["start"])
+            end = str(h["intervals"][0]["end"])
+            if len(start) == 3:
+                start = f"0{start}"
+            _tmp.append(f"{day}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+    hours_of_operation = ";".join(_tmp)
 
-    return out
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        phone=phone,
+        latitude=str(latitude),
+        longitude=str(longitude),
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://jollibeecanada.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

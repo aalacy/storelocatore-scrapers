@@ -1,42 +1,16 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "http://www.pincho.com/"
 
@@ -51,7 +25,6 @@ def fetch_data():
         "div", attrs={"class": "et_pb_text_inner"}
     )[1:]
 
-    data = []
     for item in items:
         locator_domain = "pincho.com"
 
@@ -78,13 +51,17 @@ def fetch_data():
             raw_data = (
                 str(item.find("a")).replace("\n", "").replace("</a>", "").split("<br/>")
             )
-            street_address = raw_data[0][raw_data[0].rfind(">") + 1 :].strip()
-            raw_data[1] = raw_data[1].strip()
-            city = raw_data[1][: raw_data[1].find(",")].strip()
-            state = raw_data[1][
-                raw_data[1].find(",") + 1 : raw_data[1].rfind(" ")
-            ].strip()
-            zip_code = raw_data[1][raw_data[1].rfind(" ") + 1 :].strip()
+            if raw_data[0] == "None":
+                street_address = item.span.text
+                city = state = zip_code = ""
+            else:
+                street_address = raw_data[0][raw_data[0].rfind(">") + 1 :].strip()
+                raw_data[1] = raw_data[1].strip()
+                city = raw_data[1][: raw_data[1].find(",")].strip()
+                state = raw_data[1][
+                    raw_data[1].find(",") + 1 : raw_data[1].rfind(" ")
+                ].strip()
+                zip_code = raw_data[1][raw_data[1].rfind(" ") + 1 :].strip()
 
         street_address = street_address.replace("Way,", "Way")
         if "coming soon" in street_address.lower():
@@ -100,30 +77,25 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                base_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=base_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

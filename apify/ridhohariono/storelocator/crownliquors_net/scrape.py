@@ -8,8 +8,8 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import re
 
-DOMAIN = "crownliquors.com"
-BASE_URL = "https://crownliquors.com"
+DOMAIN = "crownliquors.net"
+BASE_URL = "https://crownliquors.net"
 LOCATION_URL = "https://crownliquors.net/locations/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
