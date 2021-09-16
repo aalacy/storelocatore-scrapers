@@ -5,4 +5,3 @@ sglogging==0.0.4
 beautifulsoup4==4.9.3
 tabula-py==2.2.0
 sgscrape==0.2.3
-
