@@ -96,7 +96,6 @@ def fetch_data():
                 maxZ = search.items_remaining()
             logger.info(("Pulling Geo Code %s..." % lat, lng))
             data = {"latitude": str(lat), "longitude": str(lng)}
-            # session._refresh_client()
             locations = []
             while True:
                 try:
