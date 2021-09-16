@@ -69,7 +69,7 @@ def fetch_records(http: SgRequests):
 
     # This section scrapes the data for US and CA
     locs = get_us_ca_store_urls(http)
-    for idx, loc in enumerate(locs[0:10]):
+    for idx, loc in enumerate(locs[0:]):
         warehouse_number = loc.split("-")[-1].replace(".html", "")
         api_endpoint_url = f"https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=&hasGas=&hasTires=&hasFood=&hasHearing=&hasPharmacy=&hasOptical=&hasBusiness=&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&warehouseNumber={warehouse_number}&countryCode="
         data = fetch_json_data(http, api_endpoint_url)
