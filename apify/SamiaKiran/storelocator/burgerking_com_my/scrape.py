@@ -59,9 +59,10 @@ def fetch_data():
                 soup = BeautifulSoup(r.text, "html.parser")
                 raw_address = (
                     soup.find("span", {"itemprop": "streetAddress"})
-                    .text.replace("\n", " ")
-                    .replace("                                   ", " ")
+                    .get_text(separator="|", strip=True)
+                    .split("\n")
                 )
+                raw_address = " ".join(x.strip() for x in raw_address)
                 pa = parse_address_intl(raw_address)
                 street_address = pa.street_address_1
                 street_address = street_address if street_address else MISSING

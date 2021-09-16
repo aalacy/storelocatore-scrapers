@@ -97,25 +97,12 @@ def fetch_location(loc, driver):
         hours = text.split('"openingHours":["')[1].split('"]')[0].replace('","', "; ")
     if ',"telephone":"' in text:
         phone = text.split(',"telephone":"')[1].split('"')[0]
-
     if hours == "":
         hours = "<MISSING>"
     if phone == "":
         phone = "<MISSING>"
-    if "Cincinnati - Eastgate" in name:
-        phone = "(513) 947-8882"
-    if "Orchard Park" in name:
-        phone = "(716) 825-1378"
-    if "Gainesville" in name:
-        phone = "(352) 372-5715"
     if "4590 Jon" in name or "9150 Cov" in name:
         hours = "Sun-Thu: 11:00AM-10:00PM; Fri-Sat: 11:00AM-11:00PM"
-    if "cold-spring/cold-spring/5198" in loc:
-        phone = "(859) 441-4820"
-    if "skokie/skokie-lincolnwood/5519" in loc:
-        phone = "(847) 674-1673"
-    if "chambersburg/5447" in loc:
-        phone = "(717) 261-9701"
     if "Find A R" not in name:
         return SgRecord(
             locator_domain=website,

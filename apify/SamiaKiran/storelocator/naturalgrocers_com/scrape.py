@@ -33,7 +33,7 @@ def fetch_data():
                 {"class": "node node--type-store node--view-mode-search-list-card"},
             )[1:]
             for loc in loclist:
-                page_url = "https://burgerking.com.my" + loc["about"]
+                page_url = "https://www.naturalgrocers.com" + loc["about"]
                 log.info(page_url)
                 location_name = (
                     loc.find("h3").get_text(separator="|", strip=True).replace("|", "")
@@ -51,7 +51,7 @@ def fetch_data():
                     .replace("|", "")
                 )
                 hours_of_operation = (
-                    loc.find("div", {"class": "office-hours__item"})
+                    loc.find("div", {"class": "office-hours"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
