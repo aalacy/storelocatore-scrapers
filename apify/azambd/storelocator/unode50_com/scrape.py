@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-import requests
+import requests  # noqa
 
 url = "https://www.unode50.com/us/stores"
 domain = "unode50.com"
