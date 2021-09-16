@@ -32,7 +32,6 @@ def fetch_data(sgw: SgWriter):
     for state in states:
         state_links.append("https://locations.mtb.com/" + state["href"].split("/")[0])
 
-    city_links = []
     for state_link in state_links:
         logger.info(state_link)
         req = session.get(state_link, headers=headers)
@@ -41,21 +40,20 @@ def fetch_data(sgw: SgWriter):
         cities = base.find_all(class_="Directory-listLink")
         for city in cities:
             city_link = "https://locations.mtb.com/" + city["href"]
-            if city_link not in city_links:
-                count = city["data-count"].replace("(", "").replace(")", "").strip()
+            count = city["data-count"].replace("(", "").replace(")", "").strip()
 
-                if count == "1":
-                    final_links.append(city_link)
-                else:
-                    next_req = session.get(city_link, headers=headers)
-                    next_base = BeautifulSoup(next_req.text, "lxml")
+            if count == "1":
+                final_links.append(city_link)
+            else:
+                next_req = session.get(city_link, headers=headers)
+                next_base = BeautifulSoup(next_req.text, "lxml")
 
-                    final_items = next_base.find_all(class_="Teaser-titleLink")
-                    for final_item in final_items:
-                        final_link = (
-                            "https://locations.mtb.com/" + final_item["href"]
-                        ).replace("../", "")
-                        final_links.append(final_link)
+                final_items = next_base.find_all(class_="Teaser-titleLink")
+                for final_item in final_items:
+                    final_link = (
+                        "https://locations.mtb.com/" + final_item["href"]
+                    ).replace("../", "")
+                    final_links.append(final_link)
 
     logger.info("Processing " + str(len(final_links)) + " links ..")
     for final_link in final_links:
