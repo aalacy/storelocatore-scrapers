@@ -38,19 +38,19 @@ def fetch_data():
             _addr = list(soup1.select_one("div.page__content.rte p").stripped_strings)
             raw_address = []
             for aa in _addr:
-                if 'Ph' in aa or 'Hour' in aa:
+                if "Ph" in aa or "Hour" in aa:
                     break
                 raw_address.append(aa.replace("&nbsp;", " ").replace("\xa0", " "))
-            addr = parse_address_intl(' '.join(raw_address))
+            addr = parse_address_intl(" ".join(raw_address))
             street_address = addr.street_address_1
             if addr.street_address_2:
-                street_address += ' ' + addr.street_address_2
+                street_address += " " + addr.street_address_2
 
             hours = []
-            phone = ''
+            phone = ""
             for hh in block[:-1][::-1]:
                 if hh.startswith("Ph"):
-                    phone = hh.split('Ph.')[-1].hh.split('Ph')[-1]
+                    phone = hh.split("Ph.")[-1].hh.split("Ph")[-1]
                     break
                 hours.append(hh)
             yield SgRecord(
@@ -66,7 +66,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=' '.join(raw_address)
+                raw_address=" ".join(raw_address),
             )
 
 
