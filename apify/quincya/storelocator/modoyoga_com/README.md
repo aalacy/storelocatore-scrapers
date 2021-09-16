@@ -1,1 +1,1 @@
---ignore StateLevelCountValidator (MN state confirmed)
+--ignore CountValidator --ignore StateLevelCountValidator (MN state confirmed, KY not found)
