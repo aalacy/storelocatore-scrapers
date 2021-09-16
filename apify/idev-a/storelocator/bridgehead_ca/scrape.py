@@ -50,7 +50,7 @@ def fetch_data():
             phone = ""
             for hh in block[:-1][::-1]:
                 if hh.startswith("Ph"):
-                    phone = hh.split("Ph.")[-1].hh.split("Ph")[-1]
+                    phone = hh.split("Ph.")[-1].split("Ph")[-1]
                     break
                 hours.append(hh)
             yield SgRecord(
