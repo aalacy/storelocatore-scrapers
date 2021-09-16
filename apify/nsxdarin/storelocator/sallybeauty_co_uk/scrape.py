@@ -4,7 +4,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import json
 
 session = SgRequests(proxy_country="gb")
 
