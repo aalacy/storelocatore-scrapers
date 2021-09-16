@@ -1,4 +1,3 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
