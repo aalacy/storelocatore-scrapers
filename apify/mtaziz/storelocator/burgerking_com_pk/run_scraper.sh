@@ -30,6 +30,7 @@ else
 fi
 
 domain=${PWD##*/}
+#scraper_name=${domain}-scraper
 scraper_name=$(echo ${domain}-scraper | sed 's/_/-/g')
 
 PWD_SET=$(if [[ -z $PROXY_PASSWORD ]]; then echo ""; else echo "< NON-EMPTY >"; fi)
