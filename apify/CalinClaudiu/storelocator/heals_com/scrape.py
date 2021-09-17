@@ -66,7 +66,7 @@ def fetch_data():
     }
 
     with SgRequests() as session:
-        url = "https://www.heals.com/stores/"
+        url = "https://www.heals.com/stores"
         page = session.get(url, headers=headers)
         soup = b4(page.text, "lxml")
         results = []
