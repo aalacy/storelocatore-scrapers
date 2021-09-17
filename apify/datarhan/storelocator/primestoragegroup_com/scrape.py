@@ -27,7 +27,6 @@ def fetch_data():
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        raw_address = poi_html.xpath(".//address/text()")[0].split(", ")
         poi = loc_dom.xpath('//script[@class="yoast-schema-graph"]/text()')[0]
         poi = json.loads(poi)
         phone = poi["@graph"][0]["telephone"]
