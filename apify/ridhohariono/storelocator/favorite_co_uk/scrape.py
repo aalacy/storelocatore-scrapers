@@ -242,7 +242,7 @@ def wait_load(driver, wait, number=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get("https://favorite.co.uk/")
     wait_load(driver, "header")
     for city_list in CITIES:
