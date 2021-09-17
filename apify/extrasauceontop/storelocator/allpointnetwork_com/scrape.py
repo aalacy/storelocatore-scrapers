@@ -1,18 +1,18 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
     searche = [
         DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_2()
+            country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
         ),
         DynamicGeoSearch(
-            country_codes=[SearchableCountries.CANADA], granularity=Grain_2()
+            country_codes=[SearchableCountries.CANADA], granularity=Grain_1_KM()
         ),
         DynamicGeoSearch(
-            country_codes=[SearchableCountries.BRITAIN], granularity=Grain_2()
+            country_codes=[SearchableCountries.BRITAIN], granularity=Grain_1_KM()
         ),
     ]
     url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"

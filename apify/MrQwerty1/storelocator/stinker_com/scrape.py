@@ -121,7 +121,11 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
     }
     token = get_token()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.USA], expected_search_radius_miles=25
         )
