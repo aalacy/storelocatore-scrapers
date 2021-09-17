@@ -131,7 +131,6 @@ def get_data():
             if "searchcountry" in url:
                 country_urls.append(url)
 
-        x = 0
         for country_url in country_urls:
 
             response = s.get(country_url, headers=headers)
@@ -212,6 +211,7 @@ def get_data():
         crawl_state.set_misc_value("got_urls", True)
 
     num_urls = len(crawl_state.request_stack_iter())
+    x = 0
     for request_url in crawl_state.request_stack_iter():
         location_url = request_url.url
         x = x + 1

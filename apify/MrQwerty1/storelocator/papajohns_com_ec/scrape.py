@@ -28,7 +28,7 @@ def fetch_data(sgw: SgWriter):
         street_address = "".join(d.xpath("./div[1]/div/div[2]/text()")).strip()
         phone = "".join(d.xpath("./div[1]/div/div[last()]/text()")).strip()
         store_number = "".join(d.xpath("./@id")).split("-")[-1]
-        longitude, latitude = get_coords(store_number)
+        latitude, longitude = get_coords(store_number)
         city = "".join(
             tree.xpath(
                 f"//div[contains(@class, 'panel ') and .//a[@data-idsucursal='{store_number}']]//h3/a/text()"
