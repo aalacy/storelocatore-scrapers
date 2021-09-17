@@ -8,7 +8,6 @@ from sgscrape.sgpostal import parse_address_intl
 import ssl
 from lxml import html
 import json
-import time
 
 
 try:
