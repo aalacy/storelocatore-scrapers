@@ -66,7 +66,7 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
 
         store_number = "<MISSING>"
-        phone = city_line[city_line.find("(") : city_line.find("\r")].strip()
+        phone = city_line.split("\r")[1].strip()
         if phone == "(817) 333-018":
             phone = "(817) 333-0181"
         hours = (
