@@ -1,48 +1,18 @@
-import csv
-
 import json
 import re
-
 from bs4 import BeautifulSoup
-
 from sglogging import SgLogSetup
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("pokeworks_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+    global p
     locator_domain = "https://www.pokeworks.com/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
@@ -50,7 +20,7 @@ def fetch_data():
 
     session = SgRequests()
     req = session.get(locator_domain, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    base = BeautifulSoup(req.text, "html.parser")
 
     link_list = []
 
@@ -61,11 +31,10 @@ def fetch_data():
         except:
             continue
 
-    all_store_data = []
     for link in link_list:
         logger.info(link)
         req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        base = BeautifulSoup(req.text, "html.parser")
 
         try:
             map_json_string = base.find(class_="sqs-block map-block sqs-block-map")[
@@ -90,7 +59,10 @@ def fetch_data():
             state = "TX"
             zip_code = "75231"
         else:
-            state = city_line[1].replace("\xa0", " ").upper().strip()
+            try:
+                state = city_line[1].replace("\xa0", " ").upper().strip()
+            except:
+                state = "<MISSING>"
             if state.isdigit():
                 zip_code = state
                 state = "<MISSING>"
@@ -98,7 +70,10 @@ def fetch_data():
                 zip_code = state.split()[1].strip()
                 state = state.split()[0].strip()
             else:
-                zip_code = city_line[2].strip()
+                try:
+                    zip_code = city_line[2].strip()
+                except:
+                    zip_code = "<MISSING>"
         if city == "Laguna Niguel":
             state = "CA"
         if zip_code == "V6E":
@@ -107,9 +82,14 @@ def fetch_data():
         country_code = map_json["addressCountry"]
         if "MEX" in country_code.upper():
             continue
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-
+        if link == "http://www.pokeworks.com/san-luis-2":
+            street_address = "C. Palmira 1070"
+            zip_code = "78295"
+            city = "San Luis"
+        if link == "http://www.pokeworks.com/leon":
+            street_address = "Eugenio Garza Sada 1109-local 8 Cumbres del Campestre"
+            zip_code = "37128"
+            city = "León"
         content = base.find(class_="main-content")
 
         try:
@@ -153,31 +133,35 @@ def fetch_data():
         if "STORE INFO" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("  ")[-1].strip()
 
-        hours_of_operation = hours_of_operation.split("Limited")[0].strip()
-        store_data = [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            lat,
-            longit,
-            hours_of_operation,
-        ]
-        all_store_data.append(store_data)
+        hours_of_operation = (
+            hours_of_operation.split("Limited")[0].replace("﻿﻿ ", "").strip()
+        )
+        if hours_of_operation.find(f"{phone}") != -1:
+            hours_of_operation = hours_of_operation.split(f"{phone}")[1].strip()
 
-    return all_store_data
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=link,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=lat,
+            longitude=longit,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
