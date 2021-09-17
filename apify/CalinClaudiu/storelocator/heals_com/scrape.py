@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
 import json
-
+#Here some random text to change filesize so that JIRA automation will consider this for a fresh run rather than paste the same old failure log # noqa
 
 def parse_store(k, session):
     headers = {
@@ -66,7 +66,7 @@ def fetch_data():
     }
 
     with SgRequests() as session:
-        url = "https://www.heals.com/stores/"
+        url = "https://www.heals.com/stores"
         page = session.get(url, headers=headers)
         soup = b4(page.text, "lxml")
         results = []
