@@ -102,7 +102,8 @@ def fetch_data(sgw: SgWriter):
         else:
             ps = content.find_all("p")
             hours_of_operation = "<MISSING>"
-            for p in ps:
+            for a in ps:
+                p = a
                 if "pm" in str(p).lower():
                     hours_of_operation = (
                         " ".join(list(p.stripped_strings))
