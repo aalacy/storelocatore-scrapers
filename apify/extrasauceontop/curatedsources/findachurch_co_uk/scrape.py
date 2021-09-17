@@ -230,6 +230,9 @@ def get_location(request_url):
 
 def scrape_loc_urls():
     url_list = [loc for loc in crawl_state.request_stack_iter()]
+    if len(url_list) < 50:
+        log.info("no records, did it run with a proxy?")
+        raise Exception
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in url_list]
         for future in as_completed(futures):
