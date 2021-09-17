@@ -142,6 +142,23 @@ CITIES = [
     "Blackheath",
     "Battersea",
     "Hammersmith",
+    "Watlingstreet",
+    "Grays",
+    "Sidcup",
+    "Coulsdon",
+    "Wickford",
+    "Epsom",
+    "Upminster",
+    "Surrey",
+    "West Drayton",
+    "Great Linford",
+    "Bletchley",
+    "Cheshunt",
+    "Netherfield",
+    "Enfield",
+    "Hemel Hempstead",
+    "Watford",
+    "RAYNES PARK",
 ]
 
 
@@ -225,7 +242,7 @@ def wait_load(driver, wait, number=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
+    driver = SgSelenium(is_headless=False).chrome()
     driver.get("https://favorite.co.uk/")
     wait_load(driver, "header")
     for city_list in CITIES:
@@ -246,20 +263,19 @@ def fetch_data():
                 script_element = driver.find_element_by_xpath(
                     '//*[@id="ajx-storefinder"]/script'
                 ).get_attribute("innerHTML")
+                soup = bs(driver.page_source, "lxml")
                 staleElement = False
             except:
                 staleElement = True
         latlong = re.findall(
             r".*\?daddr=(\-?[0-9]+\.[0-9]+,\-?[0-9]+\.[0-9]+)", script_element
         )
-        soup = bs(driver.page_source, "lxml")
         main = soup.find("div", {"id": "ajx-storefinder"}).find_all(
             "div", {"class": "row row-store mb0"}
         )
         if not main:
             log.info(f"({city_list}) Element Not Found! trying to refresh...")
             wait_load(driver, "all")
-            soup = bs(driver.page_source, "lxml")
             main = soup.find_all("div", {"class": "row row-store mb0"})
         index = 0
         for row in main:
@@ -341,9 +357,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )
