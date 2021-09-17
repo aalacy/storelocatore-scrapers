@@ -3,7 +3,9 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
 import json
-#Here some random text to change filesize so that JIRA automation will consider this for a fresh run rather than paste the same old failure log # noqa
+
+# Here some random text to change filesize so that JIRA automation will consider this for a fresh run rather than paste the same old failure log # noqa
+
 
 def parse_store(k, session):
     headers = {
