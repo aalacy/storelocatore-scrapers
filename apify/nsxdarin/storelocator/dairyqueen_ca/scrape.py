@@ -1073,7 +1073,6 @@ def fetch_data():
                         )
                         if lurl not in locs:
                             locs.append(lurl)
-                            print(lurl)
     website = "dairyqueen.ca"
     typ = "<MISSING>"
     country = "CA"
