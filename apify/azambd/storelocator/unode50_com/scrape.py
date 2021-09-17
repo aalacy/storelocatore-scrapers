@@ -1,12 +1,13 @@
 import json
 from lxml import etree
 
+from sgrequests import SgRequests
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-import requests  # noqa
+
 
 url = "https://www.unode50.com/us/stores"
 domain = "unode50.com"
@@ -29,7 +30,9 @@ headers = {
     "cookie": "TvWhqLk3ZpjZqFRioIv7gr5vUZpcsmBd=668f111c445a94ba77d8cb54cd515cf2; ClsK7d1xOIBOgnEV3jdywfE11djIfGXh=dc73442c9d14c88f794251c25da742e1; _gcl_au=1.1.1931177535.1631710688; form_key=faqDWZfxvR835ic2; mage-cache-storage=%7B%7D; mage-cache-storage-section-invalidation=%7B%7D; mage-cache-sessid=true; _uetsid=934ec140162411eca711f579476138b2; _uetvid=934ed7e0162411ecb7d9d37758dc3e36; mage-messages=; product_data_storage=%7B%7D; _hjid=da7dbb3b-0f0d-41e6-97dd-6f3a7f37968a; _hjFirstSeen=1; _fbp=fb.1.1631710690060.2138396993; _hjAbsoluteSessionInProgress=0; _pin_unauth=dWlkPU9Ua3hZamt6WTJVdFlUYzJNUzAwTm1VM0xUZzBObUV0TUdNNE5tSXhOVFUxWldZeA; _ga=GA1.2.418090098.1631710693; _gid=GA1.2.8778045.1631710693",
 }
 
-response = requests.request("GET", url, headers=headers)
+session = SgRequests()
+
+response = session.get(url, headers=headers)
 
 
 def fetch_data():
