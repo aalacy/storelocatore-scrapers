@@ -1,5 +1,6 @@
 from lxml import etree
 from requests_toolbelt import MultipartEncoder
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -16,9 +17,12 @@ def fetch_data():
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
     }
-
     response = session.get(
-        "https://tpp.mystratus.com/21.05/(S(3o22wngui024ac5aho1fh0gb))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=2af09639166346abac7b38bd1247e155",
+        "https://tpp.mystratus.com/21.11/OnlineBooking/verify.aspx?loginoption=defaultnew"
+    )
+    session_id = response.url.path.split("S(")[-1].split("))")[0]
+    response = session.get(
+        f"https://tpp.mystratus.com/21.11/(S({session_id}))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=7263af65c45d414688750b38b99e6fde",
         headers=headers,
     )
     dom = etree.HTML(response.text)
