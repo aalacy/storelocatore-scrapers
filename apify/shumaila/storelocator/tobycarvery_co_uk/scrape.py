@@ -15,7 +15,7 @@ headers = {
 def fetch_data():
 
     url = "https://www.tobycarvery.co.uk/restaurants?search=#"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.select("a[href*=restaurants]")
 
@@ -24,7 +24,7 @@ def fetch_data():
 
         if "https:" not in link:
             link = "https://www.tobycarvery.co.uk" + link
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
             "</script", 1
         )[0]

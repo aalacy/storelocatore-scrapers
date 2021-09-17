@@ -56,10 +56,7 @@ class ExampleSearchIteration(SearchIteration):
         :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
         """
 
-        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
         lat, lng = coord
-        # just some clever accounting of locations/country:
-        found = 0
         url = str(f"https://www.starbucks.com/bff/locations?lat={lat}&lng={lng}")
         headers = {}
         headers["x-requested-with"] = "XMLHttpRequest"
@@ -113,7 +110,6 @@ class ExampleSearchIteration(SearchIteration):
                             current_country, default_factory=lambda: 0
                         )
                         self.__state.set_misc_value(current_country, rec_count + 1)
-                        found += 1
                     except KeyError as e:
                         yield SgRecord(
                             page_url=SgRecord.MISSING,
@@ -132,11 +128,6 @@ class ExampleSearchIteration(SearchIteration):
                             hours_of_operation=SgRecord.MISSING,
                             raw_address=str(e),
                         )
-                        found += 1
-                    progress = "??.?%"
-                    logzilla.info(
-                        f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: ??|prog: {progress}|\nRemaining: {items_remaining}"
-                    )
         except Exception as e:
             logzilla.error(f"{e}")
             locations = {"paging": {"total": 0}}
@@ -153,7 +144,7 @@ class ExampleSearchIteration(SearchIteration):
                 latitude=lat,
                 longitude=lng,
                 locator_domain="<ERROR>",
-                hours_of_operation="<ERROR>",
+                hours_of_operation=str(url),
                 raw_address=str(e),
             )
 
@@ -164,7 +155,7 @@ if __name__ == "__main__":
         search_type="DynamicGeoSearch",
         granularity=Grain_8(),
         max_search_results=50,
-        expected_search_radius_miles=20,
+        expected_search_radius_miles=8,
     )
 
     with SgWriter(
