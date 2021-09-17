@@ -55,6 +55,8 @@ def fetch_data():
             )[0]
             hoo = []
             for e in poi["openingHoursSpecification"]:
+                if not e.get("dayOfWeek"):
+                    continue
                 hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
             hours_of_operation = " ".join(hoo)
 
