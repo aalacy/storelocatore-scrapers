@@ -91,7 +91,7 @@ def fetch_data(sgw: SgWriter):
             zip_code = "37128"
             city = "León"
         content = base.find(class_="main-content")
-
+        p = ""
         try:
             phone = re.findall(r"[(\d)]{5}.[\d]{3}-[\d]{4}", str(content))[0]
         except:
