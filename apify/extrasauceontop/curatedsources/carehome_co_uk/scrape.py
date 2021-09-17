@@ -218,8 +218,17 @@ def get_data():
 
         if "searchazref" not in location_url:
             continue
+        
+        try:
+            response = s.get(location_url, headers=headers)
+        
+        except Exception:
+            new_sess = reset_sessions(location_url)
 
-        response = s.get(location_url, headers=headers)
+            s = new_sess[0]
+            headers = new_sess[1]
+            response_text = new_sess[2]
+            
         response_text = response.text
         log.info("URL " + str(x) + "/" + str(num_urls))
         log.info(location_url)
