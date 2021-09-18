@@ -17,6 +17,7 @@ def fetch_data():
 
     url = "https://www.moveitstorage.com/sitemap.xml"
     r = session.get(url, headers=headers)
+
     soup = BeautifulSoup(r.text, "html.parser")
     pattern = re.compile(r"\s\s+")
     linklist = soup.findAll("loc")
