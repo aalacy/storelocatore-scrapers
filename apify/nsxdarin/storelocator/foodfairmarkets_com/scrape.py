@@ -1,4 +1,5 @@
 import ssl
+import time
 from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
@@ -29,6 +30,7 @@ def fetch_data():
 
     driver = SgChrome(user_agent=user_agent).driver()
     driver.get(base_link)
+    time.sleep(6)
     token = driver.get_cookie("fp-session")["value"].split("%22")[-2]
     driver.close()
 
