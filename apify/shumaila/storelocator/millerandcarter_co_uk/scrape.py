@@ -31,8 +31,6 @@ def fetch_data():
                 continue
         except:
             continue
-        print("link=", link)
-
         try:
             r = session.get(link, headers=headers, verify=False)
         except:
