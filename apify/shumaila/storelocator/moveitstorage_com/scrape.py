@@ -16,7 +16,7 @@ headers = {
 def fetch_data():
 
     url = "https://www.moveitstorage.com/sitemap.xml"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     pattern = re.compile(r"\s\s+")
     linklist = soup.findAll("loc")
@@ -33,7 +33,7 @@ def fetch_data():
         except:
             continue
         try:
-            r = session.get(link, headers=headers, verify=False)
+            r = session.get(link, headers=headers)
         except:
             continue
         loc = r.text.split('<script type="application/ld+json">')[2].split(
