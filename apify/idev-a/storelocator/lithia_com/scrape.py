@@ -102,16 +102,20 @@ def fetch_records(http, state):
         if next_r.url == "#":
             yield _d(store, phone, hours, base_url)
             continue
-        page_url = "https://" + urlparse(next_r.url).netloc
+        page_url = "http://" + urlparse(next_r.url).netloc
         logger.info(page_url)
         try:
             sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
         except:
-            if "www" in next_r.url:
-                logger.info("wwwww ========")
-                continue
-            page_url = "https://www." + urlparse(next_r.url).netloc
-            sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+            try:
+                page_url = "https://" + urlparse(next_r.url).netloc
+                sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+            except:
+                if "www" in next_r.url:
+                    logger.info("wwwww ========")
+                    continue
+                page_url = "https://www." + urlparse(next_r.url).netloc
+                sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
 
         if sp1.select("div#hours1-app-root ul li"):
             hours = [
@@ -192,14 +196,28 @@ def fetch_records(http, state):
                 url = page_url + sp1.find("a", href=re.compile(r"^/hours"))["href"]
                 logger.info(url)
                 sp2 = bs(http.get(url, headers=_headers).text, "lxml")
-                try:
+                if sp2.select_one("a.callNowClass span"):
                     phone = sp2.select_one("a.callNowClass span").text.strip()
-                except:
+                if sp2.select_one("a.callNowClass"):
                     phone = sp2.select_one("a.callNowClass").text.strip()
+                elif sp2.select_one('span[itemprop="telephone"]'):
+                    phone = sp2.select_one('span[itemprop="telephone"]').text.strip()
 
-                for hh in sp2.select("div#SalesHours table tbody tr"):
-                    td = list(hh.stripped_strings)
-                    hours.append(f"{td[0]}: {td[1]} - {td[2]}")
+                _hr = sp2.find("strong", string=re.compile(r"Sales"))
+                if _hr:
+                    hours = [
+                        " ".join(hh.stripped_strings)
+                        for hh in _hr.find_parent("div").select("p")[1:]
+                    ]
+                elif sp2.select("div#SalesHours table tbody tr"):
+                    for hh in sp2.select("div#SalesHours table tbody tr"):
+                        td = list(hh.stripped_strings)
+                        hours.append(f"{td[0]}: {td[1]} - {td[2]}")
+                else:
+                    hours = [
+                        " ".join(hh.stripped_strings)
+                        for hh in sp2.select("div.widget-hours div#panel1 div.row")[1:]
+                    ]
             elif sp1.select('div[data-name="section-1-row"] > div'):
                 for loc in sp1.select('div[data-name="section-1-row"] > div'):
                     url = loc.select_one("div.cta-content a.btn")["href"]
