@@ -1,3 +1,6 @@
+from urllib.parse import urljoin
+from lxml import etree
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -21,10 +24,20 @@ def fetch_data():
         street_address = poi["address"]["street"]
         if poi["address"]["street2"]:
             street_address += " " + poi["address"]["street"]
+        hoo = []
+        page_url = "https://www.communityamerica.com/locations"
+        if poi.get("link"):
+            page_url = urljoin(start_url, poi["link"])
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath(
+                '//h5[contains(text(), "Lobby Hours")]/following-sibling::ul//text()'
+            )
+            hoo = " ".join([e.strip() for e in hoo])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.communityamerica.com/locations",
+            page_url=page_url,
             location_name=poi["name"],
             street_address=street_address,
             city=poi["address"]["city"],
@@ -32,11 +45,11 @@ def fetch_data():
             zip_postal=poi["address"]["zip"],
             country_code=SgRecord.MISSING,
             store_number=SgRecord.MISSING,
-            phone=SgRecord.MISSING,
+            phone=poi.get("phone"),
             location_type=SgRecord.MISSING,
             latitude=poi["address"]["latitude"],
             longitude=poi["address"]["longitude"],
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hoo,
         )
 
         yield item

@@ -1,3 +1,5 @@
+import re
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -30,6 +32,7 @@ def fetch_data():
         if loc_dom.xpath('//h1[contains(text(), "Coming Soon")]'):
             continue
 
+        location_name = poi["name"].replace("(Coming Soon)", "").strip()
         street_address = poi["address_line_1"]
         if poi["address_line_2"]:
             street_address += " " + poi["address_line_2"]
@@ -63,11 +66,18 @@ def fetch_data():
                 street_address = ", ".join(street_address[:2])
             else:
                 street_address = street_address[0]
+        if not city:
+            city = location_name.split("-")[0].split(", ")[0]
+        if not state:
+            state = location_name.split("-")[0].split(", ")[-1].strip()
+        if not zip_code and street_address.split()[-1].isnumeric():
+            zip_code = street_address.split()[-1]
+            street_address = " ".join(street_address.split()[:-1])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
+            location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
@@ -78,6 +88,52 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=poi["lat"],
             longitude=poi["lng"],
+            hours_of_operation=hours_of_operation,
+        )
+
+        yield item
+
+    url = "https://slimchickens.com/location-menus/"
+    response = session.get(url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//a[contains(text(), "UK")]/@href')
+    for page_url in all_locations:
+        loc_response = session.get(page_url, headers=hdr)
+        if loc_response.status_code != 200:
+            continue
+        loc_dom = etree.HTML(loc_response.text)
+
+        raw_data = loc_dom.xpath('//div[@id="MapAddress"]/p/text()')
+        raw_data = [e.strip() for e in raw_data]
+
+        data = loc_dom.xpath(
+            '//script[contains(text(), "maplistFrontScriptParams")]/text()'
+        )
+        if not data:
+            continue
+        data = re.findall("tParams =(.+);", data[0])[0]
+        data = json.loads(data)
+        poi = json.loads(data["location"])
+        location_name = poi["title"]
+        if "Coming Soon" in location_name:
+            continue
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_data[1],
+            city=raw_data[2],
+            state=SgRecord.MISSING,
+            zip_postal=raw_data[-1],
+            country_code="UK",
+            store_number=poi["cssClass"].split("-")[-1],
+            phone=loc_dom.xpath(
+                '//h4[strong[contains(text(), "PHONE:")]]/following-sibling::p/text()'
+            )[0],
+            location_type=SgRecord.MISSING,
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
             hours_of_operation=hours_of_operation,
         )
 

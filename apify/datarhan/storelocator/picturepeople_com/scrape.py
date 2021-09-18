@@ -17,9 +17,12 @@ def fetch_data():
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
     }
-
     response = session.get(
-        "https://tpp.mystratus.com/21.07/(S(hykrg13jfpdr4q1kfwzfz3vj))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=449336912b0041bc8625f63e52e3fcb7",
+        "https://tpp.mystratus.com/21.11/OnlineBooking/verify.aspx?loginoption=defaultnew"
+    )
+    session_id = response.url.path.split("S(")[-1].split("))")[0]
+    response = session.get(
+        f"https://tpp.mystratus.com/21.11/(S({session_id}))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=7263af65c45d414688750b38b99e6fde",
         headers=headers,
     )
     dom = etree.HTML(response.text)

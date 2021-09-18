@@ -2,5 +2,5 @@
 sglogging==0.0.4
 sgpostal==0.1.0
 sgscrape==0.1.13
-sgrequests==0.1.12
+sgrequests==0.1.13
 beautifulsoup4==4.9.3
