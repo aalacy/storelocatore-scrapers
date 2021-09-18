@@ -37,13 +37,22 @@ def fetch_data():
                 store_number = loc["data-restaurant-id"]
                 location_name = loc.find("dt", {"class": "mainAddress"}).text
                 hours_of_operation = (
-                    loc.find("dd", {"class": "store-hours"}).find("td").get_text(separator="|", strip=True)
-                    .replace('Hours','').replace(':','').replace('|',' ').replace('Operations','')
-                    .replace('Operation','').replace('hours','').replace('Opertions Hour','').replace('Opening','')
-
+                    loc.find("dd", {"class": "store-hours"})
+                    .find("td")
+                    .get_text(separator="|", strip=True)
+                    .replace("Hours", "")
+                    .replace(":", "")
+                    .replace("|", " ")
+                    .replace("Operations", "")
+                    .replace("Operation", "")
+                    .replace("hours", "")
+                    .replace("Opertions Hour", "")
+                    .replace("Opening", "")
                 )
-                if 'Special Business' in hours_of_operation:
-                    hours_of_operation= hours_of_operation.split('Special Business Hours')[0]
+                if "Special Business" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split(
+                        "Special Business Hours"
+                    )[0]
                 try:
                     latitude, longitude = (
                         loc.find("dd", {"class": "links"})
