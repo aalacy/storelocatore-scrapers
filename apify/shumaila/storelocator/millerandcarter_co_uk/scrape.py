@@ -15,7 +15,7 @@ headers = {
 def fetch_data():
 
     url = "https://www.millerandcarter.co.uk/sitemap.xml"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.findAll("loc")
     for link in linklist:
@@ -32,7 +32,7 @@ def fetch_data():
         except:
             continue
         try:
-            r = session.get(link, headers=headers, verify=False)
+            r = session.get(link, headers=headers)
         except:
             continue
         loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
