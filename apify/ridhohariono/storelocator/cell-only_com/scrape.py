@@ -96,7 +96,6 @@ def fetch_data():
             .replace("day,", "day: ")
             .replace(",-,", " - ")
         )
-        print(hours_of_operation)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
