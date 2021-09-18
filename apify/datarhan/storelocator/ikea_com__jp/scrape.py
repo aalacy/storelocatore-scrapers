@@ -27,6 +27,12 @@ def fetch_data():
 
         location_name = loc_dom.xpath("//h1/text()")[0]
         raw_adr = loc_dom.xpath('//p[strong[contains(text(), "Adress")]]/text()')
+        if not raw_adr:
+            raw_adr = loc_dom.xpath('//p[strong[contains(text(), "Address")]]/text()')
+        if not raw_adr:
+            raw_adr = loc_dom.xpath(
+                '//p[strong[contains(text(), "Address")]]/following-sibling::p[1]/text()'
+            )
         raw_adr = ", ".join(raw_adr)
         addr = parse_address_intl(raw_adr)
         street_address = addr.street_address_1
@@ -41,7 +47,7 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//p[strong[contains(text(), "Store opening hours")]]/following-sibling::p/text()'
         )
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).split("“Swedish")[0].strip()
 
         item = SgRecord(
             locator_domain=domain,
@@ -55,8 +61,8 @@ def fetch_data():
             store_number="",
             phone="",
             location_type="",
-            latitude=geo[0],
-            longitude=geo[1],
+            latitude=geo[1],
+            longitude=geo[0],
             hours_of_operation=hoo,
             raw_address=raw_adr,
         )
