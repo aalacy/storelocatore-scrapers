@@ -52,8 +52,13 @@ def fetch_data():
             state = "<MISSING>"
         pcode = loc["address"]["postalCode"]
         phone = loc["telephone"]
-        lat = r.text.split("label: '1'", 1)[1].split("latitude: ", 1)[0]
-        longt = r.text.split("label: '1'", 1)[1].split("longitude: ", 1)[0]
+        lat = (
+            r.text.split("label: '1'", 1)[1].split("latitude: ", 1)[1].split(",", 1)[0]
+        )
+        longt = (
+            r.text.split("label: '1'", 1)[1].split("longitude: ", 1)[1].split("}", 1)[0]
+        )
+        longt = re.sub(pattern, "", str(longt))
         soup = BeautifulSoup(r.text, "html.parser")
         hours = soup.find("div", {"class": "facility-hours-panel"}).find("table").text
         hours = (
