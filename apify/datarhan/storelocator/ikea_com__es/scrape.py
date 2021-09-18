@@ -48,6 +48,12 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//div[p[strong[contains(text(), "Store opening hours")]]]/p//text()'
         )
+        if not hoo:
+            hoo = loc_dom.xpath('//p[strong[contains(text(), "Schedule:")]]/text()')
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//li[strong[contains(text(), "Schedule:")]]/strong/text()'
+            )[1:]
         hoo = (
             " ".join([e.strip() for e in hoo if e.strip()])
             .replace("Store opening hours", "")

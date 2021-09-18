@@ -42,7 +42,12 @@ def fetch_data():
             soup.find("div", {"class": "location-hours"})
             .get_text(separator="|", strip=True)
             .replace("|", " ")
+            .replace("Dining room closes at 11pm", "")
         )
+        location_type = MISSING
+        if "Coming - - Soon" in hours_of_operation:
+            hours_of_operation = MISSING
+            location_type = "Coming Soon"
         location_name = (
             soup.find("h1").get_text(separator="|", strip=True).replace("|", " ")
         )
@@ -57,7 +62,7 @@ def fetch_data():
             country_code=country_code,
             store_number=MISSING,
             phone=phone.strip(),
-            location_type=MISSING,
+            location_type=location_type,
             latitude=MISSING,
             longitude=MISSING,
             hours_of_operation=hours_of_operation.strip(),

@@ -45,7 +45,7 @@ map_url = "https://bitcoindepot.com/get-map-points/"
 def fetch_data():
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers)
-        header1["x-csrftoken"] = res.cookies.get_dict()["csrftoken"]
+        header1["x-csrftoken"] = res.cookies.get("csrftoken")
 
         locations = session.post(map_url, headers=header1).json()["set_locations"]
         for _ in locations:
