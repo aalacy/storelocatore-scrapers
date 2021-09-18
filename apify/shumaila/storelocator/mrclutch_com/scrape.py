@@ -16,7 +16,6 @@ def fetch_data():
     url = "https://www.mrclutch.com/sitemap.xml"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    pattern = re.compile(r"\s\s+")
     linklist = soup.findAll("loc")
     for link in linklist:
 
