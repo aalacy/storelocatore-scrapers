@@ -82,7 +82,7 @@ def wait_load(driver):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     html = driver.find_element_by_tag_name("html")
     html.send_keys(Keys.END)
