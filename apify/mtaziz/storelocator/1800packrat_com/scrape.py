@@ -71,7 +71,6 @@ def get_store_urls():
         )
         tree = html.fromstring(r.text)
         logger.info(f"Raw Page Source: {r.text}")
-        r_text = r.text
         text = (
             "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
             .split("markers:")[1]
