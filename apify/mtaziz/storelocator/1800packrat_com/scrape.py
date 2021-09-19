@@ -10,6 +10,7 @@ from pyppeteer_stealth import stealth
 import json
 import ssl
 import pyppdf.patch_pyppeteer
+from sgrequests import SgRequests
 
 try:
     _create_unverified_https_context = (
@@ -28,8 +29,16 @@ logger.info(f"pyppdf loaded: {pyppdf.patch_pyppeteer}")
 LOCATION_URL = "https://www.1800packrat.com/locations"
 DOMAIN = "1800packrat.com"
 MISSING = SgRecord.MISSING
-
-
+headers_custom_for_location_url = {
+    "authority": "www.1800packrat.com",
+    "method": "GET",
+    "path": "/locations",
+    "scheme": "https",
+    "referer": "https://www.1800packrat.com/locations",
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+    "upgrade-insecure-requests": "1",
+}
 userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
 args = [
     "--no-sandbox",
@@ -51,6 +60,37 @@ options = {
 }
 
 
+def get_store_urls():
+    with SgRequests() as http:
+        geo = dict()
+        urls = []
+        r = http.get(
+            LOCATION_URL,
+            headers=headers_custom_for_location_url,
+            timeout=180,
+        )
+        tree = html.fromstring(r.text)
+        logger.info(f"Raw Page Source: {r.text}")
+        r_text = r.text
+        text = (
+            "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
+            .split("markers:")[1]
+            .split("]")[0]
+            .strip()[:-1]
+            + "]"
+        )
+        js = json.loads(text)
+        for j in js:
+            slug = j.get("Link")
+            url = f"https://www.{DOMAIN}{slug}"
+            urls.append(url)
+            lat = j.get("Latitude") or MISSING
+            lng = j.get("Longitude") or MISSING
+            geo[slug] = {"lat": lat, "lng": lng}
+            logger.info(f"Latitude & Longitude: {geo}")
+        return urls, geo
+
+
 def fetch_record(idx, content, store_url, latlng):
     logger.info(f"[{idx}] Pulling the data from {store_url}")
     page_sel = html.fromstring(content, "lxml")
@@ -64,9 +104,14 @@ def fetch_record(idx, content, store_url, latlng):
     address = json_data["address"]
     sa = address["streetAddress"] or MISSING
     street_address = sa
+    logger.info(f"[{idx}] Street Address: {street_address}")
     city = address["addressLocality"] or MISSING
+    logger.info(f"[{idx}] city: {city}")
+
     state = address["addressRegion"] or MISSING
+    logger.info(f"[{idx}] State: {state}")
     zip_postal = address["postalCode"] or MISSING
+    logger.info(f"[{idx}] Zipcode: {zip_postal}")
     country_code = "US"
     store_number = MISSING
     phone = json_data["telephone"] or MISSING
@@ -125,57 +170,9 @@ async def get_response(idx, url, latlng):
     return data
 
 
-async def get_response_initial(url):
-    driver = await launch(options)
-    page = await driver.newPage()
-    await stealth(page)
-    await page.goto(url)
-    await asyncio.sleep(5)
-    html_content = await page.content()
-    await driver.close()
-    extract_task = asyncio.ensure_future(get_store_urls(html_content))
-    extract_results = await asyncio.gather(extract_task)
-    return extract_results
-
-
-async def get_store_urls(html_content):
-    geo = dict()
-    urls = []
-    tree = html.fromstring(html_content)
-    logger.info(f"html content: {html_content}")
-    text = (
-        "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
-        .split("markers:")[1]
-        .split("]")[0]
-        .strip()[:-1]
-        + "]"
-    )
-    js = json.loads(text)
-    for j in js:
-        slug = j.get("Link")
-        url = f"https://www.{DOMAIN}{slug}"
-        urls.append(url)
-        lat = j.get("Latitude") or MISSING
-        lng = j.get("Longitude") or MISSING
-        geo[slug] = {"lat": lat, "lng": lng}
-        logger.info(f"Latitude & Longitude: {geo}")
-        logger.info(f"List of Store URLs: {urls}")
-    return urls, geo
-
-
-def get_urls():
-    return asyncio.get_event_loop().run_until_complete(
-        get_response_initial(LOCATION_URL)
-    )
-
-
-urls_geo = get_urls()
-
-
 def main_generator():
 
-    urls = urls_geo[0][0]
-    geo = urls_geo[0][1]
+    urls, geo = get_store_urls()
     logger.info(f"List of Store URLs: {urls}")
     loop = asyncio.get_event_loop()
     for idx, url in enumerate(urls[0:]):
