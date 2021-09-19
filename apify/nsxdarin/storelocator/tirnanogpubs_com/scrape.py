@@ -16,7 +16,7 @@ def fetch_data():
     typ = "<MISSING>"
     country = "CA"
     logger.info("Pulling Stores")
-    loc = "https://sheets.googleapis.com/v4/spreadsheets/1idWVGZkrRLTEkm6eB0baD9J7G6u-4rLIud4BL52Md3Q/values/1Stores?key=AIzaSyCWzsoRvbqZ_ilWyJ2z88O4nps4oGU5idU"
+    loc = "https://sheets.googleapis.com/v4/spreadsheets/1MUyodpsytUuuYhHJTepJOHdD-uTgd0X5yzZJZqFtYSo/values/1Stores?key=AIzaSyCWzsoRvbqZ_ilWyJ2z88O4nps4oGU5idU"
     headers = {
         "authority": "sheets.googleapis.com",
         "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
@@ -59,7 +59,7 @@ def fetch_data():
             if "HAPPY" in hours:
                 hours = hours.split("HAPPY")[0].strip()
             purl = (
-                "https://www.stateandmain.ca/en/locations/"
+                "https://www.tirnanogpubs.com/en/locations/"
                 + store
                 + "/"
                 + city.lower()

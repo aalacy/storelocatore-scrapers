@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 
 session = SgRequests()
@@ -13,36 +16,9 @@ logger = SgLogSetup().get_logger("boostmobile_com")
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    max_search_distance_miles=None,
     max_search_results=None,
 )
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -79,14 +55,16 @@ def fetch_data():
             ]:
                 website = "boostmobile.com"
                 store = item["id"]
-                name = item["storeName"]  # Change Location Name as  we discussed
-                typ = "Mobile Store"  # Change Location type as  we discussed
+                name = item["storeName"]
+                typ = "Mobile Store"
                 add = item["storeAddress"]["primaryAddressLine"]
                 city = item["storeAddress"]["city"]
                 state = item["storeAddress"]["state"]
                 zc = item["storeAddress"]["zipCode"]
                 lat = item["storeAddress"]["lat"]
                 lng = item["storeAddress"]["long"]
+                if lat == "30425794":
+                    lat = "30.425794"
                 country = "US"
                 phone = item["storePhone"]
                 loc = item["elevateURL"]
@@ -110,30 +88,33 @@ def fetch_data():
                     hours = "<MISSING>"
                 if loc == "" or loc is None:
                     loc = "<MISSING>"
-                # store_number should be unique
-                if store not in ids and store != "":
+                if store != "":
                     ids.append(store)
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
