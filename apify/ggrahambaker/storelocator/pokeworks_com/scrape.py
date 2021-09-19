@@ -115,7 +115,7 @@ def fetch_data(sgw: SgWriter):
         try:
             ph = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(info))
         except:
-            ph = "<MISSING>"
+            ph = list("<MISSING>")
         phone = "".join(ph).strip() or "<MISSING>"
         if phone == "<MISSING>" and state != "MX":
             phone = (
