@@ -4,6 +4,8 @@ from sglogging import sglog
 import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "freepeople.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -17,7 +19,7 @@ headers = {
 def get_api_key(resp):
 
     json_config = (
-        resp.split("window.urbn.runtimeConfig =")[1]
+        resp.split("window.urbn.config =")[1]
         .strip()
         .split('JSON.parse("')[1]
         .strip()
@@ -153,7 +155,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

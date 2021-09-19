@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("traderjoes")
 
@@ -37,13 +39,16 @@ def fetch_data():
                 locations = sp2.select("div.itemlist a.directions")
                 logger.info(f"[{state.text}][{city.text}] {len(locations)} found")
                 for loc in locations:
-                    logger.info(loc["href"])
                     sp2 = bs(
                         session.get(loc["href"], headers=_headers(city["href"])).text,
                         "lxml",
                     )
                     cc = sp2.select_one("p.opening-comments")
-                    if cc and "COMING SOON!" in cc.text:
+                    if cc and (
+                        "coming soon" in cc.text.lower()
+                        or "opening" in cc.text.lower()
+                        or "opens" in cc.text.lower()
+                    ):
                         continue
                     addr = list(sp2.select_one("div.addressline").stripped_strings)
                     hours = [_.text for _ in sp2.select("div#hoursSpl p")]
@@ -75,7 +80,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,36 +1,9 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_hours(url):
@@ -58,22 +31,29 @@ def get_tree(url):
 def get_phone(url):
     tree = get_tree(url)
     kurl = tree.xpath("/html/head/script/@src")[-1]
+    if kurl.startswith("/"):
+        kurl = f"https://smartstopselfstorage.com{kurl}"
     r = session.get(kurl)
-    phone = (r.text.split('"phone":')[1]).split(",")[0]
+    try:
+        phone = (r.text.split('"phone":')[1]).split(",")[0].replace('"', "")
+    except IndexError:
+        phone = SgRecord.MISSING
 
-    return phone.replace('"', "")
+    return phone
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://smartstopselfstorage.com/"
+def fetch_data(sgw: SgWriter):
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
     api_url = "https://smartstopselfstorage.com/umbraco/rhythm/locationsapi/findlocations?size=&latitude=36.563752659280766&longitude=-73.941626814556&radius=3915.6025249727622&culture=en-us"
 
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     js = r.json()["items"]
 
     for j in js:
-        street_address = j.get("address1") or "<MISSING>"
+        street_address = j.get("address1") or SgRecord.MISSING
         csz = j.get("address2")
         city = csz.split(",")[0].strip()
         csz = csz.split(",")[1].strip()
@@ -85,42 +65,36 @@ def fetch_data():
         country_code = "US"
         if len(postal) > 5 or not postal.isdigit():
             country_code = "CA"
-        store_number = "<MISSING>"
         slug = j.get("url") or ""
         page_url = f"https://smartstopselfstorage.com{slug}"
         location_name = f"Self Storage in {city} {state}"
         phone = j.get("phone") or get_phone(page_url)
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        latitude = j.get("latitude") or SgRecord.MISSING
+        longitude = j.get("longitude") or SgRecord.MISSING
         hours_of_operation = get_hours(page_url)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
-    scrape()
+    locator_domain = "https://smartstopselfstorage.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

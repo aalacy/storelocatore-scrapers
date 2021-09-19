@@ -1,130 +1,141 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-from sglogging import SgLogSetup
+import ssl
+from lxml import etree
+from urllib.parse import urljoin
+from time import sleep
 
-logger = SgLogSetup().get_logger('bigairusa_com')
+from sgselenium import SgChrome
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    start_url = "https://www.bigairusa.com/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    # it will used in store data.
-    base_url = "https://www.bigairusa.com"
-    locator_domain = "https://www.bigairusa.com"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
+    all_locations = dom.xpath('//li[@class="elementor-icon-list-item"]/a/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-    r= session.get('https://www.bigairusa.com',headers = headers)
-    soup = BeautifulSoup(r.text,'lxml')
-    for link in soup.find('div',class_='post-content').findAll('li'):
-        try:
-            link = link.a['href']
-            loc_r= session.get(link,headers = headers)
-        except:
-            continue
-        logger.info(link)
-        soup_loc= BeautifulSoup(loc_r.text,'lxml')
+        city = loc_dom.xpath('//a[contains(@href, "maps")]/span/text()')[-1].split(
+            ", "
+        )[0]
+        state = loc_dom.xpath('//a[contains(@href, "maps")]/span/text()')[-1].split(
+            ", "
+        )[1]
+        location_name = loc_dom.xpath('//a[contains(@href, "maps")]/span/text()')[-1]
+        phone = loc_dom.xpath(
+            '//span[i[@class="fas fa-mobile-alt"]]/following-sibling::span/text()'
+        )[0]
+        geo = (
+            loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
+            .split("/@")[-1]
+            .split(",")[:2]
+        )
+        hoo = loc_dom.xpath('//div[@class="elementor-widget-wrap"]/section[2]//text()')
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[@data-widget_type="uael-business-hours.default"]//text()'
+            )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-        location_name = soup_loc.title.text.replace("Home |","").replace("Home -","").split("|")[0].strip()
+        dir_url = store_url + "direction/"
+        loc_response = session.get(dir_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-        address = soup_loc.find(class_="address").text
-        street_city = address.split(',')[0].replace(".","").strip()
-        if "|" in street_city:
-            street_address = street_city.split("|")[0].strip()
-            city = street_city.split("|")[-1].strip()
-        else:
-            street_address = " ".join(street_city.split()[:-1]).strip()
-            city = street_city.split()[-1].strip()
+        raw_address = []
+        if loc_response.status_code != 200:
+            raw_address = [SgRecord.MISSING, SgRecord.MISSING]
+        if not raw_address:
+            raw_address = loc_dom.xpath('//h5[contains(text(), "is located")]/text()')
+            if raw_address:
+                raw_address = raw_address[0].split("located")[-1].strip().split(", ")
+        if not raw_address:
+            raw_address = loc_dom.xpath('//h5[contains(text(), "ADDRESS:")]/text()')
+            if raw_address:
+                raw_address = raw_address[0].split("ADDRESS:")[-1].strip().split(", ")
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//p[contains(text(), "shopping center:")]/text()'
+            )
+            if raw_address:
+                raw_address = (
+                    raw_address[0].split("shopping center:")[-1].strip().split(", ")
+                )
+        if not raw_address:
+            raw_address = loc_dom.xpath('//p[contains(text(), "is located")]/text()')
+            if raw_address:
+                raw_address = raw_address[0].split("located")[-1].strip().split(", ")
+        if not raw_address:
+            with SgChrome() as driver:
+                driver.get(dir_url)
+                sleep(10)
+                driver.switch_to.frame(
+                    driver.find_element_by_xpath('//iframe[contains(@src, "google")]')
+                )
+                loc_dom = etree.HTML(driver.page_source)
+                raw_address = loc_dom.xpath('//div[@class="address"]/text()')[0].split(
+                    ", "
+                )
+        street_address = raw_address[0].split("|")[0].replace("at ", "").strip()
+        if "Rd Chandler" in street_address:
+            street_address = street_address.replace("Rd Chandler", "Rd")
+        zip_code = raw_address[-1].split()[-1].replace(".", "")
+        if len(zip_code) > 5:
+            zip_code = SgRecord.MISSING
 
-        state = address.split(',')[-1][:3].strip()
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=SgRecord.MISSING,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=geo[0],
+            longitude=geo[-1],
+            hours_of_operation=hoo,
+        )
 
-        try:
-            zipp = re.findall(r'[0-9]{5}', address)[0]
-        except:
-            zipp = "<MISSING>"
+        yield item
 
-        if city == "Carlota":
-            street_address = street_city
-            city = "Laguna Hills"
-            state = "CA"
-            zipp = "<MISSING>"
-
-        try:
-            phone = soup_loc.find(class_="phone").text.replace("Phone:","").strip()
-        except:
-            info = soup_loc.find(class_="fusion-contact-info").text
-            phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(info))[0]
-
-        if "•" in phone:
-            phone = phone.split("•")[-1].strip()
-
-        hour_link = link + "hours/"
-        loc_h = session.get(hour_link,headers = headers)
-        soup_h = BeautifulSoup(loc_h.text,'lxml')
-        hours_of_operation = ""
-        raw_hours = soup_h.find('div',class_='fusion-text').find('ul')
-        try:
-            hours = list(raw_hours.stripped_strings)
-            for hour in hours:
-                if "day" in hour.lower() or "pm" in hour.lower() and "night" not in hour.lower():
-                    hours_of_operation = (hours_of_operation + " " + hour.replace("\xa0","").replace("–","-").replace("SUMMER HOURS","").replace("|","")).strip()
-        except:
-            hours_of_operation = "<MISSING>"
-
-        hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation,link]
-        store = ["<MISSING>" if x == "" or x == None  else x for x in store]
-
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-        return_main_object.append(store)
-
-    return return_main_object
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

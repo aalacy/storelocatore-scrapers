@@ -1,110 +1,87 @@
-import csv
 import json
-from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
 website = "visionexpress_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-        log.info(f"No of records being processed: {len(data)}")
+DOMAIN = "https://visionexpress.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
     url = "https://www.visionexpress.com/opticians"
     r = session.get(url, headers=headers)
     loclist = r.text.split('"stores":[')[1].split('],"queryParams"', 1)[0]
     loclist = "[" + loclist + "]"
     loclist = json.loads(loclist)
     for loc in loclist:
-        title = loc["storeName"]
-        lat = loc["lat"]
-        longt = loc["lon"]
-        store = loc["code"]
+        location_name = loc["storeName"]
+        latitude = loc["lat"]
+        longitude = loc["lon"]
+        store_number = loc["code"]
         phone = loc["Phone1"]
         city = loc["town"]
-        street = loc["streetName"]
+        street_address = loc["streetName"]
         state = loc["province"]
-        pcode = loc["postalCode"]
-        ccode = loc["country"]
-        link = (
+        zip_postal = loc["postalCode"]
+        country_code = loc["country"]
+        page_url = (
             "https://www.visionexpress.com/opticians/"
             + city.lower()
             + "/"
             + loc["slug"]
         )
-        r = session.get(link, headers=headers)
+        log.info(page_url)
+        r = session.get(page_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        hour_list1 = soup.find("div", {"class": "store-opening-hours__days"}).findAll(
-            "dt"
+        hours_of_operation = (
+            soup.find("dl", {"class": "location-opening-hours"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
         )
-        hour_list2 = soup.find("div", {"class": "store-opening-hours__times"}).findAll(
-            "dd"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
         )
-        hours = [i.text + " " + j.text for i, j in zip(hour_list1, hour_list2)]
-        hours = " ".join(hours)
-        data.append(
-            [
-                "https://www.visionexpress.com/",
-                link,
-                title.strip(),
-                street.strip(),
-                city.strip(),
-                state.strip(),
-                pcode.strip(),
-                ccode.strip(),
-                store,
-                phone.strip(),
-                "<MISSING>",
-                lat,
-                longt,
-                hours.strip(),
-            ]
-        )
-    return data
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

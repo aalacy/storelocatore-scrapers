@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("ford_co_uk")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -172,7 +148,7 @@ def fetch_data():
                                     0
                                 ]
                                 + "-"
-                                + item.split('"SalesTuesdayOpenTime":"')[1].split('"')[
+                                + item.split('"SalesTuesdayCloseTime":"')[1].split('"')[
                                     0
                                 ]
                             )
@@ -184,7 +160,7 @@ def fetch_data():
                                     '"'
                                 )[0]
                                 + "-"
-                                + item.split('"SalesWednesdayOpenTime":"')[1].split(
+                                + item.split('"SalesWednesdayCloseTime":"')[1].split(
                                     '"'
                                 )[0]
                             )
@@ -196,9 +172,9 @@ def fetch_data():
                                     0
                                 ]
                                 + "-"
-                                + item.split('"SalesThursdayOpenTime":"')[1].split('"')[
-                                    0
-                                ]
+                                + item.split('"SalesThursdayCloseTime":"')[1].split(
+                                    '"'
+                                )[0]
                             )
                             hours = (
                                 hours
@@ -206,7 +182,9 @@ def fetch_data():
                                 + "Fri: "
                                 + item.split('"SalesFridayOpenTime":"')[1].split('"')[0]
                                 + "-"
-                                + item.split('"SalesFridayOpenTime":"')[1].split('"')[0]
+                                + item.split('"SalesFridayCloseTime":"')[1].split('"')[
+                                    0
+                                ]
                             )
                             hours = (
                                 hours
@@ -216,9 +194,9 @@ def fetch_data():
                                     0
                                 ]
                                 + "-"
-                                + item.split('"SalesSaturdayOpenTime":"')[1].split('"')[
-                                    0
-                                ]
+                                + item.split('"SalesSaturdayCloseTime":"')[1].split(
+                                    '"'
+                                )[0]
                             )
                             hours = (
                                 hours
@@ -226,7 +204,9 @@ def fetch_data():
                                 + "Sun: "
                                 + item.split('"SalesSundayOpenTime":"')[1].split('"')[0]
                                 + "-"
-                                + item.split('"SalesSundayOpenTime":"')[1].split('"')[0]
+                                + item.split('"SalesSundayCloseTime":"')[1].split('"')[
+                                    0
+                                ]
                             )
                         if (
                             '"ServiceMondayOpenTime":""' not in item
@@ -250,7 +230,7 @@ def fetch_data():
                                     '"'
                                 )[0]
                                 + "-"
-                                + item.split('"ServiceTuesdayOpenTime":"')[1].split(
+                                + item.split('"ServiceTuesdayCloseTime":"')[1].split(
                                     '"'
                                 )[0]
                             )
@@ -262,7 +242,7 @@ def fetch_data():
                                     '"'
                                 )[0]
                                 + "-"
-                                + item.split('"ServiceWednesdayOpenTime":"')[1].split(
+                                + item.split('"ServiceWednesdayCloseTime":"')[1].split(
                                     '"'
                                 )[0]
                             )
@@ -274,7 +254,7 @@ def fetch_data():
                                     '"'
                                 )[0]
                                 + "-"
-                                + item.split('"ServiceThursdayOpenTime":"')[1].split(
+                                + item.split('"ServiceThursdayCloseTime":"')[1].split(
                                     '"'
                                 )[0]
                             )
@@ -286,9 +266,9 @@ def fetch_data():
                                     0
                                 ]
                                 + "-"
-                                + item.split('"ServiceFridayOpenTime":"')[1].split('"')[
-                                    0
-                                ]
+                                + item.split('"ServiceFridayCloseTime":"')[1].split(
+                                    '"'
+                                )[0]
                             )
                             hours = (
                                 hours
@@ -298,7 +278,7 @@ def fetch_data():
                                     '"'
                                 )[0]
                                 + "-"
-                                + item.split('"ServiceSaturdayOpenTime":"')[1].split(
+                                + item.split('"ServiceSaturdayCloseTime":"')[1].split(
                                     '"'
                                 )[0]
                             )
@@ -310,34 +290,36 @@ def fetch_data():
                                     0
                                 ]
                                 + "-"
-                                + item.split('"ServiceSundayOpenTime":"')[1].split('"')[
-                                    0
-                                ]
+                                + item.split('"ServiceSundayCloseTime":"')[1].split(
+                                    '"'
+                                )[0]
                             )
                         addinfo = lat + "|" + lng
                         if addinfo not in infos:
                             infos.append(addinfo)
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

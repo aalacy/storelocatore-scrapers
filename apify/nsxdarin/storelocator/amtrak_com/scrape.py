@@ -1,40 +1,16 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("amtrak_com")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -55,6 +31,7 @@ def fetch_data():
         "PE",
     ]
     url = "https://www.amtrak.com/sitemap.xml"
+    session = SgRequests()
     r = session.get(url, headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
@@ -64,11 +41,21 @@ def fetch_data():
             for item in items:
                 if "<?xml" not in item:
                     lurl = (
-                        "https://maps.amtrak.com/services/MapDataService/StationInfo/getStationInfo?stationCode="
+                        "https://www.amtrak.com/content/amtrak/en-us/stations/"
+                        + item.split("<")[0]
+                    )
+                    locs.append(lurl)
+        if "<loc>https://beta.amtrak.com/stations/" in line:
+            items = line.split("<loc>https://beta.amtrak.com/stations/")
+            for item in items:
+                if "<?xml" not in item:
+                    lurl = (
+                        "https://beta.amtrak.com/content/amtrak/en-us/stations/"
                         + item.split("<")[0]
                     )
                     locs.append(lurl)
     for loc in locs:
+        time.sleep(2)
         logger.info(("Pulling Location %s..." % loc))
         website = "amtrak.com"
         typ = "<MISSING>"
@@ -82,8 +69,9 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         phone = "215-856-7924"
-        store = loc.rsplit("=", 1)[1]
+        store = loc.rsplit("/", 1)[1].split(".")[0]
         lurl = "https://www.amtrak.com/content/amtrak/en-us/stations/" + store + ".html"
+        session = SgRequests()
         r2 = session.get(lurl, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -100,7 +88,10 @@ def fetch_data():
                     csz = line2.split('card_block-address">')[1].split("<")[0].strip()
                     city = csz.split(",")[0]
                     state = csz.split(",")[1].strip().split(" ")[0]
-                    zc = csz.rsplit(" ", 1)[1]
+                    if state not in canada:
+                        zc = csz.rsplit(" ", 1)[1]
+                    else:
+                        zc = csz.rsplit(" ", 2)[1] + " " + csz.rsplit(" ", 1)[1]
             if 'station-type">' in line2:
                 typ = line2.split('station-type">')[1].split("<")[0]
             if "maps/dir//" in line2:
@@ -141,27 +132,29 @@ def fetch_data():
         if "(" in typ:
             typ = typ.split("(")[0].strip()
         if add != "":
-            yield [
-                website,
-                lurl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=lurl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
