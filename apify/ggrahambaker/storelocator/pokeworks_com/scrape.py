@@ -55,8 +55,6 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         session = SgRequests()
         r = session.get(page_url, headers=headers)
-        if r.status_code == "404":
-            print(page_url)
         tree = html.fromstring(r.text)
 
         info = (
