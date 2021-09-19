@@ -29,7 +29,7 @@ def get_data():
             try:
                 phone = location["servicesMap"]["PHOTO_CENTER"]["phone"]
             except Exception:
-                phone = location["phone"]
+                phone = "<MISSING>"
 
             location_type = location["storeType"]
             latitude = location["coordinates"]["latitude"]
@@ -60,6 +60,10 @@ def get_data():
                     hours = hours + day.replace("Hrs", "") + " " + "closed" + ", "
 
             hours = hours[:-2]
+
+            hours = hours.replace("monToFri", "mon to fri")
+            if store_number == str("5803"):
+                hours = "Open 24/7"
 
             yield {
                 "locator_domain": locator_domain,

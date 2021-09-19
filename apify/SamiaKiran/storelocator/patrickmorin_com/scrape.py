@@ -1,10 +1,13 @@
 import json
+import datetime
+import calendar
 import unicodedata
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "patrickmorin_com"
@@ -19,6 +22,11 @@ DOMAIN = "https://patrickmorin.com/"
 MISSING = "<MISSING>"
 
 
+def findDay(date):
+    born = datetime.datetime.strptime(date, "%d %m %Y").weekday()
+    return calendar.day_name[born]
+
+
 def strip_accents(text):
 
     text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
@@ -27,63 +35,72 @@ def strip_accents(text):
 
 
 def fetch_data():
-    if True:
-        url = "https://www.patrickmorin.com/fr/magasins"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = r.text.split('"markers":')[1].split(',"type"')[0]
-        loclist = json.loads(loclist)
-        for loc in loclist:
-            page_url = loc["url"]
-            store_number = loc["id"]
-            location_name = loc["name"]
-            location_name = strip_accents(location_name)
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            phone = soup.find("span", {"itemprop": "telephone"}).find("a").text
-            hours_of_operation = soup.find("meta", {"itemprop": "openingHours"})[
-                "content"
-            ]
-            address = (
-                soup.find("div", {"class": "address"})
-                .find("span")
-                .get_text(separator="|", strip=True)
-                .split("|")
+    url = "https://www.patrickmorin.com/fr/magasins"
+    r = session.get(url, headers=headers)
+    loclist = r.text.split('"markers":')[1].split(',"type"')[0]
+    loclist = json.loads(loclist)
+    for loc in loclist:
+        page_url = loc["url"]
+        store_number = loc["id"]
+        location_name = loc["name"]
+        phone = loc["telephone"]
+        latitude = loc["latitude"]
+        longitude = loc["longitude"]
+        location_name = strip_accents(location_name)
+        log.info(page_url)
+        hour_list = loc["schedule"]["calendar"]["opening-hours"]
+        hours_of_operation = ""
+        temp_list = []
+        for hour in hour_list:
+            temp = hour.split("-")
+            day = findDay(temp[2] + " " + temp[1] + " " + temp[0])
+            temp_2 = (
+                str(hour_list[hour]).replace("]", "").replace("[", "").replace("'", '"')
             )
-            street_address = address[0]
-            address = address[1].split(",")
-            city = address[0]
-            state = address[1]
-            street_address = strip_accents(street_address)
-            city = strip_accents(city)
-            state = strip_accents(state)
-            zip_postal = address[2]
-            country_code = "CA"
-            latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
-            longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-            )
+            try:
+                temp_2 = json.loads(temp_2)
+                start = temp_2["start_time"]
+                end = temp_2["end_time"]
+                variable = day + " " + start + " - " + end
+                if variable in temp_list:
+                    continue
+                temp_list.append(variable)
+                hours_of_operation = hours_of_operation + " " + variable
+
+            except:
+                hours_of_operation = hours_of_operation + " " + day + ": Closed"
+        raw_address = loc["address"]
+        address = raw_address.split(",")
+        street_address = address[0] + " " + address[1]
+        city = address[2]
+        state = MISSING
+        zip_postal = address[3]
+        country_code = address[-1]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city,
+            state=state.strip(),
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+            raw_address=raw_address,
+        )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

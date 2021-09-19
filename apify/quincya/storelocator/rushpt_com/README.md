@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore LatLngDuplicationValidator (Confirmed correctly scraped)
