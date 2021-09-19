@@ -1,7 +1,6 @@
-sgscrape
-sglogging
-sgselenium
-sgrequests
-selenium
-bs4
 beautifulsoup4==4.7.1
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sglogging==0.0.4
+sgselenium==0.1.4
+sgrequests==0.2.3
+sgscrape==0.2.1
