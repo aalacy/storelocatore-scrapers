@@ -113,10 +113,10 @@ def fetch_data(sgw: SgWriter):
         except:
             latitude, longitude = "<MISSING>", "<MISSING>"
         try:
-            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(info))
+            ph = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(info))
         except:
-            phone = "<MISSING>"
-        phone = "".join(phone).strip() or "<MISSING>"
+            ph = "<MISSING>"
+        phone = "".join(ph).strip() or "<MISSING>"
         if phone == "<MISSING>" and state != "MX":
             phone = (
                 "".join(tree.xpath('//p[./strong[text()="STORE INFO"]]/text()[last()]'))
