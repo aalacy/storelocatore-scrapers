@@ -88,7 +88,7 @@ def fetch_data():
                 .find("img")
                 .get("src"),
             )[0]
-            country_code = "US"
+            country_code = "CA"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

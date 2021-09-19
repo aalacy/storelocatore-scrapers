@@ -1,4 +1,4 @@
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -13,7 +13,7 @@ import time
 
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 DOMAIN = "https://www.costa.co.uk/business/costa-express"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 headers = {
@@ -26,11 +26,11 @@ def record_initial_requests(
 ) -> bool:
     c = 0
     for lat, lng in search:
-        x = lat
-        y = lng
+        x = round(lat, 4)
+        y = round(lng, 4)
         logger.info(f"[{c}] (latitude, longitude) : ({lat, lng}) to be searched")
         url = (
-            "https://www.costa.co.uk/api/locations/stores?latitude="
+            "http://www.costa.co.uk/api/locations/stores?latitude="
             + str(x)
             + "&longitude="
             + str(y)
@@ -48,9 +48,13 @@ def fetch_records(
 ) -> Iterable[SgRecord]:
     total = 0
     for url_request in state.request_stack_iter():
+        r = None
         try:
-            r = http.get(url_request.url, headers=headers, verify=False, timeout=500)
-            logger.info(f"Pulling the data from : {url_request.url} ")
+            r = SgRequests.raise_on_err(http.get(url_request.url, headers=headers))
+        except SgRequestError as e:
+            logger.error(f"{str(e)}")
+        logger.info(f"Pulling the data from : {url_request.url} ")
+        if r:
             if json.loads(r.content)["stores"]:
                 total += len(json.loads(r.content)["stores"])
                 for item in json.loads(r.content)["stores"]:
@@ -187,8 +191,6 @@ def fetch_records(
                 )
             else:
                 continue
-        except:
-            raise Exception("The crawler must be running with Residential Proxy")
 
 
 def scrape():
