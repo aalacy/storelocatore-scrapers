@@ -66,7 +66,7 @@ def fetch_data(coord, sgw: SgWriter):
     r = session.get(api, headers=headers)
     try:
         js = r.json()["locations"]
-    except KeyError:
+    except:
         return
 
     for j in js:
