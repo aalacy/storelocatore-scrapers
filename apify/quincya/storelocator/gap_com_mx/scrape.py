@@ -1,15 +1,11 @@
 from bs4 import BeautifulSoup
 
-from sglogging import sglog
-
 from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-log = sglog.SgLogSetup().get_logger(logger_name="dekalash.com")
 
 
 def fetch_data(sgw: SgWriter):
