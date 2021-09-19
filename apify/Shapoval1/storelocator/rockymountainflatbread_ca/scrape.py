@@ -19,7 +19,8 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath("//h1/a")
     for d in div:
 
-        page_url = "".join(d.xpath(".//@href"))
+        slug = "".join(d.xpath(".//@href")).split("/")[-2]
+        page_url = f"https://www.rockymountainflatbread.ca/locations/{slug}/"
         location_name = "".join(d.xpath(".//text()"))
         country_code = "CA"
 
