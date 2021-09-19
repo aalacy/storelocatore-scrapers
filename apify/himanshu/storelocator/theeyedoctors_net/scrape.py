@@ -15,10 +15,6 @@ session = SgRequests()
 
 def fetch_data(sgw: SgWriter):
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
-
     base_url = "https://www.theeyedoctors.net/"
 
     link_soup = BeautifulSoup(
@@ -38,10 +34,7 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.theeyedoctors.net/locations/" + store["slug"]
 
         location_soup = BeautifulSoup(session.get(page_url).text, "lxml")
-        try:
-            location_name = location_soup.h1.text.strip()
-        except:
-            continue
+        location_name = location_soup.h1.text.strip()
         addr = list(location_soup.address.stripped_strings)
 
         street_address = " ".join(addr[:-1]).replace(",", "").split("Topeka")[0].strip()
