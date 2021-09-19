@@ -49,7 +49,6 @@ def fetch_data():
                 for no in range(no_of_stores):  # normally 3
 
                     target_index = no
-                    store_info = []
                     location_name = cleaned_info[target_index]
 
                     target_index += no_of_stores
