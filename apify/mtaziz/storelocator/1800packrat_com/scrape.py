@@ -66,9 +66,7 @@ def get_store_urls():
         urls = []
         r = http.get(
             LOCATION_URL,
-            headers=headers_custom_for_location_url,
-            timeout=180,
-        )
+            headers=headers_custom_for_location_url)
         tree = html.fromstring(r.text)
         logger.info(f"Raw Page Source: {r.text}")
         text = (
