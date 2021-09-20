@@ -130,11 +130,11 @@ def fetch_records(http, state):
             street_address=_["address"].replace(",", ""),
             city=_["city"],
             state=_["state"],
-            zip_postal=_["zip"],
+            zip_postal=_["zip"].replace("Canada", "").replace(",", "").strip(),
             location_type=_["type"],
             latitude=_["lat"],
             longitude=_["lng"],
-            country_code=country_code.replace("Canada", "").replace(",", "").strip(),
+            country_code=country_code,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
         )
