@@ -38,6 +38,9 @@ def fetch_data():
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
+
+        if loc_dom.xpath('//div[@class="nav_coming_soon"]'):
+            continue
         poi = loc_dom.xpath('//script[contains(text(), "addressRegion")]/text()')
         if poi:
             poi = json.loads(poi[0])
