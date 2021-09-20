@@ -6,12 +6,13 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup as bs
 import re
+import json
 
 log = sglog.SgLogSetup().get_logger(logger_name="findchurch")
 headers = {"User-Agent": "PostmanRuntime/7.19.0"}
 session = SgRequests()
 crawl_state = CrawlStateSingleton.get_instance()
-
+x = 0
 
 def get_urls():
     search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
@@ -65,6 +66,8 @@ def get_urls():
 
 
 def get_location(request_url):
+    x = x+1
+    print("x is " + str(x))
     session = SgRequests()
     url = request_url.url
     log.info(url)
@@ -229,11 +232,10 @@ def get_location(request_url):
 
 
 def scrape_loc_urls():
-    url_list = [loc for loc in crawl_state.request_stack_iter()][:1000]
+    url_list = [loc for loc in crawl_state.request_stack_iter()]
     if len(url_list) < 50:
         log.info("no records, did it run with a proxy?")
         raise Exception
-
     results = []
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in url_list]
@@ -244,7 +246,7 @@ def scrape_loc_urls():
                     results.append(record)
             except Exception as e:
                 log.error(str(e))
-
+        
     return results
 
 
