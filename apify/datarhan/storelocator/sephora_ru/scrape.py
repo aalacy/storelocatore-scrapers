@@ -3,7 +3,6 @@ from random import uniform
 from lxml import etree
 from urllib.parse import urljoin
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
