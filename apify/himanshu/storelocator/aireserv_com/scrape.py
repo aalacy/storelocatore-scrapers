@@ -51,7 +51,14 @@ def fetch_data():
 
         locator_domain = "https://www.aireserv.com"
         location_name = store_data["FriendlyName"]
-        street_address = store_data["Address1"].replace("Rome,GA,", "").strip()
+        try:
+            street_address = (
+                store_data["Address1"].replace("Rome,GA,", "").strip()
+                + " "
+                + store_data["Address2"]
+            )
+        except:
+            street_address = store_data["Address1"]
         city = store_data["City"]
         state = store_data["State"]
         postal = store_data["ZipCode"].strip()
