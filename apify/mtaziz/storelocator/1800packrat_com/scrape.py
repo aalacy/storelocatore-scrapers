@@ -64,9 +64,7 @@ def get_store_urls():
     with SgRequests() as http:
         geo = dict()
         urls = []
-        r = http.get(
-            LOCATION_URL,
-            headers=headers_custom_for_location_url)
+        r = http.get(LOCATION_URL, headers=headers_custom_for_location_url)
         tree = html.fromstring(r.text)
         logger.info(f"Raw Page Source: {r.text}")
         text = (
