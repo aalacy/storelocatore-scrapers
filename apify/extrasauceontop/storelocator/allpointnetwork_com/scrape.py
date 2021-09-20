@@ -2,8 +2,6 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
 
-# import json
-
 
 def get_data():
     searche = [
