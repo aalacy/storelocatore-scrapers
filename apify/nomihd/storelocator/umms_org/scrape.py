@@ -51,7 +51,6 @@ def split_fulladdress(address_info):
 def fetch_data():
     # Your scraper here
     with SgRequests(dont_retry_status_codes=([404]), verify_ssl=False) as session:
-        # scraper = cloudscraper.create_scraper(sess=session)
         search_url = "https://www.umms.org/locations"
         search_res = session.get(search_url, headers=headers)
 
