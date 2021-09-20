@@ -52,6 +52,8 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
+        if page_url.find("http") != -1 and page_url.find("https") == -1:
+            page_url = page_url.replace("http", "https")
         location_name = "".join(d.xpath(".//text()"))
         session = SgRequests()
         r = session.get(page_url, headers=headers)
@@ -81,17 +83,17 @@ def fetch_data(sgw: SgWriter):
         state = a.get("state")
         postal = a.get("postal")
         country_code = "US"
-        if page_url == "http://www.pokeworks.com/san-luis":
+        if page_url == "https://www.pokeworks.com/san-luis":
             street_address = "Av. Venustiano Carranza 2065 Cuauhtemoc"
             postal = "78270"
             state = location_name.split(",")[1].strip()
             city = location_name.split(",")[0].strip()
-        if page_url == "http://www.pokeworks.com/san-luis-2":
+        if page_url == "https://www.pokeworks.com/san-luis-2":
             street_address = "C. Palmira 1070"
             postal = "78295"
             state = location_name.split(",")[1].strip()
             city = location_name.split(",")[0].replace("2", "").strip()
-        if page_url == "http://www.pokeworks.com/leon":
+        if page_url == "https://www.pokeworks.com/leon":
             street_address = "Eugenio Garza Sada 1109-local 8 Cumbres del Campestre"
             postal = "37128"
             state = location_name.split(",")[1].strip()
