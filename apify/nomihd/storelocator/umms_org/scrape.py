@@ -4,8 +4,10 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-import cloudscraper
 import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import urllib.parse
 
 website = "umms.org"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -49,21 +51,23 @@ def split_fulladdress(address_info):
 def fetch_data():
     # Your scraper here
     with SgRequests(dont_retry_status_codes=([404]), verify_ssl=False) as session:
-        scraper = cloudscraper.create_scraper(sess=session)
+        # scraper = cloudscraper.create_scraper(sess=session)
         search_url = "https://www.umms.org/locations"
-        search_res = scraper.get(search_url, headers=headers)
+        search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
         service_list = search_sel.xpath("//option")
         for service in service_list:
-            log.info("".join(service.join("./value")))
-            service_val = "".join(service.join("./value"))
+            log.info("".join(service.xpath("@value")))
+            service_val = "".join(service.xpath("@value"))
 
             service_url = f"https://www.umms.org/locations?perpage=50&serv={service_val}&view=list&st=Locations"
-            service_res = scraper.get(service_url, headers=headers)
+            service_res = session.get(service_url, headers=headers)
             service_sel = lxml.html.fromstring(service_res.text)
 
-            store_list = search_sel.xpath('//section[@aria-label="search results"]//li')
+            store_list = service_sel.xpath(
+                '//section[@aria-label="search results"]//li'
+            )
 
             for store in store_list:
 
@@ -73,16 +77,12 @@ def fetch_data():
 
                 log.info(page_url)
                 store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)
-
-                store_info = list(
+                full_address = list(
                     filter(
                         str,
                         [x.strip() for x in store.xpath(".//address//text()")],
                     )
                 )
-
-                raw_address = "<MISSING>"
 
                 street_address, city, state, zip, country_code = split_fulladdress(
                     full_address
@@ -98,10 +98,23 @@ def fetch_data():
                             for x in store.xpath('.//a[contains(@href,"tel:")]/text()')
                         ],
                     )
-                ).strip()
+                )
+                if len(phone) > 0:
+                    phone = phone[0]
+                    if phone.isalpha():
+                        phone = "<MISSING>"
+
+                if phone == "Numbers differ by program. See below for full listing.":
+                    phone = "<MISSING>"
+
+                if len("".join(phone).strip()) <= 0:
+                    phone = "<MISSING>"
+
                 store_number = "<MISSING>"
 
-                location_type = "<MISSING>"
+                location_type = urllib.parse.unquote(
+                    service_val.replace("+", " ").strip()
+                )
 
                 # todo
                 hours_of_operation = "<MISSING>"
@@ -126,14 +139,15 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
                 )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
