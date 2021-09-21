@@ -17,8 +17,6 @@ def fetch_data():
     locs = []
     url_home = "https://www.ihg.com/bin/sitemap.holidayinnexpress.en.hoteldetail.xml"
     r = session.get(url_home, headers=headers)
-    Found = False
-    cities = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if 'hreflang="x-default" rel="alternate">' in line and "hoteldetail" in line:
