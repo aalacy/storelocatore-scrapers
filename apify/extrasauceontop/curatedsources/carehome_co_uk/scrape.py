@@ -131,7 +131,6 @@ def get_data():
             if "searchcountry" in url:
                 country_urls.append(url)
 
-        x = 0
         for country_url in country_urls:
 
             response = s.get(country_url, headers=headers)
@@ -204,7 +203,7 @@ def get_data():
                             except Exception:
                                 pass
 
-                    if location_url in location_urls:
+                    if location_url in location_urls or "#reviews" in location_url:
                         pass
                     else:
                         crawl_state.push_request(SerializableRequest(url=location_url))
@@ -212,6 +211,7 @@ def get_data():
         crawl_state.set_misc_value("got_urls", True)
 
     num_urls = len(crawl_state.request_stack_iter())
+    x = 0
     for request_url in crawl_state.request_stack_iter():
         location_url = request_url.url
         x = x + 1
@@ -219,7 +219,16 @@ def get_data():
         if "searchazref" not in location_url:
             continue
 
-        response = s.get(location_url, headers=headers)
+        try:
+            response = s.get(location_url, headers=headers)
+
+        except Exception:
+            new_sess = reset_sessions(location_url)
+
+            s = new_sess[0]
+            headers = new_sess[1]
+            response_text = new_sess[2]
+
         response_text = response.text
         log.info("URL " + str(x) + "/" + str(num_urls))
         log.info(location_url)

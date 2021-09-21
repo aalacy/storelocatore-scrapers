@@ -59,7 +59,7 @@ def fetch_data():
             if "HAPPY" in hours:
                 hours = hours.split("HAPPY")[0].strip()
             purl = (
-                "https://www.stateandmain.ca/en/locations/"
+                "https://www.tirnanogpubs.com/en/locations/"
                 + store
                 + "/"
                 + city.lower()

@@ -93,6 +93,14 @@ def fetch_data():
                     .strip()
                     .replace("\t", "")
                 )
+            if phone == "<MISSING>" and '<a class="phone"' in line2:
+                phone = (
+                    line2.split('<a class="phone"')[1]
+                    .split('">')[1]
+                    .split("<")[0]
+                    .strip()
+                    .replace("\t", "")
+                )
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
