@@ -41,8 +41,8 @@ def fetch_data(sgw: SgWriter):
             .split()[1]
         )
         city = (
-            list(bs(dt["info_window_content"], "lxml").stripped_strings)[-3]
-            .replace(", NJ", "")
+            list(bs(dt["info_window_content"], "lxml").stripped_strings)[1]
+            .split(",")[-3]
             .strip()
         )
         page_url = adr.find("a")["href"]

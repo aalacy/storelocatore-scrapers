@@ -144,6 +144,7 @@ def fetch_data():
     for cname in cities:
         url = "https://www.homesense.com/find-a-store?address=" + cname
         r = session.get(url, headers=headers)
+        r = session.get("https://www.homesense.com/search-results", headers=headers)
         logger.info(cname)
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))

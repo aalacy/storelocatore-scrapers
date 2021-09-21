@@ -21,6 +21,8 @@ def record_transformer(poi):
     city = city if city else "<MISSING>"
     state = poi.get("state")
     state = state if state else "<MISSING>"
+    if state == "--":
+        state = SgRecord.MISSING
     zip_code = poi["zipCode"]
     zip_code = zip_code if zip_code else "<MISSING>"
     country_code = poi["countryCode"]
