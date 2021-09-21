@@ -187,9 +187,7 @@ def fetch_data(driver, http, search):
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
-    )
+    search = DynamicZipSearch(country_codes=[SearchableCountries.CANADA])
 
     with SgChrome(
         executable_path=ChromeDriverManager().install(), is_headless=True

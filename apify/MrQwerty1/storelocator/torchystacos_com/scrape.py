@@ -5,6 +5,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sglogging import sglog
+
+DOMAIN = "torchystacos.com"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def get_hours(url):
@@ -13,6 +17,7 @@ def get_hours(url):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     }
+    log.info(f"Now Crawling: {url}")
     r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
     hoo = (
@@ -25,6 +30,7 @@ def get_hours(url):
     if tree.xpath("//img[contains(@src, 'coming_soon')]"):
         hoo = "Coming Soon"
 
+    log.info(f"HOO: {hoo}")
     return {_id: hoo}
 
 
@@ -42,7 +48,7 @@ def fetch_data(sgw):
     for j in js:
         urls.append("https://torchystacos.com" + j.get("permalink"))
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_hours, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             hours.append(future.result())
