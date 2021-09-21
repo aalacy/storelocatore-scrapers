@@ -107,10 +107,11 @@ def fetch_data(sgw: SgWriter):
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
-            raw_address=ad
+            raw_address=ad,
         )
 
         sgw.write_row(row)
+
 
 if __name__ == "__main__":
     session = SgRequests()
@@ -118,4 +119,3 @@ if __name__ == "__main__":
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)
-
