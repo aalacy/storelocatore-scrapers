@@ -60,6 +60,8 @@ def fetch_data(sgw: SgWriter):
             "None", ""
         ).strip()
         city = a.get("city") or "<MISSING>"
+        if city == "<MISSING>":
+            city = location_name.capitalize()
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
