@@ -23,7 +23,7 @@ def para(url):
             if i.isdigit():
                 k["phone"].append(i)
         k["phone"] = "".join(k["phone"])
-    except Exception as e:
+    except Exception:
         k["phone"] = "<MISSING>"
 
     data = soup.find_all("div", {"class": "infoBlockInfo"})
@@ -43,7 +43,7 @@ def para(url):
         coords = page.text.split("maps?ll=", 1)[1]
         k["lat"] = coords[0]
         k["lng"] = coords[1]
-    except Exception as e:
+    except Exception:
         k["lat"] = "<MISSING>"
         k["lng"] = "<MISSING>"
 
@@ -52,7 +52,7 @@ def para(url):
         k["type"] = list(k["type"].stripped_strings)
         k["type"].pop(0)
         k["type"] = "; ".join(k["type"])
-    except Exception as e:
+    except Exception:
         k["type"] = "<MISSING>"
 
     try:
