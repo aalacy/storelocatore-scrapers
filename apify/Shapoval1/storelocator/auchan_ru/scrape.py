@@ -13,7 +13,12 @@ import asyncio
 from pyppeteer import launch
 from pyppeteer_stealth import stealth
 import traceback
+import os
+import pyppdf.patch_pyppeteer
 
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-RU:{}@proxy.apify.com:8000/"
 
 locator_domain = "auchan.ru"
 log = SgLogSetup().get_logger(logger_name=locator_domain)
@@ -22,6 +27,9 @@ logging.getLogger("pyppeteer").setLevel(pyppeteer_level)
 logging.getLogger("websockets.protocol").setLevel(pyppeteer_level)
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+# To fix - certificate verify failed
+logging.info(f"pyppdf loaded: {pyppdf.patch_pyppeteer}")
 
 start_url = "https://www.auchan.ru/shops/"
 
