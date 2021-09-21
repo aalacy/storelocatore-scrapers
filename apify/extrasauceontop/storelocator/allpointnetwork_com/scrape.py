@@ -51,7 +51,6 @@ def get_data():
                         location_type = location["RetailOutlet"]
                         latitude = location["Latitude"]
                         longitude = location["Longitude"]
-                        search.found_location_at(latitude, longitude)
                         hours = "<MISSING>"
                         yield {
                             "locator_domain": locator_domain,

@@ -11,16 +11,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 logger = SgLogSetup().get_logger("laderach")
@@ -54,14 +44,17 @@ def fetch_data():
                 if store_number == "50047" or store_number == "63198":
                     continue
                 driver.get(store.iframe["src"])
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located(
-                        (
-                            By.XPATH,
-                            '//div[@class="sk-google-business-profile-container"]',
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located(
+                            (
+                                By.XPATH,
+                                '//div[@class="sk-google-business-profile-container"]',
+                            )
                         )
                     )
-                )
+                except:
+                    continue
                 sp1 = bs(driver.page_source, "lxml")
                 if sp1.select_one(".sk-google-business-profile-coming-soon-text"):
                     continue
