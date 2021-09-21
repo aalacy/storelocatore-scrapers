@@ -85,7 +85,10 @@ def fetch_data():
                 .strip()
             )
 
-            latitude, longitude = "<MISSING>", "<MISSING>"
+            latitude, longitude = (
+                "".join(store_sel.xpath("//div[@data-gmaps-lng]/@data-gmaps-lat")),
+                "".join(store_sel.xpath("//div[@data-gmaps-lng]/@data-gmaps-lng")),
+            )
 
             yield SgRecord(
                 locator_domain=locator_domain,
