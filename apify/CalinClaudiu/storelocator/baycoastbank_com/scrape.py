@@ -57,7 +57,7 @@ def para(url):
 
     try:
         addr = soup.find("div", {"class": "addrInfoBlock"}).text
-
+        k["raw_addr"] = addr
         addr = parser.parse_address_usa(addr)
         k["street_address"] = (
             addr.street_address_1 if addr.street_address_1 else "<MISSING>"
