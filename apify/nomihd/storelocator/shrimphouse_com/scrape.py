@@ -97,7 +97,7 @@ def fetch_data():
                     [
                         x.strip()
                         for x in store_sel.xpath(
-                            '//div[@class="wpb_wrapper" and contains(h3/text(),"Hours of Operation")]//text()'
+                            '//div[@class="wpb_wrapper" and contains(h3/text(),"Hours of Operation")]/p[not(span)]//text()'
                         )
                     ],
                 )
@@ -109,6 +109,8 @@ def fetch_data():
                 .strip(" ;")
                 .strip()
                 .replace(":;", ":")
+                .strip()
+                .split("; Easter Sunday")[0]
                 .strip()
             )
 

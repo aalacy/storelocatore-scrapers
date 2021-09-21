@@ -19,7 +19,7 @@ def fetch_data():
         "lat": "33.4483771",
         "lng": "-112.0740373",
         "name": "",
-        "radius": "100",
+        "radius": "5000",
         "tags": "",
         "action": "csl_ajax_onload",
     }

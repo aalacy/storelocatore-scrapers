@@ -39,6 +39,9 @@ def fetch_data():
             state = location_details["address"]["addressRegion"]
             zip = location_details["address"]["postalCode"]
             country_code = "US"
+            if "-" in state:
+                country_code = state.split("-")[0].strip()
+
             store_number = "<MISSING>"
             phone = (
                 location_details["address"]["telephone"]
