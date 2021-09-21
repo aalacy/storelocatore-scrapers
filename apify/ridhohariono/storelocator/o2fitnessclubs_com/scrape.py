@@ -14,7 +14,7 @@ BASE_URL = "https://www.o2fitnessclubs.com"
 LOCATION_URL = "https://www.o2fitnessclubs.com/locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
@@ -51,6 +51,7 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
+    HEADERS["Referer"] = url
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
@@ -101,6 +102,7 @@ def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = fetch_store_urls()
     for page_url in store_urls:
+        page_url = page_url.replace("/?hsLang=en", "")
         soup = pull_content(page_url)
         comming_soon = soup.find("div", {"class": "location-description"}).find("h6")
         if comming_soon and "COMING SOON" in comming_soon:
