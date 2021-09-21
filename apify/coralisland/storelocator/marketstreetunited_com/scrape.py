@@ -13,18 +13,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def fetch_data():
     url = "https://www.marketstreetunited.com/RS.Relationshop/StoreLocation/GetAllStoresPosition"
-    headers = {
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-        "Host": "www.marketstreetunited.com",
-        "Referer": "https://www.marketstreetunited.com/rs/StoreLocator",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
+
     with SgChrome() as driver:
         driver.get(url)
         stores_sel = lxml.html.fromstring(driver.page_source)
