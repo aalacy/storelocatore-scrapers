@@ -31,7 +31,7 @@ header1 = {
 base_url = "https://kfcvietnam.com.vn/vi/find-a-kfc.html"
 locator_domain = "https://kfcvietnam.com.vn"
 detail_url = "https://kfcvietnam.com.vn/vi/load_restaurant"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 max_workers = 2
 
 
@@ -117,3 +117,5 @@ if __name__ == "__main__":
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+
+        session.close()
