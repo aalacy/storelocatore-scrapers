@@ -7,13 +7,26 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium import SgSelenium
+import ssl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "o2fitnessclubs.com"
 BASE_URL = "https://www.o2fitnessclubs.com"
 LOCATION_URL = "https://www.o2fitnessclubs.com/locations"
 HEADERS = {
-    "Accept": "application/json, text/plain, */*",
+    "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
@@ -98,12 +111,28 @@ def get_latlong(soup):
     return latlong[0].strip(), latlong[1].strip()
 
 
+def wait_load(driver, number=0):
+    number += 1
+    try:
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "location-description"))
+        )
+    except:
+        driver.refresh()
+        if number < 3:
+            log.info(f"Try to Refresh for ({number}) times")
+            return wait_load(driver, number)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = fetch_store_urls()
+    driver = SgSelenium().chrome()
     for page_url in store_urls:
-        page_url = page_url.replace("/?hsLang=en", "")
-        soup = pull_content(page_url)
+        page_url = page_url.replace("?hsLang=en", "")
+        driver.get(page_url)
+        wait_load(driver)
+        soup = bs(driver.page_source, "lxml")
         comming_soon = soup.find("div", {"class": "location-description"}).find("h6")
         if comming_soon and "COMING SOON" in comming_soon:
             continue
