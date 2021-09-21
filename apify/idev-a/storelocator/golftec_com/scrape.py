@@ -44,10 +44,9 @@ def fetch_records(http, search):
             try:
                 res = http.get(url, headers=headers)
                 locations = res.json()
-            except Exception as err:
+            except:
                 http._client().cookies.clear()
                 http._refresh_ip()
-                print(err)
                 count += 1
 
         if "centers" in locations:
