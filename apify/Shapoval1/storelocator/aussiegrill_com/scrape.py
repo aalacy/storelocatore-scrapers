@@ -79,6 +79,8 @@ def fetch_data(sgw: SgWriter):
             location_type = "Delivery"
         if HasDelivery and HasPickup:
             location_type = "Delivery and Pickup"
+        if location_type != "Delivery and Pickup":
+            continue
 
         latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = "<MISSING>"
@@ -126,6 +128,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
