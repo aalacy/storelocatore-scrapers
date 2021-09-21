@@ -20,6 +20,14 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath("//div[@data-lat]")
+    next_page = dom.xpath('//a[@class="next page-link"]/@href')
+    while next_page:
+        response = session.get(next_page[0], headers=hdr)
+        dom = etree.HTML(response.text)
+
+        all_locations += dom.xpath("//div[@data-lat]")
+        next_page = dom.xpath('//a[@class="next page-link"]/@href')
+
     for poi_html in all_locations:
         page_url = poi_html.xpath(
             './/div[@class="fs-1-5 font-weight-bold mt-2"]/a/@href'
