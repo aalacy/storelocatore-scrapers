@@ -18,13 +18,13 @@ headers = {
 DOMAIN = "https://llbean.co.jp/"
 MISSING = SgRecord.MISSING
 
+
 def strip_accents(text):
-    
-    text = unicodedata.normalize('NFD', text)\
-           .encode('ascii', 'ignore')\
-           .decode("utf-8")
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
 
     return str(text)
+
 
 def fetch_data():
     if True:
@@ -34,14 +34,22 @@ def fetch_data():
         loclist = soup.find("div", {"class": "shop_list"}).findAll("li")
         for loc in loclist:
             temp = loc.find("p", {"class": "shop_location"}).find("a")
-            page_url = "https://www.llbean.co.jp"+temp['name'].replace('"','')
-            store_number = page_url.split('StoreID=')[1]
+            page_url = "https://www.llbean.co.jp" + temp["name"].replace('"', "")
+            store_number = page_url.split("StoreID=")[1]
             log.info(page_url)
-            location_name = temp.get_text(separator='|', strip=True).split('|')[0]
+            location_name = temp.get_text(separator="|", strip=True).split("|")[0]
             location_name = strip_accents(location_name)
-            raw_address = loc.find("p", {"class": "shop_address"}).get_text(separator='|', strip=True).replace("|"," ")
+            raw_address = (
+                loc.find("p", {"class": "shop_address"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
             raw_address = strip_accents(raw_address)
-            temp = loc.find("p", {"class": "shop_tel"}).get_text(separator='|', strip=True).split('|')
+            temp = (
+                loc.find("p", {"class": "shop_tel"})
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
             phone = temp[0].split("：")[1]
             hours_of_operation = temp[1].split("：")[1]
             pa = parse_address_intl(raw_address)
