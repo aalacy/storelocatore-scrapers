@@ -18,7 +18,7 @@ import pyppdf.patch_pyppeteer
 
 os.environ[
     "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-ru:{}@proxy.apify.com:8000/"
+] = "http://groups-RESIDENTIAL,country-RU:{}@proxy.apify.com:8000/"
 
 locator_domain = "auchan.ru"
 log = SgLogSetup().get_logger(logger_name=locator_domain)
