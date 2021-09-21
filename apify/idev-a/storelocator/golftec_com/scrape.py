@@ -1,9 +1,9 @@
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 
@@ -34,11 +34,22 @@ def _p(val):
 def fetch_records(http, search):
     # Need to add dedupe. Added it in pipeline.
     maxZ = search.items_remaining()
+
     for lat, lng in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
         url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
-        locations = http.get(url, headers=headers).json()
+        count = 0
+        while count < 2:
+            try:
+                res = http.get(url, headers=headers)
+                locations = res.json()
+            except Exception as err:
+                http._client().cookies.clear()
+                http._refresh_ip()
+                print(err)
+                count += 1
+
         if "centers" in locations:
             for _ in locations["centers"]:
                 page_url = f"{locator_domain}{_['link']}"
@@ -79,13 +90,13 @@ def fetch_records(http, search):
 if __name__ == "__main__":
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        expected_search_radius_miles=100,
+        granularity=Grain_8(),
     )
     with SgWriter(
-        deduper=SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=3
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=15
         )
     ) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="us") as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
