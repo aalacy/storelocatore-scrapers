@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -89,14 +88,10 @@ def fetch_data():
             if raw_address[0] == ",":
                 raw_address = "".join(raw_address[1:]).strip()
 
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            city = formatted_addr.city
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
+            street_address = raw_address.split(",")[0].strip()
+            city = raw_address.split(",")[1].strip().split(" ")[0].strip()
+            state = "<MISSING>"
+            zip = raw_address.split(",")[1].strip().split(" ")[1].strip()
 
             country_code = "SA"
 
@@ -137,7 +132,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 
