@@ -102,7 +102,7 @@ def fetch_records(http, state):
         if next_r.url == "#":
             yield _d(store, phone, hours, base_url)
             continue
-        page_url = "http://" + urlparse(next_r.url).netloc
+        page_url = "https://" + urlparse(next_r.url).netloc
         logger.info(page_url)
         try:
             sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
@@ -148,7 +148,13 @@ def fetch_records(http, state):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
-                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                sp2 = bs(
+                    http.get(
+                        contact_url,
+                        headers=_headers,
+                    ).text,
+                    "lxml",
+                )
                 if sp2.select_one("li.phone-main a"):
                     phone = list(sp2.select_one("li.phone-main a").stripped_strings)[0]
                     hours = [
