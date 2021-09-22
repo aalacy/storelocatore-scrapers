@@ -42,8 +42,7 @@ def fetch_data():
             pcode = state[2:]
             state = state[0:2]
         phone = content[-1]
-        hours = " ".join(content[m : m + 7]).replace("|", "").strip()
-
+        hours = " ".join(content[m : len(content) - 2]).replace("|", "").strip()
         lat, longt = (
             div.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
         )
