@@ -45,7 +45,11 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="; ".join(hours)
+                .replace(",", "")
+                .replace("\r", " ")
+                .replace("–", "-")
+                .replace("\n", "; "),
             )
 
 
