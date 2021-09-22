@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -16,6 +17,7 @@ def fetch_data():
     url = "https://www.mrclutch.com/sitemap.xml"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
+    pattern = re.compile(r"\s\s+")
     linklist = soup.findAll("loc")
     for link in linklist:
 
@@ -48,6 +50,11 @@ def fetch_data():
         lat, longt = (
             r.text.split(" google.maps.LatLng(", 1)[1].split(")", 1)[0].split(", ", 1)
         )
+        street = soup.find("div", {"class": "location"}).text.replace(
+            "OUR LOCATION", ""
+        )
+        street = re.sub(pattern, " ", street).strip()
+        street = street.split(city.strip(), 1)[0]
 
         yield SgRecord(
             locator_domain="https://www.mrclutch.com/",
