@@ -49,6 +49,7 @@ def fetch_data():
         logger.info(("Pulling Location %s..." % loc.split("|")[0]))
         r2 = session.get(loc.split("|")[0], headers=headers)
         name = loc.split("|")[1]
+        purl = loc.split("|")[0]
         typ = loc.split("|")[1]
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -89,7 +90,7 @@ def fetch_data():
         add = add.strip()
         yield SgRecord(
             locator_domain=website,
-            page_url=loc.split("|")[0],
+            page_url=purl,
             location_name=name,
             street_address=add,
             city=city,

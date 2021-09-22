@@ -8,13 +8,16 @@ from sgscrape.sgrecord_id import SgRecordID
 
 def fetch_data(sgw: SgWriter):
     page_url = "https://www.regencyfurniture.com/pages/store-locator"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0"
+    }
 
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@class='row']/div[@class='col-md-6']/p[./strong]")
     hours = tree.xpath("//hr/following-sibling::p/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
-    hours = ";".join(hours) or "<MISSING>"
+    hours = ";".join(hours) or SgRecord.MISSING
 
     for d in divs:
         hours_of_operation = hours
@@ -28,7 +31,7 @@ def fetch_data(sgw: SgWriter):
         if line[-1][0].isdigit():
             phone = line.pop()
         else:
-            phone = "<MISSING>"
+            phone = SgRecord.MISSING
 
         line = line[0]
         city = line.split(",")[0].strip()

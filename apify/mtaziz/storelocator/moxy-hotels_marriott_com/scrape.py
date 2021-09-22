@@ -1,9 +1,12 @@
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgrequests import SgRequests
 import json
 import ssl
+
 
 try:
     _create_unverified_https_context = (
@@ -15,18 +18,25 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
+DOMAIN = "moxy-hotels.marriott.com"
+URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
 logger = SgLogSetup().get_logger("moxy-hotels_marriott_com")
-headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-    "upgrade-insecure-requests": "1",
+
+
+headers_api = {
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "MMozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
 
-DOMAIN = "https://moxy-hotels.marriott.com/"
-MISSING = "<MISSING>"
-session = SgRequests()
 
-base_url_and_location_url = {
+# Marriott Hotels has total 30 brands.
+# Note: Marriott Hotels ( MC ) contains MC and MV (Marriott Vacation Club) brands as well
+# This contributes total 23 brands out of 30 brands
+# There are 22 API_ENDPOINT URLs but it will return the data for 23 brands
+# The rest of the 7 brands will be scraped using manual scraping method
+# At the time of scraping total 23 brands contritubes store count 7642
+
+url_api_endpoints_23_brands = {
     "https://ac-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_AR_en-US.json",
     "https://aloft-hotels.marriott.com/locations/": "https://pacsys.marriott.com/data/marriott_properties_AL_en-US.json",
     "https://autograph-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_AK_en-US.json",
@@ -34,7 +44,7 @@ base_url_and_location_url = {
     "https://delta-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_DE_en-US.json",
     "https://design-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_DS_en-US.json",
     "https://element-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_EL_en-US.json",
-    "https://fairfield.marriott.com/": "https://www.marriott.com/gaylord-hotels/travel.mi",
+    "https://fairfield.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_FI_en-US.json",
     "https://four-points.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_FP_en-US.json",
     "https://jw-marriott.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_JW_en-US.json",
     "https://marriott-hotels.marriott.com/locations/": "https://pacsys.marriott.com/data/marriott_properties_MC_en-US.json",
@@ -42,24 +52,35 @@ base_url_and_location_url = {
     "https://residence-inn.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_RI_en-US.json",
     "https://sheraton.marriott.com": "https://pacsys.marriott.com/data/marriott_properties_SI_en-US.json",
     "https://springhillsuites.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_SH_en-US.json",
-    "https://st-regis.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_WI_en-US.json",
-    "https://starwoodhotels.com": "https://pacsys.marriott.com/data/marriott_properties_MD_en-US.json",
+    "https://le-meridien.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_MD_en-US.json",
     "https://the-luxury-collection.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_LC_en-US.json",
     "https://towneplacesuites.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_TS_en-US.json",
     "https://tribute-portfolio.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_TX_en-US.json",
     "https://w-hotels.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_WH_en-US.json",
-    "https://www.editionhotels.com/": "https://renaissance-hotels.marriott.com/locations-list-view",
-    "https://www.marriott.co.uk/": "https://www.marriott.co.uk/",
-    "https://www.marriott.com": "https://www.marriott.com/hotels/travel/",
+    "https://westin.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_WI_en-US.json",
+    "https://st-regis.marriott.com/": "https://pacsys.marriott.com/data/marriott_properties_XR_en-US.json",
 }
 
 
-def fetch_data():
-    s = set()
-    for k, v in base_url_and_location_url.items():
-        if DOMAIN in k:
+def fetch_data_for_23_child_brands_from_api_endpoints():
+    with SgRequests() as session:
+        for k, v in url_api_endpoints_23_brands.items():
             url = v
-            response = session.get(url, headers=headers, timeout=360)
+            x = 0
+            while True:
+                x = x + 1
+                try:
+                    response = session.get(url, headers=headers_api, timeout=500)
+                    break
+                except Exception as e:
+                    logger.info("")
+                    logger.info(e)
+                    if x == 10:
+                        raise Exception(
+                            "Make sure this ran with a Proxy, will fail without one"
+                        )
+                    continue
+
             logger.info("JSON data being loaded...")
             response_text = response.text
             store_list = json.loads(response_text)
@@ -74,56 +95,59 @@ def fetch_data():
                                 if key:
                                     page_url = f"{'https://www.marriott.com/hotels/travel/'}{str(key)}"
                                 else:
-                                    page_url = MISSING
+                                    page_url = SgRecord.MISSING
                                 logger.info(f"[Page URL: {page_url} ]")
-
-                                if page_url in s:
-                                    continue
-                                s.add(page_url)
 
                                 # Location Name
                                 location_name = g["name"]
                                 location_name = (
-                                    location_name if location_name else MISSING
+                                    location_name if location_name else SgRecord.MISSING
                                 )
 
                                 # Street Address
                                 street_address = g["address"]
                                 street_address = (
-                                    street_address if street_address else MISSING
+                                    street_address
+                                    if street_address
+                                    else SgRecord.MISSING
                                 )
 
                                 # City
                                 city = g["city"]
-                                city = city if city else MISSING
+                                city = city if city else SgRecord.MISSING
 
                                 # State
                                 state = g["state_name"]
-                                state = state if state else MISSING
+                                state = state if state else SgRecord.MISSING
 
                                 # Zip Code
                                 zip_postal = g["postal_code"]
-                                zip_postal = zip_postal if zip_postal else MISSING
+                                zip_postal = (
+                                    zip_postal if zip_postal else SgRecord.MISSING
+                                )
 
                                 # Country Code
                                 country_code = g["country_name"]
-                                country_code = country_code if country_code else MISSING
+                                country_code = (
+                                    country_code if country_code else SgRecord.MISSING
+                                )
 
                                 # Store Number
-                                store_number = MISSING
+                                store_number = SgRecord.MISSING
 
                                 # Phone
                                 phone = g["phone"]
-                                phone = phone if phone else MISSING
+                                phone = phone if phone else SgRecord.MISSING
 
                                 # Location Type
-                                brand_code = g["brand_code"]
-                                location_type = f"{brand_code} - {'Marriott Hotel'}"
-                                location_type = location_type
-
+                                location_type = g["brand_code"]
+                                if location_type:
+                                    location_type = location_type + " " + "Hotels"
+                                else:
+                                    location_type = SgRecord.MISSING
                                 # Latitude
                                 latitude = g["latitude"]
-                                latitude = latitude if latitude else MISSING
+                                latitude = latitude if latitude else SgRecord.MISSING
 
                                 # Longitude
                                 longitude = g["longitude"]
@@ -135,12 +159,14 @@ def fetch_data():
                                 hours_of_operation = (
                                     hours_of_operation
                                     if hours_of_operation
-                                    else MISSING
+                                    else SgRecord.MISSING
                                 )
 
                                 # Raw Address
                                 raw_address = ""
-                                raw_address = raw_address if raw_address else MISSING
+                                raw_address = (
+                                    raw_address if raw_address else SgRecord.MISSING
+                                )
 
                                 yield SgRecord(
                                     locator_domain=locator_domain,
@@ -164,9 +190,9 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results_23_brands = fetch_data_for_23_child_brands_from_api_endpoints()
+        for rec in results_23_brands:
             writer.write_row(rec)
             count = count + 1
 
