@@ -40,6 +40,9 @@ def fetch_data():
             ):
                 street_address = street_address + ", " + store["address"]["line3"]
 
+            street_address = street_address.replace(
+                "TRAVIS PERKINS TRADING CO. LTD,", ""
+            ).strip()
             city = store["address"]["town"].strip()
             state = "<MISSING>"
             zip = store["address"]["postalCode"].strip()
