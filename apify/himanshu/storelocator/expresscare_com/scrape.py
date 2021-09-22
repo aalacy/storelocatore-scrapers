@@ -57,7 +57,7 @@ def fetch_data():
                     hours_of_operation=hoo,
                 )
 
-        yield item
+                yield item
 
 
 def scrape():
