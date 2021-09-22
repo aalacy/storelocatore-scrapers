@@ -10,7 +10,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com/es/en/stores/"
     domain = "ikea.com"
@@ -82,7 +82,7 @@ def fetch_data():
             city=addr.city,
             state=addr.state,
             zip_postal=addr.postcode,
-            country_code=addr.country,
+            country_code="ES",
             store_number="",
             phone=phone,
             location_type="",
