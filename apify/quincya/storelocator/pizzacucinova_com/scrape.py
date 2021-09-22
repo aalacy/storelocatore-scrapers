@@ -12,7 +12,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://order.pizzapaisanos.com/"
+    base_link = "https://pizzacucinova.com/locations/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -20,40 +20,56 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
 
     req = session.get(base_link, headers=headers)
-
     base = BeautifulSoup(req.text, "lxml")
-    items = base.find_all(class_="StoreHeader")
+
+    items = base.findAll("div", attrs={"class": "inner-content"})
 
     for item in items:
+        link = item.find("a")["href"]
+
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
         locator_domain = "pizzacucinova.com"
-        location_name = item.find(class_="lblStoreName").text
-        raw_address = list(item.find(id="StoreAddress").stripped_strings)
-        street_address = raw_address[0].split("*")[0].strip()
-        raw_line = raw_address[1]
+        location_name = base.find("h2").text.strip()
+
+        raw_data = (
+            str(base.find("p", attrs={"class": "address"}))
+            .replace("<p>", "")
+            .replace("</p>", "")
+            .replace("\n", "")
+            .split("<br/>")
+        )
+        street_address = raw_data[0][raw_data[0].rfind(">") + 1 :].strip()
+        raw_line = raw_data[1]
         city = raw_line[: raw_line.rfind(",")].strip()
         state = raw_line[raw_line.rfind(",") + 1 : raw_line.rfind(" ")].strip()
         zip_code = raw_line[raw_line.rfind(" ") + 1 :].strip()
         country_code = "US"
         store_number = "<MISSING>"
-        phone = item.find(id="StoreInfo").text.strip()
+        phone = re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", str(base.text))[0]
         location_type = "<MISSING>"
-        hours = item.find_all(class_="HoursCenter")
-        days = item.find_all(class_="HoursLeft")
-        hours_of_operation = ""
-        for i, row in enumerate(days):
-            day = row.text.replace("Hours", "").strip()
-            hour = hours[i].text.strip()
-            hours_of_operation = hours_of_operation + " " + day + " " + hour
-        hours_of_operation = hours_of_operation.replace("Pick Up\r\n", "")
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        hours_of_operation = (
+            base.find("div", attrs={"class": "normal-hours"})
+            .get_text(separator=u" ")
+            .replace("\n", " ")
+            .replace("Normal business hours", "")
+            .replace("\xa0", "")
+            .strip()
+        )
+        hours_of_operation = re.sub(" +", " ", hours_of_operation)
+        new_base = BeautifulSoup(req.text, "lxml")
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        raw_gps = str(new_base)
+        start_point = raw_gps.find("latitude") + 10
+        latitude = raw_gps[start_point : raw_gps.find(",", start_point)].strip()
+        semi_point = raw_gps.find("longitude", start_point)
+        longitude = raw_gps[semi_point + 12 : raw_gps.find("}", semi_point)].strip()
 
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=base_link,
+                page_url=link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
