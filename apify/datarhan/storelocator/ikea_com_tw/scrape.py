@@ -1,3 +1,4 @@
+import ssl
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -9,9 +10,18 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com.tw/zh/store/index/"
     domain = "ikea.com.tw"
@@ -57,7 +67,7 @@ def fetch_data():
         )
         location_name = location_name[0] if location_name else ""
         if not location_name:
-            location_name = loc_response.url.split("/")[-2].replace("-", " ").title()
+            location_name = page_url.split("/")[-2].replace("-", " ").title()
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
@@ -97,6 +107,8 @@ def fetch_data():
             ]
             if hoo:
                 hoo = hoo[0].split("間：")[-1]
+        if hoo == []:
+            hoo = ""
 
         item = SgRecord(
             locator_domain=domain,
