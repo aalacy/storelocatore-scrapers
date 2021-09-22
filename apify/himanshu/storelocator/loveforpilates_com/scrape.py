@@ -22,7 +22,7 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[span[@class="thumb-info-social-icons"]]')
     for poi_html in all_locations:
-        page_url = poi_html.xpath('.//h3/a/@href')[0]
+        page_url = poi_html.xpath(".//h3/a/@href")[0]
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -57,8 +57,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=data['map_start_lat'],
-            longitude=data['map_start_lng'],
+            latitude=data["map_start_lat"],
+            longitude=data["map_start_lng"],
             hours_of_operation=hoo,
         )
 
