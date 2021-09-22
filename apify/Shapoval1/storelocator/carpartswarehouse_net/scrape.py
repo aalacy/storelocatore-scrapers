@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
     js = r.json()
     for j in js:
 
-        page_url = "https://carpartswarehouse.net/locations/"
         location_name = j.get("store")
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
         state = j.get("state")
@@ -26,6 +25,7 @@ def fetch_data(sgw: SgWriter):
         country_code = j.get("country")
         city = j.get("city")
         latitude = j.get("lat")
+        store_number = "".join(j.get("email")).split("store")[1].split("@")[0].strip()
         longitude = j.get("lng")
         phone = j.get("phone")
         hours = j.get("hours") or "<MISSING>"
@@ -36,6 +36,16 @@ def fetch_data(sgw: SgWriter):
                 " ".join(h.xpath("//*//text()")).replace("\n", "").strip()
             )
 
+        api_url = "https://carpartswarehouse.net/locations/"
+        session = SgRequests()
+        r = session.get(api_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//a[contains(@href, "mailto")]')
+        for d in div:
+            em = "".join(d.xpath(".//text()")).split("store")[1].split("@")[0].strip()
+            if store_number == em:
+                page_url = "".join(d.xpath(".//preceding::h3[1]/a/@href"))
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -45,7 +55,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
