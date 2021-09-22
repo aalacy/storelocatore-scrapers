@@ -14,7 +14,7 @@ headers = {
 def fetch_data():
 
     url = "https://www.mrclutch.com/sitemap.xml"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.findAll("loc")
     for link in linklist:
@@ -30,7 +30,7 @@ def fetch_data():
         except:
             continue
         try:
-            r = session.get(link, headers=headers, verify=False)
+            r = session.get(link, headers=headers)
         except:
             continue
         soup = BeautifulSoup(r.text, "html.parser")
