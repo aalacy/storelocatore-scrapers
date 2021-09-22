@@ -106,8 +106,6 @@ def fetch_records(http, state):
         store = next_r.context.get("store")
         phone = ""
         hours = []
-        if "4904 Old Seward" not in store["street_address"]:
-            continue
         if next_r.url == "#":
             yield _d(store, phone, hours, base_url)
             continue
