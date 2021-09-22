@@ -6,6 +6,17 @@ from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("")
 
@@ -52,12 +63,6 @@ def fetch_data():
                     break
                 hours.append(hh)
 
-            coord = (
-                sp1.select_one("div#locationsInfo p a")["href"]
-                .split("ll=")[1]
-                .split("&")[0]
-                .split(",")
-            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.text.strip(),
@@ -68,8 +73,6 @@ def fetch_data():
                 country_code="US",
                 phone=block[-1],
                 locator_domain=locator_domain,
-                latitude=coord[0],
-                longitude=coord[1],
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 

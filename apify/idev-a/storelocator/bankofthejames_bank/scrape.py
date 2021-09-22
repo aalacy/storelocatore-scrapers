@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("bankofthejames")
 
@@ -29,14 +31,7 @@ def fetch_data():
             )
             if (not addr.state or not addr.city) and page_url != base_url:
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                try:
-                    addr = parse_address_intl(
-                        sp1.select_one("p.contact-info-address").text
-                    )
-                except:
-                    import pdb
-
-                    pdb.set_trace()
+                addr = parse_address_intl(sp1.select_one("p.contact-info-address").text)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -65,7 +60,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

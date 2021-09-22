@@ -1,6 +1,8 @@
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from lxml import html
 import json
@@ -9,8 +11,7 @@ import json
 logger = SgLogSetup().get_logger("toddpilates_com")
 locator_domain_url = "https://www.toddpilates.com"
 
-session = SgRequests()
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36"
 }
@@ -64,9 +65,9 @@ def get_lat_lng(data_r_yelp_lat_lng):
     return (latitude, longitude)
 
 
-def fetch_data():
+def fetch_records(http: SgRequests):
     base_url = "https://www.toddpilates.com"
-    r = session.get("https://www.toddpilates.com/", headers=headers)
+    r = http.get("https://www.toddpilates.com/", headers=headers)
     data_stores = html.fromstring(r.text, "lxml")
     url_stores = data_stores.xpath(
         '//div[div[div[contains(., "LOCATIONS")]]]/nav/a/@href'
@@ -75,7 +76,7 @@ def fetch_data():
     for num_store, url_store in enumerate(url_stores):
         locator_domain = locator_domain_url
         logger.info(f"Pulling the data from: {num_store} : {url_store} ")
-        r_loc = session.get(url_store, headers=headers)
+        r_loc = http.get(url_store, headers=headers)
         data_r_loc = html.fromstring(r_loc.text, "lxml")
         if "https://www.toddpilates.com/se-austin" not in url_store:
             url_yelp = data_r_loc.xpath('//a[contains(@href, "yelp.com")]/@href')
@@ -86,11 +87,11 @@ def fetch_data():
             logger.info(f"Page URL: {page_url} ")
 
             # Get the data From Yelp as the data is not available on the site
-            r_yelp = session.get(url_yelp, headers=headers)
+            r_yelp = http.get(url_yelp, headers=headers)
             data_r_yelp = html.fromstring(r_yelp.text, "lxml")
             json_data_r_yelp = data_r_yelp.xpath(
-                '//script[@type="application/ld+json"]/text()'
-            )[0]
+                '//script[contains(@type, "application/ld+json") and contains(text(), "LocalBusiness")]/text()'
+            )
             json_data_r_yelp = "".join(json_data_r_yelp)
             data = json.loads(json_data_r_yelp)
             location_name = data["name"].replace("&amp;", "&")
@@ -190,9 +191,7 @@ def fetch_data():
             page_url = url_austin_pickle_ranch
 
             # Get Address
-            r_austin_pickle_ranch = session.get(
-                url_austin_pickle_ranch, headers=headers
-            )
+            r_austin_pickle_ranch = http.get(url_austin_pickle_ranch, headers=headers)
             data_austin_pickle_ranch = html.fromstring(
                 r_austin_pickle_ranch.text, "lxml"
             )
@@ -231,7 +230,7 @@ def fetch_data():
 
             # Get Latitude and longitude
             latlng = data_se_austin.xpath(
-                '//div[@class="map-section w-hidden-main w-hidden-medium"]/div/div/@data-widget-latlng'
+                '//div[contains(@class, "map-section w-hidden-main w-hidden-medium")]/div/div/@data-widget-latlng'
             )
             latlng = "".join(latlng).split(",")
             latitude = latlng[0] or MISSING
@@ -278,11 +277,12 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        with SgRequests() as http:
+            records = fetch_records(http)
+            for rec in records:
+                writer.write_row(rec)
+                count = count + 1
 
     logger.info(f"No of records being processed: {count}")
     logger.info("Finished")

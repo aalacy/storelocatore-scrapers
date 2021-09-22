@@ -2,6 +2,8 @@ import json
 
 from bs4 import BeautifulSoup
 
+from geopy.geocoders import Nominatim
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -10,6 +12,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_usa
 
 from sgrequests import SgRequests
+
+geolocator = Nominatim(user_agent="geoapiExercises")
 
 
 def fetch_data(sgw: SgWriter):
@@ -41,17 +45,42 @@ def fetch_data(sgw: SgWriter):
         zip_code = addr.postcode
         country_code = addr.country
 
-        if "Las Vegas" in street_address:
-            city = "Las Vegas"
-            state = "NV"
+        try:
+            if "Northern" in country_code:
+                continue
+        except:
+            pass
+
+        if "Bayview Phase" in street_address:
+            street_address = store["address"]
+
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+
+        location = geolocator.reverse(str(latitude) + "," + str(longitude))
+        address = parse_address_usa(location.address)
+        add_split = location.address.split(",")
+        if not state:
+            state = address.state
+        if not city:
+            city = address.city
+        if not country_code:
+            country_code = address.country
+        if not zip_code:
+            zip_code = address.postcode
+
+        if not state:
+            state = add_split[-3].strip()
+        if not city:
+            city = add_split[-4].replace("County", "").strip()
+        if not zip_code:
+            zip_code = add_split[-2].strip()
 
         store_number = location_name.split("#")[-1].strip().split("-")[0].strip()
         if not store_number[0].isdigit():
             store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = store["phone"]
-        latitude = store["latitude"]
-        longitude = store["longitude"]
 
         hours_of_operation = store["custom_field_1"]
         if not hours_of_operation:
