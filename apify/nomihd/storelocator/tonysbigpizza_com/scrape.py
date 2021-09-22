@@ -67,7 +67,7 @@ def fetch_data():
     search_url = "https://tonysbigpizza.com/"
 
     with SgRequests(
-        dont_retry_status_codes_exceptions=set([301]), retries_with_fresh_proxy_ip=20
+        dont_retry_status_codes=set([404]), retries_with_fresh_proxy_ip=20
     ) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
