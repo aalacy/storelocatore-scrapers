@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
     website = "gorjana.com"
     country = "US"
     typ = "<MISSING>"
-    loc = "<MISSING>"
     store = "<MISSING>"
     lat = "<MISSING>"
     lng = "<MISSING>"
