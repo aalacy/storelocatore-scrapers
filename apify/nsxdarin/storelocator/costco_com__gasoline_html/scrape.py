@@ -99,6 +99,8 @@ def fetch_data():
             phone = "<MISSING>"
         if add != "" and IsGas is True:
             loc = loc.replace("/ ", "/").replace(" ", "-")
+            if "colchester-vt-314" in loc:
+                hours = "Mon-Fri.: 6:00am - 1:30pm, 6:00pm - 9:00pm; Sat.: 7:00am - 9:30am, 6:00pm - 8:00pm; Sun.: 7:00am - 7:00pm"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
