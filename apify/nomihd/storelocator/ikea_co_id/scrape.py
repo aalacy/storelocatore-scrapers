@@ -105,6 +105,7 @@ def fetch_data():
                     ],
                 )
             )
+            location_name = "".join(store_sel.xpath("//h1/text()")).strip()
 
             if store_info:
                 raw_address = store_info[-2].strip()
@@ -112,6 +113,8 @@ def fetch_data():
                 raw_address = (
                     store_dict[location_name][0]
                     .replace("Customer Relation Area (Counter 6),", "")
+                    .strip()
+                    .replace("Customer Relations Area (Counter no. 8),", "")
                     .strip()
                 )
 
@@ -125,8 +128,6 @@ def fetch_data():
             zip = formatted_addr.postcode
 
             country_code = "ID"
-
-            location_name = "".join(store_sel.xpath("//h1/text()")).strip()
 
             phone = store_dict[location_name][1]
             store_number = "<MISSING>"
