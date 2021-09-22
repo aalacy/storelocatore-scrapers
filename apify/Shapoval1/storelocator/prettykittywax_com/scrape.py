@@ -64,11 +64,6 @@ def fetch_data(sgw: SgWriter):
             == "https://prettykittywax.wpengine.com/locations/tx/dallas-mockingbird/"
         ):
             continue
-        if (
-            page_url
-            == "https://prettykittywax.wpengine.com/locations/tx/dallas-southlake/"
-        ):
-            page_url = "https://prettykittywax.com/locations/tx/dallas-south-lake/"
         if page_url == "https://prettykittywax.com/locations/tx/houston-wash-heights/":
             continue
         if page_url == "https://prettykittywax.com/locations/tx/dallas-uptown/":
@@ -76,7 +71,7 @@ def fetch_data(sgw: SgWriter):
         if page_url == "https://prettykittywax.com/locations/tx/dallas-mockingbird/":
             continue
         if page_url == "https://prettykittywax.com/locations/tx/dallas-southlake/":
-            continue
+            page_url = "https://prettykittywax.com/locations/tx/dallas-south-lake/"
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -89,7 +84,10 @@ def fetch_data(sgw: SgWriter):
         ad = " ".join(ad).replace("\n", " ").replace(",", "").strip()
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         location_name = tree.xpath('//h2[contains(text(), "The Pretty Kitty")]/text()')
-        location_name = "".join(location_name[0]).strip()
+        try:
+            location_name = "".join(location_name[0]).strip()
+        except:
+            location_name = "<MISSING>"
 
         location_type = "Location"
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
@@ -99,6 +97,26 @@ def fetch_data(sgw: SgWriter):
         postal = a.get("postal") or "<MISSING>"
         country_code = "USA"
         city = a.get("city") or "<MISSING>"
+        if page_url == "https://prettykittywax.com/locations/tx/fort-worth-west-7th/":
+            street_address = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="elementor-section-wrap"]/section[4]/div/div/div[1]//h2/text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            city = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="elementor-section-wrap"]/section[4]/div/div/div[1]//h2/text()[2]'
+                    )
+                )
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
         phone = "".join(
             tree.xpath(
                 '//div[@class="elementor-section-wrap"]/section[4]/div/div/div[2]//a/text()'
@@ -139,7 +157,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

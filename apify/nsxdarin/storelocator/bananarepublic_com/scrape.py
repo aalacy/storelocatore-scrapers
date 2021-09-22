@@ -31,22 +31,22 @@ def fetch_data():
     lat = "21.4007488"
     lng = "-158.001703"
     zc = "96797-5025"
-    yield [
-        website,
-        loc,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))

@@ -58,11 +58,17 @@ def fetch_records(http, page_url):
     if not city:
         city = raw_address.split(",")[-2]
     else:
-        if city.lower() in location["address"]["postalCode"]:
+        if city.lower() in location["address"]["postalCode"].lower():
             city = raw_address.split(",")[-2]
     street_address = addr.street_address_1
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
+    if location["address"]["streetAddress"] == "M25 Business centre":
+        street_address = (
+            location["address"]["streetAddress"]
+            + " "
+            + location["address"]["addressLocality"]
+        )
     hours = []
     for _ in location["openingHoursSpecification"]:
         hour = f"{_['opens']}-{_['closes']}"
