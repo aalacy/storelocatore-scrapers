@@ -80,6 +80,9 @@ def fetch_data(sgw: SgWriter):
             city = a.get("city") or "<MISSING>"
             state = a.get("state") or "<MISSING>"
             postal = a.get("postal") or "<MISSING>"
+        if city.find("St") != -1:
+            street_address = street_address + " St"
+            city = city.replace("St", "").strip()
         location_type = "pharmacy"
         hours_of_operation = (
             " ".join(
