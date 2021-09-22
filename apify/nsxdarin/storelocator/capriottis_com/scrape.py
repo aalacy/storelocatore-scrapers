@@ -6,6 +6,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import time
 from sgselenium import SgChrome
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
 
@@ -38,7 +41,6 @@ def fetch_data():
         country = "US"
         logger.info("Pulling Stores")
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '"location_id":"' in line:
                 items = line.split('"location_id":"')
                 for item in items:
@@ -78,9 +80,13 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
+    count = 0
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"Data Grabbing Finished and added {count} rows")
 
 
 scrape()
