@@ -3,7 +3,7 @@ import re
 import usaddress
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 
@@ -25,7 +25,7 @@ def fetch_data():
             link = st["href"]
         else:
             link = "https://www.rebeccataylor.com" + st["href"]
-        r = session.get(link, headers=headers)
+        r = session.get(link, headers=headers, verify=False, timeout=100)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h2", {"class": "card-title"}).text
         try:
@@ -84,7 +84,7 @@ def fetch_data():
             locator_domain="https://www.rebeccataylor.com/",
             page_url=link,
             location_name=title,
-            street_address=street.strip(),
+            street_address=street.replace(",", "").strip(),
             city=city.replace(",", "").strip(),
             state=state.strip(),
             zip_postal=pcode.strip(),
