@@ -37,6 +37,7 @@ def fetch_data():
         )
         for store in store_list:
             page_url = store.xpath("./@href")[0].strip()
+            page_url = "https://thetanningshop.co.uk/london/richmond/"
             locator_domain = website
 
             log.info(page_url)
@@ -104,11 +105,17 @@ def fetch_data():
 
             city = formatted_addr.city
             if not city:
-                city = raw_address.split(",")[-2]
+                try:
+                    city = raw_address.split(",")[-2]
+                except:
+                    pass
             state = formatted_addr.state
             zip = formatted_addr.postcode
             if not zip:
-                zip = raw_address.split(" ")[-2] + " " + raw_address.split(" ")[-1]
+                try:
+                    zip = raw_address.split(" ")[-2] + " " + raw_address.split(" ")[-1]
+                except:
+                    pass
 
             country_code = "GB"
 
