@@ -57,7 +57,6 @@ def fetch_data(sgw: SgWriter):
                 final_link = "https:" + final_link
                 final_links.append(final_link)
 
-    data = []
     total_links = len(final_links)
     logger.info("Processing %s links .." % (total_links))
     for i, final_link in enumerate(final_links):
