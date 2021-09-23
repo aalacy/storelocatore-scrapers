@@ -1,5 +1,4 @@
 import json
-from re import L
 from lxml import etree
 from urllib.parse import urljoin
 
