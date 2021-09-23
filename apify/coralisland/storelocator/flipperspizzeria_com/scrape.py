@@ -24,7 +24,7 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()
         for loc in loclist:
             page_url = "https://flipperspizzeria.com/" + loc["slug"]
-            store_numer = loc["id"]
+            store_number = loc["id"]
             log.info(page_url)
             location_name = loc["title"]["rendered"]
             phone = loc["acf"]["phone_number"]
