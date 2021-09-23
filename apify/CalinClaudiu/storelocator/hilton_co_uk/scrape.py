@@ -16,13 +16,41 @@ from sgselenium import SgFirefox
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+def cleanup_json(x):
+    x = x.replace("\n", "").replace("\r", "").replace("\t", "")
+    x = x.replace(": '", ': "')
+    x = x.replace("',", '",')
+    x = x.replace("' }", '" }').replace("'}", '"}')
+    copy = []
+    i = 0
+    length = len(x)
+    while i < length:
+        if x[i] != "<":
+            copy.append(x[i])
+        else:
+            while x[i] != ">":
+                i = i + 1
+        i += 1
+    x = "".join(copy)
+    x = x.replace(",}}", "}}")
+    try:
+        x = json.loads(x)
+    except Exception as e:
+        with open("debug.txt", mode="w", encoding="utf-8") as file:
+            file.write(x)
+            file.write(e)
+    return x
+
+
 def para(k):
 
     session = SgRequests()
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    son = session.get(k["facilityOverview"]["homeUrl"], headers=headers)
+    son = SgRequests.raise_on_err(
+        session.get(k["facilityOverview"]["homeUrl"], headers=headers)
+    )
 
     soup = b4(son.text, "lxml")
 
@@ -34,8 +62,11 @@ def para(k):
     k["extras"]["address"]["postalCode"] = "<MISSING>"
     for i in allscripts:
         if "postalCode" in i.text:
-            z = i.text.replace("\n", "")
-            data = json.loads(z)
+            try:
+                z = i.text.replace("\n", "")
+                data = cleanup_json(z)
+            except Exception:
+                raise
 
     k["extras"] = data
 
@@ -103,9 +134,8 @@ def data_fetcher(country, state):
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
-
         except Exception:
-            continue
+            raise
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
 
@@ -153,7 +183,7 @@ def scrape():
         ),
         store_number=MappingField(mapping=["_id"], part_of_record_identity=True),
         hours_of_operation=MappingField(
-            mapping=["open"],
+            mapping=["extras", "openingHours"],
             value_transform=lambda x: "Possibly Closed"
             if x == "FALSE"
             else "<MISSING>",
