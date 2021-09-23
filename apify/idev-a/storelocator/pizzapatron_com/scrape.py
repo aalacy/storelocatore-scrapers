@@ -24,9 +24,6 @@ base_url = "https://order.pizzapatron.com/api/vendors/regions?excludeCities=true
 def fetch_data():
     with SgRequests() as session:
         states = session.get(base_url, headers=_headers).json()
-        import pdb
-
-        pdb.set_trace()
         for state in states:
             state_url = (
                 f"https://order.pizzapatron.com/api/vendors/search/{state['code']}"
