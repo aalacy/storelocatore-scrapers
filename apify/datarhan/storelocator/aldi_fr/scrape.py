@@ -97,7 +97,6 @@ def fetch_locations(code, tracker):
         response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
     )
     if "Le nombre maximum des demandes de votre IP" in response.text:
-        print("max queries for IP")
         return []
 
     all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
