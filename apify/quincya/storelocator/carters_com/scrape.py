@@ -50,6 +50,8 @@ def fetch_data(sgw: SgWriter):
         base = BeautifulSoup(req.text, "lxml")
 
         final_items = base.find_all(class_="location_name")
+        if not final_items:
+            final_links.append(next_link)
         for final_item in final_items:
             final_link = final_item.a["href"]
 

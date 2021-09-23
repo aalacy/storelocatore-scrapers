@@ -1,3 +1,4 @@
+import json
 from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -5,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.pause_resume import CrawlStateSingleton
+from lxml import html
 from concurrent import futures
 
 
@@ -50,11 +52,13 @@ def get_data(zips, sgw: SgWriter):
         headers=headers,
     )
     js = r.json()
+
     for j in js["response"]["entities"]:
         a = j.get("address")
         page_url = (
             j.get("c_baseURL") or f"https://locations.pitapitusa.com/?q={str(zips)}"
         )
+
         if page_url.find("https://pitapit.ca/") != -1:
             continue
         if page_url.find("zip") != -1:
@@ -73,6 +77,16 @@ def get_data(zips, sgw: SgWriter):
         hours_of_operation = get_hours(hours)
         if hours_of_operation.count("Closed") == 7:
             hours_of_operation = "Closed"
+        store_number = "<MISSING>"
+        if page_url.find("q=") == -1:
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            jsblock = "".join(
+                tree.xpath("//script[@type='application/ld+json']/text()")
+            )
+            js = json.loads(jsblock)
+            store_number = js.get("@id")
 
         row = SgRecord(
             page_url=page_url,
@@ -82,7 +96,7 @@ def get_data(zips, sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=location_type,
             latitude=latitude,
