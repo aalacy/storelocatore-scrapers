@@ -10,7 +10,6 @@ import json
 
 website = "pizzahut.co.in"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "restaurants.pizzahut.co.in",
     "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
@@ -30,80 +29,83 @@ def fetch_data():
     # Your scraper here
     search_url = "https://restaurants.pizzahut.co.in/?page={}"
     page_no = 1
-    while True:
-        search_res = session.get(search_url.format(str(page_no)), headers=headers)
+    with SgRequests(
+        verify_ssl=False, proxy_country="in", dont_retry_status_codes=([404])
+    ) as session:
+        while True:
+            search_res = session.get(search_url.format(str(page_no)), headers=headers)
 
-        stores_sel = lxml.html.fromstring(search_res.text)
-        stores = stores_sel.xpath(
-            '//a[@class="btn btn-website"][./span[contains(text(),"Details")]]/@href'
-        )
-        for store_url in stores:
-            page_url = store_url
-            locator_domain = website
-
-            log.info(page_url)
-            store_res = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_res.text)
-            json_list = json.loads(
-                "".join(
-                    store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                ).strip()
+            stores_sel = lxml.html.fromstring(search_res.text)
+            stores = stores_sel.xpath(
+                '//a[@class="btn btn-website"][./span[contains(text(),"Details")]]/@href'
             )
-            for js in json_list:
-                if js["@type"] == "Restaurant":
-                    store_json = js
+            for store_url in stores:
+                page_url = store_url
+                locator_domain = website
 
-                    locator_domain = website
-                    location_name = "Pizza Hut"
-                    if "alternateName" in store_json:
-                        location_name = store_json["alternateName"]
-                    street_address = store_json["address"]["streetAddress"]
-                    city = store_json["address"]["addressLocality"]
-                    state = store_json["address"]["addressRegion"]
-                    zip = store_json["address"]["postalCode"]
+                log.info(page_url)
+                store_res = session.get(page_url, headers=headers)
+                store_sel = lxml.html.fromstring(store_res.text)
+                json_list = json.loads(
+                    "".join(
+                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
+                    ).strip()
+                )
+                for js in json_list:
+                    if js["@type"] == "Restaurant":
+                        store_json = js
 
-                    country_code = store_json["address"]["addressCountry"]
+                        locator_domain = website
+                        location_name = "Pizza Hut"
+                        if "alternateName" in store_json:
+                            location_name = store_json["alternateName"]
+                        street_address = store_json["address"]["streetAddress"]
+                        city = store_json["address"]["addressLocality"]
+                        state = store_json["address"]["addressRegion"]
+                        zip = store_json["address"]["postalCode"]
 
-                    store_number = "<MISSING>"
-                    phone = store_json["telephone"]
-                    if len(phone) > 0:
-                        phone = phone[0]
+                        country_code = store_json["address"]["addressCountry"]
 
-                    location_type = "<MISSING>"
-                    hours = store_json["openingHoursSpecification"]
-                    hours_list = []
-                    for hour in hours:
-                        day = hour["dayOfWeek"]
-                        time = hour["opens"] + "-" + hour["closes"]
-                        hours_list.append(day + ": " + time)
+                        store_number = "<MISSING>"
+                        phone = store_json["telephone"]
+                        if len(phone) > 0:
+                            phone = phone[0]
 
-                    hours_of_operation = "; ".join(hours_list).strip()
-                    latitude = store_json["geo"]["latitude"]
-                    longitude = store_json["geo"]["longitude"]
+                        location_type = "<MISSING>"
+                        hours = store_json["openingHoursSpecification"]
+                        hours_list = []
+                        for hour in hours:
+                            day = hour["dayOfWeek"]
+                            time = hour["opens"] + "-" + hour["closes"]
+                            hours_list.append(day + ": " + time)
 
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
-                    break
+                        hours_of_operation = "; ".join(hours_list).strip()
+                        latitude = store_json["geo"]["latitude"]
+                        longitude = store_json["geo"]["longitude"]
 
-        next_page = stores_sel.xpath('//li[@class="next"]/a/@href')
-        if len(next_page) > 0:
-            page_no = page_no + 1
-        else:
-            break
+                        yield SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                        )
+                        break
+
+            next_page = stores_sel.xpath('//li[@class="next"]/a/@href')
+            if len(next_page) > 0:
+                page_no = page_no + 1
+            else:
+                break
 
 
 def scrape():

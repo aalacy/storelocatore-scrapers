@@ -28,7 +28,7 @@ def fetch_data():
     if True:
         for country in country_list:
             log.info("Fetching Country's list...")
-            r = session.get(country, headers=headers, verify=False)
+            r = session.get(country, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             linklist = soup.find("ul", {"class": "Directory-listLinks"}).findAll(
                 "a", {"class": "Directory-listLink"}
@@ -39,7 +39,7 @@ def fetch_data():
                 loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
                 count = link["data-count"]
                 count = int(count.replace(")", "").replace("(", ""))
-                r = session.get(loc_link, headers=headers, verify=False)
+                r = session.get(loc_link, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 if count > 1:
                     loclist = soup.find(
@@ -49,7 +49,7 @@ def fetch_data():
                         loc_link = loc.find("a", {"class": "Teaser-link"})["href"]
                         loc_link = loc_link.split("en-us/")[1]
                         loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
-                        r = session.get(loc_link, headers=headers, verify=False)
+                        r = session.get(loc_link, headers=headers)
                         log.info(loc_link)
                         soup = BeautifulSoup(r.text, "html.parser")
                         address = soup.find("address", {"class": "c-address"})
@@ -84,11 +84,10 @@ def fetch_data():
                             phone = soup.find("span", {"itemprop": "telephone"}).text
                         except:
                             phone = MISSING
-                        location_name = soup.find(
-                            "h1", {"class": "Hero-title"}
-                        ).findAll("span")
                         location_name = (
-                            location_name[0].text + " " + location_name[1].text
+                            soup.find("h1", {"class": "Hero-title"})
+                            .get_text(separator="|", strip=True)
+                            .replace("|", " ")
                         )
                         hourlist = (
                             soup.find("table", {"class": "c-hours-details"})
@@ -143,10 +142,11 @@ def fetch_data():
                         phone = soup.find("span", {"itemprop": "telephone"}).text
                     except:
                         phone = MISSING
-                    location_name = soup.find("h1", {"class": "Hero-title"}).findAll(
-                        "span"
+                    location_name = (
+                        soup.find("h1", {"class": "Hero-title"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
                     )
-                    location_name = location_name[0].text + " " + location_name[1].text
                     hourlist = (
                         soup.find("table", {"class": "c-hours-details"})
                         .find("tbody")
@@ -177,7 +177,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
