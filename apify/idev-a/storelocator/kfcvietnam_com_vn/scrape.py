@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
@@ -113,7 +113,18 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
