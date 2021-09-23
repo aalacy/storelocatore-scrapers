@@ -9,9 +9,9 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     domain = "sanrio.com"
-    start_url = "https://cdn.shopify.com/s/files/1/0416/8083/0620/t/78/assets/sca.storelocator_scripttag.js?v=1612166361&shop=sanrio-na.myshopify.com"
+    start_url = "https://cdn.shopify.com/s/files/1/0416/8083/0620/t/161/assets/sca.storelocator_scripttag.js?v=1629914766&shop=sanrio-na.myshopify.com"
 
     response = session.get(start_url)
     data = re.findall("Setting=(.+);", response.text)[0]
