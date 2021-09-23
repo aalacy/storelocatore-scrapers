@@ -46,17 +46,21 @@ def fetch_data(sgw: SgWriter):
             continue
         if page_url == "https://dashatoronto.com/":
             page_url = "https://dashatoronto.com/contact/"
+
         session = SgRequests()
         r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
+        try:
+            tree = html.fromstring(r.text)
+        except:
+            tree = html.fromstring("<html></html>")
         if (
             slug.find("beverly hills") != -1
             or slug.find("san diego") != -1
             or slug.find("las vegas") != -1
+            or slug.find("SAN DIEGO") != -1
         ):
             slug = "US"
-        if slug.find("toronto") != -1:
+        if slug.find("toronto") != -1 or slug.find("TORONTO") != -1:
             slug = "CA"
         if slug.find("NORTH ISLAND SEYCHELLES") != -1:
             slug = "NORTH ISLAND"
