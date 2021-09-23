@@ -29,7 +29,14 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "https://hodlservices.ca/atm-locations/"
         icon = j.split('"icon":"')[1].split('"')[0].strip()
-        ad = j.split('"address":"')[1].split('"')[0].replace("rn", " ").strip()
+        ad = (
+            j.split('"address":"')[1]
+            .split('"')[0]
+            .replace("rn", " ")
+            .replace("u00a0", "")
+            .strip()
+        )
+
         a = parse_address(International_Parser(), ad)
         location_name = (
             j.split('"tooltip":"')[1].split('"')[0].replace("rn", " ").strip()
@@ -48,6 +55,11 @@ def fetch_data(sgw: SgWriter):
         city = a.city or "<MISSING>"
         if city == "<MISSING>":
             city = ad.split(",")[1].strip()
+        if street_address.find("21 Princess St") != -1:
+            postal = "L2A 1V7"
+        if street_address.find("L8N") != -1:
+            street_address = street_address.replace("L8N", "")
+            postal = "L8N" + " " + postal
         latitude = j.split('"lat":"')[1].split('"')[0].strip()
         longitude = j.split('"lng":"')[1].split('"')[0].strip()
         phone = j.split("Store:")[1].split("<")[0].strip()

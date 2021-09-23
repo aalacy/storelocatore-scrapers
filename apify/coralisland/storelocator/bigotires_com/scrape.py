@@ -1,154 +1,113 @@
-import csv
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-
-base_url = "https://www.bigotires.com"
-
-
-def validate(item):
-    if type(item) == list:
-        item = " ".join(item)
-    return item.strip()
+from sgscrape.pause_resume import CrawlStateSingleton
+from concurrent import futures
 
 
-def get_value(item):
-    if item is None:
-        item = "<MISSING>"
-    item = validate(item)
-    if item == "":
-        item = "<MISSING>"
-    return item
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        days = h.get("day")
+        opens = h.get("openingHour")
+        closes = h.get("closingHour")
+        line = f"{days} {opens} - {closes}"
+        tmp.append(line)
+    hours_of_operation = "; ".join(tmp)
+    return hours_of_operation
 
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
+def get_data(zipp, sgw: SgWriter):
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    output_list = []
-    store_ids = []
+    locator_domain = "https://www.bigotires.com"
+    api_url = "https://www.bigotires.com/restApi/dp/v1/store/storesByAddress"
 
     headers = {
-        "authority": "www.bigotires.com",
-        "method": "POST",
-        "path": "/restApi/dp/v1/store/storesByAddress",
-        "scheme": "https",
-        "accept": "application/json, text/plain, */*",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "en-US,en;q=0.9",
-        "content-length": "41",
-        "content-type": "application/json;charset=UTF-8",
-        "x-requested-with": "XMLHttpRequest",
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-        "x-requested-by": "123",
-        "x-requested-with": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json;charset=utf-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Requested-By": "123",
+        "Origin": "https://www.bigotires.com",
+        "Connection": "keep-alive",
+        "Referer": "https://www.bigotires.com/store-locator",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
     }
-
+    data = '{"address":"' + zipp + '"}'
     session = SgRequests()
-    url = "https://www.bigotires.com/restApi/dp/v1/store/storesByAddress"
 
-    max_distance = 200
+    r = session.post(api_url, headers=headers, data=data)
+    try:
+        js = r.json()["storesType"]["stores"]
+    except:
+        js = []
+        return
+    for j in js:
+        a = j.get("address")
+        page_url = f"https://www.bigotires.com{j.get('storeDetailsUrl')}"
 
-    search = DynamicZipSearch(
+        location_name = "<MISSING>"
+        street_address = a.get("address1") or "<MISSING>"
+        city = a.get("city") or "<MISSING>"
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("zipcode") or "<MISSING>"
+        store_number = j.get("storeNumber")
+        country_code = "US"
+        phone = (
+            "".join(a.get("phoneNumber").get("areaCode"))
+            + " "
+            + "".join(a.get("phoneNumber").get("firstThree"))
+            + " "
+            + "".join(a.get("phoneNumber").get("lastFour"))
+        )
+        latitude = j.get("mapCenter").get("latitude") or "<MISSING>"
+        longitude = j.get("mapCenter").get("latitude") or "<MISSING>"
+        hours = j.get("workingHours")
+        hours_of_operation = get_hours(hours)
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=1000,
+        expected_search_radius_miles=10,
+        max_search_results=None,
     )
 
-    for postcode in search:
-        # query the store locator using zip
-
-        data = {"address": postcode, "distanceInMiles": max_distance}
-
-        source = session.post(url, headers=headers, json=data).json()
-
-        if "storesType" not in list(source.keys()):
-            continue
-
-        store_list = source["storesType"]
-
-        if "stores" not in list(store_list.keys()):
-            continue
-
-        store_list = store_list["stores"]
-        for store in store_list:
-            store_id = validate(store["storeId"])
-            if store_id in store_ids:
-                continue
-            store_ids.append(store_id)
-            store_hours = store["workingHours"]
-            hours = ""
-            for x in store_hours:
-                if validate(x["openingHour"]) == "Closed ":
-                    hours += x["day"] + " " + x["openingHour"] + " "
-                else:
-                    hours += (
-                        x["day"] + " " + x["openingHour"] + "-" + x["closingHour"] + " "
-                    )
-            store_closed_hours = store["storeClosedHours"]
-            for x in store_closed_hours:
-                hours += validate(x["date"] + ": " + x["workingHours"] + " ")
-            hours = hours.replace("Closed-Closed", "Closed").strip()
-            output = []
-            output.append(base_url)  # url
-            output.append(base_url + store["storeDetailsUrl"])
-            output.append(validate(store["address"]["address1"]))  # location name
-            output.append(validate(store["address"]["address1"]))  # address
-            output.append(validate(store["address"]["city"]))  # city
-            output.append(validate(store["address"]["state"]))  # state
-            output.append(validate(store["address"]["zipcode"]))  # zipcode
-            output.append("US")  # country code
-            output.append(store_id)  # store_number
-            output.append(validate(store["phoneNumbers"][0]))  # phone
-            output.append("<MISSING>")  # location type
-            latitude = store["mapCenter"]["latitude"]
-            longitude = store["mapCenter"]["longitude"]
-            output.append(latitude)  # latitude
-            output.append(longitude)  # longitude
-            search.found_location_at(latitude, longitude)
-
-            output.append(get_value(hours))  # opening hours
-            output_list.append(output)
-
-    return output_list
+    with futures.ThreadPoolExecutor(max_workers=4) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in zips}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -28,7 +28,11 @@ def fetch_data(sgw: SgWriter):
     for i, item in enumerate(items):
         if i % 2 == 0:
             location_name = item.find_previous("h6").text
-            raw_address = item.text.replace("Vegas ", "Vegas,").split(",")
+            raw_address = (
+                item.text.replace("Vegas ", "Vegas,")
+                .replace("Plano TX,", "Plano, TX")
+                .split(",")
+            )
             street_address = " ".join(raw_address[:-1])
             if "  " in street_address:
                 city = street_address.split("  ")[-1].strip()
@@ -66,5 +70,5 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
     fetch_data(writer)

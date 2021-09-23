@@ -37,7 +37,11 @@ def fetch_data(sgw: SgWriter):
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(loc[0]["telephone"])
-                store.append("<MISSING>")
+                if "Not A Retail Location" in soup1.text:
+                    location_type = "Corporate Offices and Distribution Center"
+                else:
+                    location_type = "Retail Location"
+                store.append(location_type)
                 latitude = loc[0]["geo"]["latitude"]
                 longitude = loc[0]["geo"]["longitude"]
                 if "50 Walkers" in loc[0]["address"]["streetAddress"]:
