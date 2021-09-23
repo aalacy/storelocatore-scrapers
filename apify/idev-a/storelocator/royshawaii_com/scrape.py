@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
 
 try:
@@ -56,7 +58,8 @@ def fetch_data():
                 hours = _hr.find_parent().stripped_strings
             else:
                 _hr = sp1.find(
-                    "", string=re.compile(r"Open for dine-in & Carryout", re.IGNORECASE)
+                    "",
+                    string=re.compile(r"Open for dine-in & Carryout", re.IGNORECASE),
                 )
                 if _hr:
                     if _hr.find_parent("h1"):
@@ -75,8 +78,9 @@ def fetch_data():
                     )
                     if _hr:
                         temp = list(_hr.find_parent().stripped_strings)
-                        for x in range(0, len(temp), 2):
-                            hours.append(f"{temp[x]} {temp[x+1]}")
+                        if len(temp) % 2 == 0:
+                            for x in range(0, len(temp), 2):
+                                hours.append(f"{temp[x]} {temp[x+1]}")
                     else:
                         _hr = sp1.find(
                             "strong", string=re.compile(r"^HOURS", re.IGNORECASE)
@@ -170,7 +174,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
