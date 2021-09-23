@@ -34,10 +34,14 @@ def fetch_data():
             if not zip_postal.isdigit():
                 zip_postal = ""
 
+            addr = sp1.find("h2", string=re.compile(r"^Location:"))
+            street_address = ss["addressLine1"]
+            if addr:
+                street_address = list(addr.find_next_sibling("p").stripped_strings)[0]
             yield SgRecord(
                 page_url=page_url,
                 location_name=ss["addressTitle"],
-                street_address=ss["addressLine1"],
+                street_address=street_address,
                 city=ss["addressLine2"].split(",")[0].strip(),
                 state=ss["addressLine2"].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=zip_postal,
