@@ -181,6 +181,33 @@ def fetch_data():
     typ = "<MISSING>"
     country = "GB"
     loc = "<MISSING>"
+    add = "332 Upper Level 114 West Thurrock Way"
+    city = "Grays"
+    zc = "RM20 2ZP"
+    state = "<MISSING>"
+    store = "<MISSING>"
+    loc = "<MISSING>"
+    name = "TIMBERLAND - LAKESIDE"
+    phone = "01708 862692"
+    lat = "51.489"
+    lng = "0.2836034"
+    hours = "<MISSING>"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
     logger.info("Pulling Stores")
     for item in json.loads(r.content)["response"]["collection"]:
         phone = item["phone"]

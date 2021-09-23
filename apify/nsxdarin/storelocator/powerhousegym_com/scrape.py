@@ -52,13 +52,18 @@ def fetch_data():
                 h = str(h.decode("utf-8"))
                 if 'small"></p>' not in g:
                     try:
-                        addinfo = (
-                            g.split(">")[1]
-                            .strip()
-                            .replace("\r", "")
-                            .replace("\t", "")
-                            .replace("\n", "")
-                        )
+                        if '"grey-text light small">' in g:
+                            addinfo = g.split('"grey-text light small">')[1].split("<")[
+                                0
+                            ]
+                        else:
+                            addinfo = (
+                                g.split(">")[1]
+                                .strip()
+                                .replace("\r", "")
+                                .replace("\t", "")
+                                .replace("\n", "")
+                            )
                         addinfo = addinfo + "|" + h.split("<")[0].strip()
                         add = addinfo.split("|")[0]
                         csz = addinfo.split("|")[1]
@@ -108,6 +113,26 @@ def fetch_data():
                     zc = "V4W 2X3"
                     state = "BC"
                     city = "Aldergrove"
+                if "west-bloomfield" in loc:
+                    zc = "48323"
+                if "/syracuse" in loc:
+                    zc = "<MISSING>"
+                if "locations/aurora" in loc:
+                    zc = "80014"
+                add = add.replace(zc, "").strip()
+                citystring = " " + city
+                citystring2 = " " + city + " "
+                if citystring2 not in add:
+                    add = add.replace(citystring, "").strip()
+                if "</b>; Mon" in hours:
+                    hours = "Mon" + hours.split("</b>; Mon")[1]
+                if "More Info:" in hours:
+                    hours = "<MISSING>"
+                if ":; ; Mon" in hours:
+                    hours = "Mon" + hours.split(":; ; Mon")[1]
+                hours = hours.replace("; ; Staff", "; Staff")
+                if "pm; ;" in hours:
+                    hours = hours.split("pm; ;")[0] + "pm"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
