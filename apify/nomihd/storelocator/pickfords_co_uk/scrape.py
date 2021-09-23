@@ -88,7 +88,7 @@ def fetch_data():
                     [
                         x.strip()
                         for x in store_sel.xpath(
-                            '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::p[1]/span[@class="Body-Copy"]/text()'
+                            '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::p[1]/span[@class="Body-Copy"]//text()'
                         )
                     ],
                 )
@@ -100,7 +100,7 @@ def fetch_data():
                         [
                             x.strip()
                             for x in store_sel.xpath(
-                                '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::span[@class="Body-Copy"][1]/text()'
+                                '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::span[@class="Body-Copy"][1]//text()'
                             )
                         ],
                     )
@@ -122,7 +122,7 @@ def fetch_data():
                         [
                             x.strip()
                             for x in store_sel.xpath(
-                                '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::p[2]/span[@class="Body-Copy"]/text()'
+                                '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::p[2]/span[@class="Body-Copy"]//text()'
                             )
                         ],
                     )
@@ -134,7 +134,7 @@ def fetch_data():
                             [
                                 x.strip()
                                 for x in store_sel.xpath(
-                                    '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::span[@class="Body-Copy"][2]/text()'
+                                    '//div[@class="sfContentBlock"]/h3[contains(.//text(),"Contact your local")]/following-sibling::span[@class="Body-Copy"][2]//text()'
                                 )
                             ],
                         )
