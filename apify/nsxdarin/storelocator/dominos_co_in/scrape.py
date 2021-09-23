@@ -20,7 +20,6 @@ def fetch_data():
     states = []
     cities = []
     places = []
-    locs = []
     website = "dominos.co.in"
     typ = "<MISSING>"
     country = "IN"
