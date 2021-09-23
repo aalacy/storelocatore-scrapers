@@ -92,6 +92,25 @@ def fetch_data(sgw: SgWriter):
                 '//div[@class="et_pb_team_member_description"]//a[contains(@href, "tel")]/text()'
             )
         )
+        hours_of_operation = "<MISSING>"
+        if page_url == "https://www.jjfishandchicken.com/antioch-ca-restaurant/":
+            hours_of_operation = "".join(
+                tree.xpath(
+                    '//div[@class="et_pb_team_member_description"]/h4/following-sibling::div[1]/p/span[1]/span/text()'
+                )
+            )
+        if page_url == "https://www.jjfishandchicken.com/stockton-2/":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//div[@class="et_pb_team_member_description"]//h5/text()'
+                    )
+                )
+                .replace("\n", "")
+                .replace("Open", "")
+                .replace("(7 days)", "")
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -107,7 +126,7 @@ def fetch_data(sgw: SgWriter):
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
             raw_address=ad,
         )
 
