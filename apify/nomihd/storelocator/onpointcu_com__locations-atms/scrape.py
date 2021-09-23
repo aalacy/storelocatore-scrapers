@@ -7,6 +7,8 @@ from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "onpointcu.com/locations-atms"
@@ -588,7 +590,9 @@ def process_record(raw_results_from_one_zipcode):
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = parallelize(
             search_space=static_zipcode_list(
                 radius=5, country_code=SearchableCountries.USA

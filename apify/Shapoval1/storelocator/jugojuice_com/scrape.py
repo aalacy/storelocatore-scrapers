@@ -1,43 +1,14 @@
-import csv
 from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://jugojuice.com/"
-    api_url = "https://jugojuice.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1626731353763"
+def fetch_data(sgw: SgWriter):
+    api_url = "https://jugojuice.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1628874552097"
 
     session = SgRequests()
 
@@ -64,7 +35,6 @@ def fetch_data():
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         city = a.city or "<MISSING>"
-        store_number = "<MISSING>"
         location_name = (
             "".join(d.xpath(".//location/text()"))
             .replace("&#39;", "`")
@@ -80,16 +50,14 @@ def fetch_data():
         )
         if hours_of_operation != "<MISSING>":
             a = html.fromstring(hours_of_operation)
-            hours_of_operation = a.xpath("//*//text()")
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
             hours_of_operation = (
-                " ".join(hours_of_operation)
+                " ".join(a.xpath("//*//text()"))
                 .replace("â", "")
                 .replace("ââ", "")
                 .replace(" <br> ", " ")
                 .replace("<br>", "")
+                .replace("  ", " ")
+                .replace(" 	 ", " ")
                 .strip()
             )
         if hours_of_operation.find("*") != -1:
@@ -102,31 +70,28 @@ def fetch_data():
         if "temporarily closed" in location_name:
             location_type = "Temporarily Closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://jugojuice.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
