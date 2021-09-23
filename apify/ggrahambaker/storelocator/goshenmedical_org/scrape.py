@@ -123,7 +123,7 @@ def fetch_data():
                 ).strip()
                 city = a.get("city")
                 state = a.get("state")
-                postal = a.get("postal")
+                zip = a.get("postal")
                 country_code = "US"
                 phone = (
                     "".join(
@@ -164,11 +164,11 @@ def fetch_data():
                     state=state,
                     zip_postal=zip,
                     country_code=country_code,
-                    store_number=store_number,
+                    store_number="<MISSING>",
                     phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
+                    location_type="<MISSING>",
+                    latitude="<MISSING>",
+                    longitude="<MISSING>",
                     hours_of_operation=hours_of_operation,
                 )
 
