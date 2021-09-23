@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
             row = SgRecord(
                 page_url=page_url,
                 street_address=street_address,
-                city=city,
+                city=name,
                 state=state,
                 zip_postal=postal,
                 country_code="EG",
