@@ -1,112 +1,95 @@
-import csv
+import json
+from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("hancockwhitney_com")
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
+    }
+    base_link = "https://maps.locations.hancockwhitney.com/api/getAsyncLocations?template=search&radius=1000&level=search&search=36608"
+    data = session.get(base_link, headers=headers).json()["maplist"]
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
+    base = BeautifulSoup(data, "lxml")
+    js = (
+        "["
+        + base.text.replace("\r\n", "")
+        .replace("\\", "")
+        .replace("    ", "")
+        .replace(': "{', ": {")
+        .replace('}",', "},")[:-1]
+        + "]"
+    )
+    stores = json.loads(js)
 
-        logger.info(f"No of records being processed: {len(temp_list)}")
+    for store_data in stores:
+        store = []
+        store.append("https://www.hancockwhitney.com")
+        store.append("Hancock Whitney " + store_data["location_name"])
+        try:
+            street_address = store_data["address_1"] + " " + store_data["address_2"]
+        except:
+            street_address = store_data["address_1"]
+        store.append(store_data["city"])
+        store.append(store_data["region"])
+        store.append(store_data["post_code"])
+        store.append(store_data["country"])
+        store.append(store_data["lid"])
+        store.append(store_data["local_phone"])
+        store.append(store_data["Location Type_CS"])
+        store.append(store_data["lat"])
+        store.append(store_data["lng"])
+        hours = ""
+        try:
+            raw_days = store_data["hours_sets:primary"]["days"]
+        except:
+            hours = "<MISSING>"
 
+        if not hours:
+            for day in raw_days:
+                hour = raw_days[day]
+                try:
+                    if hour == "closed":
+                        clean_hours = day + " " + hour.title()
+                    else:
+                        opens = hour[0]["open"]
+                        closes = hour[0]["close"]
+                        clean_hours = day + " " + opens + "-" + closes
+                    hours = (hours + " " + clean_hours).strip()
+                except:
+                    try:
+                        hours = (hours + " " + day + " " + hour).strip()
+                    except:
+                        hours = "SOME OFF"
+        link = store_data["url"]
 
-def fetch_data():
-
-    coords = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
-    for lat, lng in coords:
-        logger.info(f"Pulling records for {lat,lng}")
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
-        }
-        r = session.get(
-            "https://hancockwhitney-api-production.herokuapp.com/location?latitude="
-            + lat
-            + "&locationTypes=atm,branch,business&longitude="
-            + lng
-            + "&pageSize=100&radius=50&searchByState=&sort=distance&sortDir=-1",
-            headers=headers,
-        )
-        data = r.json()["data"]
-        for store_data in data:
-            store = []
-            store.append("https://www.hancockwhitney.com")
-            store.append(store_data["name"])
-            store.append(store_data["address"]["street"])
-            store.append(store_data["address"]["city"])
-            store.append(store_data["address"]["state"])
-            store.append(store_data["address"]["zip"])
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(
-                store_data["phone"].replace("_", "-")
-                if "phone" in store_data
-                and store_data["phone"]
-                and store_data["phone"] != "TBD"
-                else "<MISSING>"
+        sgw.write_row(
+            SgRecord(
+                locator_domain=store[0],
+                page_url=link,
+                location_name=store[1],
+                street_address=street_address,
+                city=store[2],
+                state=store[3],
+                zip_postal=store[4],
+                country_code=store[5],
+                store_number=store[6],
+                phone=store[7],
+                location_type=store[8],
+                latitude=store[9],
+                longitude=store[10],
+                hours_of_operation=hours,
             )
-            store.append(", ".join(store_data["locationTypes"]))
-            store.append(str(store_data["geo"]["coordinates"][1]))
-            store.append(str(store_data["geo"]["coordinates"][0]))
-            hours = ""
-            if "lobbyHours" in store_data:
-                hours = store_data["lobbyHours"]
-
-            if len(hours) <= 0:
-                if "atmHours" in store_data:
-                    hours = store_data["atmHours"]
-
-            store.append(hours if hours else "<MISSING>")
-            store.append("<MISSING>")
-            yield store
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
