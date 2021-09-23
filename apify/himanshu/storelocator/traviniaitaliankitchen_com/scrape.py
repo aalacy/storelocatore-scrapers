@@ -28,8 +28,8 @@ def fetch_data():
         if link.find("https:") == -1:
             link = "https://www.traviniaitaliankitchen.com/mobile/" + link
         r = session.get(link, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
         try:
+            soup = BeautifulSoup(r.text, "html.parser")
             content = soup.find("h3").text
         except:
             continue
