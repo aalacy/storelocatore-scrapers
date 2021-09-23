@@ -25,6 +25,7 @@ def _url(phone, locs):
         if phone == loc.select("p")[3].text.strip():
             url = locator_domain + loc.a["href"]
             break
+
     return url
 
 
