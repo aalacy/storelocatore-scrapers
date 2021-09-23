@@ -61,9 +61,6 @@ def is_french_city(city, session):
             is_french = True
             break
 
-    if not len(data["value"]):
-        print(city)
-
     return is_french
 
 
