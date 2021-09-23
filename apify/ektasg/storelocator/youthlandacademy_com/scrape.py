@@ -27,6 +27,7 @@ def fetch_data(sgw: SgWriter):
     r = r.split(", map_instance,")[0]
     loclist = json.loads(r)
     for loc in loclist:
+
         location_name = loc["post_title"]
         page_url = (
             "https://www.youthlandacademy.com/locations/"
@@ -34,12 +35,15 @@ def fetch_data(sgw: SgWriter):
             + "?location="
             + location_name
         )
+
         log.info(page_url)
         latitude = loc["google_coords"][0]
         longitude = loc["google_coords"][1]
         temp = BeautifulSoup(loc["tooltip_content"], "html.parser")
         temp = temp.get_text(separator="|", strip=True).split("|")
         hours_of_operation = temp[-1]
+        if "@" in hours_of_operation:
+            hours_of_operation = temp[-2]
         phone = temp[3]
         address = temp[1] + " " + temp[2]
         address = address.replace(",", " ")

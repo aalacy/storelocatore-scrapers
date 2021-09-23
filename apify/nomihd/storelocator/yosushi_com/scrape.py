@@ -27,13 +27,15 @@ def fetch_data():
 
         stores = stores_sel.xpath('//div[@class="restaurant-list"]/div')
         for store in stores:
+            location_type = "<MISSING>"
+
             if (
                 "Kiosk"
                 in "".join(
                     store.xpath('.//div[@class="restaurant-card__badge"]/text()')
                 ).strip()
             ):
-                continue
+                location_type = "Kiosk"
 
             page_url = (
                 "https://yosushi.com"
@@ -53,7 +55,6 @@ def fetch_data():
                 ).strip()
             )
 
-            location_type = "<MISSING>"
             location_name = store_json["name"]
 
             locator_domain = website
