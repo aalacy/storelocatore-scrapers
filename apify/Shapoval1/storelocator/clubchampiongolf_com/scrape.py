@@ -1,74 +1,16 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-    }
-    cookies = {
-        "0df70ee305b6cb200ce1c1e691debe0f": "f3c0a08d7b8484f3a53105083de4e2c8",
-        "_ga": "GA1.2.1540435124.1616279320",
-        "_gid": "GA1.2.1341765674.1616279320",
-        "_fbp": "fb.1.1616279320891.257561148",
-    }
-    r = session.get(
-        "https://clubchampiongolf.com/index.php?option=com_jmap&view=sitemap&format=xml",
-        headers=headers,
-        cookies=cookies,
-    )
-    tree = html.fromstring(r.content)
-    return tree.xpath("//*[contains(text(), 'location/')]/text()")
-
-
-def get_data(url):
     locator_domain = "https://clubchampiongolf.com"
-    page_url = "".join(url)
-    if page_url.find("mass") != -1:
-        return
     session = SgRequests()
-    cookies = {
-        "0df70ee305b6cb200ce1c1e691debe0f": "f3c0a08d7b8484f3a53105083de4e2c8",
-        "_ga": "GA1.2.1540435124.1616279320",
-        "_gid": "GA1.2.1341765674.1616279320",
-        "_fbp": "fb.1.1616279320891.257561148",
-    }
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-    }
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -97,78 +39,100 @@ def get_data(url):
         "StateName": "state",
         "ZipCode": "postal",
     }
-    r = session.get(page_url, headers=headers, cookies=cookies)
-    tree = html.fromstring(r.text)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    data = {
+        "searchname": "",
+        "filter_catid": "",
+        "searchzip": "Please enter your zip code (i.e. 60527)",
+        "task": "search",
+        "qradius": "9",
+        "radius": "-1",
+        "option": "com_mymaplocations",
+        "limit": "0",
+        "component": "com_mymaplocations",
+        "Itemid": "102",
+        "zoom": "10",
+        "format": "json",
+        "geo": "",
+        "latitude": "",
+        "longitude": "",
+        "limitstart": "0",
+    }
 
-    ad = tree.xpath("//tr//span//text()")
-    ad = " ".join(ad[1:])
-    if ad.find("(") != -1:
-        ad = ad.split("(")[0].strip()
-    a = usaddress.tag(ad, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_name = "".join(
-        tree.xpath(
-            '//div[@class="uk-panel cc-loc-h1 h1-mobile-dt uk-width-xlarge"]/h1/text()'
+    r = session.post(
+        "https://clubchampiongolf.com/locations", headers=headers, data=data
+    )
+    js = r.json()["features"]
+    for j in js:
+
+        slug = "".join(j.get("properties").get("url")).replace(".", "").strip()
+        page_url = f"https://clubchampiongolf.com{slug}"
+        location_name = j.get("properties").get("name")
+        store_number = j.get("id")
+        latitude = j.get("geometry").get("coordinates")[1]
+        longitude = j.get("geometry").get("coordinates")[0]
+
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        ad = (
+            " ".join(
+                tree.xpath(
+                    '//tr[.//a[contains(@href, "tel")]]/following-sibling::tr//span//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
         )
-    )
-    phone = "".join(
-        tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')
-    ).strip()
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = " ".join(
-        tree.xpath("//div[./h3]/following-sibling::div[1]//text()")
-    )
-    if hours_of_operation.find("GET") != -1:
-        hours_of_operation = hours_of_operation.split("GET")[0].strip()
-    if hours_of_operation.find("Get") != -1:
-        hours_of_operation = hours_of_operation.split("Get")[0].strip()
+        if ad.find("(") != -1:
+            ad = ad.split("(")[0].strip()
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("postal")
+        country_code = "US"
+        phone = "".join(
+            tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')
+        ).strip()
+        hours_of_operation = " ".join(
+            tree.xpath("//div[./h3]/following-sibling::div[1]//text()")
+        )
+        if hours_of_operation.find("GET") != -1:
+            hours_of_operation = hours_of_operation.split("GET")[0].strip()
+        if hours_of_operation.find("Get") != -1:
+            hours_of_operation = hours_of_operation.split("Get")[0].strip()
 
-    return row
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
