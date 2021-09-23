@@ -67,7 +67,6 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = (hours_of_operation + " " + hour).strip()
 
         link = location.a["href"]
-        print(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
