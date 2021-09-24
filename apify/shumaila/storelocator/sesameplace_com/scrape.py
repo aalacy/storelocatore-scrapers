@@ -45,7 +45,7 @@ def fetch_data():
                 )
             ).replace(".", "")
             longt = longt[0:3] + "." + longt[3 : len(longt)]
-        except Exception as e:
+        except:
 
             longt = "<MISSING>"
         yield SgRecord(
