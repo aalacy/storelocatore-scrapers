@@ -84,7 +84,7 @@ def fetch_data(sgw: SgWriter):
                     location_type=location_type,
                     latitude=lat,
                     longitude=long,
-                    hours_of_operation=hoo
+                    hours_of_operation=hoo,
                 )
             )
 
