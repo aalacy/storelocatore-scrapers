@@ -19,8 +19,6 @@ def get_data(page_url, sgw: SgWriter):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1[@class='mtn']/text()")).strip()
-    if location_name == "<MISSING>":
-        return
     line = tree.xpath("//address/text()")
     line = list(filter(None, [l.strip() for l in line]))
     street_address = ", ".join(line[:-1])
@@ -34,6 +32,9 @@ def get_data(page_url, sgw: SgWriter):
         country_code = "CA"
 
     phone = "".join(tree.xpath("//a[@id='phone-number']/text()")).strip()
+    hours_of_operation = SgRecord.MISSING
+    if not location_name:
+        hours_of_operation = "Closed"
 
     row = SgRecord(
         page_url=page_url,
@@ -49,7 +50,7 @@ def get_data(page_url, sgw: SgWriter):
         latitude=SgRecord.MISSING,
         longitude=SgRecord.MISSING,
         locator_domain=locator_domain,
-        hours_of_operation=SgRecord.MISSING,
+        hours_of_operation=hours_of_operation,
     )
 
     sgw.write_row(row)

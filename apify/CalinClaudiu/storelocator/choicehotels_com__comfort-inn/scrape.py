@@ -80,6 +80,7 @@ class ExampleSearchIteration(SearchIteration):
         except Exception as e:
             logzilla.error(f"{e}")
             locations = {"hotelCount": 0}
+            locations["status"] = "FAIL"
             errorName = str(e)
         if (
             locations["status"] == "OK"
@@ -194,7 +195,6 @@ if __name__ == "__main__":
                 search_maker=search_maker,
                 search_iteration=search_iter,
                 country_codes=SearchableCountries.ALL,
-                max_threads=6,
             )
 
             for rec in par_search.run():
