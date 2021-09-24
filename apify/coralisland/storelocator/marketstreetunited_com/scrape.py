@@ -6,8 +6,8 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
+from selenium import webdriver  # noqa
 import ssl
-from seleniumwire import webdriver  # noqa
 
 try:
     _create_unverified_https_context = (
