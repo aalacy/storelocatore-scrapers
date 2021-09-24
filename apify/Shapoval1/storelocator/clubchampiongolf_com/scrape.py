@@ -108,6 +108,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = hours_of_operation.split("GET")[0].strip()
         if hours_of_operation.find("Get") != -1:
             hours_of_operation = hours_of_operation.split("Get")[0].strip()
+        cms = "".join(tree.xpath('//span[text()="Coming Soon!"]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
