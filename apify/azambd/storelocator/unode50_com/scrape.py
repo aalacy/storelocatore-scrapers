@@ -8,6 +8,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("unode50")
 
 url = "https://www.unode50.com/us/stores"
 domain = "unode50.com"
@@ -33,6 +36,8 @@ headers = {
 session = SgRequests()
 
 response = session.get(url, headers=headers)
+
+logger.info(f"Response1 Status:{response}")
 
 
 def fetch_data():
