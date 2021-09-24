@@ -42,6 +42,19 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "var tiendaCoords = [" in line2:
+                lat = (
+                    line2.split("var tiendaCoords = [")[1]
+                    .split("]")[0]
+                    .split(",")[1]
+                    .strip()
+                )
+                lng = (
+                    line2.split("var tiendaCoords = [")[1]
+                    .split("]")[0]
+                    .split(",")[2]
+                    .strip()
+                )
             if 'itemprop="name" style="display: none">' in line2:
                 name = (
                     line2.split('itemprop="name" style="display: none">')[1]
