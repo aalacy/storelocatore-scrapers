@@ -116,7 +116,7 @@ def fetch_data():
 
 def data_fetcher(country, state):
     url = country["link"]
-
+    url = "https://www.hilton.com/en/locations/usa/alabama/"
     masterdata = []
 
     with SgFirefox() as driver:
@@ -134,8 +134,8 @@ def data_fetcher(country, state):
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
-        except Exception:
-            raise
+        except KeyError:
+            pass
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
 
