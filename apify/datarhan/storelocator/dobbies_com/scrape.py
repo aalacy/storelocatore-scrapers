@@ -1,7 +1,6 @@
 import ssl
 from lxml import etree
 from time import sleep
-from selenium.webdriver.remote.webdriver import WebDriver
 
 from sgrequests import SgRequests
 from sgselenium import SgChrome
