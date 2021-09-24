@@ -145,9 +145,15 @@ def fetch_data():
                     times = hours_table[1].xpath("td")
                     for i, day in enumerate(days):
                         hours_list.append(
-                            "".join(days[i].xpath(".//text()")).strip()
+                            "".join(days[i].xpath(".//text()"))
+                            .strip()
+                            .replace("\n", "")
+                            .strip()
                             + ": "
-                            + "".join(times[i].xpath(".//text()")).strip()
+                            + "".join(times[i].xpath(".//text()"))
+                            .strip()
+                            .replace("\n", "")
+                            .strip()
                         )
                 except:
                     pass
