@@ -66,12 +66,16 @@ def fetch_data():
                             phone = item.split('"phone":"')[1].split('"')[0]
                         except:
                             phone = "<MISSING>"
-                        lat = item.split('"latitude":')[1].split("e")[0]
-                        lng = item.split('"longitude":')[1].split("e")[0]
-                        lat = float(lat) * 10
-                        lng = float(lng) * 10
-                        lat = str(lat)
-                        lng = str(lng)
+                        try:
+                            lat = item.split('"latitude":')[1].split("e")[0]
+                            lng = item.split('"longitude":')[1].split("e")[0]
+                            lat = float(lat) * 10
+                            lng = float(lng) * 10
+                            lat = str(lat)
+                            lng = str(lng)
+                        except:
+                            lat = "<MISSING>"
+                            lng = "<MISSING>"
                         hours = ""
                         if '"operations":[]' in item:
                             hours = "<MISSING>"
