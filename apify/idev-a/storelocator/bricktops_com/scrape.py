@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+import re
+import json
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("bricktops")
 
@@ -28,12 +31,11 @@ def fetch_data():
             addr = None
             hours_of_operation = ""
             phone = ""
-            coord = ["", ""]
+            latitude = longitude = ""
+            if sp1.find("a", href=re.compile(r"tel:")):
+                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             if not link["href"].startswith("https"):
                 location_name = sp1.select_one(".sqs-block-content h1").text
-                phone = sp1.select("div.sqs-block-html div.sqs-block-content")[
-                    -1
-                ].h3.text
                 hours_of_operation = "; ".join(
                     [
                         _.text
@@ -42,21 +44,14 @@ def fetch_data():
                         ].select("p")[1:-1]
                     ]
                 ).replace("–", "-")
-                addr = list(
-                    sp1.select("div.sqs-block-html div.sqs-block-content")[-1]
-                    .select("p")[-1]
-                    .stripped_strings
-                )
-                try:
-                    coord = (
-                        sp1.select("div.sqs-block-html div.sqs-block-content")[-1]
-                        .select("a")[-1]["href"]
-                        .split("/@")[1]
-                        .split("z/data")[0]
-                        .split(",")
-                    )
-                except:
-                    logger.info("no coord")
+                ss = json.loads(sp1.select_one("div.map-block")["data-block-json"])[
+                    "location"
+                ]
+                latitude = ss["mapLat"]
+                longitude = ss["mapLng"]
+                addr = []
+                addr.append(ss["addressLine1"])
+                addr.append(ss["addressLine2"])
             else:
                 addr = list(
                     sp1.select("div.sqs-block-html div.sqs-block-content")[0]
@@ -64,27 +59,23 @@ def fetch_data():
                     .stripped_strings
                 )
                 location_name = link.img["alt"].replace(".png", "")
-            city = state = zip_postal = ""
-            try:
-                city = addr[1].split(",")[0].strip()
-                state = " ".join(addr[1].split(",")[1].strip().split(" ")[:-1])
-                zip_postal = addr[1].split(",")[1].strip().split(" ")[-1].strip()
-            except:
-                city = ""
-                pass
+            street_address = addr[0]
+            raw_address = " ".join(addr)
+            addr = parse_address_intl(raw_address)
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
-                street_address=addr[0],
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 phone=phone,
                 country_code="US",
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=latitude,
+                longitude=longitude,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
