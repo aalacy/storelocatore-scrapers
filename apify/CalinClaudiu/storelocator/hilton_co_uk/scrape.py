@@ -130,7 +130,6 @@ def data_fetcher(country, state):
     total = 0
     allhotels = []
     for i in masterdata:
-        print(i)
         try:
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
