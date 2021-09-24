@@ -37,7 +37,6 @@ def fetch_data():
         )
         for store in store_list:
             page_url = store.xpath("./@href")[0].strip()
-            page_url = "https://thetanningshop.co.uk/london/richmond/"
             locator_domain = website
 
             log.info(page_url)
