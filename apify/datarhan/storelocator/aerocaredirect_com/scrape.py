@@ -28,7 +28,7 @@ def fetch_data():
         phone = ""
         if poi.get("fields"):
             phone = poi["fields"][0]["pivot_field_value"]
-        phone = phone if phone else "<MISSING>"
+        phone = phone if phone and phone != "() -" else "<MISSING>"
 
         item = SgRecord(
             locator_domain=domain,

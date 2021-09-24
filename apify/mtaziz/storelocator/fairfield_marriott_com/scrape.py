@@ -4,6 +4,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
+import tenacity
 import json
 import ssl
 
@@ -20,15 +22,11 @@ else:
 
 DOMAIN = "fairfield.marriott.com"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
-
 logger = SgLogSetup().get_logger("fairfield_marriott_com")
-
-
 headers_api = {
-    "accept": "application/json, text/plain, */*",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
-
 
 # Marriott Hotels has total 30 brands.
 # Note: Marriott Hotels ( MC ) contains MC and MV (Marriott Vacation Club) brands as well
@@ -63,129 +61,128 @@ url_api_endpoints_23_brands = {
 }
 
 
-def fetch_data_for_23_child_brands_from_api_endpoints():
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
+def fetch_json_data(url):
     with SgRequests() as session:
-        for k, v in url_api_endpoints_23_brands.items():
-            url = v
-            x = 0
-            while True:
-                x = x + 1
-                try:
-                    response = session.get(url, headers=headers_api, timeout=500)
-                    break
-                except Exception as e:
-                    logger.info("")
-                    logger.info(e)
-                    if x == 10:
-                        raise Exception(
-                            "Make sure this ran with a Proxy, will fail without one"
-                        )
-                    continue
-
+        try:
+            response = session.get(url, headers=headers_api)
             logger.info("JSON data being loaded...")
             response_text = response.text
             store_list = json.loads(response_text)
-            data_8 = store_list["regions"]
-            for i in data_8:
-                for j in i["region_countries"]:
-                    for k in j["country_states"]:
-                        for h in k["state_cities"]:
-                            for g in h["city_properties"]:
-                                locator_domain = DOMAIN
-                                key = g["marsha_code"]
-                                if key:
-                                    page_url = f"{'https://www.marriott.com/hotels/travel/'}{str(key)}"
-                                else:
-                                    page_url = SgRecord.MISSING
-                                logger.info(f"[Page URL: {page_url} ]")
+            data_regions = store_list["regions"]
+            return data_regions
+        except Exception as exception:
+            logger.info(f"request {url} failed | {exception}")
+            raise exception
 
-                                # Location Name
-                                location_name = g["name"]
-                                location_name = (
-                                    location_name if location_name else SgRecord.MISSING
-                                )
 
-                                # Street Address
-                                street_address = g["address"]
-                                street_address = (
-                                    street_address
-                                    if street_address
-                                    else SgRecord.MISSING
-                                )
+def fetch_data_for_23_child_brands_from_api_endpoints():
+    # This scrapes the data for 23 child brands
+    brands_and_total_count_per_brand = []
+    for k, v in url_api_endpoints_23_brands.items():
+        url = v
+        data_8 = fetch_json_data(url)
+        found = 0
+        for i in data_8:
+            for j in i["region_countries"]:
+                for k1 in j["country_states"]:
+                    for h in k1["state_cities"]:
+                        for g in h["city_properties"]:
+                            found += 1
+                            locator_domain = DOMAIN
+                            key = g["marsha_code"]
+                            if key:
+                                page_url = f"{'https://www.marriott.com/hotels/travel/'}{str(key)}"
+                            else:
+                                page_url = SgRecord.MISSING
+                            logger.info(f"[Page URL: {page_url} ]")
 
-                                # City
-                                city = g["city"]
-                                city = city if city else SgRecord.MISSING
+                            # Location Name
+                            location_name = g["name"]
+                            location_name = (
+                                location_name if location_name else SgRecord.MISSING
+                            )
 
-                                # State
-                                state = g["state_name"]
-                                state = state if state else SgRecord.MISSING
+                            # Street Address
+                            street_address = g["address"]
+                            street_address = (
+                                street_address if street_address else SgRecord.MISSING
+                            )
 
-                                # Zip Code
-                                zip_postal = g["postal_code"]
-                                zip_postal = (
-                                    zip_postal if zip_postal else SgRecord.MISSING
-                                )
+                            # City
+                            city = g["city"]
+                            city = city if city else SgRecord.MISSING
 
-                                # Country Code
-                                country_code = g["country_name"]
-                                country_code = (
-                                    country_code if country_code else SgRecord.MISSING
-                                )
+                            # State
+                            state = g["state_name"]
+                            state = state if state else SgRecord.MISSING
 
-                                # Store Number
-                                store_number = SgRecord.MISSING
+                            # Zip Code
+                            zip_postal = g["postal_code"]
+                            zip_postal = zip_postal if zip_postal else SgRecord.MISSING
 
-                                # Phone
-                                phone = g["phone"]
-                                phone = phone if phone else SgRecord.MISSING
+                            # Country Code
+                            country_code = g["country_name"]
+                            country_code = (
+                                country_code if country_code else SgRecord.MISSING
+                            )
 
-                                # Location Type
-                                location_type = g["brand_code"]
-                                if location_type:
-                                    location_type = location_type + " " + "Hotels"
-                                else:
-                                    location_type = SgRecord.MISSING
-                                # Latitude
-                                latitude = g["latitude"]
-                                latitude = latitude if latitude else SgRecord.MISSING
+                            # Store Number
+                            store_number = SgRecord.MISSING
 
-                                # Longitude
-                                longitude = g["longitude"]
-                                longitude = longitude if longitude else longitude
+                            # Phone
+                            phone = g["phone"]
+                            phone = phone if phone else SgRecord.MISSING
 
-                                # Number of Operations
+                            # Location Type
+                            location_type = g["brand_code"]
+                            if location_type:
+                                location_type = location_type + " " + "Hotels"
+                            else:
+                                location_type = SgRecord.MISSING
+                            # Latitude
+                            latitude = g["latitude"]
+                            latitude = latitude if latitude else SgRecord.MISSING
 
-                                hours_of_operation = ""
-                                hours_of_operation = (
-                                    hours_of_operation
-                                    if hours_of_operation
-                                    else SgRecord.MISSING
-                                )
+                            # Longitude
+                            longitude = g["longitude"]
+                            longitude = longitude if longitude else longitude
 
-                                # Raw Address
-                                raw_address = ""
-                                raw_address = (
-                                    raw_address if raw_address else SgRecord.MISSING
-                                )
+                            # Number of Operations
 
-                                yield SgRecord(
-                                    locator_domain=locator_domain,
-                                    page_url=page_url,
-                                    location_name=location_name,
-                                    street_address=street_address,
-                                    city=city,
-                                    state=state,
-                                    zip_postal=zip_postal,
-                                    country_code=country_code,
-                                    store_number=store_number,
-                                    phone=phone,
-                                    location_type=location_type,
-                                    latitude=latitude,
-                                    longitude=longitude,
-                                    hours_of_operation=hours_of_operation,
-                                    raw_address=raw_address,
-                                )
+                            hours_of_operation = ""
+                            hours_of_operation = (
+                                hours_of_operation
+                                if hours_of_operation
+                                else SgRecord.MISSING
+                            )
+
+                            # Raw Address
+                            raw_address = ""
+                            raw_address = (
+                                raw_address if raw_address else SgRecord.MISSING
+                            )
+
+                            yield SgRecord(
+                                locator_domain=locator_domain,
+                                page_url=page_url,
+                                location_name=location_name,
+                                street_address=street_address,
+                                city=city,
+                                state=state,
+                                zip_postal=zip_postal,
+                                country_code=country_code,
+                                store_number=store_number,
+                                phone=phone,
+                                location_type=location_type,
+                                latitude=latitude,
+                                longitude=longitude,
+                                hours_of_operation=hours_of_operation,
+                                raw_address=raw_address,
+                            )
+        total_count_per_brand = {"Brand Name": k, "Count": found}
+    brands_and_total_count_per_brand.append(total_count_per_brand)
+    logger.info(f"Counts for all brands: {brands_and_total_count_per_brand}")
 
 
 def scrape():
