@@ -2,7 +2,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def get_data():
@@ -20,8 +19,6 @@ def get_data():
             + str(search_lon)
             + "&async=results&stype=ll"
         )
-
-        x = 0
 
         try:
             response = session.get(url).text
