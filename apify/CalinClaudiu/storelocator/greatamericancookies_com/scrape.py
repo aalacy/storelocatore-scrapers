@@ -12,10 +12,17 @@ from bs4 import BeautifulSoup as b4
 import json
 
 
-def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://www.greatamericancookies.com/locations/"
+def pass_url():
+    for url in [
+        "https://www.greatamericancookies.com/locations/",
+        "https://www.greatamericancookies.com/locations/?international=1",
+    ]:
+        for item in fetch_data(url):
+            yield item
 
+
+def fetch_data(url):
+    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     son = ""
     with SgFirefox() as driver:
         logzilla.info(f"Getting page..")  # noqa
@@ -157,7 +164,7 @@ def scrape():
 
     pipeline = SimpleScraperPipeline(
         scraper_name="greatamericancookies.com",
-        data_fetcher=fetch_data,
+        data_fetcher=pass_url,
         field_definitions=field_defs,
         log_stats_interval=15,
         post_process_filter=lambda rec: rec.location_type() != "Coming Soon!",
