@@ -20,7 +20,7 @@ base_url = "https://www.phoenix.edu/api/plct/3/uopx/locations?type=site&page.siz
 
 def fetch_data():
     with SgRequests() as session:
-        hours_of_operation = ""
+        g_hours = []
         sp1 = bs(session.get(loc_url, headers=_headers).text, "lxml")
         ss = json.loads(
             sp1.select_one("div.react-campusdetailhero-container")[
@@ -31,11 +31,9 @@ def fetch_data():
             .replace("&gt;", ">")
         )
         if ss["campusData"].get("hours"):
-            hours_of_operation = "; ".join(
-                bs(ss["campusData"]["hours"], "lxml").stripped_strings
-            )
-            if "temporarily closed" in hours_of_operation:
-                hours_of_operation = "temporarily closed"
+            g_hours = list(bs(ss["campusData"]["hours"], "lxml").stripped_strings)
+            if "temporarily closed" in " ".join(g_hours):
+                g_hours = ["temporarily closed"]
         locations = session.get(base_url, headers=_headers).json()["results"]
         for loc in locations:
             _ = loc["attributes"]
@@ -57,7 +55,41 @@ def fetch_data():
                 country_code=loc["countryCode"],
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(g_hours),
+            )
+
+        locs = sp1.select("div.campus-dir-item")
+        for loc in locs:
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in loc.select("span.campus-dir-item__hours-day")
+            ]
+            phone = ""
+            if loc.select_one("div.campus-dir-item__phone a"):
+                phone = loc.select_one("div.campus-dir-item__phone a").text.strip()
+            addr = loc.select_one("div.campus-dir-item__location a").text.split(",")
+            coord = ["", ""]
+            href = loc.select_one("div.campus-dir-item__location a")["href"]
+            try:
+                coord = href.split("/@")[1].split("/data")[0].split(",")
+            except:
+                try:
+                    coord = href.split("query=")[1].split("&")[0].split(",")
+                except:
+                    pass
+            yield SgRecord(
+                page_url="https://www.phoenix.edu/campus-locations.html#additional-campus-directory",
+                location_name=loc.h4.text.strip(),
+                street_address=addr[0].replace("\r\n", ""),
+                city=addr[1],
+                state=addr[-1].strip().split()[0],
+                zip_postal=addr[-1].strip().split()[-1],
+                latitude=coord[0],
+                longitude=coord[1],
+                country_code="us",
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
             )
 
 
