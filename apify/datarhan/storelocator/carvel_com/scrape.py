@@ -26,6 +26,9 @@ def fetch_data():
         all_locations += data["response"]["results"]
 
     for poi in all_locations:
+        page_url = poi["data"]["websiteUrl"]["displayUrl"]
+        if "https://www" in page_url:
+            continue
         hoo = []
         if poi["data"].get("hours"):
             for day, hours in poi["data"]["hours"].items():
@@ -43,7 +46,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["data"]["websiteUrl"]["displayUrl"],
+            page_url=page_url,
             location_name=poi["data"]["c_nAPDescription"]["title"].replace(
                 "Welcome to Carvel ", ""
             ),
