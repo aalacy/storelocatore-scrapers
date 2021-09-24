@@ -1,10 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+import json
 
 logger = SgLogSetup().get_logger("potbelly")
 
@@ -13,51 +14,55 @@ _headers = {
 }
 
 locator_domain = "https://www.potbelly.com"
-base_url = "https://www.potbelly.com/location-finder"
+base_url = "https://www.potbelly.com/location-directory"
 
 
 def _t(val):
     return val.split()[-1]
 
 
-def fetch_records(http, search):
-    for lat, lng in search:
-        url = f"https://api.prod.potbelly.com/v1/restaurants/nearby?lat={lat}&long={lng}&includeHours=true"
-        locations = http.get(url, headers=_headers).json()["restaurants"]
-        logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
-        for _ in locations:
-            hours = []
-            if _["calendars"]:
-                for hh in _["calendars"][0]["ranges"]:
-                    hours.append(
-                        f"{hh['weekday']}: {_t(hh['start'])} - {_t(hh['end'])}"
+def fetch_data():
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        columns = json.loads(soup.find("script", type="application/json").string)[
+            "props"
+        ]["pageProps"]["columns"]
+        logger.info(f"{len(columns)} found")
+        for key, column in columns.items():
+            for state in column:
+                for link in state["locations"]:
+                    page_url = locator_domain + "/locations/" + link["url"]
+                    logger.info(page_url)
+                    url = f"https://api.prod.potbelly.com/v1/restaurants/byslug/{link['url'].split('/')[-1]}?includeHours=true"
+                    res = session.get(url, headers=_headers)
+                    if res.status_code != 200:
+                        continue
+                    _ = res.json()
+                    hours = []
+                    if _["calendars"]:
+                        for hh in _["calendars"][0]["ranges"]:
+                            hours.append(
+                                f"{hh['weekday']}: {_t(hh['start'])} - {_t(hh['end'])}"
+                            )
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=_["name"],
+                        store_number=_["id"],
+                        street_address=_["streetaddress"],
+                        city=_["city"],
+                        state=_["state"],
+                        zip_postal=_["zip"],
+                        country_code=_["country"],
+                        phone=_["telephone"],
+                        latitude=_["latitude"],
+                        longitude=_["longitude"],
+                        locator_domain=locator_domain,
+                        hours_of_operation="; ".join(hours),
                     )
-            yield SgRecord(
-                page_url=_["url"],
-                location_name=_["name"],
-                store_number=_["id"],
-                street_address=_["streetaddress"],
-                city=_["city"],
-                state=_["state"],
-                zip_postal=_["zip"],
-                country_code=_["country"],
-                phone=_["telephone"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
 
 
 if __name__ == "__main__":
-    with SgRequests() as http:
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_8()
-        )
-        with SgWriter(
-            deduper=SgRecordDeduper(
-                RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=10
-            )
-        ) as writer:
-            for rec in fetch_records(http, search):
-                writer.write_row(rec)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
