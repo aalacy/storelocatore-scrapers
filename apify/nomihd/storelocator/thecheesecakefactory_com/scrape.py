@@ -16,7 +16,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.thecheesecakefactory.com"
     search_url = "https://locations.thecheesecakefactory.com/"
 
     with SgRequests() as session:
