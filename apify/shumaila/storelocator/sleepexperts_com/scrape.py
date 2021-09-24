@@ -17,7 +17,7 @@ headers = {
 def fetch_data():
 
     url = "https://www.sleepexperts.com/stores"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     store_list = soup.findAll("div", {"class": "StorePromo"})
     pattern = re.compile(r"\s\s+")
