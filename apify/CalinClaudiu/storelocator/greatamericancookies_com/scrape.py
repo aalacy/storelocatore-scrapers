@@ -129,37 +129,50 @@ def scrape():
     url = "https://www.greatamericancookies.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["permalink"], is_required=False),
-        location_name=MappingField(
-            mapping=["title"], value_transform=lambda x: x.replace("None", "<MISSING>")
+        page_url=MappingField(
+            mapping=["permalink"], is_required=False, part_of_record_identity=True
         ),
-        latitude=MappingField(mapping=["latitude"]),
-        longitude=MappingField(mapping=["longitude"]),
+        location_name=MappingField(
+            mapping=["title"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
+        ),
+        latitude=MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=MappingField(mapping=["longitude"], part_of_record_identity=True),
         street_address=MultiMappingField(
             mapping=[["street_address_1"], ["street_address_2"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
+            part_of_record_identity=True,
         ),
         city=MappingField(
-            mapping=["city"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["city"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
         ),
         state=MappingField(
-            mapping=["state"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["state"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
         ),
         zipcode=MappingField(
             mapping=["zip"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=MissingField(),
         phone=MappingField(
             mapping=["phone"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
+            part_of_record_identity=True,
         ),
         store_number=MissingField(),
-        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
-        location_type=MappingField(mapping=["type"]),
+        hours_of_operation=MappingField(
+            mapping=["hours"], is_required=False, part_of_record_identity=True
+        ),
+        location_type=MappingField(mapping=["type"], part_of_record_identity=True),
     )
 
     pipeline = SimpleScraperPipeline(
