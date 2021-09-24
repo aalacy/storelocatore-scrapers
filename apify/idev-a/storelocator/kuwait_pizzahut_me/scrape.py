@@ -40,7 +40,6 @@ def record_initial_requests(http, state):
 def fetch_records(http, state):
     for next_r in state.request_stack_iter():
         logger.info(next_r.url)
-        # http._refresh_client()
         locations = []
         _headers["client"] = (
             http.get(client_url)
