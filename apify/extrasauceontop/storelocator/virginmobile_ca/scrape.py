@@ -6,13 +6,21 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def get_data():
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.CANADA], granularity=Grain_8())
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA], granularity=Grain_8()
+    )
     recs = []
     proxy_country = "ca"
     session = SgRequests(proxy_country=proxy_country)
     for search_lat, search_lon in search:
-        url = "https://virgin.know-where.com/virginplus/cgi/selection?place=Ajax%2C%20ON%20L1T%2C%20Canada&lang=en&ll=" + str(search_lat) + "%2C" + str(search_lon) + "&async=results&stype=ll"
-        
+        url = (
+            "https://virgin.know-where.com/virginplus/cgi/selection?place=Ajax%2C%20ON%20L1T%2C%20Canada&lang=en&ll="
+            + str(search_lat)
+            + "%2C"
+            + str(search_lon)
+            + "&async=results&stype=ll"
+        )
+
         x = 0
 
         try:
@@ -20,7 +28,7 @@ def get_data():
         except Exception:
             if proxy_country == "ca":
                 proxy_country = "us"
-            
+
             else:
                 proxy_country = "ca"
 
@@ -35,16 +43,28 @@ def get_data():
             locator_domain = "virginmobile.ca"
 
             try:
-                page_url = grid.find("li", attrs={"class": "kw-appointment-icon kw-results-icon-list-element"}).find("a")["href"]
+                page_url = grid.find(
+                    "li",
+                    attrs={"class": "kw-appointment-icon kw-results-icon-list-element"},
+                ).find("a")["href"]
             except Exception:
                 page_url = "<MISSING>"
-            
-            location_name = grid.find("span", attrs={"class": "kw-results-FIELD-NAME ultra"}).text.strip().split(" - ")[0].strip()
 
-            address = grid.find("span", attrs={"class": "kw-tablify-address"}).text.strip()
+            location_name = (
+                grid.find("span", attrs={"class": "kw-results-FIELD-NAME ultra"})
+                .text.strip()
+                .split(" - ")[0]
+                .strip()
+            )
 
-            city_state_zipp = soup.find("span", attrs={"class": "kw-tablify-city-state"}).text.strip()
-            
+            address = grid.find(
+                "span", attrs={"class": "kw-tablify-address"}
+            ).text.strip()
+
+            city_state_zipp = soup.find(
+                "span", attrs={"class": "kw-tablify-city-state"}
+            ).text.strip()
+
             city = city_state_zipp.split(",")[0]
             store_number = grid["data-kwsite"]
 
@@ -52,7 +72,11 @@ def get_data():
             zipp = city_state_zipp.split(", ")[1].split(" ")[1]
 
             try:
-                phone = grid.find("li", attrs={"class": "kw-results-phone"}).find("a")["href"].replace("tel:", "")
+                phone = (
+                    grid.find("li", attrs={"class": "kw-results-phone"})
+                    .find("a")["href"]
+                    .replace("tel:", "")
+                )
             except Exception:
                 phone = "<MISSING>"
             location_type = "<MISSING>"
@@ -60,7 +84,9 @@ def get_data():
 
             hours = ""
             try:
-                hour_section = grid.find("ul", attrs={"class": "kw-detail-hours-list"}).find_all("li")
+                hour_section = grid.find(
+                    "ul", attrs={"class": "kw-detail-hours-list"}
+                ).find_all("li")
 
                 for li in hour_section:
                     divs = li.find_all("div")
@@ -69,7 +95,7 @@ def get_data():
                     close_time = divs[-1].text.strip().replace("  ", " ")
 
                     hours = hours + day + " " + open_time + " - " + close_time + ", "
-                
+
                 hours = hours[:-2]
 
             except Exception:
@@ -80,7 +106,7 @@ def get_data():
             rec = address + page_url + store_number
             if rec in recs:
                 continue
-            
+
             recs.append(rec)
             yield {
                 "locator_domain": locator_domain,
@@ -104,9 +130,7 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(
-            mapping=["location_name"]
-        ),
+        location_name=sp.MappingField(mapping=["location_name"]),
         latitude=sp.MappingField(mapping=["latitude"]),
         longitude=sp.MappingField(mapping=["longitude"]),
         street_address=sp.MultiMappingField(
