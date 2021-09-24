@@ -10,7 +10,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 import json
-
+import time
 from sgselenium import SgFirefox
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
@@ -123,9 +123,18 @@ def data_fetcher(country, state):
         driver.get(url)
         for r in driver.requests:
             if "/graphql/customer" in r.path:
-                data = r.response.body
-                data = json.loads(data)
-                masterdata.append(data)
+                if r.response.body:
+                    data = r.response.body
+                    data = json.loads(data)
+                    masterdata.append(data)
+                else:
+                    time.sleep(30)
+                    if r.response.body:
+                        data = r.response.body
+                        data = json.loads(data)
+                        masterdata.append(data)
+                    else:
+                        pass
 
     total = 0
     allhotels = []
