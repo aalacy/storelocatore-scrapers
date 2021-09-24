@@ -24,7 +24,7 @@ def fetch_data():
     for store in store_list:
         title = store.find("div", {"class": "StorePromo-title"}).text
         address = store.find("div", {"class": "StorePromo-address"}).text
-        coord = "https://www.google.com/maps/place/" + address.replace(" ", "+")
+
         try:
             phone = store.find("div", {"class": "StorePromo-phoneNumber"}).text
         except:
