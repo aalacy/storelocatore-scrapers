@@ -16,12 +16,12 @@ def fetch_data():
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_states = dom.xpath('//select[@id="branch-locator__state-select"]/option/@value')
-    for state in all_states:
+    for state_code in all_states:
         all_cities = session.get(
-            f"https://www.bbt.com/clocator/getCities.do?state={state}"
+            f"https://www.bbt.com/clocator/getCities.do?state={state_code}"
         ).json()
         for city in all_cities["cities"]:
-            url = f"https://www.bbt.com/clocator/searchLocations.do?address={city}, {state}&type=branch&services="
+            url = f"https://www.bbt.com/clocator/searchLocations.do?address={city.replace(' ', '%20')}%2C%20{state_code}&type=&services="
             response = session.get(url)
             if response.text.endswith("}}"):
                 data = json.loads(response.text)
@@ -46,7 +46,7 @@ def fetch_data():
                 zip_code = poi["zip"]
                 zip_code = zip_code if zip_code else "<MISSING>"
                 country_code = "<MISSING>"
-                store_number = poi["centerATMNumber"]
+                store_number = poi["locationKey"]
                 store_number = store_number if store_number else "<MISSING>"
                 phone = poi["phone"]
                 phone = phone if phone else "<MISSING>"
