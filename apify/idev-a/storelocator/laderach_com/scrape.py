@@ -5,7 +5,6 @@ from sglogging import SgLogSetup
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
-import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.support import expected_conditions as EC
