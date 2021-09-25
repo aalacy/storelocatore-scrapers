@@ -75,7 +75,6 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = row["data-info-address"].split("<br />")[1].strip()
         hours_of_operation = get_hoo(page_url)
-        print(hours_of_operation)
         location_type = "BRANCH_ATM"
         latitude = handle_missing(row["data-latitude"])
         longitude = handle_missing(row["data-longitude"])
