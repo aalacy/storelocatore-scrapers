@@ -41,8 +41,12 @@ def is_multiple(location_name, locations):
 def get_hoo(link):
     soup = pull_content(link)
     hoo = soup.find("div", {"class": "branch-hours"}).find_all("p")
-    hoo = hoo[1].find("span")
-    hours_of_operations = "{}: {}".format(hoo.text, hoo.next_sibling.strip())
+    hours_of_operations = (
+        hoo[1]
+        .get_text(strip=True, separator=",")
+        .replace("Lobby Hours,", "")
+        .replace("day,", "day: ")
+    )
     return hours_of_operations
 
 
@@ -71,6 +75,7 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = row["data-info-address"].split("<br />")[1].strip()
         hours_of_operation = get_hoo(page_url)
+        print(hours_of_operation)
         location_type = "BRANCH_ATM"
         latitude = handle_missing(row["data-latitude"])
         longitude = handle_missing(row["data-longitude"])
