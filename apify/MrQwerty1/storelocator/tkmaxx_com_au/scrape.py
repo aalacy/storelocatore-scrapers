@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("Name")
         page_url = f"https://www.tkmaxx.com.au/store-locator/{location_name}"
-        street_address = f'{j.get("Address")} {j.get("Address") or ""}'.strip()
+        street_address = j.get("Address")
         city = j.get("City")
         state = j.get("State")
         postal = j.get("Zip")
