@@ -40,7 +40,11 @@ def fetch_data():
                     _ = res.json()
                     hours = []
                     if _["calendars"]:
+                        count = 0
                         for hh in _["calendars"][0]["ranges"]:
+                            if count > 6:
+                                break
+                            count += 1
                             hours.append(
                                 f"{hh['weekday']}: {_t(hh['start'])} - {_t(hh['end'])}"
                             )
