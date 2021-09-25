@@ -2,7 +2,6 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
@@ -283,9 +282,6 @@ def fetch_data_for_non_api_based_child_brands():
                             referer_custom = f"{url_base_findHotels}?page={i-1}"
                             url_base_findHotels_custom = (
                                 f"{url_base_findHotels}?page={i}"
-                            )
-                            request_headers_path = url_base_findHotels_custom.replace(
-                                "https://www.marriott.com", ""
                             )
                             headers_pagination_enabled = {
                                 "authority": "www.marriott.com",
