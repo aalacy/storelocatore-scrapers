@@ -44,13 +44,6 @@ headers_api = {
 # with API based crawling.
 
 
-# @retry(stop=stop_after_attempt(5))
-# def get_response(url, headers_custom):
-#     with SgRequests() as http:
-#         response = http.get(url, headers=headers_custom, timeout=500)
-#         return response
-
-
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response(url, headers_custom, http):
     try:
@@ -183,7 +176,6 @@ def fetch_data_for_non_api_based_child_brands():
                             divs = sel_chicago.xpath(
                                 '//div[contains(@class, "js-property-results")]/div/div/div[contains(@class, "l-row t-bg-standard-20 property-record-item")]'
                             )
-                            # [{idx}] [{idx2}]
                             for idx2, location in enumerate(divs[0:]):
                                 locator_domain = DOMAIN
                                 slug = location.xpath("./@data-marsha")[0]
