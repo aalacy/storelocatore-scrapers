@@ -4,7 +4,8 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.pause_resume import CrawlStateSingleton
 from concurrent import futures
 
 
@@ -17,9 +18,9 @@ def get_data(_zip, sgw: SgWriter):
         "Accept": "*/*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
         "Content-Type": "application/json; charset=UTF-8",
-        "Origin": "https://moneypas slocator.wave2.io",
+        "Origin": "https://moneypasswidget.wave2.io",
         "Connection": "keep-alive",
-        "Referer": "https://moneypasslocator.wave2.io/",
+        "Referer": "https://moneypasswidget.wave2.io/",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-site",
@@ -29,7 +30,7 @@ def get_data(_zip, sgw: SgWriter):
     data = {
         "Latitude": "",
         "Longitude": "",
-        "Address": f"{_zip}",
+        "Address": f"{str(_zip)}",
         "City": "",
         "State": "",
         "Zipcode": "",
@@ -59,7 +60,7 @@ def get_data(_zip, sgw: SgWriter):
         if postal == "0":
             postal = "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = a.get("LocationId")
         phone = "<MISSING>"
         latitude = a.get("Latitude") or "<MISSING>"
         longitude = a.get("Longitude") or "<MISSING>"
@@ -89,20 +90,33 @@ def get_data(_zip, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
+
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=40,
+        max_search_distance_miles=1,
+        expected_search_radius_miles=1,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=4) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
+            )
+        )
+    ) as writer:
         fetch_data(writer)
