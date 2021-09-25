@@ -1,3 +1,4 @@
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -8,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_urls = [
         "https://www.yellowmap.de/Presentation/AldiSued/de-CH/ResultList?callback=jQuery203048548467729689415_1630659526129&LocX=&LocY=&HiddenBranchCode=&BranchCode=&Lux=8.47869873046875&Luy=47.81315451752768&Rlx=10.12115478515625&Rly=46.65697731621612&ZoomLevel=9&Mode=None&Filters.OPEN=false&Filters.ASxFIWC=false&Filters.ASxFIPA=false&Filters.ASxFIBA=false&Filters.ASxFIRE=false&Filters.ASxFIEL=false&Filters.ASxKAFE=false&_=1630659526151",
         "https://www.yellowmap.de/Presentation/AldiSued/de-CH/ResultList?callback=jQuery203048548467729689415_1630659526129&LocX=&LocY=&HiddenBranchCode=&BranchCode=&Lux=7.3333740234375&Luy=47.864773955792245&Rlx=8.975830078125&Rly=46.70973594407157&ZoomLevel=9&Mode=None&Filters.OPEN=false&Filters.ASxFIWC=false&Filters.ASxFIPA=false&Filters.ASxFIBA=false&Filters.ASxFIRE=false&Filters.ASxFIEL=false&Filters.ASxKAFE=false&_=1630659526153",
@@ -25,8 +26,7 @@ def fetch_data():
     for start_url in start_urls:
         response = session.get(start_url)
         dom = etree.HTML(response.text)
-
-        all_locations = dom.xpath("//li[@data-json]")
+        all_locations = dom.xpath('//li[contains(@class, "resultItem")]')
         for poi_html in all_locations:
             location_name = poi_html.xpath(".//strong/text()")[0]
             street_address = poi_html.xpath(
@@ -41,6 +41,20 @@ def fetch_data():
             )
             phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
             phone = phone[0].replace("\\r\\n", "").strip() if phone else ""
+            latlng = dom.xpath(".//@data-json")[0]
+
+            latlng = (
+                latlng.split("bcInformation")[0]
+                .rstrip('"')
+                .replace("\\", "")
+                .rstrip(",")
+                .lstrip('"')
+                + "}"
+            )
+            latlng = json.loads(latlng)
+            latitude = latlng["locY"] or SgRecord.MISSING
+            longitude = latlng["locX"] or SgRecord.MISSING
+
             hoo = poi_html.xpath(
                 './/table[contains(@class, "openingHoursTable")]//text()'
             )
@@ -64,8 +78,8 @@ def fetch_data():
                 store_number=SgRecord.MISSING,
                 phone=phone,
                 location_type=SgRecord.MISSING,
-                latitude=SgRecord.MISSING,
-                longitude=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
             )
 

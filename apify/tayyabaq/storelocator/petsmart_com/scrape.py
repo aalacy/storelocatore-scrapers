@@ -34,7 +34,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
         soup2 = BeautifulSoup(r2.text, "html.parser")
         loclist = soup2.findAll("a", {"class": "store-details-link"})
         for loc in loclist:
-            loc = "https://www.petsmart.com/stores/us/" + loc["href"]
+            loc = state_url + loc["href"]
             store_url_list.append(loc)
             logger.info(loc)
             state.push_request(SerializableRequest(url=loc))
@@ -43,21 +43,25 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 
 def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
-        r = session.get(next_r.url, headers=headers, allow_redirects=True, timeout=180)
-        if r.url == "https://www.petsmart.com/store-locator/":
+        try:
+            r = session.get(next_r.url, headers=headers, timeout=180)
+        except:
             continue
-        logger.info(f"Pulling the data from: {r.url}")
+        logger.info(f"Pulling the data from: {next_r.url}")
         soup = BeautifulSoup(r.text, "html.parser")
-        page_url = r.url
+        page_url = next_r.url
         location_name = soup.find("h1").text
         if "Closed" in location_name:
             continue
-        raw_address = (
-            soup.find("p", {"class": "store-page-details-address"})
-            .findAll("span")[1]
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-        )
+        try:
+            raw_address = (
+                soup.find("p", {"class": "store-page-details-address"})
+                .findAll("span")[1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except:
+            continue
         address = raw_address.replace(",", " ")
         address = usaddress.parse(address)
         i = 0
