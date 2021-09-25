@@ -41,7 +41,6 @@ def fetch_data():
     stores_list = search_sel.xpath(
         '//div[@class="vc_tta-panels" and .//p[contains(./text(),"Hours")]]/div[.//text()="Hours"]'
     )
-    print(len(stores_list))
     for store in stores_list:
         name = "".join(store.xpath(".//h3/text()")).strip()
 
