@@ -290,7 +290,6 @@ def fetch_data_for_non_api_based_child_brands():
                                 headers_pagination_enabled,
                                 http,
                             )
-                            time.sleep(15)
                             logger.info(
                                 f"URL Base find Hotels Custom: {url_base_findHotels_custom} "
                             )
