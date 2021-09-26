@@ -103,10 +103,12 @@ def fetch_data():
                         if phone == "":
                             phone = "<MISSING>"
                         phone = phone.replace("&#40;", "(").replace("&#41;", ")")
-                        if " outlet" in name.lower():
+                        if "outlet" in name.lower():
                             name = "Coach Outlet"
+                            typ = "Coach Outlet"
                         else:
                             name = "Coach"
+                            typ = "Coach"
                         if "popup" not in name.lower() and "pop-up" not in name.lower():
                             yield SgRecord(
                                 locator_domain=website,
@@ -216,7 +218,7 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
-        if "Outlet In" in name:
+        if "outlet" in name.lower():
             typ = "Coach Outlet"
             name = "Coach Outlet"
         else:
@@ -335,7 +337,7 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
-        if "Outlet In" in name:
+        if "outlet" in name.lower():
             typ = "Coach Outlet"
             name = "Coach Outlet"
         else:
@@ -405,7 +407,7 @@ def fetch_data():
                         add = add.replace("&amp;", "&")
                         name = name.replace("&#39;", "'")
                         add = add.replace("&#39;", "'")
-                        if "Outlet" in name:
+                        if "outlet" in name.lower():
                             typ = "Coach Outlet"
                             name = "Coach Outlet"
                         else:
