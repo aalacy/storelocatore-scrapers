@@ -1,9 +1,8 @@
 import urllib.parse
 
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 from requests.packages.urllib3.util.retry import Retry
-from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -14,12 +13,13 @@ from sgscrape.sgwriter import SgWriter
 def make_request(session, Point):
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-        "x-xsrf-token": "efe961be-c68a-44d6-a844-d18021f76f66",
+        "service-client": "mk/web",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
     }
-    url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}%2C{}".format(
-        *Point
+    url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}".format(
+        Point[:3] + " " + Point[3:]
     )
-    return session.get(url, headers=headers).json()
+    return session.get(url, headers=headers, verify=False).json()
 
 
 def clean_record(poi):
@@ -37,10 +37,6 @@ def clean_record(poi):
     street_address = poi["address"]["line1"]
     if poi["address"]["line2"]:
         street_address += ", " + poi["address"]["line2"]
-    addr = parse_address_intl(street_address)
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
     city = poi["address"]["town"]
     city = city if city else "<MISSING>"
     state = poi["address"]["province"]
@@ -85,10 +81,10 @@ def clean_record(poi):
 
 def fetch_data():
     with SgRequests(
-        retry_behavior=Retry(total=3, connect=3, read=3, backoff_factor=0.1),
+        retry_behavior=Retry(total=0, connect=3, read=3, backoff_factor=0.1),
         proxy_rotation_failure_threshold=0,
     ) as session:
-        search = DynamicGeoSearch(
+        search = DynamicZipSearch(
             country_codes=[SearchableCountries.CANADA],
             expected_search_radius_miles=10,
         )
@@ -99,6 +95,8 @@ def fetch_data():
                 maxZ = search.items_remaining()
             data = make_request(session, Point)
             if "error.storelocator.find.nostores.error" not in str(data):
+                if not data.get("storeLocatorPageData"):
+                    continue
                 for fullRecord in data["storeLocatorPageData"]["results"]:
                     record = clean_record(fullRecord)
                     yield record

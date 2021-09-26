@@ -34,10 +34,11 @@ def fetch_data():
             )
         ).strip()
 
-        street_address = "".join(
+        street_and_city = "".join(
             store.xpath('.//span[@itemprop="streetAddress"]/text()')
         ).strip()
-        city = "<MISSING>"
+        street_address = ", ".join(street_and_city.split(",")[:-1]).strip()
+        city = "".join(street_and_city.split(",")[-1]).strip()
         state = "".join(
             store.xpath('.//span[@itemprop="addressLocality"]/text()')
         ).strip()
