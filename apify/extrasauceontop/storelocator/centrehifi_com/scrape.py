@@ -3,42 +3,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
-import json
-import html
-import re
-import unidecode
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
-
-def extract_json(html_string):
-    json_objects = []
-    count = 0
-
-    brace_count = 0
-    for element in html_string:
-
-        if element == "[":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
-
-        elif element == "]":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(
-                        html.unescape(json.loads(html_string[start : end + 1]))
-                    )
-                except Exception:
-                    pass
-        count = count + 1
-
-    return json_objects
+import re
+import unidecode
 
 
 def get_driver(url, class_name, driver=None):
@@ -55,7 +23,7 @@ def get_driver(url, class_name, driver=None):
             driver = SgChrome(
                 executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=True,
+                is_headless=False,
             ).driver()
             driver.get(url)
 
@@ -63,7 +31,8 @@ def get_driver(url, class_name, driver=None):
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
-        except Exception:
+        except Exception as e:
+            print(e)
             driver.quit()
             if x == 10:
                 raise Exception(
@@ -74,41 +43,30 @@ def get_driver(url, class_name, driver=None):
 
 
 def get_data():
-    url = "https://www.centrehifi.com/en/storelocator"
+    url = "https://www.centrehifi.com/en/store-locator/"
     class_name = "popup-language-header"
     driver = get_driver(url, class_name)
-
     response = driver.page_source
+
+    soup = bs(response, "html.parser")
     driver.quit()
 
-    json_objects = extract_json(response)
+    grids = soup.find_all("div", attrs={"class": "js-single-store-info"})
 
-    location_lists = []
-    for object in json_objects:
-        if len(object) > 3:
-            location_lists.append(object)
-
-    locations = location_lists[0]
-    soup = bs(response, "html.parser")
-    grids = soup.find_all("div", attrs={"class": "js-single-store-info"})[
-        len(locations) * -1 :
-    ]
-
-    x = 0
-
-    for location in locations:
+    for grid in grids:
         locator_domain = "centrehifi.com"
-        page_url = "<MISING>"
-        location_name = location[0]
+        page_url = "https://www.centrehifi.com/en/store-locator/"
+        location_name = grid.find("h3").text.strip()
+        latitude = grid["data-store-lat"]
+        longitude = grid["data-store-lng"]
 
-        address_parts = location[4]
+        address_parts = grid.find("p", attrs={"class": "p-0 m-0"}).text.strip()
         address_parts = unidecode.unidecode(
             address_parts.lower()
             .replace(", canada", "")
             .replace("centre hifi, ", "")
             .replace("centre hifi ", "")
         )
-
         if "qc" in address_parts:
 
             address_pieces = address_parts.split(", qc")[0].split(" ")[:-1]
@@ -155,35 +113,26 @@ def get_data():
                 )
 
             else:
-                city = address_parts.split(", ")[-1].strip().split(" ")[0]
-                zipp = (
-                    address_parts.split(", ")[-1].strip().split(" ")[-2]
-                    + " "
-                    + address_parts.split(", ")[-1].strip().split(" ")[-1]
-                )
-                state = "<MISSING>"
+                try:
+                    city = address_parts.split(", ")[-1].strip().split(" ")[0]
+                    zipp = (
+                        address_parts.split(", ")[-1].strip().split(" ")[-2]
+                        + " "
+                        + address_parts.split(", ")[-1].strip().split(" ")[-1]
+                    )
+                    state = "<MISSING>"
 
+                except Exception:
+                    print(location_name)
+                    print(address_parts)
+                    raise Exception
+
+        store_number = grid["data-store-id"]
+        phone = ""
+        location_type = ""
+        hours = ""
         country_code = "CA"
 
-        store_number = location[3]
-        latitude = location[1]
-        longitude = location[2]
-
-        grid = grids[x]
-
-        phone = grid.find("a").text.strip()
-        location_type = "<MISSING>"
-
-        tds = grid.find_all("td")
-
-        hours = ""
-        for td in tds:
-            hours = hours + unidecode.unidecode(html.unescape(td.text.strip())) + " "
-
-        hours = hours.strip().replace("h", ":").replace("T:u", "Thu")
-
-        x = x + 1
-        address = address.replace(",", "")
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
@@ -191,10 +140,10 @@ def get_data():
             "latitude": latitude,
             "longitude": longitude,
             "city": city,
-            "store_number": store_number,
             "street_address": address,
             "state": state,
             "zip": zipp,
+            "store_number": store_number,
             "phone": phone,
             "location_type": location_type,
             "hours": hours,
@@ -205,7 +154,7 @@ def get_data():
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        page_url=sp.MappingField(mapping=["page_url"]),
         location_name=sp.MappingField(
             mapping=["location_name"],
         ),
