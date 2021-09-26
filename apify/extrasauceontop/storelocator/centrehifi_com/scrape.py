@@ -31,8 +31,7 @@ def get_driver(url, class_name, driver=None):
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
-        except Exception as e:
-            print(e)
+        except Exception:
             driver.quit()
             if x == 10:
                 raise Exception(
@@ -113,19 +112,13 @@ def get_data():
                 )
 
             else:
-                try:
-                    city = address_parts.split(", ")[-1].strip().split(" ")[0]
-                    zipp = (
-                        address_parts.split(", ")[-1].strip().split(" ")[-2]
-                        + " "
-                        + address_parts.split(", ")[-1].strip().split(" ")[-1]
-                    )
-                    state = "<MISSING>"
-
-                except Exception:
-                    print(location_name)
-                    print(address_parts)
-                    raise Exception
+                city = address_parts.split(", ")[-1].strip().split(" ")[0]
+                zipp = (
+                    address_parts.split(", ")[-1].strip().split(" ")[-2]
+                    + " "
+                    + address_parts.split(", ")[-1].strip().split(" ")[-1]
+                )
+                state = "<MISSING>"
 
         store_number = grid["data-store-id"]
         phone = ""
