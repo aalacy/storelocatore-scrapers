@@ -70,9 +70,7 @@ def fetch_data():
         page_url = row["href"]
         content = pull_content(page_url)
         info = content.find("div", {"class": "inner"}).find("div", {"class": "inner"})
-        location_name = (
-            content.find("h4", {"class": "homepage-heading"}).text.split(":")[0].strip()
-        )
+        location_name = content.find("h4", {"class": "homepage-heading"}).text.strip()
         addr_phone = (
             info.find("p", {"class": "homepage-text"})
             .get_text(strip=True, separator="@")
