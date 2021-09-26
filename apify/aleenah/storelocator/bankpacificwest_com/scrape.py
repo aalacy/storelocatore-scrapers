@@ -31,7 +31,6 @@ def fetch_data():
         name = tr.find("h3").text.strip()
         ps = tr.find_all("p")
         all = str(ps[0]).replace("<p>", "").replace("</p>", "").split("<br/>")
-        print(all)
         street = all[0]
         phone = ps[2].text
         tim = ps[3].text.replace("Hours: ", "").replace("M-F,", "Monday - Friday: ")
