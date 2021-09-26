@@ -525,7 +525,7 @@ def get_store_urls_and_lat_lng():
     with SgRequests() as http:
         store_urls_latlng = []
         total = 0
-        for item in latlng_ca:
+        for urlnum, item in enumerate(latlng_ca[0:]):
             lat = item.split(",")[0]
             lng = item.split(",")[1]
             url = (
@@ -578,9 +578,7 @@ def fetch_data(http: SgRequests):
 
     for idx, store_url_lat_lng in enumerate(list_of_store_urls_latlng):
         logger.info(f"[{idx}] Pulling the data from: {store_url_lat_lng}\n")
-        logger.info(
-            f"[{idx}] Scraping Store Number:  out of {len(list_of_store_urls_latlng)}\n"
-        )
+        logger.info(f"[{idx}] out of {len(list_of_store_urls_latlng)}\n")
         store_url = store_url_lat_lng[0]
         r_store = http.get(store_url, headers=headers)
         sleep(randint(1, 4))
