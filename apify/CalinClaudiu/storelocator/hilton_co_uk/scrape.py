@@ -10,7 +10,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 import json
-
+import time
 from sgselenium import SgFirefox
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
@@ -116,16 +116,25 @@ def fetch_data():
 
 def data_fetcher(country, state):
     url = country["link"]
-
+    url = "https://www.hilton.com/en/locations/usa/alabama/"
     masterdata = []
 
     with SgFirefox() as driver:
         driver.get(url)
         for r in driver.requests:
             if "/graphql/customer" in r.path:
-                data = r.response.body
-                data = json.loads(data)
-                masterdata.append(data)
+                if r.response.body:
+                    data = r.response.body
+                    data = json.loads(data)
+                    masterdata.append(data)
+                else:
+                    time.sleep(30)
+                    if r.response.body:
+                        data = r.response.body
+                        data = json.loads(data)
+                        masterdata.append(data)
+                    else:
+                        pass
 
     total = 0
     allhotels = []
@@ -134,8 +143,8 @@ def data_fetcher(country, state):
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
-        except Exception:
-            raise
+        except KeyError:
+            pass
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
 

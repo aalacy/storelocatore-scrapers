@@ -1,54 +1,27 @@
-import csv
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(coord):
-    rows = []
-    lat, lng = coord
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
     locator_domain = "https://www.bubbakoos.com"
+    api_url = f"https://api.thelevelup.com/v15/apps/1641/locations?fulfillment_types=pickup&lat={str(lat)}&lng={str(long)}"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
     }
 
     session = SgRequests()
 
-    r = session.get(
-        f"https://api.thelevelup.com/v15/apps/1641/locations?fulfillment_types=pickup&lat={lat}&lng={lng}",
-        headers=headers,
-    )
+    r = session.get(api_url, headers=headers)
+
     js = r.json()
+
     for j in js:
         a = j.get("location")
         location_name = a.get("name") or "<MISSING>"
@@ -57,7 +30,6 @@ def get_data(coord):
         state = a.get("region") or "<MISSING>"
         postal = a.get("postal_code") or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
         page_url = (
             "https://www.bubbakoos.com/location/"
             + "".join(city).lower()
@@ -66,54 +38,45 @@ def get_data(coord):
         phone = a.get("phone") or "<MISSING>"
         latitude = a.get("latitude") or "<MISSING>"
         longitude = a.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
         hours_of_operation = (
             "".join(a.get("hours")).replace("\r\n", " ").strip() or "<MISSING>"
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return rows
+        sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=100, country_code=SearchableCountries.USA)
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=50,
+        max_search_results=None,
+    )
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[2]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

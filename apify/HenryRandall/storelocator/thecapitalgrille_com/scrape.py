@@ -16,19 +16,18 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
     }
     driver = SgSelenium().chrome()
-
     locator_domain = "https://www.thecapitalgrille.com/home"
     url = "https://www.thecapitalgrille.com/locations-sitemap.xml"
+
     session = SgRequests()
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     loc_list = []
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "href" in line:
             loc_list.append(line.split('href="', 1)[1].split('"', 1)[0])
 
     for loc in loc_list:
-        if "mexico" not in loc:
+        if "mexico" not in loc and "costa-rica" not in loc:
             driver.get(loc)
             soup = bs(driver.page_source, "html.parser")
             metadata = soup.find("script", {"type": "application/ld+json"})
