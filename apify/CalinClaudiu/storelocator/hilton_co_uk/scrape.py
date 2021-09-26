@@ -102,7 +102,7 @@ def gen_countries(session):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         countries = state.get_misc_value(
             "countries", default_factory=lambda: gen_countries(session)
         )

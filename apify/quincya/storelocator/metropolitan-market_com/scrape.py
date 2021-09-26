@@ -32,6 +32,8 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        link = req.url
+
         locator_domain = "metropolitan-market.com"
         location_name = (
             base.find("h3").text.strip() + " - " + base.find("h2").text.strip()
