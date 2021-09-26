@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     locator_domain = "https://www.riesbeckfoods.com"
     api_url = "https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token={}"

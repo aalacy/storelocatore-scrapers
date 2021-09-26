@@ -105,7 +105,7 @@ if __name__ == "__main__":
     log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, max_search_distance_miles=100
+            country_codes=SearchableCountries.ALL, max_search_distance_miles=50
         )
         for lat, lng in search:
             log.info(
