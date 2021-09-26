@@ -53,13 +53,11 @@ def fetch_data(sgw: SgWriter):
         adr = d.xpath(
             './/preceding-sibling::div[./p[@style="line-height:1.7em;font-size:17px"]][1]//text()'
         )
-        ad = list(filter(None, [a.strip() for a in adr]))
-        adress = " ".join(ad[:-1])
+        adress = " ".join(adr[:-1]).replace("\n", "").strip()
         if "404" in adress:
-            adress = " ".join(ad)
-
-        if "".join(ad).find("Clinic") != -1:
-            adress = " ".join(ad)
+            adress = " ".join(adr).replace("\n", "").strip()
+        if "".join(adr).find("Clinic") != -1:
+            adress = " ".join(adr).replace("\n", "").strip()
         a = usaddress.tag(adress, tag_mapping=tag)[0]
         phone = "".join(adr[-1])
         if "".join(adr).find("420") != -1:
