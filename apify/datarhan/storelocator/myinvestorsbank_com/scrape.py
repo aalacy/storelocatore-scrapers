@@ -1,6 +1,3 @@
-import json
-from lxml import etree
-from urllib.parse import urljoin
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
