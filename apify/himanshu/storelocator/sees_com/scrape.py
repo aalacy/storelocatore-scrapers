@@ -42,6 +42,9 @@ def fetch_data():
             if "-" in state:
                 country_code = state.split("-")[0].strip()
 
+            if state == "HK":
+                country_code = "HK"
+
             store_number = "<MISSING>"
             phone = (
                 location_details["address"]["telephone"]
