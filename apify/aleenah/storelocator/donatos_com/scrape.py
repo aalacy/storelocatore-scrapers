@@ -57,9 +57,9 @@ def fetch_data():
                 state = address[0]
                 zip_postal = address[1]
                 phone = temp[1].find("a").text
-                hours_of_operation = (
-                    temp[1].get_text(separator="|", strip=True).split("|")[-1]
-                )
+                hours_of_operation = MISSING
+            if "Warning :  Invalid argument" in hours_of_operation:
+                hours_of_operation = MISSING
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

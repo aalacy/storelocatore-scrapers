@@ -40,7 +40,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=link.country.text,
+                country_code="Canada",
                 phone=phone,
                 locator_domain=locator_domain,
                 latitude=link.latitude.text.strip(),
