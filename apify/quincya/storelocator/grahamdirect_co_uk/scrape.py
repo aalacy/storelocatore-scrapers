@@ -42,9 +42,9 @@ def fetch_data(sgw: SgWriter):
         latitude = store["lat"]
         longitude = store["lng"]
         link = "https://www.grahamdirect.co.uk/branch-locator/"
-
-        hours_of_operation = ""
-        raw_hours = " ".join(BeautifulSoup(store["hours"], "lxml").stripped_strings)
+        hours_of_operation = " ".join(
+            BeautifulSoup(store["hours"], "lxml").stripped_strings
+        )
 
         sgw.write_row(
             SgRecord(
