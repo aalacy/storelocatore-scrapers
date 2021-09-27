@@ -83,7 +83,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//h3[contains(text(), "Hours")]/following-sibling::p//text()'
+                    '//h3[contains(text(), "Hours")]/following-sibling::p//text() | //h3[contains(text(), "Hours")]/following-sibling::div/span/text()'
                 )
             )
             .replace("\n", "")
@@ -119,7 +119,12 @@ def fetch_data(sgw: SgWriter):
                 .split("REGULAR HOURS")[0]
                 .strip()
             )
-        hours_of_operation = hours_of_operation.replace("(TEMPORARILY)", "").strip()
+        hours_of_operation = (
+            hours_of_operation.replace("(TEMPORARILY)", "")
+            .replace("\r\n", " ")
+            .replace("\n", " ")
+            .strip()
+        )
         phone = (
             " ".join(
                 tree.xpath(
