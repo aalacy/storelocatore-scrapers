@@ -9,7 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://www.brainbalancecenters.com/locations?zip="
     domain = "brainbalancecenters.com"
     hdr = {
@@ -24,18 +24,16 @@ def fetch_data():
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@class="atmc-container"]/h2/text()')[
-            0
-        ].strip()
-        raw_adr = loc_dom.xpath(
-            '//h4[contains(text(), "Location")]/following-sibling::p[1]/text()'
+        location_name = poi_html.xpath(".//h3/text()")[0].strip()
+        raw_adr = poi_html.xpath(
+            './/h4[contains(text(), "Location")]/following-sibling::p[1]/text()'
         )
         raw_adr = ", ".join([e.strip() for e in raw_adr if e.strip()])
         addr = parse_address_intl(raw_adr)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        phone = loc_dom.xpath('//p[@class="phone"]/a/text()')[0]
+        phone = poi_html.xpath('.//p[@class="phone"]/text()')[0]
         latitude = poi_html.xpath("@data-lat")[0]
         longitude = poi_html.xpath("@data-lng")[0]
         hoo = loc_dom.xpath('//div[h4[contains(text(), "Hours")]]/p/text()')
