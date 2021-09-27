@@ -83,7 +83,7 @@ def fetch_data():
         ).json()
 
         entities = data["response"]["entities"]
-        token = data["response"]["pageToken"]
+        token = data["response"].get("pageToken")
 
         has_next = token is not None
         params["pageToken"] = token
@@ -115,7 +115,7 @@ def fetch_data():
 
             location_hours = []
             if location.get("hours") is None:
-                location_hours = None
+                hours_of_operation = SgRecord.MISSING
             else:
                 for day, intervals in location["hours"].items():
                     if day == "reopenDate" or day == "holidayHours":
@@ -134,7 +134,7 @@ def fetch_data():
                     hours = " ".join(all_intervals)
                     location_hours.append(f"{day}: {hours}")
 
-            hours_of_operation = ", ".join(location_hours)
+                hours_of_operation = ", ".join(location_hours)
 
             yield SgRecord(
                 locator_domain=domain,
