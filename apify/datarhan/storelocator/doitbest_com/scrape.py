@@ -79,13 +79,7 @@ def fetch_data():
             response = session.post(start_url, headers=headers, json=body)
             code = response.status_code
         while "online attacks" in response.text:
-            session = SgRequests().requests_retry_session(
-                retries=5,
-                backoff_factor=0.3,
-                status_forcelist=[
-                    418,
-                ],
-            )
+            session = SgRequests()
             response = session.get("https://doitbest.com/store-locator", headers=hdr)
             dom = etree.HTML(response.text)
             csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
