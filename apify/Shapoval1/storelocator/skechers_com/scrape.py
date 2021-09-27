@@ -354,73 +354,88 @@ def fetch_data(sgw: SgWriter):
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
         }
-        data = (
+        datas = [
             '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
             + slug
-            + '"},"expdate":{"ge":"2021-81"},"authorized":{"distinctfrom":""},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
-        )
-        r = session.get(
-            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.019478559849726018&lang=en_US",
-            headers=headers,
-            data=data,
-        )
-        try:
-            js = r.json()["response"]["collection"]
-        except:
-            js = []
-        for j in js:
+            + '"},"expdate":{"ge":"2021-81"},"authorized":{"distinctfrom":""},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}',
+            '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
+            + slug
+            + '"},"expdate":{"ge":"2021-825"},"authorized":{"distinctfrom":"1"},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}',
+        ]
+        for data in datas:
 
-            page_url = "https://www.skechers.com/store-locator.html"
-            location_name = j.get("name")
-            street_address = (
-                f"{j.get('address1')} {j.get('address2')}".replace("None", "")
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
+            r = session.get(
+                "https://hosted.where2getit.com/skechers/rest/getlist?like=0.019478559849726018&lang=en_US",
+                headers=headers,
+                data=data,
             )
-            state = j.get("state") or j.get("province") or "<MISSING>"
-            postal = j.get("postalcode") or "<MISSING>"
-            country_code = j.get("country") or "<MISSING>"
-            city = j.get("city") or "<MISSING>"
-            store_number = j.get("storeid") or "<MISSING>"
-            latitude = j.get("latitude") or "<MISSING>"
-            if latitude == "<MISSING>":
-                continue
-            longitude = j.get("longitude") or "<MISSING>"
-            phone = j.get("phone") or "<MISSING>"
-            hours_of_operation = (
-                f"Mon {j.get('rmon')} Tue {j.get('rtues')} Wed {j.get('rwed')} Thur {j.get('rthurs')} Fri {j.get('rfri')} Sat {j.get('rsat')} Sun {j.get('rsun')}"
-                or "<MISSING>"
-            )
-            if hours_of_operation.count("None") == 7:
-                hours_of_operation = "<MISSING>"
-            if (
-                hours_of_operation.count("CLOSED") == 7
-                or hours_of_operation.count("Closed") == 7
-            ):
-                hours_of_operation = "Closed"
+            try:
+                js = r.json()["response"]["collection"]
+            except:
+                js = []
+            for j in js:
 
-            row = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                page_url = "https://www.skechers.com/store-locator.html"
+                location_name = j.get("name")
+                street_address = (
+                    f"{j.get('address1')} {j.get('address2')}".replace("None", "")
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                state = j.get("state") or j.get("province") or "<MISSING>"
+                postal = j.get("postalcode") or "<MISSING>"
+                country_code = j.get("country") or "<MISSING>"
+                city = j.get("city") or "<MISSING>"
+                store_number = j.get("storeid") or "<MISSING>"
+                latitude = j.get("latitude") or "<MISSING>"
+                if latitude == "<MISSING>":
+                    continue
+                longitude = j.get("longitude") or "<MISSING>"
+                phone = j.get("phone") or "<MISSING>"
+                hours_of_operation = (
+                    f"Mon {j.get('rmon')} Tue {j.get('rtues')} Wed {j.get('rwed')} Thur {j.get('rthurs')} Fri {j.get('rfri')} Sat {j.get('rsat')} Sun {j.get('rsun')}"
+                    or "<MISSING>"
+                )
+                if hours_of_operation.count("None") == 7:
+                    hours_of_operation = "<MISSING>"
+                if (
+                    hours_of_operation.count("CLOSED") == 7
+                    or hours_of_operation.count("Closed") == 7
+                ):
+                    hours_of_operation = "Closed"
 
-            sgw.write_row(row)
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
+        )
+    ) as writer:
         fetch_data(writer)
