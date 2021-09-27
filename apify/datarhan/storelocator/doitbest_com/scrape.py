@@ -16,13 +16,7 @@ log = sglog.SgLogSetup().get_logger("doitbest.com")
 
 
 def fetch_data():
-    session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
-        retries=5,
-        backoff_factor=0.3,
-        status_forcelist=[
-            418,
-        ],
-    )
+    session = SgRequests()
 
     domain = "doitbest.com"
     start_url = "https://doitbest.com/StoreLocator/Submit"
