@@ -7,11 +7,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sgscrape.pause_resume import CrawlStateSingleton
 
 from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -40,9 +39,7 @@ def initiate_driver(url, class_name, driver=None):
         x = x + 1
         try:
             driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=True,
             ).driver()
             driver.get(url)
 
@@ -131,7 +128,6 @@ def fetch_data(search):
     driver = initiate_driver(urlForDriver, "zipField")
     totalZip = 0
     count = 0
-    states = CrawlStateSingleton.get_instance()
     for zipCode in search:
         totalZip = totalZip + 1
         data = fetch_single_zip(driver, zipCode)
@@ -189,14 +185,6 @@ def fetch_data(search):
                 raw_address=raw_address,
             )
 
-            try:
-                rec_count = states.get_misc_value(
-                    search.current_country(), default_factory=lambda: 0
-                )
-                states.set_misc_value(search.current_country(), rec_count + 1)
-            except Exception as e:
-                log.error(f"MISE {zipCode}, message={e}")
-
         if totalZip % 15 == 0:
             driver = initiate_driver(urlForDriver, "zipField", driver=driver)
         log.debug(
@@ -209,26 +197,17 @@ def fetch_data(search):
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     start = time.time()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_2(),
+        granularity=Grain_4(),
     )
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
         for rec in fetch_data(search):
             writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
-    log.debug("Printing number of records by country-code:")
-    for country_code in SearchableCountries.USA:
-        try:
-            count = state.get_misc_value(country_code, default_factory=lambda: 0)
-            log.debug(f"{country_code}: {count}")
-        except Exception as e:
-            log.info(f"Country codes: {country_code}, message={e}")
-            pass
 
     end = time.time()
     log.info(f"Scrape took {end - start} seconds.")
