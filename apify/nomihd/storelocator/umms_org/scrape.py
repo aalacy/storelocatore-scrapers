@@ -86,7 +86,7 @@ def fetch_data():
                 street_address, city, state, zip, country_code = split_fulladdress(
                     full_address
                 )
-
+                street_address = street_address.split("(")[0].strip()
                 location_name = store.xpath(".//a/text()")[0].strip()
 
                 phone = list(
@@ -119,7 +119,11 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
 
                 latitude, longitude = (
-                    store_res.text.split("lat:")[1].split(",")[0].strip(),
+                    store_res.text.split("lat:")[1]
+                    .split(",")[0]
+                    .strip()
+                    .replace("-", "")
+                    .strip(),
                     store_res.text.split("lng:")[1].split("},")[0].strip(),
                 )
 

@@ -7,6 +7,14 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 
+def has_no(x):
+    if any(i.isdigit() for i in x):
+        return True
+    if any(i in x for i in ["osed", "ay"]):
+        return True
+    return False
+
+
 def para(url):
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -32,9 +40,10 @@ def para(url):
         for div in data:
             if "ours" in div.text:
                 for string in div.stripped_strings:
-                    k["hours"].append(string)
+                    if has_no(string):
+                        k["hours"].append(string)
                 break
-        k["hours"].pop(0)
+
         k["hours"] = "; ".join(k["hours"])
     except Exception:
         k["hours"] = "<MISSING>"
@@ -57,6 +66,7 @@ def para(url):
 
     try:
         addr = soup.find("div", {"class": "addrInfoBlock"}).text
+        addr = addr.replace("\n", "").replace("\t", "").replace(",", "")
         k["raw_addr"] = addr
         addr = parser.parse_address_usa(addr)
         k["street_address"] = (
@@ -75,7 +85,8 @@ def para(url):
         k["name"] = soup.find("h1", {"class": "blue"}).text.strip()
     except Exception:
         k["name"] = "<MISSING>"
-
+    if "providence-lending" in k["url"]:
+        k["hours"] = "<MISSING>"
     yield k
 
 
@@ -93,7 +104,6 @@ def fetch_data():
     pages = []
     for i in links:
         pages.append(i["href"])
-
     lize = utils.parallelize(
         search_space=pages,
         fetch_results_for_rec=para,
@@ -123,19 +133,24 @@ def scrape():
         longitude=sp.MissingField(),
         street_address=sp.MappingField(
             mapping=["street_address"],
+            is_required=False,
         ),
         city=sp.MappingField(
             mapping=["city"],
+            is_required=False,
         ),
         state=sp.MappingField(
             mapping=["state"],
+            is_required=False,
         ),
         zipcode=sp.MappingField(
             mapping=["postcode"],
             part_of_record_identity=True,
+            is_required=False,
         ),
         country_code=sp.MappingField(
             mapping=["country"],
+            is_required=False,
         ),
         phone=sp.MappingField(
             mapping=["phone"],
@@ -144,6 +159,7 @@ def scrape():
         store_number=sp.MissingField(),
         hours_of_operation=sp.MappingField(
             mapping=["hours"],
+            is_required=False,
         ),
         location_type=sp.MissingField(),
         raw_address=sp.MappingField(
