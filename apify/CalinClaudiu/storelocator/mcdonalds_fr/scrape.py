@@ -40,7 +40,7 @@ def test_zipcode(item):
             item["properties"]["address"]["zipcode"] = item["properties"][
                 "user_properties"
             ]["displayPostCode"]
-        except Exception as e:
+        except Exception:
             pass
     return item
 
