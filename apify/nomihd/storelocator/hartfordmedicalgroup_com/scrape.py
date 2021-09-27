@@ -62,7 +62,7 @@ def fetch_data():
             country_code = "US"
             store_number = "<MISSING>"
 
-            phone = "".join(store.xpath("@data-phone")).strip()
+            phone = store.xpath("@data-phone")
             if len(phone) <= 0:
                 phone = store_sel.xpath(
                     '//p[./strong[contains(text(),"Phone")]]/a/text()'
