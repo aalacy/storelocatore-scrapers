@@ -43,12 +43,23 @@ def fetch_data():
                 r = session.get(address_url, headers=headers)
                 if r.status_code != 410:
                     soup = BeautifulSoup(r.text, "html.parser")
-                    temp = r.text.split('"address":')[1].split("</script>")[0]
-                    street_address = temp.split('"streetAddress":"')[1].split('"')[0]
-                    city = temp.split('"addressLocality":"')[1].split('"')[0]
-                    state = temp.split('"addressRegion":"')[1].split('"')[0]
-                    zip_postal = temp.split('"postalCode":"')[1].split('"')[0]
-                    phone = temp.split('"telephone":"')[1].split('"')[0]
+                    try:
+                        temp = r.text.split('"address":')[1].split("</script>")[0]
+                        street_address = temp.split('"streetAddress":"')[1].split('"')[0]
+                        city = temp.split('"addressLocality":"')[1].split('"')[0]
+                        state = temp.split('"addressRegion":"')[1].split('"')[0]
+                        zip_postal = temp.split('"postalCode":"')[1].split('"')[0]
+                        phone = temp.split('"telephone":"')[1].split('"')[0]
+                    except:
+                       
+                        address = soup.find("div",{"class":"h7 h8 h9"}).find("p").get_text(separator='|', strip=True).split('|')[0]
+                        address = address.split(",")
+                        street_address = address[0]
+                        city = address[1]
+                        state= address[2]
+                        zip_postal = MISSING
+                        phone = r.text.split('"telephone":"')[1].split('"')[0]
+                    
                     try:
                         hours_of_operation = (
                             soup.findAll("table", {"class": "ga gb"})[-1]
@@ -127,7 +138,7 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {SgRecord.Headers.PHONE, SgRecord.Headers.STREET_ADDRESS,SgRecord.Headers.ZIP}
             )
         )
     ) as writer:
