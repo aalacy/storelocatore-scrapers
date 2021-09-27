@@ -50,11 +50,7 @@ def fetch_data():
                         website = "hyundaiusa.com"
                         typ = "<MISSING>"
                         try:
-                            loc = (
-                                item.split('cobaltDealerURL":"')[1]
-                                .split('"')[0]
-                                .replace("\\", "")
-                            )
+                            loc = item.split('"')[0]
                         except:
                             loc = "<MISSING>"
                         store = item.split('"dealerCd":"')[1].split('"')[0]
