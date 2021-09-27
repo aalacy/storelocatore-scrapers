@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import json
 from sgscrape.simple_utils import parallelize
@@ -12,7 +12,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "longchamp.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
 headers = {
     "authority": "www.longchamp.com",
@@ -29,17 +28,15 @@ headers = {
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
-id_list = []
-
 
 def fetch_records_for(tup):
-    coords, CurrentCountry, countriesRemaining = tup
+    coords, CurrentCountry, countriesRemaining, session = tup
     lat = coords[0]
     lng = coords[1]
     log.info(
         f"pulling records for Country-{CurrentCountry} Country#:{countriesRemaining},\n coordinates: {lat,lng}"
     )
-    search_url = "https://www.longchamp.com/on/demandware.store/Sites-Longchamp-OC-Site/en_US/Stores-FindStores"
+    search_url = "https://www.longchamp.com/on/demandware.store/Sites-Longchamp-EU-Site/en/Stores-FindStores"
     params = (
         ("showMap", "true"),
         ("findInStore", "false"),
@@ -53,8 +50,13 @@ def fetch_records_for(tup):
         ("countryRegion", ""),
         ("formattedSuggestion", ""),
     )
-    stores_req = session.get(search_url, headers=headers, params=params)
-    stores = json.loads(stores_req.text)["stores"]
+    stores = []
+    try:
+        stores_req = SgRequests.raise_on_err(session.get(search_url, params=params))
+        stores = json.loads(stores_req.text)["stores"]
+    except SgRequestError as e:
+        log.info("Error Code: " + e.status_code)
+
     return stores, CurrentCountry
 
 
@@ -63,11 +65,6 @@ def process_record(raw_results_from_one_coordinate):
     for store in stores:
         if store["type"] != "BTQ":
             continue
-        if store["ID"] in id_list:
-            continue
-
-        id_list.append(store["ID"])
-
         page_url = "<MISSING>"
         locator_domain = website
         location_name = store["name"]
@@ -130,42 +127,43 @@ def scrape():
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        session.get(
-            "https://www.longchamp.com/en/en/stores?showMap=true", headers=headers
-        )
+        with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
+            session.get(
+                "https://www.longchamp.com/en/en/stores?showMap=true", headers=headers
+            )
 
-        countries = (
-            SearchableCountries.WITH_ZIPCODE_AND_COORDS
-            + SearchableCountries.WITH_COORDS_ONLY
-        )
-        totalCountries = len(countries)
-        currentCountryCount = 0
-        for country in countries:
-            try:
-                search = DynamicGeoSearch(
-                    expected_search_radius_miles=100, country_codes=[country]
-                )
-                results = parallelize(
-                    search_space=[
-                        (
-                            coord,
-                            search.current_country(),
-                            str(f"{currentCountryCount}/{totalCountries}"),
-                        )
-                        for coord in search
-                    ],
-                    fetch_results_for_rec=fetch_records_for,
-                    processing_function=process_record,
-                    max_threads=20,  # tweak to see what's fastest
-                )
-                for rec in results:
-                    writer.write_row(rec)
-                    count = count + 1
-                currentCountryCount += 1
-            except Exception as e:
-                log.error(f"{country}: not found\n{e}")
-                currentCountryCount += 1
-                pass
+            countries = (
+                SearchableCountries.WITH_ZIPCODE_AND_COORDS
+                + SearchableCountries.WITH_COORDS_ONLY
+            )
+            totalCountries = len(countries)
+            currentCountryCount = 0
+            for country in countries:
+                try:
+                    search = DynamicGeoSearch(
+                        expected_search_radius_miles=50, country_codes=[country]
+                    )
+                    results = parallelize(
+                        search_space=[
+                            (
+                                coord,
+                                search.current_country(),
+                                str(f"{currentCountryCount}/{totalCountries}"),
+                                session,
+                            )
+                            for coord in search
+                        ],
+                        fetch_results_for_rec=fetch_records_for,
+                        processing_function=process_record,
+                    )
+                    for rec in results:
+                        writer.write_row(rec)
+                        count = count + 1
+                    currentCountryCount += 1
+                except Exception as e:
+                    log.error(f"{country}: not found\n{e}")
+                    currentCountryCount += 1
+                    pass
 
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
