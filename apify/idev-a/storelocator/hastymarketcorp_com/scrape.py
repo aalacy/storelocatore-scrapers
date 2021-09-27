@@ -27,6 +27,10 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            if "fegus" in street_address:
+                street_address = street_address.replace("fegus", "").strip()
+                city = "fegus"
             phone = link.telephone.text.replace("TBD", "").replace("N/A", "").strip()
             if phone == "0":
                 phone = ""
@@ -37,7 +41,7 @@ def fetch_data():
                 else link.storeid.text.strip(),
                 location_name=link.location.text.strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Canada",
