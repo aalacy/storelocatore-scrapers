@@ -52,6 +52,9 @@ def record_initial_requests(http, state):
             if cls.startswith("info-window-"):
                 id = cls.split("-")[-1].strip()
                 break
+        country_code = "US"
+        if zip_postal and not zip_postal.isdigit():
+            country_code = "CA"
         store = dict(
             id=id,
             location_name=location_name,
@@ -61,6 +64,7 @@ def record_initial_requests(http, state):
             zip_postal=zip_postal,
             latitude=latitude,
             longitude=longitude,
+            country_code=country_code,
             raw_address=raw_address,
         )
         total += 1
@@ -93,7 +97,7 @@ def _d(store, phone, hours, page_url):
         zip_postal=store["zip_postal"],
         latitude=store["latitude"],
         longitude=store["longitude"],
-        country_code="US",
+        country_code=store["country_code"],
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation="; ".join(hours).replace("\u200b", ""),
