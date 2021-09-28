@@ -53,7 +53,7 @@ def record_initial_requests(http, state):
                 id = cls.split("-")[-1].strip()
                 break
         country_code = "US"
-        if zip_postal and not zip_postal.isdigit():
+        if zip_postal and not zip_postal.replace("-", "").isdigit():
             country_code = "CA"
         store = dict(
             id=id,
