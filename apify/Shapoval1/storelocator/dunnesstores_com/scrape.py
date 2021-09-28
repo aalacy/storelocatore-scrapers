@@ -39,9 +39,9 @@ def fetch_data(sgw: SgWriter):
             cityI = "".join(k.get("city"))
             if cityI.find(",") != -1:
                 cityI = cityI.replace(",", "").strip()
-            cityI = cityI.split()
+            cityInfo = cityI.split()
             tmpc = []
-            for c in cityI:
+            for c in cityInfo:
                 if c.isdigit():
                     continue
                 tmpc.append(c)
