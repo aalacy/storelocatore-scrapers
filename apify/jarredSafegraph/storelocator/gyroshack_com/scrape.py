@@ -56,17 +56,20 @@ def xml_to_dict(locations_page):
 def extract_address(location: str):
     # split by comma
     location_split = location.split(",")
-    # define two parts of string
-    location_front = location_split[0]
-    location_back = (location_split[1]).strip()
-    # split front by last space
-    split_front = location_front.rsplit(" ", 1)
-    address = split_front[0]
-    city = split_front[1]
-    # split back into two
-    location_back_split = location_back.split(" ")
-    state = location_back_split[0]
-    zip_code = location_back_split[1]
+    if len(location_split) == 2:
+        # define two parts of string
+        location_front = location_split[0]
+        location_back = (location_split[1]).strip()
+        # split front by last space
+        split_front = location_front.rsplit(" ", 1)
+        if len(split_front) == 2:
+            address = split_front[0]
+            city = split_front[1]
+        # split back into two
+        split_back = location_back.split(" ")
+        if len(split_front) == 2:
+            state = split_back[0]
+            zip_code = split_back[1]
     return {"address": address, "city": city, "state": state, "zip_code": zip_code}
 
 
