@@ -169,6 +169,7 @@ def fetch_data():
                 if hours_of_operation.find("*") != -1:
                     hours_of_operation = hours_of_operation.split("*")[0].strip()
 
+                final_hours_list = []
                 try:
                     temp_hours = hours_of_operation.split(";")
                     for hour in temp_hours:
