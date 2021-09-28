@@ -6,6 +6,8 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sglogging import sglog
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 domain = "https://www.gyroshack.com/"
 logger = sglog.SgLogSetup().get_logger(logger_name=domain)
@@ -97,7 +99,8 @@ def transform_record(raw: Any) -> SgRecord:
 
 if __name__ == "__main__":
     logger.info(f"starting scrape for {domain}")
-    with SgWriter() as writer:
+    deduper = SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    with SgWriter(deduper) as writer:
         results = fetch_raw_using()
         [
             writer.write_row(transform_record(indiv_record))
