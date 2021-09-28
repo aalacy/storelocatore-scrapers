@@ -39,13 +39,13 @@ def fetch_data(sgw: SgWriter):
             cityI = "".join(k.get("city"))
             if cityI.find(",") != -1:
                 cityI = cityI.replace(",", "").strip()
-            cityI = cityI.replace(".", "").split()
+            cityI = cityI.split()
             tmpc = []
             for c in cityI:
                 if c.isdigit():
                     continue
                 tmpc.append(c)
-            city = " ".join(tmpc)
+            city = " ".join(tmpc).replace("1.", "")
             store_number = k.get("id")
             latitude = k.get("latitude")
             longitude = k.get("longitude")
