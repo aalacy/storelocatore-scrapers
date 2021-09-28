@@ -19,7 +19,6 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "https://www.tootsies.ca/pages/store-locator"
         location_name = "".join(j.get("name"))
-        location_type = "<MISSING>"
         street_address = j.get("address")
         state = j.get("state")
         postal = j.get("postal")
