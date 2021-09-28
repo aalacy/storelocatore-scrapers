@@ -94,6 +94,11 @@ class _SearchIteration(SearchIteration):
                             street_address = raw_address.split(",")[0].strip()
                         except:
                             pass
+
+                try:
+                    street_address = street_address.rsplit(",", 1)[0].strip()
+                except:
+                    pass
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zip = store["postCode"].strip()
