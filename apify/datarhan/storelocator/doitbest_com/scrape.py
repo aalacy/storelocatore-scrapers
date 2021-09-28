@@ -63,6 +63,7 @@ def fetch_data():
         code = response.status_code
         while code != 200:
             sleep(random.uniform(5.5, 15.9))
+            session = SgRequests()
             response = session.get("https://doitbest.com/store-locator", headers=hdr)
             dom = etree.HTML(response.text)
             csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
