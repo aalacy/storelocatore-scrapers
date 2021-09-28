@@ -1,4 +1,5 @@
 FROM safegraph/apify-python3:latest
+
 COPY . ./
 
 USER root
