@@ -5,12 +5,12 @@ from sglogging import SgLogSetup
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
-import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+
 import ssl
 
 try:
@@ -22,20 +22,11 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-
 logger = SgLogSetup().get_logger("laderach")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-
-
-def _time(val):
-    val = str(val)
-    if len(val) == 3:
-        val = "0" + val
-    return val[:2] + ":" + val[2:]
-
 
 locator_domain = "https://laderach.com/"
 base_url = "https://us.laderach.com/our-locations/"
@@ -54,14 +45,17 @@ def fetch_data():
                 if store_number == "50047" or store_number == "63198":
                     continue
                 driver.get(store.iframe["src"])
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located(
-                        (
-                            By.XPATH,
-                            '//div[@class="sk-google-business-profile-container"]',
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located(
+                            (
+                                By.XPATH,
+                                '//div[@class="sk-google-business-profile-container"]',
+                            )
                         )
                     )
-                )
+                except:
+                    continue
                 sp1 = bs(driver.page_source, "lxml")
                 if sp1.select_one(".sk-google-business-profile-coming-soon-text"):
                     continue
@@ -80,19 +74,7 @@ def fetch_data():
                 country_code = addr.country
                 if not country_code and "Singapore" in _addr:
                     country_code = "Singapore"
-                if country_code == "United Arab Emirates":
-                    street_address = " ".join(_addr.split("-")[:-3])
-                    city = _addr.split("-")[-3]
-                    state = _addr.split("-")[-2]
-                    zip_postal = ""
-                hours = []
-                if _["content"]["open_hours"]:
-                    for hh in json.loads(_["content"]["open_hours"]):
-                        if not hh["time_end"]:
-                            continue
-                        hours.append(
-                            f"{hh['day']} {_time(hh['time_start'])}-{_time(hh['time_end'])}"
-                        )
+                hours = _["content"].get("week_day_text", [])
                 yield SgRecord(
                     page_url=_["content"]["website"],
                     location_name=_["content"]["place_name"],
