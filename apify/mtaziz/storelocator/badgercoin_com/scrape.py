@@ -268,7 +268,6 @@ def fetch_data(sgw: SgWriter, http: SgRequests):
 
 
 def scrape():
-    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -282,7 +281,7 @@ def scrape():
         )
     ) as writer:
         with SgRequests() as http:
-            records = fetch_data(writer, http)
+            fetch_data(writer, http)
     logger.info("Finished")
 
 
