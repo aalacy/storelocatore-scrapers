@@ -30,6 +30,9 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@class="location-info__hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else SgRecord.MISSING
+        phone = poi["telephone"]
+        if phone == "+1":
+            phone = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -41,7 +44,7 @@ def fetch_data():
             zip_postal=poi["address"]["postalCode"],
             country_code=poi["address"]["addressCountry"],
             store_number=SgRecord.MISSING,
-            phone=poi["telephone"],
+            phone=phone,
             location_type=poi["@type"],
             latitude=poi["geo"]["latitude"],
             longitude=poi["geo"]["longitude"],
