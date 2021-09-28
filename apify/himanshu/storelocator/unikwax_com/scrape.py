@@ -93,7 +93,6 @@ def fetch_data():
             .get_text(strip=True, separator=",")
         )
         if re.search(r"temporarily closed|has closed", temp_closed):
-            print("TEMP_CLOSED")
             continue
         location_name = row.find("span", {"class": "location__title"}).text.strip()
         info = content.find("script", {"class": "yext-schema-json"})
