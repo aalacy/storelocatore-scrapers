@@ -1,13 +1,16 @@
+import re as regEx
 from typing import Any
 
 import bs4
-import re as regEx
-from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from sglogging import sglog
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgrequests import SgRequests
+from sgrequests.sgrequests import SgRequestsBase
+from sgscrape.sgpostal import USA_Best_Parser, parse_address
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgwriter import SgWriter
+
 
 domain = "https://www.gyroshack.com/"
 logger = sglog.SgLogSetup().get_logger(logger_name=domain)
@@ -21,72 +24,55 @@ def fetch_raw_using():
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
     }
-    locations_page = SgRequests().request(
-        f"{domain}wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",
-        headers=headers,
-    )
-    stores = []
-    if locations_page.status_code == 200:
-        logger.debug(f"Nothing fishy here: {locations_page}")
-        try:
-            stores = xml_to_dict(locations_page)
-        except Exception as err:
-            logger.error(
-                f"error by status_code: {locations_page.status_code} for {domain}wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
+
+    with SgRequests() as http:
+        locations_page = SgRequestsBase.raise_on_err(
+            http.request(
+                f"{domain}wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",
+                headers=headers,
             )
-            logger.debug(str(err))
-    else:
-        logger.debug(f"Something fishy here: {locations_page}")
+        )
 
-    yield stores
+        soup = bs4.BeautifulSoup(locations_page.text, features="lxml")
+        for store in soup.find_all("item"):
+            yield xml_to_dict(store)
 
 
-def xml_to_dict(locations_page):
-    stores = []
-    soup = bs4.BeautifulSoup(locations_page.text, features="lxml")
-    for store in soup.find_all("item"):
-        store_tags = store.find_all()
-        store_dict = {}
-        for tag in store_tags:
-            store_dict[tag.name] = tag.getText()
-        stores.append(store_dict)
-    return stores
+def xml_to_dict(store) -> dict:
+    store_tags = store.find_all()
+    store_dict = {}
+    for tag in store_tags:
+        store_dict[tag.name] = tag.getText()
+    return store_dict
 
 
 def extract_address(location: str):
-    if location is None:
-        return {}
-    # split by comma
-    location_split = location.split(",")
-    if len(location_split) == 2:
-        # define two parts of string
-        location_front = location_split[0]
-        location_back = (location_split[1]).strip()
-        # split front by last space
-        split_front = location_front.rsplit(" ", 1)
-        if len(split_front) == 2:
-            address = split_front[0]
-            city = split_front[1]
-        # split back into two
-        split_back = location_back.split(" ")
-        if len(split_back) == 2:
-            state = split_back[0]
-            zip_code = split_back[1]
-    return {"address": address, "city": city, "state": state, "zip_code": zip_code}
+    parse_address_usa = parse_address(USA_Best_Parser(), location)
+    address = f"{parse_address_usa.street_address_1} {parse_address_usa.street_address_2}".replace(
+        "None", ""
+    ).strip()
+    return {
+        "address": address,
+        "city": parse_address_usa.city,
+        "state": parse_address_usa.state,
+        "zip_code": parse_address_usa.postcode,
+    }
 
 
-def extract_horus(operatinghours: str):
-    if operatinghours is None:
-        return ""
-    # replace xml tags with space
-    hours = regEx.sub(r"<[^>]*>", " ", operatinghours).strip()
+def extract_hours(operatinghours: str):
+    operatinghours = regEx.sub(r"<br>", ", ", operatinghours).strip()
+    soup = bs4.BeautifulSoup(operatinghours, "lxml")
+    hours = ""
+    for tag in soup.find_all("div"):
+        hours = tag.text if hours == "" else hours + ", " + tag.text
+    hours = (hours.replace("\r\n", "")).rstrip(", ")
     return hours
 
 
 def transform_record(raw: Any) -> SgRecord:
     address_dict = extract_address(raw.get("address"))
     return SgRecord(
-        page_url=f"{domain}/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",
+        page_url=SgRecord.MISSING,
         location_type=SgRecord.MISSING,
         locator_domain=domain,
         location_name=raw.get("location"),
@@ -98,7 +84,7 @@ def transform_record(raw: Any) -> SgRecord:
         phone=raw.get("telephone"),
         latitude=raw.get("latitude"),
         longitude=raw.get("longitude"),
-        hours_of_operation=extract_horus(raw.get("operatinghours")),
+        hours_of_operation=extract_hours(raw.get("operatinghours")),
         store_number=raw.get("storeid"),
         raw_address=raw.get("address"),
     )
@@ -108,10 +94,6 @@ if __name__ == "__main__":
     logger.info(f"starting scrape for {domain}")
     deduper = SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     with SgWriter(deduper) as writer:
-        results = fetch_raw_using()
-        [
-            writer.write_row(transform_record(indiv_record))
-            for record in results
-            for indiv_record in record
-        ]
+        for record in fetch_raw_using():
+            writer.write_row(transform_record(record))
     logger.info("scrape complete")
