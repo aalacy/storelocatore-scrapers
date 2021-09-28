@@ -1,172 +1,103 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import lxml.html
+import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "eyecarecenter.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+    "sec-ch-ua-mobile": "?0",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
     # Your scraper here
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=50
+
+    search_url = "https://www.eyecarecenter.com/locations/"
+    api_url = (
+        "https://www.eyecarecenter.com/_next/data/O0NLiJCm31U17G570Gx9B/locations.json"
     )
 
-    for lat, long in search:
-        log.info(f"{(lat, long)} | remaining: {search.items_remaining()}")
+    api_res = session.get(api_url, headers=headers)
+    json_res = json.loads(api_res.text)
+    stores = json_res["pageProps"]["locations"]
 
-        search_url = "https://www.eyecarecenter.com/wp-json/352inc/v1/locations/coordinates?lat={}&lng={}"
-        search_url = search_url.format(lat, long)
-        stores_req = session.get(search_url, headers=headers)
-        if "permalink" in stores_req.text:
-            stores = json.loads(stores_req.text)
-            for store in stores:
-                page_url = store["permalink"]
-                log.info(page_url)
-                store_req = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_req.text)
-                json_list = store_sel.xpath(
-                    '//script[@type="application/ld+json"]/text()'
-                )
-                store_json = None
-                for js in json_list:
-                    if "latitude" in js:
-                        store_json = json.loads(js)
-                        break
+    for store in stores:
 
-                locator_domain = website
-                location_name = store_json["name"]
-                if location_name == "":
-                    location_name = "<MISSING>"
+        page_url = search_url + store["slug"]
+        log.info(page_url)
+        store_res = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_res.text)
 
-                street_address = store_json["address"]["streetAddress"]
-                city = store_json["address"]["addressLocality"]
-                state = store_json["address"]["addressRegion"]
-                zip = store_json["address"]["postalCode"]
-                country_code = store_json["address"]["addressCountry"]
+        location_name = store["name"]
+        location_type = "<MISSING>"
+        locator_domain = website
 
-                if street_address == "" or street_address is None:
-                    street_address = "<MISSING>"
+        street_address = store["address1"].strip()
 
-                if city == "" or city is None:
-                    city = "<MISSING>"
+        city = store["city"]
+        state = store["state"]
+        zip = store["zipCode"]
 
-                if state == "" or state is None:
-                    state = "<MISSING>"
+        country_code = "US"
 
-                if zip == "" or zip is None:
-                    zip = "<MISSING>"
+        store_number = store["sysId"]
 
-                if country_code == "" or country_code is None:
-                    country_code = "<MISSING>"
+        phone = store["phoneNumber"]
 
-                store_number = "<MISSING>"
-                phone = store_json["telephone"]
+        hours = list(
+            filter(
+                str,
+                store_sel.xpath(
+                    '//div[./h2//text()="Hours of Operation:"]/div/div//text()'
+                ),
+            )
+        )
 
-                location_type = "<MISSING>"
+        hours_of_operation = "; ".join(hours).replace("day; ", "day: ").strip()
 
-                latitude = store_json["geo"]["latitude"]
-                longitude = store_json["geo"]["longitude"]
+        latitude, longitude = store["map"]["lat"], store["map"]["lon"]
 
-                search.found_location_at(latitude, longitude)
-
-                if latitude == "" or latitude is None:
-                    latitude = "<MISSING>"
-                if longitude == "" or longitude is None:
-                    longitude = "<MISSING>"
-
-                hours_of_operation = ""
-                hours = store_json["openingHoursSpecification"]
-                hours_list = []
-                for hour in hours:
-                    day = hour["dayOfWeek"]
-                    time = hour["opens"] + "-" + hour["closes"]
-                    hours_list.append(day + ":" + time)
-
-                hours_of_operation = "; ".join(hours_list).strip()
-                if hours_of_operation == "":
-                    hours_of_operation = "<MISSING>"
-
-                if phone == "" or phone is None:
-                    phone = "<MISSING>"
-
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                yield curr_list
-
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
