@@ -42,7 +42,6 @@ def fetch_data():
                 page_url = page_url + "/"
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_res.text)
 
             locator_domain = website
 
