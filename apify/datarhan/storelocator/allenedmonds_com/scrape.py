@@ -26,7 +26,7 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
-        sleep(2)
+        sleep(15)
         driver.find_element_by_id("dwfrm_storelocator_maxdistance").click()
         sleep(2)
         driver.find_element_by_xpath('//option[@label="USA"]').click()
