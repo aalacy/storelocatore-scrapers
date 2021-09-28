@@ -24,10 +24,7 @@ def fetch_data():
             count = lurl.count("/")
             if count == 6:
                 locs.append(lurl)
-                if "06899-1800-galleria-blvd.html" in lurl:
-                    print(lurl)
     for loc in locs:
-        print("Pulling Location %s..." % loc)
         website = "aerie.com"
         typ = ""
         hours = ""
