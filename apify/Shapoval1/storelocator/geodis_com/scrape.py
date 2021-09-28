@@ -38,6 +38,7 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+
         city = (
             " ".join(tree.xpath('//span[@class="locality"]/text()'))
             .replace("\n", "")
@@ -90,6 +91,17 @@ def fetch_data(sgw: SgWriter):
             " ".join(tree.xpath('//div[@class="title-agency-view"]/a/@href'))
             or "<MISSING>"
         )
+        if (
+            page_url
+            == "https://geodis.com/agency/geodis-distribution-express-agence-de-mulhouse-wittelsheim"
+        ):
+            street_address = (
+                street_address
+                + " "
+                + " ".join(tree.xpath('//span[@class="address-line2"]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
         country_code = (
             " ".join(tree.xpath('//span[@class="country"]/text()'))
             .replace("\n", "")
@@ -258,6 +270,17 @@ def fetch_data(sgw: SgWriter):
             city = "St Martin Lez Tatinghem"
             postal = "62500"
         city = city.replace("- TERMINAL CARGO", "").strip()
+
+        if (
+            phone.find("GEODIS - Castel San Giovanni (Contract Logistics)") != -1
+            or phone == "<MISSING>"
+        ):
+            phone = "<MISSING>"
+        if phone.find("GEODIS - Pioltello (Air & Ocean Freight)") != -1:
+            phone = phone.replace(
+                "GEODIS - Pioltello (Air & Ocean Freight)", ""
+            ).strip()
+
         if street_address == "<MISSING>":
             session = SgRequests()
             r = session.get(page_url, headers=headers)
@@ -289,6 +312,11 @@ def fetch_data(sgw: SgWriter):
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
             city = a.city or "<MISSING>"
+
+        if postal == "Province" or postal == "Cali":
+            postal = "<MISSING>"
+        if postal.find("C.P.") != -1:
+            postal = postal.replace("C.P.", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
