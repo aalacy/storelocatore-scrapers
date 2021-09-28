@@ -54,6 +54,8 @@ def xml_to_dict(locations_page):
 
 
 def extract_address(location: str):
+    if location == None:
+        return {}
     # split by comma
     location_split = location.split(",")
     if len(location_split) == 2:
@@ -74,29 +76,31 @@ def extract_address(location: str):
 
 
 def extract_horus(operatinghours: str):
+    if operatinghours == None:
+        return ""
     # replace xml tags with space
     hours = regEx.sub(r"<[^>]*>", " ", operatinghours).strip()
     return hours
 
 
 def transform_record(raw: Any) -> SgRecord:
-    address_dict = extract_address(raw["address"])
+    address_dict = extract_address(raw.get("address"))
     return SgRecord(
         page_url=f"{domain}/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",
         location_type=SgRecord.MISSING,
         locator_domain=domain,
-        location_name=raw["location"],
-        street_address=address_dict["address"],
-        city=address_dict["city"],
-        state=address_dict["state"],
-        zip_postal=address_dict["zip_code"],
-        country_code=raw["country"],
-        phone=raw["telephone"],
-        latitude=raw["latitude"],
-        longitude=raw["longitude"],
-        hours_of_operation=extract_horus(raw["operatinghours"]),
-        store_number=raw["storeid"],
-        raw_address=raw["address"],
+        location_name=raw.get("location"),
+        street_address=address_dict.get("address"),
+        city=address_dict.get("city"),
+        state=address_dict.get("state"),
+        zip_postal=address_dict.get("zip_code"),
+        country_code=raw.get("country"),
+        phone=raw.get("telephone"),
+        latitude=raw.get("latitude"),
+        longitude=raw.get("longitude"),
+        hours_of_operation=extract_horus(raw.get("operatinghours")),
+        store_number=raw.get("storeid"),
+        raw_address=raw.get("address"),
     )
 
 
