@@ -54,7 +54,7 @@ def xml_to_dict(locations_page):
 
 
 def extract_address(location: str):
-    if location == None:
+    if location is None:
         return {}
     # split by comma
     location_split = location.split(",")
@@ -76,7 +76,7 @@ def extract_address(location: str):
 
 
 def extract_horus(operatinghours: str):
-    if operatinghours == None:
+    if operatinghours is None:
         return ""
     # replace xml tags with space
     hours = regEx.sub(r"<[^>]*>", " ", operatinghours).strip()
