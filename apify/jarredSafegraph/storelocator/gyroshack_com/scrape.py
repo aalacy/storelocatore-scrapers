@@ -67,7 +67,7 @@ def extract_address(location: str):
             city = split_front[1]
         # split back into two
         split_back = location_back.split(" ")
-        if len(split_front) == 2:
+        if len(split_back) == 2:
             state = split_back[0]
             zip_code = split_back[1]
     return {"address": address, "city": city, "state": state, "zip_code": zip_code}
