@@ -8,6 +8,5 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
-
-
-address contains state name,address with no numb,zipcode moy in state and same lat & lng
+ 
+address with no number,address contains  state name,invalid zip,same lat & lng  and  i checked all data is true this website
