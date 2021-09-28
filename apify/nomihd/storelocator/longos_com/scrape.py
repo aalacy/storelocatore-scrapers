@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from sgrequests import SgRequests
 from sglogging import sglog
-import lxml.html
 import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "eyecarecenter.com"
+website = "longos.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
@@ -23,50 +22,58 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.eyecarecenter.com/locations/"
-    api_url = (
-        "https://www.eyecarecenter.com/_next/data/O0NLiJCm31U17G570Gx9B/locations.json"
-    )
+    search_url = "https://www.longos.com/locations/"
+    api_url = "https://api.longos.com/ggcommercewebservices/v2/groceryGatewaySpa/stores?fields=stores(displayName,name,address(FULL),%20%20%20%20%20%20openingHours(FULL),geoPoint(FULL),holidayHours(FULL))&lang=en&curr=CAD&pageSize=100"
 
     api_res = session.get(api_url, headers=headers)
     json_res = json.loads(api_res.text)
-    stores = json_res["pageProps"]["locations"]
+    stores = json_res["stores"]
 
     for store in stores:
 
-        page_url = search_url + store["slug"]
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
+        page_url = search_url
 
-        location_name = store["name"]
+        location_name = store["displayName"]
         location_type = "<MISSING>"
+        store_info = store["address"]
+
         locator_domain = website
 
-        street_address = store["address1"].strip()
+        street_address = store_info["line1"].strip()
+        if store_info.get("line2"):
+            street_address = (store_info["line2"] + " " + street_address).strip()
 
-        city = store["city"]
-        state = store["state"]
-        zip = store["zipCode"]
+        city = store_info["town"]
 
-        country_code = "US"
+        if store_info.get("region"):
+            state = store_info["region"]["isocodeShort"]
+        else:
+            state = "<MISSING>"
+        zip = store_info["postalCode"]
 
-        store_number = store["sysId"]
+        country_code = store_info["country"]["isocode"]
 
-        phone = store["phoneNumber"]
+        store_number = store_info["id"]
 
-        hours = list(
-            filter(
-                str,
-                store_sel.xpath(
-                    '//div[./h2//text()="Hours of Operation:"]/div/div//text()'
-                ),
-            )
+        phone = store_info["phone"]
+
+        hours_info = store["openingHours"]["weekDayOpeningList"]
+
+        hour_list = []
+        for hour in hours_info:
+            if hour.get("closed"):
+                hour_list.append(f"{hour['weekDay']}: Closed")
+            else:
+                hour_list.append(
+                    f"{hour['weekDay']}: {hour['openingTime']['formattedHour']} - {hour['closingTime']['formattedHour']}"
+                )
+
+        hours_of_operation = "; ".join(hour_list).replace("day; ", "day: ").strip()
+
+        latitude, longitude = (
+            store["geoPoint"]["latitude"],
+            store["geoPoint"]["longitude"],
         )
-
-        hours_of_operation = "; ".join(hours).replace("day; ", "day: ").strip()
-
-        latitude, longitude = store["map"]["lat"], store["map"]["lon"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -90,7 +97,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
