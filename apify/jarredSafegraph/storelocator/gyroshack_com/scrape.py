@@ -1,7 +1,7 @@
 import re as regEx
 from typing import Any
 
-import bs4
+from bs4 import BeautifulSoup
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgrequests.sgrequests import SgRequestsBase
@@ -33,7 +33,7 @@ def fetch_raw_using():
             )
         )
 
-        soup = bs4.BeautifulSoup(locations_page.text, features="lxml")
+        soup = BeautifulSoup(locations_page.text, features="lxml")
         for store in soup.find_all("item"):
             yield xml_to_dict(store)
 
@@ -60,13 +60,14 @@ def extract_address(location: str):
 
 
 def extract_hours(operatinghours: str):
-    operatinghours = regEx.sub(r"<br>", ", ", operatinghours).strip()
-    soup = bs4.BeautifulSoup(operatinghours, "lxml")
-    hours = ""
-    for tag in soup.find_all("div"):
-        hours = tag.text if hours == "" else hours + ", " + tag.text
-    hours = (hours.replace("\r\n", "")).rstrip(", ")
+  if operatinghours is not None:
+    hours = operatinghours.replace("\r\n", "")
+    tags = regEx.compile('<.*?>')
+    hours = regEx.sub(tags, ' ', hours).strip()
+    hours = regEx.sub('  ', ', ', hours).strip()
     return hours
+  else:
+    return ""
 
 
 def transform_record(raw: Any) -> SgRecord:
