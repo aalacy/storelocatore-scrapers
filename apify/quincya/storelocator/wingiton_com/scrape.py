@@ -1,9 +1,7 @@
-import re
 import time
 
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -21,7 +19,6 @@ def fetch_data(sgw: SgWriter):
     base_link = "https://www.wingiton.com/locations"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    headers = {"User-Agent": user_agent}
 
     driver = SgChrome(user_agent=user_agent).driver()
     driver.get(base_link)
