@@ -25,6 +25,8 @@ def fetch_data():
             if "Cape Town" in _["compositeAddress"]:
                 city = "Cape Town"
                 street_address = _["compositeAddress"].split(city)[0]
+            if street_address:
+                street_address = street_address.replace("East", "")
             hours = []
             if _["openingHours"]:
                 for day, hh in _["openingHours"].items():
@@ -33,9 +35,7 @@ def fetch_data():
                 page_url="https://virginactive.co.za/clubs",
                 store_number=_["clubId"],
                 location_name=_["name"],
-                street_address=street_address.replace("East", "")
-                .replace("Parow", "")
-                .strip(),
+                street_address=street_address.replace("Parow", "").strip(),
                 city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
