@@ -3,8 +3,8 @@ fuzzywuzzy==0.18.0
 sglogging==0.0.4
 sgvalidator==0.0.71
 --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-sgrequests==0.2.1
-sgzip==0.10.2
-sgscrape==0.1.13
+sgrequests==0.2.9
+sgzip==0.10.4
+sgscrape==0.2.4
 ordered_set==4.0.2
 python-Levenshtein==0.12.2
