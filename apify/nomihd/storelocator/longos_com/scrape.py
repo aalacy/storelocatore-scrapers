@@ -9,8 +9,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "longos.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
     "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
     "sec-ch-ua-mobile": "?0",
@@ -25,72 +23,73 @@ def fetch_data():
     search_url = "https://www.longos.com/locations/"
     api_url = "https://api.longos.com/ggcommercewebservices/v2/groceryGatewaySpa/stores?fields=stores(displayName,name,address(FULL),%20%20%20%20%20%20openingHours(FULL),geoPoint(FULL),holidayHours(FULL))&lang=en&curr=CAD&pageSize=100"
 
-    api_res = session.get(api_url, headers=headers)
-    json_res = json.loads(api_res.text)
-    stores = json_res["stores"]
+    with SgRequests(proxy_country="us", dont_retry_status_codes=([404])) as session:
+        api_res = session.get(api_url, headers=headers)
+        json_res = json.loads(api_res.text)
+        stores = json_res["stores"]
 
-    for store in stores:
+        for store in stores:
 
-        page_url = search_url
+            page_url = search_url
 
-        location_name = store["displayName"]
-        location_type = "<MISSING>"
-        store_info = store["address"]
+            location_name = store["displayName"]
+            location_type = "<MISSING>"
+            store_info = store["address"]
 
-        locator_domain = website
+            locator_domain = website
 
-        street_address = store_info["line1"].strip()
-        if store_info.get("line2"):
-            street_address = (store_info["line2"] + " " + street_address).strip()
+            street_address = store_info["line1"].strip()
+            if store_info.get("line2"):
+                street_address = (store_info["line2"] + " " + street_address).strip()
 
-        city = store_info["town"]
+            city = store_info["town"]
 
-        if store_info.get("region"):
-            state = store_info["region"]["isocodeShort"]
-        else:
-            state = "<MISSING>"
-        zip = store_info["postalCode"]
-
-        country_code = store_info["country"]["isocode"]
-
-        store_number = store_info["id"]
-
-        phone = store_info["phone"]
-
-        hours_info = store["openingHours"]["weekDayOpeningList"]
-
-        hour_list = []
-        for hour in hours_info:
-            if hour.get("closed"):
-                hour_list.append(f"{hour['weekDay']}: Closed")
+            if store_info.get("region"):
+                state = store_info["region"]["isocodeShort"]
             else:
-                hour_list.append(
-                    f"{hour['weekDay']}: {hour['openingTime']['formattedHour']} - {hour['closingTime']['formattedHour']}"
-                )
+                state = "<MISSING>"
+            zip = store_info["postalCode"]
 
-        hours_of_operation = "; ".join(hour_list).replace("day; ", "day: ").strip()
+            country_code = store_info["country"]["isocode"]
 
-        latitude, longitude = (
-            store["geoPoint"]["latitude"],
-            store["geoPoint"]["longitude"],
-        )
+            store_number = store_info["id"]
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            phone = store_info["phone"]
+
+            hours_info = store["openingHours"]["weekDayOpeningList"]
+
+            hour_list = []
+            for hour in hours_info:
+                if hour.get("closed"):
+                    hour_list.append(f"{hour['weekDay']}: Closed")
+                else:
+                    hour_list.append(
+                        f"{hour['weekDay']}: {hour['openingTime']['formattedHour']} - {hour['closingTime']['formattedHour']}"
+                    )
+
+            hours_of_operation = "; ".join(hour_list).replace("day; ", "day: ").strip()
+
+            latitude, longitude = (
+                store["geoPoint"]["latitude"],
+                store["geoPoint"]["longitude"],
+            )
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():

@@ -1,6 +1,7 @@
 import re
 import json
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgselenium.sgselenium import SgFirefox
@@ -44,6 +45,7 @@ def fetch_data():
 
         with SgFirefox() as driver:
             driver.get(page_url)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
         poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
         poi = json.loads(poi)
