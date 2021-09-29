@@ -36,14 +36,18 @@ def fetch_data():
             if sp1.select_one("div.self-center div.p"):
                 total_cnt += 1
                 logger.info(f"[{total_cnt}] in total")
-                raw_address = " ".join(
-                    sp1.select_one("div.self-center div.p").stripped_strings
-                )
+                _addr = list(sp1.select_one("div.self-center div.p").stripped_strings)
+                raw_address = " ".join(_addr)
                 addr = parse_address_intl(raw_address)
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 city = addr.city
+                if not city:
+                    if len(_addr) > 1:
+                        city = _addr[1].split(",")[0].strip()
+                    else:
+                        city = raw_address.split(",")[-2].split()[-1]
                 state = addr.state
                 zip_postal = addr.postcode
             else:
@@ -78,7 +82,7 @@ def fetch_data():
                 city=city,
                 state=state,
                 zip_postal=zip_postal,
-                country_code="UK",
+                country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
                 latitude=coord[0],
