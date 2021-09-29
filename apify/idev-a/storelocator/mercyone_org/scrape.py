@@ -44,26 +44,20 @@ def fetch_data():
             for _ in locations:
                 addr = _["LocationAddress"].split(",")
                 page_url = locator_domain + _["DirectUrl"]
-                try:
-                    yield SgRecord(
-                        page_url=page_url,
-                        location_name=_["Title"],
-                        street_address=" ".join(addr[:-2]),
-                        city=addr[-2].strip(),
-                        state=addr[-1].strip().split(" ")[0].strip(),
-                        zip_postal=addr[-1].strip().split(" ")[-1].strip(),
-                        country_code="US",
-                        phone=_["LocationPhoneNum"],
-                        latitude=_["Latitude"],
-                        longitude=_["Longitude"],
-                        locator_domain=locator_domain,
-                        raw_address=_["LocationAddress"],
-                    )
-                except Exception as err:
-                    print(err)
-                    import pdb
-
-                    pdb.set_trace()
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=_["Title"],
+                    street_address=" ".join(addr[:-2]),
+                    city=addr[-2].strip(),
+                    state=addr[-1].strip().split(" ")[0].strip(),
+                    zip_postal=addr[-1].strip().split(" ")[-1].strip(),
+                    country_code="US",
+                    phone=_["LocationPhoneNum"],
+                    latitude=_["Latitude"],
+                    longitude=_["Longitude"],
+                    locator_domain=locator_domain,
+                    raw_address=_["LocationAddress"],
+                )
 
 
 if __name__ == "__main__":
