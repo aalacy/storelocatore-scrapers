@@ -43,7 +43,6 @@ def fetch_data(sgw: SgWriter):
         if street_address.find(";") != -1 and street_address.find("1435") == -1:
             street_address = street_address.split(";")[1].strip()
         street_address = street_address.replace(";", " ").strip()
-        print(street_address)
         state = a.get("address").get("region")
         postal = a.get("address").get("post_code")
         country_code = a.get("address").get("country")
