@@ -36,7 +36,7 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             yield SgRecord(
                 page_url=base_url,
-                location_name=_["name"],
+                location_name=" ".join(bs(_["name"], "lxml").stripped_strings),
                 store_number=_["id"],
                 street_address=street_address,
                 city=addr.city,
