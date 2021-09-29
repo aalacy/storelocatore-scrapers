@@ -60,14 +60,14 @@ def extract_address(location: str):
 
 
 def extract_hours(operatinghours: str):
-  if operatinghours is not None:
-    hours = operatinghours.replace("\r\n", "")
-    tags = regEx.compile('<.*?>')
-    hours = regEx.sub(tags, ' ', hours).strip()
-    hours = regEx.sub('  ', ', ', hours).strip()
-    return hours
-  else:
-    return ""
+    if operatinghours is not None:
+        hours = operatinghours.replace("\r\n", "")
+        tags = regEx.compile("<.*?>")
+        hours = regEx.sub(tags, " ", hours).strip()
+        hours = regEx.sub("  ", ", ", hours).strip()
+        return hours
+    else:
+        return ""
 
 
 def transform_record(raw: Any) -> SgRecord:
