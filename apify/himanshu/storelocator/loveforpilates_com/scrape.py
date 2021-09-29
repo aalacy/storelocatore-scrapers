@@ -1,3 +1,4 @@
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -21,6 +22,10 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[span[@class="thumb-info-social-icons"]]')
     for poi_html in all_locations:
+        page_url = poi_html.xpath(".//h3/a/@href")[0]
+        loc_response = session.get(page_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi_html.xpath(".//h4/text()")[0]
         raw_address = poi_html.xpath(
             './/li[strong[contains(text(), "Address")]]/text()'
@@ -37,9 +42,12 @@ def fetch_data():
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
+        data = loc_dom.xpath('//div[contains(@id, "wpgmza_map")]/@data-settings')[0]
+        data = json.loads(data)
+
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=addr.city,
@@ -49,8 +57,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude="",
-            longitude="",
+            latitude=data["map_start_lat"],
+            longitude=data["map_start_lng"],
             hours_of_operation=hoo,
         )
 

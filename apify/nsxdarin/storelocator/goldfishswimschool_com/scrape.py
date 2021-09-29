@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 session = SgRequests()
 headers = {
@@ -15,19 +16,14 @@ logger = SgLogSetup().get_logger("goldfishswimschool_com")
 
 def fetch_data():
     locs = []
-    url = "https://www.goldfishswimschool.com/SiteMap.xml"
-    r = session.get(url, headers=headers)
+    url = "https://www.goldfishswimschool.com/locations/?CallAjax=GetLocations"
+    r = session.post(url, headers=headers)
     website = "goldfishswimschool.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if (
-            "/contact-us/</loc>" in line
-            and "//www.goldfishswimschool.com/contact-us/" not in line
-        ):
-            locs.append(line.split("<loc>")[1].split("/contact")[0])
+    for item in json.loads(r.content):
+        locs.append("https://www.goldfishswimschool.com" + (item["Path"]))
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -79,6 +75,10 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if name != "":
+            if "burlington-ont" in loc:
+                zc = "L7M 4X7"
+            if "/oakville" in loc:
+                zc = "L6H 2R4"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

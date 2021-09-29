@@ -24,6 +24,12 @@ def fetch_data():
             hours = []
             for hh in list(sp1.select("section#intro p")[1].stripped_strings)[1:-1]:
                 hours.append(hh.split("Reservations")[0].strip())
+            coord = (
+                sp1.select_one("div.gmaps")["data-gmaps-static-url-mobile"]
+                .split("&center=")[1]
+                .split("&")[0]
+                .split("%2C")
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h2.text.strip(),
@@ -35,6 +41,8 @@ def fetch_data():
                 phone=_.select("p")[-1].text.strip(),
                 locator_domain=locator_domain,
                 raw_address=" ".join(addr),
+                latitude=coord[0],
+                longitude=coord[1],
                 hours_of_operation="; ".join(hours).replace(",", ";").replace("–", "-"),
             )
 

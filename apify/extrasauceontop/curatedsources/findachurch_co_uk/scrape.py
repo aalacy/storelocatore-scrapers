@@ -229,7 +229,7 @@ def get_location(request_url):
 
 
 def scrape_loc_urls():
-    url_list = [loc for loc in crawl_state.request_stack_iter()][:10000]
+    url_list = [loc for loc in crawl_state.request_stack_iter()]
     if len(url_list) < 50:
         log.info("no records, did it run with a proxy?")
         raise Exception

@@ -4,6 +4,34 @@ from sgselenium import SgChrome
 import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+from bs4 import BeautifulSoup as bs
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+def _p(val):
+    if (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
 
 
 def fetch_data():
@@ -30,12 +58,34 @@ def fetch_data():
                 street_address = cross_street
             yield SgRecord(
                 page_url=base_url,
-                location_name=_["title"],
+                location_name=_["address"],
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
                 country_code="US",
-                phone=_["phone_number"],
+                phone=_p(_["phone_number"]),
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
+
+        south_california = bs(driver.page_source, "lxml").select(
+            'div._1Bme7 div[role="gridcell"] > div > div[data-testid="inline-content"] > div[data-testid="mesh-container-content"]'
+        )[-3:]
+        for _ in south_california:
+            p = _.select("p")
+            hours = []
+            temp = list(_.findChildren("div", recursive=False)[4].stripped_strings)[1:]
+            for x in range(0, len(temp), 2):
+                hours.append(f"{temp[x]} {temp[x+1]}")
+            phone = _.findChildren("div", recursive=False)[5].p.text.strip()
+            yield SgRecord(
+                page_url=base_url,
+                location_name=_.h5.text.strip(),
+                street_address=street_address,
+                city=p[0].text.strip(),
+                state="ca",
+                country_code="US",
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
@@ -49,6 +99,7 @@ if __name__ == "__main__":
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.PHONE,
+                    SgRecord.Headers.LOCATION_NAME,
                 }
             )
         )
