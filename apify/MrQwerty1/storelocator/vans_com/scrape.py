@@ -146,8 +146,7 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
 def scrape():
     log.info(f"Start Crawling {DOMAIN} ...")
     start = time.time()
-    state = CrawlStateSingleton.get_instance()
-
+    CrawlStateSingleton.get_instance().save(override=True)
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         expected_search_radius_miles=300,
