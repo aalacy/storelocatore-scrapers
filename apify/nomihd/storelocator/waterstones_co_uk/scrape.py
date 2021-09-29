@@ -8,8 +8,18 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 from sgselenium.sgselenium import SgChrome
+import ssl
 
-website = "waterstones.co.uk"
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+website = "waterstones.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
@@ -26,6 +36,8 @@ def fetch_data():
         for store in stores:
             locator_domain = website
             location_name = store["name"]
+            if location_name == "Online Events" or store["country_id"] != "235":
+                continue
             page_url = "https://www.waterstones.com" + store["url"]
             latitude = store["latitude"]
             longitude = store["longitude"]
@@ -39,7 +51,10 @@ def fetch_data():
             country_code = "GB"
             state = "<MISSING>"
             phone = store["telephone"]
-            location_type = store["closed_message"]
+            location_type = ""
+            if store["open_status"] == "0":
+                location_type = store["closed_message"]
+
             hours_of_operation = "<MISSING>"
 
             country_code = "GB"

@@ -63,9 +63,13 @@ def fetch_data():
         code = response.status_code
         while code != 200:
             sleep(random.uniform(5.5, 15.9))
+            session = SgRequests()
             response = session.get("https://doitbest.com/store-locator", headers=hdr)
             dom = etree.HTML(response.text)
-            csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
+            csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')
+            if not csrfid:
+                continue
+            csrfid = csrfid[0]
             token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
             body = {
                 "StoreLocatorForm": {
@@ -82,7 +86,10 @@ def fetch_data():
             session = SgRequests()
             response = session.get("https://doitbest.com/store-locator", headers=hdr)
             dom = etree.HTML(response.text)
-            csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
+            csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')
+            if not csrfid:
+                continue
+            csrfid = csrfid[0]
             token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
             body = {
                 "StoreLocatorForm": {
