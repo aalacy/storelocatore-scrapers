@@ -5,12 +5,11 @@ from bs4 import BeautifulSoup, ResultSet
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgrequests.sgrequests import SgRequestsBase
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
-
+from sgpostal.sgpostal import parse_address_usa
 
 domain = "https://www.gyroshack.com/"
 logger = sglog.SgLogSetup().get_logger(logger_name=domain)
@@ -43,19 +42,19 @@ def xml_to_dict(store: ResultSet) -> dict:
 
 
 def extract_address(location: str):
-    parse_address_usa = parse_address(USA_Best_Parser(), location)
-    parts = [parse_address_usa.street_address_1, parse_address_usa.street_address_2]
+    ad = parse_address_usa(location)
+    parts = [ad.street_address_1, ad.street_address_2]
     address = " ".join([part for part in parts if part]).strip()
     return {
         "address": address,
-        "city": parse_address_usa.city,
-        "state": parse_address_usa.state,
-        "zip_code": parse_address_usa.postcode,
+        "city": ad.city,
+        "state": ad.state,
+        "zip_code": ad.postcode,
     }
 
 
-def extract_hours(operatinghours: str):
-    if operatinghours is not None:
+def extract_hours(operatinghours: str) -> str:
+    if operatinghours:
         operatinghours = operatinghours.replace("\n", "")
         operatinghours = operatinghours.replace("\r", "")
         internal_br = "(?<=[a-zA-Z])<br>(?=[a-zA-Z])"
@@ -80,7 +79,7 @@ def transform_record(raw: Any) -> SgRecord:
         city=address_dict.get("city"),
         state=address_dict.get("state"),
         zip_postal=address_dict.get("zip_code"),
-        country_code=raw.get("country"),
+        country_code="US",
         phone=raw.get("telephone"),
         latitude=raw.get("latitude"),
         longitude=raw.get("longitude"),
@@ -92,7 +91,7 @@ def transform_record(raw: Any) -> SgRecord:
 
 if __name__ == "__main__":
     logger.info(f"starting scrape for {domain}")
-    deduper = SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    deduper = SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     with SgWriter(deduper) as writer:
         for record in fetch_locations():
             writer.write_row(transform_record(record))
