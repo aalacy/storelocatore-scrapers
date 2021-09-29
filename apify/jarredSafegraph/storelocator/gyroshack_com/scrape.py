@@ -1,7 +1,7 @@
 import re as regEx
 from typing import Any
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, ResultSet
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgrequests.sgrequests import SgRequestsBase
@@ -16,7 +16,7 @@ domain = "https://www.gyroshack.com/"
 logger = sglog.SgLogSetup().get_logger(logger_name=domain)
 
 
-def fetch_raw_using():
+def fetch_locations():
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -38,7 +38,7 @@ def fetch_raw_using():
             yield xml_to_dict(store)
 
 
-def xml_to_dict(store) -> dict:
+def xml_to_dict(store: ResultSet) -> dict:
     store_tags = store.find_all()
     store_dict = {}
     for tag in store_tags:
@@ -48,9 +48,8 @@ def xml_to_dict(store) -> dict:
 
 def extract_address(location: str):
     parse_address_usa = parse_address(USA_Best_Parser(), location)
-    address = f"{parse_address_usa.street_address_1} {parse_address_usa.street_address_2}".replace(
-        "None", ""
-    ).strip()
+    parts = [parse_address_usa.street_address_1, parse_address_usa.street_address_2]
+    address = " ".join([part for part in parts if part]).strip()
     return {
         "address": address,
         "city": parse_address_usa.city,
@@ -99,6 +98,6 @@ if __name__ == "__main__":
     logger.info(f"starting scrape for {domain}")
     deduper = SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     with SgWriter(deduper) as writer:
-        for record in fetch_raw_using():
+        for record in fetch_locations():
             writer.write_row(transform_record(record))
     logger.info("scrape complete")
