@@ -7,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 log = sglog.SgLogSetup().get_logger(logger_name="ultramar.ca")
 
@@ -20,18 +20,15 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
     session = SgRequests()
 
-    max_results = 15
-    max_distance = 500
     found = []
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
+        max_search_distance_miles=1000,
+        expected_search_radius_miles=500,
+        granularity=Grain_4(),
     )
-
     for lat, lng in search:
-
         base_link = (
             "https://www.ultramar.ca/en-on/find-services-stations/ajax-update-store-list/?latitude=%s&longitude=%s&is_ultralave=on"
             % (lat, lng)
