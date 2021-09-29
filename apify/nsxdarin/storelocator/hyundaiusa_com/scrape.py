@@ -49,7 +49,10 @@ def fetch_data():
                     if '"redCapUrl":' in item:
                         website = "hyundaiusa.com"
                         typ = "<MISSING>"
-                        loc = "<MISSING>"
+                        try:
+                            loc = item.split('"')[0]
+                        except:
+                            loc = "<MISSING>"
                         store = item.split('"dealerCd":"')[1].split('"')[0]
                         name = item.split('"dealerNm":"')[1].split('"')[0]
                         add = (
