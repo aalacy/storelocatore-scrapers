@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 import json
@@ -40,9 +40,11 @@ def fetch_data():
             street_address = _["addressLine2"]
             if _.get("addressLine3"):
                 street_address += " " + _["addressLine3"]
-            phone = _.get("phoneLocal")
-            if not phone:
-                phone = _.get("phoneTollFree")
+            phone = ""
+            if _.get("phoneLocal"):
+                phone = _.get("phoneLocal").replace(".", "").replace("-", "").strip()
+            if not phone and _.get("phoneTollFree"):
+                phone = _.get("phoneTollFree").replace(".", "").replace("-", "").strip()
             yield SgRecord(
                 page_url=loc_url,
                 location_name=_["altName"],
@@ -66,7 +68,12 @@ def fetch_data():
             ]
             phone = ""
             if loc.select_one("div.campus-dir-item__phone a"):
-                phone = loc.select_one("div.campus-dir-item__phone a").text.strip()
+                phone = (
+                    loc.select_one("div.campus-dir-item__phone a")
+                    .text.replace(".", "")
+                    .replace("-", "")
+                    .strip()
+                )
             addr = loc.select_one("div.campus-dir-item__location a").text.split(",")
             coord = ["", ""]
             href = loc.select_one("div.campus-dir-item__location a")["href"]
@@ -94,7 +101,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.CITY, SgRecord.Headers.PHONE}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
