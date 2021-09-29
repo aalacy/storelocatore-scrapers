@@ -76,6 +76,12 @@ def cleanup_this(raw):
         clean["hours"] = clean["hours"].replace('"', "").replace("\n", "; ")
         clean["phone"] = hours[0].text.strip()
         clean["phone"] = clean["phone"].replace('"', "").replace("\n", "; ")
+        try:
+            phonyBackup = clean["phone"].split(" ", 1)[0]
+            if len(phonyBackup) >= 10:
+                clean["phone"] = phonyBackup
+        except Exception:
+            pass
     except Exception:
         clean["hours"] = "<MISSING>"
         clean["phone"] = "<MISSING>"
