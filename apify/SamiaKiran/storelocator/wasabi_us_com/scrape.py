@@ -65,6 +65,12 @@ def fetch_data():
                 .replace("Opening Hours:", "")
             )
             country_code = "US"
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
