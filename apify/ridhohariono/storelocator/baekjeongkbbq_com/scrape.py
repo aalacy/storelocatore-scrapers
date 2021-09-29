@@ -9,9 +9,9 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 import json
 
-DOMAIN = "crazyshirts.com"
-BASE_URL = "https://www.crazyshirts.com"
-LOCATION_URL = "https://www.crazyshirts.com/store-locator/all-stores.do"
+DOMAIN = "baekjeongkbbq.com"
+BASE_URL = "https://www.baekjeongkbbq.com"
+LOCATION_URL = "https://www.baekjeongkbbq.com/locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -55,65 +55,57 @@ def pull_content(url):
 
 
 def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
         return "<MISSING>", "<MISSING>"
-    return longlat.group(2), longlat.group(1)
-
-
-def get_json(soup):
-    script = soup.find(
-        "script",
-        string=re.compile(r"MarketLive.StoreLocator.storeLocatorDetailPageReady"),
-    )
-    data = re.search(
-        r'{"resultCount":1,"results":\[(.*)\]}', script.string, re.MULTILINE
-    )
-    return json.loads(data.group(1))
+    return latlong.group(1), latlong.group(2)
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("div", {"class": "eslStore ml-storelocator-headertext"})
+    contents = soup.select(
+        "main div.content  div.row.sqs-row > div.col.sqs-col-12.span-12 > div.row.sqs-row "
+    )
     for row in contents:
-        page_url = BASE_URL + row.find("a")["href"]
-        location_name = row.text.strip()
-        if "STORE CLOSED" in location_name:
-            continue
-        content = pull_content(page_url)
-        info = get_json(content)
-        street_address = info["address"]["street1"]
-        if info["address"]["street2"]:
-            street_address += ", " + info["address"]["street2"]
-        if info["address"]["street3"]:
-            street_address += ", " + info["address"]["street3"]
-        if "Planet Hollywood Resort & Casino, " in street_address:
-            street_address = street_address.replace(
-                "Planet Hollywood Resort & Casino, ", ""
-            )
-        city = info["address"]["city"]
-        state = info["address"]["stateCode"]
-        zip_postal = info["address"]["postalCode"]
-        phone = info["address"]["phone"]
-        content.find("span", {"class": "ml-storelocator-hours-details"}).find(
-            "strong"
-        ).decompose()
-        content.find("span", {"class": "ml-storelocator-hours-details"}).find(
-            "a"
-        ).decompose()
-        hours_of_operation = content.find(
-            "span", {"class": "ml-storelocator-hours-details"}
-        ).get_text(strip=True, separator=",")
+        content = row.find_all("div", {"class": "col sqs-col-3 span-3"})
+        info = (
+            row.find("p", {"style": "white-space:pre-wrap;"})
+            .get_text(strip=True, separator="@")
+            .replace("\ufeff", "")
+            .strip()
+            .split("@")
+        )
+        location_name = info[0].strip()
+        raw_address = f"{info[1]}, {info[2]}"
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = info[3]
+        remove_elements = content[1].find_all("strong")
+        for element in remove_elements:
+            element.decompose()
+        hours_of_operation = re.sub(
+            r",\*Open for take-out & delivery.*",
+            "",
+            content[1]
+            .get_text(strip=True, separator=",")
+            .replace(" | ", ":")
+            .replace("day:", "day : ")
+            .strip(),
+        )
         country_code = "us"
         store_number = MISSING
-        location_type = "crazyshirts"
-        latitude = info["location"]["latitude"]
-        longitude = info["location"]["longitude"]
+        location_type = "baekjeongkbbq"
+        latlong = json.loads(
+            row.find("div", {"class": "col sqs-col-6 span-6"}).find("div")[
+                "data-block-json"
+            ]
+        )
+        latitude = latlong["location"]["markerLat"]
+        longitude = latlong["location"]["markerLng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=page_url,
+            page_url=LOCATION_URL,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -126,6 +118,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
@@ -136,7 +129,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )

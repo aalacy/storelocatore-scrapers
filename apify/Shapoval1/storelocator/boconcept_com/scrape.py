@@ -32,6 +32,7 @@ def fetch_data(sgw: SgWriter):
             location_name = "".join(j.get("name"))
             if location_name.find("salon zamknięty") != -1:
                 continue
+            country_code = country.upper()
             location_type = j.get("storeType") or "<MISSING>"
             street_address = (
                 f"{j.get('address1')} {j.get('address2')} {j.get('address3')}".replace(
@@ -65,7 +66,7 @@ def fetch_data(sgw: SgWriter):
                 postal = "<MISSING>"
 
             city = str(j.get("city")).replace("None", "").strip() or "<MISSING>"
-            country_code = country.upper()
+
             if country_code == "JP" and postal == "<MISSING>":
                 a = parse_address(International_Parser(), street_address)
                 street_address = f"{a.street_address_1} {a.street_address_2}".replace(
@@ -83,6 +84,7 @@ def fetch_data(sgw: SgWriter):
             phone = phone.replace("＊電話が繋がらない場合はメールにてお問合せください。", "").strip()
             if phone == "＊5/1(金)まではメールにてお問合せください。" or phone == "bc1@boconcept.ru":
                 phone = "<MISSING>"
+            phone = phone.replace("None", "").strip() or "<MISSING>"
             session = SgRequests()
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
@@ -98,6 +100,19 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             hours_of_operation = " ".join(hours_of_operation.split())
+            if phone == "<MISSING>":
+                phone = (
+                    "".join(
+                        tree.xpath('//div[@class="store-header__contact"]/p/text()[1]')
+                    )
+                    .replace("Tel", "")
+                    .replace(".", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+            if phone.find("＊") != -1:
+                phone = phone.split("＊")[0].replace("電話番号", "").strip()
+            phone = phone.replace("Tél", "").strip()
 
             row = SgRecord(
                 locator_domain=locator_domain,
