@@ -17,7 +17,6 @@ def fetch_data():
     locs = []
     url = "https://www.mayoclinichealthsystem.org/HealthSystemInternet/LocationAddress/GetLocationMapRailResults?page=1&pageSize=100&sourceLat=44.02209&sourceLong=-92.46997&activeSite=hsinternet"
     r = session.get(url, headers=headers)
-    infos = []
     website = "mayoclinichealthsystem.org"
     typ = "<MISSING>"
     country = "US"
