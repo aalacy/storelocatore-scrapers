@@ -42,7 +42,11 @@ def fetch_data():
             for store_url in stores:
                 page_url = store_url
                 locator_domain = website
-
+                if (
+                    page_url
+                    == "https://restaurants.pizzahut.co.in/pizza-hut-ph-padmini-mall-chittorgarh-pizza-restaurant-gandhi-nagar-sector-3-chittorgarh-122098/Home"
+                ):
+                    continue
                 log.info(page_url)
                 store_res = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(store_res.text)
