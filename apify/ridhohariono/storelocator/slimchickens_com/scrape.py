@@ -13,6 +13,7 @@ from sgpostal.sgpostal import parse_address_intl
 DOMAIN = "slimchickens.com"
 BASE_URL = "https://www.slimchickens.com/"
 LOCATION_URL = "https://slimchickens.com/location-menus/"
+UK_LOCATION_URL = "https://www.slimchickens.co.uk/location-menus/"
 API_URL = "https://storerocket.io/api/user/56wpZ22pAn/locations?radius=50&units=miles"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -59,6 +60,16 @@ def getAddress(raw_address):
         log.info(f"No valid address {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
+
+
+def get_latlong(url):
+    coord = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
+    if not coord:
+        coord = re.search(r"!2d([\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
+        if not coord:
+            return "<MISSING>", "<MISSING>"
+        return coord.group(1), coord.group(2)
+    return coord.group(2), coord.group(1)
 
 
 def fetch_data():
@@ -110,10 +121,78 @@ def fetch_data():
         phone = [e for e in row["fields"] if e["name"] == "Phone"]
         phone = phone[0]["pivot_field_value"] if phone else SgRecord.MISSING
         country_code = "US" if len(row["country"]) < 1 else row["country"]
-        store_number = row["id"]
-        location_type = "slimchickens"
+        store_number = MISSING
+        location_type = "slimchickens-" + country_code
         latitude = row["lat"]
         longitude = row["lng"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+    # Scrape UK
+    soup = pull_content(UK_LOCATION_URL)
+    links = soup.find("li", {"id": "nav-menu-item-11723"}).find_all("a")
+    del links[0]
+    for row in links:
+        if "coming-soon" in row["href"]:
+            continue
+        if "slimchickens.co.uk" not in row["href"]:
+            page_url = "http://www.slimchickens.co.uk" + row["href"]
+        else:
+            page_url = row["href"]
+        content = pull_content(page_url)
+        location_name = content.find(
+            "div", {"class": "title_subtitle_holder_inner"}
+        ).text.strip()
+        raw_address = (
+            content.find("div", {"id": "MapAddress"})
+            .get_text(strip=True, separator=",")
+            .strip()
+        )
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = (
+            content.find(
+                re.compile(r"h4|strong"), text=re.compile(r"PHONE:|PHONE:&nbsp;")
+            )
+            .find_next(re.compile(r"p|div"))
+            .text.strip()
+        )
+        if phone == "TBC":
+            phone = MISSING
+        hours_of_operation = (
+            content.find(
+                re.compile(r"h4|strong"), text=re.compile(r"HOURS:|HOURS:&nbsp;")
+            )
+            .parent.get_text(strip=True, separator=",")
+            .replace("HOURS:,", "")
+            .strip()
+        )
+        country_code = "UK"
+        store_number = MISSING
+        location_type = "slimchickens-" + country_code
+        try:
+            map_link = content.find("iframe", {"src": re.compile(r"\/maps\/embed\?")})[
+                "src"
+            ]
+            latitude, longitude = get_latlong(map_link)
+        except:
+            latitude = MISSING
+            longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
