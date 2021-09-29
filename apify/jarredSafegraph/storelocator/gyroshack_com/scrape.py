@@ -61,10 +61,14 @@ def extract_address(location: str):
 
 def extract_hours(operatinghours: str):
     if operatinghours is not None:
-        hours = operatinghours.replace("\r\n", "")
+        operatinghours = operatinghours.replace("\n", "")
+        operatinghours = operatinghours.replace("\r", "")
+        internal_br = "(?<=[a-zA-Z])<br>(?=[a-zA-Z])"
+        hours = regEx.sub(internal_br, ", ", operatinghours).strip()
         tags = regEx.compile("<.*?>")
         hours = regEx.sub(tags, " ", hours).strip()
-        hours = regEx.sub("  ", ", ", hours).strip()
+        double_space = regEx.compile("  ")
+        hours = regEx.sub(double_space, ", ", hours).strip()
         return hours
     else:
         return ""
