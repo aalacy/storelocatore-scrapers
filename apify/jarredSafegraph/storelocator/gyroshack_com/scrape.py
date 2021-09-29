@@ -39,11 +39,7 @@ def fetch_locations():
 
 
 def xml_to_dict(store: ResultSet) -> dict:
-    store_tags = store.find_all()
-    store_dict = {}
-    for tag in store_tags:
-        store_dict[tag.name] = tag.getText()
-    return store_dict
+    return {tag.name: tag.getText() for tag in store.find_all()}
 
 
 def extract_address(location: str):
