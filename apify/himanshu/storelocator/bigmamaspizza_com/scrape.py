@@ -50,7 +50,12 @@ def fetch_data():
                     hours_of_operation = "<MISSING>"
             else:
                 page_url = "<MISSING>"
-                hours_of_operation = page_url.text
+                try:
+                    hours_of_operation = location.find(
+                        "a", {"class": "btn store-order"}
+                    ).text
+                except:
+                    pass
 
             location_details = list(location.stripped_strings)
             locator_domain = "https://bigmamaspizza.com"
