@@ -67,9 +67,23 @@ def get_hoo(page_url):
         text = text.replace("Visiting hours", "").strip()
         if len(text) > 0:
             hoo.append(text)
+    hoo = " ".join(hoo)
+    hoo = (
+        hoo.replace(
+            "Please contact us for the most current visitor and support person policy.",
+            "",
+        )
+        .replace("Please contact us for the most current visitor policy.", "")
+        .replace(
+            "Please contact us for most current visitation and support person policy.",
+            "",
+        )
+        .replace("Visiting Hours", "")
+        .strip()
+    )
     if len(hoo) == 0:
         return MISSING
-    return " ".join(hoo)
+    return hoo
 
 
 def fetch_data():
