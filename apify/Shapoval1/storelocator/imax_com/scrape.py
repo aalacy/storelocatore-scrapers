@@ -193,6 +193,10 @@ def get_data(url, sgw: SgWriter):
     latitude = js.get("geo").get("latitude") or "<MISSING>"
     longitude = js.get("geo").get("longitude") or "<MISSING>"
     phone = js.get("telephone") or "<MISSING>"
+    if page_url == "https://www.imax.com/theatres/109-cinemas-futako-tamagawa-imax":
+        city = "Setagayaku"
+    if page_url == "https://www.imax.com/theatres/la-geode":
+        city = "Paris"
 
     row = SgRecord(
         locator_domain=locator_domain,
