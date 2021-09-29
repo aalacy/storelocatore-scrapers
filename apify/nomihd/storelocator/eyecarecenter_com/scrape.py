@@ -10,8 +10,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "eyecarecenter.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
     "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
     "sec-ch-ua-mobile": "?0",
@@ -24,66 +22,72 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://www.eyecarecenter.com/locations/"
-    api_url = (
-        "https://www.eyecarecenter.com/_next/data/O0NLiJCm31U17G570Gx9B/locations.json"
-    )
+    api_url = "https://www.eyecarecenter.com/_next/data/{}/locations.json"
+    with SgRequests(proxy_country="us", dont_retry_status_codes=([404])) as session:
+        buildID = (
+            session.get("https://www.eyecarecenter.com/locations", headers=headers)
+            .text.split('"buildId":"')[1]
+            .strip()
+            .split('",')[0]
+            .strip()
+        )
+        log.info(buildID)
+        api_res = session.get(api_url.format(buildID), headers=headers)
+        json_res = json.loads(api_res.text)
+        stores = json_res["pageProps"]["locations"]
 
-    api_res = session.get(api_url, headers=headers)
-    json_res = json.loads(api_res.text)
-    stores = json_res["pageProps"]["locations"]
+        for store in stores:
 
-    for store in stores:
+            page_url = search_url + store["slug"]
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
 
-        page_url = search_url + store["slug"]
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
+            location_name = store["name"]
+            location_type = "<MISSING>"
+            locator_domain = website
 
-        location_name = store["name"]
-        location_type = "<MISSING>"
-        locator_domain = website
+            street_address = store["address1"].strip()
 
-        street_address = store["address1"].strip()
+            city = store["city"]
+            state = store["state"]
+            zip = store["zipCode"]
 
-        city = store["city"]
-        state = store["state"]
-        zip = store["zipCode"]
+            country_code = "US"
 
-        country_code = "US"
+            store_number = store["sysId"]
 
-        store_number = store["sysId"]
+            phone = store["phoneNumber"]
 
-        phone = store["phoneNumber"]
-
-        hours = list(
-            filter(
-                str,
-                store_sel.xpath(
-                    '//div[./h2//text()="Hours of Operation:"]/div/div//text()'
-                ),
+            hours = list(
+                filter(
+                    str,
+                    store_sel.xpath(
+                        '//div[./h2//text()="Hours of Operation:"]/div/div//text()'
+                    ),
+                )
             )
-        )
 
-        hours_of_operation = "; ".join(hours).replace("day; ", "day: ").strip()
+            hours_of_operation = "; ".join(hours).replace("day; ", "day: ").strip()
 
-        latitude, longitude = store["map"]["lat"], store["map"]["lon"]
+            latitude, longitude = store["map"]["lat"], store["map"]["lon"]
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():

@@ -3,7 +3,7 @@ from time import sleep
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -24,7 +24,7 @@ def fetch_data():
     domain = "allenedmonds.com"
     start_url = "https://www.allenedmonds.com/stores"
 
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         sleep(15)
         driver.find_element_by_id("dwfrm_storelocator_maxdistance").click()

@@ -32,19 +32,31 @@ def fetch_data():
         for location in soup.find("ul", {"class": "locations-list"}).find_all(
             "li", {"class": "location"}
         ):
-            page_url = location.find("a", text=re.compile("Order Online"))["href"]
-            log.info(page_url)
-            soup1 = bs(session.get(page_url, headers=headers).text, "lxml")
-            try:
-                hours_of_operation = " ".join(
-                    list(
-                        soup1.find("div", {"id": "store-hours"})
-                        .find("table")
-                        .stripped_strings
+            page_url = location.find("a", text=re.compile("Order Online"))
+            hours_of_operation = "<MISSING>"
+            if page_url:
+                page_url = page_url["href"]
+                log.info(page_url)
+                soup1 = bs(session.get(page_url, headers=headers).text, "lxml")
+                try:
+                    hours_of_operation = " ".join(
+                        list(
+                            soup1.find("div", {"id": "store-hours"})
+                            .find("table")
+                            .stripped_strings
+                        )
                     )
-                )
-            except:
-                hours_of_operation = "<MISSING>"
+                except:
+                    hours_of_operation = "<MISSING>"
+            else:
+                page_url = "<MISSING>"
+                try:
+                    hours_of_operation = location.find(
+                        "a", {"class": "btn store-order"}
+                    ).text
+                except:
+                    pass
+
             location_details = list(location.stripped_strings)
             locator_domain = "https://bigmamaspizza.com"
             location_name = location_details[0]
