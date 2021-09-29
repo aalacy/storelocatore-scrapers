@@ -93,7 +93,7 @@ def fetch_data(sgw: SgWriter):
 
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
+        max_search_distance_miles=50,
         max_search_results=None,
         granularity=Grain_1_KM(),
     )

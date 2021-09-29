@@ -7,11 +7,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import re
-import json
 
-DOMAIN = "crazyshirts.com"
-BASE_URL = "https://www.crazyshirts.com"
-LOCATION_URL = "https://www.crazyshirts.com/store-locator/all-stores.do"
+DOMAIN = "brooklynboulders.com"
+BASE_URL = "https://brooklynboulders.com"
+LOCATION_URL = "https://brooklynboulders.com/locations/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -55,61 +54,52 @@ def pull_content(url):
 
 
 def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
         return "<MISSING>", "<MISSING>"
-    return longlat.group(2), longlat.group(1)
-
-
-def get_json(soup):
-    script = soup.find(
-        "script",
-        string=re.compile(r"MarketLive.StoreLocator.storeLocatorDetailPageReady"),
-    )
-    data = re.search(
-        r'{"resultCount":1,"results":\[(.*)\]}', script.string, re.MULTILINE
-    )
-    return json.loads(data.group(1))
+    return latlong.group(1), latlong.group(2)
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("div", {"class": "eslStore ml-storelocator-headertext"})
+    contents = soup.find("div", {"class": "grid locations-grid__list"}).find_all(
+        "article", {"class": "grid__item locations-grid__item"}
+    )
     for row in contents:
-        page_url = BASE_URL + row.find("a")["href"]
-        location_name = row.text.strip()
-        if "STORE CLOSED" in location_name:
-            continue
-        content = pull_content(page_url)
-        info = get_json(content)
-        street_address = info["address"]["street1"]
-        if info["address"]["street2"]:
-            street_address += ", " + info["address"]["street2"]
-        if info["address"]["street3"]:
-            street_address += ", " + info["address"]["street3"]
-        if "Planet Hollywood Resort & Casino, " in street_address:
-            street_address = street_address.replace(
-                "Planet Hollywood Resort & Casino, ", ""
+        url = row.find("a")["href"]
+        page_url = BASE_URL + url if DOMAIN not in url else url
+        content = pull_content(page_url).find("section", {"class": "location-map"})
+        info = content.find("div", {"class": "location-map__address"})
+        address = (
+            info.find("p")
+            .get_text(strip=True, separator="@")
+            .replace("@(Corner of 3rd Ave & Degraw)", "")
+            .replace(
+                "Located at the newly developed Eckington Yards complex near Union Market.",
+                "",
             )
-        city = info["address"]["city"]
-        state = info["address"]["stateCode"]
-        zip_postal = info["address"]["postalCode"]
-        phone = info["address"]["phone"]
-        content.find("span", {"class": "ml-storelocator-hours-details"}).find(
-            "strong"
-        ).decompose()
-        content.find("span", {"class": "ml-storelocator-hours-details"}).find(
-            "a"
-        ).decompose()
-        hours_of_operation = content.find(
-            "span", {"class": "ml-storelocator-hours-details"}
-        ).get_text(strip=True, separator=",")
+            .strip()
+            .split("@")
+        )
+        location_name = address[0]
+        raw_address = address[1]
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = info.find("a", {"href": re.compile(r"tel:.*")}).text
+        hours_of_operation = (
+            content.find("div", {"class": "location-map__working-hours"})
+            .find("p")
+            .get_text(strip=True, separator=",")
+        )
         country_code = "us"
         store_number = MISSING
-        location_type = "crazyshirts"
-        latitude = info["location"]["latitude"]
-        longitude = info["location"]["longitude"]
+        location_type = "brooklynboulders"
+        try:
+            map_link = info.find("a")["href"]
+            latitude, longitude = get_latlong(map_link)
+        except:
+            latitude = MISSING
+            longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -126,6 +116,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
