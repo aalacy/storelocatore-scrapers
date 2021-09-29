@@ -4,7 +4,14 @@ from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA, SearchableCountries.CANADA, SearchableCountries.BRITAIN], granularity=Grain_2())
+    search = DynamicGeoSearch(
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.CANADA,
+            SearchableCountries.BRITAIN,
+        ],
+        granularity=Grain_2(),
+    )
     url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
     session = SgRequests()
 
