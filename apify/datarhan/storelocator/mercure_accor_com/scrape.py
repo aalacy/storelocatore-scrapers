@@ -93,9 +93,6 @@ def fetch_data():
                 "c_allBookingFunnel"
             )
 
-            if not page_url:
-                print(location)
-
             location_name = location["name"]
             location_type = location["meta"]["entityType"]
             store_number = location["meta"]["id"]
