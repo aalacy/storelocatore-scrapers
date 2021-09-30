@@ -14,7 +14,6 @@ logger = SgLogSetup().get_logger("albertsonsmarket_com")
 
 
 def fetch_data():
-    ids = []
     url = "https://www.albertsonsmarket.com/RS.Relationshop/StoreLocation/GetListClosestStores"
     payload = {
         "__RequestVerificationToken": "i0uRi5H_YVPKWOH-rOiBsz003fjy1y-l6DqfTxHP_WsWwsjgewRjUXVOhvxho4YhJhkELE9SL_SeL8NHeZmubA9_RGU1"
