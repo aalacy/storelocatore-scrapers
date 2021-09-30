@@ -51,7 +51,14 @@ def get_data(page_url, sgw: SgWriter):
     store_number = page_url.split("L=")[1].split("&")[0]
     text = "".join(tree.xpath("//script[contains(text(), 'initializeMap')]/text()"))
     latitude, longitude = eval(text.split("initializeMap")[1].split(";")[0])
-    hours_of_operation = ";".join(tree.xpath("//dd/text()"))
+    if tree.xpath("//dt[contains(text(), 'Pharmacy')]"):
+        hours_of_operation = ";".join(
+            tree.xpath(
+                "//dt[contains(text(), 'Pharmacy')]/preceding-sibling::dd/text()"
+            )
+        )
+    else:
+        hours_of_operation = ";".join(tree.xpath("//dd/text()"))
 
     row = SgRecord(
         page_url=page_url,

@@ -1,111 +1,83 @@
-import re
-from bs4 import BeautifulSoup
-from sgrequests import SgRequests
+import ssl
+from lxml import etree
+from time import sleep
+from urllib.parse import urljoin
+
+from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-base_url = "https://local.hibdontire.com"
-
-
-def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-        for row in data:
-            writer.write_row(row)
-
-
-def fetch_links(url, session):
-    html = session.get(url).text
-    soup = BeautifulSoup(html, "html.parser")
-    target_div = soup.select_one("#links")
-    links = target_div.select("a")
-    urls = [a["href"] for a in links]
-
-    return urls
-
-
-def fetch_states(session):
-    return fetch_links(base_url, session)
-
-
-def fetch_cities(link, session):
-    city_url = f"{base_url}{link}"
-    return fetch_links(city_url, session)
-
-
-def fetch_locations(link, session):
-    location_url = f"{base_url}{link}"
-    return fetch_links(location_url, session)
-
-
-MISSING = "<MISSING>"
-
-
-def extract(url, session):
-    locator_domain = "hibdontire.com"
-    page_url = f"{base_url}{url}"
-    html = session.get(page_url).text
-    soup = BeautifulSoup(html, "html.parser")
-    info = soup.find("div", class_="location-info")
-
-    location_name = info.find("h3").text
-    store_number = re.sub(
-        r"store\s*",
-        "",
-        soup.find("div", class_="store-number").find("span").text,
-        flags=re.IGNORECASE,
-    )
-
-    street_address = soup.find("div", itemprop="streetAddress").text
-    city = soup.find("span", itemprop="addressLocality").text
-    state = soup.find("span", itemprop="addressRegion").text
-    postal = soup.find("span", itemprop="postalCode").text
-    country_code = "US"
-    latitude = MISSING
-    longitude = MISSING
-
-    hours_of_operation = ",".join(
-        [li.text for li in soup.find("dl", itemprop="openingHours").find_all("li")]
-    )
-    phone = soup.find("a", itemprop="telephone").text
-
-    return SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        latitude=latitude,
-        longitude=longitude,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-    )
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
-    with SgRequests() as session:
-        cities = []
-        locations = []
-        states = fetch_states(session)
+    domain = "hibdontire.com"
+    start_url = "https://local.hibdontire.com/"
 
-        for state in states:
-            cities.extend(fetch_cities(state, session))
+    with SgChrome() as driver:
+        driver.get(start_url)
+        sleep(10)
+        dom = etree.HTML(driver.page_source)
+    all_locations = dom.xpath('//li[@itemtype="http://schema.org/LocalBusiness"]')
 
-        for city in cities:
-            locations.extend(fetch_locations(city, session))
+    for poi_html in all_locations:
+        store_url = poi_html.xpath(".//h3/a/@href")[0]
+        store_url = urljoin(start_url, store_url)
+        location_name = poi_html.xpath(".//h3/a/text()")
+        location_name = location_name[0] if location_name else "<MISSING>"
+        street_address = poi_html.xpath('.//div[@itemprop="streetAddress"]/text()')
+        street_address = street_address[0] if street_address else "<MISSING>"
+        city = poi_html.xpath('.//span[@itemprop="addressLocality"]/text()')
+        city = city[0][:-1] if city else "<MISSING>"
+        state = poi_html.xpath('.//span[@itemprop="addressRegion"]/text()')
+        state = state[0] if state else "<MISSING>"
+        zip_code = poi_html.xpath('.//span[@itemprop="postalCode"]/text()')
+        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        phone = poi_html.xpath('.//a[@itemprop="telephone"]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        hoo = poi_html.xpath('.//dl[@class="list-hours"]//text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
 
-        for location in locations:
-            yield extract(location, session)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=SgRecord.MISSING,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
