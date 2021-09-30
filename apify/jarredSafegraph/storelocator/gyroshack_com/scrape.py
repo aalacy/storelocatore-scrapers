@@ -53,7 +53,7 @@ def extract_address(location: str) -> dict:
     }
 
 
-def extract_hours(operatinghours: str) -> str:
+def extract_hours(operatinghours: str):
     if operatinghours:
         operatinghours = operatinghours.replace("\n", "")
         operatinghours = operatinghours.replace("\r", "")
