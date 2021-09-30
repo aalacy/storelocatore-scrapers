@@ -30,15 +30,15 @@ days = [
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     for lat, lng in search:
-        http.clear_cookies()
-        locations = http.get(base_url.format(lat, lng), headers=_headers).json()[
-            "closerStores"
-        ]
+        res = http.get(base_url.format(lat, lng), headers=_headers)
+        if res.status_code != 200:
+            continue
+        locations = res.json()["closerStores"]
         logger.info(f"{len(locations)}")
         for store in locations:
             hours = []
             for hr in store.get("openingHours", {}).get("schedule", []):
-                times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['initHour']}"
+                times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['endHour']}"
                 if len(hr["weekdays"]) == 1:
                     hh = hr["weekdays"][0]
                     hours.append(f"{days[hh]}: {times}")
@@ -74,12 +74,17 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                 phone=phone,
                 country_code=store["countryCode"],
                 hours_of_operation="; ".join(hours),
+                locator_domain=locator_domain,
             )
 
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=20
+        )
+    ) as writer:
         with SgRequests(proxy_country="us") as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)

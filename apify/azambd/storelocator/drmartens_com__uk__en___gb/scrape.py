@@ -193,7 +193,6 @@ def scrape():
                 search_maker=search_maker,
                 search_iteration=search_iter,
                 country_codes=SearchableCountries.ALL,
-                max_threads=1,
             )
 
             for rec in par_search.run():
