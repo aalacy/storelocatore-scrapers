@@ -2,12 +2,10 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sglogging import SgLogSetup
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from sgscrape.sgrecord_id import SgRecordID
 from lxml import html
 import datetime
 import time
@@ -729,7 +727,7 @@ def fetch_records_global(idx, url, sgw: SgWriter, http: SgRequests):
                 latitude=lat,
                 longitude=lng,
                 hours_of_operation=hours,
-                raw_address=MISSING,
+                raw_address=raw_address,
             )
             sgw.write_row(rec)
 
@@ -758,8 +756,6 @@ def get_limited_store_urls():
     ]
     for url in urls:
         alllocs = letters
-        if ".be/" in url:
-            alllocs = becities
         if ".de/" in url:
             alllocs = decities
         if ".fr/" in url:
@@ -877,7 +873,6 @@ def get_us_store_urls():
         locs = []
         states = []
         url = "https://pizza.dominos.com/sitemap.xml"
-        country = "US"
         r = http.get(url, headers=headers)
         if r.encoding is None:
             r.encoding = "utf-8"
