@@ -99,7 +99,6 @@ def fetch_data():
 
             address = location.get("address")
             if not address:
-                print(page_url)
                 continue
 
             street_address = address["line1"]
