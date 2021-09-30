@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("unionsavings")
@@ -25,16 +25,15 @@ def fetch_data():
             page_url = location["permalink"]
             logger.info(page_url)
             res = session.get(page_url, headers=_headers)
-            if res.status_code != 200:
-                continue
-            soup1 = bs(res.text, "lxml")
             phone = ""
             if _location.select_one('a[title="Phone"]'):
                 phone = _location.select_one('a[title="Phone"]').text
             hours = ""
-            _hr = soup1.select_one("span.atm.atm-md")
-            if _hr:
-                hours = _hr.text.strip()
+            if res.status_code == 200:
+                soup1 = bs(res.text, "lxml")
+                _hr = soup1.select_one("span.atm.atm-md")
+                if _hr:
+                    hours = _hr.text.strip()
 
             yield SgRecord(
                 page_url=page_url,
@@ -53,7 +52,18 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
