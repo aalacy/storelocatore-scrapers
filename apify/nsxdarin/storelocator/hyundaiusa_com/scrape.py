@@ -72,8 +72,8 @@ def fetch_data():
                         try:
                             lat = item.split('"latitude":')[1].split("e")[0]
                             lng = item.split('"longitude":')[1].split("e")[0]
-                            lat = float(lat) * 10
-                            lng = float(lng) * 10
+                            lat = float(lat) * 100
+                            lng = float(lng) * 100
                             lat = str(lat)
                             lng = str(lng)
                         except:

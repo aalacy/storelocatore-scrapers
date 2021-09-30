@@ -174,8 +174,8 @@ def fetch_data():
                     temp_hours = hours_of_operation.split(";")
                     for hour in temp_hours:
                         try:
-                            day = hour.split(":")[0].strip()
-                            temp_time = hour.split(":")[1].strip().split("-")
+                            day = hour.split(":", 1)[0].strip()
+                            temp_time = hour.split(":", 1)[1].strip().split("-")
                             time = temp_time[0].strip() + "-" + temp_time[1].strip()
                             final_hours_list.append(day + ":" + time)
                         except:
