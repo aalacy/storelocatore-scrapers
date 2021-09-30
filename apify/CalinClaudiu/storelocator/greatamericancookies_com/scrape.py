@@ -12,10 +12,17 @@ from bs4 import BeautifulSoup as b4
 import json
 
 
-def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://www.greatamericancookies.com/locations/"
+def pass_url():
+    for url in [
+        "https://www.greatamericancookies.com/locations/",
+        "https://www.greatamericancookies.com/locations/?international=1",
+    ]:
+        for item in fetch_data(url):
+            yield item
 
+
+def fetch_data(url):
+    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     son = ""
     with SgFirefox() as driver:
         logzilla.info(f"Getting page..")  # noqa
@@ -122,42 +129,55 @@ def scrape():
     url = "https://www.greatamericancookies.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["permalink"], is_required=False),
-        location_name=MappingField(
-            mapping=["title"], value_transform=lambda x: x.replace("None", "<MISSING>")
+        page_url=MappingField(
+            mapping=["permalink"], is_required=False, part_of_record_identity=True
         ),
-        latitude=MappingField(mapping=["latitude"]),
-        longitude=MappingField(mapping=["longitude"]),
+        location_name=MappingField(
+            mapping=["title"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
+        ),
+        latitude=MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=MappingField(mapping=["longitude"], part_of_record_identity=True),
         street_address=MultiMappingField(
             mapping=[["street_address_1"], ["street_address_2"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
+            part_of_record_identity=True,
         ),
         city=MappingField(
-            mapping=["city"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["city"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
         ),
         state=MappingField(
-            mapping=["state"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["state"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
         ),
         zipcode=MappingField(
             mapping=["zip"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=MissingField(),
         phone=MappingField(
             mapping=["phone"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
+            part_of_record_identity=True,
         ),
         store_number=MissingField(),
-        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
-        location_type=MappingField(mapping=["type"]),
+        hours_of_operation=MappingField(
+            mapping=["hours"], is_required=False, part_of_record_identity=True
+        ),
+        location_type=MappingField(mapping=["type"], part_of_record_identity=True),
     )
 
     pipeline = SimpleScraperPipeline(
         scraper_name="greatamericancookies.com",
-        data_fetcher=fetch_data,
+        data_fetcher=pass_url,
         field_definitions=field_defs,
         log_stats_interval=15,
         post_process_filter=lambda rec: rec.location_type() != "Coming Soon!",
