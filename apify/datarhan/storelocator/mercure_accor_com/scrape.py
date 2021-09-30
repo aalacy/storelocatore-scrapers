@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
 from sgscrape.sgwriter import SgWriter
 
 headers = {
@@ -69,7 +69,7 @@ def fetch_data():
     params = {
         "api_key": "f60a800cdb7af0904b988d834ffeb221",
         "v": "20160822",
-        "filter": json.dumps({"websiteUrl.url": {"$contains": "all.accor"}}),
+        "filter": json.dumps({"c_pDAllAccorHotelPageURL": {"$contains": "hotel"}}),
         "languages": "en_GB",
         "pageToken": None,
     }
@@ -89,19 +89,29 @@ def fetch_data():
         params["pageToken"] = token
 
         for location in entities:
-            page_url = location["websiteUrl"]["url"]
+            page_url = location.get("websiteUrl", {}).get("url") or location.get(
+                "c_allBookingFunnel"
+            )
+
+            if not page_url:
+                print(location)
+
             location_name = location["name"]
             location_type = location["meta"]["entityType"]
             store_number = location["meta"]["id"]
 
-            address = location["address"]
+            address = location.get("address")
+            if not address:
+                print(page_url)
+                continue
+
             street_address = address["line1"]
             if address.get("line2"):
                 street_address += f', {address["line2"]}'
 
             city = address["city"]
             postal = address.get("postalCode")
-            country_code = address["countryCode"]
+            country_code = address.get("countryCode")
 
             geo = (
                 location.get("geocodedCoordinate")
@@ -154,13 +164,7 @@ def fetch_data():
 
 
 def write_output(data):
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         for row in data:
             writer.write_row(row)
 
