@@ -41,7 +41,7 @@ def xml_to_dict(store: ResultSet) -> dict:
     return {tag.name: tag.getText() for tag in store.find_all()}
 
 
-def extract_address(location: str):
+def extract_address(location: str) -> dict:
     ad = parse_address_usa(location)
     parts = [ad.street_address_1, ad.street_address_2]
     address = " ".join([part for part in parts if part]).strip()
@@ -65,7 +65,7 @@ def extract_hours(operatinghours: str) -> str:
         hours = regEx.sub(double_space, ", ", hours).strip()
         return hours
     else:
-        return ""
+        return SgRecord.MISSING
 
 
 def transform_record(raw: Any) -> SgRecord:
