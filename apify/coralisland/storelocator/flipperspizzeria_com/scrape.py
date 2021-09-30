@@ -1,3 +1,4 @@
+import html
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -27,12 +28,15 @@ def fetch_data():
             store_number = loc["id"]
             log.info(page_url)
             location_name = loc["title"]["rendered"]
+            location_name = html.unescape(location_name)
             phone = loc["acf"]["phone_number"]
             address = loc["acf"]["map_address"]["address"]
             address = BeautifulSoup(address, "html.parser")
             address = address.get_text(separator="|", strip=True).replace("|", " ")
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
+            if "12525 Florida 535" in address:
+                continue
+            raw_address = address.replace(",", " ")
+            address = usaddress.parse(raw_address)
             i = 0
             street_address = ""
             city = ""
@@ -57,6 +61,7 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            city = city.replace("St Lake Mary", "Lake Mary")
             country_code = "US"
             latitude = loc["acf"]["map_address"]["lat"]
             longitude = loc["acf"]["map_address"]["lng"]
@@ -84,6 +89,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
