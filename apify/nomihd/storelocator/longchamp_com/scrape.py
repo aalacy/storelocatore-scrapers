@@ -6,7 +6,7 @@ from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicGeoSearch
+from sgzip.dynamic import DynamicGeoSearch, Grain_1_KM
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -141,7 +141,9 @@ def scrape():
             for country in countries:
                 try:
                     search = DynamicGeoSearch(
-                        expected_search_radius_miles=50, country_codes=[country]
+                        expected_search_radius_miles=50,
+                        granularity=Grain_1_KM(),
+                        country_codes=[country],
                     )
                     results = parallelize(
                         search_space=[
