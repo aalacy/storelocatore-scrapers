@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 import json
 from sglogging import SgLogSetup
+from fuzzywuzzy import process
 
 logger = SgLogSetup().get_logger("phoenix")
 
@@ -19,6 +20,7 @@ base_url = "https://www.phoenix.edu/api/plct/3/uopx/locations?type=site&page.siz
 
 
 def fetch_data():
+    data = []
     with SgRequests() as session:
         g_hours = []
         sp1 = bs(session.get(loc_url, headers=_headers).text, "lxml")
@@ -45,19 +47,21 @@ def fetch_data():
                 phone = _.get("phoneLocal").replace(".", "").replace("-", "").strip()
             if not phone and _.get("phoneTollFree"):
                 phone = _.get("phoneTollFree").replace(".", "").replace("-", "").strip()
-            yield SgRecord(
-                page_url=loc_url,
-                location_name=_["altName"],
-                street_address=street_address,
-                city=_["city"],
-                state=_["stateProvince"],
-                zip_postal=_["postalCode"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
-                country_code=loc["countryCode"],
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(g_hours),
+            data.append(
+                SgRecord(
+                    page_url=loc_url,
+                    location_name=_["altName"],
+                    street_address=street_address,
+                    city=_["city"],
+                    state=_["stateProvince"],
+                    zip_postal=_["postalCode"],
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    country_code=loc["countryCode"],
+                    phone=phone,
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(g_hours),
+                )
             )
 
         locs = sp1.select("div.campus-dir-item")
@@ -84,7 +88,7 @@ def fetch_data():
                     coord = href.split("query=")[1].split("&")[0].split(",")
                 except:
                     pass
-            yield SgRecord(
+            record = SgRecord(
                 page_url="https://www.phoenix.edu/campus-locations.html#additional-campus-directory",
                 location_name=loc.h4.text.strip(),
                 street_address=addr[0].replace("\r\n", ""),
@@ -93,11 +97,25 @@ def fetch_data():
                 zip_postal=addr[-1].strip().split()[-1],
                 latitude=coord[0],
                 longitude=coord[1],
-                country_code="us",
+                country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
+
+            street_only = [rec.street_address().lower() for rec in data]
+            matched_records = process.extract(
+                record.street_address().lower(), street_only, limit=1
+            )
+            if not matched_records:
+                data.append(record)
+            else:
+                for x, _rec in enumerate(data):
+                    if _rec.street_address().lower() == matched_records[-1][0]:
+                        data[x] = record
+                        break
+
+        return data
 
 
 if __name__ == "__main__":

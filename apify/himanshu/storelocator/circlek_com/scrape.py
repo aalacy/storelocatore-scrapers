@@ -72,10 +72,7 @@ def fetch_locations(tracker, session, locations=[], page=0):
     for id, store in stores:
         if id in tracker or store["country"].upper() not in ["US", "CA", "CANADA"]:
             continue
-        if store["address"] + store["city"] in tracker:
-            continue
         tracker.append(id)
-        tracker.append(store["address"] + store["city"])
         locations.append(store)
     try:
         return fetch_locations(tracker, session, locations, page + 1)
