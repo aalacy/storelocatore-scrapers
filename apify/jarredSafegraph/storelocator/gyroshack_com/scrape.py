@@ -65,7 +65,7 @@ def extract_hours(operatinghours: str) -> Optional[str]:
         hours = regEx.sub(double_space, ", ", hours).strip()
         return hours
     else:
-        return SgRecord.MISSING
+        return None
 
 
 def transform_record(raw: Any) -> SgRecord:
