@@ -21,7 +21,7 @@ local = threading.local()
 
 def get_session(refresh=False):
     if not hasattr(local, "session") or refresh:
-        local.session = SgRequests()
+        local.session = SgRequests().requests_retry_session(backoff_factor=0.3)
 
     return local.session
 
