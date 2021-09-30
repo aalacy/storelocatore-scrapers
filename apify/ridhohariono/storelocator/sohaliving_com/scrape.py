@@ -121,7 +121,6 @@ def fetch_data():
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
-    fetch_data()
     count = 0
     with SgWriter(
         SgRecordDeduper(
