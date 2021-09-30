@@ -30,6 +30,7 @@ def fetch_data():
             storeid = loc["storeid"]
             title = loc["name"]
             address = loc["data"]["address"]
+            address = address.replace("\n", " ")
             parsed = parser.parse_address_usa(address)
             street1 = (
                 parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
