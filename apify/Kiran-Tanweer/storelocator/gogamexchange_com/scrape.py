@@ -76,7 +76,6 @@ def fetch_data():
             if state == "Rock":
                 city = "Little Rock"
                 state = "AR"
-
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=link.strip(),
@@ -112,7 +111,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
