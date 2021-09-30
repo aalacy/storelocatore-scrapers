@@ -68,6 +68,8 @@ def fetch_data():
             add = add.replace("&nbsp;", " ").strip()
             if "PRINCE GEORGE" in name:
                 state = "BRITISH COLUMBIA"
+            if "REGINA" in name:
+                state = "SASKATCHEWAN"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -90,6 +92,8 @@ def fetch_data():
             add = add.replace("&nbsp;", " ").strip()
             if "PRINCE GEORGE" in name:
                 state = "BRITISH COLUMBIA"
+            if "REGINA" in name:
+                state = "SASKATCHEWAN"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
