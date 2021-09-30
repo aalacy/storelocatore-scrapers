@@ -56,11 +56,6 @@ def fetch_data():
                 locator_domain = website
                 location_name = store["title"]
 
-                try:
-                    zip = store["location"]["postal_code"]
-                except:
-                    zip = formatted_addr.postcode
-
                 phone = "<MISSING>"
                 raw_address = store["address"].replace(", United States", "").strip()
                 formatted_addr = parser.parse_address_usa(raw_address)
@@ -80,6 +75,11 @@ def fetch_data():
                 except:
                     state = formatted_addr.state
                     pass
+
+                try:
+                    zip = store["location"]["postal_code"]
+                except:
+                    zip = formatted_addr.postcode
 
                 country_code = "US"
 
