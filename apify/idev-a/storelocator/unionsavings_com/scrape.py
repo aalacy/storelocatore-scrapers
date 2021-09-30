@@ -6,6 +6,7 @@ import json
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import re
 
 logger = SgLogSetup().get_logger("unionsavings")
 
@@ -28,13 +29,17 @@ def fetch_data():
             phone = ""
             if _location.select_one('a[title="Phone"]'):
                 phone = _location.select_one('a[title="Phone"]').text
-            hours = ""
+            hours = []
             if res.status_code == 200:
                 soup1 = bs(res.text, "lxml")
-                _hr = soup1.select_one("span.atm.atm-md")
+                _hr = soup1.find("span", string=re.compile(r"Lobby Hours"))
                 if _hr:
-                    hours = _hr.text.strip()
-
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in _hr.find_next_siblings("span")
+                    ]
+            else:
+                page_url = base_url
             yield SgRecord(
                 page_url=page_url,
                 location_name=location["name"],
@@ -47,7 +52,7 @@ def fetch_data():
                 longitude=location["longitude"],
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation="; ".join(hours),
             )
 
 
