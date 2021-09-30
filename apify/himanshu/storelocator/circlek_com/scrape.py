@@ -9,7 +9,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import Retrying, stop_after_attempt
 from time import sleep
@@ -72,10 +72,7 @@ def fetch_locations(tracker, session, locations=[], page=0):
     for id, store in stores:
         if id in tracker or store["country"].upper() not in ["US", "CA", "CANADA"]:
             continue
-        if store["address"] + store["city"] in tracker:
-            continue
         tracker.append(id)
-        tracker.append(store["address"] + store["city"])
         locations.append(store)
     try:
         return fetch_locations(tracker, session, locations, page + 1)
@@ -170,7 +167,7 @@ def fetch_details(store, retry=False):
             longitude = store_json["geo"]["longitude"].replace(",", ".")
             store_number = store["cost_center"]
             raw_address = store_json["name"]
-            formatted_addr = parser.parse_address_intl(raw_address)
+            formatted_addr = parse_address_intl(raw_address)
             state = formatted_addr.state
             if state:
                 state = state.replace("Mills", "").replace("Est", "").strip()

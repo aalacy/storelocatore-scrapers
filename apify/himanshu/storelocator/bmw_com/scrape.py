@@ -27,6 +27,9 @@ def fetch_data(sgw: SgWriter):
     countries.extend(SearchableCountries.WITH_ZIPCODE_AND_COORDS)
     countries.sort()
 
+    us_url = "https://www.bmwusa.com/api/dealers/search?query=BMW"
+    us_locs = session.get(us_url, headers=headers).json()
+
     for i in countries:
         country = i.upper()
         if country in addresses:
@@ -62,7 +65,7 @@ def fetch_data(sgw: SgWriter):
             if not phone:
                 phone = "<MISSING>"
             lat = value["lat"]
-            lng = value["lat"]
+            lng = value["lng"]
             store_number = value["attributes"]["distributionPartnerId"]
             link = value["attributes"]["homepage"]
             if not link:
@@ -113,6 +116,28 @@ def fetch_data(sgw: SgWriter):
                 continue
             addresses.append(location_name + city + store_number)
 
+            hours_of_operation = "<MISSING>"
+            if country_code == "US":
+                for us_loc in us_locs:
+                    if (
+                        (
+                            us_loc["DefaultService"]["Name"].replace("amp;", "")
+                            == location_name
+                        )
+                        or (
+                            us_loc["Url"].strip().replace(".com/", ".com")
+                            == link.replace(".com/", ".com")
+                        )
+                        or (us_loc["DefaultService"]["Address"] == street_address)
+                    ):
+                        try:
+                            hours_of_operation = " ".join(
+                                us_loc["DefaultService"]["Hours"]
+                            )
+                        except:
+                            pass
+                        break
+
             sgw.write_row(
                 SgRecord(
                     locator_domain=locator_domain,
@@ -128,7 +153,7 @@ def fetch_data(sgw: SgWriter):
                     location_type="<MISSING>",
                     latitude=lat,
                     longitude=lng,
-                    hours_of_operation="<MISSING>",
+                    hours_of_operation=hours_of_operation,
                 )
             )
 

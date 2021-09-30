@@ -1,76 +1,61 @@
-import csv
+import ssl
 from lxml import etree
 from time import sleep
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgselenium import SgChrome
 from sgselenium.sgselenium import webdriver
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-profile = webdriver.FirefoxProfile()
-profile.set_preference("geo.prompt.testing", True)
-profile.set_preference("geo.prompt.testing.allow", True)
-profile.set_preference(
-    "geo.wifi.uri",
-    'data:application/json,{"location": {"lat": 40.7590, "lng": -73.9845}, "accuracy": 27000.0}',
-)
-options = webdriver.FirefoxOptions()
-options.headless = True
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
+chrome_options = webdriver.ChromeOptions()
+capabilities = webdriver.DesiredCapabilities().CHROME
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+chrome_options.add_argument("--incognito")
+chrome_options.add_argument("--disable-infobars")
+chrome_options.add_argument("--disable-extensions")
+chrome_options.add_argument("--disable-popup-blocking")
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+prefs = {
+    "profile.default_content_setting_values": {"notifications": 1, "geolocation": 1},
+    "profile.managed_default_content_settings": {"geolocation": 1},
+}
+chrome_options.add_experimental_option("prefs", prefs)
+capabilities.update(chrome_options.to_capabilities())
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
-    items = []
-    scraped_items = []
-
-    DOMAIN = "dobbies.com"
+    domain = "dobbies.com"
     start_url = "https://www.dobbies.com/store-locator"
 
-    with webdriver.Firefox(options=options, firefox_profile=profile) as driver:
+    with SgChrome(chrome_options=chrome_options) as driver:
         driver.get(start_url)
-        sleep(5)
         driver.find_element_by_xpath(
-            '//div[contains(text(), "See all stores")]'
+            '//div[@class="ms-store-select__search-see-all-stores"]'
         ).click()
-        sleep(25)
+        sleep(15)
         dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath('//div[h2[contains(text(), "Store List")]]//a/@href')
-    all_locations += dom.xpath('//a[contains(text(), "See all details")]/@href')
-    for url in list(set(all_locations)):
-        store_url = urljoin(start_url, url)
+    all_locations = dom.xpath(
+        '//a[@class="ms-store-select__location-line-shop-link"]/@href'
+    )
+    for store_url in list(set(all_locations)):
+        if store_url == "https://www.dobbies.com/atherstone-outlet":
+            store_url = "https://www.dobbies.com/atherstone"
         loc_response = session.get(store_url)
         if loc_response.status_code != 200:
             continue
@@ -108,9 +93,10 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if geo:
-            geo = geo[0].split("/@")[-1].split(",")[:2]
-            latitude = geo[0]
-            longitude = geo[1]
+            if "/@" in geo:
+                geo = geo[0].split("/@")[-1].split(",")[:2]
+                latitude = geo[0]
+                longitude = geo[1]
         hours_of_operation = loc_dom.xpath(
             '//h3[contains(text(), "Store opening hours")]/following-sibling::ul/li//text()'
         )
@@ -127,33 +113,36 @@ def fetch_data():
             street_address = "Ethiebeaton Park"
             zip_code = "DD5 4HB"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
