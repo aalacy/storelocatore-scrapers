@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, Grain_8
 from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
 from sgrequests import SgRequests
@@ -329,9 +329,9 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=20,  # Must turn it back down to 50 after testing
-                            max_search_results=99,
-                            granularity=Grain_4(),
+                            expected_search_radius_miles=None,  # Must turn it back down to 50 after testing
+                            max_search_results=100,
+                            granularity=Grain_8(),
                         )
                     except Exception as e:
                         errorLink = (
@@ -445,7 +445,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=25,
-        duplicate_streak_failure_factor=250,
+        duplicate_streak_failure_factor=250000,
     )
 
     pipeline.run()
