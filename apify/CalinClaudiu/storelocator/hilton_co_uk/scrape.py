@@ -116,26 +116,40 @@ def fetch_data():
 
 def data_fetcher(country, state):
     url = country["link"]
-    url = "https://www.hilton.com/en/locations/usa/alabama/"
     masterdata = []
-
+    data = None
     with SgFirefox() as driver:
         driver.get(url)
         for r in driver.requests:
             if "/graphql/customer" in r.path:
-                if r.response.body:
-                    data = r.response.body
-                    data = json.loads(data)
-                    masterdata.append(data)
-                else:
-                    time.sleep(30)
+                try:
                     if r.response.body:
                         data = r.response.body
                         data = json.loads(data)
                         masterdata.append(data)
                     else:
-                        pass
-
+                        time.sleep(30)
+                except AttributeError:
+                    try:
+                        time.sleep(30)
+                        if r.response.body:
+                            data = r.response.body
+                            data = json.loads(data)
+                            masterdata.append(data)
+                        else:
+                            time.sleep(30)
+                    except AttributeError:
+                        try:
+                            time.sleep(30)
+                            if r.response.body:
+                                data = r.response.body
+                                data = json.loads(data)
+                                masterdata.append(data)
+                        except Exception:
+                            pass
+    if not data:
+        if "Not Found" not in driver.page_source:
+            raise
     total = 0
     allhotels = []
     for i in masterdata:
@@ -147,7 +161,6 @@ def data_fetcher(country, state):
             pass
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-
     lize = utils.parallelize(
         search_space=allhotels,
         fetch_results_for_rec=para,
