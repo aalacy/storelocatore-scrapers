@@ -65,6 +65,9 @@ def fetch_data():
         if "COMING SOON" in location_name:
             continue
         phone = store["phone"]
+        if phone and "," in phone:
+            phone = phone.split(",")[0].strip()
+
         store_number = "<MISSING>"
 
         location_type = "<MISSING>"

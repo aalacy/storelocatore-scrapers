@@ -103,10 +103,10 @@ def fetch_data():
                         if phone == "":
                             phone = "<MISSING>"
                         phone = phone.replace("&#40;", "(").replace("&#41;", ")")
-                        if " outlet" in name.lower():
-                            name = "Coach Outlet"
+                        if "outlet" in name.lower():
+                            typ = "Coach Outlet"
                         else:
-                            name = "Coach"
+                            typ = "Coach"
                         if "popup" not in name.lower() and "pop-up" not in name.lower():
                             yield SgRecord(
                                 locator_domain=website,
@@ -216,7 +216,7 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
-        if "Outlet In" in name:
+        if "outlet" in name.lower():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
@@ -333,7 +333,7 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
-        if "Outlet In" in name:
+        if "outlet" in name.lower():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
@@ -354,6 +354,74 @@ def fetch_data():
                 longitude=lng,
                 hours_of_operation=hours,
             )
+
+    for x in range(0, 100, 15):
+        url = (
+            "https://uk.coach.com/on/demandware.store/Sites-Coach_EU-Site/en_GB/Stores-FilterResult?firstQuery=GB_country&showRFStoreDivider=true&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start="
+            + str(x)
+            + "&sz=15&format=ajax"
+        )
+        r = session.get(url, headers=headers)
+        website = "uk.coach.com"
+        typ = "<MISSING>"
+        country = "GB"
+        logger.info("Pulling Stores")
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if 'meta itemprop="name" content="' in line:
+                items = line.split('meta itemprop="name" content="')
+                for item in items:
+                    if 'data-address="' in item:
+                        name = item.split('"')[0]
+                        loc = "<MISSING>"
+                        add = (
+                            item.split('"streetAddress">')[1]
+                            .split("</span>")[0]
+                            .replace("<br />", "")
+                            .strip()
+                            .replace("  ", " ")
+                        )
+                        city = item.split('rop="addressLocality">')[1].split("<")[0]
+                        state = "<MISSING>"
+                        zc = item.split('"postalCode">')[1].split("<")[0]
+                        try:
+                            phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        except:
+                            phone = "<MISSING>"
+                        phone = phone.replace("&#40;", "(").replace("&#41;", ")")
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                        store = "<MISSING>"
+                        hours = (
+                            item.split('<span itemprop="openingHours">')[1]
+                            .split("<")[0]
+                            .strip()
+                        )
+                        name = name.replace("&amp;", "&")
+                        add = add.replace("&amp;", "&")
+                        name = name.replace("&#39;", "'")
+                        add = add.replace("&#39;", "'")
+                        if "outlet" in name.lower():
+                            typ = "Coach Outlet"
+                        else:
+                            typ = "Coach"
+                        if "popup" not in name.lower() and "pop-up" not in name.lower():
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
