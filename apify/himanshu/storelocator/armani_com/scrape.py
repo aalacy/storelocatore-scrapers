@@ -129,9 +129,6 @@ def fetch_data(sgw: SgWriter):
             store_data["storeNumber"]
         )
 
-        print(page_url)
-        print(store_number)
-
         sgw.write_row(
             SgRecord(
                 locator_domain=website,
