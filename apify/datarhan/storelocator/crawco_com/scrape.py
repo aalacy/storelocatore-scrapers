@@ -47,7 +47,7 @@ def fetch_data():
                 street_address += " " + poi["mailing"]["line2"]
         if not street_address:
             street_address = "<MISSING>"
-        city = poi["address"]["city"]
+        city = poi["address"]["city"].split(",")[0].strip()
         state = poi["address"].get("state")
         state = state if state else "<MISSING>"
         zip_code = poi["address"].get("postal")
