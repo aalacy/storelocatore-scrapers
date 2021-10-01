@@ -1,56 +1,66 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+website = "gobblestop.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
-session = SgRequests()
 def fetch_data():
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        res = session.get("https://gobblestop.com/")
+        soup = BeautifulSoup(res.text, "lxml")
+        stores = soup.find_all("td")
+        for store in stores:
+            data = store.text.strip().split("\n")
+            if len("".join(data)) <= 0:
+                continue
+            loc = data[0].split("-")[1].strip()
+            id = data[0].split("#")[1].split("-")[0].strip()
+            street = data[1].strip()
+            sz = data[2].strip().split(",")
+            city = sz[0]
+            sz = sz[1].strip().split(" ")
+            state = sz[0]
+            zip = sz[1]
+            phone = data[3].strip()
 
-    all=[]
-    res = session.get("https://gobblestop.com/")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    stores = soup.find_all('td')
-    for store in stores:
-        data=store.text.strip().split("\n")
-        loc=data[0].split("-")[1].strip()
-        id=data[0].split("#")[1].split("-")[0].strip()
-        street=data[1].strip()
-        sz=data[2].strip().split(",")
-        city=sz[0]
-        sz=sz[1].strip().split(" ")
-        state=sz[0]
-        zip=sz[1]
-        phone=data[3].strip()
+            yield SgRecord(
+                locator_domain=website,
+                page_url="https://gobblestop.com/",
+                location_name=loc,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code="US",
+                store_number=id,
+                phone=phone,
+                location_type="<MISSING>",
+                latitude="<MISSING>",
+                longitude="<MISSING>",
+                hours_of_operation="<MISSING>",
+            )
 
-        all.append([
-            "https://gobblestop.com/",
-            loc,
-            street,
-            city,
-            state,
-            zip,
-            "US",
-            id,  # store #
-            phone,  # phone
-            "<MISSING>",  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
-            "<MISSING>",  # timing
-            "https://gobblestop.com/"])
-
-    return all
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
