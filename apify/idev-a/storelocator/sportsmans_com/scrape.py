@@ -35,9 +35,7 @@ def fetch_data():
                     street_address += " " + _["line2"]
                 page_url = _["url"]
                 logger.info(page_url)
-                sp1 = bs(
-                    session.get(base_url.format(page), headers=_headers).text, "lxml"
-                )
+                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 hours = []
                 for hh in sp1.select("table.c-location-hours-details tbody tr"):
                     td = hh.select("td")
