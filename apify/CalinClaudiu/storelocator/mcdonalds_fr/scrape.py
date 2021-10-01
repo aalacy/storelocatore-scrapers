@@ -121,6 +121,7 @@ def scrape():
             mapping=["properties", "contact", "phone"],
             part_of_record_identity=True,
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         store_number=sp.MappingField(
             mapping=["properties", "store_id"],
