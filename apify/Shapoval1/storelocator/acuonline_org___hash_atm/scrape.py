@@ -1,5 +1,5 @@
 import json
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_1_KM
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -111,9 +111,9 @@ def get_data(coord, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=20,
-        expected_search_radius_miles=1,
+        max_search_distance_miles=10,
         max_search_results=None,
+        granularity=Grain_1_KM(),
     )
 
     with futures.ThreadPoolExecutor(max_workers=7) as executor:
