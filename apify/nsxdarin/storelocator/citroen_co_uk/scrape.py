@@ -102,6 +102,9 @@ def fetch_data():
         if state == "":
             state = "<MISSING>"
         if add != "":
+            name = name.replace("&#039;", "'")
+            add = add.replace("&#039;", "'")
+            city = city.replace("&#039;", "'")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

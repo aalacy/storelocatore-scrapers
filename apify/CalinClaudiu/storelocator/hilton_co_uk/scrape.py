@@ -10,7 +10,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 import json
-
+import time
 from sgselenium import SgFirefox
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
@@ -116,17 +116,37 @@ def fetch_data():
 
 def data_fetcher(country, state):
     url = country["link"]
-
     masterdata = []
-
+    data = None
     with SgFirefox() as driver:
         driver.get(url)
         for r in driver.requests:
             if "/graphql/customer" in r.path:
-                data = r.response.body
-                data = json.loads(data)
-                masterdata.append(data)
-
+                try:
+                    if r.response.body:
+                        data = r.response.body
+                        data = json.loads(data)
+                        masterdata.append(data)
+                    else:
+                        time.sleep(30)
+                except AttributeError:
+                    try:
+                        time.sleep(30)
+                        if r.response.body:
+                            data = r.response.body
+                            data = json.loads(data)
+                            masterdata.append(data)
+                        else:
+                            time.sleep(30)
+                    except AttributeError:
+                        try:
+                            time.sleep(30)
+                            if r.response.body:
+                                data = r.response.body
+                                data = json.loads(data)
+                                masterdata.append(data)
+                        except Exception:
+                            pass
     total = 0
     allhotels = []
     for i in masterdata:
@@ -134,11 +154,10 @@ def data_fetcher(country, state):
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
-        except Exception:
-            raise
+        except KeyError:
+            pass
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-
     lize = utils.parallelize(
         search_space=allhotels,
         fetch_results_for_rec=para,
@@ -196,6 +215,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=5,
+        duplicate_streak_failure_factor=250,
     )
 
     pipeline.run()
