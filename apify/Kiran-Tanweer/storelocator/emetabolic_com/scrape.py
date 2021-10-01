@@ -9,7 +9,7 @@ from sgscrape import sgpostal as parser
 import json
 import re
 
-session = SgRequests(verifySSL=False)
+session = SgRequests()
 website = "emetabolic_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -40,7 +40,7 @@ def fetch_data():
                     link_url = loc["link_url"]
                     if link_url.find("emetabolic.com") == -1:
                         link_url = "https://www.emetabolic.com/" + link_url
-                    p = session.get(link_url, headers=headers, verify=False)
+                    p = session.get(link_url, headers=headers)
                     soup = BeautifulSoup(p.text, "html.parser")
                     div = soup.findAll("div", {"class": "location-contact-data"})
                     if len(div) > 0:
