@@ -9,7 +9,7 @@ from sgscrape import sgpostal as parser
 import json
 import re
 
-session = SgRequests(verifySSL=False)
+session = SgRequests()
 website = "emetabolic_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
