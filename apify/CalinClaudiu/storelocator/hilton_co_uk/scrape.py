@@ -120,6 +120,7 @@ def data_fetcher(country, state):
     data = None
     with SgFirefox() as driver:
         driver.get(url)
+        Pge = driver.page_source
         for r in driver.requests:
             if "/graphql/customer" in r.path:
                 try:
@@ -148,7 +149,7 @@ def data_fetcher(country, state):
                         except Exception:
                             pass
     if not data:
-        if "Not Found" not in driver.page_source:
+        if "Not Found" not in Pge:
             raise
     total = 0
     allhotels = []
