@@ -9,7 +9,7 @@ from sgscrape import sgpostal as parser
 import json
 import re
 
-session = SgRequests()
+session = SgRequests(verifySSL=False)
 website = "emetabolic_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -27,7 +27,7 @@ def fetch_data():
         for i in range(1, 52):
             p = str(i)
             url = "https://www.emetabolic.com/?maps_markers=" + p
-            r = session.get(url, headers=headers, verify=False)
+            r = session.get(url, headers=headers)
             response = r.text
             loclist = response.split('"markers":')[1].split("]}", 1)[0]
             loclist = loclist + "]"
@@ -69,7 +69,6 @@ def fetch_data():
                     else:
                         phone = div[1].text
                         phone = phone.strip()
-
                     time = soup.findAll("div", {"class": "location-hours-info"})
                     HOO = ""
                     for day in time:
@@ -82,7 +81,6 @@ def fetch_data():
                     if street == "15060 Sequoia Pkwy # 6Tigard":
                         street = "15060 Sequoia Pkwy # 6"
                         city = "Tigard"
-
                     yield SgRecord(
                         locator_domain=DOMAIN,
                         page_url=link_url,
@@ -118,7 +116,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
