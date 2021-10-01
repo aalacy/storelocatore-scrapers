@@ -70,9 +70,7 @@ def fetch_stores():
 
     log.debug("Clicking Accept button")
     try:
-        button = driver.find_element_by_xpath(
-            "//button[contains(@class, 'dismiss')]"
-        ).click()
+        driver.find_element_by_xpath("//button[contains(@class, 'dismiss')]").click()
     except Exception as e:
         log.info(f"Oh no!: {e}")
         pass
@@ -128,7 +126,7 @@ def fetch_data():
         log.debug(f"{count}. scrapping {page_url} ...")
 
         try:
-            driver = get_driver(page_url, class_name, driver=driver)
+            driver = get_driver(page_url, class_name, driver=None)
         except Exception:
             driver = get_driver(page_url, class_name)
 
