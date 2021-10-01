@@ -19,8 +19,6 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    found_poi = []
-
     maps = base.findAll("div", attrs={"class": "map-marker"})
     items = base.find_all(class_="col span_12 left")[1].find_all("p")
 
@@ -31,8 +29,6 @@ def fetch_data(sgw: SgWriter):
         except:
             continue
         if "coming soon" in location_name.lower():
-            continue
-        if location_name in found_poi:
             continue
 
         if (
