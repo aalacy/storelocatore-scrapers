@@ -7,10 +7,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import re
+import json
 
-DOMAIN = "marugameudon.com"
-BASE_URL = "https://www.marugameudon.com"
-LOCATION_URL = "https://www.marugameudon.com/locations/"
+DOMAIN = "marugame.co.uk"
+BASE_URL = "https://marugame.co.uk"
+LOCATION_URL = "https://marugame.co.uk/our-kitchens/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -54,43 +55,44 @@ def pull_content(url):
 
 
 def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
         return "<MISSING>", "<MISSING>"
-    return longlat.group(2), longlat.group(1)
+    return latlong.group(1), latlong.group(2)
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find("section", {"class": "locations-wrapper clear"}).find_all(
-        "ul", {"class": "location clear"}
-    )
+    contents = soup.find(
+        "section", {"class": "locations | u-rel module module-2"}
+    ).find_all("a", {"class": "location-card"})
     for row in contents:
-        if row.find("p", {"class": "location-closed"}):
+        if "is-coming-soon" in row["class"]:
             continue
-        location_name = row.find("h3").text.strip()
-        raw_address = (
-            row.find("p")
-            .get_text(strip=True, separator=",")
-            .replace("(Next to Petsmart across from FedEx)", "")
-        )
+        page_url = row["href"]
+        content = pull_content(page_url)
+        info = json.loads(content.find("div", {"id": "map-container"})["data-map"])
+        location_name = row.find("span", {"class": "title-text"}).text.strip()
+        raw_address = info["address"]
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = row.find("a", {"class": "location-phone"}).text.strip()
+        phone = MISSING
         hours_of_operation = (
-            row.find("div", {"class": "location-schedule"})
+            content.find("div", {"class": "google-map__opening-times"})
             .get_text(strip=True, separator=",")
+            .replace("Opening times,", "")
+            .replace("day,", "day: ")
             .strip()
         )
-        country_code = "US"
+        country_code = info["country_short"]
         store_number = MISSING
-        location_type = "marugameudon"
-        map_link = row.find("iframe")["src"]
-        latitude, longitude = get_latlong(map_link)
+        location_type = "marugame"
+        latitude = info["lat"]
+        longitude = info["lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -114,7 +116,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
                 }
             )
         )
