@@ -42,7 +42,7 @@ def fetch_data():
                     store_number=_["id"],
                     location_name=_["name"],
                     street_address=_["streetAddress"],
-                    city=_["locality"],
+                    city=_["locality"].split(",")[-1],
                     state=_["region"],
                     zip_postal=_["postcode"],
                     latitude=coord["lat"],

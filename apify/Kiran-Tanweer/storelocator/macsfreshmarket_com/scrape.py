@@ -21,7 +21,7 @@ MISSING = "<MISSING>"
 def fetch_data():
     if True:
         url = "https://admin.grocerytech.solutions/api/Stores"
-        r = session.get(url, headers=headers, verify=False).json()
+        r = session.get(url, headers=headers).json()
         for loc in r:
             storeid = loc["storeNumber"]
             title = loc["name"]
