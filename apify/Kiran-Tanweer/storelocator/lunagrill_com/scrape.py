@@ -23,7 +23,7 @@ def fetch_data():
     if True:
         linklist = []
         url = "https://locations.lunagrill.com/site-map/US"
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         info = soup.text
         links = str(soup)
