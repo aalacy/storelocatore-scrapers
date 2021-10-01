@@ -1,45 +1,18 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 logger = SgLogSetup().get_logger("sprinkles_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://sprinkles.com/pages/locations"
 
@@ -52,7 +25,6 @@ def fetch_data():
 
     items = base.main.find_all(class_="item")
 
-    data = []
     for item in items:
         locator_domain = "sprinkles.com"
 
@@ -61,9 +33,17 @@ def fetch_data():
 
         raw_address = list(item.p.stripped_strings)
         street_address = " ".join(raw_address[:-2]).strip()
+        try:
+            city_line = raw_address[-2].strip().split(",")
+        except:
+            street_address = raw_address[0].split(",")[0]
+            city_line = ",".join(raw_address[0].split(",")[1:]).strip().split(",")
         if not street_address:
-            street_address = "<MISSING>"
-        city_line = raw_address[-2].strip().split(",")
+            street_address = raw_address[0].strip()
+            city_line = raw_address[1].strip().split(",")
+        if "Las Vegas," in street_address:
+            street_address = ""
+            city_line = raw_address[0].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
@@ -77,6 +57,9 @@ def fetch_data():
         page_link = "https://sprinkles.com" + item.a["href"]
         page_req = session.get(page_link, headers=headers)
         page = BeautifulSoup(page_req.text, "lxml")
+
+        if "open for delivery only" in page.text:
+            location_type = "Delivery Only"
 
         hours_of_operation = ""
         raw_hours = page.find(class_="addr-hours")
@@ -96,31 +79,25 @@ def fetch_data():
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                page_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
