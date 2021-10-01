@@ -21,7 +21,7 @@ else:
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com.tw/zh/store/index/"
     domain = "ikea.com.tw"
@@ -67,7 +67,7 @@ def fetch_data():
         )
         location_name = location_name[0] if location_name else ""
         if not location_name:
-            location_name = loc_response.url.split("/")[-2].replace("-", " ").title()
+            location_name = page_url.split("/")[-2].replace("-", " ").title()
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
@@ -107,6 +107,8 @@ def fetch_data():
             ]
             if hoo:
                 hoo = hoo[0].split("間：")[-1]
+        if hoo == []:
+            hoo = ""
 
         item = SgRecord(
             locator_domain=domain,

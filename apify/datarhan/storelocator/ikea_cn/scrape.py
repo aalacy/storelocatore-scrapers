@@ -26,6 +26,8 @@ def fetch_data():
             loc_response = session.get(page_url)
             if loc_response.url == "https://www.ikea.cn/cn/en/stores/":
                 continue
+            if loc_response.status_code != 200:
+                continue
             loc_dom = etree.HTML(loc_response.text)
             if not loc_dom:
                 continue
@@ -91,14 +93,11 @@ def fetch_data():
             )
             latitude = ""
             longitude = ""
-            geo = loc_dom.xpath('//*[contains(text(), "window.__NUXT")]')
+            geo = re.findall(r"&dest=(.+?)\&", loc_response.text)
             if geo:
-                geo = etree.tostring(geo[0]).decode("utf-8")
-                geo = re.findall(r"start=(.+?)\&", geo)
-                if geo:
-                    geo = geo[0].split(",")
-                    latitude = geo[0]
-                    longitude = geo[1]
+                geo = geo[0].split(",")
+                latitude = geo[1]
+                longitude = geo[0]
 
             item = SgRecord(
                 locator_domain=domain,
