@@ -932,7 +932,11 @@ def fetch_records_us(idx, loc, sgw: SgWriter, http: SgRequests):
     store_number = json_data["branchCode"] or MISSING
     logger.info(f"[{idx}] SN: {store_number}")
 
-    phone = json_data["telephone"] or MISSING
+    phone = ""
+    try:
+        phone = json_data["telephone"]
+    except:
+        phone = MISSING
     logger.info(f"[{idx}] Tel: {phone}")
 
     location_type = "Store"
