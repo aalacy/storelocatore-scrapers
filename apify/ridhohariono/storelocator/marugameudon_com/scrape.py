@@ -84,7 +84,7 @@ def fetch_data():
         )
         country_code = "US"
         store_number = MISSING
-        location_type = "rainbowdrivein"
+        location_type = "marugameudon"
         map_link = row.find("iframe")["src"]
         latitude, longitude = get_latlong(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
