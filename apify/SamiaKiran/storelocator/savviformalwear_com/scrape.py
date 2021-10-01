@@ -1,3 +1,4 @@
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -40,6 +41,7 @@ def fetch_data():
             except:
                 hours_of_operation = MISSING
             location_type = loc["store"]
+            location_type = html.unescape(location_type)
             location_name = location_type
             city = loc["city"]
             state = loc["state"]
