@@ -22,7 +22,6 @@ def fetch_data():
     for point in all_points:
         lat = point["ParkingLot"]["latitude"]
         lng = point["ParkingLot"]["longitude"]
-        print(lat, lng)
         try:
             data = session.get(
                 f"https://parking.com/parking-near/{lat}/{lng}.json", headers=hdr
