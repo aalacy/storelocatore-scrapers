@@ -81,7 +81,6 @@ def fetch_data(sgw: SgWriter):
                 )
 
         if street_address in found:
-            print("found")
             continue
         found.append(street_address)
 
