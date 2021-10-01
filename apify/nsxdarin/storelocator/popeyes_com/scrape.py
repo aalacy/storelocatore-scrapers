@@ -120,6 +120,8 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        name = name.replace("&amp;", "&")
+        add = add.replace("&amp;", "&")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

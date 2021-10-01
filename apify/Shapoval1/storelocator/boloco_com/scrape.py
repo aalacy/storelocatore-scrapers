@@ -1,39 +1,13 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://www.boloco.com"
     page_url = "https://www.boloco.com/locations/"
     session = SgRequests()
@@ -59,25 +33,39 @@ def fetch_data():
         postal = (
             "".join(d.xpath('.//span[@class="town"]/text()')).split(",")[1].split()[1]
         )
-        store_number = "<MISSING>"
         page_url = (
             "".join(d.xpath('.//a[contains(text(), "DETAILS")]/@href'))
             or "https://www.boloco.com/locations/"
         )
+        if page_url == "http://www.boloco.com/atlantic-wharf/":
+            page_url = "https://www.boloco.com/locations/"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        location_type = "<MISSING>"
         phone = (
-            "".join(d.xpath('.//span[@class="phone"]/text()'))
+            "".join(d.xpath('.//span[@class="links"]//span[@class="phone"]/text()'))
             .replace("\n", "")
             .replace("-----", "")
             .strip()
-        )
+        ) or "<MISSING>"
+        if phone == "<MISSING>":
+            phone = (
+                "".join(d.xpath('.//span[@class="phone"]/text()'))
+                .replace("\n", "")
+                .replace("-----", "")
+                .strip()
+            ) or "<MISSING>"
         if phone.find("Closed") != -1:
             phone = phone.split("Closed")[0]
-        hours_of_operation = d.xpath('.//p[.//strong[contains(text(), "Sun")]]//text()')
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = " ".join(hours_of_operation).replace(": -", " Closed")
+        hours_of_operation = (
+            "".join(d.xpath('.//p[.//strong[contains(text(), "Sun")]]//text()'))
+            .replace(": -", " Closed")
+            .strip()
+        )
+
+        hours_of_operation = " ".join(hours_of_operation.split())
+        tmp = "".join(d.xpath('.//strong[text()="CLOSED TEMPORARILY"]/text()'))
+        if tmp:
+            hours_of_operation = "Temporarily Closed"
         if hours_of_operation.count("Closed") == 7:
             hours_of_operation = "Closed"
         if page_url != "https://www.boloco.com/locations/":
@@ -85,34 +73,35 @@ def fetch_data():
             r = session.get(page_url)
             tree = html.fromstring(r.text)
             map_link = "".join(tree.xpath("//iframe/@src"))
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            try:
+                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
