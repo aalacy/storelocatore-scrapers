@@ -43,7 +43,6 @@ def fetch_data():
 
     for url in all_locations:
         page_url = urljoin(start_url, url)
-        print(page_url)
         if "##" in page_url:
             continue
 
