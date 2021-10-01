@@ -20,7 +20,10 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[@class="location"]')
     for poi_html in all_locations:
-        store_url = start_url
+        store_url = poi_html.xpath('.//a[contains(text(), "More Location Info")]/@href')
+        store_url = store_url[0] if store_url else ""
+        if not store_url:
+            continue
         location_name = poi_html.xpath(".//h3/text()")
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath(".//address/text()")
