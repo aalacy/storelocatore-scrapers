@@ -147,9 +147,6 @@ def data_fetcher(country, state):
                                 masterdata.append(data)
                         except Exception:
                             pass
-    if not data:
-        if "Not Found" not in driver.page_source:
-            raise
     total = 0
     allhotels = []
     for i in masterdata:
