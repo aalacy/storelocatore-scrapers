@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-
     locator_domain = "https://www.galls.com"
     api_url = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/4051/stores.js?callback=SMcallback2"
     session = SgRequests()
@@ -71,7 +70,7 @@ def fetch_data(sgw: SgWriter):
             "".join(j.get("custom_field_2")).replace("<br>", " ").strip()
         )
         desc2 = "".join(j.get("custom_field_1")).replace("<br>", " ").strip()
-        if not "Fax" in desc2:
+        if "Fax" not in desc2:
             hours_of_operation = (
                 f"{j.get('custom_field_1')} {j.get('custom_field_2')}".replace(
                     "<br>", " "
