@@ -74,6 +74,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                 phone=phone,
                 country_code=store["countryCode"],
                 hours_of_operation="; ".join(hours),
+                locator_domain=locator_domain,
             )
 
 
