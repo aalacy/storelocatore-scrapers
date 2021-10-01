@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("trotters_co_uk")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -73,12 +49,10 @@ def fetch_data():
             line2 = str(line2.decode("utf-8"))
             if '<h1 class="seo-heading">' in line2:
                 name = line2.split('h1 class="seo-heading">')[1].split("<")[0]
-            if "Address:</strong> <br>" in line2:
-                addinfo = (
-                    line2.split("Address:</strong> <br>")[1]
-                    .split("</p>")[0]
-                    .replace("<br>", "|")
-                )
+            if "Address:<" in line2 and "/trotters-concession-in-harrods" not in loc:
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                addinfo = g.split("<p>")[1].split("</p>")[0].replace("<br>", "|")
                 add = addinfo.split("|")[0]
                 city = addinfo.split("|")[1]
                 state = "<MISSING>"
@@ -106,27 +80,31 @@ def fetch_data():
             state = "<MISSING>"
             zc = "SW1X 7XL"
             phone = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "London" in city:
+            city = "London"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
