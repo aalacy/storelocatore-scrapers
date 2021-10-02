@@ -1,5 +1,8 @@
-import csv
 import re
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 
 headers = {
@@ -7,40 +10,8 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
-    titlelist = []
+
     states = [
         "Alberta",
         "British Columbia",
@@ -85,9 +56,10 @@ def fetch_data():
         }
 
         url = (
-            "https://www.lowes.ca/apim/stores?maxResults=4&responseGroup=large&query="
+            "https://www.lowes.ca/apim/stores?maxResults=10&responseGroup=large&query="
             + statenow
         )
+
         loclist = session.get(url, headers=headerss).json()
         for loc in loclist:
             try:
@@ -118,35 +90,31 @@ def fetch_data():
                     endtime = endtime - 12
                 close = str(endtime) + ":00 PM "
                 hours = hours + day + " " + start + " AM - " + close
-            if link in titlelist:
-                continue
-            titlelist.append(link)
-            data.append(
-                [
-                    "https://www.lowes.ca/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    ccode,
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            yield SgRecord(
+                locator_domain="https://www.lowes.ca/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=store,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
             )
-
-            p += 1
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
