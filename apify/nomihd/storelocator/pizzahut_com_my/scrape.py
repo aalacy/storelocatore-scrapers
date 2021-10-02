@@ -12,8 +12,6 @@ from sgpostal import sgpostal as parser
 
 website = "pizzahut.com.my"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
     "authority": "apiapse1.phdvasia.com",
     "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
@@ -31,7 +29,8 @@ headers = {
 }
 
 
-def fetch_records_for(coords):
+def fetch_records_for(tup):
+    coords, session = tup
     lat = coords[0]
     lng = coords[1]
     log.info(f"pulling records for coordinates: {lat,lng}")
@@ -118,16 +117,17 @@ def scrape():
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        search = DynamicGeoSearch(country_codes=["MY"])
-        results = parallelize(
-            search_space=[(coord) for coord in search],
-            fetch_results_for_rec=fetch_records_for,
-            processing_function=process_record,
-            max_threads=10,  # tweak to see what's fastest
-        )
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+        with SgRequests() as session:
+            search = DynamicGeoSearch(country_codes=["MY"])
+            results = parallelize(
+                search_space=[(coord, session) for coord in search],
+                fetch_results_for_rec=fetch_records_for,
+                processing_function=process_record,
+                max_threads=8,  # tweak to see what's fastest
+            )
+            for rec in results:
+                writer.write_row(rec)
+                count = count + 1
 
     log.info(f"No of records being processed: {count}")
     log.info("Finished")

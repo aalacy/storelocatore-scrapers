@@ -5,7 +5,6 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-import json
 import math
 from concurrent.futures import ThreadPoolExecutor
 
@@ -18,7 +17,7 @@ _headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
 }
 session = SgRequests(proxy_country="gb").requests_retry_session()
-max_workers = 2
+max_workers = 8
 
 
 def fetchConcurrentSingle(link):
@@ -55,16 +54,19 @@ def fetch_data():
     locations = session.get(base_url, headers=_headers).json()["Value"]
     logger.info(f"{len(locations)} found")
     for page_url, _, res in fetchConcurrentList(locations):
-        if "stores/" not in page_url:
+        if "stores/" not in res.url or res.status_code != 200:
             continue
         logger.info(page_url)
-        ss = json.loads(
-            bs(res.text, "lxml").find("script", type="application/ld+json").string
-        )
-        addr = _["addressline2"].split(",")
+        addr = _["addressline2"].split()
+        sp1 = bs(res.text, "lxml")
         hours = []
-        for hh in ss.get("openingHoursSpecification", []):
-            hours.append(f"{','.join(hh['dayOfWeek'])}: {hh['opens']}-{hh['closes']}")
+        if sp1.select("div.store-detail__hours--body"):
+            for hh in list(
+                sp1.select("div.store-detail__hours--body")[0].stripped_strings
+            ):
+                if "holiday" in hh.lower() or "bank" in hh.lower():
+                    break
+                hours.append(hh)
         yield SgRecord(
             page_url=res.url,
             location_name=_["title"],
@@ -77,7 +79,7 @@ def fetch_data():
             latitude=_["lat"],
             longitude=_["lng"],
             locator_domain=locator_domain,
-            hours_of_operation="; ".join(hours),
+            hours_of_operation="; ".join(hours).replace("–", "-"),
             raw_address=_["addressline1"] + " " + _["addressline2"],
         )
 

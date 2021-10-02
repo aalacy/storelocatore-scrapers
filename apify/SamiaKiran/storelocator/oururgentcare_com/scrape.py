@@ -33,14 +33,7 @@ def fetch_data():
             location_name = soup.find("h1", {"class": "title"}).text
             street_address = soup.find("div", {"class": "address_1"}).text
             phone = soup.find("div", {"class": "phone_number"}).text
-            hours_of_operation = (
-                soup.find("div", {"class": "footer-hours"})
-                .get_text(separator="|", strip=True)
-                .split("|")
-            )
-            hours_of_operation = (
-                hours_of_operation[1] + " " + hours_of_operation[2].replace("OPEN", "")
-            )
+            hours_of_operation = r.text.split('"openingHours": "')[1].split('"')[0]
             address = soup.find("div", {"class": "address_2"}).text.split(",")
             city = address[0]
             address = address[1].split()

@@ -27,6 +27,9 @@ def fetch_data():
         poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
         poi = demjson.decode(poi)
         location_name = " ".join(loc_dom.xpath("//h1//text()"))
+        location_type = poi["@type"]
+        if loc_dom.xpath('//p[contains(text(), "s corporate office")]'):
+            location_type = "Corporate Office"
 
         item = SgRecord(
             locator_domain=domain,
@@ -39,7 +42,7 @@ def fetch_data():
             country_code=SgRecord.MISSING,
             store_number=SgRecord.MISSING,
             phone=poi["telephone"].strip(),
-            location_type=poi["@type"],
+            location_type=location_type,
             latitude=poi["geo"]["latitude"],
             longitude=poi["geo"]["longitude"],
             hours_of_operation=" ".join(poi["openingHours"]),

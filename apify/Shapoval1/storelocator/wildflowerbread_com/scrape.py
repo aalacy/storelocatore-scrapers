@@ -1,39 +1,13 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://wildflowerbread.com"
     api_url = "https://wildflowerbread.com/locations/"
 
@@ -44,13 +18,12 @@ def fetch_data():
     for b in block:
 
         street_address = "".join(
-            b.xpath('.//span[2][@itemprop="streetAddress"]/text()')
+            b.xpath('.//span[@itemprop="streetAddress"][2]/text()')
         )
         city = "".join(b.xpath('.//span[@itemprop="addressLocality"]/text()'))
         postal = "".join(b.xpath('.//span[@itemprop="postalCode"]/text()'))
         state = "".join(b.xpath('.//span[@itemprop="addressRegion"]/text()'))
         country_code = "US"
-        store_number = "<MISSING>"
         location_name = "".join(b.xpath('.//span[@itemprop="name"]/a/text()'))
         if location_name.find("Airport") != -1:
             street_address = "".join(
@@ -59,54 +32,63 @@ def fetch_data():
         slug = "".join(b.xpath('.//span[@itemprop="name"]/a/@href'))
         page_url = f"{locator_domain}{slug}"
         phone = "".join(b.xpath('.//a[@itemprop="telephone"]/text()'))
-        latln = "".join(b.xpath('.//p[@class="view-more inline"]/a/@href')).split(
-            "%40"
-        )[1:]
-        latln = "".join(latln).replace("%2C", ",")
-        if city == "Phoenix":
-            session = SgRequests()
-            r = session.get(page_url)
-            block = r.text.split("var latlng = new google.maps.LatLng(")[1].split(");")[
-                0
-            ]
-            latln = block
-        latitude = latln.split(",")[0]
-        longitude = latln.split(",")[1]
-        location_type = "<MISSING>"
-        hours_of_operation = "".join(
-            b.xpath('.//span[1][@itemprop="streetAddress"]/text()')
-        ).replace("Open ", "")
-        if location_name.find("Airport") != -1:
-            hours_of_operation = "<MISSING>"
         if location_name.find("Closed") != -1:
-            hours_of_operation = "Temporarily closed"
             location_name = location_name.split("-")[1].split("-")[0].strip()
+        percls = "".join(b.xpath('.//p[contains(text(), "permanently closed")]/text()'))
+        if percls:
+            continue
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        session = SgRequests()
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
 
-    return out
+        try:
+            latitude = (
+                "".join(tree.xpath('//script[contains(text(), "centerMap")]/text()'))
+                .split("LatLng(")[1]
+                .split(",")[0]
+                .strip()
+            )
+            longitude = (
+                "".join(tree.xpath('//script[contains(text(), "centerMap")]/text()'))
+                .split("LatLng(")[1]
+                .split(",")[1]
+                .split(")")[0]
+                .strip()
+            )
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
 
+        hours_of_operation = (
+            " ".join(tree.xpath('//time[@itemprop="openingHours"]/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
