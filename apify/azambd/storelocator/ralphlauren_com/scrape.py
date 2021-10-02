@@ -20,6 +20,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "ralphlauren.com"
 start_url = "https://www.ralphlauren.com/findstores?dwfrm_storelocator_distanceUnit=mi&dwfrm_storelocator_searchKey=10002&dwfrm_storelocator_maxdistance=50000&dwfrm_storelocator_latitude=&dwfrm_storelocator_longitude=&countryCode=&postalCode=&usePlaceDetailsAddress=false&dwfrm_storelocator_findbysearchkey=Search&findByValue=KeySearch"
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 MISSING = SgRecord.MISSING
 
 xpath_px_captcha = '//*[@id="px-captcha"]'
@@ -140,8 +143,13 @@ def fetch_stores(driver):
         if "latitude" not in store:
             continue
         for data in dataJSON:
+            if data["telephone"] == "":
+                data_phone = "None"
+            else:
+                data_phone = data["telephone"]
             if (
                 "latitude" in data["geo"]
+                and f"{data_phone}" == f'{store["phone"]}'
                 and f'{data["geo"]["latitude"]} {data["geo"]["longitude"]}'
                 == f'{store["latitude"]} {store["longitude"]}'
             ):
@@ -169,9 +177,11 @@ def fetch_data(driver):
         store_number = get_JSON_object_variable(store, "id")
         page_url = f"https://www.ralphlauren.com/Stores-Details?StoreID={store_number}"
         location_name = get_JSON_object_variable(store, "location_name")
+        location_name = location_name.split("-")[0].strip()
         street_address = get_JSON_object_variable(store, "street_address")
         city = get_JSON_object_variable(store, "city")
         zip_postal = get_JSON_object_variable(store, "postalCode")
+        street_address = street_address.replace(f",{zip_postal}", "")
         state = get_JSON_object_variable(store, "stateCode")
         country_code = get_JSON_object_variable(store, "countryCode")
         phone = get_JSON_object_variable(store, "phone")
@@ -213,7 +223,9 @@ def scrape():
     start = time.time()
     count = 0
     with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
+        executable_path=ChromeDriverManager().install(),
+        is_headless=True,
+        user_agent=user_agent,
     ) as driver:
         with SgWriter(
             deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
