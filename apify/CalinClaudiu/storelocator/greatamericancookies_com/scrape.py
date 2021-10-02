@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup as b4
 import json
+import sgpostal.sgpostal as parser
 
 
 def pass_url():
@@ -19,6 +20,32 @@ def pass_url():
     ]:
         for item in fetch_data(url):
             yield item
+
+
+def parse_details(k):
+    parse = str(
+        k["street_address_1"]
+        + " "
+        + k["street_address_2"]
+        + " "
+        + k["city"]
+        + " "
+        + k["state"]
+        + " "
+        + k["zip"]
+    )
+    addr = parser.parse_address_intl(parse)
+    print(parse)
+    k["street_address"] = (
+        addr.street_address_1 if addr.street_address_1 else "<MISSING>"
+    )
+    if addr.street_address_2:
+        k["street_address"] = k["street_address"] + ", " + addr.street_address_2
+    k["city"] = addr.city if addr.city else "<MISSING>"
+    k["state"] = addr.state if addr.state else "<MISSING>"
+    k["postcode"] = addr.postcode if addr.postcode else "<MISSING>"
+    k["country"] = addr.country if addr.country else "<MISSING>"
+    return k
 
 
 def fetch_data(url):
@@ -40,7 +67,8 @@ def fetch_data(url):
             if any(j in i["hours"] or j in i["title"] for j in comingSoon):
                 i["type"] = "Coming Soon!"
                 i["hours"] = "<MISSING>"
-            yield i
+
+            yield parse_details(i)
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -139,10 +167,8 @@ def scrape():
         ),
         latitude=MappingField(mapping=["latitude"], part_of_record_identity=True),
         longitude=MappingField(mapping=["longitude"], part_of_record_identity=True),
-        street_address=MultiMappingField(
-            mapping=[["street_address_1"], ["street_address_2"]],
-            multi_mapping_concat_with=", ",
-            value_transform=fix_comma,
+        street_address=MappingField(
+            mapping=["street_address"],
             part_of_record_identity=True,
         ),
         city=MappingField(
@@ -156,12 +182,17 @@ def scrape():
             part_of_record_identity=True,
         ),
         zipcode=MappingField(
-            mapping=["zip"],
+            mapping=["postcode"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
             part_of_record_identity=True,
         ),
-        country_code=MissingField(),
+        country_code=MappingField(
+            mapping=["country"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         phone=MappingField(
             mapping=["phone"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
