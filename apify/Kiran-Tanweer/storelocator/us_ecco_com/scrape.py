@@ -76,7 +76,6 @@ def fetch_data():
                     hour = hr.split('"data":"')[1].split('"')[0]
                     h1 = day + " " + hour
                     hoo = h1 + " " + hoo
-                
 
                 data_dedup = street + "-" + city + "-" + state + "-" + pcode
                 if data_dedup not in dedup:
@@ -118,4 +117,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
