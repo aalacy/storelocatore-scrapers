@@ -32,7 +32,7 @@ def para(k):
     k["extras"]["address"]["postalCode"] = "<MISSING>"
     for i in allscripts:
         if "postalCode" in i.text:
-            z = i.text.replace("\n", "")
+            z = i.text.replace("\n", "").replace('"The District"', "")
             data = json.loads(z)
 
     k["extras"] = data
