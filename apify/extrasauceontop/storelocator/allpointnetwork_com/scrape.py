@@ -1,77 +1,74 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    searche = [
-        DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
-        ),
-        DynamicGeoSearch(
-            country_codes=[SearchableCountries.CANADA], granularity=Grain_1_KM()
-        ),
-        DynamicGeoSearch(
-            country_codes=[SearchableCountries.BRITAIN], granularity=Grain_1_KM()
-        ),
-    ]
+    search = DynamicGeoSearch(
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.CANADA,
+            SearchableCountries.BRITAIN,
+        ],
+        granularity=Grain_2(),
+    )
     url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
     session = SgRequests()
 
-    for search in searche:
-        for search_lat, search_lon in search:
-            x = 0
-            while True:
-                x = x + 1
-                params = {
-                    "Latitude": str(search_lat),
-                    "Longitude": str(search_lon),
-                    "Miles": "100",
-                    "NetworkId": "10029",
-                    "PageIndex": str(x),
-                    "SearchByOptions": "",
-                }
+    for search_lat, search_lon in search:
+        x = 0
+        while True:
+            x = x + 1
+            params = {
+                "Latitude": str(search_lat),
+                "Longitude": str(search_lon),
+                "Miles": "100",
+                "NetworkId": "10029",
+                "PageIndex": str(x),
+                "SearchByOptions": "",
+            }
 
-                response = session.post(url, json=params).json()
+            response = session.post(url, json=params).json()
 
-                try:
-                    for location in response["data"]["ATMInfo"]:
-                        locator_domain = "allpointnetwork.com"
-                        page_url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
-                        location_name = "Allpoint " + location["RetailOutlet"]
-                        address = location["Street"]
-                        city = location["City"]
-                        state = location["State"]
-                        zipp = location["ZipCode"]
-                        country_code = location["Country"]
-                        if country_code == "MX":
-                            continue
-                        store_number = location["LocationID"]
-                        phone = "<MISSING>"
-                        location_type = location["RetailOutlet"]
-                        latitude = location["Latitude"]
-                        longitude = location["Longitude"]
-                        hours = "<MISSING>"
-                        yield {
-                            "locator_domain": locator_domain,
-                            "page_url": page_url,
-                            "location_name": location_name,
-                            "latitude": latitude,
-                            "longitude": longitude,
-                            "city": city,
-                            "store_number": store_number,
-                            "street_address": address,
-                            "state": state,
-                            "zip": zipp,
-                            "phone": phone,
-                            "location_type": location_type,
-                            "hours": hours,
-                            "country_code": country_code,
-                        }
-                    if len(response["data"]["ATMInfo"]) < 100:
-                        break
-                except Exception:
+            try:
+                for location in response["data"]["ATMInfo"]:
+                    locator_domain = "allpointnetwork.com"
+                    page_url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
+                    location_name = "Allpoint " + location["RetailOutlet"]
+                    address = location["Street"]
+                    city = location["City"]
+                    state = location["State"]
+                    zipp = location["ZipCode"]
+                    country_code = location["Country"]
+                    if country_code == "MX":
+                        continue
+                    store_number = location["LocationID"]
+                    phone = "<MISSING>"
+                    location_type = location["RetailOutlet"]
+                    latitude = location["Latitude"]
+                    longitude = location["Longitude"]
+                    search.found_location_at(latitude, longitude)
+                    hours = "<MISSING>"
+                    yield {
+                        "locator_domain": locator_domain,
+                        "page_url": page_url,
+                        "location_name": location_name,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "city": city,
+                        "store_number": store_number,
+                        "street_address": address,
+                        "state": state,
+                        "zip": zipp,
+                        "phone": phone,
+                        "location_type": location_type,
+                        "hours": hours,
+                        "country_code": country_code,
+                    }
+                if len(response["data"]["ATMInfo"]) < 100:
                     break
+            except Exception:
+                break
 
 
 def scrape():
