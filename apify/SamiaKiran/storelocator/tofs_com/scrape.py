@@ -25,7 +25,7 @@ def fetch_data():
     loclist = json.loads(r.text)
     loclist = loclist["results"]["locations"]
     for loc in loclist:
-        
+
         location_name = loc["name"]
         log.info(location_name)
         store_number = loc["id"]
@@ -74,22 +74,22 @@ def fetch_data():
             + sun
         )
         yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone.strip(),
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-                raw_address = address_raw
-            )
+            locator_domain=DOMAIN,
+            page_url=url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+            raw_address=address_raw,
+        )
 
 
 def scrape():
