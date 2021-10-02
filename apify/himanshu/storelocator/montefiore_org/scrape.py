@@ -1,76 +1,33 @@
-import csv
 import re
-
+import usaddress
 from bs4 import BeautifulSoup
+
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sglogging import SgLogSetup
 
-from sgrequests import SgRequests
-
 logger = SgLogSetup().get_logger("montefiore_org")
+
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
         "Content-Type": "application/x-www-form-urlencoded",
     }
 
-    base_url = "https://www.montefiore.org"
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
     country_code = "US"
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    hours_of_operation = ""
-    page_url = ""
-    addresses = []
     temp = []
 
-    #################################################################################
-
-    location_url1 = "https://www.montefiore.org/westchester-square-campus"
-    base_url = "https://www.montefiore.org/"
-    r = session.get(location_url1, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    page_url = "https://www.montefiore.org/westchester-square-campus"
+    r = session.get(page_url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
     data = soup.find("div", {"class": "content"}).find_all("p")[1]
     data1 = soup.find("div", {"class": "content"}).find_all("p")[2]
     phone = list(data.stripped_strings)[-1]
@@ -85,27 +42,30 @@ def fetch_data():
     longitude = (
         data1.find("a")["href"].split("en&ll=")[1].split("&spn=")[0].split(",")[1]
     )
-    store = []
-    store.append(base_url if base_url else "<MISSING>")
-    store.append(location_name if location_name else "<MISSING>")
-    store.append(street_address if street_address else "<MISSING>")
-    store.append(city if city else "<MISSING>")
-    store.append(state if state else "<MISSING>")
-    store.append(zipp if zipp else "<MISSING>")
-    store.append("US")
-    store.append("<MISSING>")
-    store.append(phone if phone else "<MISSING>")
-    store.append("<MISSING>")
-    store.append(latitude if latitude else "<MISSING>")
-    store.append(longitude if longitude else "<MISSING>")
-    store.append("<MISSING>")
-    store.append(location_url1 if location_url1 else "<MISSING>")
-    store = [str(x).strip() if x else "<MISSING>" for x in store]
-    yield store
-    location_url = "https://www.montefiore.org/cancer-contact"
+
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zipp,
+        country_code=country_code,
+        store_number=SgRecord.MISSING,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=SgRecord.MISSING,
+    )
+
+    sgw.write_row(row)
+
+    page_url = "https://www.montefiore.org/cancer-contact"
     base_url = "https://www.montefiore.org/"
-    r = session.get(location_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    r = session.get(page_url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
     data = soup.find("div", {"class": "content"})
     data2 = data.find("table")
     mp = data2.find_all("tr")
@@ -116,7 +76,6 @@ def fetch_data():
             full = list(j.stripped_strings)
             if len(full) != 1 and full != []:
                 try:
-                    data = int(full[0].strip()[0])
                     street_address = full[0]
                     city = full[1].split(",")[0]
                     state = full[1].split(",")[1].split()[0]
@@ -163,30 +122,27 @@ def fetch_data():
                 if "1695 Eastchester Road, 2nd Floor" in str(full):
                     street_address = "1695 Eastchester Road, 2nd Floor"
 
-                store = []
-                store.append(base_url if base_url else "<MISSING>")
-                store.append(location_name if location_name else "<MISSING>")
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state.replace("10504", "") if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append("<MISSING>")
-                store.append("https://www.montefiore.org/cancer-contact")
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                if (str(store[2])) in addresses:
-                    continue
-                addresses.append(str(store[2]))
-                temp.append(store)
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=SgRecord.MISSING,
+                )
 
-    # #################################################################################
+                sgw.write_row(row)
+
     r = session.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     for link in soup.find("div", class_="sectionBox grey-box bg-dkblue").find_all("a"):
         if "www" in link["href"]:
             url = link["href"]
@@ -202,7 +158,7 @@ def fetch_data():
             r1 = session.get(url, headers=headers)
         except:
             continue
-        soup1 = BeautifulSoup(r1.text, "lxml")
+        soup1 = BeautifulSoup(r1.text, "html.parser")
         try:
             table = soup1.find("div", class_="content").find("table")
             if table:
@@ -230,8 +186,6 @@ def fetch_data():
                         else:
                             phone = "<MISSING>"
                         location_type = "Moses Campus"
-                        store_number = "<MISSING>"
-                        hours_of_operation = "<MISSING>"
                         latitude = "37.0625"
                         longitude = "-95.677068"
 
@@ -241,26 +195,24 @@ def fetch_data():
 
                         page_url = url
 
-                        store = [
-                            locator_domain,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zipp,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                            page_url,
-                        ]
-                        if store[2] in addresses:
-                            continue
-                        addresses.append(store[2])
-                        temp.append(store)
+                        row = SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zipp,
+                            country_code=country_code,
+                            store_number=SgRecord.MISSING,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=SgRecord.MISSING,
+                        )
+
+                        sgw.write_row(row)
 
             else:
                 try:
@@ -268,7 +220,8 @@ def fetch_data():
                         "a", text=re.compile("Locations")
                     )
                     r = session.get("https://www.cham.org" + url1["href"])
-                    soup = BeautifulSoup(r.text, "lxml")
+                    soup = BeautifulSoup(r.text, "html.parser")
+
                     loc = list(
                         soup.find_all("div", class_="freeXML")[-1]
                         .find("p")
@@ -306,13 +259,16 @@ def fetch_data():
                     for loc in soup.find("div", class_="freeTxt").find_all(
                         "div", class_="column xsm-24 sm-12"
                     ):
-                        list_loc = list(loc.stripped_strings)
+
+                        list_loc = list(loc)
+
                         if "Phone" in list_loc[-2]:
                             del list_loc[-2]
                         location_name = list_loc[0]
                         phone = list_loc[-1]
                         if len(list_loc) > 4:
                             street_address = list_loc[-3]
+
                             city = list_loc[-2].split(",")[0]
                             state = " ".join(list_loc[-2].split(",")[1].split()[:-1])
                             zipp = list_loc[-2].split(",")[1].split()[-1]
@@ -326,122 +282,96 @@ def fetch_data():
                             city = list_loc[-2].split(",")[0]
                             state = list_loc[-2].split(",")[1]
                             zipp = "<MISSING>"
-                        location_type = "<MISSING>"
-                        store_number = "<MISSING>"
-                        latitude = "<MISSING>"
-                        longitude = "<MISSING>"
-                        hours_of_operation = "<MISSING>"
                         page_url = "https://www.cham.org" + url1["href"]
-                        store = [
-                            locator_domain,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zipp,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                            page_url,
-                        ]
-                        store = [str(x).strip() if x else "<MISSING>" for x in store]
-                        if store[2] in addresses:
-                            continue
-                        addresses.append(store[2])
-                        temp.append(store)
+
+                        row = SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zipp,
+                            country_code=country_code,
+                            store_number=SgRecord.MISSING,
+                            phone=phone,
+                            location_type=SgRecord.MISSING,
+                            latitude=SgRecord.MISSING,
+                            longitude=SgRecord.MISSING,
+                            hours_of_operation=SgRecord.MISSING,
+                        )
+
+                        sgw.write_row(row)
 
                 except:
                     if "einstein-campus" in url:
                         r = session.get(url)
-                        soup = BeautifulSoup(r.text, "lxml")
+                        soup = BeautifulSoup(r.text, "html.parser")
                         for loc in soup.find("div", class_="content").find_all("p")[:2]:
-                            list_loc = list(loc.stripped_strings)
+                            list_loc = list(loc.stripped_strings)  # type: ignore
 
                             if len(list_loc) == 2:
                                 page_url = url
-                                city = "<MISSING>"
-                                state = "<MISSING>"
-                                zipp = "<MISSING>"
-                                latitude = "<MISSING>"
-                                longitude = "<MISSING>"
-                                store_number = "<MISSING>"
                                 location_type = "Einstein Campus"
                                 location_name = list_loc[0]
                                 street_address = list_loc[1]
                                 phone = "718-904-2800"
                                 hours_of_operation = "24 hours"
-                                store = [
-                                    locator_domain,
-                                    location_name,
-                                    street_address,
-                                    city,
-                                    state,
-                                    zipp,
-                                    country_code,
-                                    store_number,
-                                    phone,
-                                    location_type,
-                                    latitude,
-                                    longitude,
-                                    hours_of_operation,
-                                    page_url,
-                                ]
-                                store = [
-                                    str(x).strip() if x else "<MISSING>" for x in store
-                                ]
-                                temp.append(store)
+
+                                row = SgRecord(
+                                    locator_domain=locator_domain,
+                                    page_url=page_url,
+                                    location_name=location_name,
+                                    street_address=street_address,
+                                    city=SgRecord.MISSING,
+                                    state=SgRecord.MISSING,
+                                    zip_postal=SgRecord.MISSING,
+                                    country_code=country_code,
+                                    store_number=SgRecord.MISSING,
+                                    phone=phone,
+                                    location_type=location_type,
+                                    latitude=SgRecord.MISSING,
+                                    longitude=SgRecord.MISSING,
+                                    hours_of_operation=hours_of_operation,
+                                )
+
+                                sgw.write_row(row)
                             else:
                                 for i in list_loc[1:]:
                                     page_url = url
-                                    city = "<MISSING>"
-                                    state = "<MISSING>"
-                                    zipp = "<MISSING>"
-                                    latitude = "<MISSING>"
-                                    longitude = "<MISSING>"
-                                    store_number = "<MISSING>"
                                     location_type = "Einstein Campus"
                                     location_name = list_loc[0]
                                     street_address = i
-                                    phone = "<MISSING>"
                                     hours_of_operation = "Open Monday through Friday, 7:00 A.M. to 7:00 P.M."
-                                    store = [
-                                        locator_domain,
-                                        location_name,
-                                        street_address,
-                                        city,
-                                        state,
-                                        zipp,
-                                        country_code,
-                                        store_number,
-                                        phone,
-                                        location_type,
-                                        latitude,
-                                        longitude,
-                                        hours_of_operation,
-                                        page_url,
-                                    ]
-                                    store = [
-                                        str(x).strip() if x else "<MISSING>"
-                                        for x in store
-                                    ]
-                                    if store[2] in addresses:
-                                        continue
-                                    addresses.append(store[2])
-                                    temp.append(store)
+                                    row = SgRecord(
+                                        locator_domain=locator_domain,
+                                        page_url=page_url,
+                                        location_name=location_name,
+                                        street_address=street_address,
+                                        city=SgRecord.MISSING,
+                                        state=SgRecord.MISSING,
+                                        zip_postal=SgRecord.MISSING,
+                                        country_code=country_code,
+                                        store_number=SgRecord.MISSING,
+                                        phone=SgRecord.MISSING,
+                                        location_type=location_type,
+                                        latitude=SgRecord.MISSING,
+                                        longitude=SgRecord.MISSING,
+                                        hours_of_operation=hours_of_operation,
+                                    )
+
+                                    sgw.write_row(row)
                     else:
                         try:
                             r = session.get(url)
                         except:
                             continue
-                        soup = BeautifulSoup(r.text, "lxml")
+                        soup = BeautifulSoup(r.text, "html.parser")
                         loc = soup.find("div", {"id": "pagetitlecontainer"})
                         page_url = url
                         store_number = "<MISSING>"
-                        if "Wakefield Campus" in loc.text:
+                        hours_of_operation = "<MISSING>"
+                        if "Wakefield Campus" in loc.text:  # type: ignore
                             add = list(
                                 soup.find("div", class_="content")
                                 .find_all("p")[2]
@@ -463,21 +393,23 @@ def fetch_data():
                                 .split("&")[0]
                             )
                             location_name = add[0]
-                            location_type = loc.text.strip()
+                            location_name = location_name.replace("\n", " ").strip()
+                            location_type = loc.text.strip()  # type: ignore
                             street_address = add[1]
                             city = add[2].split(",")[0]
                             state = add[2].split(",")[1].split()[0]
                             zipp = add[2].split(",")[1].split()[-1]
                             phone = add[-1]
                             hours_of_operation = "24-hour"
-                        elif "Westchester Square Campus" in loc.text:
+                        elif "Westchester Square Campus" in loc.text:  # type: ignore
                             add = list(
                                 soup.find("div", class_="content")
                                 .find_all("p")[1]
                                 .stripped_strings
                             )
                             location_name = add[0]
-                            location_type = loc.text.strip()
+                            location_name = location_name.replace("\n", " ").strip()
+                            location_type = loc.text.strip()  # type: ignore
                             street_address = add[1]
                             city = add[2].split(",")[0]
                             state = add[2].split(",")[1].split()[0]
@@ -505,14 +437,14 @@ def fetch_data():
                                 .find_all("p")[-2]
                                 .stripped_strings
                             )
-                            location_type = loc.text.strip()
+                            location_type = loc.text.strip()  # type: ignore
                             location_name = add[0]
+                            location_name = location_name.replace("\n", " ").strip()
                             street_address = add[1]
                             city = add[2].split(",")[0]
                             state = add[2].split(",")[1].split()[0]
                             zipp = add[2].split(",")[1].split()[-1]
                             phone = "<MISSING>"
-                            hours_of_operation = "<MISSING>"
                             latitude = (
                                 soup.find("div", class_="content")
                                 .find("iframe")["src"]
@@ -527,54 +459,52 @@ def fetch_data():
                                 .split("!2m")[0]
                                 .split("!3d")[1]
                             )
-                        store = [
-                            locator_domain,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zipp,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                            page_url,
-                        ]
-                        store = [str(x).strip() if x else "<MISSING>" for x in store]
-                        if store[2] in addresses:
-                            continue
-                        addresses.append(store[2])
-                        temp.append(store)
+                        row = SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zipp,
+                            country_code=country_code,
+                            store_number=SgRecord.MISSING,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                        )
+
+                        sgw.write_row(row)
 
         except:
             if "burke" in url:
                 r = session.get(url + "outpatient/locations")
-                soup = BeautifulSoup(r.text, "lxml")
+                soup = BeautifulSoup(r.text, "html.parser")
                 for ul in soup.find_all("ul", class_="locations-list"):
                     for loc in ul.find_all("li", class_="location-item"):
-                        location_name = loc.find("h3").text.strip()
+                        location_name = loc.find("h3").text.strip()  # type: ignore
+                        location_name = location_name.replace("\n", " ").strip()
                         add = list(
-                            loc.find("div", class_="address-proper").stripped_strings
+                            loc.find("div", class_="address-proper").stripped_strings  # type: ignore
                         )
                         street_address = " ".join(add[:-1])
                         city = add[-1].split(",")[0]
                         state = add[-1].split(",")[-1].split()[0]
                         zipp = add[-1].split(",")[-1].split()[-1]
                         phone = list(
-                            loc.find("div", class_="numbers phone").stripped_strings
+                            loc.find("div", class_="numbers phone").stripped_strings  # type: ignore
                         )[1].strip()
                         try:
                             location_type = (
-                                loc.find("div", class_="services")
+                                loc.find("div", class_="services")  # type: ignore
                                 .text.split("Click")[0]
                                 .strip()
                             )
                         except:
                             location_type = "<MISSING>"
-                        page_url = "https://www.burke.org" + loc.a["href"]
+                        page_url = "https://www.burke.org" + loc.a["href"]  # type: ignore
                         r_loc = session.get(page_url)
                         soup_loc = BeautifulSoup(r_loc.text, "lxml")
                         try:
@@ -591,124 +521,101 @@ def fetch_data():
                             )
                         except:
                             hours_of_operation = "<MISSING>"
-                        latitude = "<MISSING>"
-                        longitude = "<MISSING>"
-                        store_number = "<MISSING>"
-                        store = [
-                            locator_domain,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zipp,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                            page_url,
-                        ]
-                        store = [str(x).strip() if x else "<MISSING>" for x in store]
-                        if store[2] in addresses:
-                            continue
-                        addresses.append(store[2])
-                        temp.append(store)
+
+                        row = SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zipp,
+                            country_code=country_code,
+                            store_number=SgRecord.MISSING,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=SgRecord.MISSING,
+                            longitude=SgRecord.MISSING,
+                            hours_of_operation=hours_of_operation,
+                        )
+
+                        sgw.write_row(row)
             else:
                 r = session.get(url)
-                soup = BeautifulSoup(r.text, "lxml")
+                soup = BeautifulSoup(r.text, "html.parser")
                 try:
                     loc = soup.find("div", class_="footer-area-1").find(
                         "div", class_="locations"
                     )
-                    for li in loc.find("ul").find_all("li"):
+                    for li in loc.find("ul").find_all("li"):  # type: ignore
                         add = list(li.stripped_strings)
                         if "Directions" in add[-1]:
                             del add[-1]
                         location_name = " ".join(add[:-2])
+                        location_name = location_name.replace("\n", " ").strip()
                         street_address = add[-2]
                         city = add[-1].split(",")[0]
                         state = add[-1].split(",")[-1].split()[0]
                         zipp = add[-1].split(",")[-1].split()[-1]
                         phone = "<MISSING>"
                         hours_of_operation = "<MISSING>"
-                        store_number = "<MISSING>"
                         location_type = "Montefiore health system"
-                        latitude = "<MISSING>"
-                        longitude = "<MISSING>"
                         page_url = url
-                        store = [
-                            locator_domain,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zipp,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                            page_url,
-                        ]
-                        store = [str(x).strip() if x else "<MISSING>" for x in store]
-                        if (str(store[2])) in addresses:
-                            continue
-                        addresses.append(str(store[2]))
-                        temp.append(store)
+                        row = SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zipp,
+                            country_code=country_code,
+                            store_number=SgRecord.MISSING,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=SgRecord.MISSING,
+                            longitude=SgRecord.MISSING,
+                            hours_of_operation=hours_of_operation,
+                        )
+
+                        sgw.write_row(row)
                 except:
                     if "montefioreslc" in url:
                         r = session.get(url)
-                        soup = BeautifulSoup(r.text, "lxml")
+                        soup = BeautifulSoup(r.text, "html.parser")
                         loc = soup.find("div", class_="schema-info half")
-                        location_name = loc.find("meta", {"itemprop": "name"})[
-                            "content"
-                        ]
-                        for add in loc.find_all("div", class_="location-info"):
-                            street_address = list(add.stripped_strings)[0]
-                            city = list(add.stripped_strings)[1]
-                            state = list(add.stripped_strings)[-4]
-                            zipp = list(add.stripped_strings)[-3]
-                            phone = list(add.stripped_strings)[-1]
-                            latitude = "<MISSING>"
-                            hours_of_operation = "<MISSING>"
-                            store_number = "<MISSING>"
-                            location_type = "<MISSING>"
-                            latitude = "<MISSING>"
-                            longitude = "<MISSING>"
+                        location_name = loc.find("meta", {"itemprop": "name"})["content"]  # type: ignore
+                        location_name = location_name.replace("\n", " ").strip()
+                        for add in loc.find_all("div", class_="location-info"):  # type: ignore
+                            street_address = list(add.stripped_strings)[0]  # type: ignore
+                            city = list(add.stripped_strings)[1]  # type: ignore
+                            state = list(add.stripped_strings)[-4]  # type: ignore
+                            zipp = list(add.stripped_strings)[-3]  # type: ignore
+                            phone = list(add.stripped_strings)[-1]  # type: ignore
                             page_url = url
-                            store = [
-                                locator_domain,
-                                location_name,
-                                street_address,
-                                city,
-                                state,
-                                zipp,
-                                country_code,
-                                store_number,
-                                phone,
-                                location_type,
-                                latitude,
-                                longitude,
-                                hours_of_operation,
-                                page_url,
-                            ]
-                            store = [
-                                str(x).strip() if x else "<MISSING>" for x in store
-                            ]
-                            if store[2] in addresses:
-                                continue
-                            addresses.append(store[2])
-                            temp.append(store)
+                            row = SgRecord(
+                                locator_domain=locator_domain,
+                                page_url=page_url,
+                                location_name=location_name,
+                                street_address=street_address,
+                                city=city,
+                                state=state,
+                                zip_postal=zipp,
+                                country_code=country_code,
+                                store_number=SgRecord.MISSING,
+                                phone=phone,
+                                location_type=SgRecord.MISSING,
+                                latitude=SgRecord.MISSING,
+                                longitude=SgRecord.MISSING,
+                                hours_of_operation=SgRecord.MISSING,
+                            )
+
+                            sgw.write_row(row)
                     else:
                         pass
 
-    #############################################################################################################################
     r = session.get("https://www.montefiore.org/mmg", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
     nav = (
         soup.find("div", class_="leftnav")
         .find("ul", class_="parents")
@@ -718,15 +625,13 @@ def fetch_data():
         a = "https://www.montefiore.org/" + li.a["href"]
         logger.info(a)
         r1 = session.get(a, headers=headers)
-        soup1 = BeautifulSoup(r1.text, "lxml")
+        soup1 = BeautifulSoup(r1.text, "html.parser")
         location_name = soup1.find("div", {"id": "pagetitlecontainer"}).text
+        location_name = location_name.replace("\n", " ").strip()
         try:
             contact = soup1.find("div", class_="mmgcontact")
             address = list(contact.stripped_strings)
-            store_number = "<MISSING>"
             location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
 
             try:
                 phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(contact))[0]
@@ -741,6 +646,8 @@ def fetch_data():
                         location_type = address[i + 1].strip()
 
             page_url = a
+            if page_url == "https://www.montefiore.org/mmg-ffp":
+                continue
             if "Hours of Operation" in str(" ".join(address)):
                 hours = (
                     " ".join(address)
@@ -757,218 +664,184 @@ def fetch_data():
             else:
                 hours_of_operation = "<MISSING>"
             try:
-                data = int(address[0].strip()[0])
                 street_address = address[0]
+
                 city = address[1].split(",")[0]
                 state = address[1].split(",")[-1].split()[0]
                 zipp = address[1].split(",")[-1].split()[1]
             except:
                 try:
-                    data = int(address[1].strip()[0])
                     street_address = address[1]
+
                     city = address[2].split(",")[0]
                     state = address[2].split(",")[-1].split()[0]
                     zipp = address[2].split(",")[-1].split()[1]
                 except:
                     continue
-            store = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                page_url,
-            ]
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            temp.append(store)
+            if (
+                "".join(address).find("2532 Grand Concourse") != -1
+                or "".join(address).find("2100 Bartow Avenue") != -1
+            ):
+                street_address = address[1]
+                city = address[2].split(",")[0]
+                state = address[2].split(",")[-1].split()[0]
+                zipp = address[2].split(",")[-1].split()[1]
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
         except:
             continue
 
-    # --------------------------------  mmg locations --------------------------------
-
     url = "https://www.google.com/maps/d/embed?mid=1KdL2nJazZh47ZXogEriVKB3YLVk&msa=0&ll=40.860555025437755%2C-73.84279832234037&spn=0.005136%2C0.011362&iwloc=0004befb4696e25688410&output=embed&z=17"
-    r = session.get(url)
     logger.info(url)
-    soup = BeautifulSoup(r.text, "lxml")
-    script = soup.script.contents[0].split("KIEABWLWCFIQ06A469A1")
-    for i in script[26:51]:
-        location_type = "Montefiore Medical Group"
-        store_number = "<MISSING>"
-        page_url = "https://www.montefiore.org/mmg-map"
-        hours_of_operation = "<MISSING>"
-        latitude = i.split("\\n]\\n]\\n,")[0].split("[[[")[1].split(",")[0]
-        longitude = (
-            i.split("\\n]\\n]\\n,")[0].split("[[[")[1].split(",")[1].split("]")[0]
+    r = session.get(url)
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+    cleaned = (
+        r.text.replace("\\t", " ")
+        .replace("\t", " ")
+        .replace("\\n]", "]")
+        .replace("\n]", "]")
+        .replace("\\n,", ",")
+        .replace("\\n", "#")
+        .replace('\\"', '"')
+        .replace("\\u003d", "=")
+        .replace("\\u0026", "&")
+        .replace("\\", "")
+        .replace("\xa0", " ")
+    )
+
+    locations = (
+        cleaned.split('var _pageData = "')[1]
+        .split('";</script>')[0]
+        .replace(
+            '"Americau0027s Best Childrenu0027s Hospitals"',
+            "Americau0027s Best Childrenu0027s Hospitals",
         )
-        location_name = (
-            i.split('\\"name\\",')[1]
-            .split("\\n,1]")[0]
-            .replace('"', "")
-            .replace("\\", "")
-            .replace("[", "")
-            .replace("]", "")
+        .replace("null", "None")
+        .replace("false", "False")
+        .replace("true", "True")
+    )
+    locations = eval(locations)[1][6][0][12][0][13][0]
+    for l in locations:
+
+        location_type = "Montefiore Medical Group"
+        page_url = "https://www.montefiore.org/mmg-map"
+        location_name = l[5][0][1][0]
+        ad = " ".join(l[5][1][1]).strip()
+        if ad.find("#Information") != -1:
+            ad = ad.split("#Information")[0].strip()
+        if ad.find("Information") != -1:
+            ad = ad.split("Information")[0].strip()
+        if ad.find("Address:") != -1:
+            ad = ad.split("Address:")[1].strip()
+        if ad.find("#Website:") != -1:
+            ad = ad.split("#Website:")[0]
+        ad = (
+            ad.replace("##", " ")
+            .replace("10467-2940#", "10467-2940")
+            .replace("#Family Practice", "Family Practice")
+            .replace("#(MHFP)", "(MHFP)")
+            .replace("Ground Floor", "")
             .strip()
         )
-        address = i.split('\\"description\\",')[1].split("\n,1]")[0].split("\\n")
+        if ad.find("#") != -1:
+            ad = " ".join(ad.split("#")[1:])
+        if ad.find(")") != -1:
+            ad = ad.split(")")[1].strip()
+        ad = (
+            ad.replace("Practice Center", "")
+            .replace("AvenueBronx", "Avenue Bronx")
+            .strip()
+        )
 
-        if len(address) == 7:
-            street_address = address[0].split('[\\"')[1].split('\\"]')[0].split(",")[0]
-            city = address[0].split('[\\"')[1].split('\\"]')[0].split(",")[1]
-            state = (
-                address[0].split('[\\"')[1].split('\\"]')[0].split(",")[-1].split()[0]
-            )
-            zipp = (
-                address[0].split('[\\"')[1].split('\\"]')[0].split(",")[-1].split()[-1]
-            )
-            phone = "<MISSING>"
-        elif len(address) == 13:
-            street_address = (
-                " ".join(address)
-                .split("Address: ")[1]
-                .split("\\")[0]
-                .split(",")[0]
-                .replace("Bronx", "")
-                .strip()
-            )
-            city = "Bronx"
-            state = (
-                " ".join(address)
-                .split("Address: ")[1]
-                .split("\\")[0]
-                .split(",")[1]
-                .split()[0]
-            )
-            zipp = (
-                " ".join(address)
-                .split("Address: ")[1]
-                .split("\\")[0]
-                .split(",")[1]
-                .split()[-1]
-            )
-            phone = (
-                " ".join(address)
-                .split("Phone:")[1]
-                .split("\\")[0]
-                .replace("CHAM", "")
-                .strip()
-            )
-        else:
-            try:
-                data = int(address[1].strip()[0])
-                street_address = address[1].replace("\\", "")
-                city = address[2].split(",")[0]
-                state = address[2].split(",")[-1].replace("\\", "").split()[0]
-                zipp = address[2].split(",")[-1].replace("\\", "").split()[-1]
-                phone = (
-                    " ".join(address)
-                    .split("Phone:")[1]
-                    .split("\\")[0]
-                    .replace(" (Adult Medicine) 718-920-5161 (Pediatrics)", "")
-                )
-            except:
-                try:
-                    data = int(address[2].strip()[0])
-                    street_address = address[2].replace("\\", "")
-                    city = address[3].split(",")[0]
-                    state = address[3].split(",")[-1].replace("\\", "").split()[0]
-                    zipp = address[3].split(",")[-1].replace("\\", "").split()[-1]
-                    phone = (
-                        " ".join(address)
-                        .split("Phone:")[1]
-                        .split("\\")[0]
-                        .replace(" (Adult Medicine) 718-920-5161 (Pediatrics)", "")
-                    )
-                except:
-                    try:
-                        data = int(address[4].strip()[0])
-                        street_address = address[4].replace("\\", "")
-                        city = address[5].split(",")[0]
-                        state = address[5].split(",")[-1].replace("\\", "").split()[0]
-                        zipp = address[5].split(",")[-1].replace("\\", "").split()[-1]
-                        phone = (
-                            " ".join(address)
-                            .split("Phone:")[1]
-                            .split("\\")[0]
-                            .replace(" (Adult Medicine) 718-920-5161 (Pediatrics)", "")
-                        )
-                    except:
-                        phone = (
-                            " ".join(address)
-                            .split("Phone:")[1]
-                            .split("\\")[0]
-                            .replace(" (Adult Medicine) 718-920-5161 (Pediatrics)", "")
-                        )
-                        street_address = (
-                            " ".join(address)
-                            .split("Address: ")[1]
-                            .split("\\")[0]
-                            .split(",")[0]
-                            .strip()
-                        )
-                        city = (
-                            " ".join(address)
-                            .split("Address: ")[1]
-                            .split("\\")[0]
-                            .split(",")[1]
-                            .strip()
-                        )
-                        state = (
-                            " ".join(address)
-                            .split("Address: ")[1]
-                            .split("\\")[0]
-                            .split(",")[-1]
-                            .split()[0]
-                        )
-                        zipp = (
-                            " ".join(address)
-                            .split("Address: ")[1]
-                            .split("\\")[0]
-                            .split(",")[-1]
-                            .split()[-1]
-                        )
-        store = [
-            locator_domain,
-            location_name,
-            street_address.replace("Rd.", "Road"),
-            city,
-            state.strip(),
-            zipp.strip(),
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-            page_url,
-        ]
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-        temp.append(store)
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
 
-    for i in range(len(temp)):
-        if temp[i][1] + " " + temp[i][2] in addresses:
-            continue
-        addresses.append(temp[i][1] + " " + temp[i][2])
-        yield temp[i]
+        info = " ".join(l[5][1][1]).strip()
+        state = a.get("state") or "<MISSING>"
+        zipp = a.get("postal") or "<MISSING>"
+        country_code = "USA"
+        city = a.get("city") or "<MISSING>"
+        if city.find("Concourse Bronx") != -1:
+            street_address = street_address + " " + city.split()[0].strip()
+            city = city.split()[1].strip()
+        latitude = l[1][0][0][0]
+        longitude = l[1][0][0][1]
+        phone = "<MISSING>"
+        if info.find("#Phone:") != -1:
+            phone = info.split("#Phone:")[1].split("#")[0].strip()
+        if phone.find("(Adult Medicine)") != -1:
+            phone = phone.split("(Adult Medicine)")[0].strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    locator_domain = "https://www.montefiore.org/"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

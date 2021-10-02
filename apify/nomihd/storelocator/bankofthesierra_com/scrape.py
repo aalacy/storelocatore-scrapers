@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 import ssl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 try:
     _create_unverified_https_context = (
@@ -46,13 +48,17 @@ def fetch_data():
                     raw_info_list.append("".join(raw).strip())
 
             phone = raw_info_list[-1]
-            street_address = raw_info_list[0].strip()
-            city = raw_info_list[1].strip().split(",")[0].strip()
-            state = raw_info_list[1].strip().split(",")[1].strip().split(" ")[0].strip()
+            street_address = ", ".join(raw_info_list[:-2]).strip()
+            city = raw_info_list[-2].strip().split(",")[0].strip()
+            state = (
+                raw_info_list[-2].strip().split(",")[1].strip().split(" ")[0].strip()
+            )
             if " CA" in city:
                 city = city.replace(" CA", "").strip()
                 state = "CA"
-            zipp = raw_info_list[1].strip().split(",")[1].strip().split(" ")[-1].strip()
+            zipp = (
+                raw_info_list[-2].strip().split(",")[1].strip().split(" ")[-1].strip()
+            )
 
             hours_of_operation = "; ".join(store.xpath("td[3]/text()")).strip()
 
@@ -83,7 +89,17 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

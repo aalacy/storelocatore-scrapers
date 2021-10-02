@@ -6,7 +6,6 @@ from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -51,7 +50,7 @@ def fetch_data():
         log.info(page_url)
         hour_list = loc["schedule"]["calendar"]["opening-hours"]
         hours_of_operation = ""
-        hour_list = hour_list
+        temp_list = []
         for hour in hour_list:
             temp = hour.split("-")
             day = findDay(temp[2] + " " + temp[1] + " " + temp[0])
@@ -62,25 +61,21 @@ def fetch_data():
                 temp_2 = json.loads(temp_2)
                 start = temp_2["start_time"]
                 end = temp_2["end_time"]
-                hours_of_operation = (
-                    hours_of_operation + " " + day + " " + start + " - " + end
-                )
+                variable = day + " " + start + " - " + end
+                if variable in temp_list:
+                    continue
+                temp_list.append(variable)
+                hours_of_operation = hours_of_operation + " " + variable
+
             except:
                 hours_of_operation = hours_of_operation + " " + day + ": Closed"
-        hours_of_operation = hours_of_operation.rsplit("Monday")[1]
-        hours_of_operation = "Monday " + hours_of_operation
         raw_address = loc["address"]
-        address = raw_address.replace(",", "")
-        formatted_addr = parse_address_intl(address)
-        street_address = formatted_addr.street_address_1
-        if street_address is None:
-            street_address = formatted_addr.street_address_2
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
-        city = formatted_addr.city
-        state = formatted_addr.state if formatted_addr.state else "<MISSING>"
-        zip_postal = formatted_addr.postcode
-        country_code = formatted_addr.country
+        address = raw_address.split(",")
+        street_address = address[0] + " " + address[1]
+        city = address[2]
+        state = MISSING
+        zip_postal = address[3]
+        country_code = address[-1]
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
