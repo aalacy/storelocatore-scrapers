@@ -343,6 +343,7 @@ def start():
 def fix_phone(x):
     if len(x) < 3:
         return "<MISSING>"
+    return x
 
 
 def scrape():
@@ -380,9 +381,12 @@ def scrape():
         state=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressRegion"],
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         zipcode=sp.MappingField(
-            mapping=["sub", "mainEntity", "address", "postalCode"], is_required=False
+            mapping=["sub", "mainEntity", "address", "postalCode"],
+            is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         country_code=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressCountry"],
