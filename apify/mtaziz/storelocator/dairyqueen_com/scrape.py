@@ -96,7 +96,6 @@ def fetch_records_us(idx, url, sgw: SgWriter):
         longitude = data["latlong"].split(",")[1].strip()
         longitude = longitude if longitude else MISSING
 
-        # {"miniSiteHours":"1:11:00-19:00,2:11:00-19:00,3:11:00-19:00,5:11:00-19:00,6:11:00-20:00,7:11:00-20:00"}
         hours_of_operation = ""
         try:
             hoo = data["miniSite"]
