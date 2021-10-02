@@ -651,14 +651,13 @@ nzcities = [
 def fetch_records_global(idx, url, sgw: SgWriter, http: SgRequests):
     lurl = url.split("|")[1]
     cc = url.split("|")[0]
-    logger.info(cc)
     headers2 = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "DPZ-Market": cc,
     }
 
     r = http.get(lurl, headers=headers2)
-    time.sleep(4)
+    time.sleep(2)
     website = "dominos.com"
     typ = "<MISSING>"
     country = lurl.split("regionCode=")[1].split("&")[0]
@@ -685,7 +684,6 @@ def fetch_records_global(idx, url, sgw: SgWriter, http: SgRequests):
                 state = item["Region"] if item["Region"] else MISSING
             else:
                 state = MISSING
-            logger.info(f"[{idx}][{cc}][{idx2}] state: {state}")
 
             zc = item["PostalCode"]
             if (
@@ -710,7 +708,6 @@ def fetch_records_global(idx, url, sgw: SgWriter, http: SgRequests):
                 .replace("\r", "")
             )
             loc = "<MISSING>"
-            logger.info(f"[{idx}][{cc}][{idx2}] HOO: {item['HoursDescription']}")
             raw_address = MISSING
             rec = SgRecord(
                 locator_domain=website,
@@ -775,7 +772,7 @@ def get_limited_store_urls():
 
 
 def fetch_records_eu_global(idx, curl, sgw: SgWriter, http: SgRequests):
-    logger.info(f"url+letter/city: {curl}")
+    logger.info(f"Pulling from: {curl}")
     r = http.get(curl, headers=headers)
     time.sleep(3)
     website = "dominos.com"
@@ -786,7 +783,6 @@ def fetch_records_eu_global(idx, curl, sgw: SgWriter, http: SgRequests):
     hours = MISSING
     lat = MISSING
     lng = MISSING
-    logger.info("Pulling Stores")
 
     if r.status_code == 200:
 
@@ -825,7 +821,6 @@ def fetch_records_eu_global(idx, curl, sgw: SgWriter, http: SgRequests):
 
             lat = item["GeoCoordinates"]["Latitude"] or MISSING
             lng = item["GeoCoordinates"]["Longitude"] or MISSING
-            logger.info(f"[{idx}][{idx3}] Latlng: {lat} | {lng}")
 
             openinghours = item["OpeningHours"]
             hoo = []
@@ -903,7 +898,6 @@ def get_us_store_urls():
 
 
 def fetch_records_us(idx, loc, sgw: SgWriter, http: SgRequests):
-    logger.info(f"[{idx}] Pulling Location {loc}...")
     r2 = http.get(loc, headers=headers)
     sel = html.fromstring(r2.text, "lxml")
     raw_data = sel.xpath(
@@ -912,41 +906,31 @@ def fetch_records_us(idx, loc, sgw: SgWriter, http: SgRequests):
     raw_data1 = "".join(raw_data)
     json_data = json.loads(raw_data1)
     page_url = json_data["url"]
-    logger.info(f"[{idx}] PU: {page_url}")
+    logger.info(f"[{idx}][US] PU: {page_url}")
     location_name = json_data["name"] or MISSING
 
     address = json_data["address"]
     street_address = address["streetAddress"] or MISSING
-    logger.info(f"[{idx}] Street Address: {street_address}")
 
     city = address["addressLocality"] or MISSING
-    logger.info(f"[{idx}] city: {city}")
 
     state = address["addressRegion"] or MISSING
-    logger.info(f"[{idx}] State: {state}")
 
     zip_postal = address["postalCode"] or MISSING
-    logger.info(f"[{idx}] ZC: {zip_postal}")
 
     country_code = "US"
     store_number = json_data["branchCode"] or MISSING
-    logger.info(f"[{idx}] SN: {store_number}")
 
     phone = ""
     try:
         phone = json_data["telephone"]
     except:
         phone = MISSING
-    logger.info(f"[{idx}] Tel: {phone}")
 
     location_type = "Store"
-    logger.info(f"[{idx}] LT: {location_type}")
 
     latitude = json_data["geo"]["latitude"] or MISSING
-    logger.info(f"[{idx}] Lat: {latitude}")
-
     longitude = json_data["geo"]["longitude"] or MISSING
-    logger.info(f"[{idx}] Lng: {longitude}")
     locator_domain = DOMAIN
 
     # Hours of Operation
@@ -961,10 +945,8 @@ def fetch_records_us(idx, loc, sgw: SgWriter, http: SgRequests):
         )
         hoo.append(day_of_week)
     hours_of_operation = "; ".join(hoo)
-    logger.info(f"[{idx}] HOO: {hours_of_operation}")
     raw_address = MISSING
     location_name = location_name + " #" + str(store_number)
-    logger.info(f"[{idx}] LN: {location_name}")
     rec = SgRecord(
         locator_domain=locator_domain,
         page_url=page_url,
