@@ -24,22 +24,21 @@ def fetch_data():
         url = DOMAIN
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find(
-            "div",
-            {"class": "promos"},
-        ).findAll("p")[:-2]
+        loclist = soup.find("div", {"class": "promos"},).findAll(
+            "p"
+        )[:-2]
         for loc in loclist:
             if "https://zorbaz.com" in loc.find("a")["href"]:
                 page_url = loc.find("a")["href"]
             else:
-                  page_url = "https://zorbaz.com"+loc.find("a")["href"]
+                page_url = "https://zorbaz.com" + loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.find("div", {"class": "misc-details"})
             phone = temp.find("a").text
             hours_of_operation = temp.find("h4").text.replace("Hourz", "")
-            temp =temp.findAll("p")
+            temp = temp.findAll("p")
             location_name = soup.find("h2").text
             address = temp[0].get_text(separator="|", strip=True).split("|")
             street_address = address[0]
@@ -49,7 +48,12 @@ def fetch_data():
             state = address[0]
             zip_postal = address[1]
             country_code = "US"
-            longitude,latitude = soup.select_one("iframe[src*=maps]")['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d')
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -66,6 +70,7 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
+
 
 def scrape():
     log.info("Started")
