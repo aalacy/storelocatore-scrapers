@@ -49,146 +49,152 @@ def fetch_records_us(idx, url, sgw: SgWriter):
     with SgRequests() as http:
         logger.info(f"[{idx}] Pulling the data from: {url}")
         r = http.get(url, headers=headers)
-        s = html.fromstring(r.text, "lxml")
-        data = s.xpath('//script[contains(@id, "__NEXT_DATA__")]/text()')
-        data_json = json.loads("".join(data))
-        contentletdata = data_json["props"]["pageProps"]["contentletData"]
-        key = "".join(list(contentletdata.keys()))
-        data = contentletdata[key]
-        locator_domain = DOMAIN
-        # Page URL
-        page_url = data["urlTitle"]
-        if page_url:
-            page_url = "https://www.dairyqueen.com" + page_url
-        else:
-            page_url = MISSING
-
-        location_name = data["address1"]
-        location_name = location_name if location_name else MISSING
-
-        street_address = data["address3"]
-        street_address = street_address if street_address else MISSING
-        city = data["city"]
-        city = city if city else MISSING
-        state = data["stateProvince"]
-        state = state if state else MISSING
-        zip_postal = data["postalCode"]
-        zip_postal = zip_postal if zip_postal else MISSING
-        logger.info(f"[{idx}] Zip Code: {zip_postal}")
-
-        country_code = data["country"]
-        country_code = country_code if country_code else MISSING
-
-        store_number = data["storeId"]
-
-        phone = data["phone"]
-        phone = phone if phone else MISSING
-
-        # Location Type
-        location_type = data["conceptType"]
-        location_type = location_type if location_type else MISSING
-
-        # Latitude
-        latitude = data["latlong"].split(",")[0].strip()
-        latitude = latitude if latitude else MISSING
-
-        # Longitude
-        longitude = data["latlong"].split(",")[1].strip()
-        longitude = longitude if longitude else MISSING
-
-        hours_of_operation = ""
-        try:
-            hoo = data["miniSite"]
-            if hoo is None:
-                hours_of_operation = MISSING
+        if r.status_code == 200:
+            s = html.fromstring(r.text, "lxml")
+            data = s.xpath('//script[contains(@id, "__NEXT_DATA__")]/text()')
+            data_json = json.loads("".join(data))
+            contentletdata = data_json["props"]["pageProps"]["contentletData"]
+            key = "".join(list(contentletdata.keys()))
+            data = contentletdata[key]
+            locator_domain = DOMAIN
+            # Page URL
+            page_url = data["urlTitle"]
+            if page_url:
+                page_url = "https://www.dairyqueen.com" + page_url
             else:
-                hoo1 = hoo["miniSiteHours"]
-                hoo2 = hoo1.split(",")
-                hoo3 = [i[:2] + " " + i[2:] for i in hoo2]
-                hoo4 = [
-                    i.replace("1: ", "Sun: ")
-                    .replace("2: ", "Mon: ")
-                    .replace("3: ", "Tue: ")
-                    .replace("4: ", "Wed: ")
-                    .replace("5: ", "Thu: ")
-                    .replace("6: ", "Fri: ")
-                    .replace("7: ", "Sat: ")
-                    for i in hoo3
-                ]
+                page_url = MISSING
 
-                d = {}
-                for i in hoo4:
-                    k = i.split(" ")[0].replace(":", "")
-                    v = i.split(" ")[1]
-                    d[k] = v
-                if "Sun" in d:
-                    sun = "Sun: " + d["Sun"]
+            location_name = data["address1"]
+            location_name = location_name if location_name else MISSING
+
+            street_address = data["address3"]
+            street_address = street_address if street_address else MISSING
+            city = data["city"]
+            city = city if city else MISSING
+            state = data["stateProvince"]
+            state = state if state else MISSING
+            zip_postal = data["postalCode"]
+            zip_postal = zip_postal if zip_postal else MISSING
+            logger.info(f"[{idx}] Zip Code: {zip_postal}")
+
+            country_code = data["country"]
+            country_code = country_code if country_code else MISSING
+
+            store_number = data["storeId"]
+
+            phone = data["phone"]
+            phone = phone if phone else MISSING
+
+            # Location Type
+            location_type = data["conceptType"]
+            location_type = location_type if location_type else MISSING
+
+            # Latitude
+            latitude = data["latlong"].split(",")[0].strip()
+            latitude = latitude if latitude else MISSING
+
+            # Longitude
+            longitude = data["latlong"].split(",")[1].strip()
+            longitude = longitude if longitude else MISSING
+
+            hours_of_operation = ""
+            try:
+                hoo = data["miniSite"]
+                if hoo is None:
+                    hours_of_operation = MISSING
                 else:
-                    sun = "Sun: Closed"
+                    hoo1 = hoo["miniSiteHours"]
+                    hoo2 = hoo1.split(",")
+                    hoo3 = [i[:2] + " " + i[2:] for i in hoo2]
+                    hoo4 = [
+                        i.replace("1: ", "Sun: ")
+                        .replace("2: ", "Mon: ")
+                        .replace("3: ", "Tue: ")
+                        .replace("4: ", "Wed: ")
+                        .replace("5: ", "Thu: ")
+                        .replace("6: ", "Fri: ")
+                        .replace("7: ", "Sat: ")
+                        for i in hoo3
+                    ]
 
-                if "Mon" in d:
-                    mon = "Mon: " + d["Mon"]
-                else:
-                    mon = "Mon: Closed"
+                    d = {}
+                    for i in hoo4:
+                        k = i.split(" ")[0].replace(":", "")
+                        v = i.split(" ")[1]
+                        d[k] = v
+                    if "Sun" in d:
+                        sun = "Sun: " + d["Sun"]
+                    else:
+                        sun = "Sun: Closed"
 
-                if "Tue" in d:
-                    tue = "Tue: " + d["Tue"]
-                else:
-                    tue = "Tue: Closed"
+                    if "Mon" in d:
+                        mon = "Mon: " + d["Mon"]
+                    else:
+                        mon = "Mon: Closed"
 
-                if "Wed" in d:
-                    wed = "Wed: " + d["Wed"]
-                else:
-                    wed = "Wed: Closed"
+                    if "Tue" in d:
+                        tue = "Tue: " + d["Tue"]
+                    else:
+                        tue = "Tue: Closed"
 
-                if "Thu" in d:
-                    thu = "Thu: " + d["Thu"]
-                else:
-                    thu = "Thu: Closed"
+                    if "Wed" in d:
+                        wed = "Wed: " + d["Wed"]
+                    else:
+                        wed = "Wed: Closed"
 
-                if "Fri" in d:
-                    fri = "Fri: " + d["Fri"]
-                else:
-                    fri = "Fri: Closed"
+                    if "Thu" in d:
+                        thu = "Thu: " + d["Thu"]
+                    else:
+                        thu = "Thu: Closed"
 
-                if "Sat" in d:
-                    sat = "Sat: " + d["Sat"]
-                else:
-                    sat = "Sat: Closed"
+                    if "Fri" in d:
+                        fri = "Fri: " + d["Fri"]
+                    else:
+                        fri = "Fri: Closed"
 
-                daytimes = [sun, mon, tue, wed, thu, fri, sat]
-                hours_of_operation = "; ".join(daytimes)
-                hours_of_operation = (
-                    hours_of_operation if hours_of_operation else MISSING
-                )
-        except:
-            hours_of_operation = MISSING
+                    if "Sat" in d:
+                        sat = "Sat: " + d["Sat"]
+                    else:
+                        sat = "Sat: Closed"
 
-        # Raw Address
-        raw_address = ""
-        raw_address = raw_address if raw_address else MISSING
-        rec = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-        sgw.write_row(rec)
+                    daytimes = [sun, mon, tue, wed, thu, fri, sat]
+                    hours_of_operation = "; ".join(daytimes)
+                    hours_of_operation = (
+                        hours_of_operation if hours_of_operation else MISSING
+                    )
+            except:
+                hours_of_operation = MISSING
+
+            # Raw Address
+            raw_address = ""
+            raw_address = raw_address if raw_address else MISSING
+            rec = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            sgw.write_row(rec)
 
 
 def fetch_data(sgw: SgWriter):
-    store_urls = get_store_urls()
+    # store_urls = get_store_urls()
+    store_urls = [
+        "https://www.dairyqueen.com/en-us/locations/oh/marion/561-n-main-st/5163/",
+        "https://www.dairyqueen.com/en-us/locations/ga/buford/mall-of-georgia/10289/",
+        "https://www.dairyqueen.com/en-us/locations/oh/salem/855-w-state-st/5143/",
+    ]
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task_us = [
