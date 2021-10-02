@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup as bs
 import re
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 log = sglog.SgLogSetup().get_logger(logger_name="bigmamaspizza.com")
@@ -96,7 +96,15 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
