@@ -1,87 +1,95 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
 import json
 
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-    
-    addressess = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }
+def fetch_data(sgw: SgWriter):
 
     base_url = "https://www.theeyedoctors.net/"
 
-    link_soup = BeautifulSoup(session.get("https://www.theeyedoctors.net/our-eye-doctors/").text, "lxml")
+    link_soup = BeautifulSoup(
+        session.get("https://www.theeyedoctors.net/locations").text, "lxml"
+    )
 
-    for link in link_soup.find("div",{"class":"doctortabs"}).find_all("a"):
-        if "https:" in  link['href']:
-            page_url = link['href']
-        else:
-            page_url = "https://www.theeyedoctors.net/" + link['href']
-        
+    all_scripts = link_soup.find_all("script")
+    for script in all_scripts:
+        if "address1" in str(script):
+            script = str(script)
+            break
+
+    js = script.split('locations":')[1].split(',"currentSlug')[0]
+    stores = json.loads(js)
+
+    for store in stores:
+        page_url = "https://www.theeyedoctors.net/locations/" + store["slug"]
 
         location_soup = BeautifulSoup(session.get(page_url).text, "lxml")
-        try:
-            location_name = location_soup.find("h1",{"class":"location-name"}).text.strip()
-        except:
-            continue
-        addr = list(location_soup.find("address",{"id":"prgmStoreAddress"}).stripped_strings)
-        
-        street_address = " ".join(addr[:-1]).replace(",","").strip()
-        
+        location_name = location_soup.h1.text.strip()
+        addr = list(location_soup.address.stripped_strings)
+
+        street_address = " ".join(addr[:-1]).replace(",", "").split("Topeka")[0].strip()
+
         city = addr[-1].split(",")[0]
         state = addr[-1].split(",")[1].split()[0].strip()
-        zipp =  addr[-1].split(",")[1].split()[1].strip()
-        
-        phone = location_soup.find("div",{"class":"phone-number"}).text.strip()
-        
-        lat = location_soup.find("div",{"class":"marker"})['data-lat']
-        lng = location_soup.find("div",{"class":"marker"})['data-lng']
+        zipp = addr[-1].split(",")[1].split()[1].strip()
 
-        hours = ''
-        for hr in location_soup.find("div",{"hours"}).find_all("div",{"class":"day d-flex"}):
-            hours+= " "+hr.text+" "
+        phone = location_soup.address.find_next("a").text.strip()
+
+        store_number = ""
+        location_type = ""
+
+        latitude = (
+            re.findall(r'latitude": "[0-9]{2}\.[0-9]+', str(location_soup))[0]
+            .split(":")[1][1:]
+            .replace('"', "")
+        )
+        longitude = (
+            re.findall(r'longitude": "-[0-9]{2,3}\.[0-9]+', str(location_soup))[0]
+            .split(":")[1][1:]
+            .replace('"', "")
+        )
+
+        hours = (
+            " ".join(
+                list(
+                    location_soup.find(
+                        "div", {"class": "w-full md:w-2/3 mt-4"}
+                    ).stripped_strings
+                )
+            )
+            .split("This")[0]
+            .strip()
+        )
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours,
+            )
+        )
 
 
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)   
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
-        store.append(hours)
-        store.append(page_url)     
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
-        yield store 
-        
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

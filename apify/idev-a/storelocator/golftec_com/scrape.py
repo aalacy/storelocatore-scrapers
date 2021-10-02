@@ -1,9 +1,9 @@
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 
@@ -14,31 +14,16 @@ headers = {
 locator_domain = "https://www.golftec.com"
 
 
-def _p(val):
-    if (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    ):
-        return val
-    else:
-        return ""
-
-
 def fetch_records(http, search):
     # Need to add dedupe. Added it in pipeline.
     maxZ = search.items_remaining()
+
     for lat, lng in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
         url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
         locations = http.get(url, headers=headers).json()
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         if "centers" in locations:
             for _ in locations["centers"]:
                 page_url = f"{locator_domain}{_['link']}"
@@ -69,23 +54,23 @@ def fetch_records(http, search):
                     locator_domain=locator_domain,
                 )
 
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-
-            logger.info(f"[{lat}, {lng}] [{len(locations)}] | [{progress}]")
+        logger.info(
+            f"[{lat}, {lng}] [{len(locations.get('centers', []))}] | [{progress}]"
+        )
 
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        expected_search_radius_miles=100,
+        granularity=Grain_8(),
     )
     with SgWriter(
-        deduper=SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=3
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=15
         )
     ) as writer:
-        with SgRequests() as http:
+        with SgRequests(
+            proxy_country="us", dont_retry_status_codes_exceptions=set([403, 407, 503])
+        ) as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
