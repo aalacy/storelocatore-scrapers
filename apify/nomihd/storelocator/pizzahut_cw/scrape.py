@@ -3,99 +3,102 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
 
 website = "pizzahut.cw"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
-    "authority": "fb.tictuk.com",
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-    "accept": "application/json, text/javascript, */*; q=0.01",
+    "authority": "pizzahut.cw",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
     "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "origin": "https://cdn.tictuk.com",
-    "sec-fetch-site": "same-site",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-dest": "empty",
-    "referer": "https://cdn.tictuk.com/",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
 
 def fetch_data():
     # Your scraper here
-    data = '{"chainId":"3665184690713015","type":"getBranchesList","cust":"openRest","lang":"en"}'
+    search_url = "https://pizzahut.cw/opening-hours"
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-    search_req = session.post(
-        "https://fb.tictuk.com/webFlowAddress", headers=headers, data=data
-    )
-    stores = json.loads(search_req.text)["msg"]["pickupStores"]
-    for store in stores:
+        search_sel = lxml.html.fromstring(search_res.text)
 
-        req_ID = (
-            session.get(
-                f"https://fb.tictuk.com/start_web_session?cust=openRest&store={store['id']}&user=d8f30de5-b943-4d39-a214-68e2ff12bff4&lang=en&ref=%7B%22ref%22%3A%22chainWeb%22%2C%22orderType%22%3A%22peakup%22%7D&chain=3665184690713015",
-                headers=headers,
-            )
-            .text.split("request=")[1]
-            .strip()
-            .split("&")[0]
-            .strip()
-        )
-        store_req = session.get(
-            f"https://fb.tictuk.com/check_field?cust=openRest&request={req_ID}&field=getStore&value=",
-            headers=headers,
-        )
-        store_json = json.loads(store_req.text)["msg"]
-        locator_domain = website
+        section_list = search_sel.xpath("//table//tr[.//h2]")
 
-        location_name = store_json["name"]["en_US"]
-        street_address = store_json["address"]["formatted"]
-        state = "<MISSING>"
-        city = store_json["address"]["city"]
-        zip = "<MISSING>"
+        for idx, section in enumerate(section_list, 1):
+            store_list = section.xpath(".//h2")
+            for x, store in enumerate(store_list, 1):
+                undesired_store = section.xpath("./following-sibling::tr//h2//text()")
+                if undesired_store:
+                    undesired_store = undesired_store[x - 1]
+                raw_info = section.xpath(f"./following-sibling::tr/td[{x}]//text()")
 
-        country_code = "CW"
+                if undesired_store:
+                    for spliter, info in enumerate(raw_info):
+                        if undesired_store in info:
+                            store_info = raw_info[:spliter]
+                else:
+                    store_info = raw_info
 
-        phone = store_json["phoneNumber"]
-        store_number = store_json["id"]
+                store_info = list(filter(str, [_info.strip() for _info in store_info]))
 
-        page_url = "<MISSING>"
-        location_type = "<MISSING>"
+                page_url = search_url
+                location_name = "".join(store.xpath(".//text()")).strip()
+                locator_domain = website
 
-        hours_of_operation = "<MISSING>"
+                street_address = store_info[0].strip()
+                city = "<MISSING>"
+                state = location_name
+                zip = "<MISSING>"
 
-        latitude = store_json["address"]["latLng"]["lat"]
-        longitude = store_json["address"]["latLng"]["lng"]
+                country_code = "CW"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+                phone = store_info[1].strip()
+                store_number = "<MISSING>"
+
+                location_type = "<MISSING>"
+                if "+59" in store_info[2]:
+
+                    hours_of_operation = "; ".join(store_info[3:]).strip()
+                else:
+                    hours_of_operation = "; ".join(store_info[2:]).strip()
+                latitude, longitude = "<MISSING>", "<MISSING>"
+
+                raw_address = "<MISSING>"
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

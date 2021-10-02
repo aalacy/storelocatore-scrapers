@@ -46,14 +46,26 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath(
-        '//div[@class="wp-block-columns alignwide locationstext1 has-white-color has-text-color has-background"]/div[1]/h2[1]/a[1]'
+        '//div[@class="wp-block-columns alignwide locationstext1 has-white-color has-text-color has-background"]/div[1]/h2[1]/a'
     )
     for d in div:
         slug = "".join(d.xpath(".//@href"))
         page_url = f"{locator_domain}{slug}"
-        phone = (
-            "".join(d.xpath(".//following::h2[1]/a/text()")).split("Phone:")[1].strip()
+        try:
+            phone = (
+                "".join(d.xpath(".//following::h2[1]/a/text()"))
+                .split("Phone:")[1]
+                .strip()
+            )
+        except:
+            phone = "<MISSING>"
+        phone_url = "".join(
+            d.xpath(
+                './/following::div[@class="wp-block-column pg-col-03-loc"][1]//h2/a/@href'
+            )
         )
+        if phone_url.find("http") == -1:
+            phone_url = f"https://www.nightlitepediatrics.com{phone_url}"
 
         if page_url.find("telemedicine") != -1:
             continue
@@ -105,6 +117,16 @@ def fetch_data(sgw: SgWriter):
             .replace("Open", "")
             .strip()
         )
+        if phone == "<MISSING>":
+            session = SgRequests()
+            r = session.get(phone_url, headers=headers)
+            tree = html.fromstring(r.text)
+            phone = (
+                "".join(tree.xpath('//a[contains(text(), "New Patients:")]/text()'))
+                .replace("New Patients:", "")
+                .strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

@@ -185,7 +185,7 @@ def scrape():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         granularity=Grain_1_KM(),
-        expected_search_radius_miles=30,
+        expected_search_radius_miles=10,
     )
 
     with SgWriter(
