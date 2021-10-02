@@ -37,7 +37,7 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             _p = list(items[2].stripped_strings)
-            phone = ''
+            phone = ""
             if len(_p) > 1:
                 phone = _p[1].strip()
             yield SgRecord(
