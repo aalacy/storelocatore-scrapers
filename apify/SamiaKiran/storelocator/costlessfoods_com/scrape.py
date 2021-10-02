@@ -15,19 +15,18 @@ headers = {
 
 
 def fetch_data():
-    temp = []
     if True:
         url = "https://costlessfoods.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll(
-            "div", {"class": "block block_content_photo bgcolor0 left padding_top"}
+            "div", {"class": "block_content_photo"}
         )
         for loc in loclist:
             location_name = loc.find("div", {"class": "content_inner"}).find("h2").text
             temp = loc.find("div", {"class": "content_inner"}).findAll("p")
             phone = temp[0].findAll("strong")[1].text
-            page_url = temp[1].find("a")["href"]
+            page_url = temp[3].find("a")["href"]
             page_url = "https://costlessfoods.com" + page_url
             log.info(page_url)
             address = temp[1].findAll("strong")
