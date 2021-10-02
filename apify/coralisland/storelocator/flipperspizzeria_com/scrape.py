@@ -1,91 +1,112 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
+import html
 import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+website = "flipperspizzeria_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-base_url = 'https://flipperspizzeria.com'
+DOMAIN = "https://flipperspizzeria.com/"
+MISSING = SgRecord.MISSING
 
-
-def validate(item):    
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\r\n', '').strip()
-
-def get_value(item):
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0]
-        elif addr[1] == 'StateName':
-            state = addr[0]
-        else:
-            street += addr[0].replace(',', '') + ' '
-
-    return { 
-            'street': get_value(street), 
-            'city' : get_value(city), 
-            'state' : get_value(state), 
-            'zipcode' : get_value(zipcode)
-            }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    output_list = []
-    url = "https://flipperspizzeria.com/wp-json/wp/v2/posts?per_page=100"
-    session = requests.Session()
-    request = session.get(url)
-    store_list = json.loads(request.text)
-    for store in store_list:
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store['title']['rendered'])) #location name
-        address = parse_address(get_value(store['acf']['map_address']['address']))
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode'].replace(',', '')) #zipcode
-        output.append('US') #country code
-        output.append(str(store['id'])) #store_number
-        output.append(get_value(store['acf']['phone_number'])) #phone
-        output.append("Flippers Pizzeria") #location type
-        output.append(get_value(store['acf']['map_address']['lat'])) #latitude
-        output.append(get_value(store['acf']['map_address']['lng'])) #longitude
-        output.append(get_value(validate(etree.HTML(store['acf']['hours']).xpath('.//text()')))) #opening hours
-        output_list.append(output)
-    return output_list
+    if True:
+        url = "https://flipperspizzeria.com/wp-json/wp/v2/posts?per_page=100"
+        loclist = session.get(url, headers=headers).json()
+        for loc in loclist:
+            page_url = "https://flipperspizzeria.com/" + loc["slug"]
+            store_number = loc["id"]
+            log.info(page_url)
+            location_name = loc["title"]["rendered"]
+            location_name = html.unescape(location_name)
+            phone = loc["acf"]["phone_number"]
+            address = loc["acf"]["map_address"]["address"]
+            address = BeautifulSoup(address, "html.parser")
+            address = address.get_text(separator="|", strip=True).replace("|", " ")
+            if "12525 Florida 535" in address:
+                continue
+            raw_address = address.replace(",", " ")
+            address = usaddress.parse(raw_address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            city = city.replace("St Lake Mary", "Lake Mary")
+            country_code = "US"
+            latitude = loc["acf"]["map_address"]["lat"]
+            longitude = loc["acf"]["map_address"]["lng"]
+            hours_of_operation = loc["acf"]["hours"]
+            hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
+            hours_of_operation = (
+                hours_of_operation.get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Dine-In, Take-Out and Delivery", "")
+            )
+            if "DELIVERY ONLY" in hours_of_operation:
+                hours_of_operation = MISSING
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

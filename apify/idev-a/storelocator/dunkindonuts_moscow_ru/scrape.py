@@ -36,6 +36,10 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            _p = list(items[2].stripped_strings)
+            phone = ""
+            if len(_p) > 1:
+                phone = _p[1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.a.text.strip(),
@@ -44,7 +48,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Russia",
-                phone=list(items[2].stripped_strings)[1].strip(),
+                phone=phone,
                 locator_domain=locator_domain,
                 latitude=ss["LAT"],
                 longitude=ss["LON"],
