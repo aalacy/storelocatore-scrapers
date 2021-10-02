@@ -16,7 +16,9 @@ from sgselenium import SgFirefox
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def cleanup_json(x):
+def cleanup_json(x, url):
+    if 'ption": "",' not in x:
+        x = x.replace('ption": ""', 'ption": "')
     x = x.replace("\n", "").replace("\r", "").replace("\t", "")
     x = x.replace(": '", ': "')
     x = x.replace("',", '",')
@@ -38,7 +40,9 @@ def cleanup_json(x):
     except Exception as e:
         with open("debug.txt", mode="w", encoding="utf-8") as file:
             file.write(x)
-            file.write(e)
+            file.write(str(e))
+            file.write(str(url))
+        logzilla.error(f"{x}\n{str(e)}\n{str(url)}")
     return x
 
 
@@ -64,7 +68,7 @@ def para(k):
         if "postalCode" in i.text:
             try:
                 z = i.text.replace("\n", "")
-                data = cleanup_json(z)
+                data = cleanup_json(z, k["facilityOverview"]["homeUrl"])
             except Exception:
                 raise
 
@@ -120,7 +124,6 @@ def data_fetcher(country, state):
     data = None
     with SgFirefox() as driver:
         driver.get(url)
-        Pge = driver.page_source
         for r in driver.requests:
             if "/graphql/customer" in r.path:
                 try:
@@ -148,9 +151,6 @@ def data_fetcher(country, state):
                                 masterdata.append(data)
                         except Exception:
                             pass
-    if not data:
-        if "Not Found" not in Pge:
-            raise
     total = 0
     allhotels = []
     for i in masterdata:
