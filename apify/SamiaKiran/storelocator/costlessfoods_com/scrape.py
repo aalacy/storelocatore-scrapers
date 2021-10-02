@@ -19,9 +19,7 @@ def fetch_data():
         url = "https://costlessfoods.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll(
-            "div", {"class": "block_content_photo"}
-        )
+        loclist = soup.findAll("div", {"class": "block_content_photo"})
         for loc in loclist:
             location_name = loc.find("div", {"class": "content_inner"}).find("h2").text
             temp = loc.find("div", {"class": "content_inner"}).findAll("p")
