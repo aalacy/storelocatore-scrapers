@@ -340,6 +340,11 @@ def start():
     logzilla.info(f"Finished grabbing data!!\n expected total {EXPECTED_TOTAL}")  # noqa
 
 
+def fix_phone(x):
+    if len(x) < 3:
+        return "<MISSING>"
+
+
 def scrape():
     url = "https://www.radissonhotels.com/en-us/destination"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -386,6 +391,7 @@ def scrape():
         phone=sp.MappingField(
             mapping=["sub", "mainEntity", "telephone", 0],
             is_required=False,
+            value_transform=fix_phone,
         ),
         store_number=sp.MappingField(
             mapping=["main", "code"],
