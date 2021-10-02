@@ -34,7 +34,6 @@ def parse_details(k):
         + k["zip"]
     )
     addr = parser.parse_address_intl(parse)
-    print(parse)
     k["street_address"] = (
         addr.street_address_1 if addr.street_address_1 else "<MISSING>"
     )
