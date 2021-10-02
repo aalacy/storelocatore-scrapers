@@ -171,7 +171,10 @@ def scrape():
             is_required=False,
         ),
         location_type=sp.MappingField(
-            mapping=["storeType", "displayName"],
+            mapping=["featuredServices"],
+            value_transform=lambda x: "Vision Center"
+            if "VISION_CENTER" in str(x)
+            else "<MISSING>",
             part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),

@@ -25,10 +25,13 @@ def fetch_data(sgw: SgWriter):
             location_name = j.get("Description")[0].get("displayStoreName")
         except:
             location_name = j.get("Description").get("displayStoreName")
-        street_address = "".join(j.get("addressLine")[0]).replace(
+        ad = "".join(j.get("addressLine")[0]).replace(
             "9700 Collins Avenue,", "9700 Collins Avenue"
         )
-        street_address = street_address.split(",")[0].replace("NY", "")
+        street_address = ad.split(",")[0].replace("NY", "")
+        if ad.find("Suite") != -1:
+            street_address = " ".join(ad.split(",")[:2])
+        street_address = street_address.replace("  ", " ").strip()
         phone = j.get("telephone1")
         state = j.get("stateOrProvinceName")
         postal = j.get("postalCode")

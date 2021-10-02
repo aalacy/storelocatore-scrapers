@@ -1,37 +1,13 @@
-import csv
-
+from sglogging import sglog
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+log = sglog.SgLogSetup().get_logger(logger_name="bigfootjava.com")
 
 
 def get_urls():
@@ -56,6 +32,8 @@ def get_data(page_url):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//span[@class='locationName']/text()")).strip()
+    if len(location_name) <= 0:
+        return
     line = tree.xpath("//span[@class='locationAddress']/text()")
     line = list(filter(None, [l.strip() for l in line]))
     iscoming = "".join(line).lower()
@@ -83,28 +61,25 @@ def get_data(page_url):
     location_type = "<MISSING>"
     hours_of_operation = "<MISSING>"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    return SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
 
 
 def fetch_data():
-    out = []
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -112,14 +87,22 @@ def fetch_data():
         for future in futures.as_completed(future_to_url):
             row = future.result()
             if row:
-                out.append(row)
-
-    return out
+                yield row
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson as json
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("dunkindonutsmoscow")
 
@@ -34,6 +36,10 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            _p = list(items[2].stripped_strings)
+            phone = ""
+            if len(_p) > 1:
+                phone = _p[1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.a.text.strip(),
@@ -42,7 +48,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Russia",
-                phone=list(items[2].stripped_strings)[1].strip(),
+                phone=phone,
                 locator_domain=locator_domain,
                 latitude=ss["LAT"],
                 longitude=ss["LON"],
@@ -51,7 +57,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
