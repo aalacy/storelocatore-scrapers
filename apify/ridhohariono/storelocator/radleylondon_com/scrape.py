@@ -63,14 +63,14 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    page_urls = soup.find_all("div", {"align": "center"})[1].find_all("a")
+    page_urls = soup.find_all(
+        "a", {"href": re.compile(LOCATION_URL + r"\D+"), "target": "_self"}
+    )
     for row in page_urls:
         page_url = row["href"]
         content = pull_content(page_url)
         info = content.find("div", {"class": "inner"}).find("div", {"class": "inner"})
-        location_name = (
-            content.find("h4", {"class": "homepage-heading"}).text.split(":")[0].strip()
-        )
+        location_name = content.find("h4", {"class": "homepage-heading"}).text.strip()
         addr_phone = (
             info.find("p", {"class": "homepage-text"})
             .get_text(strip=True, separator="@")
@@ -120,6 +120,7 @@ def fetch_data():
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
+    results = fetch_data()
     count = 0
     with SgWriter(
         SgRecordDeduper(
