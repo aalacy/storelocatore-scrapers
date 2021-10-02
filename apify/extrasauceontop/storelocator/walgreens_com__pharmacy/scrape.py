@@ -39,7 +39,6 @@ def get_data():
     session = SgRequests()
 
     for search_code in search:
-        print(search_code)
         url = "https://www.walgreens.com/storelocator/find.jsp?searchCriteria=" + str(
             search_code
         )
