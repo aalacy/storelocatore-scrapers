@@ -69,12 +69,19 @@ def fetch_data():
                 phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             try:
                 coord = (
-                    sp1.select_one("main figure a img")["src"]
+                    sp1.select_one("main figure a img")["data-lazy-src"]
                     .split("false%7C")[1]
                     .split(",+")
                 )
             except:
-                coord = ["", ""]
+                try:
+                    coord = (
+                        sp1.select_one("main figure a img")["src"]
+                        .split("false%7C")[1]
+                        .split(",+")
+                    )
+                except:
+                    coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
