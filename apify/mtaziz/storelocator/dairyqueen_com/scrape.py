@@ -189,12 +189,7 @@ def fetch_records_us(idx, url, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    # store_urls = get_store_urls()
-    store_urls = [
-        "https://www.dairyqueen.com/en-us/locations/oh/marion/561-n-main-st/5163/",
-        "https://www.dairyqueen.com/en-us/locations/ga/buford/mall-of-georgia/10289/",
-        "https://www.dairyqueen.com/en-us/locations/oh/salem/855-w-state-st/5143/",
-    ]
+    store_urls = get_store_urls()
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task_us = [
