@@ -68,8 +68,6 @@ def fetch_data(sgw: SgWriter):
                 .replace(" 30", ":30")
                 .strip()
             )
-            if "permanentlyClosed" in j:
-                hours_of_operation = "Permanently Closed"
 
             longitude = j.split("coordinates:[")[1].split(",")[0].strip()
             latitude = j.split("coordinates:[")[1].split(",")[1].split("]")[0].strip()
