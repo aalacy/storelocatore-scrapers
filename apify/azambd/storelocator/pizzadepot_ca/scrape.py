@@ -156,6 +156,8 @@ def fetchData():
         latitude, longitude = parseCentrod(latlonUrl)
         log.info(f"LatLon: {latitude}, {longitude}")
         phone = soup2.find_all("span", class_="elementor-icon-list-text")[2].text
+        if phone == "Chicken Menu":
+            phone = soup2.find_all("span", class_="elementor-icon-list-text")[1].text
         _tmp = []
         try:
             hoosearch = soup2.findAll(text="Hours")[0].findNext("p")

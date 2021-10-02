@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("jiffylubeontario_com")
 
@@ -14,36 +17,8 @@ headers2 = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    alllocs = []
     url = "https://www.jiffylubeontario.com/wp-admin/admin-ajax.php"
     cities = [
         "Toronto",
@@ -159,7 +134,7 @@ def fetch_data():
         payload = {
             "action": "load_map",
             "search[postal]": city,
-            "search[config][map_height]": "176.5px",
+            "search[config][map_height]": "201.5px",
             "search[map_case]": "load_locations_from_postal_code",
         }
         r = session.post(url, headers=headers, data=payload)
@@ -249,29 +224,31 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("|")[0].strip()
         if phone == "":
             phone = "<MISSING>"
-        if lurl not in alllocs:
-            alllocs.append(lurl)
-            yield [
-                website,
-                lurl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        name = name.replace("</title>", "").strip()
+        name = name.replace("&#8211;", "-").strip()
+        yield SgRecord(
+            locator_domain=website,
+            page_url=lurl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
