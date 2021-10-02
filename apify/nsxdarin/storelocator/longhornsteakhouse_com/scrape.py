@@ -10,6 +10,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
@@ -56,6 +59,7 @@ def fetch_location(loc, driver):
     store = loc.rsplit("/", 1)[1]
 
     text = fetch(loc, driver)
+    sleep()
 
     if re.search("access denied", text, re.IGNORECASE):
         raise Exception()
@@ -94,23 +98,10 @@ def fetch_location(loc, driver):
         hours = text.split('"openingHours":["')[1].split('"]')[0].replace('","', "; ")
     if ',"telephone":"' in text:
         phone = text.split(',"telephone":"')[1].split('"')[0]
-
     if hours == "":
         hours = "<MISSING>"
     if phone == "":
         phone = "<MISSING>"
-    if "Cincinnati - Eastgate" in name:
-        phone = "(513) 947-8882"
-    if "Orchard Park" in name:
-        phone = "(716) 825-1378"
-    if "Gainesville" in name:
-        phone = "(352) 372-5715"
-    if "4590 Jon" in name or "9150 Cov" in name:
-        hours = "Sun-Thu: 11:00AM-10:00PM; Fri-Sat: 11:00AM-11:00PM"
-    if "cold-spring/cold-spring/5198" in loc:
-        phone = "(859) 441-4820"
-    if "skokie/skokie-lincolnwood/5519" in loc:
-        phone = "(847) 674-1673"
     if "Find A R" not in name:
         return SgRecord(
             locator_domain=website,
@@ -136,12 +127,11 @@ def fetch_data():
     session = SgRequests()
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://www.longhornsteakhouse.com/locations/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
 
-    with ThreadPoolExecutor() as executor, SgChrome() as driver:
+    with ThreadPoolExecutor(max_workers=1) as executor, SgChrome() as driver:
         driver.get("https://www.longhornsteakhouse.com/locations/")
         futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
         for future in as_completed(futures):

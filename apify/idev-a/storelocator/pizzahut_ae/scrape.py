@@ -15,7 +15,8 @@ _headers = {
 }
 
 
-base_url = "https://www.pizzahut.ae/api/states/AE1/cities?pageSize=1000&pageOffset=0&sort-order=ASC&deliveryMode=H&langCode=en"
+base_url = "https://www.pizzahut.ae/api/states?pageSize=1000&pageOffset=0&deliveryMode=H&langCode=en"
+city_url = "https://www.pizzahut.ae/api/states/{}/cities?pageSize=1000&pageOffset=0&sort-order=ASC&deliveryMode=H&langCode=en"
 locator_domain = "https://www.pizzahut.ae"
 session = SgRequests().requests_retry_session()
 max_workers = 12
@@ -24,7 +25,7 @@ max_workers = 12
 def fetchConcurrentSingle(city):
     page_url = f"https://www.pizzahut.ae/api//cities/{city['id']}/stores?deliveryMode=H&langCode=en"
     locs = request_with_retries(page_url).json()["body"]
-    return locs
+    return locs, city
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -52,34 +53,41 @@ def request_with_retries(url):
 
 
 def fetch_data():
-    cities = session.get(base_url, headers=_headers).json()["body"]
-    logger.info(f"{len(cities)} cities found")
-    for locs in fetchConcurrentList(cities):
-        for _ in locs:
-            raw_address = _["address"].strip()
-            if "UAE" not in raw_address and "United Arab Emirates" not in raw_address:
-                raw_address += ", United Arab Emirates"
-            addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            city = _["city"]["name"]
-            if not city and addr.city:
-                city = addr.city
-            yield SgRecord(
-                page_url="",
-                store_number=_["id"],
-                location_name=_["name"],
-                street_address=street_address,
-                city=city,
-                state=_["state"]["name"],
-                country_code="UAE",
-                phone=_["contactNo"],
-                latitude=_["locationDetail"]["latitude"],
-                longitude=_["locationDetail"]["longitude"],
-                locator_domain=locator_domain,
-                raw_address=_["address"].strip(),
-            )
+    states = session.get(base_url, headers=_headers).json()["body"]
+    for state in states:
+        cities = session.get(city_url.format(state["code"]), headers=_headers).json()[
+            "body"
+        ]
+        logger.info(f"[{state['name']}] {len(cities)} cities found")
+        for locs, city in fetchConcurrentList(cities):
+            for _ in locs:
+                raw_address = _["address"].strip()
+                if (
+                    "UAE" not in raw_address
+                    and "United Arab Emirates" not in raw_address
+                ):
+                    raw_address += ", United Arab Emirates"
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                city = _["city"]["name"]
+                if not city and addr.city:
+                    city = addr.city
+                yield SgRecord(
+                    page_url="",
+                    store_number=_["id"],
+                    location_name=_["name"],
+                    street_address=street_address,
+                    city=city,
+                    state=state["name"],
+                    country_code="UAE",
+                    phone=_["contactNo"],
+                    latitude=_["locationDetail"]["latitude"],
+                    longitude=_["locationDetail"]["longitude"],
+                    locator_domain=locator_domain,
+                    raw_address=_["address"].strip(),
+                )
 
 
 if __name__ == "__main__":

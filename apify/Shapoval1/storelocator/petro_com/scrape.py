@@ -66,6 +66,9 @@ def get_data(url, sgw: SgWriter):
     )
     if phone.find("\n") != -1:
         phone = phone.split("\n")[0]
+    map_link = "".join(tree.xpath("//iframe/@src"))
+    latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+    longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -79,8 +82,8 @@ def get_data(url, sgw: SgWriter):
         store_number=SgRecord.MISSING,
         phone=phone,
         location_type=SgRecord.MISSING,
-        latitude=SgRecord.MISSING,
-        longitude=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
         hours_of_operation=SgRecord.MISSING,
     )
 
