@@ -56,7 +56,6 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         page_url = "https://wrapchic.co.uk/find-wrapchic/"
-        location_type = "<MISSING>"
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -69,7 +68,6 @@ def fetch_data(sgw: SgWriter):
         city = a.city or "<MISSING>"
         if city == "<MISSING>" and location_name.find("London") != -1:
             city = "London"
-        store_number = "<MISSING>"
         text = "".join(d.xpath('.//a[text()="View Map"]/@href'))
         try:
             if text.find("ll=") != -1:
@@ -81,14 +79,14 @@ def fetch_data(sgw: SgWriter):
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
         phone = (
-            "".join(
-                re.findall(
-                    "((?:\+\d{2}[-\.\s]??|\d{4}[-\.\s]??)?(?:\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4}))",
-                    info1,
-                )
-            ).replace("\xa0", "")
+            re.findall(
+                r"((?:\+\d{2}[-\.\s]??|\d{4}[-\.\s]??)?(?:\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4}))",
+                info1,
+            )
             or "<MISSING>"
         )
+        phone = "".join(phone).replace("\xa0", "").strip()
+
         hours_of_operation = (
             " ".join(
                 d.xpath(
@@ -111,7 +109,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
