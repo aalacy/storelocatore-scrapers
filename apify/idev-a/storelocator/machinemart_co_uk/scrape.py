@@ -20,8 +20,11 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url).text, "lxml")
             hours = sp1.select_one("div.times p").contents[2:]
-            if len(sp1.select("div.times p")) > 1:
-                hours = list(sp1.select("div.times p")[1].stripped_strings)
+            pp = sp1.select("div.times p")
+            if len(pp) > 1:
+                if pp[-1].select("u"):
+                    del pp[-1]
+                hours = list(pp[-1].stripped_strings)
 
             yield SgRecord(
                 page_url=page_url,
