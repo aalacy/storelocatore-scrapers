@@ -74,7 +74,6 @@ def get_data():
             state = address_parts[-1].split(", ")[1].split(" ")[0]
             zipp = address_parts[-1].split(", ")[1].split(" ")[1]
             phone = address_parts[0].replace("Tel: ", "")
-            print(address_parts)
 
         store_number = ""
         for character in location_name:
