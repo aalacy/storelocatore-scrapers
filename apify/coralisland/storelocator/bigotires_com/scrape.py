@@ -41,7 +41,6 @@ def request_with_retries(zip_code):
         return []
     except Exception as e:
         log.error(f"Can't load from {zip_code}")
-        print(e)
         return []
 
 
