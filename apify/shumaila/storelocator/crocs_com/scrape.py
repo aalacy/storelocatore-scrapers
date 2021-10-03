@@ -16,7 +16,6 @@ def fetch_data():
     mylist = static_coordinate_list(10, SearchableCountries.USA)
 
     for lat, lng in mylist:
-        print(lat, lng)
 
         url = (
             "https://crocs.locally.com/stores/conversion_data?has_data=true&company_id=1762&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat="
