@@ -28,7 +28,7 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         if "?theatre=" in store_url:
             continue
-        print(store_url)
+
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
