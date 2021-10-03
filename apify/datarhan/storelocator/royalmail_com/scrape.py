@@ -6,13 +6,15 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
 from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
+from sglogging import sglog
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="gb")
 
     start_url = "https://www.royalmail.com/capi/rml/bf/v1/locations/branchFinder?postCode={}&latitude={}&longitude={}&searchRadius=40&count=5&selectedName=&officeType=csp&type=undefined&appliedFilters=undefined"
     domain = "royalmail.com"
+    log = sglog.SgLogSetup().get_logger(logger_name=domain)
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -23,6 +25,7 @@ def fetch_data():
         url = start_url.format(zipcode, coord[0], coord[1])
         all_locations = session.get(url, headers=hdr)
         if all_locations.status_code != 200:
+            log.info(f"Status Code: {all_locations.status_code}")
             continue
         for poi in all_locations.json():
             raw_address = poi["officeDetails"]["address1"]
