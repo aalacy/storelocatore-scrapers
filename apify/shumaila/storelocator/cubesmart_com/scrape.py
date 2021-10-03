@@ -1,4 +1,7 @@
-import csv
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -33,47 +36,15 @@ headers1 = {
 }
 
 
-def write_output(data):
-
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    p = 0
+
     url = "https://www.cubesmart.com/facilities/query/GetSiteGeoLocations"
-    storelist = []
+
     try:
-        loclist = session.post(url, headers=headers, verify=False).json()
+        loclist = session.post(url, headers=headers).json()
     except:
         headers["Cookie"] = cookielist[1]
-        loclist = session.post(url, headers=headers, verify=False).json()
+        loclist = session.post(url, headers=headers).json()
     for loc in loclist:
         store = str(loc["Id"])
         street = loc["Address"]
@@ -91,9 +62,6 @@ def fetch_data():
             + store
             + ".html"
         )
-        if street in storelist:
-            continue
-        storelist.append(street)
 
         headers1["Cookie"] = cookielist[1]
         headers1["Referer"] = (
@@ -116,6 +84,7 @@ def fetch_data():
             except:
                 continue
         phone = r.split('},"telephone":"', 1)[1].split('"', 1)[0]
+        phone = phone.replace(")", ") ")
         try:
             hours = (
                 r.split('<p class="csHoursList">', 1)[1]
@@ -125,36 +94,37 @@ def fetch_data():
                 .lstrip()
             )
         except:
+
             hours = "<MISSING>"
         if pcode == "75072":
             pcode = "75070"
         if loc["OpenSoon"] is False:
-            data.append(
-                [
-                    "https://www.cubesmart.com/",
-                    link,
-                    title,
-                    street,
-                    str(loc["City"]),
-                    str(loc["State"]),
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours.replace("<br/>", " ").strip(),
-                ]
-            )
 
-            p += 1
-    return data
+            yield SgRecord(
+                locator_domain="https://www.cubesmart.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=str(loc["City"]),
+                state=str(loc["State"]),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=store,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours.replace("<br/>", " ").strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
