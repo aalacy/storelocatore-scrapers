@@ -151,7 +151,7 @@ def scrape():
     ) as writer:
         with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
             search = DynamicZipSearch(
-                country_codes=["US"], expected_search_radius_miles=50
+                country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
             )
             results = parallelize(
                 search_space=[(zip, session) for zip in search],
