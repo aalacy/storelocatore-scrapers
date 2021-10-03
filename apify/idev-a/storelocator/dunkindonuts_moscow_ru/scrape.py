@@ -32,7 +32,8 @@ def fetch_data():
                 .split(");")[0]
             )
             items = link.select("div.cafe-info__item")
-            addr = parse_address_intl(list(items[0].stripped_strings)[1] + ", Russia")
+            raw_address = list(items[0].stripped_strings)[1]
+            addr = parse_address_intl(raw_address + ", Россия")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -46,13 +47,13 @@ def fetch_data():
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode,
                 country_code="Russia",
                 phone=phone,
                 locator_domain=locator_domain,
                 latitude=ss["LAT"],
                 longitude=ss["LON"],
                 hours_of_operation=list(items[3].stripped_strings)[1],
+                raw_address=raw_address,
             )
 
 

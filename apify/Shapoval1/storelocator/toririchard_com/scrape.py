@@ -23,7 +23,14 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(j.get("name")) or "<MISSING>"
         if location_name.find("Kuku") != -1:
             location_name = location_name.replace("Kukuiâ€™ula", "Kukui’ula").strip()
-        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        street_address = j.get("address")
+        street_address2 = j.get("address2") or "<MISSING>"
+        if (
+            "Unit" in street_address2
+            or "Suite" in street_address2
+            or "#" in street_address2
+        ):
+            street_address = street_address + " " + street_address2
         state = j.get("state") or "<MISSING>"
         postal = j.get("postal") or "<MISSING>"
         country_code = j.get("country") or "<MISSING>"
