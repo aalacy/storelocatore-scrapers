@@ -39,7 +39,7 @@ def request_with_retries(zip_code):
         if "stores" in data["storesType"]:
             return data["storesType"]["stores"]
         return []
-    except Exception as e:
+    except Exception:
         log.error(f"Can't load from {zip_code}")
         return []
 
