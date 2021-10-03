@@ -28,7 +28,7 @@ def fetch_data(sgw: SgWriter):
         locator_domain = "https://vapormaven.com/"
 
         street_address = "".join(street_addresses[index].split('"')[0]).strip()
-        city = "".join(cities[index].split('"')[0]).strip()
+        city = "".join(cities[index].split('"')[0]).strip().replace("\\u0027", "'")
         location_name = city
         state = "".join(states[index].split('"')[0]).strip()
         zip = "".join(zipcodes[index].split('"')[0]).strip()
