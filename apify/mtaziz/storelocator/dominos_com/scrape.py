@@ -14,7 +14,7 @@ import tenacity
 
 MISSING = SgRecord.MISSING
 DOMAIN = "dominos.com"
-MAX_WORKERS = 6
+MAX_WORKERS = 16
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
 }
@@ -944,7 +944,10 @@ def fetch_records_us(idx, loc, sgw: SgWriter):
                 '//script[contains(@type, "application/ld+json") and contains(text(), "LocalBusiness")]/text()'
             )
             raw_data1 = "".join(raw_data)
-            json_data = json.loads(raw_data1)
+            try:
+                json_data = json.loads(raw_data1)
+            except json.decoder.JSONDecodeError:
+                return
             page_url = json_data["url"]
             logger.info(f"[{idx}][US] PU: {page_url}")
             location_name = json_data["name"] or MISSING
