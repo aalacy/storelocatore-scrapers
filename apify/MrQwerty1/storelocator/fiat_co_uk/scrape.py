@@ -52,7 +52,6 @@ def fetch_data(coord, sgw: SgWriter):
             country_code="GB",
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
@@ -71,6 +70,6 @@ if __name__ == "__main__":
     }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for coords in DynamicGeoSearch(
-            country_codes=[SearchableCountries.BRITAIN], max_search_distance_miles=200
+            country_codes=[SearchableCountries.BRITAIN], max_search_distance_miles=100
         ):
             fetch_data(coords, writer)
