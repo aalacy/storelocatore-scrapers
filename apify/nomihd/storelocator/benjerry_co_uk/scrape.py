@@ -2,7 +2,6 @@ from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
