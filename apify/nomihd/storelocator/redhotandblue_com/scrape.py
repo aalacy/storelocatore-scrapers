@@ -26,7 +26,6 @@ def fetch_data():
         if len(stores_list) > 0:
             stores_list = stores_list[0].xpath(".//a/@href")
 
-        print(stores_list)
         for store in stores_list:
 
             page_url = store.strip()
