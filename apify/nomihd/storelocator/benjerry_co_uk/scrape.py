@@ -78,8 +78,6 @@ class _SearchIteration(SearchIteration):
                         country_code = data["country"]
                         latitude = data["latitude"]
                         longitude = data["longitude"]
-                        found_location_at(latitude, longitude)
-
                         hours = ""
                         if data["monday"]:
                             hours += "Monday" + " " + data["monday"]
@@ -168,7 +166,6 @@ class _SearchIteration(SearchIteration):
 
                     latitude = data["latitude"]
                     longitude = data["longitude"]
-                    found_location_at(latitude, longitude)
 
                     hours = ""
                     if data["monday"]:
@@ -246,8 +243,7 @@ def scrape():
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicZipSearch",
-        expected_search_radius_miles=100,
-        granularity=Grain_8(),
+        expected_search_radius_miles=50,
     )
 
     with SgWriter(
