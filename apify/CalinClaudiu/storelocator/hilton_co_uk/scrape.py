@@ -126,7 +126,7 @@ def fetch_data():
 def data_fetcher(country, state, sleep):
     url = country["link"]
     masterdata = []
-    with SgFirefox(is_headless=False) as driver:
+    with SgFirefox() as driver:
         driver.get(url)
         time.sleep(sleep)
         for r in driver.requests:
