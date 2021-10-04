@@ -58,14 +58,10 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    addresses = []
     mylist = static_coordinate_list(50, SearchableCountries.USA)
     MAX_RESULTS = 25
     MAX_DISTANCE = 150
-    p = 0
 
-    base_url = "https://www.midfirst.com"
-    data = []
     for lat, lng in mylist:
         try:
             json_data = session.post(
