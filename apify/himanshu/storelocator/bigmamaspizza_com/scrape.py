@@ -70,9 +70,17 @@ def fetch_data():
             location_type = "big mama's paap's pizzaria"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-            hours_of_operation = hours_of_operation.replace(
-                "WE ARE CLOSED EARLY AND CANNOT PROCESS YOUR ORDERS FOR TODAY. PLEASE FEEL FREE TO SUBMIT AN ONLINE ORDER NOW FOR A FUTURE DATE.",
-                "",
+            hours_of_operation = (
+                hours_of_operation.replace(
+                    "WE ARE CLOSED EARLY AND CANNOT PROCESS YOUR ORDERS FOR TODAY. PLEASE FEEL FREE TO SUBMIT AN ONLINE ORDER NOW FOR A FUTURE DATE.",
+                    "",
+                )
+                .strip()
+                .replace(
+                    "WE ARE CLOSED AND CANNOT PROCESS YOUR ORDERS FOR TODAY. PLEASE FEEL FREE TO SUBMIT AN ONLINE ORDER NOW FOR A FUTURE DATE.",
+                    "",
+                )
+                .strip()
             )
             yield SgRecord(
                 locator_domain=locator_domain,
