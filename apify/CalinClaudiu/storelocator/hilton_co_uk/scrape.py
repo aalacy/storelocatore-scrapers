@@ -3,7 +3,8 @@ from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgscrape import simple_utils as utils
+
+# from sgscrape import simple_utils as utils # noqa
 
 
 from sgrequests import SgRequests
