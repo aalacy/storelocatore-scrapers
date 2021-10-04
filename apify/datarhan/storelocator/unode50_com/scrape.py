@@ -36,7 +36,8 @@ def fetch_data():
         city = addr.city
         if not city:
             city = raw_address[-2]
-        city = city if city else "<MISSING>"
+        if city == "-":
+            city = SgRecord.MISSING
         street_check = " ".join([e.capitalize() for e in poi["address"].split()]).split(
             city
         )
@@ -52,10 +53,15 @@ def fetch_data():
             street_address = street_address[:-1]
         if street_address == "South Market":
             street_address = "South Market, Bay 34"
+        if street_address.isdigit():
+            street_address = ", ".join(raw_address[:2])
+        if street_address in ["-", "."]:
+            street_address = SgRecord.MISSING
+        street_address = street_address.replace(">> ", "").strip()
+        if street_address == "12":
+            street_address = ", ".join(raw_address[:2])
         state = addr.state
-        state = state if state else "<MISSING>"
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
         store_number = poi["id"]
         latitude = poi["latitude"]
         longitude = poi["longitude"]

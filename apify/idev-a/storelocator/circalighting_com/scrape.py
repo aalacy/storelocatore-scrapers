@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import dirtyjson as json
 
 
 logger = SgLogSetup().get_logger("circalighting")
@@ -54,25 +55,26 @@ def fetch_data():
                 state = city_state[1].strip().split(" ")[0].strip()
                 zip_postal = city_state[1].strip().split(" ")[1].strip()
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            if sp1.select_one("div.gmap iframe"):
+            res = session.get(page_url, headers=_headers).text
+            sp1 = bs(res, "lxml")
+            try:
+                coord = json.loads(
+                    res.split("const myLatLng =")[1].split(";")[0].strip()
+                )
+            except:
                 try:
-                    coord = (
-                        sp1.select_one("div.gmap iframe")["src"]
-                        .split("!2d")[1]
-                        .split("!3m")[0]
-                        .split("!2m")[0]
-                        .split("!3d")
-                    )
-                except:
-                    coord = (
-                        sp1.select_one("div.gmap iframe")["src"]
+                    _coord = (
+                        sp1.select_one("ul.hours")
+                        .find_next_sibling("a")
+                        .find_next_sibling("a")["href"]
                         .split("/@")[1]
                         .split("/data")[0]
                         .split(",")
                     )
-            else:
-                coord = ["", ""]
+                    coord = {"lat": _coord[0], "lng": _coord[1]}
+                except:
+                    coord = {"lat": "", "lng": ""}
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=block[0],
@@ -82,8 +84,8 @@ def fetch_data():
                 zip_postal=zip_postal,
                 country_code=country,
                 phone=phone,
-                latitude=coord[1],
-                longitude=coord[0],
+                latitude=coord["lat"],
+                longitude=coord["lng"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
