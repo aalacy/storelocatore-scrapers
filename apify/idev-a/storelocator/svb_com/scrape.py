@@ -25,12 +25,20 @@ def _d(_, country):
     if _title.get("data-branch") == "True":
         location_type = "branch"
     _addr = list(_.p.stripped_strings)
-    raw_address = " ".join(_addr)
+    raw_address = " ".join(_addr).split("Get")[0]
     addr = parse_address_intl(raw_address + ", " + country)
     street_address = addr.street_address_1
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
 
+    city = addr.city
+    state = addr.state
+    if country == "US":
+        _addr = parse_address_intl(_title.text.strip())
+        if _addr.city:
+            city = _addr.city
+        if _addr.state:
+            state = _addr.state
     phone = ""
     if _.find("a", href=re.compile(r"tel:")):
         phone = _.find("a", href=re.compile(r"tel:")).text.strip()
@@ -47,8 +55,8 @@ def _d(_, country):
         store_number=_title["data-id"],
         location_name=_title.text.strip(),
         street_address=street_address,
-        city=addr.city,
-        state=addr.state,
+        city=city,
+        state=state,
         zip_postal=addr.postcode,
         country_code=country,
         phone=phone,
