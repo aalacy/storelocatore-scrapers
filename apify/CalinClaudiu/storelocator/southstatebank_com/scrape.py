@@ -1,47 +1,18 @@
 from bs4 import BeautifulSoup
-import csv
-
 from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
 
 
 def fetch_data():
 
-    data = []
     titlelist = []
     url = "https://southstatebank.com/Global/About/CRA/Locations-Listing"
     r = session.get(url, headers=headers, verify=False)
@@ -109,33 +80,29 @@ def fetch_data():
             city = city + " " + state.replace(",", "")
             state, pcode = pcode.split(" ", 1)
         store = link.split("/")[-2]
-        data.append(
-            [
-                "https://centerstatebank.com/",
-                link,
-                title,
-                street,
-                city.replace(",", ""),
-                state,
-                pcode,
-                "US",
-                store,
-                phone,
-                ltype,
-                lat,
-                longt,
-                hours,
-            ]
+        yield SgRecord(
+            page_url=link,
+            location_name=title,
+            street_address=street,
+            city=city.replace(",", ""),
+            state=state,
+            zip_postal=pcode,
+            country_code="US",
+            store_number=store,
+            phone=phone,
+            location_type=ltype,
+            latitude=lat,
+            longitude=longt,
+            locator_domain="https://southstatebank.com/",
+            hours_of_operation=hours,
+            raw_address="<MISSING>",
         )
-
         p += 1
-    return data
 
 
 def scrape():
-
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
+        fetch_data(writer)
 
 
 scrape()
