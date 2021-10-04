@@ -67,8 +67,23 @@ def fetch_data():
         "ul", {"class": "location clear"}
     )
     for row in contents:
-        if row.find("p", {"class": "location-closed"}):
+        is_closed = row.find("p", {"class": "location-closed"})
+        if is_closed and "Coming Soon" in is_closed.text:
             continue
+        elif is_closed and "Temporarily Closed" in is_closed.text:
+            location_type = "TEMP_CLOSED"
+            phone = MISSING
+            hours_of_operation = MISSING
+        else:
+            phone = row.find("a", {"class": "location-phone"}).text.strip()
+            hours_of_operation = re.sub(
+                r"Labor.*",
+                "",
+                row.find("div", {"class": "location-schedule"})
+                .get_text(strip=True, separator=",")
+                .strip(),
+            ).rstrip(",")
+            location_type = "OPEN"
         location_name = row.find("h3").text.strip()
         raw_address = (
             row.find("p")
@@ -76,15 +91,8 @@ def fetch_data():
             .replace("(Next to Petsmart across from FedEx)", "")
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = row.find("a", {"class": "location-phone"}).text.strip()
-        hours_of_operation = (
-            row.find("div", {"class": "location-schedule"})
-            .get_text(strip=True, separator=",")
-            .strip()
-        )
         country_code = "US"
         store_number = MISSING
-        location_type = "marugameudon"
         map_link = row.find("iframe")["src"]
         latitude, longitude = get_latlong(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
