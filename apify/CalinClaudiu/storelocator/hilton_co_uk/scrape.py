@@ -18,7 +18,7 @@ logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 def cleanup_json(x, url):
     try:
-        z = x.split('"description"')[0]+str('"opening')+x.split('"opening',1)[1]
+        z = x.split('"description"')[0] + str('"opening') + x.split('"opening', 1)[1]
     except Exception as e:
         logzilla.error(f"{x}\n{str(e)}\n{str(url)}")
         z = x
@@ -122,6 +122,7 @@ def fetch_data():
                 state.set_misc_value("countries", countries)
     raise
 
+
 def data_fetcher(country, state):
     url = country["link"]
     masterdata = []
@@ -166,14 +167,14 @@ def data_fetcher(country, state):
             logzilla.error(f"{i}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-    #lize = utils.parallelize(# noqa
+    # lize = utils.parallelize(# noqa
     #    search_space=allhotels[0:2],# noqa
     #    fetch_results_for_rec=para,# noqa
     #    max_threads=10,# noqa
     #    print_stats_interval=10,# noqa
-    #)# noqa
+    # )# noqa
 
-    #for j in lize:# noqa
+    # for j in lize:# noqa
     #    yield j # noqa
     yield para(allhotels[0])
     logzilla.info(f"Finished grabbing data!!")  # noqa
