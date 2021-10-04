@@ -79,27 +79,37 @@ def fetch_data():
         street_address, city, state, zip_postal = getAddress(raw_address)
         hoo_content = content.find("div", {"id": "parking"})
         if not hoo_content.find("h4"):
-            hours_of_operation = (
+            hoo = (
                 content.find("h3", text="Restaurant Hours")
                 .find_next("p")
                 .get_text(strip=True, separator=",")
             )
         else:
-            hoo_content.find("h4").decompose()
-            hoo_content.find("p").decompose()
-            hoo_content.find_all("p")[-1].decompose()
-            hours_of_operation = re.sub(
-                r"All guests.*",
-                "",
-                content.find("div", {"id": "parking"})
-                .get_text(strip=True, separator=",")
-                .replace("Parking,", "")
-                .replace("Restaurant Hours", "")
-                .lstrip(",")
-                .strip(),
-            )
+            hours_element = content.find("div", {"id": "hours"})
+            if hours_element and hours_element.find("p"):
+                hoo = (
+                    hours_element.get_text(strip=True, separator=",")
+                    .replace("Restaurant Hours", "")
+                    .lstrip(",")
+                    .strip()
+                )
+            else:
+                hoo_content.find("h4").decompose()
+                hoo_content.find("p").decompose()
+                hoo_content.find_all("p")[-1].decompose()
+                hoo = re.sub(
+                    r"All guests.*",
+                    "",
+                    content.find("div", {"id": "parking"})
+                    .get_text(strip=True, separator=",")
+                    .replace("Parking,", "")
+                    .replace("Restaurant Hours", "")
+                    .lstrip(",")
+                    .strip(),
+                )
         if "dukeswaikiki.com" in page_url:
-            hours_of_operation = "Mon-Sun: 7:00am - 11:00pm"
+            hoo = "Mon-Sun: 7:00am - 11:00pm"
+        hours_of_operation = re.sub(r"\(.*?\)", "", hoo).strip()
         country_code = "US"
         store_number = MISSING
         location_type = "dukesrestaurants"
