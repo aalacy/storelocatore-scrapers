@@ -16,29 +16,30 @@ headers = {
 }
 
 
-
 MISSING = SgRecord.MISSING
+
+
 def fetch_data():
-    
-    pattern = re.compile(r'\s\s+') 
-    url = 'https://www.outback.com/locations/international'    
+
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.outback.com/locations/international"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    statelist = soup.findAll('ul',{'class':'directory-listing'})
+    statelist = soup.findAll("ul", {"class": "directory-listing"})
     for ccode in statelist:
-        ccode = ccode['ng-show'].split("'",1)[1].split("'",1)[0]
-        loclist = soup.findAll('li',{'class':'directory-listing-entry'})       
+        ccode = ccode["ng-show"].split("'", 1)[1].split("'", 1)[0]
+        loclist = soup.findAll("li", {"class": "directory-listing-entry"})
         for loc in loclist:
-            loc = re.sub(pattern,'\n',loc.text).strip()
-            title = loc.split('\n',1)[0]
-            address = loc.split('Address',1)[1].split('WiFi',1)[0].strip()
-            phone = address.split('\n')[-1]
+            loc = re.sub(pattern, "\n", loc.text).strip()
+            title = loc.split("\n", 1)[0]
+            address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
+            phone = address.split("\n")[-1]
             print(ccode)
-            address = address.replace(phone,'')
-            raw_address = address.replace('\n',' ').strip()
+            address = address.replace(phone, "")
+            raw_address = address.replace("\n", " ").strip()
             print(address)
             hours = "Sorry, We're Currently Closed"
-            lat = longt = '<MISSING>'
+            lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -53,24 +54,22 @@ def fetch_data():
             zip_postal = pa.postcode
             pcode = zip_postal.strip() if zip_postal else MISSING
             yield SgRecord(
-                    locator_domain="https://www.outback.com/",
-                    page_url='<MISSING>',
-                    location_name=title,
-                    street_address=street.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=pcode.strip(),
-                    country_code=ccode,
-                    store_number=SgRecord.MISSING,
-                    phone=phone.strip(),
-                    location_type=SgRecord.MISSING,
-                    latitude=SgRecord.MISSING,
-                    longitude="<MISSING>",
-                    hours_of_operation=hours,
-                    raw_address = raw_address
-             )
-            
-    
+                locator_domain="https://www.outback.com/",
+                page_url="<MISSING>",
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=SgRecord.MISSING,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude="<MISSING>",
+                hours_of_operation=hours,
+                raw_address=raw_address,
+            )
     url = "https://locations.outback.com/index.html"
     r = session.get(url, headers=headers)
     statelist = soup.find("section", {"class": "StateList"}).findAll(
@@ -112,8 +111,7 @@ def fetch_data():
                 if check2 == 0:
                     branch = "https://locations.outback.com/" + branch["href"]
                     branch = branch.replace("../", "")
-                    
-                    
+
                     r = session.get(branch, headers=headers, verify=False)
                     soup = BeautifulSoup(r.text, "html.parser")
                 store = r.text.split('"storeId":"', 1)[1].split('"', 1)[0]
@@ -147,18 +145,20 @@ def fetch_data():
                     city=city.strip(),
                     state=state.strip(),
                     zip_postal=pcode.strip(),
-                    country_code='US',
+                    country_code="US",
                     store_number=SgRecord.MISSING,
                     phone=phone.strip(),
                     location_type=SgRecord.MISSING,
                     latitude=str(lat),
                     longitude=str(longt),
                     hours_of_operation=hours,
-             )
+                )
 
 
-def scrape():    
-    with SgWriter( deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+def scrape():
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
