@@ -49,7 +49,6 @@ def fetch_data():
                     if raw_data[0].split("-")[0].isdigit():
                         phone = raw_data[0]
                         raw_data = raw_data = [""] + raw_data[1:]
-                    print(page_url, "\n", raw_data)
 
                     item = SgRecord(
                         locator_domain=domain,
