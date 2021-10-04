@@ -249,6 +249,13 @@ def get_country(search, country, session, headers, SearchableCountry, state):
     maxZ = None
     maxZ = search.items_remaining()
     total = 0
+    Point = (40.773103, -73.964488)
+    try:
+        for record in getPoint(Point, session, country.link, headers):
+            record["COUNTRY"] = country
+            yield record
+    except Exception:
+        pass
     for Point in search:
         found = 0
         try:
