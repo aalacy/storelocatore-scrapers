@@ -1,4 +1,4 @@
-import usaddress
+from sgscrape.sgpostal import USA_Best_Parser, parse_address
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -59,8 +59,11 @@ def get_data(url, sgw: SgWriter):
 
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
+    location_name = "".join(
+        tree.xpath('//h1[@class="o-location-hero__title u-h2"]/text()')
+    )
     ad = " ".join(
-        tree.xpath("//h3[contains(text(), 'Address')]/following-sibling::a/text()")
+        tree.xpath("//h3[contains(text(), 'Address')]/following-sibling::a[1]/text()")
     ).strip()
     if ad.count("Cullman") == 2 or ad.count("Huntsville") == 2:
         ad = " ".join(
@@ -68,17 +71,21 @@ def get_data(url, sgw: SgWriter):
                 "//h3[contains(text(), 'Address')]/following-sibling::a/text()[1]"
             )
         ).strip()
-    a = usaddress.tag(ad, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+
+    a = parse_address(USA_Best_Parser(), ad)
+    street_address = f"{a.street_address_1} {a.street_address_2}".replace(
         "None", ""
     ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
+    try:
+        state = location_name.split("in ")[1].split(",")[1].strip()
+    except:
+        state = "<MISSING>"
+    if state.find("(") != -1:
+        state = state.split("(")[0].strip()
+    postal = a.postcode or "<MISSING>"
     country_code = "US"
-    location_name = "".join(
-        tree.xpath('//h1[@class="o-location-hero__title u-h2"]/text()')
-    )
+    city = location_name.split("in")[1].split(",")[0].strip()
+
     phone = (
         "".join(tree.xpath("//p[contains(text(), 'Phone')]/a/text()")) or "<MISSING>"
     )
