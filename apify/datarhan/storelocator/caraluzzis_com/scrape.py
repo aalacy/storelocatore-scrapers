@@ -5,7 +5,7 @@ from time import sleep
 from urllib.parse import urljoin
 
 from sgselenium import SgChrome
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
