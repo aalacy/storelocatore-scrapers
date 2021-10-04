@@ -17,7 +17,11 @@ logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def cleanup_json(x, url):
-    z = x.split('"description"')[0] + str('"opening') + x.split('"opening', 1)[1]
+    try:
+        z = x.split('"description"')[0] + str('"opening') + x.split('"opening', 1)[1]
+    except Exception as e:
+        logzilla.error(f"{x}\n{str(e)}\n{str(url)}")
+        z = x
     x = z
     x = x.replace("\n", "").replace("\r", "").replace("\t", "")
     x = x.replace(": '", ': "')
