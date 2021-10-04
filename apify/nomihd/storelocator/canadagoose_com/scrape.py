@@ -12,9 +12,7 @@ from sgrequests import SgRequests
 
 website = "canadagoose.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-
 session = SgRequests()
-
 
 headers = {
     "Connection": "keep-alive",
@@ -30,7 +28,7 @@ headers = {
     "Sec-Fetch-User": "?1",
     "Sec-Fetch-Dest": "document",
     "Accept-Language": "en-US,en;q=0.9",
-    "Cookie": 'dwac_cdSAUiaaio11EaaadnOiJrNbA7=H8_H7RgIcfzRZ2cE6KGWLq_2XwME0CGNAm8%3D|dw-only|||USD|false|Canada%2FEastern|true; cquid=||; sid=H8_H7RgIcfzRZ2cE6KGWLq_2XwME0CGNAm8; language=en; dwanonymous_b3aa5771d8435c67a1a8775183c875b2=cd4goGJXMb3zbrbNp8a9XB7Nop; dwsid=2EHgyYmjZHvyRRGZhGiJLGh4eCeVezQKIU1tbc_wjeX7hc2A3RNEvEIGMduRH6BxlEYW8qXRcx9manJ-CSEmYQ==; __cq_dnt=0; dw_dnt=0; zarget_visitor_info=%7B%7D; zarget_user_id=20f35c11-53a1-4921-9445-7ad3031f75e8; dw=1; dw_cookies_accepted=1; BVImplmain_site=14687; globalBannerIsHidden=; __cq_uuid=ab0kwZSrU5LjRDfnQ14RitBNF9; __cq_seg=0~0.00u00211~0.00u00212~0.00u00213~0.00u00214~0.00u00215~0.00u00216~0.00u00217~0.00u00218~0.00u00219~0.00; _gcl_au=1.1.1696010982.1633246797; BVBRANDID=b41a54ab-b5cf-4e49-a68d-a03f0f707312; _ga=GA1.2.23858703.1633246798; _gid=GA1.2.108630905.1633246798; _li_dcdm_c=.canadagoose.com; _lc2_fpi=c88e71b6d53c--01fh2hgr6r35se2nt9cmzetx2d; _fbp=fb.1.1633246798768.103846891; _pin_unauth=dWlkPVpUQmxaR1JrT1RJdE16WTBNQzAwTTJFMkxUbG1aR1V0WWpsaU0ySXpaV1ppWldWaw; rskxRunCookie=0; rCookie=ml8ljtt2vpl2at8hi1l4tmkuawz9j6; civicCookieControl=%7B%22pv%22%3A%22%22%2C%22cm%22%3A%22info%22%2C%22open%22%3A%22no%22%7D; CanadaGooseUS-pagevisits={"pagevisits":3}; BVBRANDSID=afd14d06-50c3-4a76-9777-274de8f3ed51; dwac_bdbM6iaaioAiEaaaddLOa2751H=H8_H7RgIcfzRZ2cE6KGWLq_2XwME0CGNAm8%3D|dw-only|||CAD|false|Canada%2FEastern|true; cqcid=adegnkhaTBst7h7ZLU0b7qgO5r; dwanonymous_4b678b2f3ddcd887e7cd4635d93160c7=adegnkhaTBst7h7ZLU0b7qgO5r; countryCode=CA; _f60_session=F51GHj1laVAs50apMRbA92P5Y3AfnXadrRXSzWxYKZberTuDAgfwHcMcYvmIEMyH; _gat_UA-34770126-1=1; CanadaGooseCA-pagevisits={"pagevisits":4}; _uetsid=1bfb1a10241d11eca0c317f624160b29; _uetvid=1bfb4370241d11ec99fde1a140434de5; lastRskxRun=1633256485695; akm_bmfp_b2-ssn=0w0mkiHDtQPuInX54XuMvOSIFFW40I5CHJivgFai2Ijvorf0qtfwBl0Ls76bqQUH2UxxxPIaaBF42QlcQGsVrZq9alNZRIff8OyyZdTGhKn1LYtP6WBUL3J5WPzBmAgLwseXnCyyaLcsywf5SUD4ilta1; akm_bmfp_b2=0w0mkiHDtQPuInX54XuMvOSIFFW40I5CHJivgFai2Ijvorf0qtfwBl0Ls76bqQUH2UxxxPIaaBF42QlcQGsVrZq9alNZRIff8OyyZdTGhKn1LYtP6WBUL3J5WPzBmAgLwseXnCyyaLcsywf5SUD4ilta1; __cq_dnt=0; dw_dnt=0; akm_bmfp_b2-ssn=0Qpi37YlIPWjWceHAOQl2tA9RCgqqGGuqqYzE1sFM4Ha9ikFRGCBeZkhum1P1EUvSa5LDBVMelqgzH4ZY8xnLMcgKdyDnASXwhkCMzZt0t9I2zz4ed2BYI9NKePbwJAtcRCA4gvW7yTTHWVGipsCcu52W; akm_bmfp_b2=0Qpi37YlIPWjWceHAOQl2tA9RCgqqGGuqqYzE1sFM4Ha9ikFRGCBeZkhum1P1EUvSa5LDBVMelqgzH4ZY8xnLMcgKdyDnASXwhkCMzZt0t9I2zz4ed2BYI9NKePbwJAtcRCA4gvW7yTTHWVGipsCcu52W',
+    "Cookie": 'dwac_bdbM6iaaioAiEaaaddLOa2751H=_8ItzVhV3QBbbsGixlyFTBbpWQNB700pSQQ%3D|dw-only|||CAD|false|Canada%2FEastern|true; cqcid=bfbsaKiqHEBqXUAqEYsdVqc5nE; cquid=||; sid=_8ItzVhV3QBbbsGixlyFTBbpWQNB700pSQQ; dwanonymous_4b678b2f3ddcd887e7cd4635d93160c7=bfbsaKiqHEBqXUAqEYsdVqc5nE; dwsid=qrgFgg-oB9aUHXbdPPCvyUOTcUwWEpf_hnexrzMBC8r5ZbMBzh8XM5IPuIdoBVEyFIPSH103jxP8SW9WIshRYw==; language=en; __cq_dnt=0; dw_dnt=0; zarget_visitor_info=%7B%7D; zarget_user_id=f4bdfdfd-3d02-4caa-aa4f-4da851eff142; _gcl_au=1.1.850673134.1633361980; _f60_session=F51XbzGNvDgDQ9ujiTUyBZEXgjBleIScywMRAip7wl5N2U7LYixNhaWwpi27znCV; _ga=GA1.2.2128220691.1633361982; _gid=GA1.2.1574803012.1633361982; _li_dcdm_c=.canadagoose.com; _lc2_fpi=c88e71b6d53c--01fh5zbwfcpb8wqnn7b3w5wgf1; _pin_unauth=dWlkPVpUQTJPRFJoTURZdFpEbGpaQzAwTmpoa0xUazRPREV0TWpFMFpXTTVNalUwT1RNeA; dw=1; dw_cookies_accepted=1; BVImplmain_site=14687; countryCode=CA; CanadaGooseCA-pagevisits={"pagevisits":1}; globalBannerIsHidden=; _uetsid=4d1e6300252911eca361edacbd241f06; _uetvid=4d1eeab0252911ecb332b763d30a428c; BVBRANDID=3b15c22d-8977-463b-9812-3ca4f8a71490; BVBRANDSID=7af54421-8a53-48b6-b6be-077ab7e4e3e8; __cq_uuid=bfbsaKiqHEBqXUAqEYsdVqc5nE; __cq_seg=0~0.00!1~0.00!2~0.00!3~0.00!4~0.00!5~0.00!6~0.00!7~0.00!8~0.00!9~0.00; rskxRunCookie=0; rCookie=rs62kn30ncgnj6uuqpphtkuctjzyo; lastRskxRun=1633361990507; akm_bmfp_b2-ssn=0SwZK0SFPjIOZ1edzMVB4UvDv3Vo8CmPnjG9it1VLaMKNmq6Jaf5vKAgrCMWvLz21lBzBguk3dGcBUui0jHmBI3I8z3YSNoYLWMnBwiSvaOb4ZTij3ZVypCnY7aAHGJIMUJUh9FurGxygPE3V0RdObUg7; akm_bmfp_b2=0SwZK0SFPjIOZ1edzMVB4UvDv3Vo8CmPnjG9it1VLaMKNmq6Jaf5vKAgrCMWvLz21lBzBguk3dGcBUui0jHmBI3I8z3YSNoYLWMnBwiSvaOb4ZTij3ZVypCnY7aAHGJIMUJUh9FurGxygPE3V0RdObUg7',
 }
 
 
@@ -111,17 +109,19 @@ def fetch_data():
                 '//div[@class="store-info desktop"]//*[@itemprop="postalCode"]//text()'
             )
         ).strip()
-        country_code = "CA"
+        country_code = "<INACCESSIBLE>"
 
         location_name = "".join(
-            store_sel.xpath('//div[@class="store-info desktop"]//h3[last()]/text()')
-        ).strip()
-
-        phone = " ".join(
             store_sel.xpath(
-                '//div[@class="store-info desktop"]//*[@itemprop="telephone"]//text()'
+                '//div[@class="store-info desktop"]//span[@itemprop="name"]/text()'
             )
         ).strip()
+
+        phone = store_sel.xpath(
+            '//div[@class="store-info desktop"]//*[@itemprop="telephone"]//text()'
+        )
+        if len(phone) > 0:
+            phone = "".join(phone[0]).strip()
 
         store_number = "<MISSING>"
 
@@ -129,7 +129,7 @@ def fetch_data():
 
         hours_of_operation = "; ".join(
             store_sel.xpath(
-                '//div[@class="store-info desktop"]//*[@itemprop="openingHours"]//text()'
+                '//div[@class="store-info desktop"]//*[@itemprop="openingHours"]/@content'
             )
         ).strip()
         map_link = "".join(
