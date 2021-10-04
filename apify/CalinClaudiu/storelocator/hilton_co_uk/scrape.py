@@ -3,7 +3,8 @@ from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgscrape import simple_utils as utils
+
+# from sgscrape import simple_utils as utils # noqa
 
 
 from sgrequests import SgRequests
@@ -120,6 +121,7 @@ def fetch_data():
                     yield record
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
+    raise
 
 
 def data_fetcher(country, state):
@@ -162,20 +164,20 @@ def data_fetcher(country, state):
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
-        except KeyError:
-            pass
+        except KeyError as e:
+            logzilla.error(f"{i}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-    lize = utils.parallelize(
-        search_space=allhotels,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
-    )
+    # lize = utils.parallelize(# noqa
+    #    search_space=allhotels[0:2],# noqa
+    #    fetch_results_for_rec=para,# noqa
+    #    max_threads=10,# noqa
+    #    print_stats_interval=10,# noqa
+    # )# noqa
 
-    for j in lize:
-        yield j
-
+    # for j in lize:# noqa
+    #    yield j # noqa
+    yield para(allhotels[0])
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
