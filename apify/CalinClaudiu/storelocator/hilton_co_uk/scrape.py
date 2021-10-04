@@ -3,7 +3,8 @@ from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgscrape import simple_utils as utils
+
+# from sgscrape import simple_utils as utils # noqa
 
 
 from sgrequests import SgRequests
@@ -16,7 +17,13 @@ from sgselenium import SgFirefox
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def cleanup_json(x):
+def cleanup_json(x, url):
+    try:
+        z = x.split('"description"')[0] + str('"opening') + x.split('"opening', 1)[1]
+    except Exception as e:
+        logzilla.error(f"{x}\n{str(e)}\n{str(url)}")
+        z = x
+    x = z
     x = x.replace("\n", "").replace("\r", "").replace("\t", "")
     x = x.replace(": '", ': "')
     x = x.replace("',", '",')
@@ -38,7 +45,9 @@ def cleanup_json(x):
     except Exception as e:
         with open("debug.txt", mode="w", encoding="utf-8") as file:
             file.write(x)
-            file.write(e)
+            file.write(str(e))
+            file.write(str(url))
+        logzilla.error(f"{x}\n{str(e)}\n{str(url)}")
     return x
 
 
@@ -64,7 +73,7 @@ def para(k):
         if "postalCode" in i.text:
             try:
                 z = i.text.replace("\n", "")
-                data = cleanup_json(z)
+                data = cleanup_json(z, k["facilityOverview"]["homeUrl"])
             except Exception:
                 raise
 
@@ -112,30 +121,42 @@ def fetch_data():
                     yield record
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
+    raise
 
 
 def data_fetcher(country, state):
     url = country["link"]
-    url = "https://www.hilton.com/en/locations/usa/alabama/"
     masterdata = []
-
+    data = None
     with SgFirefox() as driver:
         driver.get(url)
         for r in driver.requests:
             if "/graphql/customer" in r.path:
-                if r.response.body:
-                    data = r.response.body
-                    data = json.loads(data)
-                    masterdata.append(data)
-                else:
-                    time.sleep(30)
+                try:
                     if r.response.body:
                         data = r.response.body
                         data = json.loads(data)
                         masterdata.append(data)
                     else:
-                        pass
-
+                        time.sleep(30)
+                except AttributeError:
+                    try:
+                        time.sleep(30)
+                        if r.response.body:
+                            data = r.response.body
+                            data = json.loads(data)
+                            masterdata.append(data)
+                        else:
+                            time.sleep(30)
+                    except AttributeError:
+                        try:
+                            time.sleep(30)
+                            if r.response.body:
+                                data = r.response.body
+                                data = json.loads(data)
+                                masterdata.append(data)
+                        except Exception:
+                            pass
     total = 0
     allhotels = []
     for i in masterdata:
@@ -143,21 +164,20 @@ def data_fetcher(country, state):
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
-        except KeyError:
-            pass
+        except KeyError as e:
+            logzilla.error(f"{i}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
+    # lize = utils.parallelize(# noqa
+    #    search_space=allhotels[0:2],# noqa
+    #    fetch_results_for_rec=para,# noqa
+    #    max_threads=10,# noqa
+    #    print_stats_interval=10,# noqa
+    # )# noqa
 
-    lize = utils.parallelize(
-        search_space=allhotels,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
-    )
-
-    for j in lize:
-        yield j
-
+    # for j in lize:# noqa
+    #    yield j # noqa
+    yield para(allhotels[0])
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 

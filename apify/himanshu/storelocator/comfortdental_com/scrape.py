@@ -92,8 +92,15 @@ def fetch_data():
             .split("@")
         )
         del raw_address[0]
+        location_soup = bs(session.get(page_url, headers=HEADERS).content, "lxml")
+        try:
+            hours_of_operation = " ".join(
+                list(location_soup.find(id="hoursTable").stripped_strings)
+            )
+        except:
+            hours_of_operation = MISSING
         if "New Braunfels, TX 78130" in raw_address:
-            phone = MISSING
+            phone = location_soup.find("div", {"id": "phone"}).find("a").text.strip()
         else:
             phone = raw_address[-1]
             del raw_address[-1]
@@ -103,7 +110,6 @@ def fetch_data():
             street_address = street_address.replace("Na Co", "").strip()
             city = "Aurora"
             state = "CO"
-        hours_of_operation = get_hoo(page_url)
         if "Coming Soon" in hours_of_operation:
             continue
         phone = phone.rstrip("â€¬")
