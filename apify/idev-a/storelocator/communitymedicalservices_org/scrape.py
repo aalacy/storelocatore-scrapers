@@ -25,8 +25,8 @@ def fetch_data():
         )["data_db"]["objects"]
         logger.info(f"{len(links)} found")
         for _ in links:
-            page_url = _["link"]
-            if not _["title"] or not page_url:
+            page_url = _["link"].strip()
+            if not _["title"] or not page_url or page_url == "#":
                 continue
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
