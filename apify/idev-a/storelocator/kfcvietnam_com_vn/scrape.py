@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
@@ -28,10 +28,10 @@ header1 = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-base_url = "https://kfcvietnam.com.vn/vi/nha-hang.html"
+base_url = "https://kfcvietnam.com.vn/vi/find-a-kfc.html"
 locator_domain = "https://kfcvietnam.com.vn"
 detail_url = "https://kfcvietnam.com.vn/vi/load_restaurant"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 max_workers = 2
 
 
@@ -66,9 +66,9 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def fetch_data():
+    res = session.get(base_url, headers=_headers).text
     locations = json.loads(
-        session.get(base_url, headers=_headers)
-        .text.split("var provine_name =")[1]
+        res.split("var provine_name =")[1]
         .split("var")[0]
         .replace("\r\n", "")
         .strip()[:-1]
@@ -94,20 +94,14 @@ def fetch_data():
                 longitude = str(longitude)[:3] + "." + str(longitude)[3:]
 
             hours = list(_.select_one("div.find_store_des").stripped_strings)[1:]
-            city = addr.city
-            try:
-                if city in ["Sơn", "Trì", "An"] and len(raw_address.split(",")) > 2:
-                    city = raw_address.split(",")[-2].strip()
-            except:
-                import pdb
-
-                pdb.set_trace()
             yield SgRecord(
                 page_url=res["url"],
                 store_number=store_number,
-                location_name=_.select_one("div.store_name h5").text.strip(),
+                location_name=_.select_one("div.store_name h5")
+                .text.replace("–", "-")
+                .strip(),
                 street_address=street_address,
-                city=city,
+                city=link["name"],
                 state=addr.state,
                 country_code="Vietnam",
                 locator_domain=locator_domain,
@@ -119,7 +113,20 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+
+        session.close()

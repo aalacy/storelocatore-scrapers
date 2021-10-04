@@ -284,6 +284,24 @@ def fetch_data():
                         hours = "<INACCESSIBLE>"
                     if "Sun:" in hours and "Mon" not in hours:
                         hours = "<INACCESSIBLE>"
+                    elif "clearance center" in name.lower():
+                        name = "Nike Clearance Center"
+                    elif "community store" in name.lower():
+                        name = "Nike Community Store"
+                    elif "factory store" in name.lower():
+                        name = "Nike Factory Store"
+                    elif "nikelab" in name.lower():
+                        name = "NikeLab"
+                    else:
+                        name = "Nike"
+                    if "factory" in name.lower():
+                        name = "Nike Factory Store"
+                    if "nike store" in name.lower():
+                        name = "Nike"
+                    if "nike by" in name.lower():
+                        name = "Nike"
+                    if "nike zlote" in name.lower():
+                        name = "Nike"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

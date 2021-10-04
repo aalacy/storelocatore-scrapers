@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
-from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_intl
 
 try:
     _create_unverified_https_context = (
@@ -26,7 +26,7 @@ def fetch_data():
 
     with SgChrome() as driver:
         driver.get(start_url)
-        sleep(15)
+        sleep(30)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//ul[@class="list02"]/li')
@@ -43,8 +43,9 @@ def fetch_data():
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo)
         phone = poi_html.xpath(
-            './/dt[contains(text(), "電話番号")]/following-sibling::dd/span/text()'
-        )[0]
+            './/dt[contains(text(), "電話番号")]/following-sibling::dd//span/text()'
+        )
+        phone = phone[0] if phone else ""
 
         item = SgRecord(
             locator_domain=domain,
