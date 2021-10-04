@@ -4,7 +4,7 @@ from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
 from sgscrape.pause_resume import CrawlStateSingleton
 
-# from sgscrape import simple_utils as utils # noqa
+from sgscrape import simple_utils as utils  # noqa
 
 
 from sgrequests import SgRequests
@@ -117,20 +117,20 @@ def fetch_data():
         )
         for country in countries:
             if not country["complete"]:
-                for record in data_fetcher(country, state):
+                for record in data_fetcher(country, state, 10):
                     yield record
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
-    raise
 
 
-def data_fetcher(country, state):
+def data_fetcher(country, state, sleep):
     url = country["link"]
     masterdata = []
-    data = None
-    with SgFirefox() as driver:
+    with SgFirefox(is_headless=False) as driver:
         driver.get(url)
+        time.sleep(sleep)
         for r in driver.requests:
+            data = None
             if "/graphql/customer" in r.path:
                 try:
                     if r.response.body:
@@ -159,6 +159,10 @@ def data_fetcher(country, state):
                             pass
     total = 0
     allhotels = []
+    if len(masterdata) == 0:
+        sleep += 10
+        if sleep < 30:
+            return data_fetcher(country, state, sleep)
     for i in masterdata:
         try:
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
@@ -168,16 +172,14 @@ def data_fetcher(country, state):
             logzilla.error(f"{i}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-    # lize = utils.parallelize(# noqa
-    #    search_space=allhotels[0:2],# noqa
-    #    fetch_results_for_rec=para,# noqa
-    #    max_threads=10,# noqa
-    #    print_stats_interval=10,# noqa
-    # )# noqa
-
-    # for j in lize:# noqa
-    #    yield j # noqa
-    yield para(allhotels[0])
+    lize = utils.parallelize(  # noqa
+        search_space=allhotels,  # noqa
+        fetch_results_for_rec=para,  # noqa
+        max_threads=20,  # noqa
+        print_stats_interval=10,  # noqa
+    )
+    for j in lize:
+        yield j
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
