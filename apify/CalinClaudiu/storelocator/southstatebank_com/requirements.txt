@@ -1,2 +1,4 @@
 bs4==0.0.1
-sgrequests==0.1.12
+sgrequests==0.2.6
+sgscrape==0.2.4
+beautifulsoup4==4.7.1
