@@ -12,7 +12,7 @@ import tenacity
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 4
+MAX_WORKERS = 16
 DOMAIN = "dairyqueen.com"
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",

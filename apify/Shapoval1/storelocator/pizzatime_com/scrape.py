@@ -79,6 +79,8 @@ def fetch_data(sgw: SgWriter):
             .replace("&", "-")
             .strip()
         )
+        if hours_of_operation.find("Last") != -1:
+            hours_of_operation = hours_of_operation.split("Last")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

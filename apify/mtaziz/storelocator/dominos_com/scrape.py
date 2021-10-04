@@ -9,11 +9,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 import datetime
 import time
-
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 MISSING = SgRecord.MISSING
 DOMAIN = "dominos.com"
-MAX_WORKERS = 4
+MAX_WORKERS = 16
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
 }
@@ -648,44 +649,66 @@ nzcities = [
 ]
 
 
-def fetch_records_global(idx, url, sgw: SgWriter, http: SgRequests):
-    lurl = url.split("|")[1]
-    cc = url.split("|")[0]
-    headers2 = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "DPZ-Market": cc,
-    }
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
+def fetch_records_global(idx, url, sgw: SgWriter):
+    with SgRequests() as http:
+        lurl = url.split("|")[1]
+        cc = url.split("|")[0]
+        headers2 = {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "DPZ-Market": cc,
+        }
 
-    r = http.get(lurl, headers=headers2)
-    time.sleep(2)
-    website = "dominos.com"
-    typ = "<MISSING>"
-    country = lurl.split("regionCode=")[1].split("&")[0]
-    loc = "<MISSING>"
-    store = "<MISSING>"
-    hours = "<MISSING>"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    logger.info("Pulling Stores")
-    for idx2, item in enumerate(json.loads(r.content)["Stores"][0:]):
-        if "StoreName" in str(item):
-            name = item["StoreName"]
+        r = http.get(lurl, headers=headers2)
+        time.sleep(2)
+        website = "dominos.com"
+        typ = MISSING
+        country = lurl.split("regionCode=")[1].split("&")[0]
+        loc = MISSING
+        store = MISSING
+        hours = MISSING
+        lat = MISSING
+        lng = MISSING
+        logger.info("Pulling Stores")
+        for idx2, item in enumerate(json.loads(r.content)["Stores"][0:]):
+            if "StoreName" in str(item):
+                name = item["StoreName"]
+            else:
+                name = MISSING
+
             store = item["StoreID"]
-            phone = item["Phone"]
+            phone = ""
+            if "Phone" in item:
+                phone = item["Phone"]
+            else:
+                phone = MISSING
+            phone = phone if phone else MISSING
             logger.info(f"[{idx}][{cc}][{idx2}] phone: {phone}")
             try:
                 add = item["StreetName"]
             except:
-                add = "<MISSING>"
+                add = MISSING
             add = str(add).replace("\r", "").replace("\n", "")
-            city = str(item["City"]).replace("\r", "").replace("\n", "")
+            city = ""
+            if "City" in item:
+                city = str(item["City"]).replace("\r", "").replace("\n", "")
+            else:
+                city = MISSING
+            city = city if city else MISSING
+
             state = ""
             if "Region" in item:
                 state = item["Region"] if item["Region"] else MISSING
             else:
                 state = MISSING
 
-            zc = item["PostalCode"]
+            zc = ""
+            if "PostalCode" in item:
+                zc = item["PostalCode"]
+            else:
+                zc = MISSING
+            zc = zc if zc else MISSING
+
             if (
                 "StoreCoordinates" in item
                 and "StoreLatitude" in item["StoreCoordinates"]
@@ -696,19 +719,29 @@ def fetch_records_global(idx, url, sgw: SgWriter, http: SgRequests):
                 lat = item["Latitude"]
                 lng = item["Longitude"]
             else:
-                lat = "<MISSING>"
-                lng = "<MISSING>"
+                lat = MISSING
+                lng = MISSING
 
             logger.info(f"[{idx}][{cc}][{idx2}] Latlng: {lat} | {lng}")
 
-            hours = (
-                str(item["HoursDescription"])
-                .replace("\t", "")
-                .replace("\n", "; ")
-                .replace("\r", "")
-            )
-            loc = "<MISSING>"
+            hours = ""
+            if "HoursDescription" in item:
+                hours = (
+                    str(item["HoursDescription"])
+                    .replace("\t", "")
+                    .replace("\n", "; ")
+                    .replace("\r", "")
+                )
+            else:
+                hours = MISSING
+            hours = hours if hours else MISSING
+
+            loc = MISSING
             raw_address = MISSING
+
+            if MISSING not in store and country == "CA":
+                name = "STORE #" + store
+
             rec = SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -771,98 +804,102 @@ def get_limited_store_urls():
     return city_based_urls
 
 
-def fetch_records_eu_global(idx, curl, sgw: SgWriter, http: SgRequests):
-    logger.info(f"Pulling from: {curl}")
-    r = http.get(curl, headers=headers)
-    time.sleep(3)
-    website = "dominos.com"
-    typ = MISSING
-    country = ""
-    loc = MISSING
-    store = MISSING
-    hours = MISSING
-    lat = MISSING
-    lng = MISSING
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
+def fetch_records_eu_global(idx, curl, sgw: SgWriter):
+    with SgRequests() as http:
+        logger.info(f"Pulling from: {curl}")
+        r = http.get(curl, headers=headers)
+        time.sleep(3)
+        website = "dominos.com"
+        typ = MISSING
+        country = ""
+        loc = MISSING
+        store = MISSING
+        hours = MISSING
+        lat = MISSING
+        lng = MISSING
 
-    if r.status_code == 200:
+        if r.status_code == 200:
+            for idx3, item in enumerate(json.loads(r.content)["Data"][0:]):
+                name = item["Name"]
+                store = item["StoreNo"]
+                phone = item["PhoneNo"]
+                phone = phone if phone else MISSING
 
-        for idx3, item in enumerate(json.loads(r.content)["Data"][0:]):
-            name = item["Name"]
-            store = item["StoreNo"]
-            phone = item["PhoneNo"]
-            phone = phone if phone else MISSING
-
-            try:
-                a1 = str(item["Address"]["UnitNo"])
-            except:
-                a1 = ""
-            try:
-                a2 = str(item["Address"]["StreetNo"])
-            except:
-                a2 = ""
-            try:
-                a3 = str(item["Address"]["StreetName"])
-            except:
-                a3 = ""
-            add = a1 + " " + a2 + " " + a3
-            add = add.strip().replace("  ", " ")
-            add = add.replace("None ", "")
-            add1 = " ".join(add.split()).replace("<Br/>", ", ").rstrip(",")
-            city = item["Address"]["Suburb"] or MISSING
-            state = ""
-            if "State" in item["Address"]:
-                state = (
-                    item["Address"]["State"] if item["Address"]["State"] else MISSING
-                )
-            else:
-                state = MISSING
-            zc = item["Address"]["PostalCode"] or MISSING
-            logger.info(f"[{idx}][{idx3}] City: {city} | State: {state} | ZC: {zc}")
-
-            lat = item["GeoCoordinates"]["Latitude"] or MISSING
-            lng = item["GeoCoordinates"]["Longitude"] or MISSING
-
-            openinghours = item["OpeningHours"]
-            hoo = []
-            for oh in openinghours:
-                oc = get_open_close_times(oh)
-                hoo.append(oc)
-            hours = "; ".join(hoo)
-            loc = MISSING
-            country = item["CountryCode"] or MISSING
-            raw_address = ""
-            if "FullAddress" in item["Address"]:
-                fadd = item["Address"]["FullAddress"]
-                if fadd:
-                    raw_address = (
-                        " ".join(fadd.split()).replace("<Br/>", ", ").rstrip(",")
+                try:
+                    a1 = str(item["Address"]["UnitNo"])
+                except:
+                    a1 = ""
+                try:
+                    a2 = str(item["Address"]["StreetNo"])
+                except:
+                    a2 = ""
+                try:
+                    a3 = str(item["Address"]["StreetName"])
+                except:
+                    a3 = ""
+                add = a1 + " " + a2 + " " + a3
+                add = add.strip().replace("  ", " ")
+                add = add.replace("None ", "")
+                add1 = " ".join(add.split()).replace("<Br/>", ", ").rstrip(",")
+                city = item["Address"]["Suburb"] or MISSING
+                state = ""
+                if "State" in item["Address"]:
+                    state = (
+                        item["Address"]["State"]
+                        if item["Address"]["State"]
+                        else MISSING
                     )
                 else:
+                    state = MISSING
+                zc = item["Address"]["PostalCode"] or MISSING
+                logger.info(f"[{idx}][{idx3}] City: {city} | State: {state} | ZC: {zc}")
+
+                lat = item["GeoCoordinates"]["Latitude"] or MISSING
+                lng = item["GeoCoordinates"]["Longitude"] or MISSING
+
+                openinghours = item["OpeningHours"]
+                hoo = []
+                for oh in openinghours:
+                    oc = get_open_close_times(oh)
+                    hoo.append(oc)
+                hours = "; ".join(hoo)
+                loc = MISSING
+                country = item["CountryCode"] or MISSING
+                raw_address = ""
+                if "FullAddress" in item["Address"]:
+                    fadd = item["Address"]["FullAddress"]
+                    if fadd:
+                        raw_address = (
+                            " ".join(fadd.split()).replace("<Br/>", ", ").rstrip(",")
+                        )
+                    else:
+                        raw_address = MISSING
+                else:
                     raw_address = MISSING
-            else:
-                raw_address = MISSING
 
-            rec = SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add1,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-                raw_address=raw_address,
-            )
+                rec = SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add1,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                    raw_address=raw_address,
+                )
 
-            sgw.write_row(rec)
+                sgw.write_row(rec)
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
 def get_us_store_urls():
     with SgRequests() as http:
         locs = []
@@ -897,77 +934,77 @@ def get_us_store_urls():
         return locs
 
 
-def fetch_records_us(idx, loc, sgw: SgWriter, http: SgRequests):
-    r2 = http.get(loc, headers=headers)
-    sel = html.fromstring(r2.text, "lxml")
-    raw_data = sel.xpath(
-        '//script[contains(@type, "application/ld+json") and contains(text(), "LocalBusiness")]/text()'
-    )
-    raw_data1 = "".join(raw_data)
-    json_data = json.loads(raw_data1)
-    page_url = json_data["url"]
-    logger.info(f"[{idx}][US] PU: {page_url}")
-    location_name = json_data["name"] or MISSING
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
+def fetch_records_us(idx, loc, sgw: SgWriter):
+    with SgRequests() as http:
+        r2 = http.get(loc, headers=headers)
+        if r2.status_code == 200:
+            sel = html.fromstring(r2.text, "lxml")
+            raw_data = sel.xpath(
+                '//script[contains(@type, "application/ld+json") and contains(text(), "LocalBusiness")]/text()'
+            )
+            raw_data1 = "".join(raw_data)
+            try:
+                json_data = json.loads(raw_data1)
+            except json.decoder.JSONDecodeError:
+                return
+            page_url = json_data["url"]
+            logger.info(f"[{idx}][US] PU: {page_url}")
+            location_name = json_data["name"] or MISSING
+            address = json_data["address"]
+            street_address = address["streetAddress"] or MISSING
+            city = address["addressLocality"] or MISSING
+            state = address["addressRegion"] or MISSING
+            zip_postal = address["postalCode"] or MISSING
+            country_code = "US"
+            store_number = json_data["branchCode"] or MISSING
 
-    address = json_data["address"]
-    street_address = address["streetAddress"] or MISSING
+            phone = ""
+            try:
+                phone = json_data["telephone"]
+            except:
+                phone = MISSING
 
-    city = address["addressLocality"] or MISSING
+            location_type = "Store"
+            latitude = json_data["geo"]["latitude"] or MISSING
+            longitude = json_data["geo"]["longitude"] or MISSING
+            locator_domain = DOMAIN
 
-    state = address["addressRegion"] or MISSING
-
-    zip_postal = address["postalCode"] or MISSING
-
-    country_code = "US"
-    store_number = json_data["branchCode"] or MISSING
-
-    phone = ""
-    try:
-        phone = json_data["telephone"]
-    except:
-        phone = MISSING
-
-    location_type = "Store"
-
-    latitude = json_data["geo"]["latitude"] or MISSING
-    longitude = json_data["geo"]["longitude"] or MISSING
-    locator_domain = DOMAIN
-
-    # Hours of Operation
-    hoo = []
-    for i in json_data["openingHoursSpecification"]:
-        day_of_week = (
-            i["dayOfWeek"].replace("http://schema.org/", "")
-            + " "
-            + str(i["opens"] or "")
-            + " - "
-            + str(i["closes"] or "")
-        )
-        hoo.append(day_of_week)
-    hours_of_operation = "; ".join(hoo)
-    raw_address = MISSING
-    location_name = location_name + " #" + str(store_number)
-    rec = SgRecord(
-        locator_domain=locator_domain,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=location_type,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hours_of_operation,
-        raw_address=raw_address,
-    )
-    sgw.write_row(rec)
+            # Hours of Operation
+            hoo = []
+            for i in json_data["openingHoursSpecification"]:
+                day_of_week = (
+                    i["dayOfWeek"].replace("http://schema.org/", "")
+                    + " "
+                    + str(i["opens"] or "")
+                    + " - "
+                    + str(i["closes"] or "")
+                )
+                hoo.append(day_of_week)
+            hours_of_operation = "; ".join(hoo)
+            raw_address = MISSING
+            location_name = location_name + " #" + str(store_number)
+            rec = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            sgw.write_row(rec)
 
 
-def fetch_data(sgw: SgWriter, http: SgRequests):
+def fetch_data(sgw: SgWriter):
 
     us_store_urls = get_us_store_urls()
     eu_api_endpoint_urls_be = get_limited_store_urls()
@@ -975,17 +1012,17 @@ def fetch_data(sgw: SgWriter, http: SgRequests):
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task_us = [
-            executor.submit(fetch_records_us, unum, url, sgw, http)
+            executor.submit(fetch_records_us, unum, url, sgw)
             for unum, url in enumerate(us_store_urls[0:])
         ]
         tasks.extend(task_us)
         task_eu = [
-            executor.submit(fetch_records_eu_global, unum, url, sgw, http)
+            executor.submit(fetch_records_eu_global, unum, url, sgw)
             for unum, url in enumerate(eu_api_endpoint_urls_be[0:])
         ]
         tasks.extend(task_eu)
         task_global = [
-            executor.submit(fetch_records_global, unum, url, sgw, http)
+            executor.submit(fetch_records_global, unum, url, sgw)
             for unum, url in enumerate(searchurls[0:])
         ]
         tasks.extend(task_global)
@@ -999,8 +1036,7 @@ def scrape():
             SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.STREET_ADDRESS})
         )
     ) as writer:
-        with SgRequests() as http:
-            fetch_data(writer, http)
+        fetch_data(writer)
     logger.info("Finished")
 
 
