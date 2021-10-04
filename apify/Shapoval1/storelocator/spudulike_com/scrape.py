@@ -33,10 +33,17 @@ def fetch_data(sgw: SgWriter):
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
+        if street_address.find("Court") != -1:
+            street_address = street_address.split("Court")[1].strip()
+        street_address = (
+            street_address.replace("The Dining Terrace ", "")
+            .replace("East Midlands Designer Outlet", "")
+            .strip()
+        )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "UK"
-        city = a.city or "<MISSING>"
+        city = a.city.replace("Dartford", "").strip() or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -61,7 +68,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://www.1stbmt.com"
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
