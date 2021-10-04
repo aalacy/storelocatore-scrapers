@@ -1,6 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -19,33 +20,39 @@ base_url = "https://www.pacwest.com/api/locations"
 
 
 def fetch_data():
-    with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()
-        for _ in locations:
-            street_address = _["street"]
-            if _["street2"]:
-                street_address += " " + _["street2"]
-            location_type = ",".join(_["type"])
-            if "branch" not in location_type:
-                continue
-            hours = []
-            for hh in _.get("hours", []):
-                hours.append(f"{hh['day']}: {hh['time']}")
-            yield SgRecord(
-                page_url="https://www.pacwest.com/branch",
-                store_number=_["id"],
-                location_name=_["name"],
-                street_address=street_address,
-                city=_["city"],
-                state=_["state"],
-                zip_postal=_["zip"],
-                latitude=_["lat"],
-                longitude=_["lng"],
-                country_code="US",
-                phone=_["phone"],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+    with SgChrome() as driver:
+        driver.get(locator_domain)
+        cookies = []
+        for cookie in driver.get_cookies():
+            cookies.append(f"{cookie['name']}={cookie['value']}")
+        _headers["Cookie"] = "; ".join(cookies)
+        with SgRequests() as session:
+            locations = session.get(base_url, headers=_headers).json()
+            for _ in locations:
+                street_address = _["street"]
+                if _["street2"]:
+                    street_address += " " + _["street2"]
+                location_type = ",".join(_["type"])
+                if "branch" not in location_type:
+                    continue
+                hours = []
+                for hh in _.get("hours", []):
+                    hours.append(f"{hh['day']}: {hh['time']}")
+                yield SgRecord(
+                    page_url="https://www.pacwest.com/branch",
+                    store_number=_["id"],
+                    location_name=_["name"],
+                    street_address=street_address,
+                    city=_["city"],
+                    state=_["state"],
+                    zip_postal=_["zip"],
+                    latitude=_["lat"],
+                    longitude=_["lng"],
+                    country_code="US",
+                    phone=_["phone"],
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":
