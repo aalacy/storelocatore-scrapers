@@ -12,7 +12,6 @@ from bs4 import BeautifulSoup as BS
 
 website = "wendys.co.nz"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "www.wendys.co.nz",
     "content-length": "0",
@@ -34,88 +33,91 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://www.wendys.co.nz/store/maps"
-    search_res = session.get(search_url, headers=headers)
-    json_str = search_res.text.split("JSON.parse('")[1].split("');")[0].strip()
+    with SgRequests(verify_ssl=False) as session:
+        search_res = session.get(search_url, headers=headers)
+        json_str = search_res.text.split("JSON.parse('")[1].split("');")[0].strip()
 
-    json_res = json.loads(json_str)
+        json_res = json.loads(json_str)
 
-    store_list = json_res
+        store_list = json_res
 
-    for store in store_list:
+        for store in store_list:
 
-        page_url = "https://www.wendys.co.nz/store/" + store["slug"]
-        locator_domain = website
+            page_url = "https://www.wendys.co.nz/store/" + store["slug"]
+            locator_domain = website
 
-        raw_address = urllib.parse.unquote(store["address"]).strip().replace("\n", " ")
+            raw_address = (
+                urllib.parse.unquote(store["address"]).strip().replace("\n", " ")
+            )
 
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
-        country_code = "NZ"
+            country_code = "NZ"
 
-        location_name = store["name"]
+            location_name = store["name"]
 
-        phone = store["phone"]
-        phone = urllib.parse.unquote(phone).strip()
+            phone = store["phone"]
+            phone = urllib.parse.unquote(phone).strip()
 
-        store_number = "<MISSING>"
+            store_number = "<MISSING>"
 
-        location_type = "<MISSING>"
-        hours_info = urllib.parse.unquote(store["details"]).strip()
-        hours = BS(hours_info, "lxml").get_text().split("\n")
-        hours_list = []
-        for hour in hours:
-            if len("".join(hour).strip().replace("\r", "").strip()) > 0:
-                hours_list.append(
-                    "".join(hour)
-                    .strip()
-                    .replace("\r", "")
-                    .strip()
-                    .replace("\xa0", "")
-                    .strip()
-                )
-        hours_of_operation = (
-            "; ".join(hours_list)
-            .strip()
-            .replace("CLOSED IN LEVEL 4;", "")
-            .strip()
-            .replace("(Regular hours", "")
-            .strip()
-            .replace(":;", "")
-            .strip()
-            .replace(";;", "")
-            .strip()
-            .replace(")", "")
-            .strip()
-        )
-        latitude, longitude = (
-            store["lat"],
-            store["lng"],
-        )
+            location_type = "<MISSING>"
+            hours_info = urllib.parse.unquote(store["details"]).strip()
+            hours = BS(hours_info, "lxml").get_text().split("\n")
+            hours_list = []
+            for hour in hours:
+                if len("".join(hour).strip().replace("\r", "").strip()) > 0:
+                    hours_list.append(
+                        "".join(hour)
+                        .strip()
+                        .replace("\r", "")
+                        .strip()
+                        .replace("\xa0", "")
+                        .strip()
+                    )
+            hours_of_operation = (
+                "; ".join(hours_list)
+                .strip()
+                .replace("CLOSED IN LEVEL 4;", "")
+                .strip()
+                .replace("(Regular hours", "")
+                .strip()
+                .replace(":;", "")
+                .strip()
+                .replace(";;", "")
+                .strip()
+                .replace(")", "")
+                .strip()
+            )
+            latitude, longitude = (
+                store["lat"],
+                store["lng"],
+            )
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
