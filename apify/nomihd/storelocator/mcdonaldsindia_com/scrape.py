@@ -48,18 +48,6 @@ def fetch_data():
 
                 store_info = store_sel.xpath('//div[@class="addres_box"]//text()')
 
-                full_address = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store.xpath(
-                                './/ul[@class="shop-info"]/li[1]//text()'
-                            )
-                        ],
-                    )
-                )
-
                 raw_address = " ".join(store_info[1:2]).replace("\n", " ").strip()
 
                 formatted_addr = parser.parse_address_intl(raw_address)
