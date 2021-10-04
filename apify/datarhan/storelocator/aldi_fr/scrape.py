@@ -80,7 +80,7 @@ def fetch_locations(code, tracker):
     while "Le nombre maximum des demandes de votre IP" in response.text:
         session = get_session(True)
         response = session.get(search_url.format(code))
-    session_id = response.url.params.get('SessionGuid')
+    session_id = response.url.params.get("SessionGuid")
     hdr = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Content-Type": "application/x-www-form-urlencoded",
