@@ -31,7 +31,9 @@ def fetch_data():
                 temp = list(
                     soup1.select_one("div.store-details__content").stripped_strings
                 )[1:]
-                if "Coming Soon" in "".join(temp):
+                if "Coming Soon" in "".join(temp) or "hours will be posted" in "".join(
+                    temp
+                ):
                     continue
                 for hh in temp:
                     if "re-open" in hh.lower():
