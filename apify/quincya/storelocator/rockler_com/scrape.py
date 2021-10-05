@@ -94,7 +94,11 @@ def fetch_data(sgw: SgWriter):
                     continue
                 if req.status_code == 404:
                     link = "https://www.rockler.com/retail/stores/"
-            hours_of_operation = hours_of_operation.replace("Store Hours", "").strip()
+            hours_of_operation = (
+                hours_of_operation.replace("Store Hours", "")
+                .split("Holiday")[0]
+                .strip()
+            )
 
             sgw.write_row(
                 SgRecord(
