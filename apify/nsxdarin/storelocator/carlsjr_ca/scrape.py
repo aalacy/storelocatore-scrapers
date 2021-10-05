@@ -66,15 +66,21 @@ def fetch_data():
             HFound = False
             hours = hours.replace("&amp;", "&").replace("&ndash;", "-")
             add = add.replace("&nbsp;", " ").strip()
+            state2 = state
             if "PRINCE GEORGE" in name:
-                state = "BRITISH COLUMBIA"
+                state2 = "BRITISH COLUMBIA"
+            if "Calgary" in add:
+                state2 = "ALBERTA"
+                add = add.split(",")[0]
+            if "Edmonton" in add:
+                add = add.split(",")[0]
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
                 location_name=name,
                 street_address=add,
                 city=city,
-                state=state,
+                state=state2,
                 zip_postal=zc,
                 country_code=country,
                 phone=phone,
@@ -88,15 +94,21 @@ def fetch_data():
             HFound = False
             hours = hours.replace("&amp;", "&").replace("&ndash;", "-")
             add = add.replace("&nbsp;", " ").strip()
+            state2 = state
             if "PRINCE GEORGE" in name:
-                state = "BRITISH COLUMBIA"
+                state2 = "BRITISH COLUMBIA"
+            if "Calgary" in add:
+                state2 = "ALBERTA"
+                add = add.split(",")[0]
+            if "Edmonton" in add:
+                add = add.split(",")[0]
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
                 location_name=name,
                 street_address=add,
                 city=city,
-                state=state,
+                state=state2,
                 zip_postal=zc,
                 country_code=country,
                 phone=phone,
