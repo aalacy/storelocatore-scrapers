@@ -45,7 +45,6 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(j.get("name"))
         if location_name.find("Permanently Closed") != -1:
             continue
-        location_type = "<MISSING>"
         street_address = a.get("streetAddress")
         state = a.get("addressRegion")
         postal = "".join(a.get("postalCode"))
