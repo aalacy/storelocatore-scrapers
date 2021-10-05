@@ -31,18 +31,15 @@ def fetch_data():
         street_address = poi["address"]["line1"]
         if poi["address"]["line2"]:
             street_address += ", " + poi["address"]["line2"]
-        if poi["address"]["line3"]:
-            street_address += ", " + poi["address"]["line3"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"]
-        city = city if city else "<MISSING>"
+        city = poi["address"]["line3"]
+        if not city:
+            city = poi["address"]["city"]
+        if city.split()[-1].isdigit():
+            city = " ".join(city.split()[:-1])
         state = poi["address"]["stateCode"]
-        state = state if state else "<MISSING>"
         zip_code = poi["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["address"]["countryCode"]
         phone = poi["telephone"]
-        phone = phone if phone.strip() else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["location"]["latitude"]
         longitude = poi["location"]["longitude"]
@@ -50,7 +47,9 @@ def fetch_data():
         if poi.get("storeOpeningHoursHtml"):
             hoo = etree.HTML(poi["storeOpeningHoursHtml"]).xpath("//text()")
             hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            "Monday" + " ".join(hoo).split(" Monday")[-1] if hoo else "<MISSING>"
+        )
 
         item = SgRecord(
             locator_domain=domain,
