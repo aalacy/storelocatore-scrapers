@@ -4,7 +4,7 @@ const { enqueueLinks } = require('apify').utils;
 const MISSING = '<MISSING>';
 
 function extractLocatorDomain(url) {
-  [matched, domain] = url.match(/\/\/(.*?)\//);
+  const [matched, domain] = url.match(/\/\/(.*?)\//);
   return domain;
 }
 
@@ -20,7 +20,7 @@ function extractAddress(address) {
   return { street_address, city, state, zip, country_code };
 }
 
-function extractHoursOfOperation(hours, $) {
+function extractHoursOfOperation(hours) {
   return hours
     .text()
     .replace(/(.*?\S)(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/gi, '$1 $2 ')
@@ -91,9 +91,8 @@ Apify.main(async () => {
       switch (request.userData.pageType) {
         case 'locations':
           return await enqueueLocationLinks({ $, requestQueue });
-        default:
-          const poi = await extractDataFromPage({ $, request });
-          await Apify.pushData(poi);
+        default: {}
+          await Apify.pushData(await extractDataFromPage({ $, request }));
       }
     },
   });
