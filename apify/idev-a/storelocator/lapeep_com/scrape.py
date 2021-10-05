@@ -29,7 +29,6 @@ def fetch_data():
                 _.select_one("span.wpsl-street").find_next_sibling().text.strip()
             )
             raw_address.append(city_state)
-            addr = city_state.split()
             name = list(_.select_one("span.store-title").stripped_strings)
             location_type = ""
             if len(name) > 1 and "Indoor" not in name[-1]:
@@ -43,23 +42,23 @@ def fetch_data():
             ]
             page_url = _.select_one("span.store-title a")["href"]
             logger.info(page_url)
-            coord = json.loads(
+            info = json.loads(
                 session.get(page_url, headers=_headers)
-                .text.split("var wpslSettings =")[1]
-                .split("var wpslMap_0 =")[0]
+                .text.split("var wpslMap_0 =")[1]
+                .split("/* ]]> */")[0]
                 .strip()[:-1]
-            )["startLatlng"].split(",")
+            )["locations"][0]
             yield SgRecord(
                 page_url=page_url,
-                location_name=name[0],
+                location_name=info["store"],
                 street_address=street_address,
-                city=" ".join(addr[:-2]),
-                state=addr[-2].strip(),
-                zip_postal=addr[-1].strip(),
+                city=info["city"],
+                state=info["state"],
+                zip_postal=info["zip"],
                 country_code="US",
                 phone=phone,
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=info["lat"],
+                longitude=info["lng"],
                 locator_domain=locator_domain,
                 location_type=location_type,
                 hours_of_operation="; ".join(hours),
