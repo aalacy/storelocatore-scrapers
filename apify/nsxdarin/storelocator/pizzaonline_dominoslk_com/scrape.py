@@ -12,13 +12,13 @@ headers = {
     "api_key": "X24EZOH3IL"
 }
 
-logger = SgLogSetup().get_logger("dominoslk_com")
+logger = SgLogSetup().get_logger("pizzaonline_dominoslk_com")
 
 def fetch_data():
     url = "https://apis.dominoslk.com/locator-service/ve2/cities?delivery_type=P"
     r = session.get(url, headers=headers)
     cities = []
-    website = "dominoslk.com"
+    website = "pizzaonline.dominoslk.com"
     typ = "<MISSING>"
     country = "LK"
     loc = "<MISSING>"
