@@ -57,9 +57,15 @@ def para(k):
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    son = SgRequests.raise_on_err(
-        session.get(k["facilityOverview"]["homeUrl"], headers=headers)
-    )
+    try:
+        son = SgRequests.raise_on_err(
+            session.get(k["facilityOverview"]["homeUrl"], headers=headers)
+        )
+    except Exception as e:
+        try:
+            logzilla.error(f"{str(e)}\n{k['facilityOverview']['homeUrl']}\n\n")
+        except Exception as feck:
+            logzilla.error(f"{str(feck)}\n{k}\n\n")
 
     soup = b4(son.text, "lxml")
 
