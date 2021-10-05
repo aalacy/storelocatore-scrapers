@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.hardees.com.eg/"
-    api_url = "https://www.google.com/maps/d/embed?mid=1knF9b47nuuomZYuulWMTaNtDwSQ&ll=25.429489536670854%2C51.476563700000014&z=9"
+    api_url = "https://www.google.com/maps/d/embed?mid=1qgQEmkJrGbDqCD1jpTpxYSUgiG0&ll=30.606769398065556%2C30.715179999999968&z=8"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -34,7 +34,7 @@ def fetch_data(sgw: SgWriter):
     )[1][6][0][12][0][13][0]
     for l in locations:
         page_url = "https://www.hardees.com.eg/our-stores"
-        location_name = l[5][0][1][0]
+        location_name = "".join(l[5][0][1][0]).replace("u0027", "`")
         street_address = l[5][3][6][1][0]
         country_code = "EG"
         latitude = l[1][0][0][0]
