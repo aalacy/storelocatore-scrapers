@@ -8,8 +8,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.hardees.com.eg/"
-    api_url = "https://www.google.com/maps/d/embed?mid=1qgQEmkJrGbDqCD1jpTpxYSUgiG0&ll=30.606769398065556%2C30.715179999999968&z=8"
+    locator_domain = "https://www.hardees.com.om/"
+    api_url = "https://www.google.com/maps/d/embed?mid=1TZT-fzxeYgGceZUO5uvjUt8Goe8&ll=20.37207893156093%2C56.29003380000002&z=6"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -33,10 +33,10 @@ def fetch_data(sgw: SgWriter):
         cleaned.split('var _pageData = "')[1].split('";</script>')[0]
     )[1][6][0][12][0][13][0]
     for l in locations:
-        page_url = "https://www.hardees.com.eg/our-stores"
-        location_name = "".join(l[5][0][1][0]).replace("u0027", "`")
+        page_url = "https://www.hardees.com.om/find-a-hardees"
+        location_name = l[5][0][1][0]
         street_address = l[5][3][6][1][0]
-        country_code = "EG"
+        country_code = "Oman"
         latitude = l[1][0][0][0]
         longitude = l[1][0][0][1]
         phone = l[5][3][5][1][0]
