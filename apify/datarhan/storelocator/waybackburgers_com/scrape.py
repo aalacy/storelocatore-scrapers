@@ -28,9 +28,8 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="location-name"]/text()')[0]
-        addr = parse_address_intl(
-            loc_dom.xpath('//div[@class="location-address"]/text()')[0]
-        )
+        raw_address = loc_dom.xpath('//div[@class="location-address"]/text()')[0]
+        addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
@@ -72,6 +71,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         yield item

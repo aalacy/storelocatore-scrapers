@@ -6,6 +6,8 @@ from sglogging import SgLogSetup
 import json
 import re
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("genejuarez")
 
@@ -28,21 +30,34 @@ def fetch_data():
                 continue
             page_url = link["href"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            script = json.loads(
-                sp1.find("script", id="frontend.gmap-js-extra")
-                .string.split("var gmpAllMapsInfo =")[1]
-                .split("/* ]]> */")[0]
-                .strip()[:-1]
-            )[0]
-            addr = parse_address_intl(
-                " ".join(
+            res = session.get(page_url, headers=_headers).text
+            sp1 = bs(res, "lxml")
+            raw_address = longitude = latitude = ""
+            if len(res.split("var gmpAllMapsInfo =")) > 1:
+                script = json.loads(
+                    res.split("var gmpAllMapsInfo =")[1]
+                    .split("/* ]]> */")[0]
+                    .strip()[:-1]
+                )[0]
+                raw_address = " ".join(
                     bs(script["markers"][0]["description"], "lxml").stripped_strings
                 )
-            )
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                city = addr.city
+                state = addr.state
+                zip_postal = addr.postcode
+                latitude = script["markers"][0]["coord_x"]
+                longitude = script["markers"][0]["coord_y"]
+            else:
+                addr = list(sp1.select_one("div#visit p").stripped_strings)
+                raw_address = " ".join(addr)
+                street_address = " ".join(addr[:-1])
+                city = addr[-1].split(",")[0].strip()
+                state = addr[-1].split(",")[1].strip().split(" ")[0].strip()
+                zip_postal = addr[-1].split(",")[1].strip().split(" ")[-1].strip()
             hours = []
             mon = sp1.find("strong", string=re.compile(r"Monday"))
             times = []
@@ -63,25 +78,24 @@ def fetch_data():
                 hours.append(f"{_hr[x]}: {_hr[x+1]}")
             yield SgRecord(
                 page_url=page_url,
-                location_name=script["title"],
-                store_number=script["id"],
+                location_name=sp1.h1.text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 country_code="US",
                 phone=sp1.find("a", href=re.compile(r"tel:"))
                 .text.replace("Call or text", "")
                 .strip(),
                 locator_domain=locator_domain,
-                latitude=script["markers"][0]["coord_x"],
-                longitude=script["markers"][0]["coord_y"],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
