@@ -46,7 +46,7 @@ async function extractDataFromPage({ $, request }) {
   const locator_domain = 'tumbles.net';
   const location_type = 'tumbles';
   const page_url = extractLocatorDomain(request.url);
-  const detailsComponent = $('address');
+  const detailsComponent = $('.footer-column');
   const location_name = detailsComponent.find('p:nth-child(1)').text();
   const address = detailsComponent.find('p:nth-child(2)').text();
   const { street_address, city, state, zip, country_code } = extractAddress(address);
