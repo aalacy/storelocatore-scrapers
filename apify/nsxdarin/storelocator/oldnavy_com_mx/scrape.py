@@ -126,6 +126,8 @@ def fetch_data():
         zc = adds[x].split("|")[3]
         lat = coords[x].split("|")[0]
         lng = coords[x].split("|")[1]
+        typ = "Old Navy"
+        name = "Old Navy"
         hours = hoursarray[x]
         phone = phones[x]
         hours = hours.replace("Abierto de ", "")
