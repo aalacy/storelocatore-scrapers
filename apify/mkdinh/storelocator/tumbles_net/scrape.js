@@ -4,7 +4,7 @@ const { enqueueLinks } = require('apify').utils;
 const MISSING = '<MISSING>';
 
 function extractLocatorDomain(url) {
-  const [matched, domain] = url.match(/\/\/(.*?)\//);
+  const domain = url.match(/\/\/(.*?)\//)[1];
   return domain;
 }
 
