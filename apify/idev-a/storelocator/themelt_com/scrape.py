@@ -5,7 +5,6 @@ import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
-from bs4 import BeautifulSoup as bs
 
 try:
     _create_unverified_https_context = (
