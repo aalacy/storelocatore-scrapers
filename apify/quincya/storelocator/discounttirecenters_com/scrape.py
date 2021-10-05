@@ -66,13 +66,13 @@ def fetch_data(sgw: SgWriter):
             except:
                 pass
         else:
-            raw_data = base.find(class_="m-font-size-11 font-size-14").text.strip()
-            street_address = raw_data.split(city + ",")[0].replace(",", "").strip()
+            new_raw_data = base.find(class_="m-font-size-11 font-size-14").text.strip()
+            street_address = new_raw_data.split(city + ",")[0].replace(",", "").strip()
 
-            if state in raw_data:
-                zip_code = raw_data.split(state)[-1].strip()
-            elif state in raw_data:
-                zip_code = raw_data.split(state)[-1].strip()
+            if state in new_raw_data:
+                zip_code = new_raw_data.split(state)[-1].strip()
+            elif state in new_raw_data:
+                zip_code = new_raw_data.split(state)[-1].strip()
             else:
                 zip_code = "<MISSING>"
 
