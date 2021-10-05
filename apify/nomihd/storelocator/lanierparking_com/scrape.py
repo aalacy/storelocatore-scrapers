@@ -72,7 +72,7 @@ class _SearchIteration(SearchIteration):
 
             for store in store_list:
 
-                page_url = "<MISSING>"
+                page_url = "https://manageparking.citizensparking.com/FindParking/MainFindParkingResult"
                 store_json = json.loads(
                     "".join(store.xpath("@value"))
                     .strip()
@@ -81,16 +81,36 @@ class _SearchIteration(SearchIteration):
                 )
                 locator_domain = website
 
-                street_address = store_json["Address"]
+                street_address = store_json["Address"].split("(")[0].strip()
+                if "," == street_address[-1]:
+                    street_address = "".join(street_address[:-1]).strip()
+
                 city = store_json["City"]
                 state = store_json["State"]
                 zip = store_json["ZIP"]
+
+                if street_address == "6200 HOLLYWOOD BLVD HOLLYWOOD , CA":
+                    street_address = "6200 HOLLYWOOD BLVD"
+                    city = "HOLLYWOOD"
+                    state = "CA"
 
                 country_code = "US"
 
                 location_name = store_json["Name"]
                 log.info(location_name)
                 phone = store_json["Phone"]
+                if phone:
+                    if (
+                        not phone.replace("(", "")
+                        .replace(")", "")
+                        .replace("-", "")
+                        .strip()
+                        .replace(" ", "")
+                        .strip()
+                        .isdigit()
+                    ):
+                        phone = "<MISSING>"
+
                 store_number = store_json["ParkerId"]
 
                 location_type = store_json["SrcParkingIconThumbnail"]
@@ -108,7 +128,6 @@ class _SearchIteration(SearchIteration):
                     store_json["Lat"],
                     store_json["Lng"],
                 )
-                found_location_at(latitude, longitude)
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,

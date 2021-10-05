@@ -44,6 +44,9 @@ def fetch_data():
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
             city = formatted_addr.city
+            if not city:
+                city = ", ".join(raw_address[:-1]).strip().split(",")[-2].strip()
+
             state = formatted_addr.state
             zip = formatted_addr.postcode
             country_code = "GB"
@@ -63,6 +66,8 @@ def fetch_data():
                 .replace("?", "")
                 .strip()
                 .replace(";;", "")
+                .strip()
+                .split("; Bank")[0]
                 .strip()
             )
             if hours_of_operation:
