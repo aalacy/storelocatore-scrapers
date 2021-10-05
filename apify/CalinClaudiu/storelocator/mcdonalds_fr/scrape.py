@@ -94,11 +94,11 @@ def scrape():
             part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 0],
+            mapping=["geometry", "coordinates", 1],
             part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 1],
+            mapping=["geometry", "coordinates", 0],
         ),
         street_address=sp.MappingField(
             mapping=["properties", "address", "lines"],
@@ -112,6 +112,7 @@ def scrape():
         zipcode=sp.MappingField(
             mapping=["properties", "address", "zipcode"],
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         country_code=sp.MappingField(
             mapping=["properties", "address", "country_code"],
@@ -121,6 +122,7 @@ def scrape():
             mapping=["properties", "contact", "phone"],
             part_of_record_identity=True,
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         store_number=sp.MappingField(
             mapping=["properties", "store_id"],

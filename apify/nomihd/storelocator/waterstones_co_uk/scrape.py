@@ -36,7 +36,11 @@ def fetch_data():
         for store in stores:
             locator_domain = website
             location_name = store["name"]
-            if location_name == "Online Events" or store["country_id"] != "235":
+            if (
+                location_name == "Online Events"
+                or location_name == "Jersey - St Helier"
+                or store["country_id"] != "235"
+            ):
                 continue
             page_url = "https://www.waterstones.com" + store["url"]
             latitude = store["latitude"]
@@ -54,10 +58,11 @@ def fetch_data():
             location_type = ""
             if store["open_status"] == "0":
                 location_type = store["closed_message"]
+                if not location_type:
+                    if "We are currently closed" in store["intro"]:
+                        location_type = "Closed"
 
             hours_of_operation = "<MISSING>"
-
-            country_code = "GB"
 
             if location_type == "":
                 location_type = "<MISSING>"

@@ -37,6 +37,10 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = " ".join(raw_address).split(", ")[-1]
+        street_address = street_address.replace("Wd24 5Bq", "").strip()
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0].strip() if phone else ""
         geo = re.findall(r"maps.LatLng\((.+?)\);", loc_response.text)[0].split(", ")
@@ -55,6 +59,8 @@ def fetch_data():
         if city == "6 -8 0SMOSTON ROAD":
             city = location_name
         city = city.replace("Super Market", "").split("Postal")[0].strip()
+        if zip_code in ["St Helens.", "Cwmbran"]:
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -63,7 +69,7 @@ def fetch_data():
             street_address=street_address,
             city=city,
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code="",
             store_number="",
             phone=phone,
