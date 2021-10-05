@@ -9,10 +9,11 @@ import json
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "api_key": "X24EZOH3IL"
+    "api_key": "X24EZOH3IL",
 }
 
 logger = SgLogSetup().get_logger("pizzaonline_dominoslk_com")
+
 
 def fetch_data():
     url = "https://apis.dominoslk.com/locator-service/ve2/cities?delivery_type=P"
@@ -23,28 +24,30 @@ def fetch_data():
     country = "LK"
     loc = "<MISSING>"
     logger.info("Pulling Stores")
-    for item in json.loads(r.content)['data']:
-        if item != 'TEST':
+    for item in json.loads(r.content)["data"]:
+        if item != "TEST":
             cities.append(item)
     for cid in cities:
         logger.info(cid)
-        curl = 'https://apis.dominoslk.com/locator-service/ve2/cities/' + cid + '/stores'
+        curl = (
+            "https://apis.dominoslk.com/locator-service/ve2/cities/" + cid + "/stores"
+        )
         r2 = session.get(curl, headers=headers)
-        for locitem in json.loads(r2.content)['data']:
-            store = locitem['id']
-            phone = locitem['phone']
-            name = locitem['name']
-            zc = '<MISSING>'
-            lat = locitem['latitude']
-            lng = locitem['longitude']
-            city = locitem['city']
-            add = locitem['address']
-            state = locitem['region']
+        for locitem in json.loads(r2.content)["data"]:
+            store = locitem["id"]
+            phone = locitem["phone"]
+            name = locitem["name"]
+            zc = "<MISSING>"
+            lat = locitem["latitude"]
+            lng = locitem["longitude"]
+            city = locitem["city"]
+            add = locitem["address"]
+            state = locitem["region"]
             hours = "<MISSING>"
             loc = "<MISSING>"
-            add = add.replace('\r','').replace('\n','').replace('\t','')
-            if 'ph no' in add:
-                add = add.split('ph no')[0].strip()
+            add = add.replace("\r", "").replace("\n", "").replace("\t", "")
+            if "ph no" in add:
+                add = add.split("ph no")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -65,8 +68,11 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
+
 
 scrape()
