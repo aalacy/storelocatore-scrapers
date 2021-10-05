@@ -2,54 +2,55 @@ from lxml import html
 import time
 from typing import Iterable
 
-from sgpostal.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_usa
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 
 website = "progressive.com"
 MISSING = "<MISSING>"
 start_url = "https://www.progressive.com/agent/local-agent"
 
+
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
 }
 
 
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-
-
-def fetch_stores(http, state):
-    response = http.get(start_url, headers=headers)
+def fetch_stores(http: SgRequests, state: CrawlState) -> bool:
+    response = http.get(start_url)
     body = html.fromstring(response.text, "lxml")
     stateUrls = body.xpath("//ul[@class='state-list']/li/a/@href")
-    log.debug(f"total states = {len(stateUrls)}")
+    log.info(f"total states = {len(stateUrls)}")
 
-    cityUrls = []
+    cityUrls = []  # type: ignore
     for stateUrl in stateUrls:
-        response = http.get(stateUrl, headers=headers)
+        response = http.get(stateUrl)
         body = html.fromstring(response.text, "lxml")
         cityUrls = cityUrls + body.xpath("//ul[@class='city-list']/li/a/@href")
-    log.debug(f"total cities = {len(cityUrls)}")
+    log.info(f"total cities = {len(cityUrls)}")
 
     count = 0
     for cityUrl in cityUrls:
-        response = http.get(cityUrl, headers=headers)
+        response = http.get(cityUrl)
         body = html.fromstring(response.text, "lxml")
         for page_url in body.xpath("//a[@class='list-link details']/@href"):
             state.push_request(SerializableRequest(url=page_url))
             count = count + 1
-    log.debug(f"total stores = {count}")
+    log.info(f"total stores = {count}")
+
+    return True
 
 
 def get_address(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -72,7 +73,8 @@ def get_address(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def fetch_data(http, state) -> Iterable[SgRecord]:
+def fetch_data(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
+    http = SgRequests()
     for next_r in state.request_stack_iter():
         page_url = next_r.url
         log.info(f"Now Crawling: {page_url}")
@@ -100,7 +102,7 @@ def fetch_data(http, state) -> Iterable[SgRecord]:
         hours = body.xpath(
             "//div[./h2[text()='Office Hours']]/following-sibling::div[1]//dl/div"
         )
-        hoo = []
+        hoo = []  # type: ignore
         for hour in hours:
             day = "".join(hour.xpath("./dt/text()")).strip()
             time = "".join(hour.xpath("./dd/text()")).strip()
