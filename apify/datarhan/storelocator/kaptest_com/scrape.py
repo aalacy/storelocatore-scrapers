@@ -49,11 +49,14 @@ def fetch_data():
                     if raw_data[0].split("-")[0].isdigit():
                         phone = raw_data[0]
                         raw_data = raw_data = [""] + raw_data[1:]
+                    location_name = raw_data[0]
+                    if not location_name:
+                        location_name = "<MISSING>"
 
                     item = SgRecord(
                         locator_domain=domain,
                         page_url=page_url,
-                        location_name=raw_data[0],
+                        location_name=location_name,
                         street_address=raw_data[-2],
                         city=raw_data[-1].split(", ")[0],
                         state=raw_data[-1].split(", ")[-1].split()[0],
@@ -72,9 +75,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.CITY, SgRecord.Headers.STREET_ADDRESS})
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
