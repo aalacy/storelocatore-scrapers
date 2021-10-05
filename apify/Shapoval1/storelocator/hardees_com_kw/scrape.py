@@ -9,8 +9,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def get_hours(hours) -> str:
     tmp = []
     for h in hours:
-        days = "".join(h.get("date"))
-        year, month, days = (int(x) for x in days.split("-"))
+        dayss = "".join(h.get("date"))
+        year = int(dayss.split("-")[0])
+        month = int(dayss.split("-")[1])
+        days = int(dayss.split("-")[2])
         ans = datetime.date(year, month, days)
         day = ans.strftime("%A")
         opens = "".join(h.get("onTime")).split()[1]
