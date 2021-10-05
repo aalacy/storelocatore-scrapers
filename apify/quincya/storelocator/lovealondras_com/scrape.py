@@ -27,7 +27,6 @@ def fetch_data(sgw: SgWriter):
 
     items = base.find(class_="pm-location-search-list").find_all("section")
 
-    data = []
     for i, item in enumerate(items):
         locator_domain = "lovealondras.com"
         location_name = item.h4.text
