@@ -17,8 +17,8 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    session = SgRequests()
-    response = session.get(start_url, headers=hdr)
+    session = SgRequests(proxy_rotation_failure_threshold=1)
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
 
     all_states = dom.xpath(
@@ -29,7 +29,9 @@ def fetch_data():
         state_response = session.get(full_state_url, headers=hdr)
         state_dom = etree.HTML(state_response.text)
 
-        all_stores = state_dom.xpath('//div/div[p[contains(text(), "Store List")]]')
+        all_stores = state_dom.xpath(
+            '//div[@class="inner-container storefinder-details view-all-stores"]/div[1]/div[@id]'
+        )
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
             if store_url and "/store/null" not in store_url:
@@ -49,6 +51,8 @@ def fetch_data():
                 data = demjson.decode(data)
 
                 store_number = data["name"]
+                if not store_number:
+                    store_number = SgRecord.MISSING
                 location_name = store_dom.xpath('//h1[@itemprop="name"]/text()')
                 if not location_name:
                     location_name = store_name_fromlist
@@ -104,6 +108,8 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
                 hours_of_operation = "<MISSING>"
+            if location_name == "<MISSING>":
+                continue
 
             item = SgRecord(
                 locator_domain=domain,
@@ -127,11 +133,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
