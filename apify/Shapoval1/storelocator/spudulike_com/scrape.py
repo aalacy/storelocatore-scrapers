@@ -43,7 +43,7 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "UK"
-        city = a.city or "<MISSING>"
+        city = a.city.replace("Dartford", "").strip() or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
