@@ -58,7 +58,7 @@ def fetch_records(http, search):
 
 
 if __name__ == "__main__":
-    with SgRequests() as http:
+    with SgRequests(proxy_country="us") as http:
         countries = []
         for country in bs(http.get(base_url, headers=_headers).text, "lxml").select(
             "ul.location__list-contries li a"
