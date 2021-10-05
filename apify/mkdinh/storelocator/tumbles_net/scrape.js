@@ -91,7 +91,9 @@ Apify.main(async () => {
       switch (request.userData.pageType) {
         case 'locations':
           return await enqueueLocationLinks({ $, requestQueue });
-        default: {}
+        default:
+          {
+          }
           await Apify.pushData(await extractDataFromPage({ $, request }));
       }
     },
