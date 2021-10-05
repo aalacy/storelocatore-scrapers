@@ -1,12 +1,17 @@
 import json
 from lxml import etree
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+}
 
 
 def parse_ids(dom, session):
@@ -36,97 +41,133 @@ def parse_ids(dom, session):
     return urls
 
 
+def fetch_all_locations(session):
+    locations = []
+    start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
+    traverse_directory(start_url, session, locations)
+
+    return locations
+
+
+def traverse_directory(url, session, locations):
+    page = etree.HTML(session.get(url, headers=headers, timeout=180).text)
+    sublocations = page.xpath('//*[@class="Teaser-link"]/@href')
+    bookings = [url for url in sublocations if "index.en.shtml" in url]
+    if len(bookings):
+        for booking in bookings:
+            if booking not in locations:
+                locations.append(booking)
+    else:
+        for location in sublocations:
+            traverse_directory(location, session, locations)
+
+
 def fetch_data():
     domain = "accor.com"
-    start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
-    session = SgRequests()
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    session = SgRequests(proxy_rotation_failure_threshold=3, retry_behavior=None)
+
+    params = {
+        "api_key": "f60a800cdb7af0904b988d834ffeb221",
+        "v": "20160822",
+        "filter": json.dumps({"c_pDAllAccorHotelPageURL": {"$contains": "hotel"}}),
+        "languages": "en_GB",
+        "pageToken": None,
     }
 
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-    all_directions = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-    for url in all_directions:
-        all_locations = parse_locations_urls(url)
-        for store_url in all_locations:
-            store_url = urljoin(start_url, store_url)
-            loc_response = session.get(store_url)
-            loc_dom = etree.HTML(loc_response.text)
-            if not loc_dom.xpath('//img[contains(@src, "/mer.svg")]'):
-                continue
-            poi = loc_dom.xpath(
-                '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
+    has_next = True
+
+    while has_next:
+        data = session.get(
+            "https://liveapi.yext.com/v2/accounts/1624327134898036854/entities",
+            params=params,
+        ).json()
+
+        entities = data["response"]["entities"]
+        token = data["response"].get("pageToken")
+
+        has_next = token is not None
+        params["pageToken"] = token
+
+        for location in entities:
+            page_url = location.get("websiteUrl", {}).get("url") or location.get(
+                "c_allBookingFunnel"
             )
-            if not poi:
+
+            location_name = location["name"]
+            location_type = location["meta"]["entityType"]
+            store_number = location["meta"]["id"]
+
+            address = location.get("address")
+            if not address:
                 continue
-            poi = json.loads(poi[0])
 
-            street_address = loc_dom.xpath(
-                '//meta[@property="og:street-address"]/@content'
-            )[0]
-            latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')
-            latitude = latitude[0] if latitude else SgRecord.MISSING
-            longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')
-            longitude = longitude[0] if longitude else SgRecord.MISSING
+            street_address = address["line1"]
+            if address.get("line2"):
+                street_address += f', {address["line2"]}'
 
-            item = SgRecord(
+            city = address["city"]
+            postal = address.get("postalCode")
+            country_code = address.get("countryCode")
+
+            geo = (
+                location.get("geocodedCoordinate")
+                or location.get("displayCoordinate")
+                or location.get("yextDisplayCoordinate")
+            )
+            latitude = str(geo["latitude"])
+            longitude = str(geo["longitude"])
+
+            phone = location.get("mainPhone")
+
+            location_hours = []
+            if location.get("hours") is None:
+                hours_of_operation = SgRecord.MISSING
+            else:
+                for day, intervals in location["hours"].items():
+                    if day == "reopenDate" or day == "holidayHours":
+                        continue
+
+                    all_intervals = []
+                    if intervals.get("isClosed") is not None:
+                        location_hours.append(f"{day}: Closed")
+                        break
+
+                    for hour in intervals["openIntervals"]:
+                        start = hour["start"]
+                        end = hour["end"]
+                        all_intervals.append(f"{start}-{end}")
+
+                    hours = " ".join(all_intervals)
+                    location_hours.append(f"{day}: {hours}")
+
+                hours_of_operation = ", ".join(location_hours)
+
+            yield SgRecord(
                 locator_domain=domain,
-                page_url=store_url,
-                location_name=poi["name"],
+                page_url=page_url,
+                store_number=store_number,
+                location_name=location_name,
                 street_address=street_address,
-                city=poi["address"].get("addressLocality"),
-                state=SgRecord.MISSING,
-                zip_postal=poi["address"].get("postalCode"),
-                country_code=poi["address"]["addressCountry"],
-                store_number=SgRecord.MISSING,
-                phone=poi.get("telephone"),
-                location_type=poi["@type"],
+                city=city,
+                zip_postal=postal,
+                country_code=country_code,
+                phone=phone,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
-            yield item
 
-
-def parse_locations_urls(url):
-    all_locations = []
-    session = SgRequests()
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
-    url = urljoin("https://all.accor.com/", url)
-    response = session.get(url, headers=hdr)
-    code = response.status_code
-    while code != 200:
-        session = SgRequests()
-        response = session.get(url, headers=hdr)
-        code = response.status_code
-    dom = etree.HTML(response.text)
-    urls_to_parse = dom.xpath('//div[@class="Teaser Teaser--geography"]//a/@href')
-    urls_to_parse += parse_ids(dom, session)
-    for url in urls_to_parse:
-        yield url
-    all_locations += dom.xpath(
-        '//a[@class="Teaser-link" and contains(@href, "/hotel/")]/@href'
-    )
-
-    return all_locations
+def write_output(data):
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        for row in data:
+            writer.write_row(row)
 
 
 def scrape():
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+    data = fetch_data()
+    write_output(data)
 
 
 if __name__ == "__main__":
