@@ -1,4 +1,3 @@
-import json
 import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
