@@ -35,7 +35,6 @@ def fetch_data():
 
     for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
-        print(store_url)
         loc_response = session.get(store_url)
         if loc_response.status_code != 200:
             continue
