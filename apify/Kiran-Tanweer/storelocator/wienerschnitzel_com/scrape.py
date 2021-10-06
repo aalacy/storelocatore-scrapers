@@ -37,10 +37,7 @@ def fetch_data():
         state = soup.find("span", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
         country_code = "US"
-        try:
-            phone = soup.find("span", {"itemprop": "telephone"}).text
-        except:
-            phone = "<MISSING>"
+
         hours_of_operation = (
             soup.find("div", {"class": "location-hours"})
             .get_text(separator="|", strip=True)
@@ -54,6 +51,10 @@ def fetch_data():
         location_name = (
             soup.find("h1").get_text(separator="|", strip=True).replace("|", " ")
         )
+        try:
+            phone = soup.find("span", {"itemprop": "telephone"}).text
+        except:
+            phone = "<MISSING>"
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
