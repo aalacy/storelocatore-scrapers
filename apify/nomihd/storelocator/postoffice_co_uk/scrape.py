@@ -96,7 +96,7 @@ class _SearchIteration(SearchIteration):
                             pass
 
                 try:
-                    street_address = street_address.rsplit(",", 1)[0].strip()
+                    street_address = ", ".join(raw_address.split(",")[:2]).strip()
                 except:
                     pass
                 city = formatted_addr.city
