@@ -17,17 +17,17 @@ MISSING = SgRecord.MISSING
 max_workers = 2
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0',
-    'Accept': '*/*',
-    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
-    'Content-Type': 'application/json; charset=UTF-8',
-    'Origin': 'https://moneypasswidget.wave2.io',
-    'Connection': 'keep-alive',
-    'Referer': 'https://moneypasswidget.wave2.io/',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-site',
-    'TE': 'trailers',
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    "Accept": "*/*",
+    "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+    "Content-Type": "application/json; charset=UTF-8",
+    "Origin": "https://moneypasswidget.wave2.io",
+    "Connection": "keep-alive",
+    "Referer": "https://moneypasswidget.wave2.io/",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-site",
+    "TE": "trailers",
 }
 
 session = SgRequests()
@@ -165,7 +165,9 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
