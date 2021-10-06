@@ -43,7 +43,6 @@ def fetch_data():
             for item in dealers:
                 lng = item["Longitude"]
                 lat = item["Latitude"]
-                result_coords.append((lat, lng))
                 name = item["Name"]
                 typ = item["dealerType"]
                 website = "ford.com"
