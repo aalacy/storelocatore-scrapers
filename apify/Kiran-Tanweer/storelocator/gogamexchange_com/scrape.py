@@ -30,6 +30,7 @@ def fetch_data():
             storeid = loc["storeid"]
             title = loc["name"]
             address = loc["data"]["address"]
+            address = address.replace("\n", " ").strip()
             parsed = parser.parse_address_usa(address)
             street1 = (
                 parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
@@ -76,7 +77,6 @@ def fetch_data():
             if state == "Rock":
                 city = "Little Rock"
                 state = "AR"
-
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=link.strip(),
@@ -112,7 +112,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
