@@ -59,6 +59,8 @@ def fetch_data():
         if city == "6 -8 0SMOSTON ROAD":
             city = location_name
         city = city.replace("Super Market", "").split("Postal")[0].strip()
+        if zip_code in ["St Helens.", "Cwmbran"]:
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
