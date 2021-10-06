@@ -2,14 +2,11 @@ import re
 
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-logger = SgLogSetup().get_logger("metropolitan-market_com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -27,7 +24,7 @@ def fetch_data(sgw: SgWriter):
     items = base.findAll("div", attrs={"class": "feature_box"})
 
     for item in items:
-        if "Coming Soon" in item.text:
+        if "Coming Soon" in item.text or "Opening" in item.text:
             continue
 
         link = "https://metropolitan-market.com" + item.a["href"]
@@ -35,11 +32,12 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        link = req.url
+
         locator_domain = "metropolitan-market.com"
         location_name = (
             base.find("h3").text.strip() + " - " + base.find("h2").text.strip()
         )
-        logger.info(location_name)
         section = base.find("div", attrs={"class": "section_col_content"}).p
         raw_data = (
             str(section)

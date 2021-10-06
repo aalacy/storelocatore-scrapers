@@ -1,5 +1,4 @@
 import re
-import csv
 import time
 import random
 from sgrequests import SgRequests
@@ -7,6 +6,13 @@ from sglogging import SgLogSetup
 from sgselenium import SgChrome
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
@@ -21,33 +27,6 @@ headers = {
 
 def sleep():
     time.sleep(random.randint(4, 7))
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch(loc, driver):
@@ -80,6 +59,7 @@ def fetch_location(loc, driver):
     store = loc.rsplit("/", 1)[1]
 
     text = fetch(loc, driver)
+    sleep()
 
     if re.search("access denied", text, re.IGNORECASE):
         raise Exception()
@@ -118,36 +98,27 @@ def fetch_location(loc, driver):
         hours = text.split('"openingHours":["')[1].split('"]')[0].replace('","', "; ")
     if ',"telephone":"' in text:
         phone = text.split(',"telephone":"')[1].split('"')[0]
-
     if hours == "":
         hours = "<MISSING>"
     if phone == "":
         phone = "<MISSING>"
-    if "Cincinnati - Eastgate" in name:
-        phone = "(513) 947-8882"
-    if "Orchard Park" in name:
-        phone = "(716) 825-1378"
-    if "Gainesville" in name:
-        phone = "(352) 372-5715"
-    if "4590 Jon" in name or "9150 Cov" in name:
-        hours = "Sun-Thu: 11:00AM-10:00PM; Fri-Sat: 11:00AM-11:00PM"
     if "Find A R" not in name:
-        return [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        return SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def fetch_data():
@@ -156,12 +127,11 @@ def fetch_data():
     session = SgRequests()
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://www.longhornsteakhouse.com/locations/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
 
-    with ThreadPoolExecutor() as executor, SgChrome() as driver:
+    with ThreadPoolExecutor(max_workers=1) as executor, SgChrome() as driver:
         driver.get("https://www.longhornsteakhouse.com/locations/")
         futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
         for future in as_completed(futures):
@@ -171,8 +141,10 @@ def fetch_data():
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

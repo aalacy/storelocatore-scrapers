@@ -5,6 +5,6 @@ numpy==1.20.1
 python-dateutil==2.8.1
 pytz==2021.1
 geopy==2.0.0
-sgzip==0.8.1
-sgrequests==0.1.12
-sgscrape==0.1.11
+sgzip==0.10.4
+sgrequests==0.2.9
+sgscrape==0.2.4
