@@ -84,6 +84,8 @@ def fetch_data(sgw: SgWriter):
         cms = "".join(tree.xpath('//h2[contains(text(), "OPENING SOON")]/text()'))
         if cms:
             hours_of_operation = "Coming Soon"
+        if hours_of_operation == "None 00:00 - 00:00":
+            hours_of_operation = "Closed"
         location_type = "Brand Stores"
         if location_name.find("Employee Store") != -1:
             location_type = "Invite Only s"
