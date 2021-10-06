@@ -21,8 +21,6 @@ base_url = "https://www.svb.com/locations"
 
 def _d(_, country):
     _title = _.select_one("div.collapsible-boxes__item-title")
-    if country == "US" and _title.get("data-branch") != "True":
-        return
     _addr = list(_.p.stripped_strings)
     raw_address = " ".join(_addr).split("Get")[0]
     addr = parse_address_intl(raw_address + ", " + country)
