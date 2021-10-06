@@ -69,8 +69,11 @@ def no_json(soup):
 def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
-        response = session.get(url, headers=headers)
-        soup = b4(response.text, "lxml")
+        try:
+            response = session.get(url, headers=headers)
+            soup = b4(response.text, "lxml")
+        except Exception as e:
+            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
         logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
         if len(response.text) < 400:
             logzilla.info(f"Content\n{response.text}\n\n")
