@@ -4,6 +4,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 import re
+
 session = SgRequests()
 headers = {
     "Host": "www.cubesmart.com",
@@ -68,7 +69,7 @@ def write_output(data):
 
 
 def fetch_data():
-    cleanr = re.compile(r'<[^>]+>')
+    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.cubesmart.com/facilities/query/GetSiteGeoLocations"
 
     try:
@@ -124,11 +125,10 @@ def fetch_data():
                 .replace("<br>", " ")
                 .lstrip()
             )
-            hours = re.sub(cleanr,' ',hours).strip()
+            hours = re.sub(cleanr, " ", hours).strip()
         except:
 
             hours = "<MISSING>"
-       
         if pcode == "75072":
             pcode = "75070"
         if loc["OpenSoon"] is False:
