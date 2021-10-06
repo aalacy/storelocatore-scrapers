@@ -53,11 +53,18 @@ def fetch_data():
             if HFound and 'gas-price-section">' in line2:
                 HFound = False
             if HFound and 'itemprop="openingHours" datetime="' in line2:
-                hrs = line2.split('itemprop="openingHours" datetime="')[1].split('"')[0]
+                hrs = (
+                    line2.split('itemprop="openingHours" datetime="')[1]
+                    .split('"')[0]
+                    .strip()
+                )
                 if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + "; " + hrs
+                    if "pm" in hrs:
+                        hours = hours + ": " + hrs
+                    else:
+                        hours = hours + "; " + hrs
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
             if 'itemprop="longitude" content="' in line2:
@@ -71,17 +78,17 @@ def fetch_data():
                     .split("<")[0]
                     .replace("&nbsp;", " ")
                 )
-            if 'itemprop="streetAddress">' in line2:
-                add = line2.split('itemprop="streetAddress">')[1].split("<")[0]
-            if 'itemprop="addressLocality">' in line2:
-                city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
-            if 'itemprop="addressRegion">' in line2:
-                state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
-            if 'itemprop="postalCode">' in line2:
-                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
-            if phone == "" and 'itemprop="telephone">' in line2:
+            if '"streetAddressOutput">' in line2:
+                add = line2.split('"streetAddressOutput">')[1].split("<")[0]
+            if 'addressLocalityOutput">' in line2:
+                city = line2.split('addressLocalityOutput">')[1].split("<")[0]
+            if '"addressRegionOutput">' in line2:
+                state = line2.split('"addressRegionOutput">')[1].split("<")[0]
+            if 'zipCodeOutput">' in line2:
+                zc = line2.split('zipCodeOutput">')[1].split("<")[0]
+            if phone == "" and 'telephoneOutput">' in line2:
                 phone = (
-                    line2.split('itemprop="telephone">')[1]
+                    line2.split('telephoneOutput">')[1]
                     .split("<")[0]
                     .strip()
                     .replace("\t", "")
@@ -90,8 +97,14 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
-        if add != "" and IsGas:
+        if add != "" and IsGas is True:
             loc = loc.replace("/ ", "/").replace(" ", "-")
+            if "colchester-vt-314" in loc:
+                hours = "Mon-Fri.: 6:00am - 1:30pm, 6:00pm - 9:00pm; Sat.: 7:00am - 9:30am, 6:00pm - 8:00pm; Sun.: 7:00am - 7:00pm"
+            if "w-san-antonio-san-antonio-tx-1449" in loc:
+                hours = "Mon-Fri.: 6:00am - 9:00pm; Sat.: 7:00am - 7:00pm; Sun.: 7:00am - 7:00pm"
+            if "las-vegas-bus-ctr-las-vegas-nv-563" in loc:
+                hours = "Mon-Fri.: 6:00am - 7:00pm; Sat.: 6:00am - 5:00pm; Sun.: 9:00am - 6:00pm"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -108,219 +121,6 @@ def fetch_data():
                 longitude=lng,
                 hours_of_operation=hours,
             )
-    caids = []
-    for x in range(40, 65, 5):
-        for y in range(-70, -120, -5):
-            logger.info(str(x) + "," + str(y))
-            url = (
-                "https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=50&hasGas=false&hasTires=false&hasFood=false&hasHearing=false&hasPharmacy=false&hasOptical=false&hasBusiness=false&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&latitude="
-                + str(x)
-                + "&longitude="
-                + str(y)
-                + "&countryCode=CA"
-            )
-            session = SgRequests()
-            r = session.get(url, headers=headers)
-            for line in r.iter_lines():
-                line = str(line.decode("utf-8"))
-                if '"stlocID":' in line:
-                    items = line.split('"stlocID":')
-                    for item in items:
-                        if '"country":"CA"' in item:
-                            store = item.split('"displayName":"')[1].split('"')[0]
-                            country = "CA"
-                            website = "costco.com"
-                            typ = "Warehouse"
-                            phone = item.split('"phone":"')[1].split('"')[0]
-                            city = item.split('"city":"')[1].split('"')[0]
-                            name = city
-                            state = item.split(',"state":"')[1].split('"')[0]
-                            zc = item.split('"zipCode":"')[1].split('"')[0]
-                            add = item.split('"address1":"')[1].split('"')[0]
-                            lat = item.split('"latitude":')[1].split(",")[0]
-                            lng = item.split('"longitude":')[1].split(",")[0]
-                            loc = "<MISSING>"
-                            if state == "":
-                                state = "<MISSING>"
-                            phone = phone.replace("\t", "").strip()
-                            if phone == "":
-                                phone = "<MISSING>"
-                            hours = (
-                                item.split('"warehouseHours":["')[1]
-                                .split("]")[0]
-                                .replace('","', "; ")
-                                .replace('"', "")
-                            )
-                            if store not in caids:
-                                caids.append(store)
-                                yield SgRecord(
-                                    locator_domain=website,
-                                    page_url=loc,
-                                    location_name=name,
-                                    street_address=add,
-                                    city=city,
-                                    state=state,
-                                    zip_postal=zc,
-                                    country_code=country,
-                                    phone=phone,
-                                    location_type=typ,
-                                    store_number=store,
-                                    latitude=lat,
-                                    longitude=lng,
-                                    hours_of_operation=hours,
-                                )
-    url = "https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=50&hasGas=false&hasTires=false&hasFood=false&hasHearing=false&hasPharmacy=false&hasOptical=false&hasBusiness=false&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&latitude=53.500152587890625&longitude=-0.12623600661754608&countryCode=GB"
-    session = SgRequests()
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '"stlocID":' in line:
-            items = line.split('"stlocID":')
-            for item in items:
-                if '"country":"UK"' in item:
-                    store = item.split('"displayName":"')[1].split('"')[0]
-                    country = "GB"
-                    website = "costco.com"
-                    typ = "Warehouse"
-                    phone = item.split('"phone":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    name = city
-                    state = item.split(',"state":"')[1].split('"')[0]
-                    zc = item.split('"zipCode":"')[1].split('"')[0]
-                    add = item.split('"address1":"')[1].split('"')[0]
-                    lat = item.split('"latitude":')[1].split(",")[0]
-                    lng = item.split('"longitude":')[1].split(",")[0]
-                    loc = "<MISSING>"
-                    if state == "":
-                        state = "<MISSING>"
-                    phone = phone.replace("\t", "").strip()
-                    if phone == "":
-                        phone = "<MISSING>"
-                    hours = (
-                        item.split('"warehouseHours":["')[1]
-                        .split("]")[0]
-                        .replace('","', "; ")
-                        .replace('"', "")
-                    )
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
-    countries = []
-    session = SgRequests()
-    url = "https://www.costco.com"
-    r = session.get(url, headers=headers)
-    CFound = False
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "Select country/region:</div>" in line:
-            CFound = True
-        if '<li><a href="https://www.costco.' in line and ".uk" not in line and CFound:
-            countries.append(
-                line.split('href="')[1].split('"')[0] + "/store-finder/search?q=&page=0"
-            )
-        if CFound and "</ul>" in line:
-            CFound = False
-    for co in countries:
-        logger.info(co)
-        website = "costco.com"
-        name = "<MISSING>"
-        typ = "Warehouse"
-        dc = 0
-        country = co.split("/store-")[0].rsplit(".", 1)[1].upper()
-        if country == "UK":
-            country = "GB"
-        r2 = session.get(co, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
-        for line2 in lines:
-            if '"displayName" : "' in line2:
-                hours = ""
-                phone = ""
-                add = ""
-                city = ""
-                zc = ""
-                state = ""
-                lat = ""
-                loc = ""
-                lng = ""
-                store = "<MISSING>"
-                dc = 0
-                name = line2.split('"displayName" : "')[1].split('"')[0]
-            if '"url" : "' in line2:
-                loc = co.split("/store-")[0] + line2.split('"url" : "')[1].split('"')[
-                    0
-                ].replace("\\", "")
-            if '"phone" : "' in line2:
-                phone = line2.split('"phone" : "')[1].split('"')[0]
-            if '"line1" : "' in line2:
-                add = line2.split('"line1" : "')[1].split('"')[0]
-            if '"line2" : "' in line2:
-                add = add + " " + line2.split('"line2" : "')[1].split('"')[0]
-                add = add.strip()
-            if '"town" : "' in line2:
-                city = line2.split('"town" : "')[1].split('"')[0]
-                state = "<MISSING>"
-            if '"postalCode"' in line2:
-                zc = line2.split('"postalCode" : "')[1].split('"')[0]
-            if '"latitude" : "' in line2:
-                lat = line2.split('"latitude" : "')[1].split('"')[0]
-            if '"longitude"' in line2:
-                lng = line2.split('"longitude" : "')[1].split('"')[0]
-            if ':{"individual":' in line2:
-                day = line2.split('"')[1]
-                dc = dc + 1
-                g = next(lines)
-                g = next(lines)
-                hrs = day + ": " + g.split('"')[1]
-                if dc <= 7:
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-            if '"image"' in line2:
-                if city == "":
-                    city = "<MISSING>"
-                if hours == "":
-                    hours = "<MISSING>"
-                if "?" in loc:
-                    loc = loc.split("?")[0]
-                if phone == "":
-                    phone = "<MISSING>"
-                if zc == "":
-                    zc = "<MISSING>"
-                if state == "":
-                    state = "<MISSING>"
-                loc = loc.replace("/ ", "/").replace(" ", "-")
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
 
 
 def scrape():
