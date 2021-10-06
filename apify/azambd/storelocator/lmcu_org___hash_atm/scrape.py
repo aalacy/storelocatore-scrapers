@@ -190,8 +190,6 @@ def fetch_data(search):
             f"{totalZip}. zip {zipCode} => {len(data)} stores; total store = {count}"
         )
 
-    if driver is not None:
-        driver.close()
     log.info(f"Total stores = {count}")
 
 
