@@ -33,10 +33,8 @@ def fetch_data():
             title = loc.split("\n", 1)[0]
             address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
             phone = address.split("\n")[-1]
-
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
-
             hours = "Sorry, We're Currently Closed"
             lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
@@ -156,7 +154,10 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=5,
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
