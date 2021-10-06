@@ -4,29 +4,27 @@ from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    searche = [
-        DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
-        ),
-        DynamicGeoSearch(
-            country_codes=[SearchableCountries.CANADA], granularity=Grain_1_KM()
-        ),
-        DynamicGeoSearch(
-            country_codes=[SearchableCountries.BRITAIN], granularity=Grain_1_KM()
-        ),
-    ]
+    search = DynamicGeoSearch(
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.CANADA,
+            SearchableCountries.BRITAIN,
+        ],
+        granularity=Grain_1_KM(),
+    )
     url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
     session = SgRequests()
 
-    for search in searche:
-        for search_lat, search_lon in search:
-
+    for search_lat, search_lon in search:
+        x = 0
+        while True:
+            x = x + 1
             params = {
                 "Latitude": str(search_lat),
                 "Longitude": str(search_lon),
                 "Miles": "100",
                 "NetworkId": "10029",
-                "PageIndex": "1",
+                "PageIndex": str(x),
                 "SearchByOptions": "",
             }
 
@@ -51,7 +49,6 @@ def get_data():
                     longitude = location["Longitude"]
                     search.found_location_at(latitude, longitude)
                     hours = "<MISSING>"
-
                     yield {
                         "locator_domain": locator_domain,
                         "page_url": page_url,
@@ -68,9 +65,10 @@ def get_data():
                         "hours": hours,
                         "country_code": country_code,
                     }
-
+                if len(response["data"]["ATMInfo"]) < 100:
+                    break
             except Exception:
-                pass
+                break
 
 
 def scrape():
@@ -78,14 +76,10 @@ def scrape():
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
         location_name=sp.MappingField(
-            mapping=["location_name"],
+            mapping=["location_name"], part_of_record_identity=True
         ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
         street_address=sp.MultiMappingField(
             mapping=["street_address"], is_required=False
         ),
