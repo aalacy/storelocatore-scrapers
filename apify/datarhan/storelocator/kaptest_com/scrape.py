@@ -31,7 +31,7 @@ def fetch_data():
             all_cities = dom.xpath('//table[@id="city_list"]//a/@href')
             for url in all_cities:
                 page_url = urljoin(start_url, url)
-                response = session.get(urljoin(start_url, url))
+                response = session.get(page_url)
                 dom = etree.HTML(response.text)
                 all_locations = dom.xpath('//div[@id="hor_school_scroll"]/div')
                 for poi_html in all_locations:
@@ -54,7 +54,7 @@ def fetch_data():
 
                     item = SgRecord(
                         locator_domain=domain,
-                        page_url=start_url,
+                        page_url=page_url,
                         location_name=location_name,
                         street_address=raw_data[-2],
                         city=raw_data[-1].split(", ")[0],
