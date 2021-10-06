@@ -39,7 +39,7 @@ def fetch_data():
     json_url = "/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw"
     with SgChrome() as driver:
         driver.get(base_url)
-        driver.wait_for_request(json_url)
+        driver.wait_for_request(json_url, 20)
         for rr in driver.iter_requests():
             if json_url in rr.url:
                 locations = json.loads(rr.response.body)

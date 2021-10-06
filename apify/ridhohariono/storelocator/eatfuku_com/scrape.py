@@ -66,7 +66,7 @@ def fetch_data():
     contents = soup.find("main", {"id": "main"}).find_all("div", {"class": "address"})
     for row in contents:
         info = row.parent
-        location_name = info.find("h3").text.strip()
+        location_name = info.find("h3").get_text(strip=True, separator=" ")
         raw_address = info.find("div", {"class": "address"}).get_text(
             strip=True, separator=","
         )
