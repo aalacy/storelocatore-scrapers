@@ -12,28 +12,32 @@ _headers = {
 locator_domain = "https://littlecaesarsksa.com"
 base_url = "https://littlecaesarsksa.com/wp-admin/admin-ajax.php?lang=en&action=store_search&lat=24.795976&lng=46.710109&max_results=250&search_radius=500&autoload=1"
 
+
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            street_address = _['address']
-            if _['address2']:
-                street_address += ' ' + _['address2']
-            hours = [": ".join(hh.stripped_strings) for hh in bs(_['hours'], 'lxml').select('tr')]
+            street_address = _["address"]
+            if _["address2"]:
+                street_address += " " + _["address2"]
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in bs(_["hours"], "lxml").select("tr")
+            ]
             yield SgRecord(
                 page_url="https://littlecaesarsksa.com/branches/",
-                store_number=_['id'],
+                store_number=_["id"],
                 location_name=_["store"],
                 street_address=street_address,
-                city=_['city'],
-                state=_['state'],
-                zip_postal=_['zip'],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zip"],
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code="Saudi Arabia",
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation='; '.join(hours),
+                hours_of_operation="; ".join(hours),
             )
 
 
