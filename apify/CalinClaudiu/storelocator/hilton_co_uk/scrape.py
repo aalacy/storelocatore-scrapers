@@ -3,7 +3,8 @@ from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgscrape import simple_utils as utils
+
+from sgscrape import simple_utils as utils  # noqa
 
 
 from sgrequests import SgRequests
@@ -16,7 +17,13 @@ from sgselenium import SgFirefox
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def cleanup_json(x):
+def cleanup_json(x, url):
+    try:
+        z = x.split('"description"')[0] + str('"opening') + x.split('"opening', 1)[1]
+    except Exception as e:
+        logzilla.error(f"{x}\n{str(e)}\n{str(url)}")
+        z = x
+    x = z
     x = x.replace("\n", "").replace("\r", "").replace("\t", "")
     x = x.replace(": '", ': "')
     x = x.replace("',", '",')
@@ -38,7 +45,9 @@ def cleanup_json(x):
     except Exception as e:
         with open("debug.txt", mode="w", encoding="utf-8") as file:
             file.write(x)
-            file.write(e)
+            file.write(str(e))
+            file.write(str(url))
+        logzilla.error(f"{x}\n{str(e)}\n{str(url)}")
     return x
 
 
@@ -48,27 +57,43 @@ def para(k):
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    son = SgRequests.raise_on_err(
-        session.get(k["facilityOverview"]["homeUrl"], headers=headers)
-    )
+    son = None
+    try:
+        son = SgRequests.raise_on_err(
+            session.get(k["facilityOverview"]["homeUrl"], headers=headers)
+        )
+    except Exception as e:
+        try:
+            logzilla.error(f"{str(e)}\n{k['facilityOverview']['homeUrl']}\n\n")
+        except Exception as feck:
+            logzilla.error(f"{str(feck)}\n{k}\n\n")
+    try:
 
-    soup = b4(son.text, "lxml")
+        soup = b4(son.text, "lxml")
 
-    allscripts = soup.find_all("script", {"type": "application/ld+json"})
+        allscripts = soup.find_all("script", {"type": "application/ld+json"})
+    except Exception:
+        pass
 
     data = {}
     k["extras"] = {}
     k["extras"]["address"] = {}
     k["extras"]["address"]["postalCode"] = "<MISSING>"
-    for i in allscripts:
-        if "postalCode" in i.text:
-            try:
-                z = i.text.replace("\n", "")
-                data = cleanup_json(z)
-            except Exception:
-                raise
-
-    k["extras"] = data
+    try:
+        for i in allscripts:
+            if "postalCode" in i.text:
+                try:
+                    z = i.text.replace("\n", "")
+                    data = cleanup_json(z, k["facilityOverview"]["homeUrl"])
+                except Exception:
+                    raise
+    except Exception:
+        pass
+    try:
+        k["extras"] = data
+    except Exception:
+        k["extras"]["address"]["postalCode"] = "<MISSING>"
+        k["extras"]["openingHours"] = "<MISSING>"
 
     return k
 
@@ -108,19 +133,20 @@ def fetch_data():
         )
         for country in countries:
             if not country["complete"]:
-                for record in data_fetcher(country, state):
+                for record in data_fetcher(country, state, 10):
                     yield record
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
 
 
-def data_fetcher(country, state):
+def data_fetcher(country, state, sleep):
     url = country["link"]
     masterdata = []
-    data = None
     with SgFirefox() as driver:
         driver.get(url)
+        time.sleep(sleep)
         for r in driver.requests:
+            data = None
             if "/graphql/customer" in r.path:
                 try:
                     if r.response.body:
@@ -149,25 +175,27 @@ def data_fetcher(country, state):
                             pass
     total = 0
     allhotels = []
+    if len(masterdata) == 0:
+        sleep += 10
+        if sleep < 30:
+            return data_fetcher(country, state, sleep)
     for i in masterdata:
         try:
             total = total + len(i["data"]["hotelSummaryOptions"]["hotels"])
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
-        except KeyError:
-            pass
+        except KeyError as e:
+            logzilla.error(f"{i}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-    lize = utils.parallelize(
-        search_space=allhotels,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
+    lize = utils.parallelize(  # noqa
+        search_space=allhotels,  # noqa
+        fetch_results_for_rec=para,  # noqa
+        max_threads=20,  # noqa
+        print_stats_interval=10,  # noqa
     )
-
     for j in lize:
         yield j
-
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
