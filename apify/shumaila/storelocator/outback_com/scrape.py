@@ -67,8 +67,9 @@ def fetch_data():
                 hours_of_operation=hours,
                 raw_address=raw_address,
             )
+    session1 = SgRequests()
     url = "https://locations.outback.com/index.html"
-    r = session.get(url, headers=headers)
+    r = session1.get(url, headers=headers)
     statelist = soup.find("section", {"class": "StateList"}).findAll(
         "a", {"class": "Directory-listLink"}
     )
@@ -76,7 +77,7 @@ def fetch_data():
     for stnow in statelist:
         check1 = 0
         stlink = "https://locations.outback.com/" + stnow["href"]
-        r = session.get(stlink, headers=headers, verify=False)
+        r = session1.get(stlink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         try:
             citylist = soup.find("section", {"class": "CityList"}).findAll(
@@ -90,7 +91,7 @@ def fetch_data():
             check2 = 0
             if check1 == 0:
                 citylink = "https://locations.outback.com/" + citynow["href"]
-                r = session.get(citylink, headers=headers, verify=False)
+                r = session1.get(citylink, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:
                     branchlist = soup.find(
@@ -109,7 +110,7 @@ def fetch_data():
                     branch = "https://locations.outback.com/" + branch["href"]
                     branch = branch.replace("../", "")
 
-                    r = session.get(branch, headers=headers, verify=False)
+                    r = session1.get(branch, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
                 store = r.text.split('"storeId":"', 1)[1].split('"', 1)[0]
                 lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
