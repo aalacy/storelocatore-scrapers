@@ -1,4 +1,3 @@
-import json
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
