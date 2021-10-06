@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -55,7 +54,7 @@ def fetch_data():
 
                     item = SgRecord(
                         locator_domain=domain,
-                        page_url=page_url,
+                        page_url=start_url,
                         location_name=location_name,
                         street_address=raw_data[-2],
                         city=raw_data[-1].split(", ")[0],
@@ -75,7 +74,9 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.CITY})
+        )
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
