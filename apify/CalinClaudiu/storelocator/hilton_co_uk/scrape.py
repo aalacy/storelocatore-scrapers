@@ -57,27 +57,43 @@ def para(k):
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    son = SgRequests.raise_on_err(
-        session.get(k["facilityOverview"]["homeUrl"], headers=headers)
-    )
+    son = None
+    try:
+        son = SgRequests.raise_on_err(
+            session.get(k["facilityOverview"]["homeUrl"], headers=headers)
+        )
+    except Exception as e:
+        try:
+            logzilla.error(f"{str(e)}\n{k['facilityOverview']['homeUrl']}\n\n")
+        except Exception as feck:
+            logzilla.error(f"{str(feck)}\n{k}\n\n")
+    try:
 
-    soup = b4(son.text, "lxml")
+        soup = b4(son.text, "lxml")
 
-    allscripts = soup.find_all("script", {"type": "application/ld+json"})
+        allscripts = soup.find_all("script", {"type": "application/ld+json"})
+    except Exception:
+        pass
 
     data = {}
     k["extras"] = {}
     k["extras"]["address"] = {}
     k["extras"]["address"]["postalCode"] = "<MISSING>"
-    for i in allscripts:
-        if "postalCode" in i.text:
-            try:
-                z = i.text.replace("\n", "")
-                data = cleanup_json(z, k["facilityOverview"]["homeUrl"])
-            except Exception:
-                raise
-
-    k["extras"] = data
+    try:
+        for i in allscripts:
+            if "postalCode" in i.text:
+                try:
+                    z = i.text.replace("\n", "")
+                    data = cleanup_json(z, k["facilityOverview"]["homeUrl"])
+                except Exception:
+                    raise
+    except Exception:
+        pass
+    try:
+        k["extras"] = data
+    except Exception:
+        k["extras"]["address"]["postalCode"] = "<MISSING>"
+        k["extras"]["openingHours"] = "<MISSING>"
 
     return k
 
