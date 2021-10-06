@@ -5,14 +5,13 @@ import json
 from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
-from sgscrape import sgpostal as parser
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "identogo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
     "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
     "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -22,11 +21,10 @@ headers = {
     "Content-Type": "undefined; charset=UTF-8",
 }
 
-id_list = []
 
-
-def fetch_records_for(zipcode):
-    log.info(f"pulling records for coordinates: {zipcode}")
+def fetch_records_for(tup):
+    zipcode, session = tup
+    log.info(f"pulling records for zipcode: {zipcode}")
     params = (
         ("country", "us"),
         (
@@ -84,10 +82,6 @@ def process_record(raw_results_from_one_zipcode):
         locator_domain = website
         location_name = store["properties"]["info"]["title"]
         street_address = store["properties"]["info"]["address"]
-        if street_address in id_list:
-            continue
-
-        id_list.append(street_address)
 
         if (
             store["properties"]["info"]["address2"] is not None
@@ -117,6 +111,8 @@ def process_record(raw_results_from_one_zipcode):
             location_type = location_name.split("-")[1].strip()
 
         hours_of_operation = store["properties"]["info"]["hours"]
+        if "Coming soon" in hours_of_operation:
+            continue
         latitude = store["geometry"]["coordinates"][1]
         longitude = store["geometry"]["coordinates"][0]
 
@@ -141,22 +137,32 @@ def process_record(raw_results_from_one_zipcode):
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
-        results = parallelize(
-            search_space=static_zipcode_list(
-                radius=50, country_code=SearchableCountries.USA
-            ),
-            fetch_results_for_rec=fetch_records_for,
-            processing_function=process_record,
-            max_threads=20,  # tweak to see what's fastest
+
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
         )
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+    ) as writer:
+        with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
+            search = DynamicZipSearch(
+                country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+            )
+            results = parallelize(
+                search_space=[(zip, session) for zip in search],
+                fetch_results_for_rec=fetch_records_for,
+                processing_function=process_record,
+            )
+            for rec in results:
+                writer.write_row(rec)
+                count = count + 1
 
     log.info(f"No of records being processed: {count}")
-    log.info("Finished")
-
     log.info("Finished")
 
 
