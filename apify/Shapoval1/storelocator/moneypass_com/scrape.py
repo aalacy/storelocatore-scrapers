@@ -14,16 +14,16 @@ from sgscrape.pause_resume import CrawlStateSingleton
 website = "https://moneypass.com/"
 store_url = "https://locationapi.wave2.io/api/client/getlocations"
 MISSING = SgRecord.MISSING
-max_workers = 4
+max_workers = 2
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
     "Accept": "*/*",
     "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
     "Content-Type": "application/json; charset=UTF-8",
-    "Origin": "https://03919locator.wave2.io",
+    "Origin": "https://moneypasswidget.wave2.io",
     "Connection": "keep-alive",
-    "Referer": "https://03919locator.wave2.io/",
+    "Referer": "https://moneypasswidget.wave2.io/",
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-site",
@@ -105,7 +105,7 @@ def get_hoo(store):
 
 def fetch_data():
     zip_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_distance_miles=10
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=1
     )
 
     with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -165,7 +165,9 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
