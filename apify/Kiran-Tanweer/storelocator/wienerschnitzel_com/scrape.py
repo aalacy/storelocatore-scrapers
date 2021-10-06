@@ -37,7 +37,10 @@ def fetch_data():
         state = soup.find("span", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
         country_code = "US"
-        phone = soup.find("span", {"itemprop": "telephone"}).text
+        try:
+            phone = soup.find("span", {"itemprop": "telephone"}).text
+        except:
+            phone = "<MISSING>"
         hours_of_operation = (
             soup.find("div", {"class": "location-hours"})
             .get_text(separator="|", strip=True)
