@@ -41,9 +41,8 @@ def fetch_data():
             loc_dom = etree.HTML(driver.page_source)
             geo = (
                 loc_dom.xpath('//a[@class="navigate-link"]/@href')[0]
-                .split("ll=")[-1]
-                .split("&")[0]
-                .split(",")
+                .split("/@")[-1]
+                .split(",")[:2]
             )
             driver.switch_to.default_content()
             loc_dom = etree.HTML(driver.page_source)
