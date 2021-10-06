@@ -6,7 +6,16 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
-from selenium import webdriver  # noqa
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "marketstreetunited.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -15,18 +24,14 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 def fetch_data():
     url = "https://www.marketstreetunited.com/RS.Relationshop/StoreLocation/GetAllStoresPosition"
 
-    options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("--headless")
-    options.add_argument("ignore-certificate-errors")
-    with SgChrome(chrome_options=options) as driver:
+    with SgChrome() as driver:
 
         driver.get(url)
         stores_sel = lxml.html.fromstring(driver.page_source)
         store_list = json.loads("".join(stores_sel.xpath("//body//text()")).strip())
         for store in store_list:
             locator_domain = website
-            page_url = "<MISSING>"
+            page_url = "https://www.marketstreetunited.com/rs/StoreLocator?id={}"
             location_name = store["StoreName"]
             street_address = store["Address1"]
             if store["Address2"] and len(store["Address2"]) > 0:
@@ -37,6 +42,7 @@ def fetch_data():
             zip = store["Zipcode"]
             country_code = "US"
             store_number = store["StoreID"]
+            page_url = page_url.format(str(store_number))
             phone = store["PhoneNumber"]
             location_type = "<MISSING>"
             latitude = store["Latitude"]
