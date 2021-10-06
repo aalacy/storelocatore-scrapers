@@ -4,7 +4,7 @@ const { enqueueLinks } = require('apify').utils;
 const MISSING = '<MISSING>';
 
 function extractLocatorDomain(url) {
-  [matched, domain] = url.match(/\/\/(.*?)\//);
+  const domain = url.match(/\/\/(.*?)\//)[1];
   return domain;
 }
 
@@ -20,7 +20,7 @@ function extractAddress(address) {
   return { street_address, city, state, zip, country_code };
 }
 
-function extractHoursOfOperation(hours, $) {
+function extractHoursOfOperation(hours) {
   return hours
     .text()
     .replace(/(.*?\S)(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/gi, '$1 $2 ')
@@ -46,7 +46,7 @@ async function extractDataFromPage({ $, request }) {
   const locator_domain = 'tumbles.net';
   const location_type = 'tumbles';
   const page_url = extractLocatorDomain(request.url);
-  const detailsComponent = $('address');
+  const detailsComponent = $('.footer-column');
   const location_name = detailsComponent.find('p:nth-child(1)').text();
   const address = detailsComponent.find('p:nth-child(2)').text();
   const { street_address, city, state, zip, country_code } = extractAddress(address);
@@ -92,8 +92,7 @@ Apify.main(async () => {
         case 'locations':
           return await enqueueLocationLinks({ $, requestQueue });
         default:
-          const poi = await extractDataFromPage({ $, request });
-          await Apify.pushData(poi);
+          await Apify.pushData(await extractDataFromPage({ $, request }));
       }
     },
   });
