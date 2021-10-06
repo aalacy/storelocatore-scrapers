@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import re
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
@@ -33,10 +34,10 @@ def fetch_data():
             title = loc.split("\n", 1)[0]
             address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
             phone = address.split("\n")[-1]
-
+            print(ccode)
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
-
+            print(address)
             hours = "Sorry, We're Currently Closed"
             lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
@@ -74,7 +75,7 @@ def fetch_data():
     statelist = soup.find("section", {"class": "StateList"}).findAll(
         "a", {"class": "Directory-listLink"}
     )
-
+    p = 0
     for stnow in statelist:
         check1 = 0
         stlink = "https://locations.outback.com/" + stnow["href"]
@@ -145,7 +146,7 @@ def fetch_data():
                     state=state.strip(),
                     zip_postal=pcode.strip(),
                     country_code="US",
-                    store_number=str(store),
+                    store_number=SgRecord.MISSING,
                     phone=phone.strip(),
                     location_type=SgRecord.MISSING,
                     latitude=str(lat),
@@ -156,7 +157,10 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=5,
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
