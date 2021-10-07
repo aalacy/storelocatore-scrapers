@@ -1,123 +1,101 @@
-import csv
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://loomisexpress.com"
-    api_url = "https://loomisexpress.com/loomship/Shipping/DropOffLocations"
-    session = SgRequests()
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://loomisexpress.com/"
+    api_url = "https://loomisexpress.com/loomship/Common/queryLocations"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://loomisexpress.com",
+        "Connection": "keep-alive",
+        "Referer": "https://loomisexpress.com/loomship/Shipping/DropOffLocations",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
     }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//a[text()="Last"]')
-    for d in div:
-        last_page_url = int("".join(d.xpath(".//@href")).split("=")[1].strip())
+    data = (
+        '{"origin_lat":'
+        + str(lat)
+        + ',"origin_lng":'
+        + str(long)
+        + ',"include_otc":true,"include_smart":false,"include_terminal":false,"limit":500,"within_distance":100000}'
+    )
 
-        for i in range(1, last_page_url + 1):
-            session = SgRequests()
-            page_url = (
-                f"https://loomisexpress.com/loomship/Shipping/DropOffLocations?page={i}"
-            )
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-            tr = tree.xpath('//tr[contains(@class, "gridrow")]')
-            for t in tr:
+    session = SgRequests()
 
-                location_name = (
-                    "".join(t.xpath(".//td[1]/text()")).replace("\n", "").strip()
-                )
-                street_address = "".join(t.xpath(".//td[2]/text()"))
-                state = "".join(t.xpath(".//td[4]/text()"))
-                postal = "".join(t.xpath(".//td[5]/text()"))
-                country_code = "CA"
-                city = "".join(t.xpath(".//td[3]/text()")).replace("\n", "").strip()
-                store_number = "<MISSING>"
-                phone = "".join(t.xpath(".//td[6]/text()[1]")).replace("\n", "").strip()
-                if phone.find(",") != -1:
-                    phone = phone.split(",")[0].strip()
-                if phone.find("/") != -1:
-                    phone = phone.split("/")[0].strip()
-                if not phone.replace("-", "").isdigit():
-                    phone = "<MISSING>"
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()
 
-                hours_of_operation = (
-                    " ".join(t.xpath(".//td[6]/text()[position()>1]"))
-                    .replace("\n", "")
-                    .strip()
-                    or "<MISSING>"
-                )
-                if hours_of_operation.find("Located on") != -1:
-                    hours_of_operation = hours_of_operation.split("Located on")[
-                        0
-                    ].strip()
-                hours_of_operation = hours_of_operation.replace(
-                    "Stat holidays (Canadian, B.C.) closed", ""
-                ).strip()
-                if hours_of_operation == "By appointment only":
-                    hours_of_operation = "<MISSING>"
-                longitude = "<MISSING>"
-                latitude = "<MISSING>"
-                location_type = "<MISSING>"
-                row = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    postal,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                out.append(row)
+    for j in js:
 
-    return out
+        page_url = "https://loomisexpress.com/loomship/Shipping/DropOffLocations"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = f"{j.get('address_line_1')} {j.get('address_line_2')}"
+        city = j.get("city") or "<MISSING>"
+        state = j.get("province") or "<MISSING>"
+        postal = j.get("postal_code") or "<MISSING>"
+        country_code = "CA"
+        phone = j.get("phone") or "<MISSING>"
+        if "MON-FRI: 08:30-1" in phone:
+            phone = "<MISSING>"
+        latitude = j.get("latLng")[0]
+        longitude = j.get("latLng")[1]
+        hours_of_operation = (
+            "".join(j.get("attention")).replace(". Loca", "").replace("<b", "").strip()
+            or "<MISSING>"
+        )
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_search_distance_miles=70,
+        expected_search_radius_miles=70,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

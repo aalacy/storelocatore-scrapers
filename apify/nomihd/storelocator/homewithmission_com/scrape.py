@@ -46,7 +46,7 @@ def fetch_data():
         loc_res = session.get(page_url, headers=headers)
         loc_sel = lxml.html.fromstring(loc_res.text)
 
-        stores = loc_sel.xpath("//main//p[text()]")
+        stores = loc_sel.xpath("//main//p[.//text()]")
 
         for store in stores:
 
@@ -109,6 +109,7 @@ def scrape():
             SgRecordID(
                 {
                     SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
                 }
             )
         )

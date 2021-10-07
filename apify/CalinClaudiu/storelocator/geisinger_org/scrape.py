@@ -195,6 +195,11 @@ def fetch_data():
                 i["ADDRESS2"] = i["ADDRESS2"]
             except Exception:
                 i["ADDRESS2"] = ""
+            if not i["lat"]:
+                i["lat"] = "<MISSING>"
+
+            if not i["lon"]:
+                i["lon"] = "<MISSING>"
             yield i
 
 
