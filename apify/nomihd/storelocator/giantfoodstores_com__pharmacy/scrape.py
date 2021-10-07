@@ -87,8 +87,10 @@ class _SearchIteration(SearchIteration):
                     try:
                         details = data["Details"]
                         for d in details:
-                            if "Pharmacy Hours" == d["nvcTitle"]:
-                                hours = d["nvcDescription"].replace("\n", "; ").strip()
+                            if "Pharmacy Hours" == str(d["nvcTitle"]):
+                                hours = (
+                                    str(d["nvcDescription"]).replace("\n", "; ").strip()
+                                )
                                 if hours:
                                     if ";" == hours[-1]:
                                         hours = "".join(hours[:-1]).strip()
