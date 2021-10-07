@@ -59,7 +59,9 @@ def fetch_data():
             if "Canada" not in full_address[-1]:
                 full_address = full_address[:-1]
 
-            street_address = " ".join(full_address[0:-1])
+            street_address = (
+                " ".join(full_address[0:-1]).split("International Airport")[0].strip()
+            )
             city_state_zip = full_address[-1]
 
             city = city_state_zip.split(",")[0].strip()
@@ -78,13 +80,12 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            hours = list(
-                filter(
-                    str,
-                    [x.strip() for x in store_info_divs[-1].xpath(".//text()")],
-                )
-            )
-            hours_of_operation = "; ".join(hours)
+            hours = store_info_divs[-1].xpath("p")
+            hours_list = []
+            for hour in hours:
+                hours_list.append("".join(hour.xpath(".//text()")).strip())
+
+            hours_of_operation = "; ".join(hours_list)
             latitude, longitude = "<MISSING>", "<MISSING>"
             raw_address = "<MISSING>"
 
@@ -111,7 +112,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
