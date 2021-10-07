@@ -1,3 +1,4 @@
+import tabula as tb  # noqa
 from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
@@ -9,15 +10,18 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.static import static_zipcode_list, SearchableCountries
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import International_Parser, parse_address
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from io import BytesIO
+import pikepdf
+from bs4 import BeautifulSoup
 
 local = threading.local()
 
 
 def get_session(refresh=False):
     if not hasattr(local, "session") or refresh:
-        local.session = SgRequests().requests_retry_session(backoff_factor=0.3)
+        local.session = SgRequests()
 
     return local.session
 
@@ -76,7 +80,7 @@ def fetch_locations(code, tracker):
     while "Le nombre maximum des demandes de votre IP" in response.text:
         session = get_session(True)
         response = session.get(search_url.format(code))
-    session_id = response.url.split("=")[-1]
+    session_id = response.url.params.get("SessionGuid")
     hdr = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Content-Type": "application/x-www-form-urlencoded",
@@ -103,7 +107,7 @@ def fetch_locations(code, tracker):
     all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
     next_page = dom.xpath('//a[@title="page suivante"]/@href')
     while next_page:
-        sleep(randint(0, 5))
+        sleep(randint(0, 10))
         response = session.get(urljoin(start_url, next_page[0]))
         response = session.post(start_url, headers=hdr, data=frm)
         dom = etree.HTML(
@@ -120,7 +124,7 @@ def fetch_locations(code, tracker):
         location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
         raw_adr = poi_html.xpath(".//address/text()")
         raw_adr = [e.strip() for e in raw_adr]
-        addr = parse_address_intl(" ".join(raw_adr))
+        addr = parse_address(International_Parser(), " ".join(raw_adr))
 
         if not check_is_in_france(raw_adr, tracker, session):
             continue
@@ -143,11 +147,60 @@ def fetch_locations(code, tracker):
     return items
 
 
-def fetch_data():
-    tracker = {}
-    all_codes = static_zipcode_list(10, country_code=SearchableCountries.FRANCE)
+def fetch_urls(session):
+    url = "https://www.gps-data-team.com/pdf/ALDI_fr.pdf"
+    response = session.get(url)
+    file = BytesIO(response.content)
+    pdf_file = pikepdf.Pdf.open(file)
+    urls = []
+    # iterate over PDF pages
+    for page in pdf_file.pages:
+        for annots in page.get("/Annots"):
+            uri = annots.get("/A").get("/URI")
+            if uri is not None:
+                page_url = str(uri)
+                if "ALDI-" in page_url and "pdf" not in page_url:
+                    page_url = page_url.encode("cp1252").decode("utf-8")
+                    urls.append(page_url)
 
-    with ThreadPoolExecutor() as executor:
+    return urls
+
+
+def fetch_location(page_url, session, tracker):
+    response = session.get(page_url)
+    soup = BeautifulSoup(response.text, "lxml")
+    location_name = soup.find("a", itemprop="url").text
+    address = soup.find("span", itemprop="streetAddress").text
+    addr = parse_address(International_Parser(), address)
+
+    latitude = soup.find("span", itemprop="latitude").text
+    longitude = soup.find("span", itemprop="longitude").text
+
+    if tracker.get(address) or tracker.get(addr.street_address_1):
+        return None
+
+    street_address = addr.street_address_1
+    city = addr.city
+    postal = addr.postcode
+
+    return SgRecord(
+        locator_domain="aldi.fr",
+        page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
+        location_name=location_name,
+        latitude=latitude,
+        longitude=longitude,
+        street_address=street_address,
+        city=city,
+        zip_postal=postal,
+        country_code="FR",
+    )
+
+
+def fetch_data():
+    with ThreadPoolExecutor() as executor, SgRequests() as session:
+        tracker = {}
+        all_codes = static_zipcode_list(10, country_code=SearchableCountries.FRANCE)
+
         futures = [
             executor.submit(fetch_locations, code, tracker) for code in all_codes
         ]
@@ -155,13 +208,22 @@ def fetch_data():
             for poi in future.result():
                 yield poi
 
+        urls = fetch_urls(session)
+        futures = [
+            executor.submit(fetch_location, url, session, tracker) for url in urls
+        ]
+        for future in as_completed(futures):
+            if future.result():
+                yield future.result()
+
 
 def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=10000,
         )
     ) as writer:
         for item in fetch_data():
