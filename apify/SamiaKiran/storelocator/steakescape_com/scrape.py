@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "steakescape_com"
@@ -40,15 +40,35 @@ def fetch_data():
                 except:
                     loc.select_one("a[href*=ubereats]").get("href")
                 session = SgRequests()
-                r = session.get(address_url, headers=headers, allow_redirects=True)
+                r = session.get(address_url, headers=headers)
                 if r.status_code != 410:
                     soup = BeautifulSoup(r.text, "html.parser")
-                    temp = r.text.split('"address":')[1].split("</script>")[0]
-                    street_address = temp.split('"streetAddress":"')[1].split('"')[0]
-                    city = temp.split('"addressLocality":"')[1].split('"')[0]
-                    state = temp.split('"addressRegion":"')[1].split('"')[0]
-                    zip_postal = temp.split('"postalCode":"')[1].split('"')[0]
-                    phone = temp.split('"telephone":"')[1].split('"')[0]
+                    try:
+                        temp = r.text.split('"address":')[1].split("</script>")[0]
+                        street_address = temp.split('"streetAddress":"')[1].split('"')[
+                            0
+                        ]
+                        city = temp.split('"addressLocality":"')[1].split('"')[0]
+                        state = temp.split('"addressRegion":"')[1].split('"')[0]
+                        zip_postal = temp.split('"postalCode":"')[1].split('"')[0]
+                        phone = temp.split('"telephone":"')[1].split('"')[0]
+                    except:
+                        address = (
+                            r.text.split(
+                                '<script type="application/json" id="__REDUX_STATE__">'
+                            )[1]
+                            .split("</script")[0]
+                            .split(r"{\u0022address\u0022:\u0022")[1]
+                            .split(r"\u0022")[0]
+                        )
+
+                        address = address.split(",")
+                        street_address[0]
+                        city = address[1]
+                        state = address[2]
+                        zip_postal = MISSING
+                        phone = r.text.split('"telephone":"')[1].split('"')[0]
+
                     try:
                         hours_of_operation = (
                             soup.findAll("table", {"class": "ga gb"})[-1]
@@ -124,18 +144,19 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
