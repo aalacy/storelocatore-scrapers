@@ -85,16 +85,7 @@ class _SearchIteration(SearchIteration):
                     found_location_at(float(latitude), float(longitude))
                     hours = ""
                     try:
-                        details = data["Details"]
-                        for d in details:
-                            if "Pharmacy Hours" == str(d["nvcTitle"]):
-                                hours = (
-                                    str(d["nvcDescription"]).replace("\n", "; ").strip()
-                                )
-                                if hours:
-                                    if ";" == hours[-1]:
-                                        hours = "".join(hours[:-1]).strip()
-                                break
+                        hours = data["Details"][0]["nvcDescription"]
                     except:
                         pass
 
