@@ -181,8 +181,6 @@ if __name__ == "__main__":
     ) as writer:
         with SgRequests() as http:
             search_iter = ExampleSearchIteration(http=http)
-            # for rec in search_iter.do(coord=(53.9590858,-1.0792403),zipcode = None,current_country = None, items_remaining = None, found_location_at = print):
-            #   print(rec)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
