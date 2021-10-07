@@ -1,3 +1,5 @@
+import re
+
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
@@ -25,17 +27,19 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "oakstreethealth.com"
 
-    items = base.find(class_="flex-blocks").find_all("li")
+    items = base.ul.find_all("li")
     for item in items:
+        if "coming soon" in item.text.lower():
+            continue
 
-        street_address = item.find(class_="type-body").text.strip()
-        city = (
-            item.find(class_="type-body-lg").a.text.split("|")[1].split(",")[0].strip()
+        raw_address = list(
+            item.find(class_="flex-auto").find_all("div")[-1].stripped_strings
         )
-        state = (
-            item.find(class_="type-body-lg").a.text.split("|")[1].split(",")[1].strip()
-        )
-
+        street_address = raw_address[0].strip()
+        city_line = raw_address[-1].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
         store_number = "<MISSING>"
 
@@ -46,6 +50,11 @@ def fetch_data(sgw: SgWriter):
         base = BeautifulSoup(req.text, "lxml")
 
         location_name = base.h1.text.strip()
+        try:
+            if "coming soon" in base.find(class_="relative image-label").text.lower():
+                continue
+        except:
+            pass
 
         try:
             zip_code = (
@@ -74,13 +83,7 @@ def fetch_data(sgw: SgWriter):
         except:
             location_type = "<MISSING>"
 
-        phone = (
-            base.find(class_="text-stack")
-            .find_all(class_="flex items-start")[1]
-            .text.strip()
-        )
-        if len(phone) > 40:
-            phone = "<MISSING>"
+        phone = base.find(class_="flex-1 tabular-nums").text.strip()
         try:
             hours_of_operation = " ".join(
                 list(base.find_all(class_="flex items-start")[-1].stripped_strings)
@@ -91,32 +94,16 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<MISSING>"
 
         try:
-            map_url = base.find(rel="noopener noreferrer")["href"]
-            req = session.get(map_url, headers=headers)
-            map_link = req.url
-            at_pos = map_link.rfind("@")
-            latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-            longitude = map_link[
-                map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
-            ].strip()
-
-            if len(latitude) > 20:
-                req = session.get(map_url, headers=headers)
-                maps = BeautifulSoup(req.text, "lxml")
-
-                try:
-                    raw_gps = maps.find("meta", attrs={"itemprop": "image"})["content"]
-                    latitude = raw_gps[
-                        raw_gps.find("=") + 1 : raw_gps.find("%")
-                    ].strip()
-                    longitude = raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
-                except:
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
+            latitude = re.findall(r'latitude":"[0-9]{2}\.[0-9]+', str(base))[0].split(
+                ":"
+            )[1][1:]
+            longitude = re.findall(r'longitude":"-[0-9]{2,3}\.[0-9]+', str(base))[
+                0
+            ].split(":")[1][1:]
         except:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-        if street_address == "2240 East 53rd St Suite B-1":
+        if street_address == "2240 East 53rd St":
             latitude = "39.849198"
             longitude = "-86.12594"
         if "8923 Flatlands" in street_address:

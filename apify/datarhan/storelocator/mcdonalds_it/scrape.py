@@ -23,7 +23,7 @@ def fetch_data():
             locator_domain=domain,
             page_url="https://www.mcdonalds.it/ristorante",
             location_name=SgRecord.MISSING,
-            street_address=poi["address"],
+            street_address=poi["address"].strip().replace("\r\n", " "),
             city=poi["city"],
             state=SgRecord.MISSING,
             zip_postal=SgRecord.MISSING,

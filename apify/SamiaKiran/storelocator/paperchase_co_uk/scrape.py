@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -17,6 +18,24 @@ headers = {
 
 DOMAIN = "https://www.paperchase.com/en_gb/"
 MISSING = SgRecord.MISSING
+
+
+def parse_address(address):
+    pa = parse_address_intl(address)
+
+    street_address = pa.street_address_1
+    street_address = street_address if street_address else MISSING
+
+    city = pa.city
+    city = city.strip() if city else MISSING
+
+    state = pa.state
+    state = state.strip() if state else MISSING
+
+    zip_postal = pa.postcode
+    zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+    return street_address, city, state, zip_postal
 
 
 def fetch_data():
@@ -53,11 +72,8 @@ def fetch_data():
                 if "undefined" in street_address:
                     address = loc.get_text(separator="|", strip=True).split("|")
                     location_name = address[0]
-                    address = address[1].split(",")
-                    street_address = address[0]
-                    city = address[1]
-                    state = MISSING
-                    zip_postal = address[2]
+                    raw_address = address[1]
+                    street_address, city, state, zip_postal = parse_address(raw_address)
                     country_code = address[3]
                     phone = MISSING
                     hours_of_operation = MISSING
@@ -66,9 +82,14 @@ def fetch_data():
                         location_name = loc["name"]
                     except:
                         location_name = MISSING
-                    city = address["addressLocality"]
-                    state = MISSING
-                    zip_postal = address["postalCode"]
+                    raw_address = (
+                        address["streetAddress"]
+                        + " "
+                        + address["addressLocality"]
+                        + " "
+                        + address["postalCode"]
+                    )
+                    street_address, city, state, zip_postal = parse_address(raw_address)
                     country_code = address["addressCountry"]
                     phone = loc["telephone"]
                     hour_list = loc["openingHoursSpecification"]
@@ -94,7 +115,6 @@ def fetch_data():
                             + "-"
                             + closes
                         )
-                street_address = street_address.replace("\n", "")
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
@@ -110,6 +130,7 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address.replace("\n", " ").strip(),
                 )
 
 
