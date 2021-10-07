@@ -14,7 +14,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 website = "https://moneypass.com/"
 store_url = "https://locationapi.wave2.io/api/client/getlocations"
 MISSING = SgRecord.MISSING
-max_workers = 2
+max_workers = 1
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
