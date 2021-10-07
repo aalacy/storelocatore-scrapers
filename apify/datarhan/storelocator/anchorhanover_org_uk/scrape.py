@@ -48,6 +48,11 @@ def fetch_data():
         location_type = loc_dom.xpath(
             '//button[contains(text(), "Property type")]/following-sibling::div[1]/p/text()'
         )[0]
+        geo = (
+            loc_dom.xpath('//iframe[contains(@src, "/maps/embed")]/@src')[0]
+            .split("q=")[-1]
+            .split(",")
+        )
 
         item = SgRecord(
             locator_domain=domain,
@@ -61,8 +66,8 @@ def fetch_data():
             store_number="",
             phone=poi["@graph"][2]["telephone"],
             location_type=location_type,
-            latitude="",
-            longitude="",
+            latitude=geo[0],
+            longitude=geo[1],
             hours_of_operation="",
         )
 
