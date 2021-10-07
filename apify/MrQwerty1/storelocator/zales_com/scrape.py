@@ -82,7 +82,11 @@ if __name__ == "__main__":
         "Sec-Fetch-Site": "same-origin",
         "TE": "trailers",
     }
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for _z in DynamicZipSearch(
             country_codes=[SearchableCountries.USA],
             max_search_distance_miles=100,
