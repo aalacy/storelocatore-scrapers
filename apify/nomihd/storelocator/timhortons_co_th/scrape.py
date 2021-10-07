@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests, SgRequestError
+from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from lxml import etree
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
