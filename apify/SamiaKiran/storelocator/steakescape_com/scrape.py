@@ -1,4 +1,3 @@
-import json
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
