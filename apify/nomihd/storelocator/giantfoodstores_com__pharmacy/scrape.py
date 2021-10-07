@@ -85,7 +85,7 @@ class _SearchIteration(SearchIteration):
                     found_location_at(float(latitude), float(longitude))
                     hours = ""
                     try:
-                        hours = data["Details"][0]["nvcDescription"]
+                        hours = data["Details"][0]["nvcDescription"]  # noqa
                     except:
                         pass
 
