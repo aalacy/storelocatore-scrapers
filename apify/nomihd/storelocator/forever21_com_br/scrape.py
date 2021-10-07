@@ -2,7 +2,6 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-from sgpostal import sgpostal as parser
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
