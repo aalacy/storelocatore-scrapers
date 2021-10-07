@@ -104,10 +104,8 @@ def fetch_data():
                             phone = "<MISSING>"
                         phone = phone.replace("&#40;", "(").replace("&#41;", ")")
                         if "outlet" in name.lower():
-                            name = "Coach Outlet"
                             typ = "Coach Outlet"
                         else:
-                            name = "Coach"
                             typ = "Coach"
                         if "popup" not in name.lower() and "pop-up" not in name.lower():
                             yield SgRecord(
@@ -220,10 +218,8 @@ def fetch_data():
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
         if "outlet" in name.lower():
             typ = "Coach Outlet"
-            name = "Coach Outlet"
         else:
             typ = "Coach"
-            name = "Coach"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
@@ -339,10 +335,8 @@ def fetch_data():
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
         if "outlet" in name.lower():
             typ = "Coach Outlet"
-            name = "Coach Outlet"
         else:
             typ = "Coach"
-            name = "Coach"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
@@ -409,10 +403,18 @@ def fetch_data():
                         add = add.replace("&#39;", "'")
                         if "outlet" in name.lower():
                             typ = "Coach Outlet"
-                            name = "Coach Outlet"
                         else:
                             typ = "Coach"
-                            name = "Coach"
+                        if "coach house" in name.lower():
+                            typ = "Coach Flagship Store"
+                        if (
+                            "coach fenwick" in name.lower()
+                            or "coach harvey" in name.lower()
+                            or "coach john lewis" in name.lower()
+                            or "coach selfridges" in name.lower()
+                            or "coach williams &" in name.lower()
+                        ):
+                            typ = "Coach Department & Specialty Store"
                         if "popup" not in name.lower() and "pop-up" not in name.lower():
                             yield SgRecord(
                                 locator_domain=website,
