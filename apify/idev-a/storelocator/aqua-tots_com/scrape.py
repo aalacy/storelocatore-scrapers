@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("aqua-tots")
 
@@ -53,7 +55,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
