@@ -72,11 +72,12 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
         try:
             response = session.get(url, headers=headers)
             soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
         except Exception as e:
             logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
-        logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
-        if len(response.text) < 400:
-            logzilla.info(f"Content\n{response.text}\n\n")
+
         try:
             data = json.loads(
                 str(
