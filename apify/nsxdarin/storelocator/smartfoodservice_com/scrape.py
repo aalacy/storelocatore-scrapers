@@ -49,9 +49,9 @@ def fetch_data():
                     .split("</h2>")[0]
                     .replace("<sup>&reg;</sup>", "")
                 )
-            if 'name="latitude"' in line2:
+            if 'name="latitude"' in line2 and lat == "":
                 lat = line2.split('value="')[1].split('"')[0]
-            if 'name="longitude"' in line2:
+            if 'name="longitude"' in line2 and lng == "":
                 lng = line2.split('value="')[1].split('"')[0]
             if '"streetAddress": "' in line2:
                 add = line2.split('"streetAddress": "')[1].split('"')[0]
@@ -63,7 +63,7 @@ def fetch_data():
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if 'telephone": "' in line2:
                 phone = line2.split('telephone": "')[1].split('"')[0]
-            if 'name="storeNum"' in line2:
+            if 'name="storeNum"' in line2 and store == "":
                 store = line2.split('value="')[1].split('"')[0]
             if '"openingHours": ["' in line2:
                 hours = (

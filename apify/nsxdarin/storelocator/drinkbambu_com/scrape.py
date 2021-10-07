@@ -25,6 +25,7 @@ def fetch_data():
                 if ">View Location</a>" in item:
                     locs.append("https://www.drinkbambu.com" + item.split('"')[0])
     for loc in locs:
+        CS = False
         name = ""
         add = ""
         city = ""
@@ -39,6 +40,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "Coming Soon" in line2:
+                CS = True
             if '<h1 itemprop="name">' in line2:
                 name = line2.split('<h1 itemprop="name">')[1].split("<")[0]
             if '<span itemprop="address">' in line2:
@@ -73,7 +76,7 @@ def fetch_data():
         if "<" in add:
             add = add.split("<")[0]
         add = add.strip()
-        if city != "":
+        if city != "" and CS is False:
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
