@@ -46,6 +46,8 @@ def fetch_data():
                             .replace("\\", "")
                         )
                         name = name.replace("\\u2019", "'")
+                        if "boaz-foodland" in loc:
+                            phone = "(256) 593-7206"
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,
