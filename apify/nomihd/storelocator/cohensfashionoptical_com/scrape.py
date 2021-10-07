@@ -5,7 +5,7 @@ import us
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "cohensfashionoptical.com"
@@ -38,9 +38,14 @@ def fetch_data():
                 .strip()
             )
 
-            street_address = "".join(
-                store.xpath('.//div[@class="address"]/span[@class="street"]/text()')
-            ).strip()
+            street_address = (
+                "".join(
+                    store.xpath('.//div[@class="address"]/span[@class="street"]/text()')
+                )
+                .strip()
+                .replace("Cross County Center,", "")
+                .strip()
+            )
 
             city_state_zip = "".join(
                 store.xpath('.//div[@class="address"]/span[@class="city_zip"]/text()')
@@ -127,7 +132,15 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

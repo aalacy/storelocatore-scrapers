@@ -72,10 +72,7 @@ def fetch_locations(tracker, session, locations=[], page=0):
     for id, store in stores:
         if id in tracker or store["country"].upper() not in ["US", "CA", "CANADA"]:
             continue
-        if store["address"] + store["city"] in tracker:
-            continue
         tracker.append(id)
-        tracker.append(store["address"] + store["city"])
         locations.append(store)
     try:
         return fetch_locations(tracker, session, locations, page + 1)
@@ -86,7 +83,8 @@ def fetch_locations(tracker, session, locations=[], page=0):
 retryer = Retrying(stop=stop_after_attempt(3), reraise=True)
 
 
-def fetch_details(store, retry=False):
+def fetch_details(tup, retry=False):
+    store, session = tup
     locator_domain = "https://www.circlek.com"
     location_name = ""
     street_address = ""
@@ -101,15 +99,14 @@ def fetch_details(store, retry=False):
     longitude = ""
     hours_of_operation = ""
     page_url = "https://www.circlek.com" + store["url"]
-
-    with get_session(retry) as session:
-        store_req = session.get(
-            page_url,
-            headers=headers,
-        )
+    logger.info(page_url)
+    store_req = session.get(
+        page_url,
+        headers=headers,
+    )
 
     if store_req.status_code not in (500, 404, 200):
-        return retryer(fetch_details, store, True)
+        return retryer(fetch_details, (store, session), True)
 
     store_sel = lxml.html.fromstring(store_req.text)
     json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
@@ -118,7 +115,7 @@ def fetch_details(store, retry=False):
             try:
                 store_json = json.loads(js)
             except:
-                return retryer(fetch_details, store, True)
+                return retryer(fetch_details, (store, session), True)
             location_name = (
                 store_json.get("description").split(",")[0]
                 or store.get("display_brand")
@@ -216,7 +213,7 @@ def fetch_details(store, retry=False):
                 and city == "<MISSING>"
                 and state == "<MISSING>"
             ):
-                return retryer(fetch_details, store, True)
+                return retryer(fetch_details, (store, session), True)
 
             return [
                 locator_domain,
@@ -240,7 +237,10 @@ def fetch_data(sgw: SgWriter):
     with ThreadPoolExecutor() as executor, SgRequests() as session:
         tracker: List[str] = []
         locations = fetch_locations(tracker, session)
-        futures = [executor.submit(fetch_details, location) for location in locations]
+        futures = [
+            executor.submit(fetch_details, (location, session))
+            for location in locations
+        ]
         for future in as_completed(futures):
             poi = future.result()
 
