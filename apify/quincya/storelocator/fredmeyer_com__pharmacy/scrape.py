@@ -88,17 +88,13 @@ def fetch_data(sgw: SgWriter):
                     phone = "<MISSING>"
             except:
                 phone = "<MISSING>"
-            hours_of_operation = (
-                " ".join(store["openingHours"])
-                .replace("Su-Sa", "Sun - Sat:")
-                .replace("Su-Fr", "Sun - Fri:")
-                .replace("-00:00", " - Midnight")
-                .replace("Su ", "Sun")
-                .replace("Mo-Fr", "Mon - Fri")
-                .replace("Sa ", "Sat ")
-                .replace("SunCLOSED", "Sun CLOSED")
-                .replace("  ", " ")
-            ).strip()
+            hours_of_operation = " ".join(
+                list(
+                    base.find(class_="StoreInformation-pharmacyHours")
+                    .find(class_="StoreInformation-dayAndHoursWrapper")
+                    .stripped_strings
+                )
+            )
 
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
