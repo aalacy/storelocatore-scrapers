@@ -30,14 +30,8 @@ def determine_country(country):
 def fetch_records(http, search):
     for lat, lng in search:
         url = f"https://www.t2tea.com/on/demandware.store/Sites-UNI-T2-EU-Site/en_{search.current_country().upper()}/Stores-FindStores?radius=1500&lat={lat}&long={lng}&dwfrm_storelocator_latitude={lat}&dwfrm_storelocator_longitude={lng}"
-        try:
-            res = http.get(url, headers=_headers)
-            locations = res.json()["stores"]
-        except:
-            print(res)
-            import pdb
-
-            pdb.set_trace()
+        res = http.get(url, headers=_headers)
+        locations = res.json()["stores"]
         logger.info(url)
         logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
         for _ in locations:
