@@ -90,10 +90,13 @@ def fetch_data(sgw: SgWriter):
             .strip()
         ) or "<MISSING>"
         if hours_of_operation == "<MISSING>":
-            hours_of_operation = "".join(
-                tree.xpath(
-                    '//p[./strong[text()="Regular Hours"]]/following-sibling::p/text()'
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//p[./strong[text()="Regular Hours"]]/following-sibling::p/text()'
+                    )
                 )
+                or "<MISSING>"
             )
         tmphours = (
             " ".join(
@@ -133,6 +136,20 @@ def fetch_data(sgw: SgWriter):
             )
             or "<MISSING>"
         )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h3[./strong[text()="Hours"]]/following-sibling::p/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+        hours_of_operation = hours_of_operation.replace("Temporary Hours", "").strip()
+        if hours_of_operation.find("Open") != -1:
+            hours_of_operation = hours_of_operation.split("Open")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

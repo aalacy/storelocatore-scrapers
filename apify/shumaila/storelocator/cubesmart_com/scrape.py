@@ -3,6 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
+import re
 
 session = SgRequests()
 headers = {
@@ -37,14 +38,14 @@ headers1 = {
 
 
 def fetch_data():
-
+    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.cubesmart.com/facilities/query/GetSiteGeoLocations"
 
     try:
-        loclist = session.post(url, headers=headers, verify=False).json()
+        loclist = session.post(url, headers=headers).json()
     except:
         headers["Cookie"] = cookielist[1]
-        loclist = session.post(url, headers=headers, verify=False).json()
+        loclist = session.post(url, headers=headers).json()
     for loc in loclist:
         store = str(loc["Id"])
         street = loc["Address"]
@@ -93,6 +94,7 @@ def fetch_data():
                 .replace("<br>", " ")
                 .lstrip()
             )
+            hours = re.sub(cleanr, " ", hours).strip()
         except:
 
             hours = "<MISSING>"
