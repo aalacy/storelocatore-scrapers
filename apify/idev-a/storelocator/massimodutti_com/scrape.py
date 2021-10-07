@@ -4,7 +4,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_2
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("massimodutti")
@@ -30,7 +30,6 @@ days = [
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     for lat, lng in search:
-        http.clear_cookies()
         res = http.get(base_url.format(lat, lng), headers=_headers)
         if res.status_code != 200:
             continue
@@ -39,9 +38,6 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         for store in locations:
             hours = []
             for hr in store.get("openingHours", {}).get("schedule", []):
-                import pdb
-
-                pdb.set_trace()
                 times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['endHour']}"
                 if len(hr["weekdays"]) == 1:
                     hh = hr["weekdays"][0]
@@ -78,12 +74,19 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                 phone=phone,
                 country_code=store["countryCode"],
                 hours_of_operation="; ".join(hours),
+                locator_domain=locator_domain,
             )
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    search = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, granularity=Grain_2()
+    )
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=20
+        )
+    ) as writer:
         with SgRequests(proxy_country="us") as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
