@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
 
         state = "<MISSING>"
         postal = "<MISSING>"
-        country_code = "US"
+        country_code = "PK"
         city = cp
         if cp[0].isdigit():
             postal = cp.split()[0].strip()
