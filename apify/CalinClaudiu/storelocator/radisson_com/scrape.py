@@ -93,7 +93,10 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
                 strict=False,
             )
         except Exception:
-            data = no_json(response.text)
+            try:
+                data = no_json(response.text)
+            except Exception:
+                data = {}
         data["index"] = index
         data["requrl"] = url
         data["STATUS"] = True
