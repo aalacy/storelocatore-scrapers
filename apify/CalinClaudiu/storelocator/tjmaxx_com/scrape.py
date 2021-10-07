@@ -8,7 +8,6 @@ from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
-import json
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -99,9 +98,10 @@ class ExampleSearchIteration(SearchIteration):
         if locations:
             if locations["Status"] == 0:
                 for rec in locations["Stores"]:
-                    page_url = (MISSING,)
-                    location_name = (str(rec["Name"]).strip(),)
-                    street_address = (
+                    location_name = str(
+                        str(rec["Name"]).strip(),
+                    )
+                    street_address = str(
                         str(rec["Address"]).strip()
                         + ", "
                         + str(rec["Address2"]).strip(),
@@ -115,9 +115,9 @@ class ExampleSearchIteration(SearchIteration):
                     location_type = (str(rec["Chain"]).strip(),)
                     latitude = (rec["Latitude"],)
                     longitude = (rec["Longitude"],)
-                    locator_domain = (MISSING,)
-                    hours_of_operation = (strip_para(str(rec["Hours"])).strip(),)
-                    raw_address = MISSING
+                    hours_of_operation = str(
+                        strip_para(str(rec["Hours"])).strip(),
+                    )
                     if latitude:
                         if longitude:
                             found_location_at(
