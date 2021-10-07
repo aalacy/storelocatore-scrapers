@@ -106,15 +106,33 @@ class ExampleSearchIteration(SearchIteration):
                         + ", "
                         + str(rec["Address2"]).strip(),
                     )
-                    city = str(str(rec["City"]).strip(),)
-                    state = str(str(rec["State"]).strip(),)
-                    zip_postal = str(str(rec["Zip"]).strip(),)
-                    country_code = str(str(rec["Country"]).strip(),)
-                    store_number = str(str(rec["StoreID"]).strip(),)
-                    phone = str(str(rec["Phone"]).strip(),)
-                    location_type = str(str(rec["Chain"]).strip(),)
-                    latitude = str(rec["Latitude"],)
-                    longitude = str(rec["Longitude"],)
+                    city = str(
+                        str(rec["City"]).strip(),
+                    )
+                    state = str(
+                        str(rec["State"]).strip(),
+                    )
+                    zip_postal = str(
+                        str(rec["Zip"]).strip(),
+                    )
+                    country_code = str(
+                        str(rec["Country"]).strip(),
+                    )
+                    store_number = str(
+                        str(rec["StoreID"]).strip(),
+                    )
+                    phone = str(
+                        str(rec["Phone"]).strip(),
+                    )
+                    location_type = str(
+                        str(rec["Chain"]).strip(),
+                    )
+                    latitude = str(
+                        rec["Latitude"],
+                    )
+                    longitude = str(
+                        rec["Longitude"],
+                    )
                     hours_of_operation = str(
                         strip_para(str(rec["Hours"])).strip(),
                     )
