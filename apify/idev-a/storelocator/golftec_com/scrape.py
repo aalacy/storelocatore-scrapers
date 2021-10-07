@@ -22,7 +22,13 @@ def fetch_records(http, search):
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
         url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
-        locations = http.get(url, headers=headers).json()
+        try:
+            res = http.get(url, headers=headers)
+            locations = res.json()
+        except:
+            import pdb
+
+            pdb.set_trace()
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         if "centers" in locations:
             for _ in locations["centers"]:
@@ -70,7 +76,8 @@ if __name__ == "__main__":
         )
     ) as writer:
         with SgRequests(
-            proxy_country="us", dont_retry_status_codes_exceptions=set([403, 407, 503])
+            proxy_country="us",
+            dont_retry_status_codes_exceptions=set([403, 407, 503, 502]),
         ) as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)

@@ -70,6 +70,7 @@ def fetch_data():
     session1 = SgRequests()
     url = "https://locations.outback.com/index.html"
     r = session1.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.find("section", {"class": "StateList"}).findAll(
         "a", {"class": "Directory-listLink"}
     )
