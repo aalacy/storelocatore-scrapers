@@ -55,12 +55,12 @@ class _SearchIteration(SearchIteration):
         }
 
         try:
-            data = {"vcZIPCode": zipcode, "vcLocale": "en-US"}
+            payload = {"vcZIPCode": zipcode, "vcLocale": "en-US"}
 
             r = self.__http.post(
                 "https://api.rxtouch.com/rxwebapi/1.0.5/giant/api/Store/GetStoresByZip",
                 headers=headers,
-                data=json.dumps(data),
+                data=json.dumps(payload),
             )
 
             json_data = r.json()
@@ -83,7 +83,18 @@ class _SearchIteration(SearchIteration):
                     latitude = data["fLatitude"]
                     longitude = data["fLongitude"]
                     found_location_at(float(latitude), float(longitude))
-                    hours = "<MISSING>"
+                    hours = ""
+                    try:
+                        details = data["Details"]
+                        for d in details:
+                            if "Pharmacy Hours" == d["nvcTitle"]:
+                                hours = d["nvcDescription"].replace("\n", "; ").strip()
+                                if hours:
+                                    if ";" == hours[-1]:
+                                        hours = "".join(hours[:-1]).strip()
+                                break
+                    except:
+                        pass
 
                     page_url = "<MISSING>"
                     try:
