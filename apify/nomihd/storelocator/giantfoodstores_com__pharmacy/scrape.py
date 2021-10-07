@@ -83,11 +83,7 @@ class _SearchIteration(SearchIteration):
                     latitude = data["fLatitude"]
                     longitude = data["fLongitude"]
                     found_location_at(float(latitude), float(longitude))
-                    hours = None
-                    try:
-                        hours = data["Details"][0]["nvcDescription"]  # noqa
-                    except:
-                        pass
+                    hours = "<MISSING>"
 
                     page_url = "<MISSING>"
                     try:
