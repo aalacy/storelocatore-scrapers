@@ -8,11 +8,26 @@ from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
+import json
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
-def nice_locs(resp):
-    
+
+def strip_para(x):
+    copy = []
+    inside = False
+    for i in x:
+        if i == "<" or inside:
+            inside = True
+            continue
+        elif i == ">":
+            inside = False
+            continue
+        else:
+            copy.append(i)
+    return "".join(copy)
+
+
 def fix_comma(x):
     h = []
     try:
@@ -22,6 +37,14 @@ def fix_comma(x):
         return ", ".join(h)
     except Exception:
         return x
+
+
+def replac(x):
+    x = str(x)
+    x = x.replace("'", "").replace("(", "").replace(")", "").replace(",", "")
+    if len(x) < 1:
+        return "<MISSING>"
+    return x
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -60,28 +83,71 @@ class ExampleSearchIteration(SearchIteration):
         lat, lng = coord
         # just some clever accounting of locations/country:
         numbers = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99"
-        url = str(f"https://marketingsl.tjx.com/storelocator/GetSearchResults?geolat={lat}&geolong={lng}&chain={numbers}&maxstores=9999&radius=1000")
+        url = str(
+            f"https://marketingsl.tjx.com/storelocator/GetSearchResults?geolat={lat}&geolong={lng}&chain={numbers}&maxstores=9999&radius=1000"
+        )
         headers = {}
-        headers[
-            "accept"
-        ] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
-        headers["accept-encoding"] = "gzip, deflate, br"
-        headers["accept-language"] = "en-US,en;q=0.9"
-        headers["cache-control"] = "no-cache"
-        headers["pragma"] = "no-cache"
         headers[
             "user-agent"
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         locations = None
         try:
             locations = SgRequests.raise_on_err(http.get(url, headers=headers)).json()
-            errorName = None
         except Exception as e:
             logzilla.error(f"{e}")
-
+        MISSING = "<MISSING>"
         if locations:
-            for rec in nice_locs(locations):
-                yield rec
+            if locations["Status"] == 0:
+                for rec in locations["Stores"]:
+                    page_url = (MISSING,)
+                    location_name = (str(rec["Name"]).strip(),)
+                    street_address = (
+                        str(rec["Address"]).strip()
+                        + ", "
+                        + str(rec["Address2"]).strip(),
+                    )
+                    city = (str(rec["City"]).strip(),)
+                    state = (str(rec["State"]).strip(),)
+                    zip_postal = (str(rec["Zip"]).strip(),)
+                    country_code = (str(rec["Country"]).strip(),)
+                    store_number = (str(rec["StoreID"]).strip(),)
+                    phone = (str(rec["Phone"]).strip(),)
+                    location_type = (str(rec["Chain"]).strip(),)
+                    latitude = (rec["Latitude"],)
+                    longitude = (rec["Longitude"],)
+                    locator_domain = (MISSING,)
+                    hours_of_operation = (strip_para(str(rec["Hours"])).strip(),)
+                    raw_address = MISSING
+                    if latitude:
+                        if longitude:
+                            found_location_at(
+                                replac(str(latitude)), replac(str(longitude))
+                            )
+                    yield SgRecord(
+                        page_url=MISSING,
+                        location_name=replac(location_name)
+                        if location_name
+                        else MISSING,
+                        street_address=replac(fix_comma(street_address))
+                        if street_address
+                        else MISSING,
+                        city=replac(city) if city else MISSING,
+                        state=replac(state) if state else MISSING,
+                        zip_postal=replac(zip_postal) if zip_postal else MISSING,
+                        country_code=replac(country_code) if country_code else MISSING,
+                        store_number=replac(store_number) if store_number else MISSING,
+                        phone=replac(phone) if phone else MISSING,
+                        location_type=replac(location_type)
+                        if location_type
+                        else MISSING,
+                        latitude=replac(latitude) if latitude else MISSING,
+                        longitude=replac(longitude) if longitude else MISSING,
+                        locator_domain=MISSING,
+                        hours_of_operation=replac(hours_of_operation)
+                        if hours_of_operation
+                        else MISSING,
+                        raw_address=MISSING,
+                    )
 
 
 if __name__ == "__main__":
@@ -89,7 +155,7 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_8(),
-        expected_search_radius_miles=None,
+        expected_search_radius_miles=100,
     )
 
     with SgWriter(
@@ -97,6 +163,8 @@ if __name__ == "__main__":
     ) as writer:
         with SgRequests() as http:
             search_iter = ExampleSearchIteration(http=http)
+            # for rec in search_iter.do(coord=(53.9590858,-1.0792403),zipcode = None,current_country = None, items_remaining = None, found_location_at = print):
+            #   print(rec)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
