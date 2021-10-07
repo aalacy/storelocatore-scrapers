@@ -47,19 +47,15 @@ def fetch_data():
             .strip()[:-2]
         )[2]["states"]
         for state in states:
+            hours = []
             for city in state["cities"]:
-                coming_soon = False
-                hours = []
                 for hr in city.get("locationHours", []):
                     if hr["label"] == "store":
                         for hh in hr["days"]:
                             if hh["hours"] == "Opening Soon":
-                                coming_soon = True
                                 break
                             else:
                                 hours.append(f"{hh['dayLabel']}: {hh['hours']}")
-                if coming_soon:
-                    continue
 
                 for _ in city.get("locations", []):
                     page_url = locator_domain + _["url"]
