@@ -1,3 +1,4 @@
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -30,8 +31,10 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         temp = r.text.split("locationData =")[2].split(" 'mealsCounter': 0")[0]
         location_name = temp.split("'name': '")[1].split("'")[0]
+        location_name = html.unescape(location_name)
         street_address = temp.split("'street': '")[1].split("'")[0]
         city = temp.split(" 'city': '")[1].split("'")[0]
+        city = html.unescape(city)
         state = temp.split("  'abbreviation': '")[1].split("'")[0]
         zip_postal = temp.split("'zip': '")[1].split("'")[0]
         country_code = "US"

@@ -142,6 +142,12 @@ def fetch_data():
                     zc = "<MISSING>"
                 if "<" in zc and zc != "<MISSING>":
                     zc = zc.split("<")[0].strip()
+                if "675 Ponce de Leon" in add:
+                    add = add + " Suite W115B"
+                    zc = "30308"
+                if "660 Stanford Shopping Center" in add:
+                    add = add + " Room #9"
+                    zc = "94304"
                 if len(state) == 2:
                     country = "US"
                 yield SgRecord(
