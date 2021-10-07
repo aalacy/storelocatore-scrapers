@@ -31,11 +31,11 @@ def fetch_data():
         for _type in types:
             params = dict(
                 action="mapmarkers",
-                ne_lat="38.91090161000008",
-                ne_lng="-77.01847452246247",
-                sw_lat="38.905358081773116",
-                sw_lng="-77.06009167753754",
-                zoom="15",
+                ne_lat="39.64641823308406",
+                ne_lng="-70.28235054593024",
+                sw_lat="37.79514263845464",
+                sw_lng="-80.82098579983649",
+                zoom="7",
                 reset="0",
                 formaction="search",
                 type=_type,

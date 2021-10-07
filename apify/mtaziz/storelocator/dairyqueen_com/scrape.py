@@ -7,6 +7,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 import json
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
 MISSING = SgRecord.MISSING
@@ -18,6 +20,7 @@ headers = {
 }
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
 def get_store_urls():
     store_urls = []
     with SgRequests() as http:
@@ -41,110 +44,148 @@ def get_store_urls():
     return store_urls
 
 
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def fetch_records_us(idx, url, sgw: SgWriter):
     with SgRequests() as http:
-        logger.info(f"pulling the data from: {url}")
+        logger.info(f"[{idx}] Pulling the data from: {url}")
         r = http.get(url, headers=headers)
-        s = html.fromstring(r.text, "lxml")
-        data = s.xpath('//script[contains(@id, "__NEXT_DATA__")]/text()')
-        data_json = json.loads("".join(data))
-        contentletdata = data_json["props"]["pageProps"]["contentletData"]
-        key = "".join(list(contentletdata.keys()))
-        data = contentletdata[key]
-        locator_domain = DOMAIN
-        # Page URL
-        page_url = data["urlTitle"]
-        if page_url:
-            page_url = "https://www.dairyqueen.com" + page_url
-        else:
-            page_url = MISSING
-        logger.info(f"[{idx}] page_url: {page_url} | {len(page_url)}")
+        if r.status_code == 200:
+            s = html.fromstring(r.text, "lxml")
+            data = s.xpath('//script[contains(@id, "__NEXT_DATA__")]/text()')
+            data_json = json.loads("".join(data))
+            contentletdata = data_json["props"]["pageProps"]["contentletData"]
+            key = "".join(list(contentletdata.keys()))
+            data = contentletdata[key]
+            locator_domain = DOMAIN
+            # Page URL
+            page_url = data["urlTitle"]
+            if page_url:
+                page_url = "https://www.dairyqueen.com" + page_url
+            else:
+                page_url = MISSING
 
-        location_name = data["address1"]
-        location_name = location_name if location_name else MISSING
-        logger.info(f"[{idx}] location_name: {location_name}")
+            location_name = data["address1"]
+            location_name = location_name if location_name else MISSING
 
-        street_address = data["address3"]
-        street_address = street_address if street_address else MISSING
-        logger.info(f"[{idx}] Street Address: {street_address}")
+            street_address = data["address3"]
+            street_address = street_address if street_address else MISSING
+            city = data["city"]
+            city = city if city else MISSING
+            state = data["stateProvince"]
+            state = state if state else MISSING
+            zip_postal = data["postalCode"]
+            zip_postal = zip_postal if zip_postal else MISSING
+            logger.info(f"[{idx}] Zip Code: {zip_postal}")
 
-        city = data["city"]
-        city = city if city else MISSING
-        logger.info(f"[{idx}] City: {city}")
+            country_code = data["country"]
+            country_code = country_code if country_code else MISSING
 
-        state = data["stateProvince"]
-        state = state if state else MISSING
-        logger.info(f"[{idx}] State: {state}")
+            store_number = data["storeId"]
 
-        zip_postal = data["postalCode"]
-        zip_postal = zip_postal if zip_postal else MISSING
-        logger.info(f"[{idx}] Zip Code: {zip_postal}")
+            phone = data["phone"]
+            phone = phone if phone else MISSING
 
-        country_code = data["country"]
-        country_code = country_code if country_code else MISSING
+            # Location Type
+            location_type = data["conceptType"]
+            location_type = location_type if location_type else MISSING
 
-        store_number = data["storeId"]
+            # Latitude
+            latitude = data["latlong"].split(",")[0].strip()
+            latitude = latitude if latitude else MISSING
 
-        phone = data["phone"]
-        phone = phone if phone else MISSING
-        logger.info(f"[{idx}]  Phone: {phone}")
+            # Longitude
+            longitude = data["latlong"].split(",")[1].strip()
+            longitude = longitude if longitude else MISSING
 
-        # Location Type
-        location_type = data["conceptType"]
-        location_type = location_type if location_type else MISSING
+            hours_of_operation = ""
+            try:
+                hoo = data["miniSite"]
+                if hoo is None:
+                    hours_of_operation = MISSING
+                else:
+                    hoo1 = hoo["miniSiteHours"]
+                    hoo2 = hoo1.split(",")
+                    hoo3 = [i[:2] + " " + i[2:] for i in hoo2]
+                    hoo4 = [
+                        i.replace("1: ", "Sun: ")
+                        .replace("2: ", "Mon: ")
+                        .replace("3: ", "Tue: ")
+                        .replace("4: ", "Wed: ")
+                        .replace("5: ", "Thu: ")
+                        .replace("6: ", "Fri: ")
+                        .replace("7: ", "Sat: ")
+                        for i in hoo3
+                    ]
 
-        # Latitude
-        latitude = data["latlong"].split(",")[0].strip()
-        latitude = latitude if latitude else MISSING
+                    d = {}
+                    for i in hoo4:
+                        k = i.split(" ")[0].replace(":", "")
+                        v = i.split(" ")[1]
+                        d[k] = v
+                    if "Sun" in d:
+                        sun = "Sun: " + d["Sun"]
+                    else:
+                        sun = "Sun: Closed"
 
-        # Longitude
-        longitude = data["latlong"].split(",")[1].strip()
-        longitude = longitude if longitude else MISSING
-        hoo = data["miniSite"]["miniSiteHours"]
-        hoo1 = hoo.split(",")
+                    if "Mon" in d:
+                        mon = "Mon: " + d["Mon"]
+                    else:
+                        mon = "Mon: Closed"
 
-        for dn, i in enumerate(hoo1):
-            daytime = i[2:]
-            if dn == 0:
-                sun = "Sun: " + "" + daytime
-            if dn == 1:
-                mon = "Mon: " + "" + daytime
-            if dn == 2:
-                tue = "Tue: " + "" + daytime
-            if dn == 3:
-                wed = "Wed: " + "" + daytime
-            if dn == 4:
-                thu = "Thu: " + "" + daytime
-            if dn == 5:
-                fri = "Fri: " + "" + daytime
-            if dn == 6:
-                sat = "Sat: " + "" + daytime
-        daytimes = [sun, mon, tue, wed, thu, fri, sat]
-        hours_of_operation = "; ".join(daytimes)
-        hours_of_operation = hours_of_operation if hours_of_operation else MISSING
-        logger.info(f"[{idx}] HOO: {hours_of_operation}")
+                    if "Tue" in d:
+                        tue = "Tue: " + d["Tue"]
+                    else:
+                        tue = "Tue: Closed"
 
-        # Raw Address
-        raw_address = ""
-        raw_address = raw_address if raw_address else MISSING
-        rec = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-        sgw.write_row(rec)
+                    if "Wed" in d:
+                        wed = "Wed: " + d["Wed"]
+                    else:
+                        wed = "Wed: Closed"
+
+                    if "Thu" in d:
+                        thu = "Thu: " + d["Thu"]
+                    else:
+                        thu = "Thu: Closed"
+
+                    if "Fri" in d:
+                        fri = "Fri: " + d["Fri"]
+                    else:
+                        fri = "Fri: Closed"
+
+                    if "Sat" in d:
+                        sat = "Sat: " + d["Sat"]
+                    else:
+                        sat = "Sat: Closed"
+
+                    daytimes = [sun, mon, tue, wed, thu, fri, sat]
+                    hours_of_operation = "; ".join(daytimes)
+                    hours_of_operation = (
+                        hours_of_operation if hours_of_operation else MISSING
+                    )
+            except:
+                hours_of_operation = MISSING
+
+            # Raw Address
+            raw_address = ""
+            raw_address = raw_address if raw_address else MISSING
+            rec = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            sgw.write_row(rec)
 
 
 def fetch_data(sgw: SgWriter):

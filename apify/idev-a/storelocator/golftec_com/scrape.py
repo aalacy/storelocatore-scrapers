@@ -14,23 +14,6 @@ headers = {
 locator_domain = "https://www.golftec.com"
 
 
-def _p(val):
-    if (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    ):
-        return val
-    else:
-        return ""
-
-
 def fetch_records(http, search):
     # Need to add dedupe. Added it in pipeline.
     maxZ = search.items_remaining()
@@ -39,16 +22,8 @@ def fetch_records(http, search):
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
         url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
-        count = 0
-        while count < 2:
-            try:
-                res = http.get(url, headers=headers)
-                locations = res.json()
-            except:
-                http._client().cookies.clear()
-                http._refresh_ip()
-                count += 1
-
+        locations = http.get(url, headers=headers).json()
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         if "centers" in locations:
             for _ in locations["centers"]:
                 page_url = f"{locator_domain}{_['link']}"
@@ -79,11 +54,9 @@ def fetch_records(http, search):
                     locator_domain=locator_domain,
                 )
 
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-
-            logger.info(f"[{lat}, {lng}] [{len(locations)}] | [{progress}]")
+        logger.info(
+            f"[{lat}, {lng}] [{len(locations.get('centers', []))}] | [{progress}]"
+        )
 
 
 if __name__ == "__main__":
@@ -96,6 +69,8 @@ if __name__ == "__main__":
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=15
         )
     ) as writer:
-        with SgRequests(proxy_country="us") as http:
+        with SgRequests(
+            proxy_country="us", dont_retry_status_codes_exceptions=set([403, 407, 503])
+        ) as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
