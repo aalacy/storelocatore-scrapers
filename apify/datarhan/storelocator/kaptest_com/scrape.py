@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -32,7 +31,7 @@ def fetch_data():
             all_cities = dom.xpath('//table[@id="city_list"]//a/@href')
             for url in all_cities:
                 page_url = urljoin(start_url, url)
-                response = session.get(urljoin(start_url, url))
+                response = session.get(page_url)
                 dom = etree.HTML(response.text)
                 all_locations = dom.xpath('//div[@id="hor_school_scroll"]/div')
                 for poi_html in all_locations:
@@ -76,7 +75,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.CITY, SgRecord.Headers.STREET_ADDRESS})
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.CITY})
         )
     ) as writer:
         for item in fetch_data():
