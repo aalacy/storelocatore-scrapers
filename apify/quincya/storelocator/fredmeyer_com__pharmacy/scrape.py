@@ -35,11 +35,19 @@ def fetch_data(sgw: SgWriter):
         link = item.text
         if "stores/details" in link:
 
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+            try:
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
 
-            if "Pharmacy" not in base.find(class_="StoreServices-section").text:
-                continue
+                if "Pharmacy" not in base.find(class_="StoreServices-section").text:
+                    continue
+            except:
+                session = SgRequests()
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+
+                if "Pharmacy" not in base.find(class_="StoreServices-section").text:
+                    continue
 
             try:
                 script = base.find(
