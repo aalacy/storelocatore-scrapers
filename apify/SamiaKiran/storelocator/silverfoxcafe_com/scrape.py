@@ -39,13 +39,15 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("HOURS ", "")
             )
+            if hours_of_operation == "HOURS":
+                hours_of_operation = MISSING
             temp = soup.find("div", {"class": "address"})
             latitude, longitude = temp.find("a")["href"].rsplit("/")[-1].split(",")
             address = temp.get_text(separator="|", strip=True).split("|")
             if len(address) == 1:
                 phone = address[0]
                 street_address = MISSING
-                city = MISSING
+                city = location_name
                 state = MISSING
                 zip_postal = MISSING
                 country_code = MISSING
