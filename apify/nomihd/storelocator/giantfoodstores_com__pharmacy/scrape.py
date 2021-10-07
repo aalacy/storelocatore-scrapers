@@ -82,16 +82,17 @@ class _SearchIteration(SearchIteration):
                     country_code = "US"
                     latitude = data["fLatitude"]
                     longitude = data["fLongitude"]
-                    found_location_at(latitude, longitude)
+                    found_location_at(float(latitude), float(longitude))
                     hours = ""
                     try:
                         details = data["Details"]
                         for d in details:
-                            if "Pharmacy Hours" in d["nvcTitle"]:
+                            if "Pharmacy Hours" == d["nvcTitle"]:
                                 hours = d["nvcDescription"].replace("\n", "; ").strip()
                                 if hours:
                                     if ";" == hours[-1]:
                                         hours = "".join(hours[:-1]).strip()
+                                break
                     except:
                         pass
 
