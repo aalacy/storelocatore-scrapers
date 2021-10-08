@@ -70,11 +70,14 @@ def fetch_data():
                 + " - "
                 + hour.split('"CloseTime":"')[1].split('"')[0]
             )
+            location_type = MISSING
         except:
             hours_of_operation = MISSING
+            location_type = "Coming Soon"
         page_url = "https://www.chickensaladchick.com" + div["data-href"]
         log.info(page_url)
         store_number = div["data-loc-id"]
+
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
@@ -86,7 +89,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone.strip(),
-            location_type=MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
