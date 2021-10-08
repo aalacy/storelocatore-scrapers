@@ -88,7 +88,7 @@ def fetch_data():
         store_number = MISSING
         location_type = info["@type"]
         latitude = info["geo"]["latitude"]
-        longitude = info["geo"]["latitude"]
+        longitude = info["geo"]["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
