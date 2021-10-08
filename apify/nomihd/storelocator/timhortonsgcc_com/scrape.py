@@ -18,7 +18,7 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://timhortonsgcc.com/location/"
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests(dont_retry_status_codes=([404]), verify_ssl=False) as session:
         search_res = session.get(search_url)
         search_sel = lxml.html.fromstring(search_res.text)
         map_url = "".join(
