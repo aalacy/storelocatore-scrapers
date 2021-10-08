@@ -23,7 +23,7 @@ headers = {
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
 def get_store_urls():
     store_urls = []
-    with SgRequests(proxy_country="us") as http:
+    with SgRequests() as http:
         sitemap_urls = [
             "https://www.dairyqueen.com/en-ca/sitemap.xml",
             "https://www.dairyqueen.com/en-us/sitemap.xml",
@@ -46,7 +46,7 @@ def get_store_urls():
 
 @retry(stop=stop_after_attempt(3), wait=tenacity.wait_fixed(2))
 def fetch_records_us(idx, url, sgw: SgWriter):
-    with SgRequests(proxy_country="us") as http:
+    with SgRequests() as http:
         logger.info(f"[{idx}] Pulling the data from: {url}")
         r = http.get(url, headers=headers)
         if r.status_code == 200:
