@@ -2,7 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
-from urllib3 import exceptions as urllibException
 
 logger = SgLogSetup().get_logger("walmart_com/pharmacy")
 
@@ -22,19 +21,8 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     session = SgRequests()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
-    except exceptions.RequestException as requestsException:
-        if "ProxyError" in str(requestsException):
-            attempts += 1
-            error = True
-        else:
-            raise requestsException
-
-    except urllibException.SSLError as urlException:
-        if "BAD_RECORD_MAC" in str(urlException):
-            attempts += 1
-            error = True
-        else:
-            raise urllibException
+    except:
+        error = True
 
     if error:
         if attempts < maxRetries:
