@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from concurrent import futures
@@ -30,7 +30,7 @@ def get_data(coords, sgw: SgWriter):
         + str(lat)
         + ',"origin_lng":'
         + str(long)
-        + ',"include_otc":true,"include_smart":false,"include_terminal":false,"limit":500,"within_distance":100000}'
+        + ',"include_otc":true,"include_smart":false,"include_terminal":false,"limit":50,"within_distance":100}'
     )
 
     session = SgRequests()
@@ -80,12 +80,11 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_search_distance_miles=70,
-        expected_search_radius_miles=70,
+        max_search_distance_miles=1,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=4) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -95,7 +94,8 @@ if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LATITUDE}),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         fetch_data(writer)

@@ -14,14 +14,20 @@ logger = SgLogSetup().get_logger("chuckecheese_com")
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://locations.chuckecheese.com/gu/tamuning/235-pas-street",
+        "https://locations.chuckecheese.com/pr/bayamon/rexville-town-centre-rd.-167-km-17.6",
+        "https://locations.chuckecheese.com/pr/caguas/plaza-centro-mall-30-ave.-rafael-j.-cordero",
+        "https://locations.chuckecheese.com/pr/carolina/monte-real-plaza-carr.-3-km-15.2-b.o.-canovanillas",
+        "https://locations.chuckecheese.com/ca/on/mississauga/2945-argentia-road",
+        "https://locations.chuckecheese.com/ca/on/mississauga/4141-dixie-rd.",
+    ]
     cities = []
     states = []
     website = "chuckecheese.com"
     typ = "<MISSING>"
     countries = [
         "https://locations.chuckecheese.com/ca",
-        "https://locations.chuckecheese.com/pr",
         "https://locations.chuckecheese.com/us",
     ]
     logger.info("Pulling Stores")
@@ -75,6 +81,7 @@ def fetch_data():
         if (
             "https://locations.chuckecheese.com/us" in loc
             or "https://locations.chuckecheese.com/pr" in loc
+            or "https://locations.chuckecheese.com/gu" in loc
         ):
             country = "US"
         else:
@@ -98,12 +105,15 @@ def fetch_data():
                 add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
                 zc = line2.split('temprop="postalCode">')[1].split("<")[0]
                 city = line2.split('><span class="c-address-city">')[1].split("<")[0]
-                if "/pr/" not in loc:
+                if "/pr/" not in loc and "/gu/" not in loc:
                     state = line2.split('<span class="c-address-state" >')[1].split(
                         "<"
                     )[0]
                 else:
-                    state = "PR"
+                    if "/pr/" in loc:
+                        state = "PR"
+                    else:
+                        state = "GU"
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
             if 'itemprop="latitude" content="' in line2:
@@ -124,6 +134,11 @@ def fetch_data():
         name = name.replace("&#39;", "'").replace("&amp;", "&")
         add = add.replace("&#39;", "'").replace("&amp;", "&")
         city = city.replace("&#39;", "'").replace("&amp;", "&")
+        if "gu/tamuning" in loc:
+            add = "235 Pas Street"
+            city = "Tamuning"
+            zc = "96913"
+            state = "GU"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
