@@ -22,6 +22,7 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//@href"))
 
         spage_url = f"https://www.recology.com{slug}"
+
         session = SgRequests()
         r = session.get(spage_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -45,6 +46,22 @@ def fetch_data(sgw: SgWriter):
             page_url = sspage_url
             location_name = j.get("title")
             location_type = j.get("type")
+            if location_type == "OFFIC" or location_type == "OFFI":
+                location_type = "Customer Service Offices"
+            if location_type == "TRAN":
+                location_type = "Transfer Station"
+            if location_type == "RECY":
+                location_type = "Recylcing Center"
+            if location_type == "ORGA":
+                location_type = "Compost"
+            if location_type == "LAND":
+                location_type = "Landfill"
+            if location_type == "HAZD":
+                location_type = "Household & Hazardous Waste Drop Off"
+            if location_type == "STOR":
+                location_type = "Store"
+            if location_type == "MRF":
+                location_type = "Recycling Center"
             street_address = f"{j.get('address_1')} {j.get('address_2')}".strip()
             state = j.get("state")
             postal = j.get("zip")
