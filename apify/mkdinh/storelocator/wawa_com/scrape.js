@@ -19,7 +19,7 @@ function getOrDefault(value) {
 }
 
 function formatPhone(phone) {
-  return phone ? phone.replace(/\-/g, '') : null;
+  return phone ? phone.replace(/-/g, '') : null;
 }
 
 function formatHoursOfOperation(start, end) {
@@ -32,7 +32,7 @@ function formatHoursOfOperation(start, end) {
 
 async function getSiteMapLinks(page) {
   return await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('.CMSSiteMapLink')).map((el) =>
+    return Array.from(document.querySelectorAll('.CMSSiteMapLink')).map((el) => // eslint-disable-line no-undef
       el.getAttribute('href')
     );
   });
@@ -67,7 +67,7 @@ async function fetchLocations(
       const promises = urls.map(
         (url) =>
           new Promise((resolve, reject) => {
-            fetch(url)
+            fetch(url) // eslint-disable-line no-undef
               .then((response) => response.json())
               .then((data) => resolve({ url, data }))
               .catch(() => reject(url));
