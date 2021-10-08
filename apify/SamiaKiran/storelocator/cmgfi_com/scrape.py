@@ -2,25 +2,31 @@ import json
 import usaddress
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from fuzzywuzzy import process
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
+import httpx
+
+timeout = httpx.Timeout(180.0, connect=180.0)
+session = SgRequests(timeout_config=timeout)
+
 website = "cmgfi_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
 }
 
 DOMAIN = "https://cmgfi.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
+        street_list = []
         states = [
             "AL",
             "AK",
@@ -79,6 +85,7 @@ def fetch_data():
                 "https://www.cmgfi.com/webapi/search/branch?searchType=state&userInput="
                 + state
             )
+            log.info(f"Fetching location from {state}")
             loclist = session.get(url, headers=headers).json()
             loclist = json.loads(loclist)["items"]
             for loc in loclist:
@@ -112,6 +119,11 @@ def fetch_data():
                     if temp[1].find("ZipCode") != -1:
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
+                if street_address in street_list:
+                    raw_address = "<DUPLICATE>"
+                else:
+                    street_list.append(street_address)
+                    raw_address = MISSING
                 country_code = "US"
                 phone = loc["phone"]
                 yield SgRecord(
@@ -129,57 +141,17 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=MISSING,
+                    raw_address=raw_address,
                 )
-
-
-def remakeSgRecord(record):
-    return SgRecord(
-        page_url=str(record[0]),
-        location_name=str(record[1]),
-        street_address=str(record[2]),
-        city=str(record[3]),
-        state=str(record[4]),
-        zip_postal=str(record[5]),
-        country_code=str(record[6]),
-        store_number=str(record[7]),
-        phone=str(record[8]),
-        location_type=str(record[9]),
-        latitude=str(record[10]),
-        longitude=str(record[11]),
-        locator_domain=str(record[12]),
-        hours_of_operation=str(record[13]),
-        raw_address=str(record[14]),
-    )
-
-
-def dedupe(dataset):
-    copy = []
-
-    for i in dataset:
-        copy.append(json.dumps(i.as_row()))
-
-    z = process.dedupe(copy, threshold=90)  # dict.keys() without duplicates
-    k = copy - z  # set of duplicates
-    z = list(z)  # list without duplicates
-    k = list(k)  # list of duplicates
-    i = 0
-    while i < len(copy):
-        if i < len(z):
-            rec = json.loads(z[i])
-            yield remakeSgRecord(rec)
-        else:
-            rec = json.loads(k[i - len(z)])
-            rec.pop(-1)
-            rec.append("<DUPLICATE>")
-            yield remakeSgRecord(rec)
-        i += 1
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
-        results = dedupe(fetch_data())
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
