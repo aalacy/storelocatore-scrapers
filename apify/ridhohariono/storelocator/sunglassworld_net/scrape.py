@@ -6,15 +6,14 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
-import re
-import json
 
-DOMAIN = "westshorepizza.com"
-BASE_URL = "https://westshorepizza.com"
-LOCATION_URL = "https://westshorepizza.com/locations/"
+DOMAIN = "sunglassworld.net"
+BASE_URL = "https://www.sunglassworld.net"
+LOCATION_URL = "https://www.sunglassworld.net/locations/"
+API_URL = "https://www.sunglassworld.net/wp-admin/admin-ajax.php?action=store_search&lat=30.1957055&lng=-85.7974141&max_results=500&search_radius=500&autoload=1"
 HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
@@ -50,50 +49,40 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    req = session.get(url, headers=HEADERS)
+    if req.status_code == 404:
+        return False
+    soup = bs(req.content, "lxml")
     return soup
-
-
-def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
-        return "<MISSING>", "<MISSING>"
-    return longlat.group(2), longlat.group(1)
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("div", {"class": "geodir-content"})
-    for row in contents:
-        page_url = row.find("a")["href"]
-        content = pull_content(page_url)
-        info = json.loads(
-            content.find("script", {"type": "application/ld+json"}).string
-        )
-        location_name = row.find("a").text.strip()
-        raw_address = (
-            content.find("div", {"class": "geodir_more_info post_address"})
-            .get_text(strip=True, separator=",")
-            .replace("Address:,", "")
-        )
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = (
-            content.find("div", {"class": "geodir_more_info geodir_contact"})
-            .find("a")
-            .text.strip()
-        )
-        hours_of_operation = (
-            content.find("div", {"class": "geodir_more_info geodir_timing"})
-            .get_text(strip=True, separator=",")
-            .replace("Opening Hours:,", "")
-            .strip()
-        )
-        country_code = "US"
-        location_type = "westshorepizza"
-        store_number = MISSING
-        latitude = info["geo"]["latitude"]
-        longitude = info["geo"]["longitude"]
+    data = session.get(API_URL, headers=HEADERS).json()
+    for row in data:
+        if DOMAIN in row["permalink"]:
+            page_url = row["permalink"]
+        else:
+            page_url = BASE_URL + row["permalink"]
+        location_name = row["store"]
+        street_address = f"{row['address']}, {row['address2']}".strip().rstrip(",")
+        city = row["city"]
+        state = row["state"]
+        zip_postal = row["zip"]
+        store_number = row["id"]
+        phone = row["phone"]
+        country_code = "US" if row["country"] == "United States" else row["country"]
+        location_type = "sunglassworld"
+        latitude = row["lat"]
+        longitude = row["lng"]
+        if not row["hours"]:
+            hours_of_operation = MISSING
+        else:
+            hours_of_operation = (
+                bs(row["hours"], "lxml")
+                .get_text(strip=True, separator=",")
+                .replace("day,", "day: ")
+            )
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -110,7 +99,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+            raw_address=f"{street_address}, {city}, {state} {zip_postal}",
         )
 
 

@@ -9,9 +9,9 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 import json
 
-DOMAIN = "westshorepizza.com"
-BASE_URL = "https://westshorepizza.com"
-LOCATION_URL = "https://westshorepizza.com/locations/"
+DOMAIN = "menstclinic.com"
+BASE_URL = "https://www.menstclinic.com"
+LOCATION_URL = "https://www.menstclinic.com/contactus"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -64,36 +64,35 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("div", {"class": "geodir-content"})
+    contents = soup.find(
+        "section", {"class": "contactus-locations pinstripe"}
+    ).find_all("div", {"class": "location-address"})
     for row in contents:
-        page_url = row.find("a")["href"]
+        page_url = BASE_URL + row.find("a")["href"]
         content = pull_content(page_url)
         info = json.loads(
             content.find("script", {"type": "application/ld+json"}).string
         )
-        location_name = row.find("a").text.strip()
-        raw_address = (
-            content.find("div", {"class": "geodir_more_info post_address"})
+        location_name = content.find("div", {"id": "hero-titles-inner"}).text.strip()
+        raw_address = row.text.strip()
+        street_address = info["address"]["streetAddress"]
+        city = info["address"]["addressLocality"]
+        state = info["address"]["addressRegion"]
+        zip_postal = info["address"]["postalCode"]
+        phone = content.find("span", {"class": "mm-phone-number"}).text.strip()
+        hours_of_operation = "".join(
+            content.find("section", {"class": "location-details pinstripe"})
+            .find("div", {"class": "span4 center"})
             .get_text(strip=True, separator=",")
-            .replace("Address:,", "")
-        )
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = (
-            content.find("div", {"class": "geodir_more_info geodir_contact"})
-            .find("a")
-            .text.strip()
-        )
-        hours_of_operation = (
-            content.find("div", {"class": "geodir_more_info geodir_timing"})
-            .get_text(strip=True, separator=",")
-            .replace("Opening Hours:,", "")
-            .strip()
-        )
+            .replace("Opening hours,", "")
+            .split()
+        ).replace("day,", "day: ")
         country_code = "US"
-        location_type = "westshorepizza"
         store_number = MISSING
-        latitude = info["geo"]["latitude"]
-        longitude = info["geo"]["longitude"]
+        location_type = info["@type"]
+        latlong = content.find("div", {"class": "location-map"}).find("iframe")
+        latitude = latlong["data-latitude"]
+        longitude = latlong["data-longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

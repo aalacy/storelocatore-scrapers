@@ -21,8 +21,10 @@ def fetch_data():
                 _.get("OperationalHours", {}).get("Normal", {}).get("Hours", {}).items()
             ):
                 if not hh["StartTime"]:
-                    break
-                hours.append(f"{day}: {hh['StartTime']} - {hh['EndTime']}")
+                    times = "closed"
+                else:
+                    times = f"{hh['StartTime']} - {hh['EndTime']}"
+                hours.append(f"{day}: {times}")
             location_type = ""
             if _["TemporarilyClosed"]:
                 location_type = "Temporarily Closed"

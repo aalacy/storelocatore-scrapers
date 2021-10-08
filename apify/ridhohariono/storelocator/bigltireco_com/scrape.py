@@ -9,9 +9,9 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 import json
 
-DOMAIN = "westshorepizza.com"
-BASE_URL = "https://westshorepizza.com"
-LOCATION_URL = "https://westshorepizza.com/locations/"
+DOMAIN = "bigltireco.com"
+BASE_URL = "https://www.bigltireco.com"
+LOCATION_URL = "https://www.bigltireco.com/Find-Us"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -64,34 +64,29 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("div", {"class": "geodir-content"})
-    for row in contents:
-        page_url = row.find("a")["href"]
+    page_urls = soup.find_all("a", {"class": "DetailLink"})
+    for row in page_urls:
+        page_url = row["href"]
         content = pull_content(page_url)
         info = json.loads(
             content.find("script", {"type": "application/ld+json"}).string
         )
-        location_name = row.find("a").text.strip()
-        raw_address = (
-            content.find("div", {"class": "geodir_more_info post_address"})
-            .get_text(strip=True, separator=",")
-            .replace("Address:,", "")
+        location_name = (
+            content.find("p", {"class": "subtitle"}).find("strong").text.strip()
         )
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = (
-            content.find("div", {"class": "geodir_more_info geodir_contact"})
-            .find("a")
-            .text.strip()
-        )
+        street_address = info["address"]["streetAddress"]
+        city = info["address"]["addressLocality"]
+        state = info["address"]["addressRegion"]
+        zip_postal = info["address"]["postalCode"]
+        phone = info["telephone"]
         hours_of_operation = (
-            content.find("div", {"class": "geodir_more_info geodir_timing"})
+            content.find("ul", {"id": "ndauhours", "class": "hoursmobile"})
             .get_text(strip=True, separator=",")
-            .replace("Opening Hours:,", "")
-            .strip()
+            .replace("day,", "day: ")
         )
-        country_code = "US"
-        location_type = "westshorepizza"
+        country_code = info["address"]["addressCountry"]
         store_number = MISSING
+        location_type = info["@type"]
         latitude = info["geo"]["latitude"]
         longitude = info["geo"]["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
@@ -110,7 +105,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
