@@ -54,6 +54,8 @@ def fetch_data():
                 else:
                     hoo.append(f"{day} closed")
             hoo = ", ".join(hoo).replace("None - None", "Closed")
+            if "Sunday" not in hoo:
+                hoo = hoo + ", Sunday: Closed"
             location_type = poi["type"]
             page_url = ""
             if location_type == "PO":

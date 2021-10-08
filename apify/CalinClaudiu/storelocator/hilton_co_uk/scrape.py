@@ -133,8 +133,11 @@ def fetch_data():
         )
         for country in countries:
             if not country["complete"]:
-                for record in data_fetcher(country, state, 10):
-                    yield record
+                try:
+                    for record in data_fetcher(country, state, 10):
+                        yield record
+                except Exception as e:
+                    logzilla.error(f"{str(country)}\n{str(e)}")
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
 
