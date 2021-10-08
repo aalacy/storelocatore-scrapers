@@ -140,6 +140,8 @@ def fetch_data():
                 country = line2.split('<span itemprop="addressCountry">')[1].split("<")[
                     0
                 ]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
             if '"addressLocality": "' in line2 and city == "":
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if lat == "" and '<meta itemprop="latitude" content="' in line2:
