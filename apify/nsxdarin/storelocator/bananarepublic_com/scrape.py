@@ -129,7 +129,16 @@ def fetch_data():
                 name = "Banana Republic"
                 if Outlet:
                     name = "Banana Republic Outlet"
-                if name != "":
+                if "banana-republic-7697" in loc:
+                    city = "Chicago"
+                    state = "IL"
+                    zc = "60642"
+                    add = "917 West North Avenue"
+                    hours = "Mon-Sat: 10:00am - 7:00pm; Sun: 11:00am - 6:00pm"
+                    phone = "(312) 266-1006"
+                    lat = "41.9106547"
+                    lng = "-87.6520015"
+                if name != "" and ".html" in loc:
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

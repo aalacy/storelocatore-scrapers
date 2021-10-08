@@ -1,15 +1,15 @@
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://xpark.lazparking.com/api/v1/Locations/FindLocationsByLatLng?nelat=40.73567202773479&nelng=-73.89595663283615&swlat=40.68987069570836&swlng=-74.11598896716384&type=&mode=&layout=&_"
+    start_url = "https://xpark.lazparking.com/api/v1/Locations/FindLocationsByLatLng?nelat={}&nelng={}&swlat={}&swlng={}&type=&mode=&layout=&_"
     domain = "lazparking.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -50,9 +50,7 @@ def fetch_data():
 
 
 def scrape():
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         for item in fetch_data():
             writer.write_row(item)
 

@@ -27,7 +27,7 @@ def fetch_data(_zip, sgw: SgWriter):
 
             street_address = f'{j.get("line1")} {j.get("line2") or ""}'.strip()
             city = j.get("town")
-            state = j.get("regionIsoCodeShort")
+            state = j.get("region")
             postal = j.get("postalCode")
             country_code = "US"
             phone = j.get("phone")
@@ -82,8 +82,14 @@ if __name__ == "__main__":
         "Sec-Fetch-Site": "same-origin",
         "TE": "trailers",
     }
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for _z in DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], max_search_distance_miles=100
+            country_codes=[SearchableCountries.USA],
+            max_search_distance_miles=100,
+            expected_search_radius_miles=20,
         ):
             fetch_data(_z, writer)
