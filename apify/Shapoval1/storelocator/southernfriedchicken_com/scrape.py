@@ -5,7 +5,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -38,12 +38,13 @@ def fetch_data(sgw: SgWriter):
         if page_url == "https://southernfriedchicken.com/?page_id=35894&preview=true":
             page_url = "https://southernfriedchicken.com/our-locations/"
         phone = (
-            "".join(a.xpath('//p[contains(text(), "Tel")]/text()'))
+            "".join(a.xpath('//p[contains(text(), "Tel")]/text()[1]'))
             .replace("Tel", "")
             .replace(":", "")
             .strip()
             or "<MISSING>"
         )
+
         hours_of_operation = (
             " ".join(
                 a.xpath(
@@ -151,8 +152,12 @@ def fetch_data(sgw: SgWriter):
 
         city = city.replace("Tyumenskaya", "").replace("Ghanjnsielem", "")
         if location_name.find("MARTINIQUE") != -1:
-            city = "MARTINIQUE".lower()
+            city = "MARTINIQUE".capitalize()
             country_code = "FR"
+        if location_name == "SHARJAH UAE":
+            city = "SHARJAH".capitalize()
+        if location_name == "WUSE 2, ABUJA (NIGERIA)":
+            city = "ABUJA".capitalize()
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
@@ -160,7 +165,11 @@ def fetch_data(sgw: SgWriter):
 
         if phone == "<MISSING>":
             phone = (
-                " ".join(tree.xpath('//div[./p/span[contains(text(), "Tel")]]//text()'))
+                " ".join(
+                    tree.xpath(
+                        '//div[./p/span[contains(text(), "Tel")]]/p/span/text()[1]'
+                    )
+                )
                 .replace("\n", "")
                 .replace(":", "")
                 .replace("Tel", "")
@@ -169,6 +178,8 @@ def fetch_data(sgw: SgWriter):
             )
         if phone.count("+") > 1:
             phone = phone.split("+")[1].strip()
+        if phone.find("  ") != -1:
+            phone = phone.split("  ")[0].strip()
         if hours_of_operation == "<MISSING>":
             hours_of_operation = (
                 " ".join(
