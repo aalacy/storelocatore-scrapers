@@ -4,7 +4,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch
+from sgzip.dynamic import DynamicGeoSearch, Grain_8
 from sgzip.utils import country_names_by_code
 from bs4 import BeautifulSoup as bs
 from fuzzywuzzy import process
@@ -30,7 +30,8 @@ def determine_country(country):
 def fetch_records(http, search):
     for lat, lng in search:
         url = f"https://www.t2tea.com/on/demandware.store/Sites-UNI-T2-EU-Site/en_{search.current_country().upper()}/Stores-FindStores?radius=1500&lat={lat}&long={lng}&dwfrm_storelocator_latitude={lat}&dwfrm_storelocator_longitude={lng}"
-        locations = http.get(url, headers=_headers).json()["stores"]
+        res = http.get(url, headers=_headers)
+        locations = res.json()["stores"]
         logger.info(url)
         logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
         for _ in locations:
@@ -58,7 +59,9 @@ def fetch_records(http, search):
 
 
 if __name__ == "__main__":
-    with SgRequests(proxy_country="us") as http:
+    with SgRequests(
+        proxy_country="us", dont_retry_status_codes_exceptions=set([403, 407, 503, 502])
+    ) as http:
         countries = []
         for country in bs(http.get(base_url, headers=_headers).text, "lxml").select(
             "ul.location__list-contries li a"
@@ -68,7 +71,7 @@ if __name__ == "__main__":
             )
         cc = set(countries)
         cc.remove("hk")
-        search = DynamicGeoSearch(country_codes=list(cc))
+        search = DynamicGeoSearch(country_codes=list(cc), granularity=Grain_8())
         country_list = country_names_by_code()
         with SgWriter(
             deduper=SgRecordDeduper(
