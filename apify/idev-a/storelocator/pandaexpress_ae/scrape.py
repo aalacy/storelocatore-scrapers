@@ -52,6 +52,8 @@ def fetch_data():
             country_code = _["Country"]
             if addr.country:
                 country_code = addr.country
+            if city == "Riyadh":
+                country_code = "SA"
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["Id"],
