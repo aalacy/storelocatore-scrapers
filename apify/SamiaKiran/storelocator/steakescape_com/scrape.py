@@ -140,7 +140,7 @@ def scrape():
                 }
             )
         )
-     ) as writer:
+    ) as writer:
         for item in fetch_data():
             writer.write_row(item)
 
