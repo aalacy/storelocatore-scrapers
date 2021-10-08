@@ -53,21 +53,7 @@ def fetch_data():
                         zip_postal = temp.split('"postalCode":"')[1].split('"')[0]
                         phone = temp.split('"telephone":"')[1].split('"')[0]
                     except:
-                        address = (
-                            r.text.split(
-                                '<script type="application/json" id="__REDUX_STATE__">'
-                            )[1]
-                            .split("</script")[0]
-                            .split(r"{\u0022address\u0022:\u0022")[1]
-                            .split(r"\u0022")[0]
-                        )
-
-                        address = address.split(",")
-                        street_address[0]
-                        city = address[1]
-                        state = address[2]
-                        zip_postal = MISSING
-                        phone = r.text.split('"telephone":"')[1].split('"')[0]
+                        continue
 
                     try:
                         hours_of_operation = (
