@@ -60,9 +60,30 @@ def get_JSON_object_variable(Object, varNames, noVal=MISSING):
     return value
 
 
+def address_cleanup(adr):
+    cleaned_address = (
+        adr.replace("Avenida Jose V. Caro frente Terminal American Airlines", "")
+        .replace("Applebee's Grill + Bar,", "")
+        .replace("La Parrilla Argentina,", "")
+        .replace("Galería 100 Shopping Center,", "")
+        .replace("Pearle Vision,", "")
+        .replace("Plaza Centro Mall (Caguas),", "")
+        .replace("Made Electronics,", "")
+        .replace("Chili's Grill & Bar,", "")
+        .replace("Quebrada Maga,", "")
+        .replace("Caimito,", "")
+        .replace("La Patisserie De France,", "")
+        .replace("Di Morini", "")
+        .replace("El Meson Sandwiches (San Germán),", "")
+        .replace("Edificio González Padín,", "")
+    )
+    return cleaned_address
+
+
 def get_address(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
+            raw_address = address_cleanup(raw_address)
             data = parse_address_intl(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
@@ -79,6 +100,19 @@ def get_address(raw_address):
                 state = MISSING
             if zip_postal is None or len(zip_postal) == 0:
                 zip_postal = MISSING
+            if city == "Nte":
+                city = "Hato Rey Nte"
+            if "Ponce" in street_address:
+                city = "Ponce"
+                street_address = street_address.replace("Ponce", "")
+            if "San Germán" in street_address:
+                street_address = street_address.replace("San Germán", "")
+                city = "San Germán"
+            if "Santa Isabel" in street_address:
+                street_address = street_address.replace("Santa Isabel", "")
+                city = "Santa Isabel"
+            if "Plaza Del Caribe" in street_address:
+                street_address = "Plaza Del Caribe"
             return street_address, city, state, zip_postal
     except Exception as e:
         log.info(f"Address Missing, {e}")
@@ -134,7 +168,10 @@ def fetch_data():
         for line in lines:
             if ":00" in line or ":15" in line or ":30" in line or ":45" in line:
                 hoo.append(line)
-        hours_of_operation = " ".join((" ".join(hoo)).split())
+        hoo_joined = " ".join((" ".join(hoo)).split())
+        # leave only the main hours, remove Autoservicio hours
+        separator = "Autoservicio"
+        hours_of_operation = hoo_joined.split(separator, 1)[0]
 
         if country_code == "US":
             raw_address = get_JSON_object_variable(store, "position")
@@ -152,7 +189,9 @@ def fetch_data():
                     .strip()
                 )
                 street_address, city, state, zip_postal = get_address(addr)
-
+                zip_postal = zip_postal.replace("HUMACAO", "")
+                country_code = "US"
+                state = "PR"
         yield SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,
