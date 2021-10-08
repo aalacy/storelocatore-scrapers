@@ -69,7 +69,10 @@ def fetch_data():
                         )
                         for js in json_list:
                             if "ConvenienceStore" in js:
-                                store_json = json.loads(js, strict=False)
+                                try:
+                                    store_json = json.loads(js, strict=False)
+                                except:
+                                    continue
                                 location_name = (
                                     store_json["name"].replace("&amp;", "&").strip()
                                 )
