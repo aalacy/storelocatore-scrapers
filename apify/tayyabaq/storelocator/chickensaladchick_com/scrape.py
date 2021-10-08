@@ -86,7 +86,7 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .split("|")
             )
-            street_adddress = address[0]
+            street_address = address[0]
             city = address[1]
             zip_postal = address[-1]
             state = address[-2]
