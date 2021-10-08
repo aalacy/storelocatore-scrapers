@@ -8,8 +8,16 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import cloudscraper
 
-website = "trumphotels.com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+DOMAIN = "trumphotels.com"
+BASE_URL = "https://www.trumphotels.com"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "accept-encoding": "gzip, deflate, br",
+}
+MISSING = "<MISSING>"
+
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 session = cloudscraper.create_scraper(sess=session)
 
@@ -36,35 +44,42 @@ def get_latlng(map_link):
 
 
 def fetch_data():
-    base_url = "https://www.trumphotels.com/"
     if True:
-        stores_req = session.get("https://www.trumphotels.com/")
+        stores_req = session.get(BASE_URL)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath('//div[@class="filterlist"]//a/@href')
         for store_url in stores:
-            page_url = base_url + store_url
+            page_url = BASE_URL + store_url
             log.info(page_url)
             store_req = session.get(page_url)
             store_sel = lxml.html.fromstring(store_req.text)
-
             json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
             for js in json_list:
                 store_data = json.loads(js)
                 if "address" in store_data:
-                    if store_data["address"]["addressCountry"] not in ("USA", "Canada"):
-                        continue
                     location_name = store_data["name"].replace("®", "")
                     address = store_data["address"]
-                    locator_domain = "https://www.trumphotels.com"
-                    street_address = address["streetAddress"]
+                    if "streetAddress" not in address:
+                        street_address = MISSING
+                    else:
+                        street_address = address["streetAddress"]
                     city = address["addressLocality"].split(",")[0]
                     state = (
                         address["addressRegion"].strip()
                         if "addressRegion" in address
                         else address["addressLocality"].split(",")[1]
                     )
-                    zip = address["postalCode"]
-                    country_code = "US" if address["addressCountry"] == "USA" else "CA"
+                    if "postalCode" not in address:
+                        street_address = MISSING
+                    else:
+                        zip = address["postalCode"]
+                    country_code = (
+                        "US"
+                        if address["addressCountry"] == "USA"
+                        else address["addressCountry"]
+                    )
+                    if "Aberdeenshire" in state:
+                        country_code = "Scotland"
                     store_number = "<MISSING>"
                     phone = (
                         store_data["telephone"]
@@ -81,9 +96,9 @@ def fetch_data():
                         map_link = map_link[0]
 
                         latitude, longitude = get_latlng(map_link)
-
+                    log.info("Append {} => {}".format(location_name, street_address))
                     yield SgRecord(
-                        locator_domain=locator_domain,
+                        locator_domain=DOMAIN,
                         page_url=page_url,
                         location_name=location_name,
                         street_address=street_address,

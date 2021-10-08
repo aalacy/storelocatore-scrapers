@@ -5,6 +5,10 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from bs4 import BeautifulSoup as bs
+import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -28,6 +32,16 @@ def fetch_data():
             if _.get("address3"):
                 street_address += " " + _["address3"]
             page_url = base_url + _["slug"]
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            _hr = sp1.find("", string=re.compile(r"Hours of Operation:"))
+            if _hr:
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in _hr.find_parent("h2")
+                    .find_next_sibling()
+                    .select("div.flex")
+                ]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
@@ -40,6 +54,7 @@ def fetch_data():
                 country_code="US",
                 phone=_["phoneNumber"],
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
             )
 
 
