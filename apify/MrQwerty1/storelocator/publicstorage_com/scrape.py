@@ -9,14 +9,14 @@ from concurrent import futures
 
 
 def get_urls():
-    r = session.get("https://www.publicstorage.com/sitemap_plp.xml")
+    r = session.get("https://www.publicstorage.com/sitemap_plp.xml", headers=headers)
     tree = html.fromstring(r.content)
 
     return tree.xpath("//loc/text()")
 
 
 def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[@type='application/ld+json']/text()")).strip()
     if not text:
@@ -81,5 +81,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.publicstorage.com/"
     session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

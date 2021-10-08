@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("smartfoodservice_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -73,10 +49,10 @@ def fetch_data():
                     .split("</h2>")[0]
                     .replace("<sup>&reg;</sup>", "")
                 )
-            if 'name = "latitude"' in line2:
-                lat = line2.split('value = "')[1].split('"')[0]
-            if 'name = "longitude"' in line2:
-                lng = line2.split('value = "')[1].split('"')[0]
+            if 'name="latitude"' in line2 and lat == "":
+                lat = line2.split('value="')[1].split('"')[0]
+            if 'name="longitude"' in line2 and lng == "":
+                lng = line2.split('value="')[1].split('"')[0]
             if '"streetAddress": "' in line2:
                 add = line2.split('"streetAddress": "')[1].split('"')[0]
             if '"postalCode": "' in line2:
@@ -87,8 +63,8 @@ def fetch_data():
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if 'telephone": "' in line2:
                 phone = line2.split('telephone": "')[1].split('"')[0]
-            if 'name = "storeNum"' in line2:
-                store = line2.split('value = "')[1].split('"')[0]
+            if 'name="storeNum"' in line2 and store == "":
+                store = line2.split('value="')[1].split('"')[0]
             if '"openingHours": ["' in line2:
                 hours = (
                     line2.split('"openingHours": ["')[1]
@@ -100,27 +76,29 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if add != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
