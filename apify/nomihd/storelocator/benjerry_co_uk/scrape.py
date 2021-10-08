@@ -5,6 +5,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import Grain_2
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -243,6 +244,7 @@ def scrape():
     search_maker = DynamicSearchMaker(
         search_type="DynamicZipSearch",
         expected_search_radius_miles=50,
+        granularity=Grain_2(),
     )
 
     with SgWriter(
