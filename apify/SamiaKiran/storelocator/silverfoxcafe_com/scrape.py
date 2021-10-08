@@ -52,13 +52,14 @@ def fetch_data():
                 zip_postal = MISSING
                 country_code = MISSING
             else:
+                phone = address[-1]
                 street_address = address[1]
                 address = address[2].split(",")
                 city = address[0]
                 address = address[1].split()
                 state = address[0]
                 zip_postal = address[1]
-                country_code = "US"
+            country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
