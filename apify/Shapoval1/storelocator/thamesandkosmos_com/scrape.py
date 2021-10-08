@@ -1,20 +1,25 @@
 from lxml import html
-from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgpostal.sgpostal import International_Parser, parse_address
+from concurrent import futures
 
 
-def fetch_data(sgw: SgWriter):
-
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
     locator_domain = "https://www.thamesandkosmos.com/"
-    api_url = "https://www.thamesandkosmos.com/index.php?option=com_storelocator&view=map&format=raw&searchall=0&Itemid=145&lat=40.75368539999999&lng=-73.9991637&radius=10000&catid=-1&tagid=2&featstate=0&name_search="
-    session = SgRequests()
+    api_url = f"https://www.thamesandkosmos.com/index.php?option=com_storelocator&view=map&format=raw&searchall=0&Itemid=145&lat={str(lat)}&lng={str(long)}&radius=10000&catid=-1&tagid=2&featstate=0&name_search="
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
     }
+
+    session = SgRequests()
+
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.content)
     div = tree.xpath("//markers/marker")
@@ -40,6 +45,7 @@ def fetch_data(sgw: SgWriter):
             state = ad.split(",")[2].strip()
             postal = ad.split(",")[3].strip()
             country_code = "CA"
+
         latitude = "".join(d.xpath(".//lat/text()")) or "<MISSING>"
         longitude = "".join(d.xpath(".//lng/text()")) or "<MISSING>"
         phone = "".join(d.xpath(".//phone/text()")) or "<MISSING>"
@@ -59,13 +65,30 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
-            raw_address=ad,
         )
 
         sgw.write_row(row)
 
 
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
