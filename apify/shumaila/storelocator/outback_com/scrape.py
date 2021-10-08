@@ -70,6 +70,7 @@ def fetch_data():
     session1 = SgRequests()
     url = "https://locations.outback.com/index.html"
     r = session1.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.find("section", {"class": "StateList"}).findAll(
         "a", {"class": "Directory-listLink"}
     )
@@ -113,8 +114,11 @@ def fetch_data():
                     r = session1.get(branch, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
                 store = r.text.split('"storeId":"', 1)[1].split('"', 1)[0]
-                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-                longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+                try:
+                    lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+                    longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+                except:
+                    lat = longt = "<MISSING>"
                 title = (
                     soup.find("h1", {"id": "location-name"})
                     .text.replace("\n", " ")

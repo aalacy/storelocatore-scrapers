@@ -43,6 +43,7 @@ def fetch_data():
         for rr in driver.iter_requests():
             if json_url in rr.url:
                 locations = json.loads(rr.response.body)
+
                 for _ in locations["result"]["items"]:
                     hours = []
                     if _["days_01"]:
