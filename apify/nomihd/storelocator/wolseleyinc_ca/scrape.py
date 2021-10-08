@@ -94,7 +94,7 @@ def fetch_data():
                         .replace("-", "")
                         .strip()
                         .replace(" ", "")
-                        .stri()
+                        .strip()
                         .isdigit()
                     )
                     and "TEXTING NOW AVAILABLE" not in "".join(hour).strip()
