@@ -10,19 +10,23 @@ _headers = {
 
 locator_domain = "https://www.pandaexpress.com.ph"
 base_url = "https://www.pandaexpress.com.ph/en/userlocation/searchbycoordinates?lat=34.0667&lng=-118.0833&desiredDistance=25&maxDistance=50&page=0&limit=25&hours=true&filters=%7B%7D"
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["List"]
         for _ in locations:
-            hours = []
+            hours = {}
             for day, hh in (
                 _.get("OperationalHours", {}).get("Normal", {}).get("Hours", {}).items()
             ):
                 if not hh["StartTime"]:
                     break
-                hours.append(f"{day}: {hh['StartTime']} - {hh['EndTime']}")
+                hours[day] = f"{hh['StartTime']} - {hh['EndTime']}"
+            temp = []
+            for day in days:
+                temp.append(f"{day}: {hours[day]}")
             location_type = ""
             if _["TemporarilyClosed"]:
                 location_type = "Temporarily Closed"
@@ -41,7 +45,7 @@ def fetch_data():
                 phone=_["Phone"],
                 locator_domain=locator_domain,
                 location_type=location_type,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(temp),
             )
 
 
