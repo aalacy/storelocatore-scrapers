@@ -41,7 +41,7 @@ async function getSiteMapLinks(page) {
 function generateLocationUrls(links) {
   const locationIds = links
     .map((link) => {
-      const matched = link.match(/\/stores\/(\d+)\/.*/);
+      const matched = link.match(/\/store\/(\d+)\/.*/);
       return matched ? matched[1] : null;
     })
     .filter((id) => id);
