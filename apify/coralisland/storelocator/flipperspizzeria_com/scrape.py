@@ -61,6 +61,7 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            city = city.replace("St Lake Mary", "Lake Mary")
             country_code = "US"
             latitude = loc["acf"]["map_address"]["lat"]
             longitude = loc["acf"]["map_address"]["lng"]

@@ -35,6 +35,8 @@ def fetch_data():
                 .split("!2m", 1)[0]
                 .split("!3d")
             )
+            if "!3m" in latitude:
+                latitude = latitude.split("!3m")[0]
             location_name = soup.find("h2").text
             address = (
                 soup.findAll("td", {"class": "tablecontent1"})[1]

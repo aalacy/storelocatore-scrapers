@@ -21,7 +21,7 @@ local = threading.local()
 
 def get_session(refresh=False):
     if not hasattr(local, "session") or refresh:
-        local.session = SgRequests().requests_retry_session(backoff_factor=0.3)
+        local.session = SgRequests()
 
     return local.session
 
@@ -80,7 +80,7 @@ def fetch_locations(code, tracker):
     while "Le nombre maximum des demandes de votre IP" in response.text:
         session = get_session(True)
         response = session.get(search_url.format(code))
-    session_id = response.url.split("=")[-1]
+    session_id = response.url.params.get("SessionGuid")
     hdr = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Content-Type": "application/x-www-form-urlencoded",
@@ -166,16 +166,18 @@ def fetch_urls(session):
     return urls
 
 
-def fetch_location(page_url, session):
+def fetch_location(page_url, session, tracker):
     response = session.get(page_url)
     soup = BeautifulSoup(response.text, "lxml")
     location_name = soup.find("a", itemprop="url").text
-    addr = parse_address(
-        International_Parser(), soup.find("span", itemprop="streetAddress").text
-    )
+    address = soup.find("span", itemprop="streetAddress").text
+    addr = parse_address(International_Parser(), address)
 
     latitude = soup.find("span", itemprop="latitude").text
     longitude = soup.find("span", itemprop="longitude").text
+
+    if tracker.get(address) or tracker.get(addr.street_address_1):
+        return None
 
     street_address = addr.street_address_1
     city = addr.city
@@ -207,9 +209,12 @@ def fetch_data():
                 yield poi
 
         urls = fetch_urls(session)
-        futures = [executor.submit(fetch_location, url, session) for url in urls]
+        futures = [
+            executor.submit(fetch_location, url, session, tracker) for url in urls
+        ]
         for future in as_completed(futures):
-            yield future.result()
+            if future.result():
+                yield future.result()
 
 
 def scrape():
@@ -217,7 +222,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=10000,
         )
     ) as writer:
         for item in fetch_data():
