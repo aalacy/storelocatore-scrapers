@@ -55,6 +55,7 @@ def fetch_data():
             coord = (
                 soup1.select_one("div.retail-phone a.button")["href"]
                 .split("!3d")[1]
+                .split("?")[0]
                 .split("!4d")
             )
             yield SgRecord(
