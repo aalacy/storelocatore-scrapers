@@ -141,6 +141,7 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=MISSING,
+                    raw_address=raw_address,
                 )
 
 
