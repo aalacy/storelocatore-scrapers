@@ -103,7 +103,7 @@ class DrmSearchIteration(SearchIteration):
         zipcode = str(zipcode).replace(" ", "%20")
         while True:
             url = f"{store_url}?q={zipcode}&page={page}"
-            response = self.__http.get(url, headers=hdr)
+            response = SgRequests.raise_on_err(self.__http.get(url, headers=hdr))
             try:
                 newStores = (json.loads(response.text))["data"]
             except Exception as e:
