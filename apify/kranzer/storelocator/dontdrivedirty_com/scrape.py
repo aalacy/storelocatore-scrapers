@@ -84,7 +84,7 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
-        print(page_url)
+
         if latitude == "<MISSING>":
             session = SgRequests()
             try:
