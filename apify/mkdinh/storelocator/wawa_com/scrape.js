@@ -60,7 +60,6 @@ async function fetchLocations(
   maxAttempts = 10,
   currentAttempts = 0
 ) {
-  console.log('-'.repeat(50));
   console.log(`attempt #${currentAttempts} to fetch: ${locationUrls.length} locations`);
   console.log('-'.repeat(50));
 
