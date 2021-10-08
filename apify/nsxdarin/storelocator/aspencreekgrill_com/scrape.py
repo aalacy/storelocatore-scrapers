@@ -104,7 +104,7 @@ def fetch_data():
         phone = "<MISSING>"
         store = "<MISSING>"
         country = "US"
-        if "/star" not in loc:
+        if "/star" not in loc and city != "<MISSING>":
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
