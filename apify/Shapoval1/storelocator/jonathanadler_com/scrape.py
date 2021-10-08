@@ -27,8 +27,6 @@ def fetch_data(sgw: SgWriter):
         state = j.get("prov_state") or "<MISSING>"
         postal = j.get("postal_zip") or "<MISSING>"
         country_code = "".join(j.get("country"))
-        if country_code.find("GB") != -1:
-            continue
         city = j.get("city") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
