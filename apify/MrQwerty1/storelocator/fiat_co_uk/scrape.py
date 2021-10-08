@@ -23,7 +23,9 @@ def fetch_data(coord, sgw: SgWriter):
         street_address = "".join(d.xpath("./address/text()")).strip()
         city = "".join(d.xpath("./town/text()")).strip()
         state = "".join(d.xpath("./province/text()")).strip()
-        postal = "".join(d.xpath("./zipcode/text()")).replace("_", " ").strip()
+        postal = "".join(d.xpath("./zipcode/text()")).replace("_", " ").strip() or "1"
+        if postal[0].isdigit():
+            continue
         phone = "".join(d.xpath("./tel_1/text()")).strip()
         latitude = "".join(d.xpath("./ycoord/text()")).strip()
         longitude = "".join(d.xpath("./xcoord/text()")).strip()
