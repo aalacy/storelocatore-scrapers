@@ -32,11 +32,10 @@ function formatHoursOfOperation(start, end) {
 
 async function getSiteMapLinks(page) {
   return await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('.CMSSiteMapLink')).map(
-      (
-        el // eslint-disable-line no-undef
-      ) => el.getAttribute('href')
-    );
+    return Array.from(
+      document // eslint-disable-line no-undef
+        .querySelectorAll('.CMSSiteMapLink')
+    ).map((el) => el.getAttribute('href'));
   });
 }
 
