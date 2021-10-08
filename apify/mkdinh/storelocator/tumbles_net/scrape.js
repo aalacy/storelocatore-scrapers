@@ -9,13 +9,12 @@ function extractLocatorDomain(url) {
 function extractAddress(address) {
   const components = address.split(', ');
 
-  const stateZip = components.pop();
-  const [state, zip] = stateZip.split(' ');
+  const zip = components.pop();
   const city = components.pop();
   const street_address = components.join(', ');
   const country_code = 'US';
 
-  return { street_address, city, state, zip, country_code };
+  return { street_address, city, zip, country_code };
 }
 
 async function enqueueLocationLinks({ $, requestQueue }) {
