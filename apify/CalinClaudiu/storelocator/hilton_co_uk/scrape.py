@@ -150,7 +150,7 @@ def data_fetcher(country, state, sleep):
         time.sleep(sleep)
         for r in driver.requests:
             data = None
-            if "/graphql/customer" in r.path:
+            if "graphql/customer" in r.path:
                 try:
                     if r.response.body:
                         data = r.response.body
@@ -188,7 +188,7 @@ def data_fetcher(country, state, sleep):
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
         except KeyError as e:
-            logzilla.error(f"{i}\n{str(e)}\n\n")
+            logzilla.error(f"{str(i)[:200]}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
     lize = utils.parallelize(  # noqa

@@ -77,6 +77,19 @@ def fetch_data():
         page_url = "https://www.chickensaladchick.com" + div["data-href"]
         log.info(page_url)
         store_number = div["data-loc-id"]
+        if not street_address:
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            address = (
+                soup.find("div", {"class": "address"})
+                .find("em")
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
+            street_address = address[0]
+            city = address[1]
+            zip_postal = address[-1]
+            state = address[-2]
 
         yield SgRecord(
             locator_domain=DOMAIN,
