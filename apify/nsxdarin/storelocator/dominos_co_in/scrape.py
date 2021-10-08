@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
-import time
 
 session = SgRequests()
 headers = {
@@ -37,7 +36,6 @@ def fetch_data():
                         + item.split('"title":"')[1].split('"')[0]
                     )
     for sid in states:
-        time.sleep(3)
         sname = sid.split("|")[1]
         sidnum = sid.split("|")[0]
         surl = "https://www.dominos.co.in/store-locations/api/get-cities/" + sidnum
@@ -49,7 +47,6 @@ def fetch_data():
         except:
             pass
     for cid in cities:
-        time.sleep(3)
         sname = cid.split("|")[1]
         curl = (
             "https://www.dominos.co.in/store-locations/api/get-localities/"
@@ -68,7 +65,6 @@ def fetch_data():
         except:
             pass
     for curl in places:
-        time.sleep(3)
         logger.info(curl)
         try:
             r2 = session.get(curl.split("|")[0], headers=headers)

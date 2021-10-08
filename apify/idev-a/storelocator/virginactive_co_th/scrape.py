@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
 import re
 
 logger = SgLogSetup().get_logger("virginactive")
@@ -63,10 +62,8 @@ def fetch_data():
             raw_address = (
                 " ".join(_.p.stripped_strings).replace("\n", "").replace("\r", " ")
             )
-            addr = parse_address_intl(raw_address + ", Thailand")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            addr = raw_address.split(",")
+            street_address = ", ".join(addr[:-1])
             page_url = locator_domain + _.select_one("a")["href"]
             logger.info(page_url)
             res = session.get(page_url, headers=_headers).text
@@ -85,9 +82,8 @@ def fetch_data():
                 page_url=page_url,
                 location_name=_.h4.text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=" ".join(addr[-1].strip().split()[:-1]),
+                zip_postal=addr[-1].strip().split()[-1],
                 country_code="Thailand",
                 phone=phone,
                 latitude=coord[0],
