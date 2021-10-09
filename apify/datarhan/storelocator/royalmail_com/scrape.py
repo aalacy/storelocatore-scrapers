@@ -1,3 +1,5 @@
+from lxml import etree
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -10,7 +12,7 @@ from sglogging import sglog
 
 def fetch_data():
     session = SgRequests(proxy_country="gb")
-
+    scraped_urls = []
     start_url = "https://www.royalmail.com/capi/rml/bf/v1/locations/branchFinder?postCode={}&latitude={}&longitude={}&searchRadius=40&count=5&selectedName=&officeType=&type=undefined&appliedFilters=undefined"
     domain = "royalmail.com"
     log = sglog.SgLogSetup().get_logger(logger_name=domain)
@@ -44,22 +46,21 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             else:
                 street_address = addr.street_address_2
-            hoo = []
-            for e in poi["businessDays"]:
-                day = e["businessDay"]
-                if e["openingTimes"]:
-                    opens = e["openingTimes"][0]["opensAt"]
-                    closes = e["openingTimes"][0]["closesAt"]
-                    hoo.append(f"{day}: {opens} - {closes}")
-                else:
-                    hoo.append(f"{day} closed")
-            hoo = ", ".join(hoo).replace("None - None", "Closed")
+            hoo = ""
             location_type = poi["type"]
             page_url = ""
             if location_type == "PO":
                 page_url = f'https://www.royalmail.com/services-near-you/post-office/{location_name.lower().replace(" ", "-")}-{poi["officeDetails"]["postcode"].lower().replace(" ", "-")}'
             if location_type == "DO":
                 page_url = f'https://www.royalmail.com/services-near-you/delivery-office/{location_name.lower().replace(" ", "-")}-{poi["officeDetails"]["postcode"].lower().replace(" ", "-")}'
+            if page_url:
+                if page_url in scraped_urls:
+                    continue
+                scraped_urls.append(page_url)
+                loc_response = session.get(page_url, headers=hdr)
+                loc_dom = etree.HTML(loc_response.text)
+                hoo = loc_dom.xpath('//div[@class="opening-hours-wrapper"]/div//text()')
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
