@@ -48,16 +48,16 @@ def fetch_data():
                 .string.strip()
                 .replace("\n", "")
             )
-
-            latitude = loc["geo"]["latitude"]
-            longitude = loc["geo"]["longitude"]
-            if "'" in loc["geo"]["latitude"]:
-                latitude = _sign(
-                    loc["geo"]["latitude"], json.loads(loc["geo"]["latitude"])
-                )
-                longitude = _sign(
-                    loc["geo"]["longitude"], json.loads(loc["geo"]["longitude"])
-                )
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in soup1.select("div.store-hours div.store-hours__row")
+            ]
+            coord = (
+                soup1.select_one("div.retail-phone a.button")["href"]
+                .split("!3d")[1]
+                .split("?")[0]
+                .split("!4d")
+            )
             yield SgRecord(
                 page_url=link,
                 location_name=loc["name"],
@@ -68,15 +68,15 @@ def fetch_data():
                 country_code="US",
                 location_type=loc["@type"],
                 phone=loc["telephone"],
-                latitude=latitude,
-                longitude=longitude,
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
-                hours_of_operation=_valid("; ".join(loc["openingHours"])),
+                hours_of_operation=_valid("; ".join(hours)),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
