@@ -23,6 +23,7 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         templist = []
+        templist2 = []
         url = "https://stores.footlocker.hk/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -38,7 +39,8 @@ def fetch_data():
                 r = session.get(link_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 loclist = soup.findAll("a", {"class": "LocationCard-title--link"})
-        loclist = loclist + templist
+                templist2 += loclist
+        loclist = templist + templist2
         for loc in loclist:
             location_name = loc.text
             page_url = "https://stores.footlocker.hk/" + loc["href"]
