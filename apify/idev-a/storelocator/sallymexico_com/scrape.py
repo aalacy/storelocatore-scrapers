@@ -7,8 +7,8 @@ import json
 
 locator_domain = "https://www.sallymexico.com"
 base_url = "https://www.sallymexico.com/stores"
-json_url = "/api/dataentities/WH/scroll"
-asset_url = "sallybeautymx.vtexassets.com/_v/public/assets/v1/published/bundle/public/react/asset.min.js\?v=1\&files=vtex.sticky-layout"
+json_url = r"/api/dataentities/WH/scroll"
+asset_url = r"sallybeautymx.vtexassets.com/_v/public/assets/v1/published/bundle/public/react/asset.min.js\?v=1\&files=vtex.sticky-layout"
 
 
 def fetch_data():
