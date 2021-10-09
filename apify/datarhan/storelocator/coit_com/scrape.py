@@ -11,7 +11,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://www.coit.com/locator"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
@@ -27,6 +27,7 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         if "coming-soon" in store_url:
             continue
+        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
@@ -62,7 +63,10 @@ def fetch_data():
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
         else:
-            location_name = loc_dom.xpath('//div/h1[@class="text-center"]/text()')[0]
+            location_name = loc_dom.xpath('//div/h1[@class="text-center"]/text()')
+            if not location_name:
+                continue
+            location_name = location_name[0]
             street_address = loc_dom.xpath('//span[@class="address-line1"]/text()')
             street_address = (
                 street_address[0].strip() if street_address else "<MISSING>"
