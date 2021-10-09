@@ -9,14 +9,14 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 session = SgRequests()
-website = "footlocker_hk"
+website = "footlocker_co_nz"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
 }
 
-DOMAIN = "https://www.footlocker.hk/en/homepage"
+DOMAIN = "https://www.footlocker.co.nz/"
 MISSING = SgRecord.MISSING
 
 
@@ -24,7 +24,7 @@ def fetch_data():
     if True:
         templist = []
         templist2 = []
-        url = "https://stores.footlocker.hk/"
+        url = "https://stores.footlocker.co.nz/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.findAll("li", {"class": "c-directory-list-content-item"})
@@ -35,7 +35,7 @@ def fetch_data():
             ):
                 templist.append(link.find("a"))
             else:
-                link_url = "https://stores.footlocker.hk/" + link.find("a")["href"]
+                link_url = "https://stores.footlocker.co.nz/" + link.find("a")["href"]
                 r = session.get(link_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 loclist = soup.findAll("a", {"class": "LocationCard-title--link"})
@@ -43,7 +43,7 @@ def fetch_data():
         loclist = templist + templist2
         for loc in loclist:
             location_name = loc.text
-            page_url = "https://stores.footlocker.hk/" + loc["href"]
+            page_url = "https://stores.footlocker.co.nz/" + loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -70,7 +70,7 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = "HK"
+            country_code = "NZ"
             hours_of_operation = (
                 soup.find("table", {"class": "c-location-hours-details"})
                 .get_text(separator="|", strip=True)
