@@ -48,12 +48,18 @@ def get_address(line):
     return street_address, city, state, postal
 
 
+def get_hoo(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    return " ".join(
+        ";".join(tree.xpath("//div[@class='location-hours-day']/text()")).split()
+    )
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.bauerbuilt.com/locations/"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'map_options')]/text()"))
@@ -71,26 +77,7 @@ def fetch_data(sgw: SgWriter):
         phone = e.get("%location_main_phone%")
         latitude = loc.get("lat")
         longitude = loc.get("lng")
-
-        _tmp = []
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        for day in days:
-            start = e.get(f"%location_{day}_open_time%")
-            end = e.get(f"%location_{day}_close_time%")
-            if start == "0" or not start:
-                _tmp.append(f"{day.capitalize()}: Closed")
-            else:
-                _tmp.append(f"{day.capitalize()}: {start}-{end}")
-
-        hours_of_operation = ";".join(_tmp)
+        hours_of_operation = get_hoo(page_url)
 
         row = SgRecord(
             page_url=page_url,
@@ -113,6 +100,9 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
     locator_domain = "https://www.bauerbuilt.com/"
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
