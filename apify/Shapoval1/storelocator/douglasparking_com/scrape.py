@@ -33,6 +33,8 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         info = j.get("details")
+        if "HEADQUARTERS" in info:
+            continue
         a = html.fromstring(info)
         ad = " ".join(a.xpath("//*//text()")).replace("\r\n", "").strip()
 
