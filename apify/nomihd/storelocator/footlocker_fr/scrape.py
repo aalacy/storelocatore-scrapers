@@ -21,7 +21,7 @@ def get_selector(url, session):
     try:
         response = SgRequests.raise_on_err(session.get(url, headers=headers))
         return lxml.html.fromstring(response.text)
-    except SgRequestError as e:
+    except SgRequestError:
         pass
 
 
