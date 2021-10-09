@@ -3,7 +3,7 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -58,6 +58,8 @@ def fetch_data(sgw: SgWriter):
         if not line:
             continue
         phone = line.pop().replace("Phone :", "").strip()
+        if phone.count("0") == 10:
+            phone = SgRecord.MISSING
         raw_address = ", ".join(line)
         street_address, city, state, postal = get_address(raw_address)
 
@@ -85,5 +87,7 @@ if __name__ == "__main__":
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         fetch_data(writer)

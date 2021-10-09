@@ -1,6 +1,4 @@
-sgscrape
-sgrequests
-sglogging
-sgselenium
-bs4
-beautifulsoup4==4.7.1
+sgzip==0.10.4
+sgscrape==0.2.4
+sgselenium==0.1.4
+lxml==4.6.2

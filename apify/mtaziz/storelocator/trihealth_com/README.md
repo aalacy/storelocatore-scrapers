@@ -1,15 +1,5 @@
 # How to write a Python3 scraper for SafeGraph (Simple)
 
-validate.py data.csv --ignore StreetAddressHasNumber
-
-83        #9 No. State Highway 49-88  ADDR_HAS_NO_NUMBER         83
-205  4730 Barranca Pkwy,  Suite 4730  ADDR_HAS_NO_NUMBER        205
-325   315 Valley Mall Parkway,  #315  ADDR_HAS_NO_NUMBER        325
-
-They do have numbers.
-
-
-
 Note: This template differs from the older `python3` template in that you don't need to worry about javascript related files such as `scrape.js` and `package.json`. This template also builds faster if you're testing it in a local docker image.
 
 Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
