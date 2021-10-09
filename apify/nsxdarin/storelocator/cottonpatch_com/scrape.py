@@ -79,6 +79,8 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+        if "locations/corsicana" in loc:
+            phone = "903-874-2020"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
