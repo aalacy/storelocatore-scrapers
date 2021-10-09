@@ -19,7 +19,7 @@ function getOrDefault(value) {
 }
 
 function formatPhone(phone) {
-  return phone ? phone.replace(/\-/g, '') : null;
+  return phone ? phone.replace(/-/g, '') : null;
 }
 
 function formatHoursOfOperation(start, end) {
@@ -32,16 +32,17 @@ function formatHoursOfOperation(start, end) {
 
 async function getSiteMapLinks(page) {
   return await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('.CMSSiteMapLink')).map((el) =>
-      el.getAttribute('href')
-    );
+    return Array.from(
+      document // eslint-disable-line no-undef
+        .querySelectorAll('.CMSSiteMapLink')
+    ).map((el) => el.getAttribute('href'));
   });
 }
 
 function generateLocationUrls(links) {
   const locationIds = links
     .map((link) => {
-      const matched = link.match(/\/stores\/(\d+)\/.*/);
+      const matched = link.match(/\/store\/(\d+)\/.*/);
       return matched ? matched[1] : null;
     })
     .filter((id) => id);
@@ -58,7 +59,6 @@ async function fetchLocations(
   maxAttempts = 10,
   currentAttempts = 0
 ) {
-  console.log('-'.repeat(50));
   console.log(`attempt #${currentAttempts} to fetch: ${locationUrls.length} locations`);
   console.log('-'.repeat(50));
 
@@ -67,7 +67,7 @@ async function fetchLocations(
       const promises = urls.map(
         (url) =>
           new Promise((resolve, reject) => {
-            fetch(url)
+            fetch(url) // eslint-disable-line no-undef
               .then((response) => response.json())
               .then((data) => resolve({ url, data }))
               .catch(() => reject(url));
