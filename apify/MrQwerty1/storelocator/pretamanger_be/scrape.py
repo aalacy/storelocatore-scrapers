@@ -37,10 +37,9 @@ def fetch_data(sgw: SgWriter):
     street_address, city, state, postal = get_international(raw_address)
     country_code = "BE"
 
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()")
-    )
-    latitude, longitude = text.split("google.maps.LatLng(")[1].split("),")[0].split(",")
+    latitude, longitude = "".join(
+        tree.xpath("//div[@data-position]/@data-position")
+    ).split(",")
 
     _tmp = []
     li = tree.xpath("//h3[@class='opening-title']/following-sibling::p")
@@ -58,8 +57,8 @@ def fetch_data(sgw: SgWriter):
         country_code=country_code,
         store_number=SgRecord.MISSING,
         location_type=SgRecord.MISSING,
-        latitude=latitude,
-        longitude=longitude,
+        latitude=latitude.strip(),
+        longitude=longitude.strip(),
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
         raw_address=raw_address,
