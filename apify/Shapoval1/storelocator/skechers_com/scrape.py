@@ -14,7 +14,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 website = "https://www.skechers.com/"
 store_url = "https://hosted.where2getit.com/skechers/rest/locatorsearch?like=0.2986525278541239&lang=en_US"
 MISSING = SgRecord.MISSING
-max_workers = 4
+max_workers = 2
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
@@ -70,7 +70,7 @@ def get_json_object(Object, varNames, noVal=MISSING):
 def fetch_data():
     for country_code in SearchableCountries.ALL:
         coords = DynamicGeoSearch(
-            country_codes=[f"{country_code}"], max_search_distance_miles=10
+            country_codes=[f"{country_code}"], max_search_distance_miles=1
         )
 
         with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
