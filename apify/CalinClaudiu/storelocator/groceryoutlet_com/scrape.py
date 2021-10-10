@@ -1,4 +1,6 @@
 from lxml import etree
+from time import sleep
+from random import uniform
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -20,6 +22,7 @@ def fetch_data():
     with SgFirefox() as driver:
         for code in all_codes:
             driver.get(start_url.format(code))
+            sleep(uniform(5, 30))
             dom = etree.HTML(driver.page_source)
 
             all_locations = dom.xpath("//li[@data-store-number]")
