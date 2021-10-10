@@ -23,6 +23,8 @@ def fetch_data():
 
     for poi in all_locations:
         store_url = urljoin(start_url, poi["url_key"])
+        if "no-store" in store_url:
+            continue
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
