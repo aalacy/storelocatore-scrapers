@@ -33,6 +33,7 @@ def fetch_data():
                 country_codes=[SearchableCountries.USA],
                 expected_search_radius_miles=100,
                 max_search_results=50,
+                use_state=False,
                 granularity=Grain_8(),
             )
             for lat, lng in search:

@@ -116,6 +116,7 @@ def fetch_data():
                         "Mon a Sun", "Mon-Sun"
                     )
                     hours = hours.replace(" de ", ": ").replace("am a ", "am - ")
+                    hours = hours.replace("<br/>", "; ")
                     if add != "":
                         yield SgRecord(
                             locator_domain=website,
