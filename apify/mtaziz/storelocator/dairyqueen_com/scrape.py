@@ -21,24 +21,23 @@ headers = {
 
 def get_store_urls():
     store_urls = []
-    with SgRequests() as http:
-        sitemap_urls = [
-            "https://www.dairyqueen.com/en-ca/sitemap.xml",
-            "https://www.dairyqueen.com/en-us/sitemap.xml",
-        ]
-        for idx, url in enumerate(sitemap_urls):
-            r = get_response(idx, url)
-            logger.info(f"Pulling Store URLs for: {url}")
-            en_ca = "<loc>https://www.dairyqueen.com/en-ca/locations/"
-            en_us = "<loc>https://www.dairyqueen.com/en-us/locations/"
-            ca_loc = "-ca/locations/</loc>"
-            us_loc = "-us/locations/</loc>"
-            for line in r.iter_lines():
-                line = str(line)
-                if (en_ca in line and ca_loc not in line) or (
-                    en_us in line and us_loc not in line
-                ):
-                    store_urls.append(line.split("<loc>")[1].split("<")[0])
+    sitemap_urls = [
+        "https://www.dairyqueen.com/en-ca/sitemap.xml",
+        "https://www.dairyqueen.com/en-us/sitemap.xml",
+    ]
+    for idx, url in enumerate(sitemap_urls):
+        r = get_response(idx, url)
+        logger.info(f"Pulling Store URLs for: {url}")
+        en_ca = "<loc>https://www.dairyqueen.com/en-ca/locations/"
+        en_us = "<loc>https://www.dairyqueen.com/en-us/locations/"
+        ca_loc = "-ca/locations/</loc>"
+        us_loc = "-us/locations/</loc>"
+        for line in r.iter_lines():
+            line = str(line)
+            if (en_ca in line and ca_loc not in line) or (
+                en_us in line and us_loc not in line
+            ):
+                store_urls.append(line.split("<loc>")[1].split("<")[0])
     return store_urls
 
 
