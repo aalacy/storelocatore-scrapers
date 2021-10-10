@@ -50,13 +50,17 @@ def fetch_data():
                     '//a[@title="Store Details"]/text()'
                 )[-1].strip()[3:]
                 raw_address = (
-                    loc_dom.xpath('//div[@class="storeDetails__zip"]/text()')[0]
+                    loc_dom.xpath(
+                        '//div[@class="storeSearch__resultsSection"]//address[@class="storeDetails__address"]//div[@class="storeDetails__zip"]/text()'
+                    )[0]
                     .strip()
                     .split(", ")
                 )
                 city = raw_address[0]
                 state = raw_address[-1].split()[0]
                 zip_code = raw_address[-1].split()[0]
+                if len(zip_code) == 2:
+                    zip_code = ""
                 loc_type = ""
                 hoo = list(
                     set(

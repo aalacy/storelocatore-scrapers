@@ -84,11 +84,15 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
+
         if latitude == "<MISSING>":
             session = SgRequests()
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-
+            try:
+                r = session.get(page_url, headers=headers)
+                tree = html.fromstring(r.text)
+            except:
+                latitude = longitude = "<MISSING>"
+                continue
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "lat:")]/text()'))
                 .split("lat:")[1]
@@ -101,7 +105,6 @@ def fetch_data(sgw: SgWriter):
                 .split("}")[0]
                 .strip()
             )
-
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
