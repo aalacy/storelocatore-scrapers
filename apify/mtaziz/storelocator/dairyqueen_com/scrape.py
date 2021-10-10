@@ -7,12 +7,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 import json
-from tenacity import retry, stop_after_attempt
-import tenacity
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 16
+MAX_WORKERS = 6
 DOMAIN = "dairyqueen.com"
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -20,10 +18,9 @@ headers = {
 }
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
 def get_store_urls():
     store_urls = []
-    with SgRequests() as http:
+    with SgRequests().requests_retry_session(retries=3, backoff_factor=0.3) as http:
         sitemap_urls = [
             "https://www.dairyqueen.com/en-ca/sitemap.xml",
             "https://www.dairyqueen.com/en-us/sitemap.xml",
@@ -44,9 +41,8 @@ def get_store_urls():
     return store_urls
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
 def fetch_records_us(idx, url, sgw: SgWriter):
-    with SgRequests() as http:
+    with SgRequests().requests_retry_session(retries=3, backoff_factor=0.3) as http:
         logger.info(f"[{idx}] Pulling the data from: {url}")
         r = http.get(url, headers=headers)
         if r.status_code == 200:
