@@ -77,6 +77,8 @@ def fetch_data():
                 pass
 
             street_address = ", ".join(add_list).strip()
+            if len(street_address) <= 0:
+                street_address = "Colliers Street"
             state = "<MISSING>"
             zip = address.split(",")[-2].strip()
             country_code = "GB"

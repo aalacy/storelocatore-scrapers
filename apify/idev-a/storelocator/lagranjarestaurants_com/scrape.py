@@ -24,7 +24,7 @@ def fetch_data():
         logger.info(f"{len(locations)} found")
         for _ in locations:
             coord = _["data-coor"].split(",")
-            raw_address = list(_.select_one("div.w-text1").stripped_strings)[0]
+            raw_address = " ".join(list(_.select_one("div.w-text1").stripped_strings))
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -47,9 +47,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

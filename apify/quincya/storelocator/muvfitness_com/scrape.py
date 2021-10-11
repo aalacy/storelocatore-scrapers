@@ -13,47 +13,39 @@ def fetch_data(sgw: SgWriter):
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://www.muvfitness.com/locations/"
+    base_link = "https://www.muvfitness.com/wp-admin/admin-ajax.php?action=store_search&lat=45.336447&lng=-122.605042&max_results=100&search_radius=500&autoload=1"
 
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    stores = session.get(base_link, headers=headers).json()
 
-    stores = base.find_all(class_="location")
-
-    locator_domain = "https://www.muvfitness.com/"
+    locator_domain = "https://www.muvfitness.com"
 
     for store in stores:
-        street_address = store.find(itemprop="streetAddress")["content"].strip()
-        city = store.find(itemprop="addressLocality")["content"].strip()
-        state = store.find(itemprop="addressRegion")["content"].strip()
-        zip_code = store.find(itemprop="postalCode")["content"].strip()
+        street_address = store["address"].replace("\ufeff", "").strip()
+        city = store["city"]
+        state = store["state"].replace("Washington", "WA").strip()
+        zip_code = store["zip"]
         country_code = "US"
         location_type = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = store.find(class_="phone").text.strip()
-        link = (
-            "https://www.muvfitness.com"
-            + store.find(class_="website")["href"].split("?")[0]
-        )
+        store_number = store["id"]
+        phone = store["phone"].replace("\ufeff", "").strip()
+        link = locator_domain + store["url"]
 
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        location_name = base.find(class_="h-spacer").strong.text
-        hours_of_operation = (
-            " ".join(list(base.find(class_="gym-hours").stripped_strings))
-            .split("Hours")[1]
-            .strip()
-        )
-        if "mon" not in hours_of_operation.lower():
-            hours_of_operation = "<MISSING>"
+        location_name = base.h2.text
+        try:
+            hours_of_operation = " ".join(
+                list(base.find(class_="tag_hours_table").stripped_strings)
+            ).strip()
+            if "mon" not in hours_of_operation.lower():
+                hours_of_operation = "<MISSING>"
+        except:
+            hours_of_operation = ""
 
-        map_link = base.iframe["src"]
-        lat_pos = map_link.rfind("!3d")
-        latitude = map_link[lat_pos + 3 : map_link.find("!", lat_pos + 5)].strip()
-        lng_pos = map_link.find("!2d")
-        longitude = map_link[lng_pos + 3 : map_link.find("!", lng_pos + 5)].strip()
+        latitude = store["lat"]
+        longitude = store["lng"]
 
         sgw.write_row(
             SgRecord(

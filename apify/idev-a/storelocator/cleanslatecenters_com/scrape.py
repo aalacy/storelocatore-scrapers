@@ -53,8 +53,15 @@ def fetch_data():
                 state = link.text.split(",")[-1]
             _hr = sp1.find("h4", string=re.compile(r"HOURS OF OPERATION"))
             hours = []
-            if _hr and _hr.find_next_sibling("p"):
-                hours = list(_hr.find_next_sibling("p").stripped_strings)
+            if _hr:
+                if _hr.find_next_sibling("p"):
+                    hours = list(_hr.find_next_sibling("p").stripped_strings)
+                elif _hr.find_next_sibling("div") and _hr.find_next_sibling("div").p:
+                    hours = list(_hr.find_next_sibling("div").p.stripped_strings)
+            if not hours:
+                import pdb
+
+                pdb.set_trace()
             try:
                 coord = (
                     sp1.iframe["data-src"]
