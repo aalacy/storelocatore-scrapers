@@ -1,150 +1,178 @@
-import csv
+import time
+import json
 from concurrent import futures
+
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.pause_resume import CrawlStateSingleton
+
+website = "https://www.acuonline.org"
+store_url = "https://locationapi.wave2.io/api/client/getlocations"
+MISSING = SgRecord.MISSING
+max_workers = 1
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    "Accept": "*/*",
+    "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+    "Content-Type": "application/json; charset=UTF-8",
+    "Origin": "https://03919locator.wave2.io",
+    "Connection": "keep-alive",
+    "Referer": "https://03919locator.wave2.io/",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-site",
+    "TE": "trailers",
+}
+
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(coord):
-    rows = []
-    lat, lng = coord
-    locator_domain = "https://www.citybbq.com/"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-Type": "application/json; charset=UTF-8",
-        "Origin": "https://03919locator.wave2.io",
-        "Connection": "keep-alive",
-        "Referer": "https://03919locator.wave2.io/",
-        "TE": "Trailers",
+def request_with_retries(zip_code):
+    data = {
+        "Latitude": "",
+        "Longitude": "",
+        "Address": zip_code,
+        "City": "",
+        "State": "",
+        "Zipcode": "",
+        "Country": "",
+        "Action": "textsearch",
+        "ActionOverwrite": "",
+        "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
     }
+    try:
+        response = session.post(store_url, headers=headers, data=json.dumps(data))
+        stores = json.loads(response.text)["Features"]
+        log.debug(f"From {zip_code} stores = {len(stores)}")
+        return stores
+    except Exception as e:
+        log.error(f"can't able to get data from {zip_code}: {e}")
+        return []
 
-    data = (
-        '{"Latitude":"'
-        + lat
-        + '","Longitude":"'
-        + lng
-        + '","Address":"","City":"","State":"","Zipcode":"","Country":"","Action":"initload","ActionOverwrite":"","Filters":"FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,"}'
-    )
 
-    session = SgRequests()
+def get_var_name(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
 
-    r = session.post(
-        "https://locationapi.wave2.io/api/client/getlocations",
-        headers=headers,
-        data=data,
-    )
-    js = r.json()["Features"]
 
-    for j in js:
-        a = j.get("Properties")
-        page_url = "https://www.acuonline.org/home/resources/locations"
+def get_json_object(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+        if value is None:
+            return noVal
+    return value
 
-        street_address = "".join(a.get("Address")).capitalize() or "<MISSING>"
-        city = a.get("City") or "<MISSING>"
-        state = a.get("State") or "<MISSING>"
-        postal = a.get("Postalcode") or "<MISSING>"
-        country_code = a.get("Country") or "US"
-        phone = a.get("Phone") or "<MISSING>"
-        latitude = a.get("Latitude") or "<MISSING>"
-        store_number = a.get("LocationId") or "<MISSING>"
-        longitude = a.get("Longitude") or "<MISSING>"
-        location_type = j.get("LocationFeatures").get("LocationType")
-        location_name = a.get("LocationName")
-        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        tmp = []
-        for d in days:
-            day = d
-            try:
-                opens = a.get(f"{d}Open")
-                closes = a.get(f"{d}Close")
-                line = f"{day} {opens} - {closes}"
-                if opens == closes:
-                    line = "<MISSING>"
-            except:
-                line = "<MISSING>"
-            tmp.append(line)
-        hours_of_operation = "; ".join(tmp)
-        if hours_of_operation.count("<MISSING>") == 7:
-            hours_of_operation = "<MISSING>"
-        hours_of_operation = hours_of_operation.replace("Closed -", "Closed").strip()
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
-        if hours_of_operation.find("<MISSING>") != -1:
-            hours_of_operation = "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
+def get_hoo(store):
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    hoo = []
 
-    return rows
+    for day in days:
+        opens = get_json_object(store, f"{day}Open")
+        closes = get_json_object(store, f"{day}Close")
+        if len(opens) == 0:
+            opens = MISSING
+        if len(closes) == 0:
+            closes = MISSING
+        if opens == MISSING and closes == MISSING:
+            continue
+        if closes == MISSING:
+            hoo.append(f"{day}: {opens}")
+        elif opens == MISSING:
+            hoo.append(f"{day}: {closes}")
+        else:
+            hoo.append(f"{day}: {opens} - {closes}")
+
+    hoo = "; ".join(hoo)
+    return hoo
 
 
 def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=1, country_code=SearchableCountries.USA)
+    zip_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
+    )
 
-    with futures.ThreadPoolExecutor(max_workers=7) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
+    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        executors = {
+            executor.submit(request_with_retries, zip_code): zip_code
+            for zip_code in zip_codes
+        }
 
-    return out
+        for future in futures.as_completed(executors):
+            stores = future.result()
+            for store in stores:
+                properties = get_json_object(store, "Properties")
+
+                location_name = get_json_object(properties, "LocationName")
+                store_number = get_json_object(properties, "LocationId")
+                page_url = "https://www.acuonline.org/home/resources/locations"
+                street_address = get_json_object(properties, "Address")
+                location_type = get_json_object(store, "LocationFeatures.LocationType")
+                city = get_json_object(properties, "City")
+                zip_postal = get_json_object(properties, "Postalcode")
+                state = get_json_object(properties, "State")
+                country_code = get_json_object(properties, "Country", "US")
+                phone = get_json_object(properties, "Phone")
+                latitude = get_json_object(properties, "Latitude")
+                longitude = get_json_object(properties, "Longitude")
+                hours_of_operation = get_hoo(properties)
+                raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+                    MISSING, ""
+                )
+                raw_address = " ".join(raw_address.split())
+                raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+                if raw_address[len(raw_address) - 1] == ",":
+                    raw_address = raw_address[:-1]
+
+                yield SgRecord(
+                    locator_domain=website,
+                    store_number=store_number,
+                    page_url=page_url,
+                    location_name=location_name,
+                    location_type=location_type,
+                    street_address=street_address,
+                    city=city,
+                    zip_postal=zip_postal,
+                    state=state,
+                    country_code=country_code,
+                    phone=phone,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+    return []
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    CrawlStateSingleton.get_instance().save(override=True)
+    log.info(f"Start scrapping {website} ...")
+    start = time.time()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":

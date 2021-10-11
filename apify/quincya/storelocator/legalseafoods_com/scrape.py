@@ -50,7 +50,11 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "Temporarily Closed"
         else:
             try:
-                hours_of_operation = " ".join(list(base.table.stripped_strings)[1:])
+                hours_of_operation = (
+                    " ".join(list(base.table.stripped_strings)[1:])
+                    .split("See About")[0]
+                    .strip()
+                )
             except:
                 hours_of_operation = "<MISSING>"
         try:

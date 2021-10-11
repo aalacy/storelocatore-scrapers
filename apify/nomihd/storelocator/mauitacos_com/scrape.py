@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "mauitacos.com"
@@ -24,21 +26,6 @@ headers = {
 }
 
 
-def get_latlng(lat_lng_href):
-    if "z/data" in lat_lng_href:
-        lat_lng = lat_lng_href.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in lat_lng_href:
-        lat_lng = lat_lng_href.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
     search_url = "https://mauitacos.com/locations"
@@ -46,15 +33,13 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    area_list = search_sel.xpath(
-        '//div[./h2[text()]]//div[@class="wpb_wrapper" and (./h2  or ./h3)]'
-    )
+    area_list = search_sel.xpath('//div//div[@class="wpb_wrapper" and (./h3)]')[:-1]
 
     for area in area_list:
         store_names = list(
             filter(
                 str,
-                [x.strip() for x in area.xpath("./*[self::h2 or self::h3]//text()")],
+                [x.strip() for x in area.xpath("./*[self::h3]//text()")],
             )
         )
         for pos, store_name in enumerate(store_names, 1):  # pos is position
@@ -62,80 +47,34 @@ def fetch_data():
             page_url = search_url
             locator_domain = website
             location_name = store_name
-
             store_number = "<MISSING>"
             location_type = "<MISSING>"
 
-            addresses = area.xpath(
-                f'./p[(count(preceding-sibling::h2)={pos} or count(preceding-sibling::h3)={pos}) and not(contains(.//a//text(),"Menu"))]'
+            raw_info = area.xpath(
+                f'./p[(count(preceding-sibling::h2)={pos} or count(preceding-sibling::h3)={pos}) and not(contains(.//a//text(),"Menu"))]/text()'
             )
+            add_list = []
+            phone = "<MISSING>"
+            for info in raw_info:
+                if "Phone" in info:
+                    phone = "".join(info).strip().replace("Phone:", "").strip()
+                    break
+                else:
+                    add_list.append("".join(info).strip())
 
             street_address = (
-                " ".join(
-                    list(
-                        filter(
-                            str, [x.strip() for x in addresses[0].xpath(".//text()")]
-                        )
-                    )
-                )
-                .replace("Address:", " ")
-                .replace("  ", " ")
-                .strip()
+                ", ".join(add_list[:-1]).strip().split("Shopping Center,")[-1].strip()
             )
-            temp_street = street_address
-            for index in range(0, len(temp_street)):
-                if temp_street[index].isdigit() or temp_street[index].isalpha():
-                    street_address = "".join(temp_street[index:]).strip()
-                    break
-            city_state_zip = " ".join(
-                list(filter(str, [x.strip() for x in addresses[1].xpath(".//text()")]))
-            ).strip()
-            city_state_zip = (
-                city_state_zip.replace(",", " ")
-                .replace(".", " ")
-                .replace("  ", " ")
-                .strip()
-            )
+            city_state_zip = "".join(add_list[-1]).strip()
 
-            city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-            temp_city = city
-            for index in range(0, len(temp_city)):
-                if temp_city[index].isdigit() or temp_city[index].isalpha():
-                    city = "".join(temp_city[index:]).strip()
-                    break
-
-            state = city_state_zip.split(" ")[-2].strip()
-            zip = city_state_zip.split(" ")[-1].strip()
+            city = city_state_zip.split(",")[0].strip()
+            state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
+            zip = city_state_zip.split(",")[-1].strip().split(" ")[-1].strip()
             country_code = "US"
-
-            phone = (
-                " ".join(
-                    list(
-                        filter(
-                            str, [x.strip() for x in addresses[2].xpath(".//text()")]
-                        )
-                    )
-                )
-                .replace("Phone:", " ")
-                .replace("  ", " ")
-            )
-            temp_phone = phone
-            for index in range(0, len(temp_phone)):
-                if (
-                    temp_phone[index].isdigit()
-                    or temp_phone[index].isalpha()
-                    or temp_phone[index] == "("
-                ):
-                    phone = "".join(temp_phone[index:]).strip()
-                    break
 
             hours_of_operation = "<MISSING>"
 
-            lat_lng_href = addresses[3].xpath(".//a/@href")[0]
-
-            latitude, longitude = get_latlng(lat_lng_href)
-
-            raw_address = "<MISSING>"
+            latitude, longitude = "<MISSING>", "<MISSING>"
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -152,14 +91,15 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

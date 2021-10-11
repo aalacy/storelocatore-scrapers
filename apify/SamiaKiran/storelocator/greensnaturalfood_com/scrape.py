@@ -36,11 +36,11 @@ def fetch_data():
                 address = address[1] + " " + address[3]
             else:
                 address = " ".join(x for x in address)
-            temp = loc.get_text(separator="|", strip=True).replace("|", " ")
+            temp = loc.get_text(separator="|", strip=True).split("|")
             location_name = loc.find("h2").text
             log.info(location_name)
             phone = loc.select_one("a[href*=tel]").text
-            hours_of_operation = temp[-1]
+            hours_of_operation = temp[-1].replace("Hours: ", "")
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
