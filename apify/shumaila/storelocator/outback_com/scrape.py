@@ -25,9 +25,10 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.findAll("ul", {"class": "directory-listing"})
-    for ccode in statelist:
-        ccode = ccode["ng-show"].split("'", 1)[1].split("'", 1)[0]
-        loclist = soup.findAll("li", {"class": "directory-listing-entry"})
+
+    for cnow in statelist:
+        ccode = cnow["ng-show"].split("'", 1)[1].split("'", 1)[0]
+        loclist = cnow.findAll("li", {"class": "directory-listing-entry"})
         for loc in loclist:
             loc = re.sub(pattern, "\n", loc.text).strip()
             title = loc.split("\n", 1)[0]
@@ -35,7 +36,7 @@ def fetch_data():
             phone = address.split("\n")[-1]
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
-            hours = "Sorry, We're Currently Closed"
+            hours = "<MISSING>"
             lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
 
@@ -119,18 +120,11 @@ def fetch_data():
                     longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
                 except:
                     lat = longt = "<MISSING>"
-                try:
-                    title = (
-                        soup.find("h1", {"id": "location-name"})
-                        .text.replace("\n", " ")
-                        .strip()
-                    )
-                except:
-                    try:
-                        title = soup.find("h1").text.replace("\n", " ").strip()
-
-                    except:
-                        continue
+                title = (
+                    soup.find("h1", {"id": "location-name"})
+                    .text.replace("\n", " ")
+                    .strip()
+                )
                 street = soup.find("span", {"class": "c-address-street-1"}).text
                 city = soup.find("span", {"class": "c-address-city"}).text
                 try:
@@ -146,6 +140,11 @@ def fetch_data():
                     hours = hours.split("Week", 1)[1]
                 except:
                     pass
+                try:
+                    hours = hours.split("Hours", 1)[1]
+                except:
+                    pass
+                hours = hours.replace("day", "day ")
                 yield SgRecord(
                     locator_domain="https://www.outback.com/",
                     page_url=branch,
