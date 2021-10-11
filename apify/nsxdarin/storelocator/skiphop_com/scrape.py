@@ -68,7 +68,10 @@ def fetch_data():
             hours = (
                 hours + "; Sat: " + line.split('"saturdayHours": "')[1].split('"')[0]
             )
-        if '"saturdayHours"' in line:
+        if '"llpurl": "' in line:
+            loc = line.split('"llpurl": "')[1].split('"')[0]
+            if loc == "":
+                loc = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
             if phone == "":
@@ -103,7 +106,7 @@ def fetch_data():
                 city = "California"
             if "," in name:
                 name = name.split(",")[0]
-            if "CLOSED-CLOSED" in hours:
+            if "CLOSED-CLOSED" in hours and "AM" not in hours and "PM" not in hours:
                 hours = "TEMPORARILY CLOSED"
             yield SgRecord(
                 locator_domain=website,

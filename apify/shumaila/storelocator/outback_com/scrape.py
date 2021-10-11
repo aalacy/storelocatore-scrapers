@@ -114,13 +114,23 @@ def fetch_data():
                     r = session1.get(branch, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
                 store = r.text.split('"storeId":"', 1)[1].split('"', 1)[0]
-                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-                longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
-                title = (
-                    soup.find("h1", {"id": "location-name"})
-                    .text.replace("\n", " ")
-                    .strip()
-                )
+                try:
+                    lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+                    longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+                except:
+                    lat = longt = "<MISSING>"
+                try:
+                    title = (
+                        soup.find("h1", {"id": "location-name"})
+                        .text.replace("\n", " ")
+                        .strip()
+                    )
+                except:
+                    try:
+                        title = soup.find("h1").text.replace("\n", " ").strip()
+
+                    except:
+                        continue
                 street = soup.find("span", {"class": "c-address-street-1"}).text
                 city = soup.find("span", {"class": "c-address-city"}).text
                 try:
