@@ -38,7 +38,10 @@ def fetch_data(sgw: SgWriter):
             .replace("\r", " ")
             .strip()
         )
-        if hours_of_operation.find("Opening Soon") != -1:
+        if (
+            hours_of_operation.find("Opening Soon") != -1
+            or hours_of_operation.find("Opening in ") != -1
+        ):
             hours_of_operation = "Coming Soon"
         if hours_of_operation.find("The health") != -1:
             hours_of_operation = hours_of_operation.split("The health")[0].strip()
@@ -48,8 +51,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = hours_of_operation.split("Holiday")[0].strip()
         if hours_of_operation.find("Available") != -1:
             hours_of_operation = hours_of_operation.split("Available")[0].strip()
-        if hours_of_operation.find("Open") != -1:
-            hours_of_operation = hours_of_operation.split("Open")[0].strip()
+        if hours_of_operation.find("Closed until") != -1:
+            hours_of_operation = "Temporarily Closed"
+
         hours_of_operation = hours_of_operation.replace("Hours:", "").strip()
 
         row = SgRecord(
