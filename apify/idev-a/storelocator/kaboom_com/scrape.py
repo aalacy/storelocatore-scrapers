@@ -101,6 +101,8 @@ def fetch_data():
                             or "this store is closed" in hours[0]
                         ):
                             hours = ["closed"]
+                        if "June" in hours[0] or "July" in hours[0]:
+                            hours = ["temporarily closed"]
                     yield SgRecord(
                         page_url=page_url,
                         store_number=_["store_number"],

@@ -8,7 +8,7 @@ from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-
+    locator_domain = "https://geodis.com/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
@@ -342,10 +342,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://geodis.com/"
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.PAGE_URL})
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
         fetch_data(writer)
