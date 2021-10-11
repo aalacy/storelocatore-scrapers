@@ -2,7 +2,7 @@ import time
 import json
 from concurrent import futures
 
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -105,7 +105,9 @@ def get_hoo(store):
 
 def fetch_data():
     zip_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_distance_miles=1
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
     )
 
     with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
