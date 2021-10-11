@@ -1,43 +1,45 @@
-import csv
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.aussiegrill.com"
     api_url = "https://www.aussiegrill.com/scripts/locationData.json"
     session = SgRequests()
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -47,10 +49,11 @@ def fetch_data():
     for j in js:
 
         page_url = j.get("YextURL") or "https://www.aussiegrill.com/pickup.html"
-        location_name = j.get("Name")
+        location_name = "".join(j.get("Name"))
         location_type = "<MISSING>"
         ad = "".join(j.get("Address"))
         locinfo = "".join(j.get("LocationInfo"))
+
         if locinfo.find("Coming") != -1:
             continue
         phone = "".join(j.get("Phone")).replace("Call:", "").strip() or "<MISSING>"
@@ -59,22 +62,26 @@ def fetch_data():
         postal = "<MISSING>"
         city = "<MISSING>"
         if ad:
-            street_address = ad.split(",")[0].strip()
-            state = ad.split(",")[2].split()[0].strip()
-            postal = ad.split(",")[2].split()[-1].strip()
-            city = ad.split(",")[1].strip()
-            if ad.count(",") == 3:
-                street_address = (
-                    ad.split(",")[0].strip() + " " + ad.split(",")[1].strip()
-                )
-                state = ad.split(",")[3].split()[0].strip()
-                postal = ad.split(",")[3].split()[-1].strip()
-                city = ad.split(",")[2].strip()
+            a = usaddress.tag(ad, tag_mapping=tag)[0]
+            street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+                "None", ""
+            ).strip()
+            city = a.get("city") or "<MISSING>"
+            state = a.get("state") or "<MISSING>"
+            postal = a.get("postal") or "<MISSING>"
         country_code = "US"
-        if city == "<MISSING>":
-            city = "".join(location_name).split(",")[0].capitalize().strip()
-            state = "".join(location_name).split(",")[1].strip()
-        store_number = "<MISSING>"
+        if location_name.find(",") != -1:
+            city = location_name.split(",")[0].strip()
+            state = location_name.split(",")[1].strip()
+        HasPickup = j.get("HasPickup")
+        HasDelivery = j.get("HasDelivery")
+        if HasDelivery:
+            location_type = "Delivery"
+        if HasDelivery and HasPickup:
+            location_type = "Delivery and Pickup"
+        if location_type != "Delivery and Pickup":
+            continue
+
         latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = "<MISSING>"
         if page_url != "https://www.aussiegrill.com/pickup.html":
@@ -106,31 +113,30 @@ def fetch_data():
                 .split("}")[0]
             )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)
