@@ -6,11 +6,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgSelenium
-
-driver = SgSelenium().chrome()
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
+driver = SgSelenium().chrome()
+
 session = SgRequests()
 headers = {
     "authority": "www.caobakerycafe.com",
