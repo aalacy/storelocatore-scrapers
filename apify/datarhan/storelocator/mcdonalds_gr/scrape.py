@@ -46,6 +46,8 @@ def fetch_data():
                 street_address = poi["latlng"]["street_name"]
         else:
             street_address = poi["latlng"]["address"].split(",")[0]
+        if "McDonald" in street_address:
+            street_address = etree.HTML(poi["address"]).xpath("//text()")[0]
 
         item = SgRecord(
             locator_domain=domain,

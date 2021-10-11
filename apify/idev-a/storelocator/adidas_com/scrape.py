@@ -20,6 +20,8 @@ def fetch_data():
             session.get(base_url, headers=_headers).text.replace("\\", "/")
         )["wsResponse"]["result"]
         for _ in locations:
+            if "opening_soon" in _.get("operational_status", "").lower():
+                continue
             hours = []
             for day in days:
                 if _.get(f"openinghours_{day}"):
@@ -40,7 +42,7 @@ def fetch_data():
                 country_code=_["country"],
                 phone=_.get("phone"),
                 locator_domain=locator_domain,
-                location_type=_.get("storetype"),
+                location_type=_.get("operational_status"),
                 hours_of_operation="; ".join(hours),
             )
 
