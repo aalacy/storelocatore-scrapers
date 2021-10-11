@@ -42,10 +42,10 @@ def fetch_data():
     url = "https://www.cubesmart.com/facilities/query/GetSiteGeoLocations"
 
     try:
-        loclist = session.post(url, headers=headers, verify=False).json()
+        loclist = session.post(url, headers=headers).json()
     except:
         headers["Cookie"] = cookielist[1]
-        loclist = session.post(url, headers=headers, verify=False).json()
+        loclist = session.post(url, headers=headers).json()
     for loc in loclist:
         store = str(loc["Id"])
         street = loc["Address"]
@@ -72,15 +72,17 @@ def fetch_data():
             + city
             + "-self-storage/"
         )
-
-        r = session.get(link, headers=headers1).text
+        try:
+            r = session.get(link, headers=headers1).text
+        except:
+            continue
         try:
             pcode = r.split(',"postalCode":"', 1)[1].split('"', 1)[0]
         except:
 
             headers1["Cookie"] = cookielist[2]
-            r = session.get(link, headers=headers1).text
             try:
+                r = session.get(link, headers=headers1).text
                 pcode = r.split(',"postalCode":"', 1)[1].split('"', 1)[0]
             except:
                 continue

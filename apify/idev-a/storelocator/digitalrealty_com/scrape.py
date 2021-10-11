@@ -88,9 +88,12 @@ def request_with_retries(url):
 
 
 def _d(page_url, sp3, country):
-    ss = list(
-        sp3.select("main div.uk-margin-medium")[0].select("p")[-1].stripped_strings
-    )
+    try:
+        ss = list(
+            sp3.select("main div.uk-margin-medium")[0].select("p")[-1].stripped_strings
+        )
+    except:
+        ss = []
     location_name = sp3.select_one(
         'h1[data-uk-scrollspy-class="uk-animation-slide-left"]'
     ).text.strip()
@@ -104,7 +107,14 @@ def _d(page_url, sp3, country):
             .nextSibling.strip()
         )
     except:
-        raw_address = location_name + " " + city_state
+        try:
+            raw_address = (
+                sp3.find("h3", string=re.compile(r"Property Specs"))
+                .find_next_sibling()
+                .text.strip()
+            )
+        except:
+            raw_address = location_name + " " + city_state
     addr = parse_address_intl(raw_address)
     city = addr.city
     zip_postal = addr.postcode
