@@ -2,7 +2,7 @@ import time
 import json
 from concurrent import futures
 
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -14,7 +14,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 website = "https://moneypass.com/"
 store_url = "https://locationapi.wave2.io/api/client/getlocations"
 MISSING = SgRecord.MISSING
-max_workers = 2
+max_workers = 1
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
@@ -105,7 +105,9 @@ def get_hoo(store):
 
 def fetch_data():
     zip_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_distance_miles=1
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
     )
 
     with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
