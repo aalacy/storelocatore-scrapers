@@ -58,8 +58,6 @@ class _SearchIteration(SearchIteration):
 
         search_url = "https://dl-emea.dxtservice.com/dl/api/search?latitude={}&longitude={}&searchRadius=100&includeStores=COUNTRY&pageIndex={}&pageSize=100&minDealers=10&maxDealers=20&storeTags=[103]"
         page_no = 0
-        stores = []
-
         while True:
 
             stores_req = self.__http.get(
