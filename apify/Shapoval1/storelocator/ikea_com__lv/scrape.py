@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.ikea.lv/en/"
+    locator_domain = "https://www.ikea.lv/en"
     api_url = "https://www.ikea.lv/en/page/contactsriga"
     session = SgRequests()
     headers = {
@@ -16,6 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
+
     page_url = "https://www.ikea.lv/en/page/contactsriga"
     location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
 
@@ -25,37 +26,23 @@ def fetch_data(sgw: SgWriter):
                 '//strong[contains(text(), "Address")]/following-sibling::text()[1]'
             )
         )
-        .split(",")[0]
+        .replace("\n", "")
+        .replace(",", "")
         .strip()
     )
-    state = (
+    ad = (
         "".join(
             tree.xpath(
                 '//strong[contains(text(), "Address")]/following-sibling::text()[3]'
             )
         )
-        .split(",")[1]
+        .replace("\n", "")
         .strip()
     )
-    postal = (
-        "".join(
-            tree.xpath(
-                '//strong[contains(text(), "Address")]/following-sibling::text()[3]'
-            )
-        )
-        .split(",")[2]
-        .strip()
-    )
+    state = "<MISSING>"
+    postal = ad.split(",")[2].strip()
     country_code = "LV"
-    city = (
-        "".join(
-            tree.xpath(
-                '//strong[contains(text(), "Address")]/following-sibling::text()[1]'
-            )
-        )
-        .split(",")[1]
-        .strip()
-    )
+    city = ad.split(",")[1].strip()
     phone = (
         "".join(
             tree.xpath(
@@ -67,9 +54,9 @@ def fetch_data(sgw: SgWriter):
         .strip()
     )
     hours_of_operation = (
-        " ".join(
+        "".join(
             tree.xpath(
-                '//strong[contains(text(), "Store opening hours")]/following-sibling::text()[1]'
+                '//strong[text()="Store opening hours"]/following-sibling::text()[1]'
             )
         )
         .replace("\n", "")
@@ -95,7 +82,7 @@ def fetch_data(sgw: SgWriter):
 
     sgw.write_row(row)
 
-    locator_domain = "https://www.ikea.lt/en/"
+    locator_domain = "https://www.ikea.lt/en"
     api_url = "https://www.ikea.lt/en/contactsvilnius"
     session = SgRequests()
     headers = {
@@ -103,70 +90,78 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    page_url = "https://www.ikea.lv/en/page/contactsriga"
-    location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
-    street_address = (
-        "".join(
-            tree.xpath('//b[contains(text(), "Address")]/following-sibling::text()[1]')
-        )
-        .replace(",", "")
-        .strip()
-    )
-    postal = (
-        "".join(
-            tree.xpath('//b[contains(text(), "Address")]/following-sibling::text()[2]')
-        )
-        .replace("\n", "")
-        .split()[0]
-        .strip()
-    )
-    country_code = "LT"
-    city = (
-        "".join(
-            tree.xpath('//b[contains(text(), "Address")]/following-sibling::text()[2]')
-        )
-        .replace("\n", "")
-        .split()[1]
-        .strip()
-    )
-    phone = (
-        "".join(
-            tree.xpath(
-                '//b[contains(text(), "Phone numbers:")]/following-sibling::text()[1]'
-            )
-        )
-        .replace("\n", "")
-        .replace("Customer service:", "")
-        .strip()
-    )
-    hours_of_operation = (
-        " ".join(
-            tree.xpath(
-                '//b[contains(text(), "Store opening hours")]/following-sibling::text()[1]'
-            )
-        )
-        .replace("\n", "")
-        .strip()
-    )
+    div = tree.xpath('//span[@class="nav-item pb-2 px-3"]/a')
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"https://www.ikea.lt{slug}"
 
-    row = SgRecord(
-        locator_domain=locator_domain,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=SgRecord.MISSING,
-        zip_postal=postal,
-        country_code=country_code,
-        store_number=SgRecord.MISSING,
-        phone=phone,
-        location_type=SgRecord.MISSING,
-        latitude=SgRecord.MISSING,
-        longitude=SgRecord.MISSING,
-        hours_of_operation=hours_of_operation,
-    )
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-    sgw.write_row(row)
+        location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
+        street_address = (
+            "".join(
+                tree.xpath(
+                    '//*[contains(text(), "Address:")]/following-sibling::text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
+        )
+        ad = (
+            "".join(
+                tree.xpath(
+                    '//*[contains(text(), "Address:")]/following-sibling::text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+
+        state = "<MISSING>"
+        postal = ad.split()[0].strip()
+        country_code = "LT"
+        city = ad.split()[1].strip()
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//*[contains(text(), "Phone numbers:")]/following-sibling::text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .replace("Customer service:", "")
+            .strip()
+        )
+        hours_of_operation = (
+            "".join(
+                tree.xpath(
+                    '//*[contains(text(), "pening")]/following-sibling::text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         url = "https://www.1000degreespizza.com/pizza-place-near-me-locations/"
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         locations = soup.findAll("div", {"class": "location-1000d"})
         for info in locations:
