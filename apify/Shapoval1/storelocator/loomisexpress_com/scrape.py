@@ -23,7 +23,7 @@ def fetch_data(sgw: SgWriter):
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
     }
-    data = '{"origin_lat":48.4824429,"origin_lng":-123.39337777551245,"include_otc":true,"include_smart":true,"include_terminal":false,"limit":5000,"within_distance":10000}'
+    data = '{"origin_lat":48.4824429,"origin_lng":-123.39337777551245,"include_otc":true,"include_smart":true,"include_terminal":true,"limit":5000,"within_distance":10000}'
 
     r = session.post(api_url, headers=headers, data=data)
     js = r.json()
@@ -32,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://loomisexpress.com/loomship/Shipping/DropOffLocations"
         location_name = j.get("name") or "<MISSING>"
         street_address = f"{j.get('address_line_1')}"
-
+        store_number = "".join(j.get("address_id")).strip() or "<MISSING>"
         city = "".join(j.get("city")).strip() or "<MISSING>"
         state = j.get("province") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
@@ -78,6 +78,7 @@ def fetch_data(sgw: SgWriter):
         if phone.find("UNI") != -1:
             street_address = street_address + " " + " ".join(phone.split()[:-1])
             phone = phone.split()[-1].strip()
+        street_address = street_address.replace(".", "").upper()
         latitude = j.get("latLng")[0] or "<MISSING>"
         longitude = j.get("latLng")[1] or "<MISSING>"
         hours_of_operation = (
@@ -92,6 +93,8 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<MISSING>"
         if hours_of_operation.find("BY APPOINTMENT") != -1:
             hours_of_operation = "<MISSING>"
+        if store_number == "<MISSING>":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -102,7 +105,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
@@ -116,14 +119,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.LATITUDE,
-                }
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)
