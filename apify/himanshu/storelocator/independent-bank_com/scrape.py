@@ -55,9 +55,16 @@ def fetch_data():
         phone = phone[0] if phone else SgRecord.MISSING
         latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
         longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
-        hoo = loc_dom.xpath(
-            '//div[h2[contains(text(), "Lobby Hours")]]//table[@class="c-hours-details"]/tbody//text()'
-        )
+        if "ATM" in location_name:
+            hoo = loc_dom.xpath(
+                '//div[h2[contains(text(), "ATM Hours")]]//table[@class="c-hours-details"]/tbody//text()'
+            )
+            location_type = "ATM"
+        else:
+            hoo = loc_dom.xpath(
+                '//div[h2[contains(text(), "Lobby Hours")]]//table[@class="c-hours-details"]/tbody//text()'
+            )
+            location_type = "BRANCH"
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
 
@@ -72,7 +79,7 @@ def fetch_data():
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,

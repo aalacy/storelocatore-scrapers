@@ -65,6 +65,9 @@ def get_data(url, sgw: SgWriter):
     city = adr.city or SgRecord.MISSING
     state = adr.state or SgRecord.MISSING
     postal = adr.postcode or SgRecord.MISSING
+    if "Juxon House" in street_address:
+        street_address = line.split(",")[1].strip()
+        postal = line.split(",")[-1].strip()
     country_code = "GB"
     store_number = page_url.split("/")[-1].split("-")[0]
 

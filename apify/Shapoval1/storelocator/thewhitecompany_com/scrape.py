@@ -55,11 +55,8 @@ def fetch_data(sgw: SgWriter):
         "https://www.thewhitecompany.com/uk/twccmsservice/components/RightSecondStores?pageId=storeLocatorPage",
     ]
     for api_url in api_urls:
-        session = SgRequests()
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        }
-        r = session.get(api_url, headers=headers)
+
+        r = session.get(api_url)
         try:
             js = r.json()["data"]["LeftColumnStores"]["components"]
         except:
@@ -78,6 +75,9 @@ def fetch_data(sgw: SgWriter):
                 state = "<MISSING>"
                 postal = a.get("postalCode")
                 country_code = a.get("country").get("isocode")
+                if country_code == "US":
+                    state = "".join(a.get("postalCode")).split()[0].strip()
+                    postal = "".join(a.get("postalCode")).split()[1].strip()
                 formattedAddress = a.get("formattedAddress")
                 city = a.get("town")
                 latitude = l.get("geoPoint").get("latitude")
@@ -122,7 +122,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://www.thewhitecompany.com/"
+    locator_domain = "thewhitecompany.com"
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
