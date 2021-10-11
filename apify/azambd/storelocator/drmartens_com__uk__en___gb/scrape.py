@@ -187,7 +187,7 @@ def scrape():
     )
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        with SgRequests(dont_retry_status_codes_exceptions = set(504)) as http:
+        with SgRequests(dont_retry_status_codes_exceptions=set(504)) as http:
             search_iter = DrmSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
