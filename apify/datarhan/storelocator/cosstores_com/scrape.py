@@ -17,15 +17,17 @@ def fetch_data():
     all_countries = dom.xpath("//div/@data-countries-with-local-sites")[0][1:-1].split(
         ","
     )
+    all_countries += ["AU", "JP"]
     for country in all_countries:
         data = session.get(
-            f"https://api.storelocator.hmgroup.tech/v2/brand/cos/stores/locale/en_GB/country/{country}?openinghours=true&campaigns=true&departments=true"
+            f"https://api.storelocator.hmgroup.tech/v2/brand/cos/stores/locale/en_GB/country/{country}"
         ).json()
         all_locations = data["stores"]
         for poi in all_locations:
             hoo = []
-            for e in poi["openingHours"]:
-                hoo.append(f'{e["name"]} {e["opens"]} - {e["closes"]}')
+            if poi.get("openingHours"):
+                for e in poi["openingHours"]:
+                    hoo.append(f'{e["name"]} {e["opens"]} - {e["closes"]}')
             hoo = " ".join(hoo)
             state = poi["address"].get("state")
             if not state and poi.get("region"):

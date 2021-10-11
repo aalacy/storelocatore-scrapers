@@ -10,7 +10,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://viewer.mapme.com"
+locator_domain = "https://bigthunderfireworks.com"
 base_url = "https://main-apis-prd.mapme.com/api/stories/aggregated/american-fireworks"
 category = "7984a0d2-4133-4fb9-95bb-1878ded22734"
 
