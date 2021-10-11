@@ -10,14 +10,14 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     domain = "myrighttime.com"
     start_url = "https://www.myrighttime.com/locations"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath(
-        '//b[contains(text(), "If selecting")]/following-sibling::b/a/@href'
+        '//h3[b[contains(text(), "IN-PERSON VISITS")]]/following-sibling::p[2]//a/@href'
     )
 
     for store_url in all_locations:
@@ -54,6 +54,10 @@ def fetch_data():
                 '//p[font[contains(text(), "To speak to a representative, please call ")]]/text()'
             )
             phone = phone[-1] if phone else ""
+        hoo = loc_dom.xpath(
+            '//h4[contains(text(), "Hours of Operation:")]/following-sibling::h4/text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
@@ -69,7 +73,7 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hoo,
         )
 
         yield item
