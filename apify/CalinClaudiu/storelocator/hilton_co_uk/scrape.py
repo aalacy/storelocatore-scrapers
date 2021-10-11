@@ -133,8 +133,11 @@ def fetch_data():
         )
         for country in countries:
             if not country["complete"]:
-                for record in data_fetcher(country, state, 10):
-                    yield record
+                try:
+                    for record in data_fetcher(country, state, 10):
+                        yield record
+                except Exception as e:
+                    logzilla.error(f"{str(country)}\n{str(e)}")
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
 
@@ -147,7 +150,7 @@ def data_fetcher(country, state, sleep):
         time.sleep(sleep)
         for r in driver.requests:
             data = None
-            if "/graphql/customer" in r.path:
+            if "graphql/customer" in r.path:
                 try:
                     if r.response.body:
                         data = r.response.body
@@ -185,7 +188,7 @@ def data_fetcher(country, state, sleep):
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
         except KeyError as e:
-            logzilla.error(f"{i}\n{str(e)}\n\n")
+            logzilla.error(f"{str(i)[:200]}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
     lize = utils.parallelize(  # noqa
