@@ -35,6 +35,17 @@ def fetch_data(sgw: SgWriter):
         latitude = "".join(tree.xpath('//meta[@itemprop="latitude"]/@content'))
         longitude = "".join(tree.xpath('//meta[@itemprop="longitude"]/@content'))
         phone = "".join(tree.xpath('//span[@itemprop="telephone"]/a/text()'))
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//div[contains(@class, "salon-timings")]//meta[@itemprop="openingHours"]/@content'
+                )
+            )
+            .replace("\n", "")
+            .replace("Su  -", "Su  - Closed")
+            .strip()
+            or "<fdfgdgf>"
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -50,7 +61,7 @@ def fetch_data(sgw: SgWriter):
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
