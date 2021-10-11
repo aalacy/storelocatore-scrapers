@@ -120,11 +120,18 @@ def fetch_data():
                     longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
                 except:
                     lat = longt = "<MISSING>"
-                title = (
-                    soup.find("h1", {"id": "location-name"})
-                    .text.replace("\n", " ")
-                    .strip()
-                )
+                try:
+
+                    title = (
+                        soup.find("h1", {"id": "location-name"})
+                        .text.replace("\n", " ")
+                        .strip()
+                    )
+                except:
+                    try:
+                        title = soup.find("h1").text.replace("\n", " ").strip()
+                    except:
+                        continue
                 street = soup.find("span", {"class": "c-address-street-1"}).text
                 city = soup.find("span", {"class": "c-address-city"}).text
                 try:
