@@ -65,6 +65,11 @@ def fetch_data():
             store["latitude"],
             store["longitude"],
         )
+        if latitude == "0.000000":
+            latitude = "<MISSING>"
+
+        if longitude == "0.000000":
+            longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,
