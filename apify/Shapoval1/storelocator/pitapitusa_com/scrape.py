@@ -48,7 +48,7 @@ def get_data(zips, sgw: SgWriter):
     }
     session = SgRequests()
     r = session.get(
-        f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=50&location={str(zips)}&limit=50&api_key=0044bc2f8e2fa0fe5019f2301f8cdd49&v=20181201&resolvePlaceholders=true&entityTypes=location",
+        f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=500&location={str(zips)}&limit=50&api_key=0044bc2f8e2fa0fe5019f2301f8cdd49&v=20181201&resolvePlaceholders=true&entityTypes=location",
         headers=headers,
     )
     js = r.json()
