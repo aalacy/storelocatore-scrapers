@@ -75,7 +75,7 @@ def fetch_data():
             phone = data[f"{rl_id}"]["phone"]
             latitude = data[f"{rl_id}"]["lat"]
             longitude = data[f"{rl_id}"]["lng"]
-            raw_address = data[f"{rl_id}"]["fullAddress"]
+            raw_address = data[f"{rl_id}"]["fullAddress"].replace("\n", " ")
             street_address, city, state, zip_postal = get_address(raw_address)
             hours_of_operation = ", ".join(data[f"{rl_id}"]["schemaHours"])
 
