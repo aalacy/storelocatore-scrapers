@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 import urllib.parse
 import dirtyjson as json
 from sglogging import SgLogSetup
