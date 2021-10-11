@@ -19,7 +19,7 @@ def fetch_data():
     all_locations = json.loads(data)
 
     for poi in all_locations:
-        store_url = "<MISSING>"
+        store_url = "https://www.sanrio.com/pages/store-locator"
         location_name = poi["name"]
         street_address = poi["address"]
         city = poi["city"]
@@ -33,12 +33,11 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["lat"]
         longitude = poi["lng"]
-        hours_of_operation = poi.get("schedule")
-        hours_of_operation = (
-            " ".join(hours_of_operation.replace("<br>", "").split())
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        hoo = poi.get("schedule")
+        if hoo:
+            if "<br>" in hoo:
+                hoo = hoo.split("<br>")
+                hoo = hoo[0][:-2] + " " + hoo[1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -54,7 +53,7 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hoo,
         )
 
         yield item

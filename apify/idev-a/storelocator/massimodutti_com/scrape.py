@@ -4,7 +4,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_2
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("massimodutti")
@@ -74,11 +74,14 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                 phone=phone,
                 country_code=store["countryCode"],
                 hours_of_operation="; ".join(hours),
+                locator_domain=locator_domain,
             )
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
+    search = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, granularity=Grain_2()
+    )
     with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=20

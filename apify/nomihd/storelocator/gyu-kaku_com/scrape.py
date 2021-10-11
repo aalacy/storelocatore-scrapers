@@ -144,6 +144,18 @@ def fetch_data():
                     ],
                 )
             )
+            if len(store_info) <= 0:
+                store_info = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[contains(@class,"grid__item") and ./h3]/h3[1]//text()'
+                            )
+                        ],
+                    )
+                )
             if not store_info:
                 continue
 
@@ -209,7 +221,9 @@ def fetch_data():
                 location_type = "Temporarily Closed"
 
             hours = list(filter(validhour, hours))
-            hours_of_operation = " ".join(hours)
+            hours_of_operation = (
+                " ".join(hours).strip().replace("until further notice:", "").strip()
+            )
 
             map_link = "".join(store_sel.xpath('//a[contains(@href,"maps")]/@href'))
             latitude, longitude = get_latlng(map_link)
