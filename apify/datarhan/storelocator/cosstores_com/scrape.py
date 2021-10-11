@@ -17,15 +17,17 @@ def fetch_data():
     all_countries = dom.xpath("//div/@data-countries-with-local-sites")[0][1:-1].split(
         ","
     )
+    all_countries += ["AU", "JP"]
     for country in all_countries:
         data = session.get(
-            f"https://api.storelocator.hmgroup.tech/v2/brand/cos/stores/locale/en_GB/country/{country}?openinghours=true&campaigns=true&departments=true"
+            f"https://api.storelocator.hmgroup.tech/v2/brand/cos/stores/locale/en_GB/country/{country}"
         ).json()
         all_locations = data["stores"]
         for poi in all_locations:
             hoo = []
-            for e in poi["openingHours"]:
-                hoo.append(f'{e["name"]} {e["opens"]} - {e["closes"]}')
+            if poi.get("openingHours"):
+                for e in poi["openingHours"]:
+                    hoo.append(f'{e["name"]} {e["opens"]} - {e["closes"]}')
             hoo = " ".join(hoo)
             state = poi["address"].get("state")
             if not state and poi.get("region"):
@@ -33,15 +35,28 @@ def fetch_data():
             city = poi["address"].get("postalAddress")
             if not city:
                 city = poi["city"]
+            street_address = poi["address"]["streetName1"]
+            if "," in city:
+                street_address += ", " + city.split(",")[0].strip()
+                city = city.split(",")[-1].split()[-1].strip()
+            if city.split()[-1].isdigit():
+                city = " ".join(city.split()[:-1])
+            if street_address == city:
+                city = ""
+            if state == "(unknown)":
+                state = ""
+            zip_code = poi["address"]["postCode"].strip()
+            if zip_code == "-":
+                zip_code = ""
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=start_url,
                 location_name=poi["name"],
-                street_address=poi["address"]["streetName1"],
+                street_address=street_address,
                 city=city,
                 state=state,
-                zip_postal=poi["address"]["postCode"],
+                zip_postal=zip_code,
                 country_code=poi["countryCode"],
                 store_number=poi["storeCode"],
                 phone=poi["phone"],

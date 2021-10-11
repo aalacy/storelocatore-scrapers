@@ -3,7 +3,7 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -30,6 +30,8 @@ def fetch_data(sgw: SgWriter):
         line = root.xpath("//div[@class='location-address']/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = ", ".join(line[:-1])
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
@@ -51,9 +53,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
@@ -66,5 +66,11 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://californiasun.com/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
         fetch_data(writer)
