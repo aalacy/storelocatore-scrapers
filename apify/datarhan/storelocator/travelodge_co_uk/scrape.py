@@ -74,7 +74,7 @@ def fetch_data():
             state=addr.state,
             zip_postal=addr.postcode,
             country_code=addr.country,
-            store_number="",
+            store_number=store_url.split("/")[-2],
             phone=phone,
             location_type="",
             latitude=latitude,
