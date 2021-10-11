@@ -15,15 +15,15 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
 cookies = {
-    'dwac_cdSAUiaaio11EaaadnOiJrNbA7': '5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0%3D|dw-only|||USD|false|Canada%2FEastern|true',
-    'cqcid': 'abHD59LYsfOy6WboYD9gghKG4L',
-    'cquid': '||',
-    'sid': '5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0',
-    'language': 'en_US',
-    'dwanonymous_b3aa5771d8435c67a1a8775183c875b2': 'abHD59LYsfOy6WboYD9gghKG4L',
-    'dwsid': 'n_kCnAw_0Ax8iXxr57o8zrrEjD4SgV4S1hdk-JdwdSOzBNNLdVJYCN1QlCC9I0nwRnkdZNnvsAqZ4P6E26AZJQ==',
-    'akm_bmfp_b2-ssn': '0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ',
-    'akm_bmfp_b2': '0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ',
+    "dwac_cdSAUiaaio11EaaadnOiJrNbA7": "5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0%3D|dw-only|||USD|false|Canada%2FEastern|true",
+    "cqcid": "abHD59LYsfOy6WboYD9gghKG4L",
+    "cquid": "||",
+    "sid": "5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0",
+    "language": "en_US",
+    "dwanonymous_b3aa5771d8435c67a1a8775183c875b2": "abHD59LYsfOy6WboYD9gghKG4L",
+    "dwsid": "n_kCnAw_0Ax8iXxr57o8zrrEjD4SgV4S1hdk-JdwdSOzBNNLdVJYCN1QlCC9I0nwRnkdZNnvsAqZ4P6E26AZJQ==",
+    "akm_bmfp_b2-ssn": "0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ",
+    "akm_bmfp_b2": "0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ",
 }
 
 
