@@ -55,20 +55,11 @@ def fetch_data(sgw: SgWriter):
                 "".join(d.xpath(".//a/@href")).split("@")[1].split(",")[1].strip()
             )
         hours_of_operation = (
-            "".join(d.xpath('.//preceding-sibling::p[contains(text(), ":")][1]/text()'))
+            " ".join(d.xpath(".//preceding-sibling::p//text()"))
             .replace("\n", "")
-            .strip()
-            + " "
-            + "".join(
-                d.xpath('.//preceding-sibling::p[contains(text(), ":")][2]/text()')
-            )
-            .replace("\n", "")
-            .strip()
-            + " "
-            + "".join(
-                d.xpath('.//preceding-sibling::p[contains(text(), ":")][3]/text()')
-            )
-            .replace("\n", "")
+            .split("Opening hours")[-1]
+            .replace("Wheelchair accessible", "")
+            .replace("Wheelchair Accessible", "")
             .strip()
         )
 
