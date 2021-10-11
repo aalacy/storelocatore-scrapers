@@ -26,60 +26,52 @@ def fetch_data():
             "button.maplibregl-ctrl-fullscreen.mapboxgl-ctrl-fullscreen"
         ).click()
         time.sleep(2)
-        # driver.find_element_by_css_selector('button#zoom-in-btn').click()
-        # time.sleep(2)
         for marker in driver.find_elements_by_css_selector(
             'div[aria-label="Map marker"]'
         ):
+            driver.execute_script("arguments[0].click();", marker)
+            time.sleep(1)
+            info = driver.find_element_by_css_selector("div.mapboxgl-popup-content")
+            raw_address = info.find_element_by_css_selector(
+                "p.popup-address"
+            ).text.strip()
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            phone = ""
             try:
-                driver.execute_script("arguments[0].click();", marker)
-                time.sleep(1)
-                info = driver.find_element_by_css_selector("div.mapboxgl-popup-content")
-                raw_address = info.find_element_by_css_selector(
-                    "p.popup-address"
+                phone = info.find_element_by_css_selector(
+                    "div.popup-phone"
                 ).text.strip()
-                addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
-                phone = ""
-                try:
-                    phone = info.find_element_by_css_selector(
-                        "div.popup-phone"
-                    ).text.strip()
-                except:
-                    pass
-                hours_of_operation = info.find_element_by_css_selector(
-                    "div.popup-hours"
-                ).text.strip()
-                location_name = info.find_element_by_css_selector(
-                    "h5.popup-name"
-                ).text.strip()
-                info.find_element_by_css_selector(
-                    "button.mapboxgl-popup-close-button"
-                ).click()
-                time.sleep(1)
-                if "Coming Soon" in hours_of_operation:
-                    continue
-                logger.info(location_name)
-                yield SgRecord(
-                    page_url=base_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code="US",
-                    locator_domain=locator_domain,
-                    phone=phone,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
-            except Exception as err:
-                logger.info(str(err))
-                import pdb
-
-                pdb.set_trace()
+            except:
+                pass
+            hours_of_operation = info.find_element_by_css_selector(
+                "div.popup-hours"
+            ).text.strip()
+            location_name = info.find_element_by_css_selector(
+                "h5.popup-name"
+            ).text.strip()
+            info.find_element_by_css_selector(
+                "button.mapboxgl-popup-close-button"
+            ).click()
+            time.sleep(1)
+            if "Coming Soon" in hours_of_operation:
+                continue
+            logger.info(location_name)
+            yield SgRecord(
+                page_url=base_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="US",
+                locator_domain=locator_domain,
+                phone=phone,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 if __name__ == "__main__":
