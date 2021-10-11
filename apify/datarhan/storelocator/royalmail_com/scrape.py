@@ -60,7 +60,11 @@ def fetch_data():
                 loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)
                 hoo = loc_dom.xpath('//div[@class="opening-hours-wrapper"]/div//text()')
-                hoo = " ".join([e.strip() for e in hoo if e.strip()])
+                hoo = (
+                    " ".join([e.strip() for e in hoo if e.strip()])
+                    .split("Please check")[0]
+                    .strip()
+                )
 
             item = SgRecord(
                 locator_domain=domain,
