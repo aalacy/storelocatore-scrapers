@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -21,7 +21,9 @@ def fetch_data():
             street_address = _["address"]
             if _["address2"]:
                 street_address += " " + _["address2"]
-            page_url = f"https://www.diptyqueparis.com/en_us{_['request_path']}"
+            page_url = ""
+            if _["request_path"]:
+                page_url = f"https://www.diptyqueparis.com/en_us/{_['request_path']}"
             state = ""
             if _.get("region"):
                 state = _.get("region")
@@ -64,7 +66,17 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

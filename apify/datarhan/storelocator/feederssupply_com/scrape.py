@@ -36,10 +36,9 @@ def fetch_data():
             sleep(30)
             poi_html = etree.HTML(driver.page_source)
             raw_data = poi_html.xpath(
-                '//div[@class="animating-screenIn-exit"]//div[@data-testid="mesh-container-content"]/div[3]//text()'
+                '//div[p[span[span[span[span[@style="font-family:futura-lt-w01-book,sans-serif"]]]]]]/p//text()'
             )
             raw_data = [e.strip() for e in raw_data if e.strip() and len(e) > 1]
-
             store_url = start_url
             location_name = raw_data[0]
             location_name = location_name if location_name else "<MISSING>"
