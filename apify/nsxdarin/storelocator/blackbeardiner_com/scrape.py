@@ -1,4 +1,5 @@
 import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -27,8 +28,6 @@ def fetch_data(sgw: SgWriter):
         postal = j.get("zip") or "<MISSING>"
         country_code = "US"
         city = "".join(j.get("city")) or "<MISSING>"
-        city_slug = city.lower().replace(" ", "-").strip()
-        page_url = f"https://blackbeardiner.com/location/{city_slug}/"
         store_number = j.get("id") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
@@ -39,6 +38,19 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.find("<") != -1:
             hours_of_operation = hours_of_operation.split("<")[0].strip()
+        session = SgRequests()
+        r = session.get("https://blackbeardiner.com/locations/", headers=headers)
+        tree = html.fromstring(r.text)
+
+        page_url = "".join(
+            tree.xpath(
+                f'//address[contains(text(), "{street_address}")]/following::div[@class="col-xs-12 col-sm-6 col-md-3"][1]/preceding::a[1]/@href'
+            )
+        )
+        if page_url.find("/locations-coming-soon/") != -1:
+            page_url = "https://blackbeardiner.com/locations-coming-soon/"
+        if location_name == "Vancouver Black Bear Diner":
+            page_url = "https://blackbeardiner.com/location/vancouver/"
 
         row = SgRecord(
             locator_domain=locator_domain,

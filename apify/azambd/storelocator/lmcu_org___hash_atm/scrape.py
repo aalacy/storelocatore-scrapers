@@ -101,7 +101,6 @@ def fetch_single_zip(zip):
         driver.execute_script("arguments[0].click();", applyButton)
     except:
         log.info("CloudFlare Triggered or Page load failed, Retrying...")
-        driver.quit()
 
         driver = initiate_driver(urlForDriver, "zipField")
         driver.get(f"{website}/locations/atm-listing/")
