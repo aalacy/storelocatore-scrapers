@@ -64,7 +64,7 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.find("div", {"class": "clearfix eltd-full-section-inner"}).find_all(
-        "div", {"class": "wpb_column vc_column_container vc_col-sm-1/5"}
+        "div", {"class": re.compile(r"wpb_column vc_column_container vc_col-sm-1/5.*")}
     )
     for row in contents:
         location_name = row.find("h2", {"class": "eltd-section-title"}).text.strip()
@@ -72,7 +72,12 @@ def fetch_data():
         raw_address = info[0].get_text(strip=True, separator=",")
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = info[1].text.strip()
-        hours_of_operation = info[3].get_text(strip=True, separator=",").strip()
+        hours_of_operation = (
+            info[3]
+            .get_text(strip=True, separator=",")
+            .replace("Temporary hours as of 9/1/21,", "")
+            .strip()
+        )
         country_code = "US"
         store_number = MISSING
         location_type = "rainbowdrivein"

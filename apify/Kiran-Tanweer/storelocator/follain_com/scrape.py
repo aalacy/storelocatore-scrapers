@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape import sgpostal as parser
 import re
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 website = "follain_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -24,7 +24,7 @@ def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
         url = "https://follain.com/pages/store-locations"
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         locations = soup.findAll("div", {"class": "store-content"})
         for loc in locations:

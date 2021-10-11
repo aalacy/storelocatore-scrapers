@@ -19,7 +19,6 @@ headers2 = {
 
 def fetch_data():
     locs = []
-    alllocs = []
     url = "https://www.jiffylubeontario.com/wp-admin/admin-ajax.php"
     cities = [
         "Toronto",
@@ -225,24 +224,24 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("|")[0].strip()
         if phone == "":
             phone = "<MISSING>"
-        if lurl not in alllocs:
-            alllocs.append(lurl)
-            yield SgRecord(
-                locator_domain=website,
-                page_url=lurl,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        name = name.replace("</title>", "").strip()
+        name = name.replace("&#8211;", "-").strip()
+        yield SgRecord(
+            locator_domain=website,
+            page_url=lurl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
