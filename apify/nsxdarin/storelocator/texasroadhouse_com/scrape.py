@@ -18,7 +18,6 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://www.texasroadhouse.com/locations/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
@@ -40,7 +39,6 @@ def fetch_data():
         phone = ""
         hours = ""
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'itemprop="name">' in line2:
                 name = line2.split('itemprop="name">')[1].split("<")[0]
             if '"address1":"' in line2:
