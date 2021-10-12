@@ -24,6 +24,7 @@ def fetch_data():
             items = text.split('"@type":"Restaurant","address":')
             for item in items:
                 if '"addressRegion":"' in item:
+                    name = item.split('"name":"')[1].split('"')[0]
                     loc = "https://www.woodysdiners.com/locations"
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"lng:')[1].split(",")[0]
@@ -60,6 +61,9 @@ def scrape():
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in results:
             writer.write_row(rec)
+
+
+scrape()
 
 
 scrape()
