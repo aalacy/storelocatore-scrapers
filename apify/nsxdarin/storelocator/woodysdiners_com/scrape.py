@@ -1,97 +1,65 @@
-import csv
 from sgselenium import SgChrome
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data():
+    website = "woodysdiners.com"
+    typ = "Restaurant"
+    country = "US"
+    loc = "<MISSING>"
+    store = "<MISSING>"
     url = "https://www.woodysdiners.com/locations"
     with SgChrome() as driver:
         driver.get(url)
         website = "woodysdiners.com"
         typ = "Restaurant"
         country = "US"
-        loc = "<MISSING>"
         store = "<MISSING>"
-        hours = "<MISSING>"
-        lat = "<MISSING>"
-        lng = "<MISSING>"
         text = driver.page_source
         text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-        if (
-            '{"__typename":"CustomForm","id":11687,"allowAttachments":false,"des'
-            in text
-        ):
-            items = text.split(
-                '{"__typename":"CustomForm","id":11687,"allowAttachments":false,"des'
-            )[1].split('"RestaurantLocation","id":')
+        if '"@type":"Restaurant","address":' in text:
+            items = text.split('"@type":"Restaurant","address":')
             for item in items:
-                if '"allowReservations":' in item:
-                    loc = (
-                        "https://www.woodysdiners.com/"
-                        + item.split('"slug":"')[1].split('"')[0]
-                    )
-                    name = item.split('"name":"')[1].split('"')[0]
-                    lat = item.split(',"lat":')[1].split(",")[0]
-                    lng = item.split(',"lng":')[1].split(",")[0]
-                    phone = item.split('"phone":"')[1].split('"')[0]
+                if '"addressRegion":"' in item:
+                    loc = "https://www.woodysdiners.com/locations"
+                    lat = item.split('"lat":')[1].split(",")[0]
+                    lng = item.split('"lng:')[1].split(",")[0]
+                    city = item.split('"addressLocality":"')[1].split('"')[0]
+                    state = item.split('"addressRegion":"')[1].split('"')[0]
                     zc = item.split('"postalCode":"')[1].split('"')[0]
+                    add = item.split('"streetAddress":"')[1].split('"')[0]
+                    phone = item.split('"telephone":"')[1].split('"')[0]
                     hours = (
-                        item.split(',"schemaHours":["')[1]
+                        item.split('"openingHours":["')[1]
                         .split("]")[0]
                         .replace('","', "; ")
-                        .replace('"', "")
                     )
-                    state = item.split('"state":"')[1].split('"')[0]
-                    add = item.split('"streetAddress":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    store = item.split(",")[0]
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
