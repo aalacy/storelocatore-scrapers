@@ -14,7 +14,7 @@ local = threading.local()
 
 def fetch_store_numbers():
     store_numbers = []
-    with SgChrome(seleniumwire_auto_config=False).driver() as driver:
+    with SgChrome().driver() as driver:
         driver.get("https://www.wawa.com/site-map")
         soup = BeautifulSoup(driver.page_source)
         links = soup.find_all("a", class_="CMSSiteMapLink")
@@ -108,11 +108,14 @@ def write_data(data):
 def fetch_data():
     store_numbers = fetch_store_numbers()
 
+    locations = []
     with SgChrome().driver() as driver:
         for num in store_numbers:
-            fetch_location(num, driver)
+            location = fetch_location(num, driver)
+            if location:
+                locations.append(location)
 
-    return []
+    return locations
 
 
 if __name__ == "__main__":
