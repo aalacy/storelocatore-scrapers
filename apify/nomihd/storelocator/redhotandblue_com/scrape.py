@@ -34,7 +34,9 @@ def fetch_data():
             page_res = session.get(page_url, headers=headers)
             page_sel = lxml.html.fromstring(page_res.text)
 
-            location_name = "".join(page_sel.xpath("//title/text()")).strip()
+            location_name = (
+                "".join(page_sel.xpath("//title/text()")).strip().split("—")[0].strip()
+            )
 
             street_address = "".join(
                 page_sel.xpath(
@@ -47,9 +49,9 @@ def fetch_data():
                         '//div[contains(@class,"et_pb_text_inner") and .//strong]/p/text()'
                     )
                 ).strip()
-            city = "<MISSING>"
+            city = location_name.split(",")[0].strip()
 
-            state = "<MISSING>"
+            state = location_name.split(",")[-1].strip()
             zip = "<MISSING>"
 
             country_code = "US"
