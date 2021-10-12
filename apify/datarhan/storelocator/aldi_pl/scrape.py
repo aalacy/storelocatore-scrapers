@@ -9,10 +9,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
     domain = "aldi.pl"
@@ -24,7 +25,7 @@ def fetch_data():
     for code in all_codes:
         sleep(uniform(0, 5))
         response = session.get(search_url.format(code))
-        session_id = response.url.split("=")[-1]
+        session_id = str(response.url.raw[-1]).split("=")[-1]
         hdr = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Content-Type": "application/x-www-form-urlencoded",
@@ -68,6 +69,11 @@ def fetch_data():
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
             raw_adr = poi_html.xpath(".//address/text()")
             raw_adr = [e.strip() for e in raw_adr]
+            addr = parse_address_intl(" ".join(raw_adr))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+
             hoo = poi_html.xpath('.//td[contains(@class,"OpeningHours")]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
@@ -75,11 +81,11 @@ def fetch_data():
                 locator_domain=domain,
                 page_url="https://www.aldi.pl/informacje-dla-klienta/wyszukiwarka-sklepu.html",
                 location_name=location_name,
-                street_address=raw_adr[0],
-                city=" ".join(raw_adr[1].split()[1:]),
+                street_address=street_address,
+                city=addr.city,
                 state=SgRecord.MISSING,
-                zip_postal=raw_adr[1].split()[0],
-                country_code="PL",
+                zip_postal=addr.postcode,
+                country_code="",
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,
                 location_type=SgRecord.MISSING,
