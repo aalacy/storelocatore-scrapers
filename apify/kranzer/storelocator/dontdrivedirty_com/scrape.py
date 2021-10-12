@@ -84,7 +84,10 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
-
+        if "-" in hours_of_operation.strip()[0:4]:
+            hours_of_operation = "<MISSING>"
+            if "-" in location_name:
+                location_name = location_name + " " + "Coming Soon"
         if latitude == "<MISSING>":
             session = SgRequests()
             try:
