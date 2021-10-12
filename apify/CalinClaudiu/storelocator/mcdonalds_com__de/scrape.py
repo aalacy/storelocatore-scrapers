@@ -58,6 +58,12 @@ def fix_comma(x):
         return x.replace("  ", " ")
 
 
+def better_hours(x):
+    if "hours" in x:
+        return x.replace("'", "").replace("{", "").replace("}", "").replace("hours", "")
+    return x
+
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -100,7 +106,9 @@ def scrape():
             is_required=False,
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["hours_of_operation"], is_required=False
+            mapping=["hours_of_operation"],
+            is_required=False,
+            value_transform=better_hours,
         ),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
         raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
@@ -111,6 +119,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=1000,
+        duplicate_streak_failure_factor=100,
     )
 
     pipeline.run()

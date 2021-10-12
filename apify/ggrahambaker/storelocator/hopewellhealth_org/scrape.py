@@ -1,102 +1,82 @@
-import csv
-import os
-from sgselenium import SgSelenium
+from lxml import etree
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'http://www.hopewellhealth.org/' 
-    ext = 'locations.htm'
+    session = SgRequests()
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    start_url = "https://www.hopewellhealth.org/locations/"
+    domain = "hopewellhealth.org"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    locs = driver.find_elements_by_css_selector('table.content')
+    all_locations = dom.xpath("//div[@data-settings and div[div[div[div[h2]]]]]")
+    for poi_html in all_locations:
+        location_name = " ".join(
+            [e.strip() for e in poi_html.xpath(".//h2/text()")[0].split()]
+        )
+        if location_name in ["Our Mission", "Our Values", "Our Vision"]:
+            continue
+        raw_data = poi_html.xpath(".//div[@data-settings]/div/p/text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        street_address = raw_data[0]
+        city = raw_data[1].split(", ")[0]
+        state = raw_data[1].split(", ")[-1].split()[0]
+        zip_code = raw_data[1].split(", ")[-1].split()[-1]
+        phone = (
+            poi_html.xpath(".//div[@data-settings]/div/p/text()")[2]
+            .split(": ")[-1]
+            .split("or")[0]
+            .strip()
+        )
 
-    dup_tracker = []
-    all_store_data = []
-    for loc in locs:
-        cols = loc.find_elements_by_css_selector('td')
-        for col in cols:
-            info_raw = col.text.split('\n')
-            if len(info_raw) == 1:
-                continue
-            info = []
-            for i in info_raw:
-                if 'Formerly' in i:
-                    continue
-                if i == '':
-                    continue
-                if 'Perry County WIC Program' in i:
-                    continue
-    
-                info.append(i)
-  
-            location_name = info[0]
-            if '2541 Panther Drive' in location_name:
-                continue
-            if 'New Lexington' in location_name:
-                off = 1
-            else:
-                off = 0
-            street_address = info[1 + off]
-            if street_address not in dup_tracker:
-                dup_tracker.append(street_address)
-            else:
-                continue
-            city, state, zip_code = addy_ext(info[2 + off])
-            phone_number = info[3 + off].split(':')[1].split('or')[0].strip()
-            
-            link = col.find_element_by_css_selector('a').get_attribute('href')
-            
-            start = link.find('sll=')
-            if start > 0:
-                coords = link[start + 4:].split(',')
-                lat = coords[0]
-                longit = coords[1].split('&')[0]
-            else:
-                start = link.find('@')
-                if start > 0:
-                    coords = link[start + 1:].split(',')
-                    lat = coords[0]
-                    longit = coords[1]
-                else:
-                    lat, longit = '<MISSING>', '<MISSING>'
-                
-            country_code = 'US'
-            store_number = '<MISSING>'
-            location_type = '<MISSING>'
+        geo = poi_html.xpath('.//a[contains(@href, "maps")]/@href')[0]
+        if "/@" in geo:
+            geo = geo.split("/@")[-1].split(",")[:2]
+        else:
+            geo = geo.split("ll=")[-1].split("&")[0].split(",")
+        if "http" in geo[0]:
+            geo = ["", ""]
 
-            hours = '<MISSING>'
-            page_url = '<MISSING>'
-            street_address = street_address.split('Suite')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo[0],
+            longitude=geo[1],
+            hours_of_operation="",
+        )
 
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                            store_number, phone_number, location_type, lat, longit, hours, page_url]
+        yield item
 
-            all_store_data.append(store_data)
-       
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

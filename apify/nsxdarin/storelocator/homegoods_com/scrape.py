@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("homegoods_com")
 
@@ -8,33 +11,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -51,6 +27,7 @@ def fetch_data():
             locs.append(lurl + "|" + sname)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
+        CS = False
         loc = loc.replace("&#39;", "'")
         add = ""
         city = ""
@@ -65,6 +42,8 @@ def fetch_data():
             r2.encoding = "utf-8"
         lines = r2.iter_lines(decode_unicode=True)
         for line2 in lines:
+            if "New store opening on" in line2:
+                CS = True
             if "<h2>" in line2:
                 g = next(lines)
                 h = next(lines)
@@ -99,27 +78,30 @@ def fetch_data():
         add = add.replace("&#39;", "'")
         city = city.replace("&#39;", "'")
         name = name.replace("&#39;", "'")
-        yield [
-            website,
-            loc.split("|")[0],
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if CS is False:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc.split("|")[0],
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

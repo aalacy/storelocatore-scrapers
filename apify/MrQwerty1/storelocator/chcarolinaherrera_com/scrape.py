@@ -16,7 +16,7 @@ def get_international(line):
     ).strip()
     city = adr.city
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or SgRecord.MISSING
 
     return street_address, city, state, postal
 
@@ -57,7 +57,12 @@ def get_data(param, sgw: SgWriter):
         location_name = j.get("name")
         raw_address = ", ".join(j.get("address") or []).strip()
         street_address, city, state, postal = get_international(raw_address)
-        phone = j.get("telf")
+        if postal == SgRecord.MISSING and country_code == "US":
+            street_address = raw_address.split(",")[0].strip()
+            city = raw_address.split(",")[1].strip()
+            postal = raw_address.split(",")[2].strip()
+        phone = j.get("telf") or ""
+        phone = phone.lower().replace("n/d", "").strip()
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         store_number = j.get("id")

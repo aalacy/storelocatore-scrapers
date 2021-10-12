@@ -111,46 +111,49 @@ def fetch_data():
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    session = SgRequests()
+
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=5,
+        expected_search_radius_miles=4,
         max_search_results=None,
     )
     identities = set()
     maxZ = search.items_remaining()
     total = 0
-    for zipcode in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        found = 0
-        son = session.get(url.format(zipcode=zipcode), headers=headers).json()
-        son = son["data"]["filter_by_location"]["city_stores"]
-        copy = []
-        for i in son:
-            for store in i:
-                search.found_location_at(store["lat"], store["lng"])
-                if store["id"] not in identities:
-                    identities.add(store["id"])
-                    found += 1
-                    copy.append(store)
-        if len(copy) > 0:
+    with SgRequests() as session:
+        for zipcode in search:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            found = 0
+            son = session.get(url.format(zipcode=zipcode), headers=headers).json()
+            son = son["data"]["filter_by_location"]["city_stores"]
+            copy = []
+            for i in son:
+                for store in i:
+                    search.found_location_at(store["lat"], store["lng"])
+                    if store["id"] not in identities:
+                        identities.add(store["id"])
+                        found += 1
+                        copy.append(store)
+            if len(copy) > 0:
 
-            son = copy
+                son = copy
 
-            lize = utils.parallelize(
-                search_space=son,
-                fetch_results_for_rec=para,
-                max_threads=20,
-                print_stats_interval=20,
+                lize = utils.parallelize(
+                    search_space=son,
+                    fetch_results_for_rec=para,
+                    max_threads=20,
+                    print_stats_interval=20,
+                )
+                for i in lize:
+                    yield i
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
-            for i in lize:
-                yield i
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-        total += found
-        logzilla.info(
-            f"{zipcode} | found: {found} | total: {total} | progress: {progress}"
-        )
+            total += found
+            logzilla.info(
+                f"{zipcode} | found: {found} | total: {total} | progress: {progress}"
+            )
 
 
 def scrape():
