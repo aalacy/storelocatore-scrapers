@@ -1,6 +1,5 @@
 import json
 from lxml import etree
-from urllib.parse import urlencode
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
