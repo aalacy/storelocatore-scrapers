@@ -22,7 +22,7 @@ def get_data(zips, sgw: SgWriter, slug):
         + str(slug).upper()
         + '"}]},"searchradius":"250","where":{"expdate":{"ge":"2021-912"},"authorized":{"distinctfrom":"1"},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}},"false":"0"}}}'
     )
-    print(data)
+
     session = SgRequests()
 
     r = session.post(api_url, headers=headers, data=data)
