@@ -17,7 +17,12 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api, headers=headers)
 
     for j in r.json():
-        location_name = j.get("store")
+        location_name = j.get("store") or ""
+        location_name = (
+            location_name.replace("&#8211;", "-")
+            .replace("&#038;", "&")
+            .replace("&#8217;", "'")
+        )
         page_url = j.get("permalink")
         street_address = f'{j.get("address")} {j.get("address2")}'.strip()
         city = j.get("city")
@@ -39,7 +44,7 @@ def fetch_data(sgw: SgWriter):
             time = "".join(t.xpath("./td[2]//text()")).strip()
             _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
         row = SgRecord(
             page_url=page_url,
