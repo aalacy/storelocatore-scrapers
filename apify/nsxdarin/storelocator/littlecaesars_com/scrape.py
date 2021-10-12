@@ -25,7 +25,7 @@ def fetch_data():
     for coord in search:
         website = "littlecaesars.com"
         url = "https://api.cloud.littlecaesars.com/bff/api/stores?zip=" + coord
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         for item in json.loads(r.content)["stores"]:
             name = "Little Caesar's"
             city = item["address"]["city"]
