@@ -66,7 +66,10 @@ def fetch_data():
     soup = pull_content(LOCATION_URL)
     page_urls = soup.find_all("a", {"class": "DetailLink"})
     for row in page_urls:
-        page_url = row["href"]
+        if "http" not in row["href"]:
+            page_url = "http:" + row["href"]
+        else:
+            page_url = row["href"]
         content = pull_content(page_url)
         info = json.loads(
             content.find("script", {"type": "application/ld+json"}).string
