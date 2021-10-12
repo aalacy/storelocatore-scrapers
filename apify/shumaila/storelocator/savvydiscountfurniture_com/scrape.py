@@ -46,8 +46,11 @@ def fetch_data():
         lat, longt = soup.select_one("a[href*=dir]")["href"].split("/")[-1].split(",")
         coord = soup.select_one("a[href*=maps]")["href"]
         m = session.get(coord, headers=headers)
-        lat, longt = m.url.split("@", 1)[1].split("data", 1)[0].split(",", 1)
-        longt = longt.split(",", 1)[0]
+        try:
+            lat, longt = m.url.split("@", 1)[1].split("data", 1)[0].split(",", 1)
+            longt = longt.split(",", 1)[0]
+        except:
+            lat = longt = "<MISSING>"
 
         yield SgRecord(
             locator_domain="https://www.savvydiscountfurniture.com",
