@@ -46,14 +46,14 @@ def fetch_data():
                             or "holiday" in _hh
                             or "children" in _hh
                             or "spa" in _hh
-                            or "hour" in _hh
                             or "please" in _hh
                             or "wellness" in _hh
                             or "will" in _hh
                             or "pool" in _hh
                             or "adult" in _hh
                             or "swimming" in _hh
-                            or "last" in _hh
+                            or "booking" in _hh
+                            or "prior" in _hh
                         ):
                             break
                         hours.append(
