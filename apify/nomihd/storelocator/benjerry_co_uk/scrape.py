@@ -151,7 +151,6 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except Exception as e:
-            print(e.message)
             pass
 
 
