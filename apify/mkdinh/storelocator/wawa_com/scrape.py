@@ -110,6 +110,8 @@ def fetch_data():
 
     locations = []
     with SgChrome().driver() as driver:
+        driver.set_script_timeout(300)
+
         for num in store_numbers:
             location = fetch_location(num, driver)
             if location:
