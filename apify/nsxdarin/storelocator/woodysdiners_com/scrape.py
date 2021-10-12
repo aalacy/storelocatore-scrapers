@@ -64,6 +64,3 @@ def scrape():
 
 
 scrape()
-
-
-scrape()
