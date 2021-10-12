@@ -6,7 +6,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
 
+domain = "https://joeskwikmart.com/"
+log = sglog.SgLogSetup().get_logger(logger_name=domain)
 session = SgRequests()
 
 headers = {
@@ -35,13 +38,17 @@ def fetch_data(sgw: SgWriter):
     }
 
     loclist = session.post(url, data=mydata, headers=headers).json()["features"]
-    domain = "https://joeskwikmart.com/"
     for loc in loclist:
         longt = loc["geometry"]["coordinates"][0]
         lat = loc["geometry"]["coordinates"][1]
         title = loc["properties"]["name"]
         link = "https://joeskwikmart.com/" + loc["properties"]["url"]
         content = loc["properties"]["fulladdress"]
+        check_phone = re.search(r"tel:(\d+)", content)
+        if not check_phone:
+            phone = "<MISSING>"
+        else:
+            phone = check_phone.group(1)
         content = re.sub(cleanr, "\n", str(content)).strip().splitlines()
         street = content[0]
         city, state = content[1].split("&#44;", 1)
@@ -49,7 +56,7 @@ def fetch_data(sgw: SgWriter):
         store = title.split("#")[1]
         title = title.replace("&apos;", "'")
         hours = "<MISSING>"
-
+        log.info("Append {} => {}".format(title, street))
         sgw.write_row(
             SgRecord(
                 locator_domain=domain,
@@ -61,7 +68,7 @@ def fetch_data(sgw: SgWriter):
                 zip_postal=pcode,
                 country_code="US",
                 store_number=store,
-                phone="<MISSING>",
+                phone=phone,
                 location_type="<MISSING>",
                 latitude=lat,
                 longitude=longt,
