@@ -18,20 +18,6 @@ locator_domain = "https://pizzatwist.com/"
 base_url = "https://pizzatwist.com/"
 
 
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
-
-
 def fetch_data():
     with SgRequests(verify_ssl=False) as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
