@@ -150,7 +150,7 @@ class _SearchIteration(SearchIteration):
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
-        except Exception as e:
+        except:
             pass
 
 
