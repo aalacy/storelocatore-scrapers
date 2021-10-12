@@ -1,1 +1,3 @@
 --ignore CountryCodeFillRateChecker (Country code not US or CA)
+
+--ignore LatLngDuplicationValidator (Confirmed scarape correctly)

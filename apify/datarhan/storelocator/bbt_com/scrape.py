@@ -42,7 +42,10 @@ def fetch_data():
                 city = poi["city"]
                 city = city if city else "<MISSING>"
                 state = poi["state"]
-                state = state if state else "<MISSING>"
+                state = state if state else ""
+                if city.endswith(" FL"):
+                    city = city.replace(" FL", "")
+                    state = "FL"
                 zip_code = poi["zip"]
                 zip_code = zip_code if zip_code else "<MISSING>"
                 country_code = "<MISSING>"
