@@ -89,6 +89,8 @@ def fetch_data():
             if phone == "n/a":
                 phone = ""
 
+            if country_code == "INT":
+                country_code = "CN"
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["data-store-code"],
