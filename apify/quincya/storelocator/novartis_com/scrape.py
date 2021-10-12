@@ -66,6 +66,12 @@ def fetch_data(sgw: SgWriter):
                 zip_code = addr.postcode
                 country_code = item.find(class_="country").text.strip()
 
+                if city and city[-1:] == "/":
+                    city = city[:-1].strip()
+
+                if state and state[:1] == "/":
+                    state = state[1:].strip()
+
                 if street_address:
                     if (
                         country_code == "United States"

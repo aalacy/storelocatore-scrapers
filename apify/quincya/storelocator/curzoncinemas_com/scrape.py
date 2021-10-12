@@ -10,6 +10,12 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-gb:{}@proxy.apify.com:8000/"
+
 
 def fetch_data(sgw: SgWriter):
 

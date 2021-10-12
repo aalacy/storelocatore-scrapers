@@ -125,6 +125,8 @@ def fetch_data():
                     else:
                         hours = hours + "; " + hrs
             if add != "<MISSING>":
+                if " (" in add:
+                    add = add.split(" (")[0].strip()
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

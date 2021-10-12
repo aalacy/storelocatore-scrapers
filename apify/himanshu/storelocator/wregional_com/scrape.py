@@ -1,10 +1,16 @@
-import csv
+from lxml import etree
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
 import re
 from itertools import groupby
 import json
+
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+
 
 DOMAIN = "wregional.com"
 BASE_URL = "https://www.wregional.com"
@@ -19,36 +25,6 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def pull_content(url):
@@ -304,36 +280,47 @@ def fetch_type_a2(content, page_url, location_type, location_name):
 
 
 def fetch_type_a3(content, page_url, location_type, location_name):
-    main = content.find("div", {"class": "clinics"}).find(
-        "ul", {"class": "providers flex"}
-    )
-    if not main:
-        info_addr = (
-            content.find("div", {"class": "clinics"})
-            .get_text(strip=True, separator="|")
-            .split("|")
-        )
-        if len(info_addr) <= 17:
-            del info_addr[:10]
-        else:
-            del info_addr[:17]
-        info_addr = "|".join(info_addr)
-        info_addr = info_addr.encode("ascii", "ignore").decode()
+    dom = etree.HTML(content.text)
+    location_name = dom.xpath('//div[@class="page-title"]/h1/text()')
+    if location_name:
+        location_name = location_name[0]
+        raw_adr = dom.xpath(
+            '//strong[contains(text(), "{}")]/following::text()'.format(location_name)
+        )[:2]
+        full_address = [e.strip() for e in raw_adr]
+
     else:
-        info_addr = main.find_next("div", {"class": "grey-line"}).find_next("p")
-        if not info_addr:
+        main = content.find("div", {"class": "clinics"}).find(
+            "ul", {"class": "providers flex"}
+        )
+        if not main:
             info_addr = (
                 content.find("div", {"class": "clinics"})
                 .get_text(strip=True, separator="|")
                 .split("|")
             )
-            del info_addr[:86]
+            if len(info_addr) <= 17:
+                del info_addr[:10]
+            else:
+                del info_addr[:17]
             info_addr = "|".join(info_addr)
+            info_addr = info_addr.encode("ascii", "ignore").decode()
         else:
-            info_addr = info_addr.get_text(strip=True, separator="|")
-    full_address = info_addr.replace("Telephone (Washington County):", "Telephone:")
-    full_address = full_address.replace("Telephone: ", "Telephone:|")
-    full_address = full_address.replace("Phone:", "Telephone:").split("|")
+            info_addr = main.find_next("div", {"class": "grey-line"}).find_next("p")
+            if not info_addr:
+                info_addr = (
+                    content.find("div", {"class": "clinics"})
+                    .get_text(strip=True, separator="|")
+                    .split("|")
+                )
+                del info_addr[:86]
+                info_addr = "|".join(info_addr)
+            else:
+                info_addr = info_addr.get_text(strip=True, separator="|")
+        full_address = info_addr.replace("Telephone (Washington County):", "Telephone:")
+        full_address = full_address.replace("Telephone: ", "Telephone:|")
+        full_address = full_address.replace("Phone:", "Telephone:").split("|")
+
     location = fetch_type_a_proccess(
         page_url,
         content,
@@ -353,6 +340,7 @@ def fetch_type_a_proccess(
         and "3 E. Appleby Road" not in formated_address[1]
         or "Springdale Center for Health" in formated_address[1]
         or "Located in the William L. Bradley Medical Plaza" in formated_address[1]
+        or "Urgent Care Clinic" in formated_address[0]
     ):
         del formated_address[1]
     if len(formated_address) >= 5:
@@ -470,27 +458,38 @@ def fetch_type_a_proccess(
 
 
 def fetch_type_b(content, page_url, location_type, location_name):
-    main = content.find("ul").find_next("p")
-    if not main:
-        info_addr = content.get_text(strip=True, separator="|").split("|")
-        if len(info_addr) >= 19:
-            del info_addr[:15]
-        info_addr = "|".join(info_addr)
-        info_addr = info_addr.replace("Map and Directions", "Telephone:|<MISSING>")
+    location_name = " ".join([e.strip() for e in location_name.split() if e.strip()])
+    dom = etree.HTML(content.text)
+    location_name = dom.xpath('//div[@class="page-title"]/h1/text()')
+    if location_name:
+        raw_adr = dom.xpath(
+            '//strong[contains(text(), "{}")]/following::text()'.format(
+                location_name[0]
+            )
+        )[:2]
+        full_address = [e.strip() for e in raw_adr]
     else:
-        addr = main.find_next("p").get_text(strip=True, separator="|").split("|")
-        info_addr_list = []
-        for row in addr:
-            if "72762" in row:
-                info_addr_list.append(row)
-                info_addr_list.append("Telephone:|479.463.2333")
-            else:
-                info_addr_list.append(row)
-        info_addr = "|".join(info_addr_list)
-    info_addr = info_addr.encode("ascii", "ignore").decode()
-    full_address = info_addr.replace("Telephone (Washington County):", "Telephone:")
-    full_address = full_address.replace("Telephone: ", "Telephone:|")
-    full_address = full_address.replace("Phone:", "Telephone:").split("|")
+        main = content.find("ul").find_next("p")
+        if not main:
+            info_addr = content.get_text(strip=True, separator="|").split("|")
+            if len(info_addr) >= 19:
+                del info_addr[:15]
+            info_addr = "|".join(info_addr)
+            info_addr = info_addr.replace("Map and Directions", "Telephone:|<MISSING>")
+        else:
+            addr = main.find_next("p").get_text(strip=True, separator="|").split("|")
+            info_addr_list = []
+            for row in addr:
+                if "72762" in row:
+                    info_addr_list.append(row)
+                    info_addr_list.append("Telephone:|479.463.2333")
+                else:
+                    info_addr_list.append(row)
+            info_addr = "|".join(info_addr_list)
+        info_addr = info_addr.encode("ascii", "ignore").decode()
+        full_address = info_addr.replace("Telephone (Washington County):", "Telephone:")
+        full_address = full_address.replace("Telephone: ", "Telephone:|")
+        full_address = full_address.replace("Phone:", "Telephone:").split("|")
     location = fetch_type_a_proccess(
         page_url,
         content,
@@ -539,10 +538,31 @@ def fetch_type_urgent(soup, page_url):
 
 def scrape():
     log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for elem in fetch_data():
+            item = SgRecord(
+                locator_domain=elem[0],
+                page_url=elem[1],
+                location_name=elem[2],
+                street_address=elem[3],
+                city=elem[4],
+                state=elem[5],
+                zip_postal=elem[6],
+                country_code=elem[7],
+                store_number=elem[8],
+                phone=elem[9],
+                location_type=elem[10],
+                latitude=elem[11],
+                longitude=elem[12],
+                hours_of_operation=elem[13],
+            )
+            writer.write_row(item)
 
 
 scrape()

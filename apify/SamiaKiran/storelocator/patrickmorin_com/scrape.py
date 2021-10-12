@@ -50,7 +50,7 @@ def fetch_data():
         log.info(page_url)
         hour_list = loc["schedule"]["calendar"]["opening-hours"]
         hours_of_operation = ""
-        hour_list = hour_list
+        temp_list = []
         for hour in hour_list:
             temp = hour.split("-")
             day = findDay(temp[2] + " " + temp[1] + " " + temp[0])
@@ -61,13 +61,14 @@ def fetch_data():
                 temp_2 = json.loads(temp_2)
                 start = temp_2["start_time"]
                 end = temp_2["end_time"]
-                hours_of_operation = (
-                    hours_of_operation + " " + day + " " + start + " - " + end
-                )
+                variable = day + " " + start + " - " + end
+                if variable in temp_list:
+                    continue
+                temp_list.append(variable)
+                hours_of_operation = hours_of_operation + " " + variable
+
             except:
                 hours_of_operation = hours_of_operation + " " + day + ": Closed"
-        hours_of_operation = hours_of_operation.rsplit("Monday")[1]
-        hours_of_operation = "Monday " + hours_of_operation
         raw_address = loc["address"]
         address = raw_address.split(",")
         street_address = address[0] + " " + address[1]
