@@ -112,8 +112,8 @@ def fetch_data():
     with SgChrome().driver() as driver:
         for num in store_numbers:
             location = fetch_location(num, driver)
-
-            locations.append(location)
+            if location:
+                locations.append(location)
 
     return locations
 
