@@ -20,7 +20,10 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         store_number = j.get("id")
         slug = j.get("website") or ""
-        page_url = f"https://www.greasemonkeyauto.com/{slug}"
+        if slug.startswith("/"):
+            page_url = f"https://www.greasemonkeyauto.com/{slug}"
+        else:
+            page_url = slug
         phone = j.get("phone")
         latitude = j.get("lat")
         longitude = j.get("lng")
