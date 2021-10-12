@@ -8,7 +8,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-session = SgRequests()
 website = "footlocker_com_sa"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
@@ -25,7 +24,7 @@ def fetch_data():
     loclist = []
     if True:
         url = "https://www.footlocker.com.sa/en/store-finder"
-        with SgRequests(proxy_country="uae") as http:
+        with SgRequests(proxy_country="ae") as http:
             r = http.get(url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             linklist = soup.findAll("div", {"class": "by--alphabet"})
