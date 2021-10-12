@@ -51,6 +51,8 @@ def fetch_data():
 
             zip_postal = pa.postcode
             pcode = zip_postal.strip() if zip_postal else MISSING
+            if "Address" in title:
+                title = raw_address
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
                 page_url="<MISSING>",
@@ -151,7 +153,8 @@ def fetch_data():
                     hours = hours.split("Hours", 1)[1]
                 except:
                     pass
-                hours = hours.replace("day", "day ")
+                hours = hours.replace("day", "day ").replace("osed", "osed ").strip()
+
                 yield SgRecord(
                     locator_domain="https://www.outback.com/",
                     page_url=branch,
