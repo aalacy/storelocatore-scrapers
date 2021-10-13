@@ -2,7 +2,8 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
-from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+
 
 from sgscrape import simple_utils as utils  # noqa
 
@@ -51,33 +52,48 @@ def cleanup_json(x, url):
     return x
 
 
-def para(k):
+def para(k, session):
 
-    session = SgRequests()
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    son = SgRequests.raise_on_err(
-        session.get(k["facilityOverview"]["homeUrl"], headers=headers)
-    )
+    son = None
+    try:
+        son = SgRequests.raise_on_err(
+            session.get(k["facilityOverview"]["homeUrl"], headers=headers)
+        )
+    except Exception as e:
+        try:
+            logzilla.error(f"{str(e)}\n{k['facilityOverview']['homeUrl']}\n\n")
+        except Exception as feck:
+            logzilla.error(f"{str(feck)}\n{k}\n\n")
+    try:
 
-    soup = b4(son.text, "lxml")
+        soup = b4(son.text, "lxml")
 
-    allscripts = soup.find_all("script", {"type": "application/ld+json"})
+        allscripts = soup.find_all("script", {"type": "application/ld+json"})
+    except Exception:
+        pass
 
     data = {}
     k["extras"] = {}
     k["extras"]["address"] = {}
     k["extras"]["address"]["postalCode"] = "<MISSING>"
-    for i in allscripts:
-        if "postalCode" in i.text:
-            try:
-                z = i.text.replace("\n", "")
-                data = cleanup_json(z, k["facilityOverview"]["homeUrl"])
-            except Exception:
-                raise
-
-    k["extras"] = data
+    try:
+        for i in allscripts:
+            if "postalCode" in i.text:
+                try:
+                    z = i.text.replace("\n", "")
+                    data = cleanup_json(z, k["facilityOverview"]["homeUrl"])
+                except Exception:
+                    raise
+    except Exception:
+        pass
+    try:
+        k["extras"] = data
+    except Exception:
+        k["extras"]["address"]["postalCode"] = "<MISSING>"
+        k["extras"]["openingHours"] = "<MISSING>"
 
     return k
 
@@ -117,10 +133,14 @@ def fetch_data():
         )
         for country in countries:
             if not country["complete"]:
-                for record in data_fetcher(country, state, 10):
-                    yield record
+                try:
+                    data_fetcher(country, state, 10)
+                except Exception as e:
+                    logzilla.error(f"{str(country)}\n{str(e)}")
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
+            for next_r in state.request_stack_iter():
+                yield para(next_r.context, session)
 
 
 def data_fetcher(country, state, sleep):
@@ -131,7 +151,7 @@ def data_fetcher(country, state, sleep):
         time.sleep(sleep)
         for r in driver.requests:
             data = None
-            if "/graphql/customer" in r.path:
+            if "graphql/customer" in r.path:
                 try:
                     if r.response.body:
                         data = r.response.body
@@ -169,17 +189,12 @@ def data_fetcher(country, state, sleep):
             for j in i["data"]["hotelSummaryOptions"]["hotels"]:
                 allhotels.append(j)
         except KeyError as e:
-            logzilla.error(f"{i}\n{str(e)}\n\n")
+            logzilla.error(f"{str(i)[:200]}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-    lize = utils.parallelize(  # noqa
-        search_space=allhotels,  # noqa
-        fetch_results_for_rec=para,  # noqa
-        max_threads=20,  # noqa
-        print_stats_interval=10,  # noqa
-    )
-    for j in lize:
-        yield j
+    for req in allhotels:
+        state.push_request(SerializableRequest(url="<MISSING>", context=req))
+
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
