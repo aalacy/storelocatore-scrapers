@@ -15,52 +15,18 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
 cookies = {
-    "dwanonymous_b3aa5771d8435c67a1a8775183c875b2": "adt8yYpartGjBT4acGDvbA75LT",
-    "BVBRANDID": "f333f2c0-e7bf-4191-b38b-22502fcde1ef",
-    "dwanonymous_2954ea0b586e0f3a1c58971e98526cb1": "beH9ZjJyHc2aAyIXhV5wms3wbr",
-    "dwanonymous_4b678b2f3ddcd887e7cd4635d93160c7": "deEhWuRbc41unMaWN624yxAdge",
-    "_scid": "593cc78b-eedb-4eab-8165-f722d3c391bf",
+    "dwac_cdSAUiaaio11EaaadnOiJrNbA7": "5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0%3D|dw-only|||USD|false|Canada%2FEastern|true",
+    "cqcid": "abHD59LYsfOy6WboYD9gghKG4L",
     "cquid": "||",
-    "__cq_dnt": "0",
-    "dw_dnt": "0",
-    "zarget_visitor_info": "%7B%7D",
-    "zarget_user_id": "2f0dde7c-585c-4579-b996-ac4b1b998e7a",
-    "_gcl_au": "1.1.860488317.1633360934",
-    "_ga": "GA1.2.887594067.1633360936",
-    "_li_dcdm_c": ".canadagoose.com",
-    "_lc2_fpi": "c88e71b6d53c--01fh5yc0hwt99pzx9yrmp6yqjc",
-    "dw": "1",
-    "dw_cookies_accepted": "1",
-    "BVImplmain_site": "14687",
-    "globalBannerIsHidden": "",
-    "_pin_unauth": "dWlkPU5EaG1NelUzT0RFdE1XRmpPUzAwT1RBeUxXSTJaV1V0TmpaaFpEVmhNV1V4TlRReQ",
-    "__cq_uuid": "absHmGtKqd2YWuvTkgqrGzqkFq",
-    "__cq_seg": "0~0.00!1~0.00!2~0.00!3~0.00!4~0.00!5~0.00!6~0.00!7~0.00!8~0.00!9~0.00",
-    "rskxRunCookie": "0",
-    "rCookie": "5u0tvyvfe86ccefhqrcbrokucsxq3m",
-    "civicCookieControl": "%7B%22pv%22%3A%22%22%2C%22cm%22%3A%22info%22%2C%22open%22%3A%22no%22%2C%22consented%22%3A%22yes%22%2C%22explicitly%22%3A%22yes%22%2C%22hidden%22%3A%22yes%22%7D",
-    "contactWindowDialogIsHidden": "1",
-    "_sctr": "1|1633287600000",
-    "_f60_session": "F51hqZiTYbk4PIg16hnwMXH32whiHfkmFi2OCwZlnluC9maJDeh8fw29PvwFUmgB",
-    "CanadaGooseCA-pagevisits": '{"pagevisits":1}',
-    "dwac_bdbM6iaaioAiEaaaddLOa2751H": "LT4AGzBxpt35rCSzCwRu_vKgGnxE399yCZc%3D|dw-only|||CAD|false|Canada%2FEastern|true",
-    "cqcid": "adt8yYpartGjBT4acGDvbA75LT",
-    "countryCode": "US",
-    "dwac_cdSAUiaaio11EaaadnOiJrNbA7": "Twc1SZ71pp_YhOZ94m7YpSZNP7A266paPV8%3D|dw-only|||USD|false|Canada%2FEastern|true",
-    "sid": "Twc1SZ71pp_YhOZ94m7YpSZNP7A266paPV8",
-    "dwsid": "hTUWXUQFoss4RkfAqyiBFex_HKTsG64O3Z2ZJDRXyegm3tmPvX9eHPqqbWW2Air6VjCkFoppC96nE6YOjR8wCA==",
-    "language": "en",
-    "_gid": "GA1.2.233579639.1633692851",
-    "BVBRANDSID": "5a995f9d-3bea-49d4-829e-7382510f49f6",
-    "lastRskxRun": "1633693187450",
-    "CanadaGooseUS-pagevisits": '{"pagevisits":9}',
-    "akm_bmfp_b2-ssn": "038ZOX4c7tQ7mafejoyPGJMwbwxa7StA9UMYUZsMj3QAaoGp5UHkRORAOCN3MBnvEkXUPq2LN84miaHepiLdrdIsSI9RZjLq9FwGgkadawwiqcB7KuWNyNVW25DGjfVx3f1kt1F5PLESj1MOVq8qiCXMfGH",
-    "akm_bmfp_b2": "038ZOX4c7tQ7mafejoyPGJMwbwxa7StA9UMYUZsMj3QAaoGp5UHkRORAOCN3MBnvEkXUPq2LN84miaHepiLdrdIsSI9RZjLq9FwGgkadawwiqcB7KuWNyNVW25DGjfVx3f1kt1F5PLESj1MOVq8qiCXMfGH",
-    "_gat_UA-34770126-1": "1",
-    "_uetsid": "a7f24100282b11ec906b0f650e57155c",
-    "_uetvid": "4c9bf690e62511eb977165ee7ae05647",
-    "_derived_epik": "dj0yJnU9VWJxa3RfcHVaYVZMZnJNTFdjNEhUenczWnJHbGx5U0Qmbj16dldHbXVyWVN1Vm56QkFlTDAwTFBRJm09ZiZ0PUFBQUFBR0ZnTG53JnJtPWYmcnQ9QUFBQUFHRmdMbnc",
+    "sid": "5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0",
+    "language": "en_US",
+    "dwanonymous_b3aa5771d8435c67a1a8775183c875b2": "abHD59LYsfOy6WboYD9gghKG4L",
+    "dwsid": "n_kCnAw_0Ax8iXxr57o8zrrEjD4SgV4S1hdk-JdwdSOzBNNLdVJYCN1QlCC9I0nwRnkdZNnvsAqZ4P6E26AZJQ==",
+    "akm_bmfp_b2-ssn": "0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ",
+    "akm_bmfp_b2": "0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ",
 }
+
+
 headers = {
     "Connection": "keep-alive",
     "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
@@ -154,6 +120,18 @@ def fetch_data():
                 '//div[@class="store-info desktop"]//*[@itemprop="postalCode"]//text()'
             )
         ).strip()
+
+        if len(street_address) <= 0:
+            street_address = ", ".join(
+                "".join(
+                    store_sel.xpath(
+                        '//div[@class="store-info desktop"]//*[@itemprop="address"]//text()'
+                    )
+                )
+                .strip()
+                .split(",")[:-1]
+            ).strip()
+
         country_code = "<INACCESSIBLE>"
         if "Italy" == state:
             country_code = "IT"
@@ -187,15 +165,30 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        hours_of_operation = (
-            "; ".join(
-                store_sel.xpath(
-                    '//div[@class="store-info desktop"]//*[@itemprop="openingHours"]/@content'
-                )
+        hours = store_sel.xpath('//div[@class="store-info desktop"]/text()')
+        hours_list = []
+        for hour in hours:
+            if len("".join(hour).strip()) > 0:
+                hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath(
+                '//div[@class="store-info desktop"]/p[./meta[@itemprop="openingHours"]]/text()'
             )
-            .strip()
-            .replace("${schema-Th-Su}$", "Closed")
-        )
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath('//div[@class="store-info desktop"]/p/text()')
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        hours_of_operation = "; ".join(hours_list).strip()
+        if "," == hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
         map_link = "".join(
             store_sel.xpath(
                 '//div[@class="store-info desktop"]//a[contains(@href,"maps")]/@href'

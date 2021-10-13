@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,8 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://www.jrff.co.jp/cinnabon/location/"
     domain = "jrff.co.jp"
     hdr = {
@@ -24,7 +22,10 @@ def fetch_data():
         '//div[@class="edgtf-elements-holder edgtf-three-columns edgtf-responsive-mode-1024"]/div'
     )
     for poi_html in all_locations:
-        location_name = poi_html.xpath(".//h5/strong/span/text()")[0]
+        location_name = poi_html.xpath(".//h5/strong/span/text()")
+        if not location_name:
+            continue
+        location_name = location_name[0]
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else ""
         raw_adr = poi_html.xpath(".//p[strong]/text()")
@@ -36,20 +37,19 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url="",
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
-            state=addr.state,
-            zip_postal=addr.postcode,
-            country_code="JP",
+            city="",
+            state="",
+            zip_postal="",
+            country_code="",
             store_number="",
             phone=phone,
             location_type="",
             latitude="",
             longitude="",
             hours_of_operation="",
-            raw_address=raw_adr,
         )
 
         yield item
