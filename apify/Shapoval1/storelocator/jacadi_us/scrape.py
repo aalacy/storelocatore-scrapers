@@ -29,9 +29,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//h3[./button[text()="United States"]]/following-sibling::ul/li/a | //h3[./button[text()="Canada"]]/following-sibling::ul/li/a'
-    )
+    div = tree.xpath("//h3/following-sibling::ul/li/a")
     for d in div:
         slug = "".join(d.xpath(".//@href"))
         spage_url = f"https://www.jacadi.us{slug}"
@@ -57,9 +55,9 @@ def fetch_data(sgw: SgWriter):
             state = "<MISSING>"
 
             postal = a.get("postalCode")
+            if postal == "0" or postal == "-":
+                postal = "<MISSING>"
             country_code = a.get("addressCountry")
-            if "TR" in country_code:
-                continue
             city = "".join(a.get("addressLocality"))
             if city.find(",") != -1:
                 state = city.split(",")[1].strip()
@@ -71,6 +69,8 @@ def fetch_data(sgw: SgWriter):
             latitude = js.get("geo").get("latitude")
             longitude = js.get("geo").get("longitude")
             phone = js.get("telephone") or "<MISSING>"
+            if phone == "0":
+                phone = "<MISSING>"
             hours = js.get("openingHoursSpecification") or "<MISSING>"
             hours_of_operation = "<MISSING>"
             if hours != "<MISSING>":

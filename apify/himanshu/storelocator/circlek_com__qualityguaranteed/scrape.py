@@ -34,8 +34,7 @@ def fetch_data():
     hours_of_operation = ""
 
     location_urls = [
-        "https://www.circlek.com/stores_new.php?lat=33.6&lng=-112.12&distance=10000000&services=gas&region=global&page={}",
-        "https://www.circlek.com/stores_new.php?lat=33.6&lng=-112.12&distance=10000000&services=diesel&region=global&page={}",
+        "https://www.circlek.com/stores_new.php?lat=33.6&lng=-112.12&distance=10000000&services=gas,diesel&region=global&page={}"
     ]
 
     for location_url in location_urls:
