@@ -18,7 +18,6 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'tabName":null,"url":"' in line:
             items = line.split('tabName":null,"url":"')
             for item in items:
@@ -58,7 +57,6 @@ def fetch_data():
         lat = ""
         lng = ""
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if "><h4>" in line2 and add == "":
                 name = line2.split("><h4>")[1].split("<")[0]
                 add = line2.split("<h4>")[1].split("<span>")[1].split("</span")[0]

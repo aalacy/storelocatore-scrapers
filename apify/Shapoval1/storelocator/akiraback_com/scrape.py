@@ -58,6 +58,7 @@ def fetch_data(sgw: SgWriter):
             or slug.find("san diego") != -1
             or slug.find("las vegas") != -1
             or slug.find("SAN DIEGO") != -1
+            or slug.find("Los Angeles") != -1
         ):
             slug = "US"
         if slug.find("toronto") != -1 or slug.find("TORONTO") != -1:
@@ -70,6 +71,7 @@ def fetch_data(sgw: SgWriter):
             slug = "Vietnam"
         if slug.find("BANGKOK") != -1:
             slug = "Thailand"
+
         country_code = slug
         city = "<MISSING>"
         street_address = "<MISSING>"
@@ -399,6 +401,8 @@ def fetch_data(sgw: SgWriter):
             longitude = "100.5655813"
         if page_url == "https://www.north-island.com/dining-options/":
             street_address = "PO Box 1176"
+        if city.find("Los Angeles") != -1:
+            country_code = "US"
 
         row = SgRecord(
             locator_domain=locator_domain,

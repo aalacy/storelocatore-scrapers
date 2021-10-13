@@ -36,6 +36,15 @@ def fetch_data():
                 lurl = line2.split("<loc>")[1].split("<")[0]
                 if lurl not in locs:
                     locs.append(lurl)
+            if ".xml</loc>" in line2:
+                smurl = line2.split("<loc>")[1].split("<")[0]
+                r3 = session.get(smurl, headers=headers)
+                for line3 in r3.iter_lines():
+                    line3 = str(line3.decode("utf-8"))
+                    if "/Home</loc>" in line3:
+                        lurl = line3.split("<loc>")[1].split("<")[0]
+                        if lurl not in locs:
+                            locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
