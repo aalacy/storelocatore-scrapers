@@ -124,8 +124,6 @@ def ret_record(record):
     except Exception:
         pass
 
-    locator_domain = ("https://www.starbuck.com/",)
-
     raw_address = "<MISSING>"
 
     return SgRecord(
