@@ -18,9 +18,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("div", {"class": "fl-callout-content"})
     url = "https://api.storerocket.io/api/user/3MZpoQ2JDN/locations?radius=250&units=miles"
-    loclist = session.get(url, headers=headers, verify=False).json()["results"][
-        "locations"
-    ]
+    loclist = session.get(url, headers=headers).json()["results"]["locations"]
     for div in divlist:
         content = div.text.strip().splitlines()
         title = content[0]

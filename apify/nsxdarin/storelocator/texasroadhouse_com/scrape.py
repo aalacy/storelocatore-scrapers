@@ -84,6 +84,12 @@ def fetch_data():
         if add != "" and city != "<MISSING>":
             name = name.replace("\\u0027", "'")
             add = add.replace("\\u0027", "'")
+            name = name.replace("\\/", "/")
+            add = add.replace("\\/", "/")
+            if lat == "0":
+                lat = "<MISSING>"
+            if lng == "0":
+                lng = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
