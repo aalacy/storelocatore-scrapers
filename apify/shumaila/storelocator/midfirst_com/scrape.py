@@ -2,11 +2,13 @@ from sgrequests import SgRequests
 from sgselenium import SgSelenium
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
-
+import ssl
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
 
@@ -58,7 +60,7 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    mylist = static_coordinate_list(50, SearchableCountries.USA)
+    mylist = static_coordinate_list(10, SearchableCountries.USA)
     MAX_RESULTS = 25
     MAX_DISTANCE = 150
 

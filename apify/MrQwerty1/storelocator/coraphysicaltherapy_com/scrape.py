@@ -4,15 +4,11 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def fetch_data(sgw: SgWriter):
-    api = "https://www.coraphysicaltherapy.com/wp-admin/admin-ajax.php?action=store_search&lat=33.836081&lng=-81.1637245&autoload=1"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-
+def fetch_data(la, ln, sgw: SgWriter):
+    api = f"https://www.coraphysicaltherapy.com/wp-admin/admin-ajax.php?action=store_search&lat={la}&lng={ln}&autoload=1"
     r = session.get(api, headers=headers)
     js = r.json()
 
@@ -62,5 +58,19 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.coraphysicaltherapy.com/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        fetch_data(writer)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=50,
+        max_search_distance_miles=200,
+        max_search_results=20,
+    )
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for lat, lon in search:
+            fetch_data(lat, lon, writer)
