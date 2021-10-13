@@ -1,39 +1,12 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://uberrito.com"
     page_url = "https://uberrito.com/locations"
@@ -52,15 +25,14 @@ def fetch_data():
         tree = html.fromstring(r.text)
 
         location_name = "".join(tree.xpath('//h1[@itemprop="name"]/text()'))
-
-        location_type = "<MISSING>"
         street_address = "".join(tree.xpath('//span[@itemprop="streetAddress"]/text()'))
-        phone = "".join(tree.xpath('//span[@itemprop="telephone"]/text()'))
+        phone = (
+            "".join(tree.xpath('//span[@itemprop="telephone"]/text()')) or "<MISSING>"
+        )
         state = "".join(tree.xpath('//span[@itemprop="addressRegion"]/text()'))
         postal = "".join(tree.xpath('//span[@itemprop="postalCode"]/text()'))
         country_code = "US"
         city = "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
-        store_number = "<MISSING>"
         text = "".join(tree.xpath('//a[contains(@href, "/maps/")]/@href'))
         try:
             if text.find("ll=") != -1:
@@ -77,32 +49,33 @@ def fetch_data():
             .replace("   ", " ")
             .strip()
         )
+        cms = "".join(tree.xpath('//img[@itemprop="image"]/@src'))
+        if "Coming-Soon" in cms:
+            hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
