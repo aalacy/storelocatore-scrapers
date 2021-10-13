@@ -45,7 +45,7 @@ def fetch_data(sgw: SgWriter):
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
-        phone = raw_address[2]
+        phone = raw_address[2].split("/")[0].strip()
         store_number = ""
         map_link = base.iframe["src"]
         req = session.get(map_link, headers=headers)
