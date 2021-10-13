@@ -81,4 +81,5 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
 
+
 scrape()
