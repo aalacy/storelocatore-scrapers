@@ -2,7 +2,8 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
-from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+
 
 from sgscrape import simple_utils as utils  # noqa
 
@@ -51,9 +52,8 @@ def cleanup_json(x, url):
     return x
 
 
-def para(k):
+def para(k, session):
 
-    session = SgRequests()
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
@@ -134,12 +134,13 @@ def fetch_data():
         for country in countries:
             if not country["complete"]:
                 try:
-                    for record in data_fetcher(country, state, 10):
-                        yield record
+                    data_fetcher(country, state, 10)
                 except Exception as e:
                     logzilla.error(f"{str(country)}\n{str(e)}")
                 country["complete"] = True
                 state.set_misc_value("countries", countries)
+            for next_r in state.request_stack_iter():
+                yield para(next_r.context, session)
 
 
 def data_fetcher(country, state, sleep):
@@ -191,14 +192,9 @@ def data_fetcher(country, state, sleep):
             logzilla.error(f"{str(i)[:200]}\n{str(e)}\n\n")
 
     logzilla.info(f"Found a total of {total} hotels for country {country}")  # noqa
-    lize = utils.parallelize(  # noqa
-        search_space=allhotels,  # noqa
-        fetch_results_for_rec=para,  # noqa
-        max_threads=20,  # noqa
-        print_stats_interval=10,  # noqa
-    )
-    for j in lize:
-        yield j
+    for req in allhotels:
+        state.push_request(SerializableRequest(url="<MISSING>", context=req))
+
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
