@@ -18,7 +18,6 @@ def fetch_data():
     typ = "Restaurant"
     hours = "<MISSING>"
     for line in lines:
-        line = str(line.decode("utf-8"))
         if '{"name": "' in line:
             line = line.replace('"categories": [{"name":', "")
             items = line.split('"name": "')
