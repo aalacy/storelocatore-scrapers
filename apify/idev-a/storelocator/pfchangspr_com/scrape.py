@@ -32,6 +32,9 @@ def fetch_data():
                 latitude=coord[1],
                 longitude=coord[0],
                 locator_domain=locator_domain,
+                hours_of_operation=list(
+                    _.select_one("div.store-hours").stripped_strings
+                )[1],
                 raw_address=", ".join(addr),
             )
 
