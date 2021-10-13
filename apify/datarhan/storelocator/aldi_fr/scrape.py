@@ -77,7 +77,7 @@ def fetch_locations(code, tracker):
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=fr-FR&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=F&Zip={}&Town=&Street=&Radius=100000"
     response = session.get(search_url.format(code))
 
-    while "Le nombre maximum des demandes de votre IP" in response.text:
+    while hasattr(response, "base_exception"):
         session = get_session(True)
         response = session.get(search_url.format(code))
     session_id = response.url.params.get("SessionGuid")
