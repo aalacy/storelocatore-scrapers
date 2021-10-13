@@ -21,41 +21,46 @@ def fetch_data():
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers).text
         locations = json.loads(
-            res.split("var GTU_L_Locations =")[1].split("/* ]]> */")[0].strip()[:-1]
-        )
+            res.split("var wpgmp_gtu_data =")[1].split("/* ]]> */")[0].strip()[:-1]
+        )["places"]
         for _ in locations:
-            if not _["ACF"]["street"]:
+            loc = _["location"]
+            country_code = loc["extra_fields"]["category_slug"].replace("-", " ")
+            page_url = loc["extra_fields"]["sl_url"].replace(
+                "awww.aqua-tots.com", "www.aqua-tots.com"
+            )
+            if country_code and country_code not in ["united states", "canada"]:
                 continue
-            if _["ACF"].get("coming_soon") == "yes":
+            if "Bangkok" == loc["state"]:
                 continue
-            if (_["ACF"].get("country") or "US") not in ["US", "CA"]:
-                logger.info(f'[Non US] {_["ACF"].get("country")} - {_["post_name"]}')
-                continue
-            page_url = f"{locator_domain}{_['post_name']}"
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = [
-                ": ".join(hh.stripped_strings) for hh in sp1.select("div#hours div.row")
-            ]
+            hours = []
+            res1 = session.get(page_url, headers=_headers)
+            if res1.status_code == 200:
+                sp1 = bs(res1.text, "lxml")
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in sp1.select("div#hours div.row")
+                ]
             yield SgRecord(
                 page_url=page_url,
-                store_number=_["ID"],
-                location_name=_["post_title"],
-                street_address=_["ACF"]["street"],
-                city=_["ACF"]["city"],
-                state=_["ACF"]["state"],
-                latitude=_["ACF"]["latitude"],
-                longitude=_["ACF"]["longitude"],
-                zip_postal=_["ACF"]["zip"],
-                country_code=_["ACF"].get("country", "US") or "US",
-                phone=_["ACF"]["phone"],
+                store_number=_["id"],
+                location_name=_["title"],
+                street_address=_["address"],
+                city=loc["city"],
+                state=loc["state"],
+                latitude=loc["lat"],
+                longitude=loc["lng"],
+                zip_postal=loc["postal_code"],
+                country_code=country_code,
+                phone=loc["extra_fields"]["sl_phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
