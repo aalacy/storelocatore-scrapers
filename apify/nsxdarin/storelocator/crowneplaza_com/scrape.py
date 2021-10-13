@@ -16,7 +16,7 @@ headers = {
 def fetch_data():
     states = []
     cities = []
-    locs = []
+    locs = ["https://www.ihg.com/crowneplaza/hotels/gb/en/hobart/hbaho/hoteldetail"]
     url_home = "https://www.ihg.com/destinations/us/en/explore"
     r = session.get(url_home, headers=headers)
     Found = False
