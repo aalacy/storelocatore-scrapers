@@ -24,6 +24,129 @@ def fix_comma(x):
         return x
 
 
+def ret_record(record):
+    page_url = "<MISSING>"
+    location_name = "<MISSING>"
+
+    street_address = "<MISSING>"
+
+    city = "<MISSING>"
+
+    state = "<MISSING>"
+
+    zip_postal = "<MISSING>"
+
+    country_code = "<MISSING>"
+
+    store_number = "<MISSING>"
+
+    phone = "<MISSING>"
+
+    location_type = "<MISSING>"
+
+    latitude = "<MISSING>"
+
+    longitude = "<MISSING>"
+    hours_of_operation = "<MISSING>"
+
+    try:
+        page_url = "https://www.starbucks.com/store-locator/store/{}/{}".format(
+            str(record["id"]), str(record["slug"])
+        )
+    except Exception:
+        pass
+    try:
+        location_name = str(record["name"])
+    except Exception:
+        pass
+    try:
+        street_address = fix_comma(
+            str(
+                str(record["address"]["streetAddressLine1"])
+                + ","
+                + str(record["address"]["streetAddressLine2"])
+                + ","
+                + str(record["address"]["streetAddressLine3"])
+            )
+        )
+    except Exception:
+        pass
+
+    try:
+        city = str(record["address"]["city"])
+    except Exception:
+        pass
+
+    try:
+        state = str(record["address"]["countrySubdivisionCode"])
+    except Exception:
+        pass
+
+    try:
+        zip_postal = str(record["address"]["postalCode"])
+    except Exception:
+        pass
+
+    try:
+        country_code = str(record["address"]["countryCode"])
+    except Exception:
+        pass
+
+    try:
+        store_number = str(record["id"])
+    except Exception:
+        pass
+
+    try:
+        phone = str(record["phoneNumber"])
+    except Exception:
+        pass
+
+    try:
+        location_type = str(
+            str(record["brandName"]) + " - " + str(record["ownershipTypeCode"])
+        )
+    except Exception:
+        pass
+
+    try:
+        latitude = str(record["coordinates"]["latitude"])
+    except Exception:
+        pass
+
+    try:
+        longitude = str(record["coordinates"]["longitude"])
+    except Exception:
+        pass
+
+    try:
+        hours_of_operation = str(record["schedule"])
+    except Exception:
+        pass
+
+    locator_domain = ("https://www.starbuck.com/",)
+
+    raw_address = "<MISSING>"
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain="https://www.starbucks.com/",
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
+    )
+
+
 class ExampleSearchIteration(SearchIteration):
     """
     Here, you define what happens with each iteration of the search.
@@ -57,7 +180,9 @@ class ExampleSearchIteration(SearchIteration):
         """
 
         lat, lng = coord
-        url = str(f"https://www.starbucks.com/bff/locations?lat={lat}&lng={lng}")
+        url = str(
+            f"https://www.starbucks.com/bff/locations?lat={round(lat,6)}&lng={round(lng,6)}&mop=true"
+        )
         headers = {}
         headers["x-requested-with"] = "XMLHttpRequest"
         headers[
@@ -75,37 +200,7 @@ class ExampleSearchIteration(SearchIteration):
                             )
                         except Exception:
                             pass
-                        yield SgRecord(
-                            page_url="https://www.starbucks.com/store-locator/store/{}/{}".format(
-                                str(record["id"]), str(record["slug"])
-                            ),
-                            location_name=str(record["name"]),
-                            street_address=fix_comma(
-                                str(
-                                    str(record["address"]["streetAddressLine1"])
-                                    + ","
-                                    + str(record["address"]["streetAddressLine2"])
-                                    + ","
-                                    + str(record["address"]["streetAddressLine3"])
-                                )
-                            ),
-                            city=str(record["address"]["city"]),
-                            state=str(record["address"]["countrySubdivisionCode"]),
-                            zip_postal=str(record["address"]["postalCode"]),
-                            country_code=str(record["address"]["countryCode"]),
-                            store_number=str(record["id"]),
-                            phone=str(record["phoneNumber"]),
-                            location_type=str(
-                                str(record["brandName"])
-                                + " - "
-                                + str(record["ownershipTypeCode"])
-                            ),
-                            latitude=str(record["coordinates"]["latitude"]),
-                            longitude=str(record["coordinates"]["longitude"]),
-                            locator_domain="https://www.starbuck.com/",
-                            hours_of_operation=str(record["schedule"]),
-                            raw_address=SgRecord.MISSING,
-                        )
+                        yield ret_record(record)
                         rec_count = self.__state.get_misc_value(
                             current_country, default_factory=lambda: 0
                         )
@@ -131,6 +226,7 @@ class ExampleSearchIteration(SearchIteration):
         except Exception as e:
             logzilla.error(f"{e}")
             locations = {"paging": {"total": 0}}
+            pass
             yield SgRecord(
                 page_url=url,
                 location_name="<ERROR>",
