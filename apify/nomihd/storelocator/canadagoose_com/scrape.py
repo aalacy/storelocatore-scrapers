@@ -12,25 +12,34 @@ from sgrequests import SgRequests
 
 website = "canadagoose.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-
 session = SgRequests()
+
+cookies = {
+    "dwac_cdSAUiaaio11EaaadnOiJrNbA7": "5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0%3D|dw-only|||USD|false|Canada%2FEastern|true",
+    "cqcid": "abHD59LYsfOy6WboYD9gghKG4L",
+    "cquid": "||",
+    "sid": "5PXJtINY4DgUY5D_iUF-ZsHIRxad5m4mvv0",
+    "language": "en_US",
+    "dwanonymous_b3aa5771d8435c67a1a8775183c875b2": "abHD59LYsfOy6WboYD9gghKG4L",
+    "dwsid": "n_kCnAw_0Ax8iXxr57o8zrrEjD4SgV4S1hdk-JdwdSOzBNNLdVJYCN1QlCC9I0nwRnkdZNnvsAqZ4P6E26AZJQ==",
+    "akm_bmfp_b2-ssn": "0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ",
+    "akm_bmfp_b2": "0OWGeTyYYR4KixKt2pAmM2DXcIcQzq2M9Eom6bJw5PqxZpX8uw2nbtzJcPXaOVW6JyRDl6GTD6EKPOi0Ey75dEfwV0LoamhNN1bYF8vvEErxnDXyobZHmqKyXT3ImnGdhNFJaRNe2myQn50OJPriMzpqQ",
+}
 
 
 headers = {
     "Connection": "keep-alive",
-    "Cache-Control": "max-age=0",
     "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
     "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Linux"',
+    "sec-ch-ua-platform": '"Windows"',
     "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "Sec-Fetch-Site": "none",
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-User": "?1",
     "Sec-Fetch-Dest": "document",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Cookie": 'dwac_cdSAUiaaio11EaaadnOiJrNbA7=H8_H7RgIcfzRZ2cE6KGWLq_2XwME0CGNAm8%3D|dw-only|||USD|false|Canada%2FEastern|true; cquid=||; sid=H8_H7RgIcfzRZ2cE6KGWLq_2XwME0CGNAm8; language=en; dwanonymous_b3aa5771d8435c67a1a8775183c875b2=cd4goGJXMb3zbrbNp8a9XB7Nop; dwsid=2EHgyYmjZHvyRRGZhGiJLGh4eCeVezQKIU1tbc_wjeX7hc2A3RNEvEIGMduRH6BxlEYW8qXRcx9manJ-CSEmYQ==; __cq_dnt=0; dw_dnt=0; zarget_visitor_info=%7B%7D; zarget_user_id=20f35c11-53a1-4921-9445-7ad3031f75e8; dw=1; dw_cookies_accepted=1; BVImplmain_site=14687; globalBannerIsHidden=; __cq_uuid=ab0kwZSrU5LjRDfnQ14RitBNF9; __cq_seg=0~0.00u00211~0.00u00212~0.00u00213~0.00u00214~0.00u00215~0.00u00216~0.00u00217~0.00u00218~0.00u00219~0.00; _gcl_au=1.1.1696010982.1633246797; BVBRANDID=b41a54ab-b5cf-4e49-a68d-a03f0f707312; _ga=GA1.2.23858703.1633246798; _gid=GA1.2.108630905.1633246798; _li_dcdm_c=.canadagoose.com; _lc2_fpi=c88e71b6d53c--01fh2hgr6r35se2nt9cmzetx2d; _fbp=fb.1.1633246798768.103846891; _pin_unauth=dWlkPVpUQmxaR1JrT1RJdE16WTBNQzAwTTJFMkxUbG1aR1V0WWpsaU0ySXpaV1ppWldWaw; rskxRunCookie=0; rCookie=ml8ljtt2vpl2at8hi1l4tmkuawz9j6; civicCookieControl=%7B%22pv%22%3A%22%22%2C%22cm%22%3A%22info%22%2C%22open%22%3A%22no%22%7D; CanadaGooseUS-pagevisits={"pagevisits":3}; BVBRANDSID=afd14d06-50c3-4a76-9777-274de8f3ed51; dwac_bdbM6iaaioAiEaaaddLOa2751H=H8_H7RgIcfzRZ2cE6KGWLq_2XwME0CGNAm8%3D|dw-only|||CAD|false|Canada%2FEastern|true; cqcid=adegnkhaTBst7h7ZLU0b7qgO5r; dwanonymous_4b678b2f3ddcd887e7cd4635d93160c7=adegnkhaTBst7h7ZLU0b7qgO5r; countryCode=CA; _f60_session=F51GHj1laVAs50apMRbA92P5Y3AfnXadrRXSzWxYKZberTuDAgfwHcMcYvmIEMyH; _gat_UA-34770126-1=1; CanadaGooseCA-pagevisits={"pagevisits":4}; _uetsid=1bfb1a10241d11eca0c317f624160b29; _uetvid=1bfb4370241d11ec99fde1a140434de5; lastRskxRun=1633256485695; akm_bmfp_b2-ssn=0w0mkiHDtQPuInX54XuMvOSIFFW40I5CHJivgFai2Ijvorf0qtfwBl0Ls76bqQUH2UxxxPIaaBF42QlcQGsVrZq9alNZRIff8OyyZdTGhKn1LYtP6WBUL3J5WPzBmAgLwseXnCyyaLcsywf5SUD4ilta1; akm_bmfp_b2=0w0mkiHDtQPuInX54XuMvOSIFFW40I5CHJivgFai2Ijvorf0qtfwBl0Ls76bqQUH2UxxxPIaaBF42QlcQGsVrZq9alNZRIff8OyyZdTGhKn1LYtP6WBUL3J5WPzBmAgLwseXnCyyaLcsywf5SUD4ilta1; __cq_dnt=0; dw_dnt=0; akm_bmfp_b2-ssn=0Qpi37YlIPWjWceHAOQl2tA9RCgqqGGuqqYzE1sFM4Ha9ikFRGCBeZkhum1P1EUvSa5LDBVMelqgzH4ZY8xnLMcgKdyDnASXwhkCMzZt0t9I2zz4ed2BYI9NKePbwJAtcRCA4gvW7yTTHWVGipsCcu52W; akm_bmfp_b2=0Qpi37YlIPWjWceHAOQl2tA9RCgqqGGuqqYzE1sFM4Ha9ikFRGCBeZkhum1P1EUvSa5LDBVMelqgzH4ZY8xnLMcgKdyDnASXwhkCMzZt0t9I2zz4ed2BYI9NKePbwJAtcRCA4gvW7yTTHWVGipsCcu52W',
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
@@ -61,7 +70,7 @@ def fetch_data():
         "https://www.canadagoose.com/us/en/find-a-retailer/find-a-retailer.html"
     )
 
-    response = session.get(search_url, headers=headers)
+    response = session.get(search_url, headers=headers, cookies=cookies)
     search_sel = lxml.html.fromstring(response.text, "lxml")
     store_list = search_sel.xpath('//div[@class="store"]')
     log.info(f"Total Locations to crawl: {len(store_list)}")
@@ -111,27 +120,75 @@ def fetch_data():
                 '//div[@class="store-info desktop"]//*[@itemprop="postalCode"]//text()'
             )
         ).strip()
-        country_code = "CA"
 
+        if len(street_address) <= 0:
+            street_address = ", ".join(
+                "".join(
+                    store_sel.xpath(
+                        '//div[@class="store-info desktop"]//*[@itemprop="address"]//text()'
+                    )
+                )
+                .strip()
+                .split(",")[:-1]
+            ).strip()
+
+        country_code = "<INACCESSIBLE>"
+        if "Italy" == state:
+            country_code = "IT"
+            state = "<MISSING>"
+        if "France" == state:
+            country_code = "FR"
+            state = "<MISSING>"
+        if "Taiwan" == state:
+            country_code = "TW"
+            state = "<MISSING>"
+
+        try:
+            if state.split(" ")[0].strip().isdigit():
+                zip = state.split(" ", 1)[0].strip()
+                state = state.split(" ", 1)[-1].strip()
+        except:
+            pass
         location_name = "".join(
-            store_sel.xpath('//div[@class="store-info desktop"]//h3[last()]/text()')
-        ).strip()
-
-        phone = " ".join(
             store_sel.xpath(
-                '//div[@class="store-info desktop"]//*[@itemprop="telephone"]//text()'
+                '//div[@class="store-info desktop"]//span[@itemprop="name"]/text()'
             )
         ).strip()
+
+        phone = store_sel.xpath(
+            '//div[@class="store-info desktop"]//*[@itemprop="telephone"]//text()'
+        )
+        if len(phone) > 0:
+            phone = "".join(phone[0]).strip()
 
         store_number = "<MISSING>"
 
         location_type = "<MISSING>"
 
-        hours_of_operation = "; ".join(
-            store_sel.xpath(
-                '//div[@class="store-info desktop"]//*[@itemprop="openingHours"]//text()'
+        hours = store_sel.xpath('//div[@class="store-info desktop"]/text()')
+        hours_list = []
+        for hour in hours:
+            if len("".join(hour).strip()) > 0:
+                hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath(
+                '//div[@class="store-info desktop"]/p[./meta[@itemprop="openingHours"]]/text()'
             )
-        ).strip()
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath('//div[@class="store-info desktop"]/p/text()')
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        hours_of_operation = "; ".join(hours_list).strip()
+        if "," == hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
         map_link = "".join(
             store_sel.xpath(
                 '//div[@class="store-info desktop"]//a[contains(@href,"maps")]/@href'
