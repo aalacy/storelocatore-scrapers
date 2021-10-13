@@ -15,7 +15,7 @@ def fetch_data(sgw: SgWriter):
 
     titlelist = []
     url = "https://southstatebank.com/Global/About/CRA/Locations-Listing"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=location-detail]")
 
@@ -28,7 +28,7 @@ def fetch_data(sgw: SgWriter):
         if link in titlelist:
             continue
         titlelist.append(link)
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
         street = soup.find("div", {"class": "address"}).findAll("p")[0].text
