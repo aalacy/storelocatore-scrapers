@@ -3,6 +3,13 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
@@ -12,8 +19,9 @@ def fetch_data():
     loc = "<MISSING>"
     store = "<MISSING>"
     url = "https://www.woodysdiners.com/locations"
-    with SgChrome() as driver:
+    with SgChrome(user_agent=user_agent) as driver:
         driver.get(url)
+        driver.implicitly_wait(30)
         website = "woodysdiners.com"
         typ = "Restaurant"
         country = "US"
