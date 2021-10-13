@@ -55,7 +55,6 @@ def fetch_data(sgw: SgWriter):
         phone = js.get("telephone") or "<MISSING>"
         hours = js.get("openingHoursSpecification") or "<MISSING>"
         hours_of_operation = "<MISSING>"
-        tmp = []
         if hours != "<MISSING>":
             hours_of_operation = get_hours(hours)
         hours_of_operation = hours_of_operation.replace(
