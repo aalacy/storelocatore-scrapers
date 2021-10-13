@@ -64,7 +64,6 @@ def fetch_stores(driver):
 
     all_directories = []
     store_urls = []
-    city_urls = []
     all_directories = all_directories + directory_urls
 
     count = 0
