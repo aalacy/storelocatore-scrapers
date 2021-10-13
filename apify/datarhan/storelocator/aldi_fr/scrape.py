@@ -199,7 +199,7 @@ def fetch_location(page_url, session, tracker):
 def fetch_data():
     with ThreadPoolExecutor() as executor, SgRequests() as session:
         tracker = {}
-        all_codes = static_zipcode_list(10, country_code=SearchableCountries.FRANCE)
+        all_codes = static_zipcode_list(5, country_code=SearchableCountries.FRANCE)
 
         futures = [
             executor.submit(fetch_locations, code, tracker) for code in all_codes
