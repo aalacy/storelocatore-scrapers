@@ -95,7 +95,6 @@ def fetch_data(sgw: SgWriter):
                     hours_list.append(day + time)
 
                 hours = "; ".join(hours_list).strip()
-            print(hours)
 
             row = SgRecord(
                 locator_domain=base_url,
