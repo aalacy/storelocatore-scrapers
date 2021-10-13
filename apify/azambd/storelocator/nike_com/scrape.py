@@ -150,7 +150,7 @@ def get_raw_country(main_section):
     raw_address = ", ".join(
         main_section.xpath(".//div[contains(@class, 'headline-5')]/p/text()")
     )
-    if not "," in raw_address:
+    if "," not in raw_address:
         return MISSING, MISSING
 
     address = raw_address.split(",")
