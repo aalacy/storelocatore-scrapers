@@ -22,7 +22,6 @@ def fetch_data():
     Found = False
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://order.capriottis.com/menu/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
         if "UK</a>" in line:
@@ -56,7 +55,6 @@ def fetch_data():
             hours = ""
             r2 = session.get(lurl, headers=headers)
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
                 if "coming soon" in line2 and "wide variety coming soon" not in line2:
                     CS = True
                 if "<title>" in line2:

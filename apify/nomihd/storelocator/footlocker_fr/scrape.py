@@ -76,6 +76,7 @@ def get_store_data(store_sel, page_url):
     store_number = "<MISSING>"
     phone = "".join(store_sel.xpath('//span[@itemprop="telephone"]/text()')).strip()
     location_type = "<MISSING>"
+
     latitude = store_sel.xpath(
         '//span[@class="coordinates"]/meta[@itemprop="latitude"]/@content'
     )
@@ -94,11 +95,19 @@ def get_store_data(store_sel, page_url):
         hours_list = []
         for hour in hours:
             day = "".join(hour.xpath("td[1]/text()")).strip()
-            time = "".join(hour.xpath("td[2]//text()")).strip()
+            time_list = hour.xpath("td[2]/span")
+            final_time_list = []
+            for t in time_list:
+                final_time_list.append("".join(t.xpath(".//text()")).strip())
+
+            if len(final_time_list) <= 0:
+                final_time_list.append("".join(hour.xpath("td[2]//text()")).strip())
+            time = ", ".join(final_time_list)
             hours_list.append(day + ":" + time)
 
     hours_of_operation = "; ".join(hours_list).strip()
-
+    if hours_of_operation.encode("ascii", "ignore").decode("utf-8").count("Ferm") == 7:
+        location_type = "Temporary Closed"
     return SgRecord(
         locator_domain=locator_domain,
         page_url=page_url,
