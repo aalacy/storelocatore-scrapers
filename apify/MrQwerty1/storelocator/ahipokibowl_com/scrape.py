@@ -13,6 +13,9 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api, headers=headers)
     for j in r.json():
         location_name = j.get("store") or ""
+        street = f'{j.get("address")} {j.get("address2") or ""}'.strip()
+        if "@" in street:
+            street = street.split("@")[0].strip()
         source = j.get("hours") or "<html></html>"
         tree = html.fromstring(source)
         hours = tree.xpath("//text()")
@@ -24,7 +27,7 @@ def fetch_data(sgw: SgWriter):
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,
-            street_address=f'{j.get("address")} {j.get("address2") or ""}'.strip(),
+            street_address=street,
             city=j.get("city"),
             state=j.get("state"),
             zip_postal=j.get("zip"),
