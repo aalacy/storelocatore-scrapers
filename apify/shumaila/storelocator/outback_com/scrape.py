@@ -25,19 +25,18 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.findAll("ul", {"class": "directory-listing"})
-    for ccode in statelist:
-        ccode = ccode["ng-show"].split("'", 1)[1].split("'", 1)[0]
-        loclist = soup.findAll("li", {"class": "directory-listing-entry"})
+
+    for cnow in statelist:
+        ccode = cnow["ng-show"].split("'", 1)[1].split("'", 1)[0]
+        loclist = cnow.findAll("li", {"class": "directory-listing-entry"})
         for loc in loclist:
             loc = re.sub(pattern, "\n", loc.text).strip()
             title = loc.split("\n", 1)[0]
             address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
             phone = address.split("\n")[-1]
-
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
-
-            hours = "Sorry, We're Currently Closed"
+            hours = "<MISSING>"
             lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
 
@@ -52,6 +51,8 @@ def fetch_data():
 
             zip_postal = pa.postcode
             pcode = zip_postal.strip() if zip_postal else MISSING
+            if "Address" in title:
+                title = raw_address
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
                 page_url="<MISSING>",
@@ -69,8 +70,10 @@ def fetch_data():
                 hours_of_operation=hours,
                 raw_address=raw_address,
             )
+    session1 = SgRequests()
     url = "https://locations.outback.com/index.html"
-    r = session.get(url, headers=headers)
+    r = session1.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.find("section", {"class": "StateList"}).findAll(
         "a", {"class": "Directory-listLink"}
     )
@@ -78,7 +81,7 @@ def fetch_data():
     for stnow in statelist:
         check1 = 0
         stlink = "https://locations.outback.com/" + stnow["href"]
-        r = session.get(stlink, headers=headers, verify=False)
+        r = session1.get(stlink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         try:
             citylist = soup.find("section", {"class": "CityList"}).findAll(
@@ -92,7 +95,7 @@ def fetch_data():
             check2 = 0
             if check1 == 0:
                 citylink = "https://locations.outback.com/" + citynow["href"]
-                r = session.get(citylink, headers=headers, verify=False)
+                r = session1.get(citylink, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:
                     branchlist = soup.find(
@@ -111,16 +114,26 @@ def fetch_data():
                     branch = "https://locations.outback.com/" + branch["href"]
                     branch = branch.replace("../", "")
 
-                    r = session.get(branch, headers=headers, verify=False)
+                    r = session1.get(branch, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
                 store = r.text.split('"storeId":"', 1)[1].split('"', 1)[0]
-                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-                longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
-                title = (
-                    soup.find("h1", {"id": "location-name"})
-                    .text.replace("\n", " ")
-                    .strip()
-                )
+                try:
+                    lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+                    longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+                except:
+                    lat = longt = "<MISSING>"
+                try:
+
+                    title = (
+                        soup.find("h1", {"id": "location-name"})
+                        .text.replace("\n", " ")
+                        .strip()
+                    )
+                except:
+                    try:
+                        title = soup.find("h1").text.replace("\n", " ").strip()
+                    except:
+                        continue
                 street = soup.find("span", {"class": "c-address-street-1"}).text
                 city = soup.find("span", {"class": "c-address-city"}).text
                 try:
@@ -136,6 +149,12 @@ def fetch_data():
                     hours = hours.split("Week", 1)[1]
                 except:
                     pass
+                try:
+                    hours = hours.split("Hours", 1)[1]
+                except:
+                    pass
+                hours = hours.replace("day", "day ").replace("osed", "osed ").strip()
+
                 yield SgRecord(
                     locator_domain="https://www.outback.com/",
                     page_url=branch,
@@ -156,7 +175,10 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=5,
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
