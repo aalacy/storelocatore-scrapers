@@ -32,8 +32,11 @@ def fetchConcurrentList(links, http):
 
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
-        sp1 = bs(http.get(next_r.url, headers=_headers).text, "lxml")
         logger.info(next_r.url)
+        res = http.get(next_r.url, headers=_headers)
+        if res.status_code != 200:
+            continue
+        sp1 = bs(res.text, "lxml")
         street_address = ""
         if sp1.select_one(".c-address-street-1"):
             street_address = sp1.select_one(".c-address-street-1").text.strip()

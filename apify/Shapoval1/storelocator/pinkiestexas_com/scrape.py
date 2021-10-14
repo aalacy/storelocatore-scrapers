@@ -45,6 +45,16 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
+            hours_of_operation = (
+                "".join(
+                    b.xpath(
+                        './/preceding::h2[./strong[contains(text(), "WE’RE OPEN")]]/strong/text()'
+                    )
+                )
+                .replace("\n", "")
+                .replace("WE’RE OPEN", "")
+                .strip()
+            )
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -60,7 +70,7 @@ def fetch_data(sgw: SgWriter):
                 location_type=SgRecord.MISSING,
                 latitude=SgRecord.MISSING,
                 longitude=SgRecord.MISSING,
-                hours_of_operation=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
             sgw.write_row(row)

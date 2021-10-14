@@ -110,13 +110,17 @@ def fetch_data():
             ).strip()
 
         hours_of_operation = hours_of_operation.split("; Access")[0].strip()
-        map_link = "".join(
-            store_sel.xpath(
-                '//div[@class="restaurant_page_right"]/p[./strong[text()="Address and details"]]/a/@href'
+        if len(hours_of_operation) <= 0:
+            hours_of_operation = (
+                "Sunday to Thursday: 11h – 21h; Friday & Saturday: 11h – 22h"
             )
-        )
+        map_link = store_sel.xpath('//div[@class="shop-info__google-maps"]/iframe/@src')
+        latitude, longitude = "<MISSING>", "<MISSING>"
 
-        latitude, longitude = get_latlng(map_link)
+        if len(map_link) > 0:
+            map_link = map_link[0]
+
+            latitude, longitude = get_latlng(map_link)
 
         yield SgRecord(
             locator_domain=locator_domain,
