@@ -11,7 +11,7 @@ import re
 DOMAIN = "xplorpreschool.com"
 BASE_URL = "https://www.xplorpreschool.com"
 LOCATION_URL = "https://www.xplorpreschool.com/states/"
-API_URL = "https://www.xplorpreschool.com/wp-admin/admin-ajax.php?action=nobel_schools&change=true&query=los+angeles&radius=5000&program=All&type=latlng&location%5Blat%5D=34.0522342&location%5Blng%5D=-118.2436849"
+API_URL = "https://www.xplorpreschool.com/wp-admin/admin-ajax.php?action=nobel_schools&change=true&radius=10000&program=All&type=latlng&location%5Blat%5D=36.02048110961914&location%5Blng%5D=-115.28479766845703"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
