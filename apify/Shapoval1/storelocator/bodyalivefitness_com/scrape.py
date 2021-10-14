@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -87,6 +88,15 @@ def get_data(url, sgw: SgWriter):
     ll = "".join(tree.xpath('//div[@class="et_pb_code_inner"]/iframe/@src'))
     latitude = ll.split("!3d")[1].strip().split("!")[0].strip()
     longitude = ll.split("!2d")[1].strip().split("!")[0].strip()
+    hours_of_operation = "<MISSING>"
+    jsblock = "".join(
+        tree.xpath('//script[contains(text(), "http://schema.org")]/text()')
+    )
+    js = json.loads(jsblock)
+    for j in js["location"]:
+        url = j.get("url")
+        if page_url == url:
+            hours_of_operation = " ".join(j.get("openingHours"))
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -102,7 +112,7 @@ def get_data(url, sgw: SgWriter):
         location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
-        hours_of_operation=SgRecord.MISSING,
+        hours_of_operation=hours_of_operation,
     )
 
     sgw.write_row(row)
