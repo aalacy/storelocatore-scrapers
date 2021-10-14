@@ -80,9 +80,9 @@ def fetch_data(sgw: SgWriter):
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             if latlong:
-                latlong = re.search(r"\@(\d+.*)", latlong["href"]).group(1).split(",")
-                latitude = latlong[0]
-                longitude = latlong[1]
+                nlatlong = re.search(r"\@(\d+.*)", latlong["href"]).group(1).split(",")
+                latitude = nlatlong[0]
+                longitude = nlatlong[1]
             link = "https://larosagrill.com/" + row.a["href"]
 
             sgw.write_row(
