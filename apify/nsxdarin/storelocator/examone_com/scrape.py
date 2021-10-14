@@ -80,7 +80,7 @@ def fetch_data():
                             add = add.split(" Ofc#")[0]
                         yield SgRecord(
                             locator_domain=website,
-                            page_url=lurl,
+                            page_url=loc,
                             location_name=name,
                             street_address=add,
                             city=city,
