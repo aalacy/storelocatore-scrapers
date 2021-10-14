@@ -1,4 +1,6 @@
 import json
+import urllib.parse
+
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -24,12 +26,15 @@ def get_urls():
 
 
 def get_data(slug, sgw: SgWriter):
-    page_url = f"https://www.tkmaxx.pl{slug}"
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    page_url = urllib.parse.unquote(f"https://www.tkmaxx.pl{slug}").replace(" ", "_")
+    r = session.get(page_url, headers=headers)
+
     try:
+        tree = html.fromstring(r.text)
         d = tree.xpath("//div[@class='nearby-store active-store']")[0]
     except IndexError:
+        return
+    except AttributeError:
         return
 
     location_name = "".join(d.xpath("./a/text()")).strip()
@@ -71,7 +76,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -80,5 +85,10 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.tkmaxx.pl/"
     session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
