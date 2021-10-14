@@ -1,3 +1,4 @@
+import json
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
@@ -6,9 +7,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
-
-import re
-import json
 
 session = SgRequests()
 
