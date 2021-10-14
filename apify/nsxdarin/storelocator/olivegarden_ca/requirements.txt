@@ -4,4 +4,4 @@ sglogging==0.0.4
 sgscrape==0.2.4
 lxml==4.6.2
 selenium==3.141.0
-sgselenium==0.0.15
+sgselenium==0.1.4
