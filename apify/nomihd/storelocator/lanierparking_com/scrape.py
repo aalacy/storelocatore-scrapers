@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import SearchableCountries
+from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 import lxml.html
 
@@ -89,10 +89,11 @@ class _SearchIteration(SearchIteration):
                 state = store_json["State"]
                 zip = store_json["ZIP"]
 
-                if street_address == "6200 HOLLYWOOD BLVD HOLLYWOOD , CA":
-                    street_address = "6200 HOLLYWOOD BLVD"
-                    city = "HOLLYWOOD"
-                    state = "CA"
+                if street_address:
+                    if street_address == "6200 HOLLYWOOD BLVD HOLLYWOOD , CA":
+                        street_address = "6200 HOLLYWOOD BLVD"
+                        city = "HOLLYWOOD"
+                        state = "CA"
 
                 country_code = "US"
 
@@ -153,7 +154,8 @@ def scrape():
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=100,
+        granularity=Grain_8(),
     )
 
     with SgWriter(
