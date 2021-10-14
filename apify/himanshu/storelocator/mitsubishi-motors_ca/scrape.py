@@ -1,5 +1,4 @@
 import httpx
-import unicodedata
 
 from bs4 import BeautifulSoup
 
@@ -24,7 +23,7 @@ timeout = httpx.Timeout(10.0, connect=10.0)
 def fetch_data(sgw: SgWriter):
     session = SgRequests(timeout_config=timeout)
     base_url = "https://www.mitsubishi-motors.ca/"
-    addressess = []
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
     }
