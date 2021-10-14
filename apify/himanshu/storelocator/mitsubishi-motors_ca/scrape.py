@@ -101,7 +101,7 @@ def fetch_data(sgw: SgWriter):
                     hours = " ".join(
                         list(
                             soup1.find(
-                                "div", {"id": "tabs-template-hours1"}.find("li")
+                                "div", {"id": "tabs-template-hours1"}
                             ).stripped_strings
                         )
                     )
@@ -262,10 +262,7 @@ def fetch_data(sgw: SgWriter):
                     hours = " ".join(
                         list(
                             soup1.find(
-                                "div",
-                                {"class": "footer-column footer-column--hours"}.find(
-                                    "ul"
-                                ),
+                                "div", {"class": "footer-column footer-column--hours"}
                             ).stripped_strings
                         )
                     )
@@ -307,7 +304,7 @@ def fetch_data(sgw: SgWriter):
                     hours = " ".join(
                         list(
                             soup1.find(
-                                "div", {"class": "footer-hours"}.find_all("p")[1]
+                                "div", {"class": "footer-hours"}
                             ).stripped_strings
                         )
                     )
