@@ -18,21 +18,7 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
     base_url = "https://www.sambabraziliansteakhouse.com/"
-    return_main_object = []
     locator_domain = base_url
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    hours_of_operation = "<MISSING>"
-    page_url = base_url
     r = session.get("https://www.sambabraziliansteakhouse.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     script = soup.find_all("script", {"type": "application/ld+json"})[-1]
