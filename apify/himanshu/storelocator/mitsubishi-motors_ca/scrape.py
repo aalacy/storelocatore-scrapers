@@ -43,8 +43,8 @@ def fetch_data(sgw: SgWriter):
         page_url = loc["PrimaryDomain"]
         storeno = loc["CompanyId"]
 
+        hours = ""
         log.info(page_url)
-        got_hours = False
         try:
             r1 = session.get(page_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
@@ -55,9 +55,8 @@ def fetch_data(sgw: SgWriter):
                 soup1 = BeautifulSoup(r1.text, "lxml")
             except:
                 hours = "<INACCESSIBLE>"
-                got_hours = True
 
-        if not got_hours:
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -66,11 +65,9 @@ def fetch_data(sgw: SgWriter):
                         ).stripped_strings
                     )
                 )
-                if hours:
-                    got_hours = True
             except:
                 pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -79,11 +76,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -92,33 +87,27 @@ def fetch_data(sgw: SgWriter):
                             ).li.stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(soup1.find("table", {"class": "hours"}).stripped_strings)
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
                             soup1.find(
-                                "div", {"id": "tabs-template-hours1"}.ul.li
+                                "div", {"id": "tabs-template-hours1"}.find("li")
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -127,20 +116,16 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(soup1.find("div", {"id": "HOPSales"}).stripped_strings)
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -149,11 +134,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -162,11 +145,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -175,11 +156,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -188,24 +167,20 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
-                            soup1.find(
-                                "div", {"class": "map_open_hours"}
-                            ).ul.li.stripped_strings
+                            soup1.find("div", {"class": "map_open_hours"})
+                            .find("li")
+                            .stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -214,11 +189,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -227,11 +200,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -240,11 +211,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -253,11 +222,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -266,11 +233,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -279,11 +244,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -292,25 +255,23 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
                             soup1.find(
                                 "div",
-                                {"class": "footer-column footer-column--hours"}.ul,
+                                {"class": "footer-column footer-column--hours"}.find(
+                                    "ul"
+                                ),
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -319,7 +280,7 @@ def fetch_data(sgw: SgWriter):
                     )
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -328,11 +289,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -341,11 +300,9 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -354,50 +311,31 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
                             soup1.find(
-                                "div", {"class": "hours-footer hours-footer-1"}.ul
+                                "div", {"class": "hours-footer hours-footer-1"}
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
                             soup1.find(
-                                "div", {"class": "footer_dealer_info_hours"}.ul
+                                "div", {"class": "footer_dealer_info_hours"}
                             ).stripped_strings
                         )
                     )
-                    if hours:
-                        got_hours = True
                 except:
                     pass
-            if not got_hours:
-                try:
-                    hours = " ".join(
-                        list(
-                            soup1.find(
-                                "div", {"class": "footer_dealer_info_hours"}.ul
-                            ).stripped_strings
-                        )
-                    )
-                    if hours:
-                        got_hours = True
-                except:
-                    pass
-            if not got_hours:
+            if not hours:
                 try:
                     hours = " ".join(
                         list(
@@ -407,7 +345,19 @@ def fetch_data(sgw: SgWriter):
                         )
                     )
                 except:
-                    hours = ""
+                    pass
+            if not hours:
+                try:
+                    if (
+                        "Today"
+                        in soup1.find(class_="top-bar")
+                        .find_all(class_="header-contact__link")[1]
+                        .text
+                    ):
+                        hours = "<INACCESSIBLE>"
+                except:
+                    pass
+
         hours = (
             hours.replace("Heures d'ouverture", "")
             .replace("Days Hours", "")
@@ -417,11 +367,13 @@ def fetch_data(sgw: SgWriter):
             .replace("Sales", "")
             .replace("Horaires:", "")
             .replace("Business hours", "")
+            .replace("of Operation", "")
             .replace(":  Mon", "Mon")
             .replace("Dealership hours of operation", "")
             .split("Tell us")[0]
             .split("Avisez-nous")[0]
             .split("See All")[0]
+            .split("Service")[0]
             .strip()
         )
         try:
