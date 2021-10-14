@@ -85,13 +85,16 @@ def fetch_data():
             ]
             page_url = locator_domain + _.select_one("a.store-details-link")["href"]
             coord = _latlng(markers, ss["name"])
+            state = addr.state
+            if state and state.replace("-", "").isdigit():
+                state = ""
             yield SgRecord(
                 page_url=page_url,
                 store_number=ss["ID"],
                 location_name=ss["name"],
                 street_address=street_address,
                 city=ss["city"],
-                state=addr.state,
+                state=state,
                 zip_postal=ss.get("postalCode"),
                 country_code=addr.country,
                 phone=_.select_one("p.store-phone").text.strip(),

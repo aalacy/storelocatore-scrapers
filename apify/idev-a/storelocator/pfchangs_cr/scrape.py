@@ -23,46 +23,54 @@ base_urls = [
 countries = ["Costa Rica", "Guatemala", "Panama"]
 
 
+def _coord(locs, name):
+    lat = lng = ""
+    for loc in locs:
+        if name in loc.p.text:
+            lat = loc.iframe["src"].split("&lat=")[1].split("&")[0]
+            lng = loc.iframe["src"].split("&lon=")[1].split("&")[0]
+
+    return lat, lng
+
+
 def fetch_data():
     with SgRequests() as session:
         for x, url in enumerate(base_urls):
-            locations = bs(session.get(url, headers=_headers).text, "lxml").select(
-                "section#location div.row > div"
-            )
+            sp1 = bs(session.get(url, headers=_headers).text, "lxml")
+            locations = sp1.select("section#location div.row > div")
             logger.info(f"{url} {len(locations)} found")
+            locs = sp1.select("div.zerogrid div.item-container")
             for _ in locations:
                 p = _.select("p")
-                try:
-                    raw_address = list(p[2].stripped_strings)[-1]
-                    addr = parse_address_intl(raw_address + f", {countries[x]}")
-                    street_address = addr.street_address_1
-                    if addr.street_address_2:
-                        street_address += " " + addr.street_address_2
-                    phone = ""
-                    _pp = list(p[0].stripped_strings)
-                    if len(_pp) > 1:
-                        phone = _pp[-1]
-                    hours = ""
-                    _hr = list(p[3].stripped_strings)
-                    if _hr:
-                        hours = _hr[-1]
-                    yield SgRecord(
-                        page_url=url,
-                        location_name=_.h2.text.strip(),
-                        street_address=street_address,
-                        city=addr.city,
-                        state=addr.state,
-                        zip_postal=addr.postcode,
-                        country_code=countries[x],
-                        phone=phone,
-                        locator_domain=locator_domain,
-                        hours_of_operation=hours.replace("|", ";"),
-                        raw_address=raw_address,
-                    )
-                except:
-                    import pdb
-
-                    pdb.set_trace()
+                raw_address = list(p[2].stripped_strings)[-1]
+                addr = parse_address_intl(raw_address + f", {countries[x]}")
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                phone = ""
+                _pp = list(p[0].stripped_strings)
+                if len(_pp) > 1:
+                    phone = _pp[-1]
+                hours = ""
+                _hr = list(p[3].stripped_strings)
+                if _hr:
+                    hours = _hr[-1]
+                lat, lng = _coord(locs, _.h2.text.strip())
+                yield SgRecord(
+                    page_url=url,
+                    location_name=_.h2.text.strip(),
+                    street_address=street_address,
+                    city=addr.city,
+                    state=addr.state,
+                    zip_postal=addr.postcode,
+                    country_code=countries[x],
+                    phone=phone,
+                    latitude=lat,
+                    longitude=lng,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours.replace("|", ";"),
+                    raw_address=raw_address,
+                )
 
 
 if __name__ == "__main__":
