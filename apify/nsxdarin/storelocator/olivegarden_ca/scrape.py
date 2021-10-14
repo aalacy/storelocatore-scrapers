@@ -22,7 +22,6 @@ headers = {
 
 def fetch_data():
     urls = []
-    items = []
     url = "https://www.olivegarden.ca/ca-locations-sitemap.xml"
     r = session.get(url, headers=headers)
 
@@ -48,8 +47,8 @@ def fetch_data():
         logger.info(("\nParsing data for: %s\n" % url_store))
         logger.info(("\nParsing data from.... \n%s\n" % json_clean))
         json_data = json.loads(json_clean)
-        page_url = json_data["url"] or "<MISSING>"
-        locator_domain = locator_domain_name
+        purl = json_data["url"] or "<MISSING>"
+        website = locator_domain_name
         name = json_data["name"] or "<MISSING>"
         add = json_data["address"]["streetAddress"].strip() or "<MISSING>"
         city = json_data["address"]["addressLocality"].strip() or "<MISSING>"
@@ -70,8 +69,8 @@ def fetch_data():
         if "saskatoon/saskatoon/4349" in url_store:
             hours = "Sun-Sat: 11:00AM-10:00PM"
         yield SgRecord(
-            locator_domain=locator_domain_name,
-            page_url=url_store,
+            locator_domain=website,
+            page_url=purl,
             location_name=name,
             street_address=add,
             city=city,
