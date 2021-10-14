@@ -1,5 +1,3 @@
-from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -19,8 +17,6 @@ def fetch_data():
     all_locations = data["contentlets"]
     for poi in all_locations:
         page_url = f'https://nl.sunglasshut.com/nl/winkelzoeker/{poi["exampleUrl"]}'
-        loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text)
         street_address = poi["address"]
         if poi["address2"]:
             street_address += ", " + poi["address2"]
