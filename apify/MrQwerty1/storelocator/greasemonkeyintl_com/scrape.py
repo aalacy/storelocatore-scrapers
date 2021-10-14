@@ -1,9 +1,17 @@
 import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+
+def get_phone(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//a[@class='phone-number']/text()")).strip()
 
 
 def fetch_data(sgw: SgWriter):
@@ -21,10 +29,15 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("id")
         slug = j.get("website") or ""
         if slug.startswith("/"):
-            page_url = f"https://www.greasemonkeyauto.com/{slug}"
+            page_url = f"https://www.greasemonkeyauto.com{slug}"
         else:
             page_url = slug
         phone = j.get("phone")
+        if not phone:
+            try:
+                phone = get_phone(page_url)
+            except:
+                pass
         latitude = j.get("lat")
         longitude = j.get("lng")
 
