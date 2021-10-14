@@ -7,8 +7,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 
-DOMAIN = "ride-indoorcyclin.com"
-BASE_URL = "https://www.ride-indoorcyclin.com/"
+DOMAIN = "ride-indoorcycling.com"
+BASE_URL = "https://www.ride-indoorcycling.com/"
 LOCATION_URL = "https://www.ride-indoorcycling.com/studios/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
