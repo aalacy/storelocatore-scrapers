@@ -17,15 +17,15 @@ def fetch_data():
         "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
         "Accept-Encoding": "gzip, deflate, br",
         "content-type": "application/json",
-        "X-Session-Id": "0825598d-9de8-4833-b313-45c256538d36",
-        "x-user-datetime": "2021-08-11T18:59:04+02:00",
-        "x-lr-session-url": "https://app.logrocket.com/mj7uvx/ctg-prod/s/4-ba17643b-8286-4a11-973c-616ee90a23ef/0/7eb88c81-6e1d-4391-af6f-e4292cb0284c?t=1628701144056",
+        "X-Session-Id": "f2f3c21d-133b-4a1f-ba3c-6b10a3d79fc6",
+        "x-user-datetime": "2021-08-12T19:34:20+02:00",
+        "x-lr-session-url": "https://app.logrocket.com/mj7uvx/ctg-prod/s/4-ee18101c-97b9-4253-8990-13f3eadeef8d/0/08c2d611-63b5-4908-a504-6e717841c1a7?t=1628789660079",
         "x-ui-language": "de",
         "x-ui-region": "DE",
     }
 
     for lat, lng in DynamicGeoSearch(
-        country_codes=[SearchableCountries.GERMANY], expected_search_radius_miles=500
+        country_codes=[SearchableCountries.GERMANY], expected_search_radius_miles=20
     ):
         frm = [
             {
@@ -34,7 +34,7 @@ def fetch_data():
                 "variables": {
                     "input": {
                         "coordinates": {
-                            "searchRadius": 500,
+                            "searchRadius": 25000,
                             "userLat": lat,
                             "userLng": lng,
                         },
