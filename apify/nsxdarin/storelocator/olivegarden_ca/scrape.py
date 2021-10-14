@@ -5,9 +5,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from lxml import html
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 import time
-import csv
 
 logger = SgLogSetup().get_logger("olivegarden_ca")
 session = SgRequests()
@@ -15,33 +18,6 @@ session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -74,47 +50,48 @@ def fetch_data():
         json_data = json.loads(json_clean)
         page_url = json_data["url"] or "<MISSING>"
         locator_domain = locator_domain_name
-        location_name = json_data["name"] or "<MISSING>"
-        street_address = json_data["address"]["streetAddress"].strip() or "<MISSING>"
+        name = json_data["name"] or "<MISSING>"
+        add = json_data["address"]["streetAddress"].strip() or "<MISSING>"
         city = json_data["address"]["addressLocality"].strip() or "<MISSING>"
         state = json_data["address"]["addressRegion"].strip() or "<MISSING>"
-        country_code = json_data["address"]["addressCountry"] or "<MISSING>"
-        zip = json_data["address"]["postalCode"].strip() or "<MISSING>"
-        store_number = json_data["branchCode"] or "<MISSING>"
+        country = json_data["address"]["addressCountry"] or "<MISSING>"
+        zc = json_data["address"]["postalCode"].strip() or "<MISSING>"
+        store = json_data["branchCode"] or "<MISSING>"
         phone = json_data["telephone"].strip() or "<MISSING>"
-        location_type = json_data["@type"] or "<MISSING>"
-        latitude = json_data["geo"]["latitude"] or "<MISSING>"
-        longitude = json_data["geo"]["longitude"] or "<MISSING>"
+        typ = json_data["@type"] or "<MISSING>"
+        lat = json_data["geo"]["latitude"] or "<MISSING>"
+        lng = json_data["geo"]["longitude"] or "<MISSING>"
         hoo = json_data["openingHours"]
         if hoo:
             hoo = "; ".join(hoo)
-            hours_of_operation = hoo
+            hours = hoo
         else:
-            hours_of_operation = "<MISSING>"
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items.append(row)
-    return items
+            hours = "<MISSING>"
+        if "saskatoon/saskatoon/4349" in url_store:
+            hours = "Sun-Sat: 11:00AM-10:00PM"
+        yield SgRecord(
+            locator_domain=locator_domain_name,
+            page_url=url_store,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()
