@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import Grain_8, SearchableCountries
+from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 import lxml.html
 
@@ -153,8 +153,7 @@ def scrape():
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=100,
-        granularity=Grain_8(),
+        expected_search_radius_miles=50,
     )
 
     with SgWriter(

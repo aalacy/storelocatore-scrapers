@@ -77,7 +77,8 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId),
+        duplicate_streak_failure_factor=5,
     ) as writer:
 
         results = fetch_data()

@@ -86,11 +86,11 @@ def fetch_data():
                 state = " ".join(list(set(state.split(" "))))
             zip_postal = addr.postcode
             phone = loc["telephone"].split("(x")[0]
-            if phone == "n/a":
+            if phone == "n/a" or phone == "N/A":
                 phone = ""
 
             if country_code == "INT":
-                country_code = "CN"
+                country_code = ""
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["data-store-code"],
