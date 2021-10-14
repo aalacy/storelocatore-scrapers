@@ -23,7 +23,6 @@ def fetch_data():
     zc = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "window.app_props" in line:
             items = line.split("u0022location_code")
             for item in items:
