@@ -149,6 +149,9 @@ def fetch_data(sgw: SgWriter):
 
             latitude = format(lat, ".4f")
             longitude = format(lon, ".4f")
+            if latitude == "0.0000":
+                latitude = ""
+                longitude = ""
         else:
             link = row[-1]
             location_name = row[1]
