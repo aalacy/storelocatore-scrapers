@@ -81,9 +81,6 @@ def get_data():
             data["locations"]
 
         except Exception:
-            print(search_url)
-            with open("file.txt", "w", encoding="utf-8") as output:
-                print(response, file=output)
             raise Exception
         for location in data["locations"]:
             locator_domain = "krystal.com"
