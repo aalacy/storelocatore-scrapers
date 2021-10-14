@@ -98,13 +98,14 @@ def fetch_data(sgw: SgWriter):
                     pass
             if not hours:
                 try:
-                    hours = " ".join(
+                    fin_hours = " ".join(
                         list(
                             soup1.find(
                                 "div", {"id": "tabs-template-hours1"}.ul.li
                             ).stripped_strings
                         )
                     )
+                    hours = fin_hours
                 except:
                     pass
             if not hours:
@@ -259,7 +260,7 @@ def fetch_data(sgw: SgWriter):
                     pass
             if not hours:
                 try:
-                    hours = " ".join(
+                    fin_hours = " ".join(
                         list(
                             soup1.find(
                                 "div",
@@ -267,6 +268,7 @@ def fetch_data(sgw: SgWriter):
                             ).stripped_strings
                         )
                     )
+                    hours = fin_hours
                 except:
                     pass
             if not hours:
@@ -302,46 +304,50 @@ def fetch_data(sgw: SgWriter):
                     pass
             if not hours:
                 try:
-                    hours = " ".join(
+                    fin_hours = " ".join(
                         list(
                             soup1.find(
                                 "div", {"class": "footer-hours"}.find_all("p")[1]
                             ).stripped_strings
                         )
                     )
+                    hours = fin_hours
                 except:
                     pass
             if not hours:
                 try:
-                    hours = " ".join(
+                    fin_hours = " ".join(
                         list(
                             soup1.find(
                                 "div", {"class": "hours-footer hours-footer-1"}.ul
                             ).stripped_strings
                         )
                     )
+                    hours = fin_hours
                 except:
                     pass
             if not hours:
                 try:
-                    hours = " ".join(
+                    fin_hours = " ".join(
                         list(
                             soup1.find(
                                 "div", {"class": "footer_dealer_info_hours"}.ul
                             ).stripped_strings
                         )
                     )
+                    hours = fin_hours
                 except:
                     pass
             if not hours:
                 try:
-                    hours = " ".join(
+                    fin_hours = " ".join(
                         list(
                             soup1.find(
                                 "div", {"class": "footer_dealer_info_hours"}.ul
                             ).stripped_strings
                         )
                     )
+                    hours = fin_hours
                 except:
                     pass
             if not hours:
