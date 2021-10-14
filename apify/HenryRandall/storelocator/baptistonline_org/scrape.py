@@ -16,7 +16,7 @@ base_url = "https://www.baptistonline.org/locations"
 def find_details(link, location_type, session, sgw):
     page_url = link.a["href"]
     if "google.com" in page_url or "tel:" in page_url:
-        page_url = "<MISSING>"
+        page_url = SgRecord.MISSING
     elif not page_url.startswith("http"):
         page_url = locator_domain + link.a["href"]
     addr = list(link.select_one("p.location-address").stripped_strings)
@@ -37,7 +37,6 @@ def find_details(link, location_type, session, sgw):
         latitude = SgRecord.MISSING
     if longitude is None:
         longitude = SgRecord.MISSING
-    
     sgw.write_row(
         SgRecord(
             locator_domain=locator_domain,
@@ -59,7 +58,6 @@ def find_details(link, location_type, session, sgw):
 
 
 def fetch_data(sgw: SgWriter):
-    data = []
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=headers).text, "html.parser")
         links = soup.select("div#hospitals ul li")
@@ -81,8 +79,6 @@ def fetch_data(sgw: SgWriter):
         location_type = "specialty facilities"
         for link in links:
             find_details(link, location_type, session, sgw)
-
-
 
 
 def scrape():
