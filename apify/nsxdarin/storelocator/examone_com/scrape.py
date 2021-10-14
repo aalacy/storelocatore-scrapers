@@ -49,7 +49,6 @@ def fetch_data():
                         zc = item.split('"qsl_zip\\":\\"')[1].split("\\")[0]
                         country = "US"
                         phone = item.split('"qsl_phone\\":\\"')[1].split("\\")[0]
-                        lurl = "<MISSING>"
                         add = add.strip()
                         lat = item.split('"qsl_latitude\\":\\"')[1].split("\\")[0]
                         lng = item.split('"qsl_longitude\\":\\"')[1].split("\\")[0]
