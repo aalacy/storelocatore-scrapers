@@ -95,8 +95,6 @@ def fetch_location(store_number, retry_count=0):
     except:
         if retry_count < 3:
             return fetch_location(store_number, retry_count + 1)
-        else:
-            print(page_url)
 
 
 def write_data(data):
