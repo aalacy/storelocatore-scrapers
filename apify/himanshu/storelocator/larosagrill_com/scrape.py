@@ -37,7 +37,6 @@ def fetch_data(sgw: SgWriter):
         .find("div", {"class": "container"})
         .find_all("div", {"class": "marginall-5"})
     )
-    locations = []
     for row in content:
         locator_domain = DOMAIN
         coming_soon = row.find("img", {"src": "images/coming soon.jpg"})
