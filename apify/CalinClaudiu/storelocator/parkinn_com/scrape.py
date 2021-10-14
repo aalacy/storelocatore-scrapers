@@ -1,37 +1,18 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
-import asyncio
-import os
-
-os.environ["HTTPX_LOG_LEVEL"] = "trace"
-import httpx
+from sgrequests.sgrequests import SgRequests
 import json
 import time
+from sgscrape.pause_resume import CrawlStateSingleton
 
 EXPECTED_TOTAL = 0
-DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def set_proxies():
-    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
-
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = (
-            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
-        )
-        proxy_url = url.format(proxy_password)
-        proxies = {
-            "http://": proxy_url,
-        }
-        return proxies
-    else:
-        return None
-
-
-proxies = set_proxies()
-timeout = httpx.Timeout(60.0, connect=120.0)
+def get_main(url, headers, session):
+    response = session.get(url, headers=headers)
+    return response.json()
 
 
 def no_json(soup):
@@ -85,58 +66,48 @@ def no_json(soup):
     return k
 
 
-async def fetch_data(index: int, url: str, headers) -> dict:
-    global timeout
-    global proxies
+def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
-        async with httpx.AsyncClient(
-            proxies=proxies, headers=headers, timeout=None
-        ) as client:
-            response = await client.get(url)
+        try:
+            response = session.get(url, headers=headers)
             soup = b4(response.text, "lxml")
             logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
                 logzilla.info(f"Content\n{response.text}\n\n")
-            try:
-                data = json.loads(
-                    str(
-                        soup.find(
-                            "script",
-                            {"type": "application/ld+json", "id": "schema-webpage"},
-                        ).text
-                    )
-                    .replace("\u0119", "e")
-                    .replace("\u011f", "g")
-                    .replace("\u0144", "n")
-                    .replace("\u0131", "i"),
-                    strict=False,
+        except Exception as e:
+            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
+
+        try:
+            data = json.loads(
+                str(
+                    soup.find(
+                        "script",
+                        {"type": "application/ld+json", "id": "schema-webpage"},
+                    ).text
                 )
-            except Exception:
+                .replace("\u0119", "e")
+                .replace("\u011f", "g")
+                .replace("\u0144", "n")
+                .replace("\u0131", "i"),
+                strict=False,
+            )
+        except Exception:
+            try:
                 data = no_json(response.text)
-            data["index"] = index
-            data["requrl"] = url
-            data["STATUS"] = True
+            except Exception:
+                data = {}
+        data["index"] = index
+        data["requrl"] = url
+        data["STATUS"] = True
     else:
-        await asyncio.sleep(0)  # had to improvise
         data["index"] = index
         data["requrl"] = "<MISSING>"
         data["STATUS"] = False
     return data
 
 
-async def get_main(url, headers):
-    global timeout
-    global proxies
-    async with httpx.AsyncClient(
-        proxies=proxies, headers=headers, timeout=timeout
-    ) as client:
-        response = None
-        response = await client.get(url)
-        return response.json()
-
-
-async def get_brand(brand_code, brand_name, url, url2):
+def get_brand(brand_code, brand_name, url, url2, session):
 
     headers = {}
     headers["authority"] = str(url).replace("https://", "")
@@ -154,44 +125,19 @@ async def get_brand(brand_code, brand_name, url, url2):
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
 
-    son = await get_main(str(url + url2 + brand_code), headers)
-    task_list = []
+    son = get_main(str(url + url2 + brand_code), headers, session)
     results = []
-    chunk_size = 10
-    last_chunk = 0
-    last_tick = time.monotonic()
     total_records = len(son["hotels"])
     global EXPECTED_TOTAL
     EXPECTED_TOTAL += total_records
     for index, record in enumerate(son["hotels"]):
-        task_list.append(fetch_data(index, record["overviewPath"], headers))
-        if index % chunk_size == 0 and last_chunk != index:
-            last_tick = time.monotonic()
-            last_chunk = index
-            if len(task_list) > 0:
-                z = await asyncio.gather(*task_list)
-                for item in z:
-                    results.append(
-                        {
-                            "main": son["hotels"][item["index"]],
-                            "sub": item,
-                            "@type": brand_name,
-                        }
-                    )
-                logzilla.info(
-                    f"Finished {last_chunk}/{total_records} for brand {brand_name}, last step took {round(time.monotonic()-last_tick,5)} seconds."
-                )
-                task_list = []
-
-    last_tick = time.monotonic()
-    if len(task_list) > 0:
-        z = await asyncio.gather(*task_list)
-        for item in z:
-            results.append(
-                {"main": son["hotels"][item["index"]], "sub": item, "@type": brand_name}
-            )
-        logzilla.info(
-            f"Finished {total_records}/{total_records} for brand {brand_name}, last step took {round(time.monotonic()-last_tick,5)} seconds."
+        z = fetch_data(index, record["overviewPath"], headers, session)
+        results.append(
+            {
+                "main": son["hotels"][z["index"]],
+                "sub": z,
+                "@type": brand_name,
+            }
         )
     return results
 
@@ -310,49 +256,101 @@ def clean_record(k):
 
 
 def start():
-    urls = [
-        "https://www.radissonhotelsamericas.com",
-        "https://www.radissonhotels.com",
-    ]
+    state = CrawlStateSingleton.get_instance()
+    urlA = "https://www.radissonhotelsamericas.com"
+    urlB = "https://www.radissonhotels.com"
     url2 = "/zimba-api/destinations/hotels?brand="
-    brands = [
-        {"code": "pii", "name": "Park Inn by Radisson"},
-        {"code": "rdb", "name": "Radisson Blu"},
-        {"code": "rdr", "name": "Radisson RED"},
-        {"code": "art", "name": "art'otel"},
-        {"code": "rad", "name": "Radisson"},
-        {"code": "ri", "name": "Radisson Individuals"},
-        {"code": "prz", "name": "prizeotel"},
-        {"code": "pph", "name": "Park Plaza"},
-        {"code": "cis", "name": "Country Inn & Suites"},
-        {"code": "rco", "name": "Radisson Collection"},
-    ]
+    brandsA = state.get_misc_value(
+        "brandsA",
+        default_factory=lambda: [
+            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
+            {"code": "rdb", "name": "Radisson Blu", "done": False},
+            {"code": "rdr", "name": "Radisson RED", "done": False},
+            {"code": "art", "name": "art'otel", "done": False},
+            {"code": "rad", "name": "Radisson", "done": False},
+            {"code": "ri", "name": "Radisson Individuals", "done": False},
+            {"code": "prz", "name": "prizeotel", "done": False},
+            {"code": "pph", "name": "Park Plaza", "done": False},
+            {"code": "cis", "name": "Country Inn & Suites", "done": False},
+            {"code": "rco", "name": "Radisson Collection", "done": False},
+        ],
+    )
+    brandsB = state.get_misc_value(
+        "brandsB",
+        default_factory=lambda: [
+            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
+            {"code": "rdb", "name": "Radisson Blu", "done": False},
+            {"code": "rdr", "name": "Radisson RED", "done": False},
+            {"code": "art", "name": "art'otel", "done": False},
+            {"code": "rad", "name": "Radisson", "done": False},
+            {"code": "ri", "name": "Radisson Individuals", "done": False},
+            {"code": "prz", "name": "prizeotel", "done": False},
+            {"code": "pph", "name": "Park Plaza", "done": False},
+            {"code": "cis", "name": "Country Inn & Suites", "done": False},
+            {"code": "rco", "name": "Radisson Collection", "done": False},
+        ],
+    )
     badrecords = []
-    for url in urls:
-        for brand in brands:
-            start_time = time.monotonic()
-            logzilla.info(f"Selected brand: {brand}")
-            data = asyncio.run(
-                get_brand(
-                    brand["code"],
-                    brand["name"],
-                    url,
-                    url2,
-                )
-            )
-            for i in data:
-                k = clean_record(i)
-                if k["sub"]["STATUS"]:
-                    yield k
-                else:
-                    badrecords.append(k)
-                    yield k
-            logzilla.info(
-                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-            )
+    with SgRequests() as session:
+        for url in [urlA, urlB]:
+            if url == urlA:
+                for brand in brandsA:
+                    if not brand["done"]:
+                        start_time = time.monotonic()
+                        logzilla.info(f"Selected brand: {brand}")
+                        data = get_brand(
+                            brand["code"],
+                            brand["name"],
+                            url,
+                            url2,
+                            session,
+                        )
+                        for i in data:
+                            k = clean_record(i)
+                            if k["sub"]["STATUS"]:
+                                yield k
+                            else:
+                                badrecords.append(k)
+                                yield k
+                        logzilla.info(
+                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                        )
+                        brand["done"] = True
+                        state.set_misc_value("brandsA", brandsA)
+            if url == urlB:
+                for brand in brandsB:
+                    if not brand["done"]:
+                        start_time = time.monotonic()
+                        logzilla.info(f"Selected brand: {brand}")
+                        data = get_brand(
+                            brand["code"],
+                            brand["name"],
+                            url,
+                            url2,
+                            session,
+                        )
+                        for i in data:
+                            k = clean_record(i)
+                            if k["sub"]["STATUS"]:
+                                yield k
+                            else:
+                                badrecords.append(k)
+                                yield k
+                        logzilla.info(
+                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                        )
+                        brand["done"] = True
+                        state.set_misc_value("brandsB", brandsB)
+
     logzilla.info(f"Badrecords :\n\n{badrecords}")
     global EXPECTED_TOTAL
     logzilla.info(f"Finished grabbing data!!\n expected total {EXPECTED_TOTAL}")  # noqa
+
+
+def fix_phone(x):
+    if len(x) < 3:
+        return "<MISSING>"
+    return x
 
 
 def scrape():
@@ -362,14 +360,17 @@ def scrape():
         page_url=sp.MappingField(
             mapping=["sub", "requrl"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
             mapping=["main", "name"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["main", "coordinates", "latitude"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["main", "coordinates", "longitude"],
@@ -378,6 +379,7 @@ def scrape():
         street_address=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "streetAddress"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressLocality"],
@@ -386,9 +388,12 @@ def scrape():
         state=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressRegion"],
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         zipcode=sp.MappingField(
-            mapping=["sub", "mainEntity", "address", "postalCode"], is_required=False
+            mapping=["sub", "mainEntity", "address", "postalCode"],
+            is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         country_code=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressCountry"],
@@ -397,10 +402,12 @@ def scrape():
         phone=sp.MappingField(
             mapping=["sub", "mainEntity", "telephone", 0],
             is_required=False,
+            value_transform=fix_phone,
         ),
         store_number=sp.MappingField(
             mapping=["main", "code"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
