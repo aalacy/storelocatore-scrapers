@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("jiffylubeontario_com")
 
@@ -14,36 +17,19 @@ headers2 = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
-    alllocs = []
+    locs = [
+        "https://www.jiffylubeontario.com/sudbury-1003-kingsway",
+        "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard",
+        "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15",
+        "https://www.jiffylubeontario.com/oshawa-581-king-st",
+        "https://www.jiffylubeontario.com/oshawa-23-taunton-rd-west",
+        "https://www.jiffylubeontario.com/whitby-516-brock-st-n",
+        "https://www.jiffylubeontario.com/stcatharines-124-hartzel-rd",
+        "https://www.jiffylubeontario.com/niagara-falls-5975-thorold-stone-rd",
+        "https://www.jiffylubeontario.com/welland-536-niagara-st",
+        "https://www.jiffylubeontario.com/sarnia-763-exmouth-st",
+    ]
     url = "https://www.jiffylubeontario.com/wp-admin/admin-ajax.php"
     cities = [
         "Toronto",
@@ -59,7 +45,8 @@ def fetch_data():
         "Richmond Hill",
         "Oakville",
         "Burlington",
-        "Greater Sudbury",
+        "Sudbury",
+        "Chelmsford",
         "Oshawa",
         "Barrie",
         "St Catharines",
@@ -159,7 +146,7 @@ def fetch_data():
         payload = {
             "action": "load_map",
             "search[postal]": city,
-            "search[config][map_height]": "176.5px",
+            "search[config][map_height]": "201.5px",
             "search[map_case]": "load_locations_from_postal_code",
         }
         r = session.post(url, headers=headers, data=payload)
@@ -191,7 +178,6 @@ def fetch_data():
                 if linfo not in locs:
                     locs.append(linfo)
                 count = count + 1
-
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         lurl = loc.split("|")[0]
@@ -249,29 +235,31 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("|")[0].strip()
         if phone == "":
             phone = "<MISSING>"
-        if lurl not in alllocs:
-            alllocs.append(lurl)
-            yield [
-                website,
-                lurl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        name = name.replace("</title>", "").strip()
+        name = name.replace("&#8211;", "-").strip()
+        yield SgRecord(
+            locator_domain=website,
+            page_url=lurl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

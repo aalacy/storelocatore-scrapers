@@ -15,7 +15,6 @@ headers = {
 
 def fetch_data():
     stnames = []
-    ids = []
     states = []
     url = "https://bananarepublic.gap.com/stores/"
     website = "bananarepublic.com"
@@ -32,22 +31,22 @@ def fetch_data():
     lat = "21.4007488"
     lng = "-158.001703"
     zc = "96797-5025"
-    yield [
-        website,
-        loc,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
@@ -130,8 +129,16 @@ def fetch_data():
                 name = "Banana Republic"
                 if Outlet:
                     name = "Banana Republic Outlet"
-                if store not in ids and name != "":
-                    ids.append(store)
+                if "banana-republic-7697" in loc:
+                    city = "Chicago"
+                    state = "IL"
+                    zc = "60642"
+                    add = "917 West North Avenue"
+                    hours = "Mon-Sat: 10:00am - 7:00pm; Sun: 11:00am - 6:00pm"
+                    phone = "(312) 266-1006"
+                    lat = "41.9106547"
+                    lng = "-87.6520015"
+                if name != "" and ".html" in loc:
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

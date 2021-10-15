@@ -30,11 +30,6 @@ def fetch_data():
             title = loc.find("h3").text
         except:
             continue
-        try:
-            if "soon" in loc.find("img")["src"]:
-                continue
-        except:
-            pass
         details = loc.find("p")
         phone = ""
         address = ""
@@ -42,6 +37,7 @@ def fetch_data():
         details = BeautifulSoup(details, "html.parser")
 
         if len(details.findAll("a")) > 1:
+
             if details.findAll("a")[0].get("href").find("tel") != -1:
                 phone = details.findAll("a")[0].text
             else:
@@ -58,6 +54,7 @@ def fetch_data():
                 details.findAll("a")[1].next_sibling.lstrip().replace("–", "-")
             )
         elif len(details.findAll("a")) == 1:
+
             if details.findAll("a")[0].get("href").find("tel") != -1:
                 phone = details.findAll("a")[0].text
             else:
@@ -82,16 +79,24 @@ def fetch_data():
             else:
                 hours_of_operation = "<MISSING>"
         else:
+
             if details.text:
                 address = details.text
                 street = address.split("\n")[0]
                 city = address.split("\n")[1].split(", ")[0].strip()
                 state = address.split("\n")[1].split(", ")[1].split(" ")[0].strip()
                 zip = address.split("\n")[1].split(", ")[1].split(" ")[1]
+                phone = SgRecord.MISSING
+                hours_of_operation = SgRecord.MISSING
             else:
-                address = SgRecord.MISSING
-            phone = SgRecord.MISSING
-            hours_of_operation = SgRecord.MISSING
+
+                details = loc.findAll("p")[-1].text.split("\n")
+                city, state = details[-1].split(", ", 1)
+                state, zip = state.split(" ", 1)
+                street = " ".join(details[0 : len(details) - 1]).strip()
+
+                phone = SgRecord.MISSING
+                hours_of_operation = "Opening Soon"
         if len(phone) < 2:
             phone = "<MISSING>"
         yield SgRecord(
