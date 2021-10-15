@@ -26,7 +26,6 @@ def eliminate_space(items):
 
 
 def fetch_data(sgw: SgWriter):
-    output_list = []
     url = "https://www.roscoeschickenandwaffles.com/locations-and-hours"
     session = SgRequests()
     request = session.get(url)
