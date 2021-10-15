@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
             street_address=street_address,
             city=SgRecord.MISSING,
             state=state,
-            zip_postal=SgRecord.MISSING,
+            zip_postal=postal,
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
