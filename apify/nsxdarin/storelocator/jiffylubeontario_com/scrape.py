@@ -151,33 +151,35 @@ def fetch_data():
         }
         r = session.post(url, headers=headers, data=payload)
         count = 0
-        for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
-            if "new google.maps.LatLng(" in line and "(0, 0)" not in line:
-                llat = line.split("new google.maps.LatLng(")[1].split(",")[0]
-                llng = (
-                    line.split("new google.maps.LatLng(")[1]
-                    .split(",")[1]
-                    .strip()
-                    .split(")")[0]
-                )
-                coords.append(llat + "|" + llng)
-            if '<span class="postal">' in line:
-                lc = line.split(",")[0].strip().replace("\t", "")
-                lp = line.split('<span class="postal">')[1].split("<")[0].strip()
-            if '<a href="https://www.jiffylubeontario.com/' in line:
-                lurl = line.split('href="')[1].split('"')[0]
-                linfo = lurl + "|" + lp + "|" + lc
-                linfo = (
-                    linfo
-                    + "|"
-                    + coords[count].split("|")[0]
-                    + "|"
-                    + coords[count].split("|")[1]
-                )
-                if linfo not in locs:
-                    locs.append(linfo)
-                count = count + 1
+        try:
+            for line in r.iter_lines():
+                if "new google.maps.LatLng(" in line and "(0, 0)" not in line:
+                    llat = line.split("new google.maps.LatLng(")[1].split(",")[0]
+                    llng = (
+                        line.split("new google.maps.LatLng(")[1]
+                        .split(",")[1]
+                        .strip()
+                        .split(")")[0]
+                    )
+                    coords.append(llat + "|" + llng)
+                if '<span class="postal">' in line:
+                    lc = line.split(",")[0].strip().replace("\t", "")
+                    lp = line.split('<span class="postal">')[1].split("<")[0].strip()
+                if '<a href="https://www.jiffylubeontario.com/' in line:
+                    lurl = line.split('href="')[1].split('"')[0]
+                    linfo = lurl + "|" + lp + "|" + lc
+                    linfo = (
+                        linfo
+                        + "|"
+                        + coords[count].split("|")[0]
+                        + "|"
+                        + coords[count].split("|")[1]
+                    )
+                    if linfo not in locs:
+                        locs.append(linfo)
+                    count = count + 1
+        except:
+            pass
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         lurl = loc.split("|")[0]
@@ -200,10 +202,8 @@ def fetch_data():
         r3 = session.get(hrurl, headers=headers2)
         lines2 = r3.iter_lines()
         for line3 in lines2:
-            line3 = str(line3.decode("utf-8"))
             if '<span class="textday">' in line3:
                 g = next(lines2)
-                g = str(g.decode("utf-8"))
                 day = g.split("<")[0].strip().replace("\t", "")
             if "<strong>CLOSED</strong>" in line3:
                 day = day + ": CLOSED"
@@ -224,10 +224,8 @@ def fetch_data():
                 else:
                     hours = hours + "; " + day
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if 'itemprop="name address">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 add = g.split(">")[1].split("<")[0]
             if 'class="location-phone">' in line2:
                 phone = line2.split('"tel:')[1].split('"')[0]
