@@ -18,7 +18,18 @@ headers2 = {
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://www.jiffylubeontario.com/sudbury-1003-kingsway",
+        "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard",
+        "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15",
+        "https://www.jiffylubeontario.com/oshawa-581-king-st",
+        "https://www.jiffylubeontario.com/oshawa-23-taunton-rd-west",
+        "https://www.jiffylubeontario.com/whitby-516-brock-st-n",
+        "https://www.jiffylubeontario.com/stcatharines-124-hartzel-rd",
+        "https://www.jiffylubeontario.com/niagara-falls-5975-thorold-stone-rd",
+        "https://www.jiffylubeontario.com/welland-536-niagara-st",
+        "https://www.jiffylubeontario.com/sarnia-763-exmouth-st",
+    ]
     url = "https://www.jiffylubeontario.com/wp-admin/admin-ajax.php"
     cities = [
         "Toronto",
@@ -34,7 +45,8 @@ def fetch_data():
         "Richmond Hill",
         "Oakville",
         "Burlington",
-        "Greater Sudbury",
+        "Sudbury",
+        "Chelmsford",
         "Oshawa",
         "Barrie",
         "St Catharines",
@@ -166,7 +178,6 @@ def fetch_data():
                 if linfo not in locs:
                     locs.append(linfo)
                 count = count + 1
-
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         lurl = loc.split("|")[0]

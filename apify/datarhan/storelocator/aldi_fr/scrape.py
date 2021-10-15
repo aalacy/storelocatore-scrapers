@@ -46,26 +46,30 @@ def check_is_in_france(addr, tracker, session):
     return False
 
 
-def is_french_city(city, session):
-    params = {
-        "q": city,
-        "appid": "F2DD9E3AA45F7512D9C6CA9A150CBA7F76556B81",
-        "structuredaddress": True,
-    }
-    data = session.get(
-        "https://www.bing.com/api/v6/Places/AutoSuggest", params=params
-    ).json()
-    is_french = False
-    for item in data["value"]:
-        if item["_type"] == "PostalAddress" and item["countryIso"] == "FR":
-            is_french = True
-            break
+def is_french_city(city, session, retry=0):
+    try:
+        params = {
+            "q": city,
+            "appid": "F2DD9E3AA45F7512D9C6CA9A150CBA7F76556B81",
+            "structuredaddress": True,
+        }
+        data = session.get(
+            "https://www.bing.com/api/v6/Places/AutoSuggest", params=params
+        ).json()
+        is_french = False
+        for item in data["value"]:
+            if item["_type"] == "PostalAddress" and item["countryIso"] == "FR":
+                is_french = True
+                break
 
-        elif item["_type"] == "Place" and item["address"]["countryIso"] == "FR":
-            is_french = True
-            break
+            elif item["_type"] == "Place" and item["address"]["countryIso"] == "FR":
+                is_french = True
+                break
 
-    return is_french
+        return is_french
+    except:
+        if retry < 3:
+            return is_french_city(city, SgRequests(), retry + 1)
 
 
 def fetch_locations(code, tracker):
