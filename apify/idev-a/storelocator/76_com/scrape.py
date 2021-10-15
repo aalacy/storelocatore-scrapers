@@ -33,8 +33,7 @@ def fetch_data():
 
             try:
                 locations = session.get(url, headers=_headers).json()["d"]["results"]
-            except Exception as err:
-                print(err)
+            except:
                 continue
             total += len(locations)
             for store in locations:
