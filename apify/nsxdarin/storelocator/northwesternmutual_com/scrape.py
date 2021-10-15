@@ -46,46 +46,49 @@ def fetch_data():
         lat = ""
         lng = ""
         store = "<MISSING>"
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<p class="nmxo-utility-nav--text">' in line2:
-                name = (
-                    line2.split('<p class="nmxo-utility-nav--text">')[1]
-                    .split("<")[0]
-                    .strip()
-                )
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"telePhone": "' in line2:
-                phone = line2.split('"telePhone": "')[1].split('"')[0]
-            if '"openingHours": "' in line2:
-                hours = line2.split('"openingHours": "')[1].split('"')[0]
-            if '"latitude": "' in line2:
-                lat = line2.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line2:
-                lng = line2.split('"longitude": "')[1].split('"')[0]
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        try:
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                if '<p class="nmxo-utility-nav--text">' in line2:
+                    name = (
+                        line2.split('<p class="nmxo-utility-nav--text">')[1]
+                        .split("<")[0]
+                        .strip()
+                    )
+                if '"streetAddress": "' in line2:
+                    add = line2.split('"streetAddress": "')[1].split('"')[0]
+                if '"addressLocality": "' in line2:
+                    city = line2.split('"addressLocality": "')[1].split('"')[0]
+                if '"addressRegion": "' in line2:
+                    state = line2.split('"addressRegion": "')[1].split('"')[0]
+                if '"postalCode": "' in line2:
+                    zc = line2.split('"postalCode": "')[1].split('"')[0]
+                if '"telePhone": "' in line2:
+                    phone = line2.split('"telePhone": "')[1].split('"')[0]
+                if '"openingHours": "' in line2:
+                    hours = line2.split('"openingHours": "')[1].split('"')[0]
+                if '"latitude": "' in line2:
+                    lat = line2.split('"latitude": "')[1].split('"')[0]
+                if '"longitude": "' in line2:
+                    lng = line2.split('"longitude": "')[1].split('"')[0]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        except:
+            pass
 
 
 def scrape():
