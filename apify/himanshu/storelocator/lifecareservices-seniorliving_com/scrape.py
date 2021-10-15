@@ -37,11 +37,11 @@ def fetch_data(sgw: SgWriter):
 
     url = "https://www.lifecareservices-seniorliving.com/wp/wp-admin/admin-ajax.php"
 
-    data = {"pg": "1", "action": "get_communities", "gd_nonce": str(gd_nonce)}
+    data1 = {"pg": "1", "action": "get_communities", "gd_nonce": str(gd_nonce)}
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
     }
-    response = session.post(url, headers=headers, data=data).json()
+    response = session.post(url, headers=headers, data=data1).json()
     for ut in response["results"]:
         soup1 = BeautifulSoup(ut["html"], "lxml")
         for data in soup1.find_all("div", {"class": "cmnty-results-address"}):
