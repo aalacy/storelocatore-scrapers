@@ -56,16 +56,19 @@ def fetch_data(sgw: SgWriter):
         if "+" not in phone:
             phone = ""
         hours_of_operation = ""
-        latitude = ""
-        longitude = ""
-        map_link = base.iframe["src"]
-        req = session.get(map_link, headers=headers)
-        map_str = BeautifulSoup(req.text, "lxml")
-        geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{2,3}\.[0-9]+", str(map_str))[0].split(
-            ","
-        )
-        latitude = geo[0]
-        longitude = geo[1]
+
+        try:
+            map_link = base.iframe["src"]
+            req = session.get(map_link, headers=headers)
+            map_str = BeautifulSoup(req.text, "lxml")
+            geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{2,3}\.[0-9]+", str(map_str))[
+                0
+            ].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = "<INACCESSBILE>"
+            longitude = "<INACCESSBILE>"
 
         sgw.write_row(
             SgRecord(
