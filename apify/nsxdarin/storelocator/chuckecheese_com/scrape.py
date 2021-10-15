@@ -33,50 +33,51 @@ def fetch_data():
         "https://locations.chuckecheese.com/us",
     ]
     logger.info("Pulling Stores")
-    ##    for cty in countries:
-    ##        r = session.get(cty, headers=headers)
-    ##        for line in r.iter_lines():
-    ##            line = str(line.decode("utf-8"))
-    ##            if '"Directory-listLink" href="' in line:
-    ##                items = line.split('"Directory-listLink" href="')
-    ##                for item in items:
-    ##                    if 'data-ya-track="directorylink"' in item:
-    ##                        purl = (
-    ##                            "https://locations.chuckecheese.com/" + item.split('"')[0]
-    ##                        )
-    ##                        if purl.count("/") == 6:
-    ##                            locs.append(purl)
-    ##                        else:
-    ##                            states.append(purl)
-    ##    for surl in states:
-    ##        logger.info(surl)
-    ##        r = session.get(surl, headers=headers)
-    ##        for line in r.iter_lines():
-    ##            line = str(line.decode("utf-8"))
-    ##            if '"Directory-listLink" href="../' in line:
-    ##                items = line.split('"Directory-listLink" href="../')
-    ##                for item in items:
-    ##                    if 'data-ya-track="directorylink"' in item:
-    ##                        purl = (
-    ##                            "https://locations.chuckecheese.com/" + item.split('"')[0]
-    ##                        )
-    ##                        if purl.count("/") == 6:
-    ##                            locs.append(purl)
-    ##                        else:
-    ##                            cities.append(purl)
-    ##    for curl in cities:
-    ##        logger.info(curl)
-    ##        r = session.get(curl, headers=headers)
-    ##        for line in r.iter_lines():
-    ##            line = str(line.decode("utf-8"))
-    ##            if '<a class="Teaser-link" href="../../' in line:
-    ##                items = line.split('<a class="Teaser-link" href="../../')
-    ##                for item in items:
-    ##                    if 'data-ya-track="visitpage">View' in item:
-    ##                        purl = (
-    ##                            "https://locations.chuckecheese.com/" + item.split('"')[0]
-    ##                        )
-    ##                        locs.append(purl)
+    for cty in countries:
+        r = session.get(cty, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"Directory-listLink" href="' in line:
+                items = line.split('"Directory-listLink" href="')
+                for item in items:
+                    if 'data-ya-track="directorylink"' in item:
+                        purl = (
+                            "https://locations.chuckecheese.com/" + item.split('"')[0]
+                        )
+                        if purl.count("/") == 6:
+                            locs.append(purl)
+                        else:
+                            states.append(purl)
+    for surl in states:
+        logger.info(surl)
+        r = session.get(surl, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"Directory-listLink" href="../' in line:
+                items = line.split('"Directory-listLink" href="../')
+                for item in items:
+                    if 'data-ya-track="directorylink"' in item:
+                        purl = (
+                            "https://locations.chuckecheese.com/" + item.split('"')[0]
+                        )
+                        if purl.count("/") == 6:
+                            locs.append(purl)
+                        else:
+                            cities.append(purl)
+    for curl in cities:
+        logger.info(curl)
+        r = session.get(curl, headers=headers)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '<a class="Teaser-link" href="../../' in line:
+                items = line.split('<a class="Teaser-link" href="../../')
+                for item in items:
+                    if 'data-ya-track="visitpage">View' in item:
+                        purl = (
+                            "https://locations.chuckecheese.com/" + item.split('"')[0]
+                        )
+                        locs.append(purl)
+
     for loc in locs:
         logger.info(loc)
         loc = loc.replace("&amp;", "&").replace("&#39;", "'")
