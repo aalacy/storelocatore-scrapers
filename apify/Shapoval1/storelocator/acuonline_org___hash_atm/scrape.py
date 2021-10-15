@@ -2,7 +2,7 @@ import time
 import json
 from concurrent import futures
 
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -14,7 +14,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 website = "https://www.acuonline.org"
 store_url = "https://locationapi.wave2.io/api/client/getlocations"
 MISSING = SgRecord.MISSING
-max_workers = 2
+max_workers = 1
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
@@ -30,7 +30,7 @@ headers = {
     "TE": "trailers",
 }
 
-session = SgRequests()
+
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -48,6 +48,7 @@ def request_with_retries(zip_code):
         "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
     }
     try:
+        session = SgRequests()
         response = session.post(store_url, headers=headers, data=json.dumps(data))
         stores = json.loads(response.text)["Features"]
         log.debug(f"From {zip_code} stores = {len(stores)}")
@@ -105,7 +106,9 @@ def get_hoo(store):
 
 def fetch_data():
     zip_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_distance_miles=10
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
     )
 
     with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -165,7 +168,9 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
