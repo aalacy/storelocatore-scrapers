@@ -28,21 +28,21 @@ def fetch_data():
         store = "<MISSING>"
         text = driver.page_source
         text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-        if '"@type":"Restaurant","address":' in text:
-            items = text.split('"@type":"Restaurant","address":')
+        if ',"__typename":"RestaurantLocation","' in text:
+            items = text.split(',"__typename":"RestaurantLocation","')
             for item in items:
-                if '"addressRegion":"' in item:
+                if "activeDeliveryRanges" in item:
                     name = item.split('"name":"')[1].split('"')[0]
                     loc = "https://www.woodysdiners.com/locations"
                     lat = item.split('"lat":')[1].split(",")[0]
                     lng = item.split('"lng:')[1].split(",")[0]
-                    city = item.split('"addressLocality":"')[1].split('"')[0]
-                    state = item.split('"addressRegion":"')[1].split('"')[0]
+                    city = item.split('"city":"')[1].split('"')[0]
+                    state = item.split('"state":"')[1].split('"')[0]
                     zc = item.split('"postalCode":"')[1].split('"')[0]
                     add = item.split('"streetAddress":"')[1].split('"')[0]
-                    phone = item.split('"telephone":"')[1].split('"')[0]
+                    phone = item.split('"displayPhone":"')[1].split('"')[0]
                     hours = (
-                        item.split('"openingHours":["')[1]
+                        item.split('"schemaHours":[')[1]
                         .split("]")[0]
                         .replace('","', "; ")
                     )
