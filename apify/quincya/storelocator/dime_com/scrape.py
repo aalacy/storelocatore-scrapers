@@ -13,7 +13,6 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    data = []
     locator_domain = "dime.com"
 
     for num in range(5):
