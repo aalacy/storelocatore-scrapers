@@ -46,26 +46,30 @@ def check_is_in_france(addr, tracker, session):
     return False
 
 
-def is_french_city(city, session):
-    params = {
-        "q": city,
-        "appid": "F2DD9E3AA45F7512D9C6CA9A150CBA7F76556B81",
-        "structuredaddress": True,
-    }
-    data = session.get(
-        "https://www.bing.com/api/v6/Places/AutoSuggest", params=params
-    ).json()
-    is_french = False
-    for item in data["value"]:
-        if item["_type"] == "PostalAddress" and item["countryIso"] == "FR":
-            is_french = True
-            break
+def is_french_city(city, session, retry=0):
+    try:
+        params = {
+            "q": city,
+            "appid": "F2DD9E3AA45F7512D9C6CA9A150CBA7F76556B81",
+            "structuredaddress": True,
+        }
+        data = session.get(
+            "https://www.bing.com/api/v6/Places/AutoSuggest", params=params
+        ).json()
+        is_french = False
+        for item in data["value"]:
+            if item["_type"] == "PostalAddress" and item["countryIso"] == "FR":
+                is_french = True
+                break
 
-        elif item["_type"] == "Place" and item["address"]["countryIso"] == "FR":
-            is_french = True
-            break
+            elif item["_type"] == "Place" and item["address"]["countryIso"] == "FR":
+                is_french = True
+                break
 
-    return is_french
+        return is_french
+    except:
+        if retry < 3:
+            return is_french_city(city, SgRequests(), retry + 1)
 
 
 def fetch_locations(code, tracker):
@@ -77,7 +81,7 @@ def fetch_locations(code, tracker):
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=fr-FR&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=F&Zip={}&Town=&Street=&Radius=100000"
     response = session.get(search_url.format(code))
 
-    while "Le nombre maximum des demandes de votre IP" in response.text:
+    while hasattr(response, "base_exception"):
         session = get_session(True)
         response = session.get(search_url.format(code))
     session_id = response.url.params.get("SessionGuid")
@@ -199,7 +203,7 @@ def fetch_location(page_url, session, tracker):
 def fetch_data():
     with ThreadPoolExecutor() as executor, SgRequests() as session:
         tracker = {}
-        all_codes = static_zipcode_list(10, country_code=SearchableCountries.FRANCE)
+        all_codes = static_zipcode_list(5, country_code=SearchableCountries.FRANCE)
 
         futures = [
             executor.submit(fetch_locations, code, tracker) for code in all_codes
