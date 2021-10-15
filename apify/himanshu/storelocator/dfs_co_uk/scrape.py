@@ -3,7 +3,7 @@ import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -44,11 +44,11 @@ def fetch_data():
         try:
             temp, city = city.split(",")
             city = city.strip()
-            street = street + " " + temp
+            street_address = street_address + " " + temp
         except:
             pass
         try:
-            state, pcode = pcode.split(",")
+            state, zipp = zipp.split(",")
         except:
             pass
         latitude = r1.text.split("myStoreLat = ")[1].split("+")[0].strip()
