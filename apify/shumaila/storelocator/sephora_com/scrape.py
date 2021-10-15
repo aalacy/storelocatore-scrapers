@@ -61,6 +61,9 @@ def fetch_data():
             )
             if ("AM " and "PM ") not in hours:
                 hours = "<MISSING>"
+            if (" sunday " not in hours) and ("<MISSING>" not in hours):
+                hours = hours + " sunday Closed "
+            hours = hours.replace("sunday sunday Closed ", "sunday Closed ")
             yield SgRecord(
                 locator_domain="https://www.sephora.com/",
                 page_url=link,
