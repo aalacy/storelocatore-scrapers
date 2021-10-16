@@ -34,6 +34,7 @@ def fetch_data(sgw: SgWriter):
     for i, item in enumerate(items):
         link = item.text
         if "stores/details" in link:
+            log.info(link)
 
             try:
                 req = session.get(link, headers=headers)

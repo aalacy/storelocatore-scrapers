@@ -50,15 +50,15 @@ cookies = {
     "sid": "i5TdP_WrRK7oA316c4b4YC2ccSG-dM_Gm14",
     "dwsid": "aqSkgiy1eHkctxY2SXrRdMysCJxnavMRb-prjX7tCja3tZlOAzpqR5bhdkHc5WRS7IVZUsMAnS9DDlxMrcgrag==",
     "language": "en",
-    "_gid": "GA1.2.310488206.1633952765",
-    "CanadaGooseUS-pagevisits": '{"pagevisits":21}',
-    "_uetsid": "d11c02402a8811eca2606d60a830f039",
+    "CanadaGooseUS-pagevisits": '{"pagevisits":24}',
     "_uetvid": "4c9bf690e62511eb977165ee7ae05647",
-    "_derived_epik": "dj0yJnU9c05zRkp1bUltSDN5b2tHX01sS1VxSUNjOWg2QjhjTXQmbj1BT1RJT01LS3NQYVRxM3FwWXhxR1F3Jm09ZiZ0PUFBQUFBR0ZrTTBnJnJtPWYmcnQ9QUFBQUFHRmtNMGc",
-    "lastRskxRun": "1633956682142",
-    "akm_bmfp_b2-ssn": "02PuPaNoXWh3Scod0OAP7SfEgnE3AgqF4cyJFjPc0lo48oy732lZP0zEMwDbeD6KRS89RhIFvTu0s0WysszWknH2vdh5OrNUxJ2yM0BPipOPnm1EGxTJxXPhckMl4nNejgXj9lTf91r8KZ9aCcYzrJUKJRJ",
-    "akm_bmfp_b2": "02PuPaNoXWh3Scod0OAP7SfEgnE3AgqF4cyJFjPc0lo48oy732lZP0zEMwDbeD6KRS89RhIFvTu0s0WysszWknH2vdh5OrNUxJ2yM0BPipOPnm1EGxTJxXPhckMl4nNejgXj9lTf91r8KZ9aCcYzrJUKJRJ",
+    "_derived_epik": "dj0yJnU9akVmdUFxcG5VSVpVR2pVeUtlRjB0ZkpXek84WlI1amQmbj02VmVLY01LcURQLXgxMXVURGRERy13Jm09ZiZ0PUFBQUFBR0ZrTk9NJnJtPWYmcnQ9QUFBQUFHRmtOT00",
+    "lastRskxRun": "1633957091941",
+    "akm_bmfp_b2-ssn": "0DoJh7fcGyiAtXcc9KIXonwn000DOhw35qwZyNtOeqr7NW5kafxl0s23iYIu6afgv8FWVzQOPQZk3bsnlIhwlCwlbuun5pDzNouJMg44X8vQY9rrPdYu0C20c4Rvf39vvnNW4zLyLtxZqypF7LlXn7c4C",
+    "akm_bmfp_b2": "0DoJh7fcGyiAtXcc9KIXonwn000DOhw35qwZyNtOeqr7NW5kafxl0s23iYIu6afgv8FWVzQOPQZk3bsnlIhwlCwlbuun5pDzNouJMg44X8vQY9rrPdYu0C20c4Rvf39vvnNW4zLyLtxZqypF7LlXn7c4C",
+    "KP_REF": "",
 }
+
 
 headers = {
     "Connection": "keep-alive",
