@@ -189,6 +189,18 @@ def get_hoo(main_section):
     return MISSING
 
 
+def update_location_name(location_name):
+    if "nike" in location_name.lower() and "-" in location_name:
+        return location_name.split("-")[0].strip()
+
+    if "nike" not in location_name.lower():
+        if location_name.upper() == location_name:
+            return "NIKE " + location_name
+        else:
+            return "Nike " + location_name
+    return location_name
+
+
 def fetch_data(driver):
     stores = fetch_stores(driver)
     log.info(f"Total stores = {len(stores)}")
@@ -221,6 +233,7 @@ def fetch_data(driver):
         latitude, longitude = get_lat_lng(main_section)
         hours_of_operation = get_hoo(main_section)
         street_address, city, state, zip_postal = get_address(raw_address)
+        location_name = update_location_name(location_name)
 
         rec_count = State.get_misc_value(country_code, default_factory=lambda: 0)
         State.set_misc_value(country_code.lower(), rec_count + 1)
