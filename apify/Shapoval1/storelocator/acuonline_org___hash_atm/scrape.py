@@ -30,7 +30,7 @@ headers = {
     "TE": "trailers",
 }
 
-session = SgRequests()
+
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -48,6 +48,7 @@ def request_with_retries(zip_code):
         "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
     }
     try:
+        session = SgRequests()
         response = session.post(store_url, headers=headers, data=json.dumps(data))
         stores = json.loads(response.text)["Features"]
         log.debug(f"From {zip_code} stores = {len(stores)}")
