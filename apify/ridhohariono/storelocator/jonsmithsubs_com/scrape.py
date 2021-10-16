@@ -62,6 +62,7 @@ def fetch_data():
         .find("div", {"class": "pm-location-search-list"})
         .find_all("div", {"class": "col-md-4 col-xs-12 pm-location"})
     )
+    more_locs = soup.find("section", {"id": "more-locs"}).find_all("section")
     for row in content:
         check_status = row.find(
             "div", {"id": re.compile(r"location-search-content-.*")}
@@ -82,7 +83,7 @@ def fetch_data():
         country_code = "US"
         store_number = MISSING
         phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
-        location_type = MISSING
+        location_type = "PRIMARY LOCATION"
         latitude = MISSING
         longitude = MISSING
         hours_of_operation = (
@@ -96,6 +97,37 @@ def fetch_data():
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+    for row in more_locs:
+        info = row.get_text(strip=True, separator="@").split("@")
+        location_name = info[0]
+        raw_address = " ".join(info[1:-1])
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        country_code = "US"
+        store_number = MISSING
+        phone = info[-1]
+        location_type = "LOCATIONS IN SOUTH FLORIDA"
+        latitude = MISSING
+        longitude = MISSING
+        hours_of_operation = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
             location_name=location_name,
             street_address=street_address,
             city=city,
