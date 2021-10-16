@@ -82,7 +82,7 @@ def fetch_data():
         country_code = "US"
         store_number = MISSING
         phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
-        location_type = "PRIMARY LOCATION"
+        location_type = MISSING
         latitude = MISSING
         longitude = MISSING
         hoo_content = row.find("div", {"class": "hours"})
