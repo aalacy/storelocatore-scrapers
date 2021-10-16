@@ -58,11 +58,6 @@ def fetch_data(sgw: SgWriter):
         hoo = ", ".join(loc_data["openingHours"]).strip()
         loc = loc_data["address"]["addressLocality"]
         loc_url = url + loc.lower().replace(" ", "-")
-        lat, long = re.findall(
-            r'"lat":(-?[\d\.]+),"lng":(-?[\d\.]+),"menuLandingPageUrl":null,"name":"'
-            + loc.strip(),
-            str(soup),
-        )[0]
 
         sgw.write_row(
             SgRecord(
@@ -77,8 +72,8 @@ def fetch_data(sgw: SgWriter):
                 store_number=SgRecord.MISSING,
                 phone=loc_data["address"]["telephone"],
                 location_type=loc_data["@type"],
-                latitude=lat,
-                longitude=long,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
                 hours_of_operation=hoo,
             )
         )
