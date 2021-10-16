@@ -62,7 +62,6 @@ def fetch_data():
             else:
                 hours_of_operation = loc[-1]
             hours_of_operation = loc[-1]
-            print(hours_of_operation)
             for coord in coord_list:
                 temp = coord.find("strong").text
                 if location_name == temp:
@@ -70,25 +69,23 @@ def fetch_data():
                     longitude = coord["data-lng"]
                     break
             country_code = "CA"
-
-
-####            yield SgRecord(
-####                locator_domain=DOMAIN,
-####                page_url=url,
-####                location_name=location_name,
-####                street_address=street_address.strip(),
-####                city=city.strip(),
-####                state=state.strip(),
-####                zip_postal=zip_postal.strip(),
-####                country_code=country_code,
-####                store_number=MISSING,
-####                phone=phone.strip(),
-####                location_type=MISSING,
-####                latitude=latitude,
-####                longitude=longitude,
-####                hours_of_operation=hours_of_operation.strip(),
-####                raw_address=raw_address,
-####            )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
+            )
 
 
 def scrape():
