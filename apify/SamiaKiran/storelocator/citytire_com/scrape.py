@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -54,9 +55,14 @@ def fetch_data():
             loc = loc.get_text(separator="|", strip=True).split("|")
             if "Sat (Seasonal)" in loc[-1]:
                 del loc[-1]
+            elif "Sat (Appointment Only)" in loc[-1]:
+                del loc[-1]
+            elif "Contact your Local Branch" in loc[-1]:
+                del loc[-1]
+            else:
+                hours_of_operation = loc[-1]
             hours_of_operation = loc[-1]
-            if "cta@citytire.com" in loc[-1]:
-                hours_of_operation = MISSING
+            print(hours_of_operation)
             for coord in coord_list:
                 temp = coord.find("strong").text
                 if location_name == temp:
@@ -64,38 +70,37 @@ def fetch_data():
                     longitude = coord["data-lng"]
                     break
             country_code = "CA"
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-                raw_address=raw_address,
-            )
+
+
+####            yield SgRecord(
+####                locator_domain=DOMAIN,
+####                page_url=url,
+####                location_name=location_name,
+####                street_address=street_address.strip(),
+####                city=city.strip(),
+####                state=state.strip(),
+####                zip_postal=zip_postal.strip(),
+####                country_code=country_code,
+####                store_number=MISSING,
+####                phone=phone.strip(),
+####                location_type=MISSING,
+####                latitude=latitude,
+####                longitude=longitude,
+####                hours_of_operation=hours_of_operation.strip(),
+####                raw_address=raw_address,
+####            )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
