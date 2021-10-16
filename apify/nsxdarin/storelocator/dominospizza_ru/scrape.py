@@ -16,20 +16,11 @@ logger = SgLogSetup().get_logger("dominospizza_ru")
 
 
 def fetch_data():
-    url = "https://dominospizza.ru/find_dominos?st=del"
+    url = "https://yfe.dominospizza.ru/api/address/getCities"
     cities = []
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'cities":[{' in line:
-            items = line.split('cities":[{')[1].split('e,"id":')
-            for item in items:
-                if 'cityUrl":"' in item:
-                    cities.append(
-                        item.split(",")[0]
-                        + "|"
-                        + item.split('"name":"')[1].split('"')[0]
-                    )
+    for item in json.loads(r.content):
+        cities.append(str(item["id"]) + "|" + item["name"])
     website = "dominospizza.ru"
     loc = "<MISSING>"
     typ = "<MISSING>"
@@ -40,7 +31,7 @@ def fetch_data():
         logger.info(str(cid))
         city = cid.split("|")[1]
         curl = (
-            "https://fe.dominospizza.ru/api/store/differentCityStores?cityCode="
+            "https://yfe.dominospizza.ru/api/store/differentCityStores?cityCode="
             + cid.split("|")[0]
         )
         r2 = session.get(curl, headers=headers)

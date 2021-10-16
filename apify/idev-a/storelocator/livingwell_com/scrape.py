@@ -32,16 +32,33 @@ def fetch_data():
             if sp1.select(
                 "section.section-club-visit div.col-md-offset-2 div.row div.col-md-6"
             )[0].p:
-                for hh in list(
+                for hr in list(
                     sp1.select_one(
-                        "section.section-club-visit div.col-md-offset-2 div.row div.col-md-6 p"
-                    ).stripped_strings
+                        "section.section-club-visit div.col-md-offset-2 div.row div.col-md-6"
+                    ).select("p")
                 ):
-                    if "club" in hh.lower() or "gym" in hh.lower():
-                        continue
-                    if "weekend" in hh.lower() or "holiday" in hh.lower():
-                        break
-                    hours.append(hh.split("If")[0])
+                    for hh in hr.stripped_strings:
+                        _hh = hh.lower()
+                        if "club" in _hh or "gym" in _hh or "fitness" in _hh:
+                            continue
+                        if (
+                            "weekend" in _hh
+                            or "holiday" in _hh
+                            or "children" in _hh
+                            or "spa" in _hh
+                            or "please" in _hh
+                            or "wellness" in _hh
+                            or "will" in _hh
+                            or "pool" in _hh
+                            or "adult" in _hh
+                            or "swimming" in _hh
+                            or "booking" in _hh
+                            or "prior" in _hh
+                        ):
+                            break
+                        hours.append(
+                            hh.split("If")[0].split("from")[0].replace("*", "")
+                        )
             raw_address = " ".join(
                 list(
                     sp1.select(
@@ -66,7 +83,7 @@ def fetch_data():
                 country_code=addr.country,
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation=" ".join(hours),
+                hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
             )
 

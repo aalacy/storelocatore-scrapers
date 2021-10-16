@@ -7,7 +7,6 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
 website = "footlocker_ae"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
@@ -24,74 +23,77 @@ def fetch_data():
     loclist = []
     if True:
         url = "https://www.footlocker.ae/en/store-finder"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.findAll("div", {"class": "by--alphabet"})
-        for link in linklist:
-            temp_list = link.findAll("a")
-            loclist += temp_list
-        for loc in loclist:
-            store_number = loc["data-glossary-view"]
-            link = (
-                "https://www.footlocker.com.ae/en/store-detail/"
-                + store_number
-                + "/glossary?_wrapper_format=drupal_ajax"
-            )
-            data = session.get(link, headers=headers, data=payload).json()
-            data = data[3]["data"]
-            soup = BeautifulSoup(data, "html.parser")
-            location_name = (
-                soup.find("a", {"class": "row-title"})
-                .get_text(separator="|", strip=True)
-                .replace("|", "")
-            )
-            log.info(location_name)
-            phone = soup.find("div", {"class": "field--name-field-store-phone"}).text
-            raw_address = (
-                soup.find("div", {"class": "views-field-field-store-address"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
-            pa = parse_address_intl(raw_address)
+        with SgRequests(proxy_country="ae") as http:
+            r = http.get(url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            linklist = soup.findAll("div", {"class": "by--alphabet"})
+            for link in linklist:
+                temp_list = link.findAll("a")
+                loclist += temp_list
+            for loc in loclist:
+                store_number = loc["data-glossary-view"]
+                link = (
+                    "https://www.footlocker.com.ae/en/store-detail/"
+                    + store_number
+                    + "/glossary?_wrapper_format=drupal_ajax"
+                )
+                data = http.get(link, headers=headers, data=payload).json()
+                data = data[3]["data"]
+                soup = BeautifulSoup(data, "html.parser")
+                location_name = (
+                    soup.find("a", {"class": "row-title"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", "")
+                )
+                log.info(location_name)
+                phone = soup.find(
+                    "div", {"class": "field--name-field-store-phone"}
+                ).text
+                raw_address = (
+                    soup.find("div", {"class": "views-field-field-store-address"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                pa = parse_address_intl(raw_address)
 
-            street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
 
-            city = pa.city
-            city = city.strip() if city else MISSING
+                city = pa.city
+                city = city.strip() if city else MISSING
 
-            state = pa.state
-            state = state.strip() if state else MISSING
+                state = pa.state
+                state = state.strip() if state else MISSING
 
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = "AE"
-            hours_of_operation = (
-                soup.find("div", {"class": "open--hours"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
-            coords = soup.find("div", {"class": "geolocation"})
-            latitude = coords["data-lat"]
-            longitude = "-" + coords["data-lng"]
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-                raw_address=raw_address,
-            )
+                country_code = "AE"
+                hours_of_operation = (
+                    soup.find("div", {"class": "open--hours"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                coords = soup.find("div", {"class": "geolocation"})
+                latitude = coords["data-lat"]
+                longitude = "-" + coords["data-lng"]
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
