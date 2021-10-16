@@ -24,7 +24,6 @@ def fetch_data():
     lng = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '{"id":' in line:
             items = line.split('{"id":')
             for item in items:
