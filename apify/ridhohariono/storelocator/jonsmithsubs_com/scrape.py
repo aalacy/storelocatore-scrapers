@@ -6,10 +6,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
+import re
 
-DOMAIN = "ride-indoorcycling.com"
-BASE_URL = "https://www.ride-indoorcycling.com/"
-LOCATION_URL = "https://www.ride-indoorcycling.com/studios/"
+DOMAIN = "jonsmithsubs.com"
+BASE_URL = "https://www.jonsmithsubs.com"
+LOCATION_URL = "https://www.jonsmithsubs.com/locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -56,26 +57,77 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    content = soup.find("ul", {"class": "locations"}).find_all("li")
+    content = (
+        soup.find("div", {"id": "locations"})
+        .find("div", {"class": "pm-location-search-list"})
+        .find_all("div", {"class": "col-md-4 col-xs-12 pm-location"})
+    )
+    more_locs = soup.find("section", {"id": "more-locs"}).find_all("section")
     for row in content:
-        page_url = row.find("a", {"class": "learn-btn"})["href"]
-        if page_url == "#":
-            page_url = LOCATION_URL
-        location_name = row.find("h5", {"class": "headline"}).text.strip()
-        info = row.find("address").get_text(strip=True, separator="@").split("@")
-        raw_address = "".join(info[:-1]).replace("\n", " ").strip()
+        check_status = row.find(
+            "div", {"id": re.compile(r"location-search-content-.*")}
+        )
+        if (
+            not check_status
+            or "Coming Soon!" in check_status.text.strip()
+            or "Temporarily Closed" in check_status.text.strip()
+        ):
+            continue
+
+        page_url = BASE_URL + row.find("a", text="View Menu & Details")["href"]
+        location_name = row.find("h4").text.strip()
+        raw_address = row.find("a", {"class": "address-link"}).get_text(
+            strip=True, separator=" "
+        )
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        country_code = "US"
+        store_number = MISSING
+        phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+        location_type = "PRIMARY LOCATION"
+        latitude = MISSING
+        longitude = MISSING
+        hours_of_operation = (
+            row.find("div", {"class": "hours"})
+            .get_text(strip=True, separator=",")
+            .replace(",:,", ": ")
+            .replace("-,", "- ")
+            .replace("00,", "00 ")
+        )
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+    for row in more_locs:
+        info = row.get_text(strip=True, separator="@").split("@")
+        location_name = info[0]
+        raw_address = " ".join(info[1:-1])
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         store_number = MISSING
         phone = info[-1]
-        location_type = MISSING
+        location_type = "LOCATIONS IN SOUTH FLORIDA"
         latitude = MISSING
         longitude = MISSING
         hours_of_operation = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=page_url,
+            page_url=LOCATION_URL,
             location_name=location_name,
             street_address=street_address,
             city=city,
