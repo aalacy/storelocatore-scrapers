@@ -21,7 +21,7 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         log.info("Loading Page......")
         url = "https://genesishcc.com/findlocations/"
         driver.get(url)
