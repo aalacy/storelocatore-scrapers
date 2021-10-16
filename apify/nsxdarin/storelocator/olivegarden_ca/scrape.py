@@ -24,10 +24,7 @@ def fetch_data():
     urls = []
     url = "https://www.olivegarden.ca/ca-locations-sitemap.xml"
     r = session.get(url, headers=headers)
-
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if "<loc>" in line:
             urls.append(line.split("<loc>")[1].split("<")[0])
 
