@@ -20,7 +20,7 @@ def get_hours(hours) -> str:
     ]
     hourss = eval(hours)
     for d in days:
-        days = d
+        days = str(d)
         opens = hourss.get(f"{days}").get("open_time")
         closes = hourss.get(f"{days}").get("closing_time")
         line = f"{days} {opens} - {closes}"
