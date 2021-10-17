@@ -35,7 +35,7 @@ def fetch_data():
                     name = item.split('"name":"')[1].split('"')[0]
                     loc = "https://www.woodysdiners.com/locations"
                     lat = item.split('"lat":')[1].split(",")[0]
-                    lng = item.split('"lng:')[1].split(",")[0]
+                    lng = item.split('"lng":')[1].split(",")[0]
                     city = item.split('"city":"')[1].split('"')[0]
                     state = item.split('"state":"')[1].split('"')[0]
                     zc = item.split('"postalCode":"')[1].split('"')[0]
