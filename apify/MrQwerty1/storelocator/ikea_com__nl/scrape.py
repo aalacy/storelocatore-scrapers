@@ -36,6 +36,7 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//p[./strong[contains(text(), 'IKEA ')]]/text()")
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
+    street_address = raw_address.split(",")[0].strip()
     if city == SgRecord.MISSING:
         city = location_name.replace("IKEA ", "")
 

@@ -51,7 +51,7 @@ def get_data(page_url, sgw: SgWriter):
 
     raw_address = ", ".join(
         tree.xpath(
-            "//p[./strong[contains(text(), 'Adres')]]/text()|//p[./strong[contains(text(), 'Adres')]]/following-sibling::p[1]/text()"
+            "//p[./strong[contains(text(), 'Adres')]]/text()|//p[./strong[contains(text(), 'Adres')] and not(./preceding-sibling::h2)]/following-sibling::p[1]/text()"
         )
     ).strip()
     street_address, city, state, postal = get_international(raw_address)

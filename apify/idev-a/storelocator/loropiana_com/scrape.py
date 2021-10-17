@@ -59,6 +59,16 @@ def fetch_data():
                 city = _["address"]["addressLocality"]
                 street_address = _["address"]["streetAddress"]
                 state = _["address"]["addressRegion"]
+                if _["address"]["addressCountry"].lower() == "cn":
+                    if state == "CN":
+                        state = ""
+                    if city == "Shenyang":
+                        addr = parse_address_intl(_["address"]["streetAddress"])
+                        state = addr.state
+                        if addr.city:
+                            street_address = _["address"]["streetAddress"].split(
+                                addr.city
+                            )[-1]
                 if (
                     _["address"]["addressCountry"].lower() == "jp"
                     or _["address"]["addressCountry"].lower() == "japan"
@@ -75,6 +85,8 @@ def fetch_data():
                     or _["address"]["addressCountry"].lower() == "korea"
                     or _["address"]["addressCountry"].lower() == "hk"
                     or _["address"]["addressCountry"].lower() == "gb"
+                    or _["address"]["addressCountry"].lower() == "kz"
+                    or _["address"]["addressCountry"].lower() == "cn"
                 ):
                     pass
                 else:
