@@ -54,7 +54,7 @@ def fetch_data():
         "WI",
     ]
     url = "https://huntingtonhelps.com/location/state-list"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.find("div", {"id": "centerListing"})
     for state in statelist:
@@ -78,7 +78,7 @@ def fetch_data():
             phone = loc.find("div", {"class": "phone"}).text
             loclink = loc.find("h3").find("a")["href"]
             loclink = "https://huntingtonhelps.com" + loclink
-            link = session.get(loclink, headers=headers, verify=False)
+            link = session.get(loclink, headers=headers)
             soup = BeautifulSoup(link.text, "html.parser")
             hour = soup.find("div", {"class": "hours col-sm-6"})
             li = hour.findAll("li")
