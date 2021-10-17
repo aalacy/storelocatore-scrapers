@@ -93,7 +93,7 @@ def fetch_location(store_number, retry_count=0):
                 phone=phone,
             )
     except:
-        if retry_count < 3:
+        if retry_count < 5:
             return fetch_location(store_number, retry_count + 1)
 
 
