@@ -95,7 +95,6 @@ def fetch_data():
         if "T." in phone:
             phone = phone.split("T.")[1].strip().split(" ")[0].strip()
 
-        hours_list = []
         hours_of_operation = "; ".join(
             store_sel.xpath(
                 '//tr[./td[text()="HORARIOS:"]]/following-sibling::tr[1]/td[1]/text()'
