@@ -43,7 +43,7 @@ def fetch_data():
                     continue
                 del driver.requests
                 state.click()
-                rr = driver.wait_for_request(gun_url)
+                driver.wait_for_request(gun_url)
                 cities = driver.find_elements_by_css_selector(
                     "select.location_2 option"
                 )
