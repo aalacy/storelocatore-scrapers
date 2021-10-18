@@ -6,26 +6,32 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sglogging import sglog
+
+domain = "groceryoutlet.com"
+log = sglog.SgLogSetup().get_logger(logger_name=domain)
 
 
 def fetch_data():
     start_url = (
         "https://www.groceryoutlet.com/store-locator?store_location={}&store_region="
     )
-    domain = "groceryoutlet.com"
 
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
-    with SgFirefox() as driver:
+
+    with SgChrome() as driver:
         for code in all_codes:
+            log.info(f"Crawling page: {start_url.format(code)}")
             driver.get(start_url.format(code))
-            sleep(uniform(5, 30))
+            sleep(uniform(7, 30))
             dom = etree.HTML(driver.page_source)
 
             all_locations = dom.xpath("//li[@data-store-number]")
+            log.info(f"Location Found : {len(all_locations)} in {code}")
             for poi_html in all_locations:
                 location_name = poi_html.xpath(".//h6/text()")[0]
                 page_url = poi_html.xpath('.//a[contains(text(), "See This")]/@href')[0]
