@@ -31,7 +31,7 @@ def fetch_data():
         if ',"__typename":"RestaurantLocation","' in text:
             items = text.split(',"__typename":"RestaurantLocation","')
             for item in items:
-                if "activeDeliveryRanges" in item:
+                if "activeOrderingRanges" in item:
                     name = item.split('"name":"')[1].split('"')[0]
                     loc = "https://www.woodysdiners.com/locations"
                     lat = item.split('"lat":')[1].split(",")[0]
@@ -40,12 +40,18 @@ def fetch_data():
                     state = item.split('"state":"')[1].split('"')[0]
                     zc = item.split('"postalCode":"')[1].split('"')[0]
                     add = item.split('"streetAddress":"')[1].split('"')[0]
-                    phone = item.split('"displayPhone":"')[1].split('"')[0]
-                    hours = (
-                        item.split('"schemaHours":[')[1]
-                        .split("]")[0]
-                        .replace('","', "; ")
-                    )
+                    try:
+                        phone = item.split('"displayPhone":"')[1].split('"')[0]
+                    except:
+                        phone = "<MISSING>"
+                    try:
+                        hours = (
+                            item.split('"schemaHours":[')[1]
+                            .split("]")[0]
+                            .replace('","', "; ")
+                        )
+                    except:
+                        hours = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
