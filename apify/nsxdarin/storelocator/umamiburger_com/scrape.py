@@ -57,7 +57,10 @@ def fetch_data():
             hours = ""
             lat = ""
             lng = ""
+            CS = False
             for line2 in r2.iter_lines():
+                if "- Coming Soon<" in line2:
+                    CS = True
                 if "><h4>" in line2 and add == "":
                     name = line2.split("><h4>")[1].split("<")[0]
                     add = (
@@ -69,8 +72,14 @@ def fetch_data():
                     )
                     csz = line2.split("<h4>")[1].split("<br />")[1].split("<")[0]
                     city = csz.split(",")[0]
-                    zc = csz.rsplit(" ", 1)[1]
-                    state = csz.split(",")[1].strip().split(" ")[0]
+                    try:
+                        zc = csz.rsplit(" ", 1)[1]
+                    except:
+                        zc = "<MISSING>"
+                    try:
+                        state = csz.split(",")[1].strip().split(" ")[0]
+                    except:
+                        state = "<MISSING>"
                     add = (
                         add.replace("<!-- -->", " ")
                         .replace("  ", " ")
@@ -107,22 +116,23 @@ def fetch_data():
             if phone == "":
                 phone = "<MISSING>"
             add = add.strip().replace("  ", " ").replace("  ", " ")
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+            if CS is False:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
