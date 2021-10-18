@@ -20,23 +20,14 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 local = threading.local()
 
 headers = {
-    "authority": "apps.pnc.com",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
-    "accept": "application/json, text/plain, */*",
-    "sec-ch-ua-mobile": "?0",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-dest": "empty",
-    "referer": "https://apps.pnc.com/locator/search",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 id_list = []
 
 
-def get_session():
-    if not hasattr(local, "session") or local.count > 10:
+def get_session(refresh):
+    if refresh or not hasattr(local, "session") or local.count > 10:
         local.session = SgRequests()
         local.count = 0
 
@@ -44,15 +35,15 @@ def get_session():
     return local.session
 
 
-def retry_error_callback(retry_state):
-    coord = retry_state.args[0]
-    log.error(f"Failure to fetch locations for: {coord}")
-    return None
+def fetch_locations(url, retry=0):
+    try:
+        return get_session(retry > 0).get(url, headers=headers, timeout=30).json()
+    except:
+        if retry < 3:
+            return fetch_locations(url, retry + 1)
 
-
-@retry(stop=stop_after_attempt(3), retry_error_callback=retry_error_callback)
-def fetch_locations(url):
-    return get_session().get(url, headers=headers, timeout=15).json()
+        log.error(f"Failure to fetch locations for: {url}")
+        return None
 
 
 def fetch_location(url, driver):

@@ -74,11 +74,22 @@ def fetch_data():
             .strip()
             .replace(".", "")
             .strip()
+            .replace("  ", " ")
+            .strip()
         )
         try:
             zip = " ".join(zip.rsplit(" ")[-2:]).strip()
         except:
             pass
+
+        try:
+            if zip[0].isalpha() is True and zip[1].isdigit() is not True:
+                zip = "<MISSING>"
+        except:
+            pass
+
+        if zip == "W635":
+            zip = "F94 " + zip
 
         country_code = "IE"
         if "Northern Ireland" in raw_address:
