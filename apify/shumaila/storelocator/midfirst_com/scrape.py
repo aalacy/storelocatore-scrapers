@@ -60,7 +60,7 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    mylist = static_coordinate_list(50, SearchableCountries.USA)
+    mylist = static_coordinate_list(10, SearchableCountries.USA)
     MAX_RESULTS = 25
     MAX_DISTANCE = 150
 
@@ -117,10 +117,10 @@ def fetch_data():
                 )
             if street_address in addresses:
                 continue
-            if (len(phone)) < 3:
-                phone = "<MISSING>"
             if len(hours_of_operation) < 3:
                 hours_of_operation = "<MISSING>"
+            if (len(phone)) < 3:
+                phone = "<MISSING>"
             yield SgRecord(
                 locator_domain=base_url,
                 page_url=link,

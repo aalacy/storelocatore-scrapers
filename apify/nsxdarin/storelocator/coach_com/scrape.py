@@ -405,6 +405,16 @@ def fetch_data():
                             typ = "Coach Outlet"
                         else:
                             typ = "Coach"
+                        if "coach house" in name.lower():
+                            typ = "Coach Flagship Store"
+                        if (
+                            "coach fenwick" in name.lower()
+                            or "coach harvey" in name.lower()
+                            or "coach john lewis" in name.lower()
+                            or "coach selfridges" in name.lower()
+                            or "coach williams &" in name.lower()
+                        ):
+                            typ = "Coach Department & Specialty Store"
                         if "popup" not in name.lower() and "pop-up" not in name.lower():
                             yield SgRecord(
                                 locator_domain=website,
