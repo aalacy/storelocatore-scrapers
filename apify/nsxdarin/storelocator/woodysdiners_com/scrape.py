@@ -40,12 +40,18 @@ def fetch_data():
                     state = item.split('"state":"')[1].split('"')[0]
                     zc = item.split('"postalCode":"')[1].split('"')[0]
                     add = item.split('"streetAddress":"')[1].split('"')[0]
-                    phone = item.split('"displayPhone":"')[1].split('"')[0]
-                    hours = (
-                        item.split('"schemaHours":[')[1]
-                        .split("]")[0]
-                        .replace('","', "; ")
-                    )
+                    try:
+                        phone = item.split('"displayPhone":"')[1].split('"')[0]
+                    except:
+                        phone = "<MISSING>"
+                    try:
+                        hours = (
+                            item.split('"schemaHours":[')[1]
+                            .split("]")[0]
+                            .replace('","', "; ")
+                        )
+                    except:
+                        hours = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
