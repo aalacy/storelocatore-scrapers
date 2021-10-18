@@ -1,40 +1,13 @@
-import csv
 import re
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
 def get_urls(coord):
@@ -48,7 +21,6 @@ def get_urls(coord):
         "distance:from": "|".join(coord),
     }
 
-    session = SgRequests()
     r = session.post(api_url, data=data)
     u = r.url
 
@@ -69,12 +41,7 @@ def get_urls(coord):
     return urls
 
 
-def get_data(page_url):
-    locator_domain = "https://heronfoods.com/"
-    if not page_url:
-        return
-
-    session = SgRequests()
+def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -83,24 +50,17 @@ def get_data(page_url):
     line = list(filter(None, [l.strip() for l in line]))
     line = " ".join(line)
     adr = parse_address(International_Parser(), line)
-
-    street_address = (
-        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-            "None", ""
-        ).strip()
-        or "<MISSING>"
-    )
-
-    city = adr.city or "<MISSING>"
-    state = adr.state or "<MISSING>"
-    postal = adr.postcode or "<MISSING>"
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city
+    state = adr.state
+    postal = adr.postcode
     country_code = "GB"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
+
     text = "".join(tree.xpath("//div[@class='box-wrapper']//script/text()"))
     latitude = "".join(re.findall(r'"lat":"(\d+.\d+)', text)) or "<MISSING>"
     longitude = "".join(re.findall(r'"lng":"(-?\d+.\d+)', text)) or "<MISSING>"
-    location_type = "<MISSING>"
 
     _tmp = []
     li = tree.xpath("//div[@class='box2col opening-hours']//li")
@@ -114,52 +74,44 @@ def get_data(page_url):
     if iscoming:
         hours_of_operation = "Coming Soon"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    coords = static_coordinate_list(radius=15, country_code=SearchableCountries.BRITAIN)
+def fetch_data(sgw: SgWriter):
     urls = set()
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN],
+        max_search_distance_miles=200,
+        expected_search_radius_miles=15,
+    )
+
+    for coord in search:
+        links = get_urls(coord)
+        for link in links:
+            urls.add(link)
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_urls, coord): coord for coord in coords}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            links = future.result()
-            for link in links:
-                urls.add(link)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://heronfoods.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

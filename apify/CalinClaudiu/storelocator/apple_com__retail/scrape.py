@@ -249,6 +249,13 @@ def get_country(search, country, session, headers, SearchableCountry, state):
     maxZ = None
     maxZ = search.items_remaining()
     total = 0
+    Point = (40.773103, -73.964488)
+    try:
+        for record in getPoint(Point, session, country.link, headers):
+            record["COUNTRY"] = country
+            yield record
+    except Exception:
+        pass
     for Point in search:
         found = 0
         try:
@@ -329,8 +336,8 @@ def fetch_data():
                     try:
                         search = DynamicGeoSearch(
                             country_codes=[SearchableCountry],
-                            expected_search_radius_miles=20,  # Must turn it back down to 50 after testing
-                            max_search_results=99,
+                            expected_search_radius_miles=None,  # Must turn it back down to 50 after testing
+                            max_search_results=100,
                             granularity=Grain_4(),
                         )
                     except Exception as e:
@@ -445,6 +452,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=25,
+        duplicate_streak_failure_factor=250000,
     )
 
     pipeline.run()

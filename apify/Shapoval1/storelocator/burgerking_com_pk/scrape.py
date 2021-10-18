@@ -50,6 +50,7 @@ def fetch_data(sgw: SgWriter):
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=SgRecord.MISSING,
+                    raw_address=location_name,
                 )
 
                 sgw.write_row(row)

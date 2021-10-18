@@ -97,6 +97,26 @@ def fetch_data(sgw: SgWriter):
         postal = a.get("postal") or "<MISSING>"
         country_code = "USA"
         city = a.get("city") or "<MISSING>"
+        if page_url == "https://prettykittywax.com/locations/tx/fort-worth-west-7th/":
+            street_address = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="elementor-section-wrap"]/section[4]/div/div/div[1]//h2/text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            city = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="elementor-section-wrap"]/section[4]/div/div/div[1]//h2/text()[2]'
+                    )
+                )
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
         phone = "".join(
             tree.xpath(
                 '//div[@class="elementor-section-wrap"]/section[4]/div/div/div[2]//a/text()'

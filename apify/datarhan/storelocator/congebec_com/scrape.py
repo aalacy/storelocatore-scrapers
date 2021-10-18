@@ -27,6 +27,7 @@ def fetch_data():
             poi_html.xpath(".//p/text()")[0]
             .replace("Adress: ", "")
             .replace("\xa0", " ")
+            .replace("Address: ", "")
         )
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
@@ -41,6 +42,8 @@ def fetch_data():
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         raw_data = poi_html.xpath('.//p[contains(text(), "Adress")]/text()')
+        if not raw_data:
+            raw_data = poi_html.xpath('.//p[contains(text(), "Address")]/text()')
         phone = [e.strip() for e in raw_data if "Phone" in e]
         phone = (
             phone[0].split("Phone:")[-1].replace("\xa0", "") if phone else "<MISSING>"

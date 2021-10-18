@@ -14,6 +14,7 @@ headers = {
 
 def fetch_data():
     mylist = static_coordinate_list(100, SearchableCountries.USA)
+    mylist = mylist + static_coordinate_list(70, SearchableCountries.CANADA)
     daylist = [
         "monday",
         "tuesday",
@@ -23,7 +24,6 @@ def fetch_data():
         "saturday",
         "sunday",
     ]
-
     for lat, lng in mylist:
         url = (
             "https://www.gcrtires.com/bcsutil/commercial/locations?lat="
@@ -32,15 +32,19 @@ def fetch_data():
             + str(lng)
             + "&radius="
             + "1000"
-            + "&bu=null&collection=aem_commercial_dealers&locationType=GCR"
+            + "&bu=tbr&collection=aem_commercial_dealers"
         )
 
-        loclist = session.get(url, headers=headers, verify=False).json()
+        try:
+            loclist = session.get(url, headers=headers).json()
+        except:
+            continue
         if len(loclist) == 0:
             continue
         for loc in loclist:
             store = loc["locationNo"]
             title = loc["legalName"].replace("\u0026", "&").strip()
+
             street = loc["streetAddress"]
             city = loc["city"]
             state = loc["state"]
@@ -61,36 +65,43 @@ def fetch_data():
                 close = 0
                 flag = 0
                 try:
-                    close = int(loc[day + "Close"].split(":", 1)[0])
+                    try:
+                        close = int(loc[day + "Close"].split(":", 1)[0])
+                    except:
+                        close = int(loc[day + "Close"].split(".", 1)[0])
+                        flag = 1
+                    if close > 12:
+                        close = close - 12
+                    if flag == 0:
+                        hours = (
+                            hours
+                            + day
+                            + " "
+                            + loc[day + "Open"]
+                            + " am - "
+                            + str(close)
+                            + ":"
+                            + loc[day + "Close"].split(":", 1)[1]
+                            + " pm "
+                        )
+                    elif flag == 1:
+                        hours = (
+                            hours
+                            + day
+                            + " "
+                            + loc[day + "Open"]
+                            + " am - "
+                            + str(close)
+                            + ":"
+                            + loc[day + "Close"].split(".", 1)[1]
+                            + " pm "
+                        )
                 except:
-                    close = int(loc[day + "Close"].split(".", 1)[0])
-                    flag = 1
-                if close > 12:
-                    close = close - 12
-                if flag == 0:
-                    hours = (
-                        hours
-                        + day
-                        + " "
-                        + loc[day + "Open"]
-                        + " am - "
-                        + str(close)
-                        + ":"
-                        + loc[day + "Close"].split(":", 1)[1]
-                        + " pm "
-                    )
-                elif flag == 1:
-                    hours = (
-                        hours
-                        + day
-                        + " "
-                        + loc[day + "Open"]
-                        + " am - "
-                        + str(close)
-                        + ":"
-                        + loc[day + "Close"].split(".", 1)[1]
-                        + " pm "
-                    )
+                    hours = hours + day + " Closed "
+            try:
+                ltype = loc["locationType"]
+            except:
+                ltype = "<MISSING>"
             link = "https://www.gcrtires.com/stores" + loc["externalPath"]
             if "--" in phone.strip():
                 phone = SgRecord.MISSING
@@ -105,9 +116,9 @@ def fetch_data():
                 country_code=ccode,
                 store_number=store,
                 phone=phone.strip(),
-                location_type=SgRecord.MISSING,
-                latitude=lat,
-                longitude=longt,
+                location_type=ltype,
+                latitude=str(lat),
+                longitude=str(longt),
                 hours_of_operation=hours,
             )
 

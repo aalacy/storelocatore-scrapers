@@ -33,7 +33,7 @@ def fetch_data(sgw: SgWriter):
             continue
 
         street_address = (store["address"] + " " + store["address_line_2"]).strip()
-        city = store["city"]
+        city = store["city"].strip()
         state = store["state"]
         zip_code = store["zip"]
 
@@ -45,6 +45,10 @@ def fetch_data(sgw: SgWriter):
             if "," in city:
                 street_address = city.split(",")[0].strip()
                 city = city.split(",")[1].strip()
+
+        if not city:
+            city = street_address.split(",")[1].strip()
+            street_address = street_address.split(",")[0].strip()
 
         country_code = "US"
         store_number = store["id"]
