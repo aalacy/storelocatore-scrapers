@@ -1,2 +1,2 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountValidator --ignore StateLevelCountValidator --ignore LatLngDuplicationValidator --ignore CountryCodeFillRateChecker
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore CountValidator --ignore StateLevelCountValidator --ignore LatLngDuplicationValidator --ignore CountryValidator --ignore CentroidValidator
 (Confirmed scraper worked correctly)
