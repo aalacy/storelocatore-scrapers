@@ -26,7 +26,6 @@ def fetch_data():
         raw_address = div.find("p")
         raw_address = re.sub(cleanr, "\n", str(raw_address))
         raw_address = re.sub(pattern, "\n", str(raw_address)).replace("\n", " ").strip()
-        print(raw_address)
         phone = div.find("p", {"class": "phoneDetails"}).text.split(" ", 1)[1]
         hours = div.find("ol").text
         hours = re.sub(pattern, " ", str(hours)).strip()
@@ -41,7 +40,7 @@ def fetch_data():
             .split("location/", 1)[1]
             .split("/", 1)[0]
         )
-        raw_address = address.replace("\n", " ").strip()
+        raw_address = raw_address.replace("\n", " ").strip()
         pa = parse_address_intl(raw_address)
         street_address = pa.street_address_1
         street = street_address if street_address else "<MISSING>"
