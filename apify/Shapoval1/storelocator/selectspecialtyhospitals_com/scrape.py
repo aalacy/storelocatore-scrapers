@@ -63,7 +63,6 @@ def fetch_data(sgw: SgWriter):
             hooco = f"https://www.selectspecialtyhospitals.com{hooco}"
         hours_of_operation = "<MISSING>"
         if hooco:
-            session = SgRequests()
             r = session.get(hooco, headers=headers)
             tree = html.fromstring(r.text)
             hours_of_operation = (
