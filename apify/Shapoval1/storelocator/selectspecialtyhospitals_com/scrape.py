@@ -61,7 +61,7 @@ def fetch_data(sgw: SgWriter):
         try:
             tree = html.fromstring(r.text)
         except AttributeError:
-            return
+            continue
         hooco = "".join(tree.xpath('//div[@class="field-businesshours"]/p/a/@href'))
         if hooco.find("http") == -1:
             hooco = f"https://www.selectspecialtyhospitals.com{hooco}"
@@ -71,7 +71,7 @@ def fetch_data(sgw: SgWriter):
             try:
                 tree = html.fromstring(r.text)
             except AttributeError:
-                return
+                continue
             hours_of_operation = (
                 "".join(
                     tree.xpath(
