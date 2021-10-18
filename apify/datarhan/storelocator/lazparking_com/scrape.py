@@ -15,7 +15,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
     )
     for lat, lng in all_coords:
         all_locations = session.get(
