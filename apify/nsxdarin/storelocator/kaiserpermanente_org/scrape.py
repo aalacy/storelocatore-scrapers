@@ -54,70 +54,75 @@ def fetch_data():
         zc = ""
         phone = ""
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        AF = False
-        for line2 in lines:
-            if "Affiliated facility" in line2:
-                AF = True
-            if (
-                'phone-number styling-5-marketing" x-ms-format-detection="none">'
-                in line2
-            ):
-                g = next(lines)
-                phone = g.strip().replace("\t", "").replace("\r", "").replace("\t", "")
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split("<")[0]
-                if " |" in name:
-                    name = name.split(" |")[0]
-            if '{"street":"' in line2 and add == "":
-                add = line2.split('{"street":"')[1].split('"')[0]
-                city = line2.split('"city":"')[1].split('"')[0]
-                state = line2.split('"state":"')[1].split('"')[0]
-                zc = line2.split('"zip":"')[1].split('"')[0]
-                try:
-                    lat = line2.split('"lat":"')[1].split('"')[0]
-                    lng = line2.split('"lng":"')[1].split('"')[0]
-                except:
-                    lat = "<MISSING>"
-                    lng = "<MISSING>"
-                if ", Suite" in add:
-                    add = add.split(", Suite")[0]
-                if " Suite" in add:
-                    add = add.split(" Suite")[0]
-                if ", Ste" in add:
-                    add = add.split(", Ste")[0]
-                if " Ste" in add:
-                    add = add.split(" Ste")[0]
-            if '<ul class="fd--no-bullets fd--no-padding-margin">' in line2:
-                g = next(lines)
-                hours = g.split(">")[1].split("<")[0]
-                next(lines)
-                g = next(lines)
-                if "day" in g and "<li>" in g:
-                    hours = hours + "; " + g.split(">")[1].split("<")[0].strip()
-            if "> Holidays" in line2:
-                hours = hours + "; " + line2.split(">")[1].split("<")[0].strip()
-        if hours == "":
-            hours = "<MISSING>"
-        if "day" not in hours and "MISSING" not in hours:
-            hours = hours + " - 7 days"
-        if AF:
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        try:
+            lines = r2.iter_lines()
+            AF = False
+            for line2 in lines:
+                if "Affiliated facility" in line2:
+                    AF = True
+                if (
+                    'phone-number styling-5-marketing" x-ms-format-detection="none">'
+                    in line2
+                ):
+                    g = next(lines)
+                    phone = (
+                        g.strip().replace("\t", "").replace("\r", "").replace("\t", "")
+                    )
+                if "<title>" in line2:
+                    name = line2.split("<title>")[1].split("<")[0]
+                    if " |" in name:
+                        name = name.split(" |")[0]
+                if '{"street":"' in line2 and add == "":
+                    add = line2.split('{"street":"')[1].split('"')[0]
+                    city = line2.split('"city":"')[1].split('"')[0]
+                    state = line2.split('"state":"')[1].split('"')[0]
+                    zc = line2.split('"zip":"')[1].split('"')[0]
+                    try:
+                        lat = line2.split('"lat":"')[1].split('"')[0]
+                        lng = line2.split('"lng":"')[1].split('"')[0]
+                    except:
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                    if ", Suite" in add:
+                        add = add.split(", Suite")[0]
+                    if " Suite" in add:
+                        add = add.split(" Suite")[0]
+                    if ", Ste" in add:
+                        add = add.split(", Ste")[0]
+                    if " Ste" in add:
+                        add = add.split(" Ste")[0]
+                if '<ul class="fd--no-bullets fd--no-padding-margin">' in line2:
+                    g = next(lines)
+                    hours = g.split(">")[1].split("<")[0]
+                    next(lines)
+                    g = next(lines)
+                    if "day" in g and "<li>" in g:
+                        hours = hours + "; " + g.split(">")[1].split("<")[0].strip()
+                if "> Holidays" in line2:
+                    hours = hours + "; " + line2.split(">")[1].split("<")[0].strip()
+            if hours == "":
+                hours = "<MISSING>"
+            if "day" not in hours and "MISSING" not in hours:
+                hours = hours + " - 7 days"
+            if AF:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+        except:
+            pass
 
 
 def scrape():

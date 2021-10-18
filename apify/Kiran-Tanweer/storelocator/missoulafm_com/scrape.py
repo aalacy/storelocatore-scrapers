@@ -26,7 +26,10 @@ def fetch_data():
         for loc in loclist:
             store_number = loc["store_id"]
             location_name = loc["store_name"]
-            log.info(location_name)
+            page_url = (
+                "https://missoulafm.com/" + location_name.split("-")[1].strip().lower()
+            )
+            log.info(page_url)
             phone = loc["store_phone"]
             street_address = loc["store_address"]
             city = loc["store_city"]
