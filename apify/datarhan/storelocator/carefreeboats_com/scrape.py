@@ -33,6 +33,18 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        zip_code = addr.postcode
+        country_code = ""
+        if zip_code and len(zip_code.split()) == 2:
+            country_code = "CA"
+        else:
+            if zip_code:
+                country_code = "US"
+        if not country_code:
+            country_code = addr.country
+        state = addr.state
+        if state == "Ontario":
+            country_code = "CA"
 
         item = SgRecord(
             locator_domain=domain,
@@ -40,9 +52,9 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=addr.city,
-            state=addr.state,
-            zip_postal=addr.postcode,
-            country_code="",
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
             store_number="",
             phone=raw_data[-1],
             location_type="",
