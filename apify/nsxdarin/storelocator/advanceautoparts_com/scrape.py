@@ -22,7 +22,6 @@ def fetch_data():
     website = "advanceautoparts.com"
     typ = "<MISSING>"
     country = "<MISSING>"
-    canada = ["PE", "NB", "MB", "BC", "ON", "QC", "AB", "NS", "NL"]
     for url in urls:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -98,7 +97,6 @@ def fetch_data():
                 country = ""
                 phone = ""
                 store = ""
-                LocFound = False
                 NFound = False
                 for line in r.iter_lines():
                     if NFound is False and '"Nap-heading Heading Heading--h1">' in line:
@@ -155,28 +153,26 @@ def fetch_data():
                                     hours = hrs
                                 else:
                                     hours = hours + "; " + hrs
-                if store not in allstores:
-                    allstores.append(store)
-                    if state == "":
-                        state = "PR"
-                    if state == "PR":
-                        country = "US"
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+                if state == "":
+                    state = "PR"
+                if state == "PR":
+                    country = "US"
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
             except:
                 if tries <= 3:
                     LFound = True
