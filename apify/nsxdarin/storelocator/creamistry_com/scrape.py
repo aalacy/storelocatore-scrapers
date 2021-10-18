@@ -19,7 +19,6 @@ def fetch_data():
             lurl = "https://creamistry.com/" + line.split('href="')[1].split('"')[0]
             if "detail" not in lurl:
                 locs.append(lurl)
-    print(("Found %s Locations." % str(len(locs))))
     for loc in locs:
         name = ""
         add = ""
@@ -32,7 +31,6 @@ def fetch_data():
         country = ""
         zc = ""
         phone = ""
-        print(("Pulling Location %s..." % loc))
         website = "creamistry.com"
         typ = "Restaurant"
         r2 = session.get(loc, headers=headers)
