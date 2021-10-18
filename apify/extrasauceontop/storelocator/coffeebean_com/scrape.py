@@ -64,7 +64,9 @@ def get_data():
         if us.states.lookup(state):
             country_code = "USA"
         else:
-            country_code = page_url.replace("https://www.coffeebean.com/store/", "").split("/")[0]
+            country_code = page_url.replace(
+                "https://www.coffeebean.com/store/", ""
+            ).split("/")[0]
 
         try:
             location_name = soup.find("h1", attrs={"class": "Hero-title"}).text.strip()
