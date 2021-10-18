@@ -2,7 +2,7 @@ import time
 import json
 from concurrent import futures
 
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_2
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -17,20 +17,22 @@ MISSING = SgRecord.MISSING
 max_workers = 1
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-    "Accept": "*/*",
-    "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-    "Content-Type": "application/json; charset=UTF-8",
-    "Origin": "https://03919locator.wave2.io",
-    "Connection": "keep-alive",
-    "Referer": "https://03919locator.wave2.io/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-site",
-    "TE": "trailers",
+    "authority": "locationapi.wave2.io",
+    "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+    "accept": "*/*",
+    "content-type": "application/json; charset=UTF-8",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
+    "sec-ch-ua-platform": '"macOS"',
+    "origin": "https://03919locator.wave2.io",
+    "sec-fetch-site": "same-site",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://03919locator.wave2.io/",
+    "accept-language": "en-US,en;q=0.9",
 }
 
-session = SgRequests()
+
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -48,6 +50,7 @@ def request_with_retries(zip_code):
         "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
     }
     try:
+        session = SgRequests()
         response = session.post(store_url, headers=headers, data=json.dumps(data))
         stores = json.loads(response.text)["Features"]
         log.debug(f"From {zip_code} stores = {len(stores)}")
@@ -106,8 +109,8 @@ def get_hoo(store):
 def fetch_data():
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=1,
-        granularity=Grain_1_KM(),
+        max_search_distance_miles=10,
+        granularity=Grain_2(),
     )
 
     with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
