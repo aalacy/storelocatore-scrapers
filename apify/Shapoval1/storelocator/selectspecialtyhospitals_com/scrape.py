@@ -15,6 +15,7 @@ def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+
     r = session.get(api_url, headers=headers)
     js = r.json()["Results"]
 
@@ -57,14 +58,20 @@ def fetch_data(sgw: SgWriter):
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        try:
+            tree = html.fromstring(r.text)
+        except AttributeError:
+            return
         hooco = "".join(tree.xpath('//div[@class="field-businesshours"]/p/a/@href'))
         if hooco.find("http") == -1:
             hooco = f"https://www.selectspecialtyhospitals.com{hooco}"
         hours_of_operation = "<MISSING>"
         if hooco:
             r = session.get(hooco, headers=headers)
-            tree = html.fromstring(r.text)
+            try:
+                tree = html.fromstring(r.text)
+            except AttributeError:
+                return
             hours_of_operation = (
                 "".join(
                     tree.xpath(
@@ -98,7 +105,6 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
