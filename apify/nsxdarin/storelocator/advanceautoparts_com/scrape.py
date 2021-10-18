@@ -18,7 +18,6 @@ def fetch_data():
     states = []
     cities = []
     locs = []
-    allstores = []
     website = "advanceautoparts.com"
     typ = "<MISSING>"
     country = "<MISSING>"
