@@ -229,30 +229,20 @@ def get_location(request_url):
 
 
 def scrape_loc_urls():
-    url_list = [loc for loc in crawl_state.request_stack_iter()][:1000]
+    url_list = [loc for loc in crawl_state.request_stack_iter()]
     if len(url_list) < 50:
         log.info("no records, did it run with a proxy?")
         raise Exception
 
-    results = []
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_location, loc) for loc in url_list]
         for future in as_completed(futures):
             try:
                 record = future.result()
                 if record:
-                    results.append(record)
+                    yield record
             except Exception as e:
                 log.error(str(e))
-
-    return results
-
-
-def get_data():
-    results = scrape_loc_urls()
-
-    for result in results:
-        yield result
 
 
 def scrape():
@@ -290,7 +280,7 @@ def scrape():
 
     pipeline = sp.SimpleScraperPipeline(
         scraper_name="Crawler",
-        data_fetcher=get_data,
+        data_fetcher=scrape_loc_urls,
         field_definitions=field_defs,
         log_stats_interval=15,
     )

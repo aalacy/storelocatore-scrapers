@@ -59,8 +59,13 @@ def fetch_data():
             .split(",")
         )
 
-        street_address = ", ".join(full_address[:-3]).strip()
+        street_address = (
+            ", ".join(full_address[:-3]).strip().replace(",  Alpharetta", "").strip()
+        )
         city = location_name.split(",")[0].strip()
+        if street_address == "378 Newnan Crossing Bypass Newnan":
+            street_address = "378 Newnan Crossing Bypass"
+
         state = full_address[-2].strip()
         zip = full_address[-1].split("-")[-1].strip()
         country_code = "US"

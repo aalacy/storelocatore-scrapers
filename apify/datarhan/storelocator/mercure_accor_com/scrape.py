@@ -1,6 +1,5 @@
 import json
 from lxml import etree
-from urllib.parse import urlencode
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -14,33 +13,6 @@ headers = {
 }
 
 
-def parse_ids(dom, session):
-    ent_list = []
-    ids = dom.xpath('//script[@id="paginator-ids-core"]/text()')
-    urls = []
-    if ids:
-        ids = json.loads(ids[0])
-        for e in ids:
-            ent_list.append({"meta.id": {"$eq": e}})
-
-        params = {
-            "api_key": "f60a800cdb7af0904b988d834ffeb221",
-            "v": "20160822",
-            "filter": {"$or": ent_list},
-            "languages": "en_GB",
-            "limit": "50",
-        }
-        params = urlencode(params)
-        url = "https://liveapi.yext.com/v2/accounts/1624327134898036854/entities?"
-
-        urls = []
-        data = session.get(url + params).json()
-        for e in data["response"]["entities"]:
-            urls.append(e["c_pageDestinationURL"])
-
-    return urls
-
-
 def fetch_all_locations(session):
     locations = []
     start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
@@ -50,7 +22,7 @@ def fetch_all_locations(session):
 
 
 def traverse_directory(url, session, locations):
-    page = etree.HTML(session.get(url, headers=headers, timeout=180).text)
+    page = etree.HTML(session.get(url, headers=headers).text)
     sublocations = page.xpath('//*[@class="Teaser-link"]/@href')
     bookings = [url for url in sublocations if "index.en.shtml" in url]
     if len(bookings):
@@ -64,11 +36,13 @@ def traverse_directory(url, session, locations):
 
 def fetch_data():
     domain = "accor.com"
-    session = SgRequests(proxy_rotation_failure_threshold=3, retry_behavior=None)
+    session = SgRequests()
 
     all_locations = fetch_all_locations(session)
     for store_url in all_locations:
         loc_response = session.get(store_url, headers=headers)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath(
             '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
@@ -76,7 +50,8 @@ def fetch_data():
         if not poi:
             continue
         poi = json.loads(poi[0])
-
+        if poi["logo"].split("/")[-1] != "logo_mer.png":
+            continue
         street_address = loc_dom.xpath(
             '//meta[@property="og:street-address"]/@content'
         )[0]

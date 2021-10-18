@@ -40,34 +40,13 @@ def split_fulladdress(address_info):
     return street_address, city, state, zip, country_code
 
 
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
 
     search_url = "https://tonysbigpizza.com/"
 
     with SgRequests(
-        dont_retry_status_codes_exceptions=set([301]), retries_with_fresh_proxy_ip=20
+        dont_retry_status_codes=set([404]), retries_with_fresh_proxy_ip=20
     ) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
@@ -118,8 +97,19 @@ def fetch_data():
                 )
             )
             hours_of_operation = "; ".join(hours)
-            map_link = "".join(store_sel.xpath('//a[contains(@href,"maps")]/@href'))
-            latitude, longitude = get_latlng(map_link)
+            map_link = "".join(
+                store_sel.xpath('//a[contains(@href,"/maps/dir/")]/@href')
+            )
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            try:
+                latitude = map_link.split("/")[-1].strip().split(",")[0].strip()
+            except:
+                pass
+            try:
+                longitude = map_link.split("/")[-1].strip().split(",")[1].strip()
+            except:
+                pass
             raw_address = "<MISSING>"
 
             yield SgRecord(

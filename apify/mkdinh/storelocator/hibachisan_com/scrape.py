@@ -51,6 +51,7 @@ def fetch_data():
     df = fetch_locations()
     for _, row in df.iterrows():
         yield SgRecord(
+            locator_domain="hibachisan.com",
             location_name=row.location_name,
             street_address=row.street_address,
             city=row.city,
