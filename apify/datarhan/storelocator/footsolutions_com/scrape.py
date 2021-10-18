@@ -1,150 +1,85 @@
-import csv
+import json
+import datetime
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "footsolutions.com"
-    start_url = "https://footsolutions.com/map"
+    session = SgRequests()
+    domain = "footsolutions.com"
+    start_url = "https://footsolutions.com/locations/"
 
     hdr = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//a[contains(@class, "Map__StoreLink")]/@href')
-
-    for url in list(set(all_locations)):
-        store_url = urljoin(start_url, url)
-        if store_url == "https://footsolutions.com/sandy-springs":
-            store_url = "https://footsolutions.com/sandysprings"
-        loc_response = session.get(store_url, headers=hdr)
-        if loc_response.status_code == 404:
-            continue
+    data = (
+        dom.xpath('//script[contains(text(), "FWP_JSON =")]/text()')[0]
+        .split("JSON =")[-1]
+        .split(";\nwindow.FWP_HTTP")[0]
+    )
+    data = json.loads(data)
+    all_locations = data["preload_data"]["settings"]["map"]["locations"]
+    for poi in all_locations:
+        poi_html = etree.HTML(poi["content"])
+        page_url = poi_html.xpath("//a/@href")[0]
+        loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h2[contains(@class, "Hero__SubTitle")]/text()')
-        if not location_name:
-            location_name = loc_dom.xpath(
-                '//h1[contains(@class, "Headings__TitleM")]/text()'
-            )
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath('//a[contains(@href, "maps.google")]/p/text()')
+        location_name = poi_html.xpath("//strong/text()")[0]
+        raw_address = poi_html.xpath('//div[@class="address"]//text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
-        addr = parse_address_intl(" ".join(raw_address))
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        if not street_address:
-            street_address = raw_address[0]
-        if street_address.endswith("/"):
-            street_address = street_address[:-1]
-        city = addr.city
-        if not city:
-            city = raw_address[1].split(", ")[0]
-        city = city.split("/")[0].strip()
-        state = addr.state
-        if not state:
-            state = raw_address[1].split(", ")[-1].split()[0]
-        zip_code = addr.postcode
-        if not zip_code:
-            zip_code = raw_address[1].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//a[contains(@class, "Hero__Phone")]/text()')
-        if not phone:
-            phone = loc_dom.xpath('//p[contains(@class, "Phone")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hoo = loc_dom.xpath(
-            '//p[contains(text(), "Hours")]/following-sibling::p/text()'
+        if len(raw_address) == 3:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+        phone = loc_dom.xpath('//a[@class="phone"]/span/text()')[0]
+        hoo = loc_dom.xpath('//div[@class="hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo)
+        today = datetime.datetime.today().strftime("%A")
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        tomorrow = tomorrow.strftime("%A")
+        hoo = hoo.replace("Today", today).replace("Tomorrow", tomorrow)
+        zip_code = " ".join(raw_address[1].split(", ")[-1].split()[1:])
+        country_code = "US"
+        if len(zip_code.split()) == 2:
+            country_code = "CA"
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[-1].split()[0],
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=poi["position"]["lat"],
+            longitude=poi["position"]["lng"],
+            hours_of_operation=hoo,
         )
-        if not hoo:
-            hoo = loc_dom.xpath(
-                '//h1[contains(text(), "Hours")]/following-sibling::div/p/text()'
-            )
-        hoo = [
-            " - ".join(
-                [s.strip() for s in e.strip().split("-") if "april" not in s.lower()]
-            )
-            for e in hoo
-            if e.strip()
-        ]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-        if "Private Appointments" in hours_of_operation:
-            hours_of_operation = (
-                "Monday-Friday 10:00AM - 5:00PM Saturday 10:00AM - 4:00PM"
-            )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
