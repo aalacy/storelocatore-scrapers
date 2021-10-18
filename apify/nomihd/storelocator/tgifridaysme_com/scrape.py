@@ -38,7 +38,7 @@ def fetch_data():
             log.info(country)
             data = {"c": country, "action": "active_country"}
 
-            search_res = session.post(
+            session.post(
                 "https://tgifridaysme.com/wp-content/themes/tgifridays-theme/ajaxRequest.php",
                 data=data,
             )
@@ -57,22 +57,6 @@ def fetch_data():
                 page_url = "<MISSING>"
                 store_number = "".join(stores[index].xpath("@id")).strip()
                 log.info(f"pulling info for ID: {store_number}")
-                store_headers = {
-                    "authority": "tgifridaysme.com",
-                    "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
-                    "accept": "application/json, text/javascript, */*; q=0.01",
-                    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-                    "x-requested-with": "XMLHttpRequest",
-                    "sec-ch-ua-mobile": "?0",
-                    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
-                    "sec-ch-ua-platform": '"Windows"',
-                    "origin": "https://tgifridaysme.com",
-                    "sec-fetch-site": "same-origin",
-                    "sec-fetch-mode": "cors",
-                    "sec-fetch-dest": "empty",
-                    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
-                }
-
                 store_data = {"p": store_number, "action": "map_content"}
                 store_req = session.post(
                     "https://tgifridaysme.com/wp-content/themes/tgifridays-theme/ajaxRequest.php",
