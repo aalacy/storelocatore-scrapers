@@ -44,13 +44,13 @@ def fetch_data():
         raw_address = address.replace("\n", " ").strip()
         pa = parse_address_intl(raw_address)
         street_address = pa.street_address_1
-        street = street_address if street_address else MISSING
+        street = street_address if street_address else "<MISSING>"
         city = pa.city
-        city = city.strip() if city else MISSING
+        city = city.strip() if city else "<MISSING>"
         state = pa.state
-        state = state.strip() if state else MISSING
+        state = state.strip() if state else "<MISSING>"
         zip_postal = pa.postcode
-        pcode = zip_postal.strip() if zip_postal else MISSING
+        pcode = zip_postal.strip() if zip_postal else "<MISSING>"
 
         yield SgRecord(
             locator_domain=base_url,
