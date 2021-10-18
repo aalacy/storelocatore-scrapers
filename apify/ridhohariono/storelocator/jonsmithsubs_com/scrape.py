@@ -64,18 +64,14 @@ def fetch_data():
     )
     more_locs = soup.find("section", {"id": "more-locs"}).find_all("section")
     for row in content:
-        check_status = row.find(
-            "div", {"id": re.compile(r"location-search-content-.*")}
-        )
-        if (
-            not check_status
-            or "Coming Soon!" in check_status.text.strip()
-            or "Temporarily Closed" in check_status.text.strip()
-        ):
+        if "Coming Soon!" in row.text.strip():
             continue
-
-        page_url = BASE_URL + row.find("a", text="View Menu & Details")["href"]
         location_name = row.find("h4").text.strip()
+        url_content = row.find("a", text="View Menu & Details")
+        if not url_content:
+            page_url = LOCATION_URL
+        else:
+            page_url = BASE_URL + row.find("a", text="View Menu & Details")["href"]
         raw_address = row.find("a", {"class": "address-link"}).get_text(
             strip=True, separator=" "
         )
@@ -83,7 +79,10 @@ def fetch_data():
         country_code = "US"
         store_number = MISSING
         phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
-        location_type = "PRIMARY LOCATION"
+        if "Temporarily Closed" in row.text.strip():
+            location_type = "TEMPORARILY CLOSED"
+        else:
+            location_type = "PRIMARY LOCATION"
         latitude = MISSING
         longitude = MISSING
         hours_of_operation = (
@@ -93,6 +92,8 @@ def fetch_data():
             .replace("-,", "- ")
             .replace("00,", "00 ")
         )
+        if "Temporarily Closed" in hours_of_operation:
+            hours_of_operation = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
