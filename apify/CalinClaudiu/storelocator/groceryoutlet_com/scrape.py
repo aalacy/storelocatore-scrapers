@@ -9,6 +9,9 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgChrome
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import sglog
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 domain = "groceryoutlet.com"
 log = sglog.SgLogSetup().get_logger(logger_name=domain)
