@@ -10,7 +10,7 @@ from sgpostal.sgpostal import parse_address_usa
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://wbliquors.com/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
@@ -20,29 +20,24 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//div[contains(@class, "jet-listing-grid__item jet-listing-dynamic-post-") and @data-post-id]'
+        '//div[@class="jet-listing-grid jet-listing"]/div/div[contains(@class, "jet-listing-grid__item")]'
     )
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//h5/text()")[0].replace("\n", "").strip()
         raw_addr = poi_html.xpath(
-            './/div[@class="elementor-widget-container"]/p/text()'
+            './/div[@class="elementor-text-editor elementor-clearfix"]/p/text()'
         )[0]
         addr = parse_address_usa(raw_addr)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
         city = addr.city
-        if not city and len(raw_addr.split(", ")) > 1:
-            city = raw_addr.split(", ")[1]
-        street_address = raw_addr.split(city)[0].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        if not city:
-            street_address = raw_addr
-        if city and ", " in city:
-            street_address += ", " + city.split(", ")[0]
-            city = city.split(", ")[-1]
-        if len(street_address.split()) == 1:
-            street_address = raw_addr.split(", ")[0]
-        if city and street_address.endswith(city):
-            street_address = street_address[: len(city)].strip()
+        if city and "," in city:
+            street_address += " " + city.split(",")[0].strip()
+            city = " " + city.split(",")[-1].strip()
+        if not city and "," in street_address:
+            city = street_address.split(",")[-1].strip()
+            street_address = street_address.split(",")[0].strip()
         state = addr.state
         zip_code = addr.postcode
         country_code = addr.country

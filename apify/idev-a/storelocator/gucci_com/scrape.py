@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import json
+import dirtyjson as json
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
@@ -16,21 +16,34 @@ _headers = {
     "accept-language": "en-US,en;q=0.9,ko;q=0.8",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.gucci.com"
+base_url = "https://www.gucci.com/int/en/store"
 
 
 def fetch_data():
-    locator_domain = "https://www.gucci.com"
-    base_url = "https://www.gucci.com/int/en/store"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("ol.search-results li.store-item")
-        logger.info(f"[********] {len(locations)} found in {base_url}")
+        logger.info(f"[********] {len(locations)} found")
+
         for _ in locations:
             page_url = locator_domain + _.h3.a["href"]
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            loc = json.loads(
-                sp1.find("script", type="application/ld+json").string.strip()
-            )
+            logger.info(f"{page_url}")
+            res = session.get(page_url, headers=_headers)
+            if res.url == "https://www.gucci.com/int/en/store":
+                continue
+            sp1 = bs(res.text, "lxml")
+            try:
+                loc = json.loads(
+                    sp1.find("script", type="application/ld+json").string.strip()
+                )
+            except:
+                loc = json.loads(
+                    sp1.find("script", type="application/ld+json")
+                    .string.replace('""Shop', '"Shop')
+                    .replace('Shanghai"', "Shanghai")
+                    .strip()
+                )
             hours = []
             for hh in loc["openingHoursSpecification"]:
                 day = f"{hh['dayOfWeek'][0]}-{hh['dayOfWeek'][-1]}"
@@ -73,9 +86,11 @@ def fetch_data():
                 state = " ".join(list(set(state.split(" "))))
             zip_postal = addr.postcode
             phone = loc["telephone"].split("(x")[0]
-            if phone == "n/a":
+            if phone == "n/a" or phone == "N/A":
                 phone = ""
-            logger.info(f"[{aa['addressCountry']}] {page_url}")
+
+            if country_code == "INT":
+                country_code = ""
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["data-store-code"],
