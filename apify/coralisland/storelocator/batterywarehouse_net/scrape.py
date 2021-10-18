@@ -53,7 +53,6 @@ def fetch_data():
                 .replace("|", "")
                 .replace("YorkPA", "York PA")
             )
-            print(address)
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -87,7 +86,6 @@ def fetch_data():
                 .replace("Hours:", "")
                 .replace("/", " ")
             )
-            print(hours_of_operation)
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
