@@ -4,7 +4,7 @@ import json
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -42,9 +42,10 @@ def fetch_data():
                     link = stlink
                 content = re.sub(cleanr, "\n", str(div)).strip()
                 content = re.sub(pattern, "\n", str(content)).strip()
+
                 if (
                     "(" in content.splitlines()[-1]
-                    and ")" in content.splitlines()[-1]
+                    or ")" in content.splitlines()[-1]
                     or "-" in content.splitlines()[-1]
                 ):
                     title = content.split("\n", 1)[0]
@@ -55,7 +56,7 @@ def fetch_data():
                     title = content.splitlines()[0]
                     street = (
                         content.split(title, 1)[1]
-                        .split(city, 1)[0]
+                        .split(city + "\n", 1)[0]
                         .replace("\n", " ")
                         .strip()
                     )
@@ -101,7 +102,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
 
         results = fetch_data()
