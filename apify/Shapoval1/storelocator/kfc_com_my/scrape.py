@@ -34,6 +34,8 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
+        if phone == "n/a":
+            phone = "<MISSING>"
         hours_of_operation = f"Weekday {j.get('weekdayopen')} - {j.get('weekdayclose')} Weekend {j.get('weekendopen')} - {j.get('weekendclose')}"
 
         row = SgRecord(
