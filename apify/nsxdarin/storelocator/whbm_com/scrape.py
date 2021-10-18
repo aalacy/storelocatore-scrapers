@@ -12,7 +12,6 @@ headers = {
 
 
 def fetch_data():
-    locs = []
     typ = "<MISSING>"
     website = "whbm.com"
     url = "https://www.whitehouseblackmarket.com/locations/modules/multilocation/?near_location=55441&services__in=&language_code=en-us&published=1&within_business=true&limit=500"
