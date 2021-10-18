@@ -96,7 +96,7 @@ def fetch_location(store_number, retry_count=0):
         if retry_count < 5:
             return fetch_location(store_number, retry_count + 1)
         else:
-            raise Exception(f'fail to fetch: {page_url}')
+            raise Exception(f"fail to fetch: {page_url}")
 
 
 def write_data(data):
