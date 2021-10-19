@@ -32,19 +32,32 @@ def fetch_data():
             page_url = loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            temp = r.text.split('<script type="application/ld+json">')[1].split('</script>')[0]
+            temp = r.text.split('<script type="application/ld+json">')[1].split(
+                "</script>"
+            )[0]
             temp = json.loads(temp)
             location_name = temp["name"]
             phone = temp["telephone"]
             address = temp["address"]
-            street_address = address["streetAddress"]
             city = address["addressLocality"]
             state = address["addressRegion"]
             zip_postal = address["postalCode"]
+            street_address = (
+                address["streetAddress"]
+                .replace("<br/>", "")
+                .replace(city, "")
+                .replace(state, "")
+                .replace(zip_postal, "")
+            )
             country_code = address["addressCountry"]
             latitude = str(temp["geo"]["latitude"])
             longitude = str(temp["geo"]["longitude"])
-            hours_of_operation = str(temp['openingHours']).replace("'","").replace('[','').replace(']','')
+            hours_of_operation = (
+                str(temp["openingHours"])
+                .replace("'", "")
+                .replace("[", "")
+                .replace("]", "")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
