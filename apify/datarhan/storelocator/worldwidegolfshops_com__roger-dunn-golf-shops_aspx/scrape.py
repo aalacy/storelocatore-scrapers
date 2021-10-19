@@ -3,11 +3,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import webdriver, SgFirefox
+from sgselenium.sgselenium import SgFirefox
 import json
 from sglogging import SgLogSetup
 
-
+MISSING = SgRecord.MISSING
 STORE_LOCATOR_URL = "https://www.worldwidegolfshops.com/storelocator"
 headers = {
     "content-type": "application/json",
