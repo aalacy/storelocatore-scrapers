@@ -256,7 +256,7 @@ if __name__ == "__main__":
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
     ) as writer:
-        search_iter = ExampleSearchIteration(http=http)
+        search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
             search_iteration=search_iter,
