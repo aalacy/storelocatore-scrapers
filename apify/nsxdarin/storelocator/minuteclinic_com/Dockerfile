@@ -4,6 +4,6 @@ COPY . ./
 
 USER root
 
-RUN pip3.7 install -r requirements.txt
+RUN pip3.9 install -r requirements.txt
 
 CMD npm start
