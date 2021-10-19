@@ -3,3 +3,4 @@ sgscrape==0.1.14
 sgrequests==0.1.13
 sgvalidator==0.0.71
 beautifulsoup4==4.9.3
+sgzip==0.10.4
