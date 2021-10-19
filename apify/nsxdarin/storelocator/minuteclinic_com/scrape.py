@@ -26,12 +26,6 @@ def write_output(data):
             writer.write_row(row)
 
 
-def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for row in data:
-            writer.write_row(row)
-
-
 def random_sleep():
     time.sleep(random.random() * 2)
 
