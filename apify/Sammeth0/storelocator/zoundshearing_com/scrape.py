@@ -19,7 +19,7 @@ def fetch_data():
         "lat": "33.4483771",
         "lng": "-112.0740373",
         "name": "",
-        "radius": "100",
+        "radius": "5000",
         "tags": "",
         "action": "csl_ajax_onload",
     }
@@ -30,13 +30,13 @@ def fetch_data():
         street_address = poi["address"]
         if poi["address2"]:
             street_address += " " + poi["address2"]
-        hoo = poi["hours"].strip()
+        hoo = poi["hours"].strip().replace("&amp;", "&").replace("&lt;br&gt;", "")
         if hoo == "Call for Appointment":
             hoo = ""
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url="https://www.zoundshearing.com/corp/storelocator/",
             location_name=poi["name"],
             street_address=street_address,
             city=poi["city"],

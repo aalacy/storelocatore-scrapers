@@ -1,42 +1,16 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.lovealondras.com/locations"
 
@@ -47,13 +21,12 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    raw_data = base.find(class_="js-react-on-rails-component").contents[0]
-    js = raw_data.split('locations":')[-1].split(',"menus')[0]
+    raw_data = base.find(id="popmenu-apollo-state").contents[0]
+    js = raw_data.split("STATE =")[1].strip()[:-1]
     store_data = json.loads(js)
 
     items = base.find(class_="pm-location-search-list").find_all("section")
 
-    data = []
     for i, item in enumerate(items):
         locator_domain = "lovealondras.com"
         location_name = item.h4.text
@@ -63,40 +36,44 @@ def fetch_data():
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
-        store_number = store_data[i]["id"]
         location_type = "<MISSING>"
         phone = item.find_all("p")[1].text.strip()
         hours_of_operation = " ".join(list(item.find(class_="hours").stripped_strings))
-        latitude = store_data[i]["lat"]
-        longitude = store_data[i]["lng"]
         link = (
             "https://www.lovealondras.com" + item.find("a", string="View Menu")["href"]
         )
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+
+        store_number = ""
+        latitude = ""
+        longitude = ""
+
+        for loc in store_data:
+            if "RestaurantLocation:" in loc:
+                store = store_data[loc]
+                if store["city"] in location_name:
+                    store_number = store["id"]
+                    latitude = store["lat"]
+                    longitude = store["lng"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

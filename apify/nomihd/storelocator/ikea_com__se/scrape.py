@@ -66,7 +66,7 @@ def fetch_data():
         store_number = "<MISSING>"
 
         location_type = "<MISSING>"
-        hours = store_sel.xpath('//div[./h3[contains(text(),"ppettider")]]')
+        hours = store_sel.xpath('//div[./*[contains(text(),"ppettider")]]')
         if len(hours) > 0:
             hours_of_operation = ", ".join(hours[0].xpath("p[1]/text()")).strip()
 

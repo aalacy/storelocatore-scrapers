@@ -1024,7 +1024,15 @@ allcities = [
 
 
 def fetch_data():
-    locs = ["https://www.dairyqueen.com/en-ca/locations/on/ajax/250-bayly-st-w/1993/"]
+    locs = [
+        "https://www.dairyqueen.com/en-ca/locations/on/ajax/250-bayly-st-w/1993/",
+        "https://www.dairyqueen.com/en-ca/locations/sk/carlyle/cornerstone-plaza/7833/",
+        "https://www.dairyqueen.com/en-ca/locations/sk/davidson/highway-11-enterprise-lane/12601/",
+        "https://www.dairyqueen.com/en-ca/locations/sk/rosthern/901-saskatchewan-st/15258/",
+        "https://www.dairyqueen.com/en-ca/locations/sk/wakaw/nw-14-section-19-twp-42-range-26-west-2/13384/",
+        "https://www.dairyqueen.com/en-ca/locations/sk/shellbrook/highway-3-and-55/15278/",
+        "https://www.dairyqueen.com/en-ca/locations/ab/valleyview/3808-highway-st-unit-3/14661/",
+    ]
     for lat, lng in search:
         time.sleep(1)
         url = (

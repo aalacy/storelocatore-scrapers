@@ -28,7 +28,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://thetanningshop.co.uk/stores/"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
@@ -96,26 +96,49 @@ def fetch_data():
                 if len(store_info) > 0:
                     store_info = [store_info[0]]
 
+            location_name = "".join(
+                store_sel.xpath("//div[@data-title]/@data-title")
+            ).strip()
+
             raw_address = " ".join(store_info).replace(": ", "").strip()
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if street_address and formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
+            if not street_address:
+                street_address = raw_address.split(",")[0].strip()
             city = formatted_addr.city
-            if not city:
-                city = raw_address.split(",")[-2]
+            if not city and len(location_name) > 0:
+                city = location_name.replace("The Tanning Shop", "").strip()
+
+            if len(location_name) <= 0:
+                location_name = (
+                    "".join(store_sel.xpath("//title/text()"))
+                    .strip()
+                    .split("|")[-1]
+                    .strip()
+                )
+
             state = formatted_addr.state
             zip = formatted_addr.postcode
             if not zip:
-                zip = raw_address.split(" ")[-2] + " " + raw_address.split(" ")[-1]
+                try:
+                    zip = raw_address.split(" ")[-2] + " " + raw_address.split(" ")[-1]
+                except:
+                    pass
+
+            if zip:
+                if zip == "D11":
+                    zip = "D11 AFDO"
+                    city = "Dublin"
+                if zip == "A63":
+                    zip = "A63 X283"
+                    city = "Greystones"
 
             country_code = "GB"
 
-            location_name = "".join(
-                store_sel.xpath("//div[@data-title]/@data-title")
-            ).strip()
-
+            phone = "<MISSING>"
             raw_phone = list(
                 filter(
                     str,
@@ -162,6 +185,11 @@ def fetch_data():
                 if len(raw_phone) > 0:
                     phone = raw_phone[0]
 
+            if "Call" in phone:
+                raw_phone = store_sel.xpath('//a[contains(@href,"tel:")]/@href')
+                if len(raw_phone) > 0:
+                    phone = raw_phone[0].replace("tel:", "").strip()
+
             store_number = "<MISSING>"
             location_type = "<MISSING>"
             hours = list(
@@ -175,6 +203,31 @@ def fetch_data():
                     ],
                 )
             )
+            if len(hours) <= 0:
+                hours = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[./preceding-sibling::h5[contains(.//text(),"Opening")]]/table//text()'
+                            )
+                        ],
+                    )
+                )
+
+            if len(hours) <= 0:
+                hours = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div/p[contains(.//text(),"OPENING HOURS")]/following-sibling::table//text()'
+                            )
+                        ],
+                    )
+                )
 
             hours_of_operation = "; ".join(hours).replace("day;", "day:")
             latitude, longitude = (

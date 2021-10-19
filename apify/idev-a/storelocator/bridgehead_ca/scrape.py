@@ -7,6 +7,7 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 logger = SgLogSetup().get_logger("bridgehead")
 
@@ -53,6 +54,19 @@ def fetch_data():
                     phone = hh.split("Ph.")[-1].split("Ph")[-1]
                     break
                 hours.append(hh)
+            if hours and hours[0].lower() == "closed":
+                hours = []
+                for hh in (
+                    soup1.find_all("", string=re.compile(addr.city))[-1]
+                    .find_parent()
+                    .find_next_siblings("p")
+                ):
+                    if not hh.text.replace("\xa0", " ").strip():
+                        continue
+                    hours += list(hh.stripped_strings)
+
+            if hours and "Hours" in hours[0]:
+                del hours[0]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_[0],
@@ -65,7 +79,7 @@ def fetch_data():
                 longitude=_[2],
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(hours).replace("\xa0", " "),
                 raw_address=" ".join(raw_address),
             )
 

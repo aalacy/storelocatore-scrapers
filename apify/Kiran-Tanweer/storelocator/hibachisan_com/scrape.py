@@ -49,6 +49,7 @@ def get_phone(row):
 
 def fetch_data():
     df = fetch_locations()
+
     for _, row in df.iterrows():
         yield SgRecord(
             locator_domain="hibachisan.com",

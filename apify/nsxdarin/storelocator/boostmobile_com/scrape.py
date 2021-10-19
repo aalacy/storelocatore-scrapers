@@ -22,9 +22,7 @@ search = DynamicZipSearch(
 
 
 def fetch_data():
-    ids = []
     for coord in search:
-
         logger.info(f"Zip Code: {coord}")
         url = (
             "https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode="
@@ -63,8 +61,8 @@ def fetch_data():
                 zc = item["storeAddress"]["zipCode"]
                 lat = item["storeAddress"]["lat"]
                 lng = item["storeAddress"]["long"]
-                if lat == "30425794":
-                    lat = "30.425794"
+                if lat == 30425794:
+                    lat = 30.425794
                 country = "US"
                 phone = item["storePhone"]
                 loc = item["elevateURL"]
@@ -75,9 +73,6 @@ def fetch_data():
                 hours = hours + "; Fri: " + item["storeHours"]["fri"]
                 hours = hours + "; Sat: " + item["storeHours"]["sat"]
                 hours = hours + "; Sun: " + item["storeHours"]["sun"]
-                if lat and lng:
-                    search.found_location_at(lat, lng)
-                    logger.info(f"found loc at ({lat}, {lng})")
                 if lat == "":
                     lat = "<MISSING>"
                 if lng == "":
@@ -89,7 +84,6 @@ def fetch_data():
                 if loc == "" or loc is None:
                     loc = "<MISSING>"
                 if store != "":
-                    ids.append(store)
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
