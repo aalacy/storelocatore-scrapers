@@ -6,31 +6,74 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
-import ssl
-from undetected_chromedriver import Chrome, ChromeOptions
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+from sgrequests import SgRequests
+
 
 website = "canadagoose.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-options = ChromeOptions()
-options.headless = True
-options.add_argument("--headless")
-options.add_argument("--disable-gpu")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("--ignore-certificate-errors")
-options.add_argument(
-    "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
-)
+cookies = {
+    "dwanonymous_b3aa5771d8435c67a1a8775183c875b2": "adt8yYpartGjBT4acGDvbA75LT",
+    "BVBRANDID": "f333f2c0-e7bf-4191-b38b-22502fcde1ef",
+    "dwanonymous_2954ea0b586e0f3a1c58971e98526cb1": "beH9ZjJyHc2aAyIXhV5wms3wbr",
+    "dwanonymous_4b678b2f3ddcd887e7cd4635d93160c7": "deEhWuRbc41unMaWN624yxAdge",
+    "_scid": "593cc78b-eedb-4eab-8165-f722d3c391bf",
+    "cquid": "||",
+    "__cq_dnt": "0",
+    "dw_dnt": "0",
+    "zarget_visitor_info": "%7B%7D",
+    "zarget_user_id": "2f0dde7c-585c-4579-b996-ac4b1b998e7a",
+    "_gcl_au": "1.1.860488317.1633360934",
+    "_ga": "GA1.2.887594067.1633360936",
+    "_li_dcdm_c": ".canadagoose.com",
+    "_lc2_fpi": "c88e71b6d53c--01fh5yc0hwt99pzx9yrmp6yqjc",
+    "dw": "1",
+    "dw_cookies_accepted": "1",
+    "BVImplmain_site": "14687",
+    "globalBannerIsHidden": "",
+    "_pin_unauth": "dWlkPU5EaG1NelUzT0RFdE1XRmpPUzAwT1RBeUxXSTJaV1V0TmpaaFpEVmhNV1V4TlRReQ",
+    "__cq_uuid": "absHmGtKqd2YWuvTkgqrGzqkFq",
+    "__cq_seg": "0~0.00!1~0.00!2~0.00!3~0.00!4~0.00!5~0.00!6~0.00!7~0.00!8~0.00!9~0.00",
+    "rskxRunCookie": "0",
+    "rCookie": "5u0tvyvfe86ccefhqrcbrokucsxq3m",
+    "civicCookieControl": "%7B%22pv%22%3A%22%22%2C%22cm%22%3A%22info%22%2C%22open%22%3A%22no%22%2C%22consented%22%3A%22yes%22%2C%22explicitly%22%3A%22yes%22%2C%22hidden%22%3A%22yes%22%7D",
+    "contactWindowDialogIsHidden": "1",
+    "_sctr": "1|1633287600000",
+    "_f60_session": "F51hqZiTYbk4PIg16hnwMXH32whiHfkmFi2OCwZlnluC9maJDeh8fw29PvwFUmgB",
+    "CanadaGooseCA-pagevisits": '{"pagevisits":1}',
+    "dwac_bdbM6iaaioAiEaaaddLOa2751H": "LT4AGzBxpt35rCSzCwRu_vKgGnxE399yCZc%3D|dw-only|||CAD|false|Canada%2FEastern|true",
+    "cqcid": "adt8yYpartGjBT4acGDvbA75LT",
+    "countryCode": "US",
+    "dwac_cdSAUiaaio11EaaadnOiJrNbA7": "i5TdP_WrRK7oA316c4b4YC2ccSG-dM_Gm14%3D|dw-only|||USD|false|Canada%2FEastern|true",
+    "sid": "i5TdP_WrRK7oA316c4b4YC2ccSG-dM_Gm14",
+    "dwsid": "aqSkgiy1eHkctxY2SXrRdMysCJxnavMRb-prjX7tCja3tZlOAzpqR5bhdkHc5WRS7IVZUsMAnS9DDlxMrcgrag==",
+    "language": "en",
+    "CanadaGooseUS-pagevisits": '{"pagevisits":24}',
+    "_uetvid": "4c9bf690e62511eb977165ee7ae05647",
+    "_derived_epik": "dj0yJnU9akVmdUFxcG5VSVpVR2pVeUtlRjB0ZkpXek84WlI1amQmbj02VmVLY01LcURQLXgxMXVURGRERy13Jm09ZiZ0PUFBQUFBR0ZrTk9NJnJtPWYmcnQ9QUFBQUFHRmtOT00",
+    "lastRskxRun": "1633957091941",
+    "akm_bmfp_b2-ssn": "0DoJh7fcGyiAtXcc9KIXonwn000DOhw35qwZyNtOeqr7NW5kafxl0s23iYIu6afgv8FWVzQOPQZk3bsnlIhwlCwlbuun5pDzNouJMg44X8vQY9rrPdYu0C20c4Rvf39vvnNW4zLyLtxZqypF7LlXn7c4C",
+    "akm_bmfp_b2": "0DoJh7fcGyiAtXcc9KIXonwn000DOhw35qwZyNtOeqr7NW5kafxl0s23iYIu6afgv8FWVzQOPQZk3bsnlIhwlCwlbuun5pDzNouJMg44X8vQY9rrPdYu0C20c4Rvf39vvnNW4zLyLtxZqypF7LlXn7c4C",
+    "KP_REF": "",
+}
+
+
+headers = {
+    "Connection": "keep-alive",
+    "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-User": "?1",
+    "Sec-Fetch-Dest": "document",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+}
 
 
 def get_latlng(map_link):
@@ -60,102 +103,152 @@ def fetch_data():
         "https://www.canadagoose.com/us/en/find-a-retailer/find-a-retailer.html"
     )
 
-    with Chrome(options=options, executable_path="/bin/chromedriver") as driver:
-        driver.get(search_url)
-        time.sleep(30)
-        search_sel = lxml.html.fromstring(driver.page_source)
+    response = session.get(search_url, headers=headers, cookies=cookies)
+    search_sel = lxml.html.fromstring(response.text, "lxml")
+    store_list = search_sel.xpath('//div[@class="store"]')
+    log.info(f"Total Locations to crawl: {len(store_list)}")
+    for store in store_list:
 
-        store_list = search_sel.xpath('//div[@class="store"]')
-        for store in store_list:
+        page_url = store.xpath("./a/@href")[0].strip()
+        log.info(f"Now crawling: {page_url}")
+        response2 = session.get(page_url, headers=headers)
+        time.sleep(3)
+        store_sel = lxml.html.fromstring(response2.text, "lxml")
 
-            page_url = store.xpath("./a/@href")[0].strip()
-            log.info(page_url)
-            driver.get(page_url)
-            store_sel = lxml.html.fromstring(driver.page_source)
+        locator_domain = website
 
-            locator_domain = website
-
-            street_address = (
-                " ".join(
-                    store_sel.xpath(
-                        '//div[@class="store-info desktop"]//*[@itemprop="streetAddress"]//text()'
-                    )
+        street_address = (
+            " ".join(
+                store_sel.xpath(
+                    '//div[@class="store-info desktop"]//*[@itemprop="streetAddress"]//text()'
                 )
-                .strip()
-                .replace("\n", "")
-                .strip()
             )
-            city = (
-                " ".join(
-                    store_sel.xpath(
-                        '//div[@class="store-info desktop"]//*[@itemprop="addressLocality"]//text()'
-                    )
+            .strip()
+            .replace("\n", "")
+            .strip()
+        )
+        city = (
+            " ".join(
+                store_sel.xpath(
+                    '//div[@class="store-info desktop"]//*[@itemprop="addressLocality"]//text()'
                 )
-                .strip()
-                .replace("\n", "")
-                .strip()
             )
+            .strip()
+            .replace("\n", "")
+            .strip()
+        )
+        try:
             if city[-1] == ",":
                 city = "".join(city[:-1]).strip()
+        except:
+            city = "<MISSING>"
 
-            state = " ".join(
-                store_sel.xpath(
-                    '//div[@class="store-info desktop"]//*[@itemprop="addressRegion"]//text()'
-                )
-            ).strip()
-            zip = " ".join(
-                store_sel.xpath(
-                    '//div[@class="store-info desktop"]//*[@itemprop="postalCode"]//text()'
-                )
-            ).strip()
-            country_code = "CA"
-
-            location_name = "".join(
-                store_sel.xpath('//div[@class="store-info desktop"]//h3[last()]/text()')
-            ).strip()
-
-            phone = " ".join(
-                store_sel.xpath(
-                    '//div[@class="store-info desktop"]//*[@itemprop="telephone"]//text()'
-                )
-            ).strip()
-
-            store_number = "<MISSING>"
-
-            location_type = "<MISSING>"
-
-            hours_of_operation = "; ".join(
-                store_sel.xpath(
-                    '//div[@class="store-info desktop"]//*[@itemprop="openingHours"]//text()'
-                )
-            ).strip()
-            map_link = "".join(
-                store_sel.xpath(
-                    '//div[@class="store-info desktop"]//a[contains(@href,"maps")]/@href'
-                )
+        state = " ".join(
+            store_sel.xpath(
+                '//div[@class="store-info desktop"]//*[@itemprop="addressRegion"]//text()'
             )
-
-            latitude, longitude = get_latlng(map_link)
-
-            raw_address = "<MISSING>"
-
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
+        ).strip()
+        zip = " ".join(
+            store_sel.xpath(
+                '//div[@class="store-info desktop"]//*[@itemprop="postalCode"]//text()'
             )
+        ).strip()
+
+        if len(street_address) <= 0:
+            street_address = ", ".join(
+                "".join(
+                    store_sel.xpath(
+                        '//div[@class="store-info desktop"]//*[@itemprop="address"]//text()'
+                    )
+                )
+                .strip()
+                .split(",")[:-1]
+            ).strip()
+
+        country_code = "<INACCESSIBLE>"
+        if "Italy" == state:
+            country_code = "IT"
+            state = "<MISSING>"
+        if "France" == state:
+            country_code = "FR"
+            state = "<MISSING>"
+        if "Taiwan" == state:
+            country_code = "TW"
+            state = "<MISSING>"
+
+        try:
+            if state.split(" ")[0].strip().isdigit():
+                zip = state.split(" ", 1)[0].strip()
+                state = state.split(" ", 1)[-1].strip()
+        except:
+            pass
+        location_name = "".join(
+            store_sel.xpath(
+                '//div[@class="store-info desktop"]//span[@itemprop="name"]/text()'
+            )
+        ).strip()
+
+        phone = store_sel.xpath(
+            '//div[@class="store-info desktop"]//*[@itemprop="telephone"]//text()'
+        )
+        if len(phone) > 0:
+            phone = "".join(phone[0]).strip()
+
+        store_number = "<MISSING>"
+
+        location_type = "<MISSING>"
+
+        hours = store_sel.xpath('//div[@class="store-info desktop"]/text()')
+        hours_list = []
+        for hour in hours:
+            if len("".join(hour).strip()) > 0:
+                hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath(
+                '//div[@class="store-info desktop"]/p[./meta[@itemprop="openingHours"]]/text()'
+            )
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath('//div[@class="store-info desktop"]/p/text()')
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        hours_of_operation = "; ".join(hours_list).strip()
+        if "," == hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
+        map_link = "".join(
+            store_sel.xpath(
+                '//div[@class="store-info desktop"]//a[contains(@href,"maps")]/@href'
+            )
+        )
+
+        latitude, longitude = get_latlng(map_link)
+
+        raw_address = "<MISSING>"
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():

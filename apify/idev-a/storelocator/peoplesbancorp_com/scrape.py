@@ -49,7 +49,7 @@ def fetch_data():
                         continue
                     street_address = _["address_1"]
                     if _["address_2"]:
-                        street_address += " " + _["address_1"]
+                        street_address += " " + _["address_2"]
                     hours = []
                     if _.get("hours_sets:primary"):
                         _hr = json.loads(_["hours_sets:primary"])

@@ -40,9 +40,12 @@ def fetch_data():
             page_url = "".join(store.xpath(".//@href")).strip()
             if page_url[-1] != "/":
                 page_url = page_url + "/"
+
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
-
+            if "Coming soon:" in store_res.text:
+                log.info("ignored")
+                continue
             locator_domain = website
 
             store_info = list(
@@ -95,6 +98,8 @@ def fetch_data():
                 store_res.text.split('"longitude":')[1]
                 .split("},")[0]
                 .strip('" ')
+                .strip()
+                .replace('"', "")
                 .strip(),
             )
 

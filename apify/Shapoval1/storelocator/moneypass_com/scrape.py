@@ -1,16 +1,25 @@
 import json
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
-from sgscrape.sgrecord import SgRecord
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
 from concurrent import futures
+from sgscrape.pause_resume import CrawlStateSingleton
+
+from sglogging import sglog
+import time
+
+locator_domain = "moneypass.com"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+session = SgRequests()
 
 
 def get_data(_zip, sgw: SgWriter):
-    locator_domain = "https://www.moneypass.com/"
+
     page_url = "https://www.moneypass.com/atm-locator.html"
 
     headers = {
@@ -40,7 +49,6 @@ def get_data(_zip, sgw: SgWriter):
         "Filters": "ATMSF,ATMDP,HAATM,247ATM,",
     }
 
-    session = SgRequests()
     r = session.post(
         "https://locationapi.wave2.io/api/client/getlocations",
         headers=headers,
@@ -48,6 +56,7 @@ def get_data(_zip, sgw: SgWriter):
     )
     try:
         js = r.json()["Features"]
+        log.debug(f"From {_zip} stores = {len(js)}")
     except:
         return
     for j in js:
@@ -90,33 +99,30 @@ def get_data(_zip, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-        max_search_results=None,
-        granularity=Grain_1_KM(),
+        max_search_distance_miles=500,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=4) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
-if __name__ == "__main__":
+def scrape():
     CrawlStateSingleton.get_instance().save(override=True)
-    session = SgRequests()
+    log.info(f"Start scrapping {locator_domain} ...")
+    start = time.time()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.STORE_NUMBER,
-                }
-            )
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
         fetch_data(writer)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
+
+
+if __name__ == "__main__":
+    scrape()
