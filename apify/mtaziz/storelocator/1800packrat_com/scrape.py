@@ -47,7 +47,6 @@ def get_store_urls():
         urls = []
         urls_latlng = []
         tree = html.fromstring(response.text, "lxml")
-        logger.info(f"html content: {response.text}")
         text = (
             "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
             .split("markers:")[1]
@@ -103,7 +102,7 @@ def fetch_record(idx, url_latlng):
         logger.info(f"JSON Data: {json_data}")
         # All the data is not available in JSON form, therefore we need to parse using lxml
         if json_data:
-            json_data = "".join(json_data)
+            json_data = json_data[0]
             json_data = " ".join(json_data.split())
             json_data = json.loads(json_data)
             page_url = json_data["url"]
