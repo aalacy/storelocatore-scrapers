@@ -39,7 +39,6 @@ def fetch_data(sgw: SgWriter):
         slug = j.get("pageUrl")
         page_url = f"https://www.spar.si{slug}"
         location_name = j.get("name")
-        location_type = "<MISSING>"
         street_address = j.get("address")
         state = "<MISSING>"
         postal = j.get("zipCode")
