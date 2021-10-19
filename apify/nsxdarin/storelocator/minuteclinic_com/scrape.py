@@ -59,7 +59,7 @@ def get_state_urls():
     session = get_session()
     url = "https://www.cvs.com/minuteclinic/clinic-locator/"
     r = session.get(url, headers=headers)
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'title="Locations in' in line:
             lurl = line.split('href="')[1].split('"')[0]
             state_urls.append(lurl)
@@ -83,7 +83,7 @@ def get_cities_in_state(state_url):
     random_sleep()
     r = session.get(state_url, headers=headers)
     logger.info(state_url)
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'title="Locations in' in line:
             lurl = line.split('href="')[1].split('"')[0]
             cities.append(lurl)
@@ -109,7 +109,7 @@ def get_locations_in_city(city_url):
     random_sleep()
     r = session.get(city_url, headers=headers)
 
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'class="covid-standalone-details">' in line:
             locs.append(line.split('href="')[1].split('"')[0])
 
@@ -155,7 +155,7 @@ def get_location(url):
         if response.url != url and "cvs-pharmacy-address" in response.url:
             return None
 
-        for line2 in response.iter_lines(decode_unicode=True):
+        for line2 in response.iter_lines():
             if '"streetAddress": "' in line2:
                 add = line2.split('"streetAddress": "')[1].split('"')[0]
             if '"addressLocality": "' in line2:
