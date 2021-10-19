@@ -30,17 +30,27 @@ def fetch_data():
             else:
                 continue
         state = loc_dom.xpath('//input[contains(@name, "State")]/@value')[0]
+        if state in ["Not Assign", "Not Assigned"]:
+            continue
         zip_code = loc_dom.xpath('//input[contains(@name, "Zip")]/@value')[0]
+        if zip_code in ["ZipCode N", "Not Assig"]:
+            continue
         phone = loc_dom.xpath('//input[contains(@name, "Phone")]/@value')[0]
+        if phone.lower().strip() == "none":
+            phone = ""
         latitude = loc_dom.xpath('//input[contains(@name, "Latitude")]/@value')[0]
+        if latitude == "0.000000":
+            latitude = ""
         longitude = loc_dom.xpath('//input[contains(@name, "Longitude")]/@value')[0]
+        if longitude == "0.000000":
+            longitude = ""
         hoo = loc_dom.xpath('//td[h2[contains(text(), "HOURS")]]/p/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://pmi-parking.com/r/parking/home.aspx",
+            page_url=page_url,
             location_name="",
             street_address=street_address,
             city=city,
