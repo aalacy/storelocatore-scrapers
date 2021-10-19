@@ -36,16 +36,11 @@ def fetch_data():
                 hours = []
                 for hh in _.get("shopHours", []):
                     hr = hh["openingHours"]
-                    try:
-                        if hr["from1"]:
-                            times = f"{_f(hr['from1']['hourOfDay'])}:{_f(hr['from1']['minute'])} - {_f(hr['to1']['hourOfDay'])}:{_f(hr['to1']['minute'])}"
-                        else:
-                            times = "closed"
-                        hours.append(f"{hr['dayType']}: {times}")
-                    except:
-                        import pdb
-
-                        pdb.set_trace()
+                    if hr["from1"]:
+                        times = f"{_f(hr['from1']['hourOfDay'])}:{_f(hr['from1']['minute'])} - {_f(hr['to1']['hourOfDay'])}:{_f(hr['to1']['minute'])}"
+                    else:
+                        times = "closed"
+                    hours.append(f"{hr['dayType']}: {times}")
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["locationId"],
