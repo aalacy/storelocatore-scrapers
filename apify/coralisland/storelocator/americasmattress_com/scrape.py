@@ -46,22 +46,19 @@ def fetch_data():
                 h_temp = []
                 store_hours = json.loads(loc["hours"])
                 for key, hour in list(store_hours.items()):
-                    try:
-                        if (
-                            "open" in hour
-                            and hour["open"] is not None
-                            and hour["open"] != ""
-                        ):
-                            temp = key + " " + hour["open"]
-                        if (
-                            "close" in hour
-                            and hour["close"] is not None
-                            and hour["close"] != ""
-                        ):
-                            temp += "-" + hour["close"]
-                        h_temp.append(temp)
-                    except Exception as e:
-                        pdb.set_trace()
+                    if (
+                        "open" in hour
+                        and hour["open"] is not None
+                        and hour["open"] != ""
+                    ):
+                        temp = key + " " + hour["open"]
+                    if (
+                        "close" in hour
+                        and hour["close"] is not None
+                        and hour["close"] != ""
+                    ):
+                        temp += "-" + hour["close"]
+                    h_temp.append(temp)
                 store_hours = ", ".join(h_temp)
             else:
                 store_hours = "<MISSING>"
