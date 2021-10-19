@@ -23,7 +23,7 @@ search = DynamicZipSearch(
 @retry(stop=stop_after_attempt(10))
 def fetch_zip_code(url):
     session = SgRequests()
-    return session.get(url, headers=headers, timeout=10).json()
+    return session.get(url, headers=headers).json()
 
 
 def fetch_data():
