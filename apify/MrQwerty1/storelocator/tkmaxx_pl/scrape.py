@@ -31,7 +31,7 @@ def get_response(url):
             logger.info(f"{url} >> HTTP Success Status: {response.status_code}")
             return response
 
-        raise Exception(f"{url} >>> Failure Error: {response_proxy.status_code}")
+        raise Exception(f"{url} >>> Failure Error: {response.status_code}")
 
 
 def get_urls(loc_url):
