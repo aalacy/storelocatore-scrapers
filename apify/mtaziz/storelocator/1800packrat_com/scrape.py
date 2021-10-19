@@ -118,9 +118,6 @@ def fetch_record(idx, url_latlng):
             store_number = MISSING
             phone = json_data["telephone"] or MISSING
             location_type = json_data["@type"]
-            page_url_custom = page_url.replace(
-                "https://www.1800packrat.com", ""
-            ).strip()
             lat = url_latlng[1] or MISSING
             latitude = lat
             logger.info(f"[{idx}] Latitude: {lat}")
