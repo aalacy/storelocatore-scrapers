@@ -76,7 +76,6 @@ def fetch_data():
         raw_address = store.find("div").find("p").get_text(strip=True, separator=" ")
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = store.find("div").find("a").text.strip()
-        print(raw_address)
         country_code = "US"
         store_number = key
         location_type = MISSING
