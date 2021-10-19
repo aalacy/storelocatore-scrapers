@@ -8,34 +8,30 @@ from concurrent import futures
 
 
 def get_urls():
-    r = session.get("https://www.fitworks.com/")
+    r = session.get("https://westvillenyc.com/locations/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//a[@class='dropdown-link-3 w-dropdown-link' and contains(@href, 'location')]/@href"
-    )
+    return tree.xpath("//a[@class='btn-sketch text-white']/@href")
 
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "FITWORKS"
-    line = tree.xpath("//div[text()='Address']/following-sibling::div[1]//text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = line[0]
-    line = line[1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    phone = "".join(tree.xpath("//a[contains(@href, 'tel')]/text()")).strip()
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    line = tree.xpath("//p[@class='mb-1 single-location-txt']/text()")
+    street_address = line.pop(0).strip()
+    phone = line.pop(1)
+    csz = line.pop(0)
+    city = csz.split(",")[0].strip()
+    csz = csz.split(",")[1].strip()
+    state = csz.split()[0]
+    postal = csz.split()[1]
 
     _tmp = []
-    hours = tree.xpath("//div[text()='Club hours']/following-sibling::div[1]//text()")
+    hours = tree.xpath("//p[contains(text(), 'Hours')]/text()")
     for h in hours:
-        if not h.strip() or "open" in h:
+        if not h.strip() or "PLEASE" in h or "LOCATION" in h or "Hours" in h:
             continue
         _tmp.append(h.strip())
 
@@ -67,7 +63,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.fitworks.com/"
+    locator_domain = "https://westvillenyc.com/"
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

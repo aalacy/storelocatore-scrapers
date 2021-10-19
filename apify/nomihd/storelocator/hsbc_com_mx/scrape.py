@@ -62,11 +62,12 @@ def fetch_data():
             phone = store_info["contactPoint"][0]["telephone"]
             location_type = "<MISSING>"
 
-            hours = store_info["openingHoursSpecification"]
             hour_list = []
-            for hour in hours:
-                day = hour["dayOfWeek"].split("/")[-1].strip()
-                hour_list.append(f'{day}: {hour["opens"]}-{hour["closes"]}')
+            if "openingHoursSpecification" in store_info:
+                hours = store_info["openingHoursSpecification"]
+                for hour in hours:
+                    day = hour["dayOfWeek"].split("/")[-1].strip()
+                    hour_list.append(f'{day}: {hour["opens"]}-{hour["closes"]}')
 
             hours_of_operation = "; ".join(hour_list)
             for day in [

@@ -8,38 +8,39 @@ from concurrent import futures
 
 
 def get_urls():
-    r = session.get("https://www.fitworks.com/")
+    r = session.get("https://www.modani.com/store-locations")
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//a[@class='dropdown-link-3 w-dropdown-link' and contains(@href, 'location')]/@href"
-    )
+    return set(tree.xpath("//div[@class='store_time_info']//a/@href"))
 
 
-def get_data(page_url, sgw: SgWriter):
+def get_data(slug, sgw: SgWriter):
+    if slug.startswith("{"):
+        return
+    page_url = f"https://www.modani.com{slug}"
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "FITWORKS"
-    line = tree.xpath("//div[text()='Address']/following-sibling::div[1]//text()")
+    location_name = "".join(
+        tree.xpath("//div[@class='store_box_title']/text()")
+    ).strip()
+    line = tree.xpath("//div[@class='store_box_address']/text()")
     line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = line[0]
-    line = line[1]
+    if "2nd\xa0Floor" in line:
+        line = line[: line.index("2nd\xa0Floor")]
+    street_address = ", ".join(line[:-1])
+    line = line[-1]
     city = line.split(",")[0].strip()
     line = line.split(",")[1].strip()
     state = line.split()[0]
     postal = line.split()[1]
-    phone = "".join(tree.xpath("//a[contains(@href, 'tel')]/text()")).strip()
-
-    _tmp = []
-    hours = tree.xpath("//div[text()='Club hours']/following-sibling::div[1]//text()")
-    for h in hours:
-        if not h.strip() or "open" in h:
-            continue
-        _tmp.append(h.strip())
-
-    hours_of_operation = ";".join(_tmp)
+    phone = "".join(tree.xpath("//span[@class='telephone']/text()")).strip()
+    text = "".join(tree.xpath("//iframe/@src"))
+    latitude = text.split("!3d")[1].split("!")[0]
+    longitude = text.split("!2d")[1].split("!")[0]
+    hours = tree.xpath("//div[@class='store_box_time']/text()")
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = ";".join(hours)
 
     row = SgRecord(
         page_url=page_url,
@@ -49,6 +50,8 @@ def get_data(page_url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code="US",
+        latitude=latitude,
+        longitude=longitude,
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
@@ -60,14 +63,14 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.fitworks.com/"
+    locator_domain = "https://www.modani.com/"
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
