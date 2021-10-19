@@ -46,11 +46,10 @@ def fetch_data():
         "extensions": {
             "persistedQuery": {
                 "version": 1,
-                "sha256Hash": "4e8b93beb8554126cfe7b082c716d13297910daae0eb4691387679eef7c1c09c",
+                "sha256Hash": "200466567f80973aacb4e7a7b6df609c2ea071cea84680c2cef0dc6265e220fc",
                 "sender": "vtex.store-locator@0.x",
                 "provider": "vtex.store-locator@0.x",
             },
-            "variables": "eyJsYXRpdHVkZSI6bnVsbCwibG9uZ2l0dWRlIjpudWxsfQ==",
         },
     }
     stores_req = session.post(

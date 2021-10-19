@@ -5,6 +5,9 @@ from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, class_name, driver=None):
@@ -21,7 +24,7 @@ def get_driver(url, class_name, driver=None):
             driver = SgChrome(
                 executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=False,
+                is_headless=True,
             ).driver()
             driver.get(url)
 
