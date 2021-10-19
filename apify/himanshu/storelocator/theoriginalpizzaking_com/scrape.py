@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -12,51 +13,52 @@ headers = {
 
 def fetch_data():
 
+    url = "https://theoriginalpizzaking.com/additional-pizza-king-locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("div", {"class": "fl-callout-content"})
     url = "https://api.storerocket.io/api/user/3MZpoQ2JDN/locations?radius=250&units=miles"
-    loclist = session.get(url, headers=headers, verify=False).json()["results"][
-        "locations"
-    ]
-    for loc in loclist:
-        title = loc["name"]
-        store = loc["id"]
-        lat = loc["lat"]
-        longt = loc["lng"]
-        street = loc["address_line_1"]
+    loclist = session.get(url, headers=headers).json()["results"]["locations"]
+    for div in divlist:
+        content = div.text.strip().splitlines()
+        title = content[0]
+        phone = content[1]
+        street = content[2]
+
         try:
-            city = loc["city"].strip()
-            state = loc["state"]
-            pcode = loc["postcode"]
+            city, state = content[3].split(", ", 1)
+            state, pcode = state.strip().split(" ", 1)
         except:
-            try:
-                street, city, state, pcode = (
-                    loc["address"].replace(", United States", "").split(", ")
-                )
-            except:
-                street, city = loc["address"].split(title.replace("Pizza King ", ""), 1)
-                city, state = city.split(", ", 1)
-                state, pcode = state.split(" ", 1)
-        link = str(loc["url"])
-        if len(link) < 6:
-            link = "<MISSING>"
-        ccode = "US"
-        if str(street) == "None":
-            street, city, state, pcode = (
-                loc["address"].replace(", United States", "").split(", ")
-            )
-        phone = (
-            loc["phone"]
-            .replace("(", "")
-            .replace(")", "")
-            .replace("-", "")
-            .replace(" ", "")
-        )
-        phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+            city = street.split(",")[-1].strip()
+            state, pcode = content[3].split(" ", 1)
+        link = "<MISSING>"
+        try:
+            link = div.find("a", {"class": "fl-button"})["href"]
+        except:
+            pass
+        for loc in loclist:
+            if (
+                phone.replace("(", "")
+                .replace(")", "")
+                .replace(" ", "")
+                .replace("-", "")
+                .strip()
+                == loc["phone"]
+                .replace(" ", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .strip()
+            ):
+                store = loc["id"]
+                lat = loc["lat"]
+                longt = loc["lng"]
+                break
         if "Indiana" in state:
             state = "IN"
         elif "Illinois" in state:
             state = "IL"
-        if len(state.strip()) > 3:
-            state, pcode = state.split(" ", 1)
+        state = state.replace(",", "").replace(".", "").upper()
         yield SgRecord(
             locator_domain="https://theoriginalpizzaking.com/",
             page_url=link,
@@ -65,7 +67,7 @@ def fetch_data():
             city=city.strip(),
             state=state.strip(),
             zip_postal=pcode,
-            country_code=ccode,
+            country_code="US",
             store_number=str(store),
             phone=phone.strip(),
             location_type="<MISSING>",
