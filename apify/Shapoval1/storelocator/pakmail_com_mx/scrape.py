@@ -41,6 +41,7 @@ def fetch_data(sgw: SgWriter):
         if street_address.find("Estado De México") != -1:
             state = "Estado De México"
             street_address = street_address.replace("Estado De México", "").strip()
+        street_address = street_address or "<MISSING>"
         if street_address == "5 Loc.":
             street_address = " ".join(ad.split(",")[:2]).strip()
         postal = a.postcode or "<MISSING>"
@@ -48,6 +49,8 @@ def fetch_data(sgw: SgWriter):
             postal = postal.split()[-1].strip()
         country_code = "MX"
         city = a.city or "<MISSING>"
+        if street_address == "<MISSING>" and ad.find(",") != -1:
+            street_address = ad.split(",")[0].strip()
 
         r = session.get(page_url, headers=headers)
         time.sleep(5)

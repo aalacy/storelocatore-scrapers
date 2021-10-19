@@ -10,15 +10,15 @@ from sgscrape.sgpostal import parse_address, International_Parser
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def get_urls(coord):
-    urls = []
+def get_urls(lat, lng):
+    urls = set()
     api_url = "https://heronfoods.com/index.php"
 
     data = {
         "params": "eyJyZXN1bHRfcGFnZSI6InN0b3JlbG9jYXRvciJ9",
         "ACT": "29",
         "site_id": "1",
-        "distance:from": "|".join(coord),
+        "distance:from": f"{lat}|{lng}",
     }
 
     r = session.post(api_url, data=data)
@@ -33,7 +33,7 @@ def get_urls(coord):
             page_url = "".join(
                 d.xpath(".//a[contains(@href, '/store-details/')]/@href")
             )
-            urls.append(page_url)
+            urls.add(page_url)
 
         if len(divs) < 6:
             break
@@ -99,8 +99,8 @@ def fetch_data(sgw: SgWriter):
         expected_search_radius_miles=15,
     )
 
-    for coord in search:
-        links = get_urls(coord)
+    for lat, lng in search:
+        links = get_urls(lat, lng)
         for link in links:
             urls.add(link)
 
@@ -113,5 +113,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://heronfoods.com/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
