@@ -1,5 +1,3 @@
-from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -14,9 +12,6 @@ def fetch_data():
         "https://api.shopsuche.spar-express.de/sparexpressstores?page=0&size=500"
     )
     domain = "spar-express.de"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
     data = session.get(start_url).json()
     for poi in data["entries"]:
 
