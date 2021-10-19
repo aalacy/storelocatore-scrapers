@@ -1,14 +1,13 @@
-import csv
-from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("minuteclinic_com")
 
