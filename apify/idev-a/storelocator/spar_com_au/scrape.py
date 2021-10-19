@@ -41,11 +41,12 @@ def fetch_data():
                     if "Avenue" in city or "Street" in city:
                         city = ""
             if city and city.lower() in _["address"].lower():
-                reg1 = ","
+                reg1 = r","
+                reg2 = r"[\s]?"
                 street_address = [
                     aa.strip()
                     for aa in re.split(
-                        re.compile(f"{city}[\s]?{reg1}", re.I), _["address"]
+                        re.compile(f"{city}{reg2}{reg1}", re.I), _["address"]
                     )
                     if aa.strip()
                 ][0].strip()
