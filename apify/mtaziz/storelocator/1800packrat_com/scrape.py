@@ -127,7 +127,7 @@ def fetch_record(idx, url_latlng, sgw: SgWriter):
     a = page_sel.xpath('//div[@class="location-info"]/div//text()')
     b = [" ".join(i.split()) for i in a]
     c = [i for i in b if i]
-    d = ""
+    d = None
     if "Storage facility access available by appointment" in c:
         d = c[:-1]
     else:
@@ -135,10 +135,10 @@ def fetch_record(idx, url_latlng, sgw: SgWriter):
     add = ", ".join(d)
     add1 = add.split("CUSTOMER SERVICE HOURS")
     add2 = add1[0].split(",")
-    add2 = [i.strip() for i in add2]
-    add2 = [i for i in add2 if i]
-    add3 = add2[:-1]
-    address_x = ", ".join(add3)
+    add3 = [i.strip() for i in add2]
+    add4 = [i for i in add3 if i]
+    add5 = add4[:-1]
+    address_x = ", ".join(add5)
     pai = parse_address_intl(address_x)
     sta1 = pai.street_address_1
     sta2 = pai.street_address_2
@@ -156,7 +156,7 @@ def fetch_record(idx, url_latlng, sgw: SgWriter):
     country_code = "US"
     store_number = MISSING
 
-    phone = "".join(add2[-1:])
+    phone = "".join(add4[-1:])
     phone = phone if phone else MISSING
     logger.info(f"[{idx}] Phone: {phone}")
 
