@@ -49,7 +49,8 @@ def fetch_data():
             states = driver.find_elements_by_css_selector("select.location_1 option")
             logger.info(f"{len(states)} states")
             for state in states:
-                if not state.get_attribute("value"):
+                state_val = state.get_attribute("value")
+                if not state_val:
                     continue
                 del driver.requests
                 state.click()
@@ -57,9 +58,10 @@ def fetch_data():
                 cities = driver.find_elements_by_css_selector(
                     "select.location_2 option"
                 )
-                logger.info(f"[{state.get_attribute('value')}] {len(cities)} cities")
+                logger.info(f"[{state_val}] {len(cities)} cities")
                 for gun in cities:
-                    if not gun.get_attribute("value"):
+                    gun_val = gun.get_attribute("value")
+                    if not gun_val:
                         continue
                     del driver.requests
                     gun.click()
@@ -73,14 +75,17 @@ def fetch_data():
                         locations = res["list"]
                     else:
                         continue
-                    logger.info(
-                        f"[{gun.get_attribute('value')}] {len(locations)} locations"
-                    )
+                    logger.info(f"[{gun_val}] {len(locations)} locations")
                     for _ in locations:
                         res = http.get(
                             detail_url.format(_["storeCode"]), headers=_headers
                         )
-                        loc = json.loads(res.text.split("\n")[-1])
+                        try:
+                            loc = json.loads(res.text.split("\n")[-1])
+                        except:
+                            import pdb
+
+                            pdb.set_trace()
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["storeCode"],
