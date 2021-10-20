@@ -104,7 +104,7 @@ def fetch_data(sgw: SgWriter):
         max_search_distance_miles=500,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()
