@@ -1,39 +1,13 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     locator_domain = "https://geodis.com/"
     session = SgRequests()
     headers = {
@@ -44,7 +18,6 @@ def fetch_data():
         "https://geodis.com/geodis_custom_ajax_get_all_locations", headers=headers
     )
     js = r.json()
-    s = set()
     for j in js:
         node_id = j.get("node_id")
         latitude = j.get("coordinates")[0]
@@ -58,19 +31,24 @@ def fetch_data():
             data=data,
         )
         tree = html.fromstring(r.text)
-        page_url = "https://geodis.com/locations"
+
         street_address = (
             " ".join(tree.xpath('//span[@class="address-line1"]/text()'))
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
+
         city = (
             " ".join(tree.xpath('//span[@class="locality"]/text()'))
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
+        if city.find("Cedex") != -1:
+            city = city.split("Cedex")[0].strip()
+        if city.find("cedex") != -1:
+            city = city.split("cedex")[0].strip()
         state = (
             " ".join(tree.xpath('//span[@class="administrative-area"]/text()'))
             .replace("\n", "")
@@ -99,6 +77,7 @@ def fetch_data():
             .replace("NY-", "")
             .strip()
         )
+
         if postal.find("Santiago") != -1:
             postal = "<MISSING>"
 
@@ -108,7 +87,21 @@ def fetch_data():
             .strip()
             or "<MISSING>"
         )
-
+        page_url = (
+            " ".join(tree.xpath('//div[@class="title-agency-view"]/a/@href'))
+            or "<MISSING>"
+        )
+        if (
+            page_url
+            == "https://geodis.com/agency/geodis-distribution-express-agence-de-mulhouse-wittelsheim"
+        ):
+            street_address = (
+                street_address
+                + " "
+                + " ".join(tree.xpath('//span[@class="address-line2"]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
         country_code = (
             " ".join(tree.xpath('//span[@class="country"]/text()'))
             .replace("\n", "")
@@ -124,7 +117,6 @@ def fetch_data():
             state = " ".join(po.split()[:-1])
             postal = po.split()[-1].strip()
         store_number = node_id
-        location_type = "<MISSING>"
         hours_of_operation = (
             " ".join(tree.xpath('//div[1][@class="group-clock-view"]/div/text()'))
             .replace("\n", "")
@@ -144,36 +136,215 @@ def fetch_data():
         if phone == "0" or phone == "2":
             phone = "<MISSING>"
 
-        line = street_address
-        if line in s:
-            continue
-        s.add(line)
+        if state.find("EX5") != -1:
+            state = "<MISSING>"
+            postal = "EX5 2UL"
+            country_code = "UK"
+        if state == "HP12":
+            state = "<MISSING>"
+            postal = "HP12 3TA"
+            country_code = "UK"
+        if state == "HU4":
+            state = "<MISSING>"
+            postal = "HU4 7DW"
+            country_code = "UK"
+        if state == "NN17":
+            state = "<MISSING>"
+            postal = "NN17 9RS"
+            country_code = "UK"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
 
-    return out
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find("(") != -1:
+            city = city.split("(")[0].strip()
+        if city.find("-") != -1:
+            city = city.split("-")[0].strip()
+        if city.find(";") != -1:
+            city = city.split(";")[0].strip()
+        if city.find("/") != -1:
+            city = city.split("/")[0].strip()
+        if city == "62500":
+            city = "St Martin Lez Tatinghem"
+            postal = "62500"
+        city = city.replace("- TERMINAL CARGO", "").strip()
 
+        if (
+            phone.find("GEODIS - Castel San Giovanni (Contract Logistics)") != -1
+            or phone == "<MISSING>"
+        ):
+            phone = "<MISSING>"
+        if phone.find("GEODIS - Pioltello (Air & Ocean Freight)") != -1:
+            phone = phone.replace(
+                "GEODIS - Pioltello (Air & Ocean Freight)", ""
+            ).strip()
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if street_address == "<MISSING>":
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            ad = (
+                "".join(
+                    tree.xpath(
+                        '//div[./div/div[@class="field field--name-field-address-1 field--type-string field--label-hidden field--item"]]/div//text()'
+                    )
+                )
+                .replace("\n", " ")
+                .strip()
+                + " "
+                + "".join(
+                    tree.xpath(
+                        '//div[./div/div[@class="field field--name-field-address-2 field--type-string field--label-hidden field--item"]]/div//text()'
+                    )
+                )
+                .replace("\n", " ")
+                .strip()
+                or "<MISSING>"
+            )
+            a = parse_address(International_Parser(), ad)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or ad
+                or "<MISSING>"
+            )
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            city = a.city or "<MISSING>"
+        if street_address.find("Dove Close") != -1:
+            street_address = street_address + " - " + "Fradley Park"
+
+        if postal == "Province" or postal == "Cali":
+            postal = "<MISSING>"
+        if postal.find("C.P.") != -1:
+            postal = postal.replace("C.P.", "").strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.STREET_ADDRESS})
+        )
+    ) as writer:
+        fetch_data(writer)

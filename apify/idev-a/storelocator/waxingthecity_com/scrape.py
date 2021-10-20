@@ -28,10 +28,11 @@ def fetch_data():
             if cc["address2"]:
                 street_address += " " + cc["address2"]
             hours = []
-            for hh in cc["hours"]:
-                hours.append(
-                    f"{hh['dayOfWeek']}: {_time(hh['openTime'])}-{_time(hh['closeTime'])}"
-                )
+            if type(cc["hours"]) == list:
+                for hh in cc["hours"]:
+                    hours.append(
+                        f"{hh['dayOfWeek']}: {_time(hh['openTime'])}-{_time(hh['closeTime'])}"
+                    )
             page_url = f"https://www.waxingthecity.com/locations/{cc['number']}/{cc['country']}/{cc['state_abbr']}/{cc['city']}/".lower()
             yield SgRecord(
                 page_url=page_url,

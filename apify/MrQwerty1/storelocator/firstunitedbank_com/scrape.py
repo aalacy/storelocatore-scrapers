@@ -1,131 +1,93 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgcrawler.sgcrawler_fun import SgCrawlerUsingHttpFun
+from sgcrawler.helper_definitions import (
+    DeclarativeTransformerAndFilter,
+    DeclarativePipeline,
+)
 from sgrequests import SgRequests
+from sgscrape.simple_scraper_pipeline import (
+    SSPFieldDefinitions,
+    ConstantField,
+    MappingField,
+    MissingField,
+)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-    r = session.get("https://www.firstunitedbank.com/locations", headers=headers)
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//h4/a[contains(@href,'/locations/')]/@href")
-
-
-def get_data(url):
-    locator_domain = "https://www.firstunitedbank.com/"
-    page_url = f"https://www.firstunitedbank.com{url}"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-
-    location_name = " ".join("".join(tree.xpath("//h1/text()")).split())
-    line = tree.xpath("//h5/following-sibling::address/p[1]/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = ", ".join(line[:-1])
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath(
-                "//div[./strong[contains(text(), 'Phone')]]/following-sibling::div[1]/text()"
-            )
-        ).strip()
-        or "<MISSING>"
+def fetch_data(_, http: SgRequests):
+    r = http.request(
+        url="https://www.firstunitedbank.com/q2_map/ajax/get-location-data/1"
     )
-    latitude, longitude = "<MISSING>", "<MISSING>"
-    location_type = "Branch"
+    js = r.json()["locations"]
 
+    for j in js:
+        yield j
+
+
+def get_type(types: list):
+    return types.pop(0)
+
+
+def get_hours(source: str):
     _tmp = []
-    divs = tree.xpath("//div[@data-day]")
-    for d in divs:
-        day = "".join(d.xpath("./div[1]//text()")).strip()
-        time = "".join(d.xpath("./div[2]//text()")).strip()
+    tree = html.fromstring(source)
+    tr = tree.xpath("//tr[./td[1]/strong]")
+    for t in tr:
+        day = "".join(t.xpath("./td[1]/strong/text()")).strip()
+        time = "".join(t.xpath("./td[2]//text()")).strip()
+        if "N/A" in time:
+            continue
         _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    return ";".join(_tmp)
 
 
 if __name__ == "__main__":
-    scrape()
+    crawler_domain = "firstunitedbank.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        SgCrawlerUsingHttpFun(
+            crawler_domain=crawler_domain,
+            transformer=DeclarativeTransformerAndFilter(
+                pipeline=DeclarativePipeline(
+                    crawler_domain=crawler_domain,
+                    field_definitions=SSPFieldDefinitions(
+                        locator_domain=ConstantField(
+                            "https://www.firstunitedbank.com/"
+                        ),
+                        page_url=MappingField(
+                            mapping=["url"],
+                            is_required=False,
+                        ),
+                        location_name=MappingField(mapping=["name"], is_required=False),
+                        street_address=MappingField(
+                            mapping=["address"], is_required=False
+                        ),
+                        city=MappingField(mapping=["city"], is_required=False),
+                        state=MappingField(mapping=["state"], is_required=False),
+                        zipcode=MappingField(mapping=["zip"], is_required=False),
+                        country_code=ConstantField("US"),
+                        store_number=MissingField(),
+                        phone=MappingField(mapping=["phone"], is_required=False),
+                        location_type=MappingField(
+                            mapping=["type"],
+                            raw_value_transform=get_type,
+                            is_required=False,
+                        ),
+                        latitude=MappingField(mapping=["lat"], is_required=False),
+                        longitude=MappingField(mapping=["long"], is_required=False),
+                        hours_of_operation=MappingField(
+                            mapping=["hours"],
+                            value_transform=get_hours,
+                            is_required=False,
+                        ),
+                        raw_address=MissingField(),
+                    ),
+                    fail_on_outlier=False,
+                )
+            ),
+            fetch_raw_using=fetch_data,
+            make_http=lambda _: SgRequests(),
+            data_writer=writer,
+        ).run()

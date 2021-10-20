@@ -62,9 +62,21 @@ def fetch_data():
 
         location_type = "<MISSING>"
         hours_of_operation = raw_list[-2].strip()
+        map_link = "".join(
+            store_sel.xpath('//a[contains(@href,"maps.google.com")]/@href')
+        ).strip()
 
         latitude, longitude = "<MISSING>", "<MISSING>"
-
+        if "sll=" in map_link:
+            latitude = map_link.split("sll=")[1].strip().split(",")[0].strip()
+            longitude = (
+                map_link.split("sll=")[1]
+                .strip()
+                .split(",")[1]
+                .strip()
+                .split("&")[0]
+                .strip()
+            )
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

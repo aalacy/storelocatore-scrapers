@@ -6,6 +6,17 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 session = SgRequests()
 website = " shop.cleosfurniture_com"
@@ -38,6 +49,12 @@ def fetch_data(sgw: SgWriter):
             temp_list = soup.find(
                 "div", {"class": "wpb_text_column wpb_content_element"}
             ).findAll("p")
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
             location_name = soup.find("h1").text
             phone = temp_list[0].get_text(separator="|", strip=True).split("|")[1]
             address = temp_list[1].get_text(separator="|", strip=True).split("|")
@@ -70,8 +87,8 @@ def fetch_data(sgw: SgWriter):
                     store_number=MISSING,
                     phone=phone,
                     location_type=MISSING,
-                    latitude=MISSING,
-                    longitude=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
             )

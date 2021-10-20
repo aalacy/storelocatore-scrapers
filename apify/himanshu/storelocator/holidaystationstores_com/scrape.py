@@ -1,49 +1,20 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("holidaystationstores_com")
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    addressess = []
-
-    base_url = "https://www.holidaystationstores.com/"
+def fetch_data(sgw: SgWriter):
     data = {
-        "Lat": 40.4172871,
-        "Lng": -82.90712300000001,
+        "Lat": 45.755799,
+        "Lng": -93.6544079,
         "Diesel": "false",
         "E85": "false",
         "NonOxygenated": "false",
@@ -58,7 +29,7 @@ def fetch_data():
         "Propane": "false",
         "CNG": "false",
         "SearchMethod": "City",
-        "SearchValue": "OH",
+        "SearchValue": "MN",
     }
 
     headers = {
@@ -75,13 +46,17 @@ def fetch_data():
         headers=headers,
     )
     soup = BeautifulSoup(r.text, "html.parser")
+    s = set()
     for name in soup.find_all("a", {"class": "HolidayHoverNone"}):
         location_name = name.find(
             "div", {"class": "col-12 HolidayFontColorRedHover font-weight-bold"}
         ).text.strip()
         store_number = location_name.split("#")[-1]
+        phone = "<INACCESSIBLE>"
+        hours_of_operation = "<INACCESSIBLE>"
         longitude = name["data-lng"]
         latitude = name["data-lat"]
+        country_code = "US"
         street_address = name.find_all("div")[1].text
         raw = name.find_all("div")[-1].text
         city = raw.split(",")[0]
@@ -94,33 +69,33 @@ def fetch_data():
             "https://www.holidaystationstores.com/Locations/Detail?storeNumber="
             + str(store_number)
         )
-
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append(store_number)
-        store.append("<INACCESSIBLE>")
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append("<INACCESSIBLE>")
-        store.append(page_url)
-        if store[2] in addressess:
+        line = location_name
+        if line in s:
             continue
-        addressess.append(store[2])
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
+        s.add(line)
 
-        yield store
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    locator_domain = "https://www.holidaystationstores.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "abeandlouies.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -46,13 +48,11 @@ def fetch_data():
 
         locator_domain = website
 
-        location_name = stores_json["name"]
-
         street_address = addresses[index]["streetAddress"]
         city = addresses[index]["addressLocality"]
         state = addresses[index]["addressRegion"]
         zip = addresses[index]["postalCode"]
-
+        location_name = city + ", " + state
         country_code = "US"
 
         store_number = "<MISSING>"
@@ -118,7 +118,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

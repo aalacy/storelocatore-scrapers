@@ -5,8 +5,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "oxygenyogaandfitness.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -52,6 +54,10 @@ def fetch_data():
         page_url = "".join(
             store_sel.xpath('//div[@class="store-infowindow"]/div/span/a/@href')
         ).strip()
+        location_name = "".join(
+            store_sel.xpath('//div[@class="store-infowindow"]/div/h3/text()')
+        ).strip()
+
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         if stores_req.ok is True:
@@ -64,6 +70,20 @@ def fetch_data():
                 temp_add = store_page_sel.xpath(
                     '//div[@class="et_pb_text_inner"][.//h1[contains(text(),"LOCATED AT") or contains(text(),"located at") or contains(text(),"Located at") or contains(text(),"Located At")]]/div/div/div//text()'
                 )
+
+            if len(temp_add) <= 0:
+                temp_add = store_page_sel.xpath(
+                    '//div[@class="et_pb_text_inner"][.//h1[contains(text(),"LOCATED AT") or contains(text(),"located at") or contains(text(),"Located at") or contains(text(),"Located At")]]/div/div/p/text()'
+                )
+            if len(temp_add) <= 0:
+                temp_add = store_page_sel.xpath(
+                    '//div[@class="et_pb_text_inner"][./h2[contains(text(),"LOCATED AT") or contains(text(),"located at") or contains(text(),"Located at") or contains(text(),"Located At")]]/p//text()'
+                )
+            if len(temp_add) <= 0:
+                temp_add = store_page_sel.xpath(
+                    f'//div[@class="et_pb_text_inner"][.//h1[contains(text(),"{location_name}")]]/div/div/div/text()'
+                )
+
             if len(temp_add) > 0:
                 for phn_idx, x in enumerate(temp_add):
                     if bool(re.search("^[0-9-.() ]{1,17}$", x)):
@@ -71,13 +91,23 @@ def fetch_data():
                 if re.search("^[0-9-.() ]{1,17}$", temp_add[phn_idx]):
                     full_address = temp_add[:phn_idx]
                     for add in full_address:
-                        if len("".join(add).strip()) > 0:
+                        if (
+                            len("".join(add).strip()) > 0
+                            and "(Yoga)" not in "".join(add).strip()
+                            and "@" not in "".join(add).strip()
+                        ):
+                            add_list.append("".join(add).strip())
+                else:
+                    full_address = temp_add
+                    for add in full_address:
+                        if (
+                            len("".join(add).strip()) > 0
+                            and "(Yoga)" not in "".join(add).strip()
+                            and "@" not in "".join(add).strip()
+                        ):
                             add_list.append("".join(add).strip())
 
         locator_domain = website
-        location_name = "".join(
-            store_sel.xpath('//div[@class="store-infowindow"]/div/h3/text()')
-        ).strip()
 
         raw_address = ""
         if len(add_list) > 0:
@@ -128,7 +158,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

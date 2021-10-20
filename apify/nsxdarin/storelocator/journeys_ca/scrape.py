@@ -40,15 +40,14 @@ def fetch_data():
         for line2 in r2.iter_lines(decode_unicode=True):
             if 'class="store-name">' in line2:
                 sname = line2.split('">')[1].split("#")[0].strip()
-                surl = (
-                    "https://www.journeys.ca" + line2.split('href="')[1].split('"')[0]
-                )
+                surl = line2.split('href="')[1].split('"')[0]
                 if surl not in locs:
                     locs.append(surl + "|" + sname)
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc.split("|")[0]))
         r2 = session.get(loc.split("|")[0], headers=headers)
         name = loc.split("|")[1]
+        purl = loc.split("|")[0]
         typ = loc.split("|")[1]
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -87,9 +86,10 @@ def fetch_data():
                 lat = "<MISSING>"
                 lng = "<MISSING>"
         add = add.strip()
+        name = "JOURNEYS #" + store
         yield SgRecord(
             locator_domain=website,
-            page_url=loc.split("|")[0],
+            page_url=purl,
             location_name=name,
             street_address=add,
             city=city,
