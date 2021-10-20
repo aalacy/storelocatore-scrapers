@@ -30,12 +30,12 @@ def fetch_data():
         loclist = r.text.split('"places":')[1].split(',"styles"')[0]
         loclist = json.loads(loclist)
         for loc in loclist:
-            store_number = loc['id']
+            store_number = loc["id"]
             location_name = loc["title"]
             log.info(location_name)
             phone = loc["content"]
             phone = BeautifulSoup(phone, "html.parser")
-            phone = phone.find('a').text.replace('+','')
+            phone = phone.find("a").text.replace("+", "")
             raw_address = loc["address"]
             pa = parse_address_intl(raw_address)
 
@@ -51,9 +51,9 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            latitude = loc['location']['lat']
-            longitude = loc['location']['lng']
-            country_code = loc['location']["country"]
+            latitude = loc["location"]["lat"]
+            longitude = loc["location"]["lng"]
+            country_code = loc["location"]["country"]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -69,7 +69,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=MISSING,
-                raw_address = raw_address
+                raw_address=raw_address,
             )
 
 
