@@ -1,9 +1,24 @@
 import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+
+def get_phone(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//a[@class='phone-number']/text()")).strip()
+
+
+def get_street(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    return tree.xpath("//div[contains(@class, 'center-address')]/div/text()")[1].strip()
 
 
 def fetch_data(sgw: SgWriter):
@@ -18,13 +33,22 @@ def fetch_data(sgw: SgWriter):
         state = j.get("state")
         postal = j.get("postal_code")
         country_code = "US"
-        store_number = j.get("id")
         slug = j.get("website") or ""
         if slug.startswith("/"):
-            page_url = f"https://www.greasemonkeyauto.com/{slug}"
+            page_url = f"https://www.greasemonkeyauto.com{slug}"
         else:
             page_url = slug
+        store_number = page_url.split("-")[-1].replace("/", "")
+        if not store_number:
+            store_number = location_name.split("#")[-1]
+        if "-1030" in page_url:
+            street_address = get_street(page_url)
         phone = j.get("phone")
+        if not phone:
+            try:
+                phone = get_phone(page_url)
+            except:
+                pass
         latitude = j.get("lat")
         longitude = j.get("lng")
 
