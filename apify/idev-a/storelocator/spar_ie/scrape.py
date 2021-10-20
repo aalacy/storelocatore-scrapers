@@ -38,7 +38,7 @@ def fetch_data():
             street_address = zip_postal = city = ""
             if raw_address:
                 addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
+                street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 if raw_address.split(_["county"])[-1].strip():
