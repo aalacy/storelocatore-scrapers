@@ -13,7 +13,7 @@ headers = {
 
 
 def fetch_data():
-    
+
     url = "https://www.streetcorner.com/consumer/"
     page = session.get(url, headers=headers)
     cleanr = re.compile("<.*?>")
@@ -71,9 +71,9 @@ def fetch_data():
             else:
                 if len(pcode) == 4:
                     pcode = "0" + pcode
-            hours =  hours.encode('ascii', 'ignore').decode('ascii')
+            hours = hours.encode("ascii", "ignore").decode("ascii")
             if title.find("Coming Soon") == -1:
-                
+
                 yield SgRecord(
                     locator_domain="https://www.streetcorner.com/",
                     page_url=link,
@@ -90,17 +90,17 @@ def fetch_data():
                     longitude=str(longt),
                     hours_of_operation=hours.replace("am", "am-"),
                 )
-            
+
 
 def scrape():
-    
-    with SgWriter( deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
-        
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
 
 
 scrape()
-
-
