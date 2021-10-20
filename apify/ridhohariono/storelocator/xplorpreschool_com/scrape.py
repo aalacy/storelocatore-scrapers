@@ -5,12 +5,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 import re
 
 DOMAIN = "xplorpreschool.com"
 BASE_URL = "https://www.xplorpreschool.com"
-LOCATION_URL = "https://www.xplorpreschool.com/states/"
 API_URL = "https://www.xplorpreschool.com/wp-admin/admin-ajax.php?action=nobel_schools&change=true&radius=10000&program=All&type=latlng&location%5Blat%5D=36.02048110961914&location%5Blng%5D=-115.28479766845703"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -25,7 +24,7 @@ session = SgRequests(verify_ssl=False)
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -61,38 +60,21 @@ def get_latlong(url):
     return longlat.group(2), longlat.group(1)
 
 
-def get_hoo(url, location_type):
-    if location_type in {
-        "leportschools",
-        "heritageoak",
-        "rhoadesschool",
-        "sagemont",
-        "rsgrow",
-        "parkmaitland",
-    }:
-        return MISSING
+def get_hoo(url):
     soup = pull_content(url)
-    if location_type in {"basisindependent"}:
+    hoo_content = soup.find(
+        re.compile(r"li|div"), {"class": re.compile(r"detail hours.*")}
+    )
+    if hoo_content:
         hoo = (
-            soup.find("section", {"class": "map-item map-hours"})
-            .find("div", {"class": "map-content"})
-            .get_text(strip=True, separator=",")
-            .replace("Front Office Hours:", "")
-        ).strip()
-    else:
-        hoo_content = soup.find(
-            re.compile(r"li|div"), {"class": re.compile(r"detail hours.*")}
+            hoo_content.get_text(strip=True, separator=",")
+            .replace("Hours,", "")
+            .replace("Academic:", "")
         )
-        if hoo_content:
-            hoo = (
-                hoo_content.get_text(strip=True, separator=",")
-                .replace("Hours,", "")
-                .replace("Academic:", "")
-            )
-            hoo = re.sub(r"Grades.*", "", hoo).rstrip(",").strip()
-            hoo = re.sub(r"Extended:.*", "", hoo).rstrip(",").strip()
-        else:
-            hoo = MISSING
+        hoo = re.sub(r"Grades.*", "", hoo).rstrip(",").strip()
+        hoo = re.sub(r"Extended:.*", "", hoo).rstrip(",").strip()
+    else:
+        hoo = MISSING
     return hoo
 
 
@@ -113,7 +95,10 @@ def fetch_data():
         location_type = re.search(
             r"^(?:https?:\/\/)?(?:[^@\n]+@)?(?:[^.]+\.)?([^:\/\n\?\=]+)\.", page_url
         ).group(1)
-        hours_of_operation = get_hoo(page_url, location_type)
+        if "xplorpreschool" in page_url:
+            hours_of_operation = get_hoo(page_url)
+        else:
+            hours_of_operation = MISSING
         country_code = "US"
         store_number = MISSING
         latitude = row["lat"]

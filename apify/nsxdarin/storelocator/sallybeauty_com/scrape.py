@@ -34,9 +34,7 @@ def fetch_data():
         url = curl
         logger.info(("Pulling Canada URL %s..." % curl))
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if '"ID": "' in line:
                 hours = ""
                 loc = "<MISSING>"
@@ -70,6 +68,26 @@ def fetch_data():
                 phone = line.split('"phone": "')[1].split('"')[0]
             if '"stateCode": "' in line:
                 state = line.split('"stateCode": "')[1].split('"')[0]
+            if '"storeHours": "' in line:
+                days = (
+                    line.split('"storeHours": "')[1]
+                    .split('"')[0]
+                    .split('</div>\\n",')[0]
+                    .split("<div class='store-hours-day'>")
+                )
+                for day in days:
+                    if '<span class=\\"hours-of-day\\">' in day:
+                        hrs = (
+                            day.split("\\n")[0]
+                            + day.split('<span class=\\"hours-of-day\\">')[1].split(
+                                "<"
+                            )[0]
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+
                 cas = [
                     "AB",
                     "BC",
@@ -88,7 +106,6 @@ def fetch_data():
                 if store not in ids and country == "CA":
                     ids.append(store)
                     logger.info(("Pulling Store ID #%s..." % store))
-                    hours = "<MISSING>"
                     if store == "store_10777":
                         zc = "06473"
                     if "." in lat and "." in lng:
@@ -126,9 +143,7 @@ def fetch_data():
             + str(y)
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if '"ID": "' in line:
                 hours = ""
                 loc = "<MISSING>"
@@ -164,10 +179,28 @@ def fetch_data():
                 state = line.split('"stateCode": "')[1].split('"')[0]
             if '"stateCode": "' in line:
                 state = line.split('"stateCode": "')[1].split('"')[0]
+            if '"storeHours": "' in line:
+                days = (
+                    line.split('"storeHours": "')[1]
+                    .split('"')[0]
+                    .split('</div>\\n",')[0]
+                    .split("<div class='store-hours-day'>")
+                )
+                for day in days:
+                    if '<span class=\\"hours-of-day\\">' in day:
+                        hrs = (
+                            day.split("\\n")[0]
+                            + day.split('<span class=\\"hours-of-day\\">')[1].split(
+                                "<"
+                            )[0]
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
                 if store not in ids and " " not in zc:
                     ids.append(store)
                     logger.info(("Pulling Store ID #%s..." % store))
-                    hours = "<MISSING>"
                     country = "US"
                     if zc == "":
                         zc = "<MISSING>"
