@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-    domain = "bjs.com"
+    domain = "bjsoptical.com"
     start_url = "https://api.bjs.com/digital/live/api/v1.2/club/search/10201"
     headers = {
         "content-type": "application/json",
@@ -21,12 +21,12 @@ def fetch_data():
 
     for poi in data["Stores"]["PhysicalStore"]:
         coming_soon = [
-            e["displayValue"] for e in poi["Attribute"] if e["name"] == "Coming Soon"
+            elem["value"] for elem in poi["Attribute"] if elem["name"] == "Coming Soon"
         ][0]
-        if coming_soon != "No":
+        if coming_soon == "Yes":
             continue
-        store_url = "<MISSING>"
         location_name = poi["Description"][0]["displayStoreName"]
+        store_url = f"https://www.bjs.com/cl/{location_name.lower()}/{poi['storeName']}"
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["addressLine"][0]
         street_address = street_address if street_address else "<MISSING>"

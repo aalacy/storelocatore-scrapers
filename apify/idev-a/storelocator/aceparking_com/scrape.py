@@ -89,7 +89,7 @@ def fetch_data(city_list):
                         page_url="https://space.aceparking.com/site/results",
                         store_number=_["id"].split("-")[-1],
                         location_name=location_name,
-                        street_address=" ".join(street_address),
+                        street_address=" ".join(street_address).split("Lot")[0].strip(),
                         city=row[0],
                         state=row[1],
                         country_code="US",
