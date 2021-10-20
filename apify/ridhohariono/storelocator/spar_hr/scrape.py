@@ -81,13 +81,11 @@ def fetch_data():
         location_type = info["@type"]
         hours_of_operation = ""
         for hoo in info["openingHoursSpecification"]:
+            day = hoo["dayOfWeek"].replace("http://schema.org/", "")
+            if day in hours_of_operation:
+                continue
             hours_of_operation += (
-                hoo["dayOfWeek"].replace("http://schema.org/", "")
-                + ": "
-                + hoo["opens"]
-                + " - "
-                + hoo["closes"]
-                + ","
+                day + ": " + hoo["opens"] + " - " + hoo["closes"] + ","
             )
         hours_of_operation = re.sub(r",$", "", hours_of_operation).lstrip(",")
         country_code = "HR"
