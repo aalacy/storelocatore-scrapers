@@ -84,7 +84,7 @@ if __name__ == "__main__":
     )
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=20
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
         with SgRequests(proxy_country="us") as http:

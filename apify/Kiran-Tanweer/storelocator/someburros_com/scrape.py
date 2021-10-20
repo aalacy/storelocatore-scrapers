@@ -6,6 +6,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 from sgscrape import sgpostal as parser
+import os
+
+
+os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
+os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 
 session = SgRequests()
@@ -48,6 +53,7 @@ def fetch_data():
             phone = phone.replace(")", "").strip()
             hours = hours.replace("\n", " ")
             hours = hours.replace(" Order online", "").strip()
+            hours = hours.replace("7 days a week", "Mon-Sun")
             parsed = parser.parse_address_usa(address)
             street1 = (
                 parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
@@ -60,6 +66,8 @@ def fetch_data():
             city = parsed.city if parsed.city else "<MISSING>"
             state = parsed.state if parsed.state else "<MISSING>"
             pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+            hours = hours.replace("â€“", "-").strip()
+            title = title.replace("â€“", "-").strip()
 
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -68,7 +76,7 @@ def fetch_data():
                 street_address=street.strip(),
                 city=city.strip(),
                 state=state.strip(),
-                zip_postal=pcode,
+                zip_postal=pcode.strip(),
                 country_code="US",
                 store_number=MISSING,
                 phone=phone,
