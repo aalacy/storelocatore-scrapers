@@ -20,13 +20,12 @@ def fetch_data():
         "div"
     )
 
-    store_data = []
     for store in location_data:
         store_name = store.p.text.split("\n")[0]
         street_add = re.findall("\t\t\t\t\t\t\t\t(.*)<br/>\n\t", str(store))[0]
         city = re.findall("<br/>\n\t\t\t\t\t\t\t\t(.*), ", str(store))[0]
         state = re.findall(", ([A-Za-z]{2}) ", str(store))[0]
-        zip = re.findall(", [A-Za-z]{2} (\d{4,5})", str(store))[0]
+        zip = re.findall(", [A-Za-z]{2} (\\d{4,5})", str(store))[0]
         phone = "<MISSING>"
 
         yield SgRecord(
