@@ -43,6 +43,9 @@ def fetch_data():
                 stores = session.get(
                     location_url.format(lat, lng, str(page)), headers=headers
                 ).json()["stores"]
+                if len(stores) <= 0:
+                    cont = False
+                    break
                 logger.info("Processing %s links.." % (len(stores)))
                 for key in stores.keys():
                     if stores[key]["country"].upper() in ["CA", "CANADA"]:
