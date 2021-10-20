@@ -1,7 +1,5 @@
 import usaddress
 from bs4 import BeautifulSoup
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
