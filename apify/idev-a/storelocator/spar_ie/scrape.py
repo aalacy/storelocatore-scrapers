@@ -46,12 +46,16 @@ def fetch_data():
                 city = addr.city
             if not city:
                 city = _["town"]
+            if street_address:
+                street_address = (
+                    street_address.replace("Spar Express", "")
+                    .replace("Spar", "")
+                    .strip()
+                )
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["name"].replace("&#8217;", "'"),
-                street_address=street_address.replace("Spar Express", "")
-                .replace("Spar", "")
-                .strip(),
+                street_address=street_address,
                 city=city,
                 state=_["county"],
                 zip_postal=zip_postal,
