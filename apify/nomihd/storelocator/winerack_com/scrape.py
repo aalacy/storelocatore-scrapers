@@ -189,7 +189,7 @@ def scrape():
     search = DynamicZipSearch(country_codes=[SearchableCountries.CANADA])
 
     with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=False
+        executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
         with SgWriter(
             deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)

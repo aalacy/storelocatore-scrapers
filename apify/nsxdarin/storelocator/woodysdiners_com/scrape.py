@@ -31,7 +31,7 @@ def fetch_data():
         if ',"__typename":"RestaurantLocation","' in text:
             items = text.split(',"__typename":"RestaurantLocation","')
             for item in items:
-                if "activeOrderingRanges" in item:
+                if "activeOrderingRanges" in item and '"name":"' in item:
                     name = item.split('"name":"')[1].split('"')[0]
                     loc = "https://www.woodysdiners.com/locations"
                     lat = item.split('"lat":')[1].split(",")[0]
