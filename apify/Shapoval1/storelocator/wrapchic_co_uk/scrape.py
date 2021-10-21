@@ -5,7 +5,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -55,7 +55,7 @@ def fetch_data(sgw: SgWriter):
             .replace("The ParadeCanterbury", "The Parade Canterbury")
             .strip()
         )
-        page_url = "https://wrapchic.co.uk/find-wrapchic/"
+
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -96,6 +96,12 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", " ")
             .strip()
             or "<MISSING>"
+        )
+        session = SgRequests()
+        r = session.get("https://wrapchic.co.uk/locations/", headers=headers)
+        tree = html.fromstring(r.text)
+        page_url = "".join(
+            tree.xpath(f'//a[contains(text(), "{location_name}")]/@href')
         )
 
         row = SgRecord(

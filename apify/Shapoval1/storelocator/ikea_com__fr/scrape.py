@@ -1,10 +1,10 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -19,29 +19,53 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     div = tree.xpath("//p[./a]")
     for d in div:
-
         page_url = "".join(d.xpath(".//@href"))
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = "".join(tree.xpath("//h1/text()")).strip()
         ad = (
-            tree.xpath(
-                '//section[.//a[contains(@href, "pdf")]]//text() | //section[.//strong[contains(text(), "IKEA Nice ")]]//text()'
+            " ".join(
+                tree.xpath(
+                    '//p/strong[contains(text(), "IKEA ")]/following-sibling::text()'
+                )
             )
+            .replace("\n", "")
+            .strip()
             or "<MISSING>"
         )
+        if ad.find(", vous serez aussi") != -1:
+            ad = ad.split(", vous serez aussi")[0].strip()
+        if ad.find("Vous serez aussi") != -1:
+            ad = ad.split("Vous serez aussi")[0].strip()
+        if ad.find("à la conception pour tous vos projets !") != -1:
+            ad = ad.split("à la conception pour tous vos projets !")[1].strip()
         if ad == "<MISSING>":
-            ad = tree.xpath('//section[.//a[contains(@href, "maps")]]//text()')
-        if ad[1] == "Adresse":
-            ad = ad[2:]
-        if ad[0] == "\n            ":
-            ad = ad[15:]
-        ad = ad[2:]
-        adr = " ".join(ad).split("\n")[0].strip()
-        a = parse_address(International_Parser(), adr)
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//p/strong[contains(text(), "Marseille - La Valentine")]/following-sibling::text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+        if ad == "<MISSING>":
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//p/strong[contains(text(), "City Paris La Madeleine")]/following-sibling::text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+
+        location_name = "".join(tree.xpath("//h1/text()")).strip()
+        a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
@@ -49,9 +73,8 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "FR"
         city = a.city or "<MISSING>"
-        if page_url == "https://www.ikea.com/fr/fr/stores/grand-parilly/":
-            street_address = "9 rue Simone Veil"
-        if page_url == "https://www.ikea.com/fr/fr/stores/montpellier/":
+        if street_address == "2 Montpellier Cedex":
+            street_address = "Zone Odysséum 1 place de Troie"
             city = "Montpellier"
         text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href')) or "<MISSING>"
         try:
@@ -95,7 +118,16 @@ def fetch_data(sgw: SgWriter):
             if i.find("Lun") != -1:
                 tmp.append(i)
                 break
-        hours_of_operation = "".join(tmp)
+        hours_of_operation = "".join(tmp) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//strong[contains(text(), "Horaires d\'ouverture ")]/following-sibling::text()'
+                    )
+                )
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -119,5 +151,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
         fetch_data(writer)
