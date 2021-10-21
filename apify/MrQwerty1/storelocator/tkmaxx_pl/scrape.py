@@ -22,11 +22,11 @@ headers = {
 logger = SgLogSetup().get_logger(logger_name="tkmaxx_pl")
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
+@retry(stop=stop_after_attempt(15), wait=tenacity.wait_fixed(10))
 def get_response(url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
-        time.sleep(random.randint(5, 15))
+        time.sleep(random.randint(5, 20))
         if response.status_code == 200:
             logger.info(f"{url} >> HTTP Success Status: {response.status_code}")
             return response
@@ -54,7 +54,7 @@ def get_data(idx, slug, sgw: SgWriter):
     page_url = urllib.parse.unquote(f"https://www.tkmaxx.pl{slug}").replace(" ", "_")
     try:
         r = get_response(page_url)
-        time.sleep(random.randint(4, 7))
+        time.sleep(random.randint(10, 20))
         logger.info(f"Pulling the data from {page_url}")
 
         try:
@@ -110,7 +110,7 @@ def get_data(idx, slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     LOCATION_URL = "https://www.tkmaxx.pl/znajdz-sklep"
     urls = get_urls(LOCATION_URL)
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+    with futures.ThreadPoolExecutor(max_workers=6) as executor:
         future_to_url = {
             executor.submit(get_data, idx, url, sgw): url
             for idx, url in enumerate(urls)

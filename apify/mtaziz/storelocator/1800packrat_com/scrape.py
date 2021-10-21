@@ -13,6 +13,7 @@ import ssl
 import time
 import random
 from sgpostal.sgpostal import parse_address_intl
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     _create_unverified_https_context = (
@@ -28,6 +29,10 @@ LOCATION_URL = "https://www.1800packrat.com/locations"
 DOMAIN = "1800packrat.com"
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger(logger_name="1800packrat_com")
+headers = {
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "MMozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
+}
 
 
 proxy_password = os.environ["PROXY_PASSWORD"]
@@ -40,14 +45,16 @@ proxies = {
 }  # Proxy that works with cloudscraper
 
 
-def get_store_urls():
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
+def get_store_urls(url):
     try:
-        response = get_response(LOCATION_URL)
+        scraper = cloudscraper.CloudScraper()
+        response = scraper.get(url, proxies=proxies, headers=headers)
+        logger.info(f"{LOCATION_URL} >> HTTP Status Code: {response.status_code}")
         geo = dict()
         urls = []
         urls_latlng = []
         tree = html.fromstring(response.text, "lxml")
-        logger.info(f"html content: {response.text}")
         text = (
             "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
             .split("markers:")[1]
@@ -79,173 +86,133 @@ def get_store_urls():
         logger.info(f" {e} >> Error getting from {LOCATION_URL}")
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def get_response(url):
     scraper = cloudscraper.CloudScraper()
     response_proxy = scraper.get(url, proxies=proxies)
-    time.sleep(random.randint(5, 15))
-    if response_proxy.status_code == 200:
+    time.sleep(random.randint(5, 10))
+    page_sel = html.fromstring(response_proxy.text, "lxml")
+    a = page_sel.xpath('//div[@class="location-info"]/div//text()')
+    a1 = "".join(a)
+    if response_proxy.status_code == 200 and "CUSTOMER SERVICE HOURS" in a1:
+        logger.info(f"[ {url} ] | Address Data: {a1}")
         logger.info(f"{url} >> HTTP Status: {response_proxy.status_code}")
         return response_proxy
 
     raise Exception(f"{url} >> Temporary Error: {response_proxy.status_code}")
 
 
-def fetch_record(idx, url_latlng):
+def fetch_record(idx, url_latlng, sgw: SgWriter):
     store_url = url_latlng[0]
-    try:
-        response = get_response(store_url)
-        time.sleep(random.randint(4, 7))
-        logger.info(f"Pulling the data from {store_url}")
-        page_sel = html.fromstring(response.text, "lxml")
-        xpath_json_data = '//script[contains(@type, "application/ld+json") and contains(text(), "MovingCompany")]/text()'
-        json_data = page_sel.xpath(xpath_json_data)
-        logger.info(f"JSON Data: {json_data}")
-        # All the data is not available in JSON form, therefore we need to parse using lxml
-        if json_data:
-            json_data = "".join(json_data)
-            json_data = " ".join(json_data.split())
-            json_data = json.loads(json_data)
-            page_url = json_data["url"]
-            location_name = json_data["name"] or MISSING
-            address = json_data["address"]
-            sa = address["streetAddress"] or MISSING
-            street_address = sa
-            city = address["addressLocality"] or MISSING
-            state = address["addressRegion"] or MISSING
-            zip_postal = address["postalCode"] or MISSING
-            country_code = "US"
-            store_number = MISSING
-            phone = json_data["telephone"] or MISSING
-            location_type = json_data["@type"]
-            lat = url_latlng[1] or MISSING
-            latitude = lat
-            logger.info(f"[{idx}] Latitude: {lat}")
-            lng = url_latlng[2] or MISSING
-            longitude = lng
-            logger.info(f"[{idx}] Longitude: {lng}")
-            locator_domain = "1800packrat.com"
+    response = get_response(store_url)
+    time.sleep(random.randint(5, 7))
+    logger.info(f"Pulling the data from {store_url}")
+    page_sel = html.fromstring(response.text, "lxml")
 
-            # Hours of Operation
-            hoo = []
-            for i in json_data["openingHoursSpecification"]:
-                day_of_week = (
-                    i["dayOfWeek"].replace("http://schema.org/", "")
-                    + " "
-                    + str(i["opens"] or "")
-                    + " - "
-                    + str(i["closes"] or "")
-                )
-                hoo.append(day_of_week)
-            hours_of_operation = "; ".join(hoo)
-            logger.info(f"[{idx}] HOO: {hours_of_operation}")
-            raw_address = MISSING
+    location_name = "".join(page_sel.xpath("//title/text()"))
+    location_name = (
+        location_name.split("|")[-1]
+        + ", "
+        + location_name.split("|")[0].split(" in ")[-1]
+    )
+    location_name = location_name.strip() or MISSING
+    if (
+        "1800-PACK-RAT, Portable Storage & Mobile Moving Containers Houston, TX"
+        in location_name
+    ):
+        location_name = "1800-PACK-RAT, Houston, TX"
+    logger.info(f"[{idx}] locname: {location_name}")
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
-        else:
-            location_name = "".join(page_sel.xpath("//title/text()"))
-            location_name = (
-                location_name.split("|")[-1]
-                + ", "
-                + location_name.split("|")[0].split(" in ")[-1]
-            )
-            location_name = location_name.strip() or MISSING
-            logger.info(f"[{idx}] locname: {location_name}")
+    page_url = store_url
+    a = page_sel.xpath('//div[@class="location-info"]/div//text()')
+    b = [" ".join(i.split()) for i in a]
+    c = [i for i in b if i]
+    d = None
+    if "Storage facility access available by appointment" in c:
+        d = c[:-1]
+    else:
+        d = c
+    add = ", ".join(d)
+    add1 = add.split("CUSTOMER SERVICE HOURS")
+    add2 = add1[0].split(",")
+    add3 = [i.strip() for i in add2]
+    add4 = [i for i in add3 if i]
+    add5 = add4[:-1]
+    address_x = ", ".join(add5)
+    pai = parse_address_intl(address_x)
+    sta1 = pai.street_address_1
+    sta2 = pai.street_address_2
+    street_address = ""
+    if sta1 is not None and sta2 is None:
+        street_address = sta1
+    elif sta1 is not None and sta2 is not None:
+        street_address = sta1 + ", " + sta2
+    else:
+        street_address = MISSING
 
-            page_url = store_url
+    city = pai.city or MISSING
+    state = pai.state or MISSING
+    zip_postal = pai.postcode or MISSING
+    country_code = "US"
+    store_number = MISSING
 
-            a = page_sel.xpath('//div[@class="location-info"]/div/p/text()')
-            b = [" ".join(i.split()) for i in a]
-            address_x = ", ".join(b[0:2])
-            pai = parse_address_intl(address_x)
-            street_address = pai.street_address_1
-            city = pai.city or MISSING
-            state = pai.state or MISSING
-            zip_postal = pai.postcode or MISSING
-            country_code = "US"
-            store_number = MISSING
-            phone = "".join(page_sel.xpath('//*[@class="nav-clickToCall"]/span/text()'))
-            phone = phone if phone else MISSING
-            logger.info(f"[{idx}] Phone: {phone}")
+    phone = "".join(add4[-1:])
+    phone = phone if phone else MISSING
+    logger.info(f"[{idx}] Phone: {phone}")
 
-            location_type = "MovingCompany"
+    location_type = "MovingCompany"
 
-            lat = url_latlng[1] or MISSING
-            latitude = lat
-            logger.info(f"[{idx}] Latitude: {lat}")
+    lat = url_latlng[1] or MISSING
+    latitude = lat
+    logger.info(f"[{idx}] Latitude: {lat}")
 
-            lng = url_latlng[2] or MISSING
-            longitude = lng
-            logger.info(f"[{idx}] Longitude: {lng}")
+    lng = url_latlng[2] or MISSING
+    longitude = lng
+    logger.info(f"[{idx}] Longitude: {lng}")
 
-            locator_domain = "1800packrat.com"
-            hoo = page_sel.xpath(
-                '//p[contains(text(), "CUSTOMER SERVICE HOURS")]//following-sibling::text()'
-            )
-            hoo1 = [" ".join(h.split()) for h in hoo]
-            hoo1 = [h for h in hoo1 if h]
-            hours_of_operation = None
-            if hoo1:
-                hours_of_operation = ", ".join(hoo1)
-            else:
-                hours_of_operation = MISSING
+    locator_domain = "1800packrat.com"
 
-            logger.info(f"[{idx}] HOO: {hours_of_operation}")
-            raw_address = address_x
-            raw_address = raw_address if raw_address else MISSING
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+    hoo_raw = ", ".join(d)
+    hoo_raw1 = hoo_raw.split("CUSTOMER SERVICE HOURS")
+    hours_of_operation = hoo_raw1[-1].lstrip(",").strip()
+    hours_of_operation = hours_of_operation if hours_of_operation else MISSING
+    logger.info(f"[{idx}] HOO: {hours_of_operation}")
+    raw_address = address_x
+    raw_address = raw_address if raw_address else MISSING
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
+    )
 
-    except Exception as e:
-        raise Exception(f" {e} >> Error getting from {store_url}")
+    sgw.write_row(row)
 
 
-def scrape():
-    urls_latlng = get_store_urls()
-    count = 0
-    logger.info("Started")
-
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
-        for idx, url_latlng in enumerate(urls_latlng[0:]):
-            records = fetch_record(idx, url_latlng)
-            for rec in records:
-                writer.write_row(rec)
-                count = count + 1
-
-    logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
+def scrape(sgw: SgWriter):
+    urls_latlng = get_store_urls(LOCATION_URL)
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        task = {
+            executor.submit(fetch_record, idx, url_latlng, sgw): url_latlng
+            for idx, url_latlng in enumerate(urls_latlng[0:])
+        }
+        for future in as_completed(task):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    logger.info("Started")
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        scrape(writer)
+    logger.info("Finished")
