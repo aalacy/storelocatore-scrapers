@@ -7,8 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from lxml import etree
-
 base_url = "https://lamadeleine.com"
 
 
