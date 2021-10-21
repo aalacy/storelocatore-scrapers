@@ -27,7 +27,10 @@ def get_urls(lat, lng):
     for i in range(0, 60000, 6):
         url = f"{u}/P{i}"
         r = session.get(url)
-        tree = html.fromstring(r.text.replace("<!--p>", "").replace("</p-->", ""))
+        try:
+            tree = html.fromstring(r.text.replace("<!--p>", "").replace("</p-->", ""))
+        except:
+            continue
         divs = tree.xpath("//div[contains(@class, 'box2col store-details-container')]")
         for d in divs:
             page_url = "".join(
