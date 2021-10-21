@@ -68,6 +68,11 @@ def fetch_data():
                         .replace("\r", "")
                     )
                     loc = "<MISSING>"
+                    zc = "<MISSING>"
+                    if "Shop #3" in add:
+                        add = "Upper Manor Park Plaza, 184 Co"
+                    if "Shop #2" in add:
+                        add = "Orange Street"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

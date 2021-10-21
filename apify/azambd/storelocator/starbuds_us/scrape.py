@@ -166,6 +166,26 @@ def get_address(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
+def get_var_name(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
+
+
+def get_JSON_object_variable(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    return value
+
+
 def fetch_data():
     page_urls = fetch_store_links()
     log.debug(f"Total store count={len(page_urls)}")
@@ -176,23 +196,23 @@ def fetch_data():
         details = fetch_store_details(page_url)
 
         country_code = "US"
-        location_name = details["location_name"]
-        phone = details["phone"]
-        operations = details["operations"]
-        store_number = details["store_number"]
-        location_type = details["location_type"]
-        location = details["location"]
+        location_name = get_JSON_object_variable(details, "location_name")
+        phone = get_JSON_object_variable(details, "phone")
+        operations = get_JSON_object_variable(details, "operations")
+        store_number = get_JSON_object_variable(details, "store_number")
+        location_type = get_JSON_object_variable(details, "location_type")
 
-        raw_address = location["address"]
-        latitude = str(location["latitude"])
-        longitude = str(location["longitude"])
+        location = get_JSON_object_variable(details, "location")
+        if location == MISSING:
+            location = {}
+
+        raw_address = get_JSON_object_variable(location, "address")
+        latitude = str(get_JSON_object_variable(location, "latitude"))
+        longitude = str(get_JSON_object_variable(location, "longitude"))
 
         street_address, city, state, zip_postal = get_address(raw_address)
         if state == MISSING and ", CO ":  # special case for only 1 row
             state = "CO"
-
-        if "USA" not in raw_address:
-            continue
 
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -209,7 +229,6 @@ def fetch_data():
             longitude=longitude,
             hours_of_operation=operations,
             location_type=location_type,
-            raw_address=raw_address,
         )
 
 
@@ -217,7 +236,9 @@ def scrape():
     log.info(f"Start Crawling {website} ...")
     start = time.time()
     result = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
     end = time.time()
