@@ -226,6 +226,8 @@ def fetch_data():
             name = "Coach"
         if "Outlet In " in name:
             name = "Coach Outlet"
+        if "outlet" in typ.lower():
+            name = "Coach Outlet"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
@@ -345,6 +347,8 @@ def fetch_data():
             name = "Coach"
         if "Outlet In " in name:
             typ = "Coach Outlet"
+        if "outlet" in typ.lower():
+            name = "Coach Outlet"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
