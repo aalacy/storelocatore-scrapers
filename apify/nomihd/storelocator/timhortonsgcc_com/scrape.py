@@ -89,6 +89,8 @@ def fetch_data():
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
+                if zip:
+                    zip = zip.replace("UAE", "").strip().replace("KSA", "").strip()
                 country_code = formatted_addr.country
 
                 store_number = "<MISSING>"
