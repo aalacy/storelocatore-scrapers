@@ -104,7 +104,7 @@ def fetch_data():
                 hours = "<MISSING>"
             if "day" not in hours and "MISSING" not in hours:
                 hours = hours + " - 7 days"
-            if AF:
+            if AF is False:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
