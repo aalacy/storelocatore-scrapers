@@ -63,17 +63,17 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
 if __name__ == "__main__":
     with SgChrome() as driver:
         driver.get(base_link)
-        cookies = driver.get_cookies()
-        cookie = ""
-        for cook in cookies:
-            cookie = cookie + cook["name"] + "=" + cook["value"] + "; "
-
-        _headers["cookie"] = cookie.strip()[:-1]
+        cookies = []
+        for cook in driver.get_cookies():
+            cookies.append(f'{cook["name"]}={cook["value"]}')
+        _headers["cookie"] = ";".join(cookies)
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
         )
         with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)
+            deduper=SgRecordDeduper(
+                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
+            )
         ) as writer:
             with SgRequests(proxy_country="us") as http:
                 for rec in fetch_records(http, search):
