@@ -130,7 +130,7 @@ def scrape():
     count = 0
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STORE_NUMBER})
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.STREET_ADDRESS})
         )
     ) as writer:
         with SgRequests() as http:
