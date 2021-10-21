@@ -90,6 +90,8 @@ def fetch_data():
         phone = row.find_element_by_xpath(
             '//*[@id="featurecardPanel"]/div/div/div[4]/div[2]/div[3]'
         ).text.strip()
+        if DOMAIN in phone:
+            phone = "+356 2226 8888"
         hours_of_operation = (
             row.find_element_by_xpath(
                 '//*[@id="featurecardPanel"]/div/div/div[4]/div[1]/div[2]/div[2]'
