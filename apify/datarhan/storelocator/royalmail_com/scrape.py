@@ -60,7 +60,21 @@ def fetch_data():
                 loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)
                 hoo = loc_dom.xpath('//div[@class="opening-hours-wrapper"]/div//text()')
-                hoo = " ".join([e.strip() for e in hoo if e.strip()])
+                hoo = (
+                    " ".join([e.strip() for e in hoo if e.strip()])
+                    .split(" opening hours.")[-1]
+                    .split("Please check")[0]
+                    .strip()
+                    .split("have changed ")[-1]
+                )
+                raw_address = loc_dom.xpath('//div[@class="branch-address"]/text()')[0]
+                addr = parse_address_intl(raw_address)
+                city = addr.city
+                street_address = addr.street_address_1
+                if street_address and addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                else:
+                    street_address = addr.street_address_2
 
             item = SgRecord(
                 locator_domain=domain,

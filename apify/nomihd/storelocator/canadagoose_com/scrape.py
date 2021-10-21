@@ -46,21 +46,20 @@ cookies = {
     "dwac_bdbM6iaaioAiEaaaddLOa2751H": "LT4AGzBxpt35rCSzCwRu_vKgGnxE399yCZc%3D|dw-only|||CAD|false|Canada%2FEastern|true",
     "cqcid": "adt8yYpartGjBT4acGDvbA75LT",
     "countryCode": "US",
-    "dwac_cdSAUiaaio11EaaadnOiJrNbA7": "Twc1SZ71pp_YhOZ94m7YpSZNP7A266paPV8%3D|dw-only|||USD|false|Canada%2FEastern|true",
-    "sid": "Twc1SZ71pp_YhOZ94m7YpSZNP7A266paPV8",
-    "dwsid": "hTUWXUQFoss4RkfAqyiBFex_HKTsG64O3Z2ZJDRXyegm3tmPvX9eHPqqbWW2Air6VjCkFoppC96nE6YOjR8wCA==",
+    "dwac_cdSAUiaaio11EaaadnOiJrNbA7": "i5TdP_WrRK7oA316c4b4YC2ccSG-dM_Gm14%3D|dw-only|||USD|false|Canada%2FEastern|true",
+    "sid": "i5TdP_WrRK7oA316c4b4YC2ccSG-dM_Gm14",
+    "dwsid": "aqSkgiy1eHkctxY2SXrRdMysCJxnavMRb-prjX7tCja3tZlOAzpqR5bhdkHc5WRS7IVZUsMAnS9DDlxMrcgrag==",
     "language": "en",
-    "_gid": "GA1.2.233579639.1633692851",
-    "BVBRANDSID": "5a995f9d-3bea-49d4-829e-7382510f49f6",
-    "lastRskxRun": "1633693187450",
-    "CanadaGooseUS-pagevisits": '{"pagevisits":9}',
-    "akm_bmfp_b2-ssn": "038ZOX4c7tQ7mafejoyPGJMwbwxa7StA9UMYUZsMj3QAaoGp5UHkRORAOCN3MBnvEkXUPq2LN84miaHepiLdrdIsSI9RZjLq9FwGgkadawwiqcB7KuWNyNVW25DGjfVx3f1kt1F5PLESj1MOVq8qiCXMfGH",
-    "akm_bmfp_b2": "038ZOX4c7tQ7mafejoyPGJMwbwxa7StA9UMYUZsMj3QAaoGp5UHkRORAOCN3MBnvEkXUPq2LN84miaHepiLdrdIsSI9RZjLq9FwGgkadawwiqcB7KuWNyNVW25DGjfVx3f1kt1F5PLESj1MOVq8qiCXMfGH",
-    "_gat_UA-34770126-1": "1",
-    "_uetsid": "a7f24100282b11ec906b0f650e57155c",
+    "CanadaGooseUS-pagevisits": '{"pagevisits":24}',
     "_uetvid": "4c9bf690e62511eb977165ee7ae05647",
-    "_derived_epik": "dj0yJnU9VWJxa3RfcHVaYVZMZnJNTFdjNEhUenczWnJHbGx5U0Qmbj16dldHbXVyWVN1Vm56QkFlTDAwTFBRJm09ZiZ0PUFBQUFBR0ZnTG53JnJtPWYmcnQ9QUFBQUFHRmdMbnc",
+    "_derived_epik": "dj0yJnU9akVmdUFxcG5VSVpVR2pVeUtlRjB0ZkpXek84WlI1amQmbj02VmVLY01LcURQLXgxMXVURGRERy13Jm09ZiZ0PUFBQUFBR0ZrTk9NJnJtPWYmcnQ9QUFBQUFHRmtOT00",
+    "lastRskxRun": "1633957091941",
+    "akm_bmfp_b2-ssn": "0DoJh7fcGyiAtXcc9KIXonwn000DOhw35qwZyNtOeqr7NW5kafxl0s23iYIu6afgv8FWVzQOPQZk3bsnlIhwlCwlbuun5pDzNouJMg44X8vQY9rrPdYu0C20c4Rvf39vvnNW4zLyLtxZqypF7LlXn7c4C",
+    "akm_bmfp_b2": "0DoJh7fcGyiAtXcc9KIXonwn000DOhw35qwZyNtOeqr7NW5kafxl0s23iYIu6afgv8FWVzQOPQZk3bsnlIhwlCwlbuun5pDzNouJMg44X8vQY9rrPdYu0C20c4Rvf39vvnNW4zLyLtxZqypF7LlXn7c4C",
+    "KP_REF": "",
 }
+
+
 headers = {
     "Connection": "keep-alive",
     "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
@@ -154,6 +153,18 @@ def fetch_data():
                 '//div[@class="store-info desktop"]//*[@itemprop="postalCode"]//text()'
             )
         ).strip()
+
+        if len(street_address) <= 0:
+            street_address = ", ".join(
+                "".join(
+                    store_sel.xpath(
+                        '//div[@class="store-info desktop"]//*[@itemprop="address"]//text()'
+                    )
+                )
+                .strip()
+                .split(",")[:-1]
+            ).strip()
+
         country_code = "<INACCESSIBLE>"
         if "Italy" == state:
             country_code = "IT"
@@ -187,15 +198,30 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        hours_of_operation = (
-            "; ".join(
-                store_sel.xpath(
-                    '//div[@class="store-info desktop"]//*[@itemprop="openingHours"]/@content'
-                )
+        hours = store_sel.xpath('//div[@class="store-info desktop"]/text()')
+        hours_list = []
+        for hour in hours:
+            if len("".join(hour).strip()) > 0:
+                hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath(
+                '//div[@class="store-info desktop"]/p[./meta[@itemprop="openingHours"]]/text()'
             )
-            .strip()
-            .replace("${schema-Th-Su}$", "Closed")
-        )
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath('//div[@class="store-info desktop"]/p/text()')
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        hours_of_operation = "; ".join(hours_list).strip()
+        if "," == hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
         map_link = "".join(
             store_sel.xpath(
                 '//div[@class="store-info desktop"]//a[contains(@href,"maps")]/@href'

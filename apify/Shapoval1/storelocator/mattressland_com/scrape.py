@@ -22,7 +22,6 @@ def fetch_data(sgw: SgWriter):
 
     for j in js["@graph"]:
         a = j.get("address")
-        location_name = j.get("name")
         location_type = j.get("@type")
         if location_type != "Store":
             continue
@@ -51,6 +50,11 @@ def fetch_data(sgw: SgWriter):
         page_url = "".join(
             tree.xpath(
                 f'//*[contains(@data-href, "{slug_lat}")]/following::*[text()="Contact this location"][1]/@data-href'
+            )
+        )
+        location_name = "".join(
+            tree.xpath(
+                f'//*[contains(@data-href, "{slug_lat}")]/preceding::h3[1]/text()'
             )
         )
 

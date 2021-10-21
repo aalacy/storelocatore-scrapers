@@ -24,6 +24,8 @@ def fetch_data():
             phone = ""
             if _.select_one("li.telefono"):
                 phone = _.select_one("li.telefono").text.split(":")[-1].strip()
+            if phone == "-":
+                phone = ""
             hours = [hh.text.strip() for hh in _.select("li.atención")]
             coord = _.select_one("span.ubicacion").text.strip().split(",")
             yield SgRecord(

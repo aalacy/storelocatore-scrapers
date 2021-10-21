@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -51,15 +52,20 @@ def fetch_data():
                     location_name = raw_data[0]
                     if not location_name:
                         location_name = "<MISSING>"
+                    raw_address = ", ".join(raw_data[-2:])
+                    addr = parse_address_intl(raw_address)
+                    street_address = addr.street_address_1
+                    if addr.street_address_2:
+                        street_address += ", " + addr.street_address_2
 
                     item = SgRecord(
                         locator_domain=domain,
                         page_url=page_url,
                         location_name=location_name,
-                        street_address=raw_data[-2],
-                        city=raw_data[-1].split(", ")[0],
-                        state=raw_data[-1].split(", ")[-1].split()[0],
-                        zip_postal=raw_data[-1].split(", ")[-1].split()[-1],
+                        street_address=street_address,
+                        city=addr.city,
+                        state=addr.state,
+                        zip_postal=addr.postcode,
                         country_code="",
                         store_number="",
                         phone=phone,
@@ -67,6 +73,7 @@ def fetch_data():
                         latitude="",
                         longitude="",
                         hours_of_operation="",
+                        raw_address=raw_address,
                     )
 
                     yield item
@@ -75,7 +82,8 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.CITY})
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.CITY}),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
