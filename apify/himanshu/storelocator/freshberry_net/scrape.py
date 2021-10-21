@@ -22,7 +22,6 @@ def fetch_data(sgw: SgWriter):
     }
 
     # it will used in store data
-    base_url = "http://freshberry.net/"
     locator_domain = "http://freshberry.net/"
     page_url = "<MISSING>"
     location_name = ""
