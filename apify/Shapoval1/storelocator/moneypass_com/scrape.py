@@ -111,11 +111,9 @@ def get_data(_zip, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=500,
-        max_search_results=100,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()
