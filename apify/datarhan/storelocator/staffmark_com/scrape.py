@@ -1,46 +1,15 @@
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "staffmark.com"
+    domain = "staffmark.com"
     start_url = "http://staffmark.com/locations/Default.aspx"
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -54,7 +23,6 @@ def fetch_data():
     viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')[0]
     view_gen = dom.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')[0]
     validation = dom.xpath('//input[@id="__EVENTVALIDATION"]/@value')[0]
-    as_fid = dom.xpath('//input[@name="as_fid"]/@value')[0]
 
     formdata = {
         "__EVENTTARGET": "",
@@ -67,7 +35,7 @@ def fetch_data():
         "txtZip": "",
         "ddDist": "100",
         "btnSearchLocations": "Search",
-        "as_fid": as_fid,
+        "as_fid": "",
     }
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -105,6 +73,8 @@ def fetch_data():
             city = address_raw[1].split(",")[0]
             state = address_raw[1].split(",")[-1].split()[0]
             zip_code = address_raw[1].split(",")[-1].split()[-1]
+        if street_address.strip().endswith(","):
+            street_address = street_address.strip()[:-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath(
@@ -116,31 +86,36 @@ def fetch_data():
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
