@@ -216,8 +216,8 @@ def get_geolocation(location, page_schema):
             latitude = None
             longitude = None
     try:
-        latitude = float(latitude) or None
-        longitude = float(longitude) or None
+        latitude = latitude or None
+        longitude = longitude or None
     except:
         latitude = None
         longitude = None

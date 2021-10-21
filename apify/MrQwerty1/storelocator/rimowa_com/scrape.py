@@ -46,6 +46,21 @@ def get_data(page_url, sgw: SgWriter):
     location_type = j.get("@type")
     hours_of_operation = j.get("openingHours") or ""
 
+    if (postal == "" or postal == "null") and street_address.split()[-1][0].isdigit():
+        postal = street_address.split()[-1]
+
+    if "Century" in postal:
+        postal = SgRecord.MISSING
+
+    if hours_of_operation == "" or hours_of_operation == "null":
+        _tmp = []
+        tr = tree.xpath("//div[@class='hours-list-item']")
+        for t in tr:
+            day = "".join(t.xpath("./div[1]/text()")).strip()
+            inter = "".join(t.xpath("./div[2]/text()")).strip()
+            _tmp.append(f"{day}: {inter}")
+        hours_of_operation = ";".join(_tmp)
+
     row = SgRecord(
         page_url=page_url,
         location_name=location_name,
