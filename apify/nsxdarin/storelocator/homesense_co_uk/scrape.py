@@ -20,6 +20,7 @@ def fetch_data():
         "Birmingham",
         "Glasgow",
         "Liverpool",
+        "Blanchardstown",
         "Bristol",
         "Manchester",
         "Sheffield",
@@ -214,6 +215,14 @@ def fetch_data():
             city = "Manchester"
         if "Staples" in name:
             city = "London"
+        city = city.replace("Hedge_End", "Hedge End")
+        city = city.replace("Kingston_Park", "Kingston Park")
+        city = city.replace("Merthyr_Tydfil", "Merthyr Tydfil")
+        city = city.replace("Fort_Kinnaird", "Fort Kinnaird")
+        city = city.replace("Milton_Keynes", "Milton Keynes")
+        city = city.replace("Tunbridge_Wells", "Tunbridge Wells")
+        if "_" in city:
+            city = city.split("_")[0]
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
