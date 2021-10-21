@@ -90,9 +90,6 @@ def fetch_data():
     driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     wait_load(driver)
-    elements = driver.find_elements_by_class_name(
-        "ws-find-store-navigation__list-item--level-0"
-    )
     soup = bs(driver.page_source, "lxml")
     content = soup.find_all(
         "a",
