@@ -62,7 +62,7 @@ def get_latlong(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get(
         "https://www.google.com/maps/d/u/3/embed?mid=1kehyqKYdh70CKXeXQhs-cBmrLdfbnxIc&z=11"
     )
@@ -122,7 +122,7 @@ def fetch_data():
 
 
 def scrape():
-    log.info("asdasStasdasart {} Scraper".format(DOMAIN))
+    log.info("Start {} Scraper".format(DOMAIN))
     count = 0
     with SgWriter(
         SgRecordDeduper(
