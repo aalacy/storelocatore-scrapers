@@ -9,12 +9,18 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
     domain = "bbt.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
     start_url = "https://www.truist.com/truist-api/locator/locations.json?returnBranchATMStatus=Y&maxResults=100&locationType=BOTH&searchRadius=30&address={}"
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=30
     )
     for code in all_codes:
-        data = session.get(start_url.format(code)).json()
+        data = session.get(start_url.format(code), headers=hdr)
+        if data.status_code != 200:
+            continue
+        data = data.json()
         if not data.get("location"):
             continue
         for poi in data["location"]:
