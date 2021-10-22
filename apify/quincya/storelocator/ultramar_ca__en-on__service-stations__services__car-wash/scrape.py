@@ -54,7 +54,7 @@ def fetch_data(sgw: SgWriter):
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            location_name = base.find(itemprop="name").text
+            location_name = base.h1.text
             phone = base.find(itemprop="telephone").text
             city = base.find(itemprop="addressLocality").text
             state = base.find(itemprop="addressRegion").text

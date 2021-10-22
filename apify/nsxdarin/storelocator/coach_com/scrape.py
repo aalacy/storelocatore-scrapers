@@ -30,7 +30,12 @@ def fetch_data():
             for item in info:
                 if "</option>" in item:
                     ccode = item.split('"')[0]
-                    if len(ccode) > 1:
+                    if (
+                        len(ccode) > 1
+                        and ccode != "CA"
+                        and ccode != "GB"
+                        and ccode != "US"
+                    ):
                         countries.append(ccode)
     for ccode in countries:
         CFound = True
@@ -215,6 +220,14 @@ def fetch_data():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
+        if "COACH in" in name:
+            name = "Coach"
+        if "COACH" in name and " In " in name:
+            name = "Coach"
+        if "Outlet In " in name:
+            name = "Coach Outlet"
+        if "outlet" in typ.lower():
+            name = "Coach Outlet"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
@@ -328,6 +341,14 @@ def fetch_data():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
+        if "COACH in" in name:
+            name = "Coach"
+        if "COACH" in name and " In " in name:
+            name = "Coach"
+        if "Outlet In " in name:
+            typ = "Coach Outlet"
+        if "outlet" in typ.lower():
+            name = "Coach Outlet"
         if "popup" not in name.lower() and "pop-up" not in name.lower():
             yield SgRecord(
                 locator_domain=website,
