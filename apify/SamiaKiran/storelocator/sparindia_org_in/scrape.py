@@ -37,7 +37,7 @@ def fetch_data():
             loclist = state_url.findAll("p")
             for loc in loclist:
                 loc = loc.get_text(separator="|", strip=True).split("|")[:-1]
-                location_name = strip_accents(loc[0])
+                location_name = strip_accents(loc[0]).replace(",", "")
                 log.info(location_name)
                 phone = loc[-1].replace("Contact No:", "").replace("Phone:", "")
                 address = " ".join(loc[1:-1])
