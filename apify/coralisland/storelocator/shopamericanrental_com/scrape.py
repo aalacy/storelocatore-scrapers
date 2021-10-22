@@ -57,6 +57,7 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .split("facebook")[0]
+                .replace("OPEN NOW", "")
             )
             yield SgRecord(
                 locator_domain=DOMAIN,
