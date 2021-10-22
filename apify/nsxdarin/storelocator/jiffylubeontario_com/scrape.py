@@ -19,16 +19,16 @@ headers2 = {
 
 def fetch_data():
     locs = [
-        "https://www.jiffylubeontario.com/sudbury-1003-kingsway",
-        "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard",
-        "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15",
-        "https://www.jiffylubeontario.com/oshawa-581-king-st",
-        "https://www.jiffylubeontario.com/oshawa-23-taunton-rd-west",
-        "https://www.jiffylubeontario.com/whitby-516-brock-st-n",
-        "https://www.jiffylubeontario.com/stcatharines-124-hartzel-rd",
-        "https://www.jiffylubeontario.com/niagara-falls-5975-thorold-stone-rd",
-        "https://www.jiffylubeontario.com/welland-536-niagara-st",
-        "https://www.jiffylubeontario.com/sarnia-763-exmouth-st",
+        "https://www.jiffylubeontario.com/sudbury-1003-kingsway||Sudbury",
+        "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard||Sudbury",
+        "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15||Chelmsford",
+        "https://www.jiffylubeontario.com/oshawa-581-king-st||Oshawa",
+        "https://www.jiffylubeontario.com/oshawa-23-taunton-rd-west||Oshawa",
+        "https://www.jiffylubeontario.com/whitby-516-brock-st-n||Whitby",
+        "https://www.jiffylubeontario.com/stcatharines-124-hartzel-rd||St. Catharines",
+        "https://www.jiffylubeontario.com/niagara-falls-5975-thorold-stone-rd||Niagara Falls",
+        "https://www.jiffylubeontario.com/welland-536-niagara-st||Welland",
+        "https://www.jiffylubeontario.com/sarnia-763-exmouth-st||Sarnia",
     ]
     url = "https://www.jiffylubeontario.com/wp-admin/admin-ajax.php"
     cities = [
@@ -235,6 +235,8 @@ def fetch_data():
             phone = "<MISSING>"
         name = name.replace("</title>", "").strip()
         name = name.replace("&#8211;", "-").strip()
+        if zc == "":
+            zc = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
             page_url=lurl,
