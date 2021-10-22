@@ -85,7 +85,6 @@ def fetch_records_global(idx, url, sgw: SgWriter):
         "DPZ-Market": cc,
     }
 
-    # r = http.get(lurl, headers=headers2)
     r = get_response_global(idx, lurl, headers2)
     time.sleep(2)
     website = "dominos.com"
