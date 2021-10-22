@@ -123,7 +123,11 @@ def gen_countries(session):
         links = alist.find_all("a")
         for link in links:
             countries.append(
-                {"text": link.text, "link": link["href"], "complete": False}
+                {
+                    "text": link.text,
+                    "link": link["href"].replace("https", "http"),
+                    "complete": False,
+                }
             )
     return countries
 

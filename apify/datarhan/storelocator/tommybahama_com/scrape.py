@@ -13,7 +13,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=true&searchOutlets=true&searchInternational=false"
+    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=true&searchOutlets=true&searchInternational=true"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
@@ -86,7 +86,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+            raw_address=" ".join(raw_address),
         )
 
         yield item
