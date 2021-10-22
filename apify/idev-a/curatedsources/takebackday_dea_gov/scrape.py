@@ -25,11 +25,16 @@ def fetch_data():
                 "county_P": "",
                 "city_P": "",
                 "state_P": state.abbr,
-                "searchRadius": "500",
+                "searchRadius": "5000",
                 "_eventId_submit": "Submit",
             }
-            soup = bs(session.post(base_url, headers=_headers, data=data).text, "lxml")
+            res = session.post(base_url, headers=_headers, data=data)
+            if res.status_code != 200:
+                logger.warning(state.abbr)
+                continue
+            soup = bs(res.text, "lxml")
             if "An unexpected error" in soup.text:
+                logger.warning(state.abbr)
                 continue
             temp = " ".join(
                 list(soup.select_one("div#tableie h2").stripped_strings)
@@ -52,7 +57,7 @@ def fetch_data():
                 )
                 addr = raw_address.split(",")
                 yield SgRecord(
-                    location_name=f"Drug Disposal Site at {list(td[0].stripped_strings)[0]}",
+                    location_name=f"DRUG DISPOSAL SITE AT {list(td[0].stripped_strings)[0]}",
                     street_address=" ".join(addr[:-2]),
                     city=addr[-2],
                     state=addr[-1].strip().split(" ")[0].strip(),

@@ -61,6 +61,10 @@ def get_store_data(store_sel, page_url):
         )
     ).strip()
 
+    if "," in city:
+        state = city.split(",")[-1].strip()
+        city = city.split(",")[0].strip()
+
     zip = "".join(
         store_sel.xpath(
             '//section[@class="nap-unit-inner"]//address//span[@class="c-address-postal-code"]/text()'
