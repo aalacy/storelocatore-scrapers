@@ -16,6 +16,9 @@ import time
 from sgselenium import SgChrome
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def cleanup_json(x, url):
