@@ -48,14 +48,14 @@ def fetch_data():
                     break
             hours = []
             for hh in temp:
+                if "|" in hh:
+                    continue
                 if "Uber" in hh or "Servicio" in hh:
                     break
                 hours.append(hh)
 
             addr = parse_address_intl(" ".join(_addr) + ", Mexico")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            street_address = _addr[0]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.find_previous_sibling("h3").text.strip(),
