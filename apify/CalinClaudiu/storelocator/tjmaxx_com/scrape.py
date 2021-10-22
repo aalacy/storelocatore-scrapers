@@ -169,6 +169,10 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
+    tocrawl = SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
+    tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.CANADA)
+    tocrawl.append(SearchableCountries.AUSTRALIA)
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
@@ -184,7 +188,7 @@ if __name__ == "__main__":
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
+                country_codes=tocrawl,
             )
 
             for rec in par_search.run():
