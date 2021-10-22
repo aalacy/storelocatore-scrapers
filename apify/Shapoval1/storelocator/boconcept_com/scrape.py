@@ -23,7 +23,7 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(j.get("name"))
         if location_name.find("salon zamknięty") != -1:
             continue
-        country_code = j.get("country")
+        country_code = j.get("countryCode") or "<MISSING>"
         location_type = j.get("storeType") or "<MISSING>"
         street_address = (
             f"{j.get('address1')} {j.get('address2')} {j.get('address3')}".replace(
@@ -64,6 +64,7 @@ def fetch_data(sgw: SgWriter):
             city = a.city or "<MISSING>"
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
+            country_code = a.country or "<MISSING>"
 
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
