@@ -1,4 +1,5 @@
 import re
+from urllib import parse
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -13,7 +14,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=true&searchOutlets=true&searchInternational=true"
+    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=false&searchOutlets=true&searchInternational=true"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
@@ -87,6 +88,50 @@ def fetch_data():
             longitude=longitude,
             hours_of_operation=hours_of_operation,
             raw_address=" ".join(raw_address),
+        )
+
+        yield item
+
+    response = session.get(
+        "https://www.tommybahama.com/stores-restaurants/international-locations"
+    )
+    dom = etree.HTML(response.text)
+    int_locations = dom.xpath('//p[a[u[contains(text(), "VIEW MAP")]]]')
+    for poi_html in int_locations:
+        raw_data = poi_html.xpath("text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        for i, e in enumerate(raw_data):
+            if len(e.split(".")) > 2:
+                index = i
+                break
+        raw_address = ", ".join(raw_data[1:index])
+        addr = parse_address_intl(raw_address)
+        hoo = " ".join(raw_data).split("Open")[-1].strip()
+        if "am-" not in hoo.lower():
+            hoo = ""
+        phone = [e for e in raw_data if len(e.split(".")) > 2 and "," not in e]
+        phone = phone[0] if phone else ""
+        if "Dubai" in phone:
+            phone = ""
+        if "Brisbane" in phone:
+            phone = ""
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.tommybahama.com/stores-restaurants/international-locations",
+            location_name=raw_data[0],
+            street_address=raw_data[1],
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code=addr.country,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item
