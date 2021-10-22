@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
-import datetime
 import time
 from tenacity import retry, stop_after_attempt
 import tenacity
