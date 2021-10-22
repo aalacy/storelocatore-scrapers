@@ -64,7 +64,9 @@ def get_data():
         if us.states.lookup(state):
             country_code = "USA"
         else:
-            continue
+            country_code = page_url.replace(
+                "https://www.coffeebean.com/store/", ""
+            ).split("/")[0]
 
         try:
             location_name = soup.find("h1", attrs={"class": "Hero-title"}).text.strip()
@@ -91,7 +93,7 @@ def get_data():
                 "span", attrs={"class": "Address-field Address-city"}
             ).text.strip()
         except Exception:
-            city = soup.find("span", attrs={"property": "addressLocality"})
+            city = soup.find("span", attrs={"property": "addressLocality"}).text.strip()
         store_number = "<MISSING>"
         try:
             address = soup.find(
@@ -118,9 +120,13 @@ def get_data():
             except Exception:
                 zipp = "<MISSING>"
 
-        phone = soup.find("span", attrs={"itemprop": "telephone"})
-        if phone == "NULL":
+        try:
+            phone = soup.find("span", attrs={"itemprop": "telephone"}).text.strip()
+            if phone == "NULL":
+                phone = "<MISSING>"
+        except Exception:
             phone = "<MISSING>"
+
         location_type = "<MISSING>"
 
         days = soup.find_all("td", attrs={"class": "c-hours-details-row-day"})
