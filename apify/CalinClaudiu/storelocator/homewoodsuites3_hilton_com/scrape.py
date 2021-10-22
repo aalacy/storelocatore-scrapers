@@ -60,7 +60,10 @@ def para(k, session):
     son = None
     try:
         son = SgRequests.raise_on_err(
-            session.get(k["facilityOverview"]["homeUrl"], headers=headers)
+            session.get(
+                k["facilityOverview"]["homeUrl"].replace("https", "http"),
+                headers=headers,
+            )
         )
     except Exception as e:
         try:
@@ -147,7 +150,7 @@ def data_fetcher(country, state, sleep):
     url = country["link"]
     masterdata = []
     with SgChrome() as driver:
-        driver.get(url)
+        driver.get(url.replace("https", "http"))
         time.sleep(sleep)
         for r in driver.requests:
             data = None
