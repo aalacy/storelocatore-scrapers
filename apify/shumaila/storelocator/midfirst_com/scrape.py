@@ -117,10 +117,10 @@ def fetch_data():
                 )
             if street_address in addresses:
                 continue
-            if (len(phone)) < 3:
-                phone = "<MISSING>"
             if len(hours_of_operation) < 3:
                 hours_of_operation = "<MISSING>"
+            if (len(phone)) < 3:
+                phone = "<MISSING>"
             yield SgRecord(
                 locator_domain=base_url,
                 page_url=link,
