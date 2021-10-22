@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 
 logger = SgLogSetup().get_logger("hansonlogistics")
@@ -29,7 +31,7 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = list(link.p.stripped_strings)
-            coord = sp1.iframe["data-src"].split("!2d")[1].split("!2m")[0].split("!3d")
+            coord = sp1.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.h5.text.strip(),
@@ -48,7 +50,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
