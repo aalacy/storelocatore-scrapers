@@ -314,10 +314,10 @@ def fetch_data_us_ca(idx, url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     list_of_country_codes = get_list_of_countries_global()
     logger.info(f"Number of Countries: {len(list_of_country_codes)}")
-    logger.info(f"Pulling the list of Global Countries")
+    logger.info("Pulling the list of Global Countries")
 
     loc_url_list = get_loc_urls()
-    logger.info(f"Pulling the list of urls from sitemap url for US and CA")
+    logger.info("Pulling the list of urls from sitemap url for US and CA")
     logger.info(f"Total US and CA stores found to be : {len(loc_url_list)}")
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
