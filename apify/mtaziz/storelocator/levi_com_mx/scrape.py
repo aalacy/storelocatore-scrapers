@@ -4,7 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
 import ssl
 
 try:
@@ -51,8 +50,8 @@ def fetch_data():
                 location_name = "Levi's Retail Partner"
                 location_type = "RETAILER"
             else:
-                locaiton_name = MISSING
-                loction_type = MISSING
+                location_name = MISSING
+                location_type = MISSING
             lt = location_type
 
             if "OUTLET" in lt or "RETAILER" in lt or "STORE" in lt:
