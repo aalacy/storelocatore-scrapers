@@ -4,7 +4,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import os
 
+
+os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
+os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 session = SgRequests()
 website = "macsfreshmarket_com"
@@ -56,23 +60,27 @@ def fetch_data():
                 hours = hours.strip()
                 if hours.find("Sat") == -1:
                     hours = "Mon-Sun: " + hours
+
                 hours = hours.replace("Mon-Sun: <MISSING>", "<MISSING>")
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=DOMAIN,
-                location_name=title.strip(),
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode.strip(),
-                country_code="US",
-                store_number=storeid,
-                phone=phone.strip(),
-                location_type=SgRecord.MISSING,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours.strip(),
-            )
+
+            if title.find("Mac's") != -1:
+
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=DOMAIN,
+                    location_name=title.strip(),
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=storeid,
+                    phone=phone.strip(),
+                    location_type=SgRecord.MISSING,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours.strip(),
+                )
 
 
 def scrape():
@@ -92,6 +100,7 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
+
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
