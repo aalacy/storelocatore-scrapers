@@ -13,7 +13,6 @@ os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000
 os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 
-
 session = SgRequests()
 website = "brush32_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -28,26 +27,26 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        pattern = re.compile(r'\s\s+')
+        pattern = re.compile(r"\s\s+")
         search_url = "https://www.brush32.com/locations/"
         stores_req = session.get(search_url, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
-        locations = soup.findAll('li', {'class':'locations-list-item'})
+        locations = soup.findAll("li", {"class": "locations-list-item"})
         for loc in locations:
-            storeid = loc['data-office-id']
-            lat = loc['data-lat']
-            lng = loc['data-lng']
-            title = loc.find('h3', {'class':'location-title'}).text
-            address = loc.find('address', {'class':'location-address'}).text
-            phone = loc.find('a', {'class':'office-phone-swap'}).text
-            loc_link = loc.find('div', {'class':'location-links'}).find('a')['href']
-            address = re.sub(pattern, ' ', address).strip()
+            storeid = loc["data-office-id"]
+            lat = loc["data-lat"]
+            lng = loc["data-lng"]
+            title = loc.find("h3", {"class": "location-title"}).text
+            address = loc.find("address", {"class": "location-address"}).text
+            phone = loc.find("a", {"class": "office-phone-swap"}).text
+            loc_link = loc.find("div", {"class": "location-links"}).find("a")["href"]
+            address = re.sub(pattern, " ", address).strip()
             address = address.split(title)[1].strip()
             address = address.split(phone)[0]
             req = session.get(loc_link, headers=headers)
             bs = BeautifulSoup(req.text, "html.parser")
-            hours = bs.find('table', {'class':'hours-table'}).text
-            hours = re.sub(pattern, ' ', hours).strip()
+            hours = bs.find("table", {"class": "hours-table"}).text
+            hours = re.sub(pattern, " ", hours).strip()
             parsed = parser.parse_address_usa(address)
             street1 = (
                 parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
@@ -60,7 +59,7 @@ def fetch_data():
             city = parsed.city if parsed.city else "<MISSING>"
             state = parsed.state if parsed.state else "<MISSING>"
             pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-            title = title.rstrip('*')
+            title = title.rstrip("*")
 
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -99,4 +98,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
