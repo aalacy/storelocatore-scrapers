@@ -56,6 +56,9 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = session.get(next_r.url, headers=headers)
+        location_type = MISSING
+        if "(Temporarily Closed)" in r.text:
+            location_type = "Temporarily Closed"
         logger.info(f"Pulling the data from: {next_r.url}")
         temp = r.text.split('<script type="application/ld+json" id="indy-schema">')[
             1
@@ -84,7 +87,7 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             country_code=country_code,
             store_number=MISSING,
             phone=phone.strip(),
-            location_type=MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
