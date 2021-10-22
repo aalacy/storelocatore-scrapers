@@ -90,7 +90,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=loc.select_one("div.garage-link a")["href"],
                 store_number=_[3],
-                location_name=_[4],
+                location_name=_[4].replace("&#8211;", "-"),
                 street_address=street_address.replace("&#8211;", "-"),
                 city=city,
                 state=addr.state,
