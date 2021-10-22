@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup as b4
 
 import json
 import time
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -149,7 +149,7 @@ def fetch_data():
 def data_fetcher(country, state, sleep):
     url = country["link"]
     masterdata = []
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(url.replace("https", "http"))
         time.sleep(sleep)
         for r in driver.requests:
