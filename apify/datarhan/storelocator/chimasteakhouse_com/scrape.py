@@ -1,4 +1,5 @@
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -47,7 +48,7 @@ def fetch_data():
 
         with SgFirefox() as driver:
             driver.get(page_url)
-            driver.implicitly_wait(10)
+            sleep(10)
             driver.switch_to.frame(
                 driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
             )

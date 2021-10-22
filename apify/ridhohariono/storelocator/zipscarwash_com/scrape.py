@@ -135,7 +135,8 @@ def scrape():
                 {
                     SgRecord.Headers.RAW_ADDRESS,
                 }
-            )
+            ),
+            duplicate_streak_failure_factor=250000,
         )
     ) as writer:
         results = fetch_data()
