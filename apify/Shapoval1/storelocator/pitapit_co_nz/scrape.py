@@ -56,6 +56,13 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.find("Holidays") != -1:
             hours_of_operation = hours_of_operation.split("Holidays")[0].strip()
+        tmp_cls = "".join(
+            d.xpath(
+                './/h6[text()="Temporarily closed."]/text() | .//h6[contains(text(), "Temporarily closed")]/text()'
+            )
+        )
+        if tmp_cls:
+            hours_of_operation = "Temporarily closed"
 
         row = SgRecord(
             locator_domain=locator_domain,
