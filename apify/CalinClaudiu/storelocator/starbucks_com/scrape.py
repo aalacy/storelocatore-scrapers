@@ -187,7 +187,9 @@ class ExampleSearchIteration(SearchIteration):
             "user-agent"
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         try:
-            locations = http.get(url, headers=headers).json()
+            locations = SgRequests.raise_on_err(
+                self.__http.get(url, headers=headers)
+            ).json()
             if locations["paging"]["total"] > 0:
                 for record in locations["stores"]:
                     try:
@@ -222,9 +224,9 @@ class ExampleSearchIteration(SearchIteration):
                             raw_address=str(e),
                         )
         except Exception as e:
-            logzilla.error(f"{e}")
+            # logzilla.error(f"{e}")
+            logzilla.info(f"Error on url: {url}")
             locations = {"paging": {"total": 0}}
-            pass
             yield SgRecord(
                 page_url=url,
                 location_name="<ERROR>",
@@ -253,10 +255,13 @@ if __name__ == "__main__":
     )
 
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumAndPageUrlId,
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
-        with SgRequests() as http:
-            search_iter = ExampleSearchIteration(http=http)
+        with SgRequests() as http1:
+            search_iter = ExampleSearchIteration(http=http1)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
