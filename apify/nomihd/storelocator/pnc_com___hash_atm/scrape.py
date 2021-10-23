@@ -205,7 +205,9 @@ def retry_refetch_hours_error_callback(retry_state):
 def refetch_hours(location):
     with get_session() as driver:
         id = location["externalId"]
-        page_url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+        page_url = (
+            f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+        )
         location["page_url"] = page_url
         details = driver.execute_async_script(
             f"""
