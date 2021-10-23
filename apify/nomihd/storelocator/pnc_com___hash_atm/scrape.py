@@ -39,7 +39,7 @@ def fetch_locations(url, retry=0):
     try:
         time.sleep(random.randint(1, 3))
         return get_session(retry > 0).get(url, headers=headers).json()
-    except Exception as e:
+    except Exception:
         if retry < 10:
             return fetch_locations(url, retry + 1)
 
