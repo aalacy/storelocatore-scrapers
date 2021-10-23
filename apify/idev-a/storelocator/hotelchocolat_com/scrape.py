@@ -60,15 +60,22 @@ def fetch_data():
             "script", string=re.compile(r"new google.maps.Marker\(")
         ).string.split("new google.maps.Marker(")[1:]
         for _ in locations:
-            raw_address = [
-                aa.text.strip()
-                for aa in _.select_one("p.store-phone").find_previous_siblings("p")
-            ]
-            addr = parse_address_intl(" ".join(raw_address))
-            street_address = addr.street_address_1
+            raw_address = " ".join(
+                [
+                    aa.text.strip()
+                    for aa in _.select_one("p.store-phone").find_previous_siblings("p")[
+                        ::-1
+                    ]
+                ]
+            ).replace("Hotel Chocolat", "")
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            street_address = street_address.strip()
             ss = json.loads(_.select_one("a.get-dir-store-detail")["data-gtmdata"])
+            if street_address.isdigit() and ss["city"] in raw_address:
+                street_address = raw_address.split(ss["city"])[0].strip()
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in _.select("div.working-hours > p")
@@ -78,13 +85,16 @@ def fetch_data():
             ]
             page_url = locator_domain + _.select_one("a.store-details-link")["href"]
             coord = _latlng(markers, ss["name"])
+            state = addr.state
+            if state and state.replace("-", "").isdigit():
+                state = ""
             yield SgRecord(
                 page_url=page_url,
                 store_number=ss["ID"],
                 location_name=ss["name"],
                 street_address=street_address,
                 city=ss["city"],
-                state=addr.state,
+                state=state,
                 zip_postal=ss.get("postalCode"),
                 country_code=addr.country,
                 phone=_.select_one("p.store-phone").text.strip(),
@@ -93,7 +103,7 @@ def fetch_data():
                 location_type=", ".join(location_type),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=" ".join(raw_address),
+                raw_address=raw_address,
             )
 
 
