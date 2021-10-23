@@ -36,12 +36,15 @@ def fetch_data():
                 if pref in raw_address:
                     state = pref
                     break
+            street_address = _city = raw_address
             if state:
-                _city = raw_address.replace(state, "")
-            _city = _city.split("市")
-            if len(_city) > 1:
-                city = _city[0] + "市"
-            street_address = _city[-1]
+                street_address = _city = raw_address.replace(state, "")
+            if "市" in _city:
+                _city = _city.split("市")
+                if len(_city) > 1:
+                    city = _city[0] + "市"
+            if city:
+                street_address = street_address.replace(city, "")
             if state == "東京都":
                 city = state
                 state = ""
