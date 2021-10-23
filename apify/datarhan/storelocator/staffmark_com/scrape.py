@@ -73,6 +73,8 @@ def fetch_data():
             city = address_raw[1].split(",")[0]
             state = address_raw[1].split(",")[-1].split()[0]
             zip_code = address_raw[1].split(",")[-1].split()[-1]
+        if street_address.strip().endswith(","):
+            street_address = street_address.strip()[:-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath(
