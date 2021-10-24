@@ -36,15 +36,15 @@ def fetch_data():
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
-        zip = line.split()[1]
+        postal = line.split()[1]
         country_code = "US"
 
-        store_number = j.get("oloID") or "<MISSING>"
+        store_number = j.get("oloID")
         location_name = j.get("name")
         ph = j.get("phone")
-        location_type = "<MISSING>"
+        location_type = SgRecord.MISSING
         if "Coming Soon" in ph:
-            phone = "<MISSING>"
+            phone = SgRecord.MISSING
             location_type = "Coming Soon"
         else:
             phone = ph.split(">")[-1].replace("Â", "").strip() or "<MISSING>"
@@ -64,7 +64,7 @@ def fetch_data():
             street_address=street_address,
             city=city,
             state=state,
-            zip_postal=zip,
+            zip_postal=postal,
             country_code=country_code,
             store_number=store_number,
             phone=phone,
@@ -79,7 +79,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:
