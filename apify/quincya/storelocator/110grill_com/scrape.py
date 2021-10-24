@@ -31,9 +31,8 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://www.110grill.com"
 
     for i, item in enumerate(items):
-        try:
-            link = locator_domain + item.find("a", string="View Location")["href"]
-        except:
+        link = locator_domain + item.find("a", class_="pagebutton")["href"]
+        if "pages" not in link:
             continue
         location_name = item.h4.text
         street_address = item.p.span.text.replace("\xa0", " ").strip()

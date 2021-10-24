@@ -1,0 +1,11 @@
+--ignore CentroidValidator  (Confirmed Scrape correctly)
+Found 1 concerning rows. Examples:
+     latitude longitude                       REASON  rowNumber
+1033        1        -1  EITHER_LAT_OR_LNG_IMPRECISE       1033
+
+
+--ignore CountryValidator (Confirmed Scrape correctly)
+
+Found 1 concerning rows. Examples:
+                         state      phone     zip                  REASON  rowNumber
+593  Newfoundland and Labrador  <MISSING>  O0O0O0  INVALID_CA_POSTAL_CODE        593

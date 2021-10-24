@@ -74,6 +74,9 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             state = j.get("state") or j.get("province") or "<MISSING>"
+            state = str(state).replace("&#xf1;", "ñ").strip()
+            if state == "110001":
+                state = "<MISSING>"
             postal = j.get("postalcode") or "<MISSING>"
             country_code = j.get("country") or "<MISSING>"
             city = j.get("city") or "<MISSING>"
