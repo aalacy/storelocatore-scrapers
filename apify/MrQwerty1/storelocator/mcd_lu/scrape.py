@@ -15,22 +15,31 @@ def get_international(line):
     city = adr.city
     state = adr.state
     postal = adr.postcode
+    if "Ingeldorf" in line:
+        city = "Ingeldorf"
+        street_address = line.split(city)[0].strip()[:-1]
 
     return street_address, city, state, postal
 
 
-def fetch_data(sgw: SgWriter):
-    for i in range(1, 1000):
-        page_url = f"https://mcd.lu/content.php?r=1_{i}&lang=de"
+def get_geo(text):
+    if "ll=" in text:
+        lat = text.split("ll=")[1].split(",")[0].strip()
+        lng = text.split("ll=")[1].split(",")[1].split("&")[0].strip()
+        return lat, lng
+    return SgRecord.MISSING, SgRecord.MISSING
 
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-        }
+
+def fetch_data(sgw: SgWriter):
+    for store_number in range(1, 1000):
+        page_url = f"https://mcd.lu/content.php?r=1_{store_number}&lang=de"
         r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        tree = html.fromstring(r.text.replace("<!--", "").replace("-->", ""))
         location_name = "".join(tree.xpath("//h1/text()")).strip()
         if not location_name:
             break
+        if tree.xpath("//h1[@style='color: red;']"):
+            continue
         phone = "".join(tree.xpath("//span[@itemprop='telephone']/text()")).strip()
 
         _tmp = []
@@ -44,9 +53,15 @@ def fetch_data(sgw: SgWriter):
 
         ad = ", ".join(_tmp)
         street_address, city, state, postal = get_international(ad)
+        text = "".join(tree.xpath("//iframe/@src"))
+        latitude, longitude = get_geo(text)
         hours_of_operation = ";".join(
             tree.xpath("//meta[@itemprop='openingHours']/@content")
         )
+        if store_number == 10:
+            hours_of_operation = ";".join(
+                tree.xpath("//meta[@itemprop='openingHours']/@content")[2:]
+            )
 
         row = SgRecord(
             page_url=page_url,
@@ -56,11 +71,11 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="LU",
-            store_number=SgRecord.MISSING,
+            store_number=str(store_number),
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
         )
@@ -71,5 +86,8 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://mcd.lu/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

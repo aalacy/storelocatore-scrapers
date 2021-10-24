@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 
@@ -22,6 +22,127 @@ def fix_comma(x):
         return ", ".join(h)
     except Exception:
         return x
+
+
+def ret_record(record):
+    page_url = "<MISSING>"
+    location_name = "<MISSING>"
+
+    street_address = "<MISSING>"
+
+    city = "<MISSING>"
+
+    state = "<MISSING>"
+
+    zip_postal = "<MISSING>"
+
+    country_code = "<MISSING>"
+
+    store_number = "<MISSING>"
+
+    phone = "<MISSING>"
+
+    location_type = "<MISSING>"
+
+    latitude = "<MISSING>"
+
+    longitude = "<MISSING>"
+    hours_of_operation = "<MISSING>"
+
+    try:
+        page_url = "https://www.starbucks.com/store-locator/store/{}/{}".format(
+            str(record["id"]), str(record["slug"])
+        )
+    except Exception:
+        pass
+    try:
+        location_name = str(record["name"])
+    except Exception:
+        pass
+    try:
+        street_address = fix_comma(
+            str(
+                str(record["address"]["streetAddressLine1"])
+                + ","
+                + str(record["address"]["streetAddressLine2"])
+                + ","
+                + str(record["address"]["streetAddressLine3"])
+            )
+        )
+    except Exception:
+        pass
+
+    try:
+        city = str(record["address"]["city"])
+    except Exception:
+        pass
+
+    try:
+        state = str(record["address"]["countrySubdivisionCode"])
+    except Exception:
+        pass
+
+    try:
+        zip_postal = str(record["address"]["postalCode"])
+    except Exception:
+        pass
+
+    try:
+        country_code = str(record["address"]["countryCode"])
+    except Exception:
+        pass
+
+    try:
+        store_number = str(record["id"])
+    except Exception:
+        pass
+
+    try:
+        phone = str(record["phoneNumber"])
+    except Exception:
+        pass
+
+    try:
+        location_type = str(
+            str(record["brandName"]) + " - " + str(record["ownershipTypeCode"])
+        )
+    except Exception:
+        pass
+
+    try:
+        latitude = str(record["coordinates"]["latitude"])
+    except Exception:
+        pass
+
+    try:
+        longitude = str(record["coordinates"]["longitude"])
+    except Exception:
+        pass
+
+    try:
+        hours_of_operation = str(record["schedule"])
+    except Exception:
+        pass
+
+    raw_address = "<MISSING>"
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain="https://www.starbucks.com/",
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
+    )
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -56,20 +177,55 @@ class ExampleSearchIteration(SearchIteration):
         :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
         """
 
-        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
         lat, lng = coord
-        # just some clever accounting of locations/country:
-        found = 0
-        url = str(f"https://www.starbucks.com/bff/locations?lat={lat}&lng={lng}")
+        url = str(
+            f"https://www.starbucks.com/bff/locations?lat={round(lat,6)}&lng={round(lng,6)}&mop=true"
+        )
         headers = {}
         headers["x-requested-with"] = "XMLHttpRequest"
         headers[
             "user-agent"
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         try:
-            locations = http.get(url, headers=headers).json()
+            locations = SgRequests.raise_on_err(
+                self.__http.get(url, headers=headers)
+            ).json()
+            if locations["paging"]["total"] > 0:
+                for record in locations["stores"]:
+                    try:
+                        try:
+                            found_location_at(
+                                record["coordinates"]["latitude"],
+                                record["coordinates"]["longitude"],
+                            )
+                        except Exception:
+                            pass
+                        yield ret_record(record)
+                        rec_count = self.__state.get_misc_value(
+                            current_country, default_factory=lambda: 0
+                        )
+                        self.__state.set_misc_value(current_country, rec_count + 1)
+                    except KeyError as e:
+                        yield SgRecord(
+                            page_url=SgRecord.MISSING,
+                            location_name=SgRecord.MISSING,
+                            street_address=SgRecord.MISSING,
+                            city=SgRecord.MISSING,
+                            state=SgRecord.MISSING,
+                            zip_postal=SgRecord.MISSING,
+                            country_code=SgRecord.MISSING,
+                            store_number=str(record),
+                            phone=SgRecord.MISSING,
+                            location_type=SgRecord.MISSING,
+                            latitude=SgRecord.MISSING,
+                            longitude=SgRecord.MISSING,
+                            locator_domain=SgRecord.MISSING,
+                            hours_of_operation=SgRecord.MISSING,
+                            raw_address=str(e),
+                        )
         except Exception as e:
-            logzilla.error(f"{e}")
+            # logzilla.error(f"{e}")
+            logzilla.info(f"Error on url: {url}")
             locations = {"paging": {"total": 0}}
             yield SgRecord(
                 page_url=url,
@@ -84,98 +240,37 @@ class ExampleSearchIteration(SearchIteration):
                 latitude=lat,
                 longitude=lng,
                 locator_domain="<ERROR>",
-                hours_of_operation="<ERROR>",
+                hours_of_operation=str(url),
                 raw_address=str(e),
             )
-        if locations["paging"]["total"] > 0:
-            for record in locations["stores"]:
-                try:
-                    try:
-                        found_location_at(
-                            record["coordinates"]["latitude"],
-                            record["coordinates"]["longitude"],
-                        )
-                    except Exception:
-                        pass
-                    yield SgRecord(
-                        page_url="https://www.starbucks.com/store-locator/store/{}/{}".format(
-                            str(record["id"]), str(record["slug"])
-                        ),
-                        location_name=str(record["name"]),
-                        street_address=fix_comma(
-                            str(
-                                str(record["address"]["streetAddressLine1"])
-                                + ","
-                                + str(record["address"]["streetAddressLine2"])
-                                + ","
-                                + str(record["address"]["streetAddressLine3"])
-                            )
-                        ),
-                        city=str(record["address"]["city"]),
-                        state=str(record["address"]["countrySubdivisionCode"]),
-                        zip_postal=str(record["address"]["postalCode"]),
-                        country_code=str(record["address"]["countryCode"]),
-                        store_number=str(record["id"]),
-                        phone=str(record["phoneNumber"]),
-                        location_type=str(
-                            str(record["brandName"])
-                            + " - "
-                            + str(record["ownershipTypeCode"])
-                        ),
-                        latitude=str(record["coordinates"]["latitude"]),
-                        longitude=str(record["coordinates"]["longitude"]),
-                        locator_domain="https://www.starbuck.com/",
-                        hours_of_operation=str(record["schedule"]),
-                        raw_address=SgRecord.MISSING,
-                    )
-                    found += 1
-                except KeyError as e:
-                    yield SgRecord(
-                        page_url=SgRecord.MISSING,
-                        location_name=SgRecord.MISSING,
-                        street_address=SgRecord.MISSING,
-                        city=SgRecord.MISSING,
-                        state=SgRecord.MISSING,
-                        zip_postal=SgRecord.MISSING,
-                        country_code=SgRecord.MISSING,
-                        store_number=str(record),
-                        phone=SgRecord.MISSING,
-                        location_type=SgRecord.MISSING,
-                        latitude=SgRecord.MISSING,
-                        longitude=SgRecord.MISSING,
-                        locator_domain=SgRecord.MISSING,
-                        hours_of_operation=SgRecord.MISSING,
-                        raw_address=str(e),
-                    )
-                    found += 1
-                progress = "??.?%"
-                logzilla.info(
-                    f"{str(lat).replace('(','').replace(')','')}{str(lng).replace('(','').replace(')','')}|found: {found}|total: ??|prog: {progress}|\nRemaining: {items_remaining}"
-                )
-        rec_count = self.__state.get_misc_value(
-            current_country, default_factory=lambda: 0
-        )
-        self.__state.set_misc_value(current_country, rec_count + 1)
 
 
 if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        granularity=Grain_8(),
+        granularity=Grain_4(),
         max_search_results=50,
-        expected_search_radius_miles=20,
+        expected_search_radius_miles=50,
     )
 
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumAndPageUrlId,
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
-        with SgRequests() as http:
-            search_iter = ExampleSearchIteration(http=http)
+        with SgRequests() as http1:
+            search_iter = ExampleSearchIteration(http=http1)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
+                country_codes=[
+                    SearchableCountries.AUSTRALIA,
+                    SearchableCountries.USA,
+                    SearchableCountries.CANADA,
+                    SearchableCountries.BRITAIN,
+                ],
             )
 
             for rec in par_search.run():

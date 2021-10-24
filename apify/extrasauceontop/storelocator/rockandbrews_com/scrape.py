@@ -97,12 +97,17 @@ def get_data():
                 .split(" Kitchen")[0]
             )
 
-            location_url_format = (
-                name.replace(" ", "-").replace("&", "-and-").replace(".", "").lower()
+            page_url = (
+                "https://www.rockandbrews.com"
+                + grid.find("a", attrs={"class": "details-button"})["href"]
             )
-            page_url = "https://www.rockandbrews.com/" + location_url_format
 
             driver.get(page_url)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "pm-custom-section-heading")
+                )
+            )
 
             html = driver.page_source
             soup = bs(html, "html.parser")
@@ -111,7 +116,10 @@ def get_data():
             try:
                 phone = div.find("a")["href"].replace("tel:", "")
             except Exception:
-                phone = "<MISSING>"
+                a_tags = soup.find_all("a")
+                for tag in a_tags:
+                    if "tel:" in tag["href"]:
+                        phone = tag["href"].replace("tel:", "")
 
             if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"
@@ -172,3 +180,5 @@ def scrape():
 
 
 scrape()
+
+# https://www.rockandbrews.com/yaamava'-resort--and--casino
