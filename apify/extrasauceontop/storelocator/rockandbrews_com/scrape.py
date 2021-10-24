@@ -97,10 +97,10 @@ def get_data():
                 .split(" Kitchen")[0]
             )
 
-            location_url_format = (
-                name.replace(" ", "-").replace("&", "-and-").replace(".", "").lower()
+            page_url = (
+                "https://www.rockandbrews.com"
+                + grid.find("a", attrs={"class": "details-button"})["href"]
             )
-            page_url = "https://www.rockandbrews.com/" + location_url_format
 
             driver.get(page_url)
             WebDriverWait(driver, 20).until(
@@ -180,3 +180,5 @@ def scrape():
 
 
 scrape()
+
+# https://www.rockandbrews.com/yaamava'-resort--and--casino

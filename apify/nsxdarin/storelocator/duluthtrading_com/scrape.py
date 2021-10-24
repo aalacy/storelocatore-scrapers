@@ -55,7 +55,6 @@ def fetch_data():
                 day = line2.split(">")[1].split("<")[0]
                 next(lines)
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 day = (
                     day
                     + ": "
