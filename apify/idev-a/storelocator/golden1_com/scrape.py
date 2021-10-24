@@ -5,7 +5,7 @@ from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_2
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import ssl
@@ -40,10 +40,14 @@ data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbra
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     for lat, lng in search:
-        locations = http.post(
-            base_url, headers=_headers, data=data.format(lat, lng)
-        ).json()["locations"]
+        try:
+            locations = http.post(
+                base_url, headers=_headers, data=data.format(lat, lng)
+            ).json()["locations"]
+        except:
+            locations = []
         logger.info(f"[{lat}, {lng}] {len(locations)} found")
+        search.found_location_at(lat, lng)
         for _ in locations:
             yield SgRecord(
                 page_url="https://www.golden1.com/atm-branch-finder#",
@@ -68,11 +72,11 @@ if __name__ == "__main__":
             cookies.append(f'{cook["name"]}={cook["value"]}')
         _headers["cookie"] = ";".join(cookies)
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+            country_codes=[SearchableCountries.USA], granularity=Grain_2()
         )
         with SgWriter(
             deduper=SgRecordDeduper(
-                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
+                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
             )
         ) as writer:
             with SgRequests(proxy_country="us") as http:

@@ -35,8 +35,6 @@ def fetch_data():
                     hours.append(
                         f"{hh['weekDayName']}: {hh['timeFrom']}-{hh['timeTill']}"
                     )
-            store_number = x + 1
-            page_url = f"https://www.kfc.ru/restaurants/{store_number}"
             zip_postal = raw_address.split(",")[0].strip()
             if not zip_postal.isdigit():
                 zip_postal = ""
@@ -49,8 +47,8 @@ def fetch_data():
             if city and city in street_address:
                 street_address = ", ".join(street_address.split(",")[1:])
             yield SgRecord(
-                page_url=page_url,
-                store_number=store_number,
+                page_url="https://www.kfc.ru/restaurants",
+                store_number=_["storeId"],
                 location_name=_["title"]["ru"],
                 street_address=street_address,
                 city=city,
@@ -58,6 +56,7 @@ def fetch_data():
                 latitude=addr["coordinates"]["geometry"]["coordinates"][0],
                 longitude=addr["coordinates"]["geometry"]["coordinates"][1],
                 country_code="Ru",
+                location_type=_["status"],
                 phone=addr["phoneNumber"].split("доб")[0],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),

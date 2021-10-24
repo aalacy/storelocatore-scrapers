@@ -7,7 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -15,8 +15,11 @@ headers = {
 
 def fetch_data():
 
+    session = SgRequests()
     linklist = []
-    token = "A6A0O%2FgwH2pX1Q92HEJdggdori4beBTIRkIXN30nekyY%2BhDNP5j7qTa%2Fs4kntlZDZtYfyfkIyTqFLjRD2gwo3Q%3D%3D"
+    token = session.get(
+        "https://mmfoodmarket.com/en/current_user.json", headers=headers
+    ).json()["csrf_token"]
 
     zips = static_zipcode_list(radius=10, country_code=SearchableCountries.CANADA)
 
@@ -30,6 +33,7 @@ def fetch_data():
             + str(token)
         )
         if p / 50 == 0:
+            session = SgRequests()
             token = session.get(
                 "https://mmfoodmarket.com/en/current_user.json", headers=headers
             ).json()["csrf_token"]
