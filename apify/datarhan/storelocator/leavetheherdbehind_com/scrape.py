@@ -33,7 +33,6 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="single-location__image"]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
-        print(store_url)
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
