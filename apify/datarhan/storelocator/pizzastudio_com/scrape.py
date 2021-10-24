@@ -18,10 +18,8 @@ def fetch_data():
     all_locations = json.loads(response.text)
     for poi in all_locations:
         store_url = "https://pizzastudio.com/locations/" + poi["locationurl"]
-        location_name = poi["locationname"]
+        location_name = poi["locationname"].replace("&acirc;", "â")
         street_address = poi.get("address1")
-        if not street_address:
-            continue
         city = poi["city"]
         state = poi["stateabbrev"]
         if "," in city:
