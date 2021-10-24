@@ -33,6 +33,7 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="single-location__image"]/@href')
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
+        print(store_url)
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
@@ -70,10 +71,13 @@ def fetch_data():
         location_type = "<MISSING>"
         store_number = "<MISSING>"
         phone = "<MISSING>"
-        geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')[0]
-        geo = re.findall(r"center: \[(.+?)\],", geo_data)[0].split(",")
-        latitude = geo[1]
-        longitude = geo[0]
+        geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')
+        latitude = ""
+        longitude = ""
+        if geo_data:
+            geo = re.findall(r"center: \[(.+?)\],", geo_data[0])[0].split(",")
+            latitude = geo[1]
+            longitude = geo[0]
         hours_of_operation = loc_dom.xpath(
             '//h2[contains(text(), "Opening Hours")]/following-sibling::div/span/text()'
         )
