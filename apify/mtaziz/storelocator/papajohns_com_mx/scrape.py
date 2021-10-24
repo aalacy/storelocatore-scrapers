@@ -9,7 +9,6 @@ from tenacity import retry, stop_after_attempt
 import tenacity
 import ssl
 import random
-from lxml import html
 import time
 import json
 from urllib.parse import urlparse
@@ -88,7 +87,6 @@ def fetch_records(idx, url, sgw: SgWriter):
         datamx = json.loads(r.content)
         datamx_response = datamx["response"]
         for idx, _ in enumerate(datamx_response):
-            locator_domain = urlparse(url).netloc
             ln = _["name"]
             slug = _["url"]
             page_url = f"https://{domain}/restaurant/{slug}"
