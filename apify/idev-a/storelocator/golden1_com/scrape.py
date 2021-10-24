@@ -40,9 +40,12 @@ data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbra
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     for lat, lng in search:
-        locations = http.post(
-            base_url, headers=_headers, data=data.format(lat, lng)
-        ).json()["locations"]
+        try:
+            locations = http.post(
+                base_url, headers=_headers, data=data.format(lat, lng)
+            ).json()["locations"]
+        except:
+            locations = []
         logger.info(f"[{lat}, {lng}] {len(locations)} found")
         search.found_location_at(lat, lng)
         for _ in locations:

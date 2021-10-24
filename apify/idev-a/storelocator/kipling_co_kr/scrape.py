@@ -54,8 +54,8 @@ def fetch_data():
                 state=state,
                 country_code="KR",
                 phone=_.select_one("p.telephone").text.strip().split(":")[-1],
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=coord[1],
+                longitude=coord[0],
                 locator_domain=locator_domain,
                 raw_address=raw_address,
             )
