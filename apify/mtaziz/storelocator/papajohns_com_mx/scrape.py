@@ -89,7 +89,11 @@ def fetch_records():
                 page_url = f"https://{domain}/restaurant/{slug}"
                 address = _["address"]
                 pai = parse_address_intl(address)
-                sta = pai.street_address_1 if pai.street_address_1 is not None else MISSING
+                sta = (
+                    pai.street_address_1
+                    if pai.street_address_1 is not None
+                    else MISSING
+                )
                 city = pai.city if pai.city is not None else MISSING
                 state = pai.city if pai.city is not None else MISSING
                 zc = pai.postcode if pai.postcode is not None else MISSING
