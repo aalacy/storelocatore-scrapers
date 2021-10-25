@@ -1,5 +1,5 @@
 import json
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
 
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -111,9 +111,11 @@ def get_data(_zip, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=14) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()
