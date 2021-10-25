@@ -29,6 +29,7 @@ def fetch_data():
                 location_name="Kipling",
                 street_address=street_address,
                 city=_["CityName"],
+                zip_postal=_["ZipCode"],
                 latitude=_["Latitude"],
                 longitude=_["Longitude"],
                 country_code="Taiwan",
