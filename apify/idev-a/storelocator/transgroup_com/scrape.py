@@ -16,7 +16,6 @@ _headers = {
 locator_domain = "https://www.scangl.com"
 base_url = "https://www.scangl.com/about/our-locations/"
 url = "https://siws.transgroup.com/StationInfo.asmx/GetStationInfoJSonIncludeSpecServices?callback=jQuery183023879191175909176_1625502747472&cityCode=%22{}%22&_=1625502788447"
-streets = []
 
 
 def fetch_data():
