@@ -40,10 +40,14 @@ def fetch_data():
                 .find_next_sibling()
                 .stripped_strings
             )
+            name = _.select_one("div.name").text.strip()
+            location_name = "Kipling"
+            if "Outlet" in name:
+                location_name = "Kipling Outlet"
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["data-id"],
-                location_name=_.select_one("div.name").text.strip(),
+                location_name=location_name,
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
