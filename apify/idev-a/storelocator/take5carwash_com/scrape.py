@@ -48,7 +48,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
-                location_name=_["phone"],
+                location_name=_["name"],
                 street_address=" ".join(addr[:-2]),
                 city=addr[-2],
                 state=state,
