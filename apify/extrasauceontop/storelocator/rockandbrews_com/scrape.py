@@ -25,7 +25,7 @@ def get_driver(url, class_name, driver=None):
             driver = SgChrome(
                 executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=True,
+                is_headless=False,
             ).driver()
             driver.get(url)
 
@@ -95,13 +95,15 @@ def get_data():
                 grid.find("div", attrs={"class": "hours"})
                 .text.split(" Happy")[0]
                 .split(" Kitchen")[0]
-            )
+            ).replace("Â ", " ").replace("Open early for Playoff Baseball!", "")
+
+            hour = "".join(c for c in hour if ord(c)<128)
 
             page_url = (
                 "https://www.rockandbrews.com"
                 + grid.find("a", attrs={"class": "details-button"})["href"]
             )
-
+            print(page_url)
             driver.get(page_url)
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located(
