@@ -5,7 +5,7 @@ from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import ssl
