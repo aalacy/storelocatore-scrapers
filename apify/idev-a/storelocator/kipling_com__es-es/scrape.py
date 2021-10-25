@@ -52,7 +52,7 @@ def fetch_data():
             addr = parse_address_intl(raw_address + ", Spain")
             yield SgRecord(
                 page_url=base_url,
-                location_name='Kipling',
+                location_name="Kipling",
                 street_address=block[1:][0],
                 city=addr.city,
                 state=addr.state,
