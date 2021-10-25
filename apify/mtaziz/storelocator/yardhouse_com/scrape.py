@@ -73,6 +73,17 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         data_json = data_raw.xpath('//script[@type="application/ld+json"]/text()')[0]
         data_json1 = data_json.replace("\n", "")
         data = json.loads(data_json1)
+        if not data:
+            r = http.get(next_r.url, headers=headers)
+            time.sleep(6)
+            logger.info(f"Pulling store data from: {next_r.url}")
+            data_raw = html.fromstring(r.text, "lxml")
+            data_json = data_raw.xpath('//script[@type="application/ld+json"]/text()')[
+                0
+            ]
+            data_json1 = data_json.replace("\n", "")
+            data = json.loads(data_json1)
+
         if data:
             logger.info(f"Pulling the Data from: {idx} <<:>> {next_r.url}")
 
