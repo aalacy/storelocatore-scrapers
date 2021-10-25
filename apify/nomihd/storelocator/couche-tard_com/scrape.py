@@ -56,6 +56,9 @@ def fetch_data():
                             continue
                         found_poi.append(page_url)
 
+                        page_url = page_url.replace(
+                            "store-locator", "trouvez-votre-magasin"
+                        ).strip()
                         logger.info(page_url)
                         try:
                             store_req = session.get(page_url, headers=headers)
