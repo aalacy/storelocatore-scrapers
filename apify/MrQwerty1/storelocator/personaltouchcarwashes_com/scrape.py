@@ -6,7 +6,19 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_types():
+    types = dict()
+    r = session.get(locator_domain, headers=headers)
+    tree = html.fromstring(r.text)
+    slugs = set(tree.xpath("//a[text()='FULL SERVICE']/following-sibling::ul//a/@href"))
+    for slug in slugs:
+        types[slug] = "Full Service"
+
+    return types
+
+
 def fetch_data(sgw: SgWriter):
+    types = get_types()
     api = "https://personaltouchcarwashes.com/wp-content/plugins/leaflet-maps-marker/leaflet-geojson.php?layer=1&full=no&full_icon_url=no"
     r = session.get(api, headers=headers)
     js = r.json()["features"]
@@ -23,7 +35,7 @@ def fetch_data(sgw: SgWriter):
         slug = location_name.lower().replace(" ", "-")
         if "---" in slug:
             slug = slug.split("---")[0]
-        page_url = f"{locator_domain}{slug}"
+        page_url = f"{locator_domain}{slug}/"
         raw_address = "".join(
             d.xpath(".//div[contains(@class, 'item-address')]/span/text()")
         ).strip()
@@ -36,6 +48,7 @@ def fetch_data(sgw: SgWriter):
             d.xpath(".//div[contains(@class, 'item-phone')]//text()")
         ).strip()
 
+        location_type = types.get(page_url) or "Express"
         hours = d.xpath(".//div[contains(@class, 'working-hours')]/span/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours)
@@ -47,6 +60,7 @@ def fetch_data(sgw: SgWriter):
             city=city,
             state=state,
             zip_postal=postal,
+            location_type=location_type,
             country_code="US",
             phone=phone,
             latitude=latitude,
