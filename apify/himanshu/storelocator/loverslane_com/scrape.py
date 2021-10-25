@@ -14,7 +14,6 @@ log = sglog.SgLogSetup().get_logger(logger_name="loverslane")
 def fetch_data():
     base_url = "https://www.loverslane.com"
     r = session.get(base_url + "/stores")
-    soup = BeautifulSoup(r.text, "lxml")
     for link in eval(r.text.split("var stores =")[1].split("];")[0] + "]"):
         lat = link[1]
         lng = link[2]
