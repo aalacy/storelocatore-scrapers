@@ -49,14 +49,22 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             hours = []
             _hr = sp1.find("h2", string=re.compile(r"^HOURS OF OPERATION"))
+            if not _hr:
+                _hr = sp1.find("h2", string=re.compile(r"^HOURS"))
             if _hr:
                 for hh in _hr.find_parent().find_next_sibling().select("tr")[1:]:
                     hours.append(": ".join(hh.stripped_strings))
+                if not hours:
+                    for hh in _hr.find_parent("div").find_next_siblings("div"):
+                        if hh.text.strip():
+                            hours = hh.stripped_strings
+                            break
+
             phone = ""
             if sp1.find("a", href=re.compile(r"tel:")):
                 phone = (
                     sp1.find("a", href=re.compile(r"tel:")).text.split(":")[-1].strip()
-                )
+                ).split(":")[-1]
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("h1.entry-title").text.strip(),
@@ -70,7 +78,7 @@ def fetch_data():
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(hours).replace("–", "-"),
                 raw_address=raw_address,
             )
 
