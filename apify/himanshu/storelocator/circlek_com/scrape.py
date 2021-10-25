@@ -129,7 +129,7 @@ def fetch_details(tup, retry=False):
                 try:
                     store_json = json.loads(js)
                 except:
-                    return retryer(fetch_details, (store, session), True)
+                    continue
                 location_name = (
                     store_json.get("description").split(",")[0]
                     or store.get("display_brand")
