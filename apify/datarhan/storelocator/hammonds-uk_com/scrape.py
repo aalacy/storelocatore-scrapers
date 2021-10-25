@@ -11,17 +11,15 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.hammonds-uk.com/api/token"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
+    session.get("https://www.hammonds-uk.com/find-your-local-showroom")
     response = session.get(start_url)
     token = response.text[1:-1]
     hdr = {
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36",
         "x-csrf-token": token,
