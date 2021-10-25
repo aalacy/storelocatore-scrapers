@@ -17,7 +17,7 @@ days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 def fetch_data():
     with SgRequests() as session:
         locations = json.loads(
-            session.get(base_url, headers=_headers).text.replace("\\", "/")
+            session.get(base_url, headers=_headers).text.replace("\\2", "2")
         )["wsResponse"]["result"]
         for _ in locations:
             if "opening_soon" in _.get("operational_status", "").lower():

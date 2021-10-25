@@ -6,7 +6,7 @@ from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicGeoSearch
+from sgzip.dynamic import DynamicGeoSearch, Grain_1_KM
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -36,7 +36,7 @@ def fetch_records_for(tup):
     log.info(
         f"pulling records for Country-{CurrentCountry} Country#:{countriesRemaining},\n coordinates: {lat,lng}"
     )
-    search_url = "https://www.longchamp.com/on/demandware.store/Sites-Longchamp-EU-Site/en/Stores-FindStores"
+    search_url = "https://www.longchamp.com/on/demandware.store/Sites-Longchamp-NA-Site/en_US/Stores-FindStores"
     params = (
         ("showMap", "true"),
         ("findInStore", "false"),
@@ -129,7 +129,7 @@ def scrape():
     ) as writer:
         with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
             session.get(
-                "https://www.longchamp.com/en/en/stores?showMap=true", headers=headers
+                "https://www.longchamp.com/us/en/stores?showMap=true", headers=headers
             )
 
             countries = (
@@ -141,7 +141,9 @@ def scrape():
             for country in countries:
                 try:
                     search = DynamicGeoSearch(
-                        expected_search_radius_miles=50, country_codes=[country]
+                        expected_search_radius_miles=50,
+                        granularity=Grain_1_KM(),
+                        country_codes=[country],
                     )
                     results = parallelize(
                         search_space=[
