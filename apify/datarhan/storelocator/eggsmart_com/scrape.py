@@ -18,7 +18,9 @@ def fetch_data():
     domain = "eggsmart.com"
 
     all_locations = []
-    all_codes = DynamicZipSearch(country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=200)
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=200
+    )
     for code in all_codes:
         formdata = {"city": "Ajax", "address": code}
         response = session.post(start_url, data=formdata)
