@@ -92,12 +92,16 @@ def get_data():
             longitude = "<MISSING>"
 
             hour = (
-                grid.find("div", attrs={"class": "hours"})
-                .text.split(" Happy")[0]
-                .split(" Kitchen")[0]
-            ).replace("Â ", " ").replace("Open early for Playoff Baseball!", "")
+                (
+                    grid.find("div", attrs={"class": "hours"})
+                    .text.split(" Happy")[0]
+                    .split(" Kitchen")[0]
+                )
+                .replace("Â ", " ")
+                .replace("Open early for Playoff Baseball!", "")
+            )
 
-            hour = "".join(c for c in hour if ord(c)<128)
+            hour = "".join(c for c in hour if ord(c) < 128)
 
             page_url = (
                 "https://www.rockandbrews.com"
