@@ -73,25 +73,31 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         data_json = data_raw.xpath('//script[@type="application/ld+json"]/text()')[0]
         data_json1 = data_json.replace("\n", "")
         data = json.loads(data_json1)
+        got_data = False
         for i in range(5):
-            if not data["name"]:
-                logger.info("Retrying data pull ..")
-                r = http.get(next_r.url, headers=headers)
-                time.sleep(10)
-                data_raw = html.fromstring(r.text, "lxml")
-                data_json = data_raw.xpath(
-                    '//script[@type="application/ld+json"]/text()'
-                )[0]
-                data_json1 = data_json.replace("\n", "")
-                data = json.loads(data_json1)
+            if not got_data:
+                try:
+                    location_name = data["name"]
+                    if location_name:
+                        got_data = True
+                except:
+                    pass
+                if not got_data:
+                    logger.info("Retrying data pull ..")
+                    r = http.get(next_r.url, headers=headers)
+                    time.sleep(10)
+                    data_raw = html.fromstring(r.text, "lxml")
+                    data_json = data_raw.xpath(
+                        '//script[@type="application/ld+json"]/text()'
+                    )[0]
+                    data_json1 = data_json.replace("\n", "")
+                    data = json.loads(data_json1)
             else:
                 break
 
-        if data:
+        if got_data:
 
             page_url = next_r.url if next_r.url else MISSING
-
-            location_name = data["name"] if data["name"] else MISSING
 
             sa = data["address"]["streetAddress"]
             street_address = sa if sa else MISSING
