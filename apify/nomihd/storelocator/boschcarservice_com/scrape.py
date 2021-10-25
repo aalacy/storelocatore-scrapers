@@ -54,8 +54,6 @@ class _SearchIteration(SearchIteration):
 
         lat = coord[0]
         lng = coord[1]
-        log.info(f"pulling data for coordinates: {lat},{lng}")
-
         search_url = "https://dl-emea.dxtservice.com/dl/api/search?latitude={}&longitude={}&searchRadius=100&includeStores=COUNTRY&pageIndex={}&pageSize=100&minDealers=10&maxDealers=20&storeTags=[103]"
         page_no = 0
         while True:
@@ -70,7 +68,6 @@ class _SearchIteration(SearchIteration):
                     page_url = "<MISSING>"
                     locator_domain = website
                     location_name = store["displayName"]
-                    log.info(location_name)
                     street_address = store["address"]["addressLine1"]
 
                     if (

@@ -1,11 +1,9 @@
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
 from bs4 import BeautifulSoup
-import time
-import csv
-
-
-logger = SgLogSetup().get_logger("huntingtonhelps_com")
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -13,38 +11,7 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
     statelist = [
         "AL",
         "AR",
@@ -87,7 +54,7 @@ def fetch_data():
         "WI",
     ]
     url = "https://huntingtonhelps.com/location/state-list"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.find("div", {"id": "centerListing"})
     for state in statelist:
@@ -111,7 +78,7 @@ def fetch_data():
             phone = loc.find("div", {"class": "phone"}).text
             loclink = loc.find("h3").find("a")["href"]
             loclink = "https://huntingtonhelps.com" + loclink
-            link = session.get(loclink, headers=headers, verify=False)
+            link = session.get(loclink, headers=headers)
             soup = BeautifulSoup(link.text, "html.parser")
             hour = soup.find("div", {"class": "hours col-sm-6"})
             li = hour.findAll("li")
@@ -121,40 +88,42 @@ def fetch_data():
                 hours = hours + " " + hr
             hours = hours.lstrip()
             hours = hours.rstrip()
-            directions = soup.findAll("div", {"class": "col-md-6"})[1]
-            imgs = directions.find("img", {"class": "img-responsive"})['src']
-            coord = imgs.split('H%7C')[1]
-            coord = coord.split('&')[0]
-            lat, longt = coord.split(',')
-
-
-            data.append(
-                [
-                    "https://huntingtonhelps.com/",
-                    loclink,
-                    title,
-                    street,
-                    city,
-                    state,
-                    zipcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            try:
+                longt, lat = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d", 1)
+                )
+            except:
+                lat = longt = "<MISSING>"
+            yield SgRecord(
+                locator_domain="https://huntingtonhelps.com/",
+                page_url=loclink,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zipcode.strip(),
+                country_code="US",
+                store_number=SgRecord.MISSING,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
             )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
-

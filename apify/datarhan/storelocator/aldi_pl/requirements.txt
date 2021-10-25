@@ -3,5 +3,5 @@ sgrequests==0.2.9
 lxml==4.6.2
 sgzip==0.10.4
 sgscrape==0.2.4
-sgvalidator==0.0.71
 sgpostal==0.1.0
+sglogging==0.0.4
