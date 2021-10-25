@@ -107,7 +107,6 @@ def get_data():
                 "https://www.rockandbrews.com"
                 + grid.find("a", attrs={"class": "details-button"})["href"]
             )
-            print(page_url)
             driver.get(page_url)
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located(
