@@ -2,7 +2,6 @@
 sglogging==0.0.4
 lxml==4.6.2
 tenacity==7.0.0
-sgvalidator==0.0.71
 sgscrape==0.2.2
 sgpostal==0.1.0
 sgrequests==0.2.9

@@ -7,8 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import retry, stop_after_attempt
 import tenacity
 import ssl
-import random
-import time
 import json
 from urllib.parse import urlparse
 from sgpostal.sgpostal import parse_address_intl
