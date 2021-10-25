@@ -28,16 +28,12 @@ def fetch_data():
         state = soup1.find("span", itemprop="addressRegion").text.strip()
         zip = soup1.find("span", itemprop="postalCode").text.strip()
         phone = soup1.find("span", itemprop="telephone").text.strip()
-        hour = ""
-        for hr in soup1.find_all("span", itemprop="openingHours"):
-            hour += hr.text + " , "
-        hour = hour.rstrip(" , ")
-        if len(hour) <= 0:
-            hour = ", ".join(
-                store_sel.xpath(
-                    '//p[./strong[contains(text(),"Store Hours")]]/span/text()'
-                )
-            ).strip()
+        hour = ", ".join(
+            store_sel.xpath('//p[./strong[contains(text(),"Store Hours")]]/span/text()')
+        ).strip()
+        location_type = "<MISSING>"
+        if "Not a Retail Store" in name:
+            location_type = "Corporate Offices/Distribution Center"
 
         yield SgRecord(
             locator_domain=base_url,
@@ -50,7 +46,7 @@ def fetch_data():
             country_code="US",
             store_number="<MISSING>",
             phone=phone,
-            location_type="loverslane",
+            location_type=location_type,
             latitude=lat,
             longitude=lng,
             hours_of_operation=hour,
