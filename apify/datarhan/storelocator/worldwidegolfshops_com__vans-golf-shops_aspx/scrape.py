@@ -49,7 +49,6 @@ def fetch_data():
             loc_dom = etree.HTML(driver.page_source)
         poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
         poi = json.loads(poi)
-        print(page_url)
         location_name = loc_dom.xpath("//h1/text()")
         if not location_name:
             continue
