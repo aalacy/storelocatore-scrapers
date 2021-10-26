@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent import futures
-from sglogging import SgLogSetup
+from sglogging import sglog
 
 locator_domain = "pakmail.com.mx"
 log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
