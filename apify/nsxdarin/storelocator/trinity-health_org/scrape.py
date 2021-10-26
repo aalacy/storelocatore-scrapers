@@ -14,7 +14,6 @@ logger = SgLogSetup().get_logger("trinity-health_org")
 
 
 def fetch_data():
-    locs = []
     for x in range(0, 500):
         logger.info(x)
         loc = (
