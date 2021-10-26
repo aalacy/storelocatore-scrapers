@@ -19,9 +19,7 @@ def fetch_data():
     cities = []
     url = "https://oldnavy.gapcanada.ca/stores?cid=57308&mlink=5151,8551677,7"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'class="ga-link" data-ga="Maplist, Region ' in line:
             stub = line.split('href="')[1].split('"')[0]
             lurl = "https://oldnavy.gapcanada.ca/" + stub
@@ -31,9 +29,7 @@ def fetch_data():
         if "/" in state:
             logger.info(("Pulling Province %s..." % state))
             r2 = session.get(state, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            for line2 in r2.iter_lines(decode_unicode=True):
+            for line2 in r2.iter_lines():
                 if 'data-city-item="' in line2:
                     lurl = (
                         "https://oldnavy.gapcanada.ca/"
@@ -44,9 +40,7 @@ def fetch_data():
     for city in cities:
         logger.info(("Pulling City %s..." % city))
         r2 = session.get(city, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if '<a class="view-store ga-link"' in line2:
                 lurl = (
                     "https://oldnavy.gapcanada.ca/"
@@ -71,9 +65,7 @@ def fetch_data():
         lat = ""
         lng = ""
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         for line2 in lines:
             if 'store_type\\": \\"Outlet' in line2:
                 typ = "Old Navy Outlet"
@@ -106,6 +98,10 @@ def fetch_data():
                 zc = line2.split('"post_code\\":\\"')[1].split("\\")[0]
                 phone = line2.split('"local_phone\\":\\"')[1].split("\\")[0]
                 typ = line2.split('"store_type\\": \\"')[1].split("\\")[0]
+        if "outlet" in typ.lower():
+            name = "Old Navy Outlet"
+        else:
+            name = "Old Navy"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
