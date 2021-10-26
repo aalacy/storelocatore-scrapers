@@ -6,6 +6,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent import futures
+from sglogging import SgLogSetup
+
+locator_domain = "pakmail.com.mx"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def get_urls():
@@ -29,8 +33,9 @@ def get_urls():
 
 
 def get_data(url, sgw: SgWriter):
-    locator_domain = "https://www.pakmail.com.mx/"
+
     page_url = url
+    log.info(f"Page URL: {page_url}")
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -45,7 +50,7 @@ def get_data(url, sgw: SgWriter):
     }
     try:
         result = SgRequests.raise_on_err(session.get(page_url, headers=headers))
-        print(f"## Response: {result}")
+        log.info(f"## Response: {result}")
         tree = html.fromstring(result.text)
 
         jsBlock = (
@@ -94,7 +99,7 @@ def get_data(url, sgw: SgWriter):
         sgw.write_row(row)
 
     except Exception as e:
-        print(f"Err at #L96: {e}")
+        log.info(f"Err at #L100: {e}")
 
 
 def fetch_data(sgw: SgWriter):
