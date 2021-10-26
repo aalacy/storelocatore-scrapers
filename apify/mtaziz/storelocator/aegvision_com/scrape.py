@@ -1,3 +1,4 @@
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -8,7 +9,6 @@ import json
 from tenacity import retry, stop_after_attempt
 import tenacity
 import ssl
-import requests
 
 
 try:
@@ -44,10 +44,11 @@ logger = SgLogSetup().get_logger("aegvision_com")
 
 @retry(stop=stop_after_attempt(1), wait=tenacity.wait_fixed(2))
 def get_response(idx, url):
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
-        return response
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
 
 
 def get_api_urls():
