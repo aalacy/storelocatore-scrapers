@@ -7,3 +7,4 @@ sgscrape==0.2.4
 sgpostal==0.1.0
 selenium==3.141.0
 sgselenium==0.1.4
+sgzip==0.10.4
