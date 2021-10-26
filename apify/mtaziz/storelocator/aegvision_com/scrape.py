@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import json
 from tenacity import retry, stop_after_attempt
 import tenacity
 import ssl
