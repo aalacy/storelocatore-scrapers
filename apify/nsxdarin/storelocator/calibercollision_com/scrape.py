@@ -25,13 +25,26 @@ def fetch_data():
         try:
             hours = str(item["hours"])
         except:
-            hours = "<MISSING>"
+            try:
+                hours = "M-F: " + item["newTime_open"] + "-" + item["newTime_closed"]
+            except:
+                hours = ""
         hours = (
             hours.replace("<br />", "; ")
             .replace("\n", "")
             .replace("<br/>", "; ")
             .replace("<br>", "; ")
         )
+        if "SAT" not in hours:
+            try:
+                hours = (
+                    hours
+                    + "; "
+                    + item["newTime_open_saturday"]
+                    + item["newTime_closed_saturday"]
+                )
+            except:
+                pass
         add = item["address_info"][0]["address"].replace('"', "'")
         city = item["address_info"][0]["city"]
         state = item["address_info"][0]["state_province"]
@@ -54,90 +67,11 @@ def fetch_data():
             store = item["location_id"]
         except:
             store = "<MISSING>"
+        if hours == "; CLOSED SAT &amp; SUN":
+            hours = "M-F: 7:30AM - 5:30PM; CLOSED SAT &amp; SUN"
         if hours == "":
             hours = "<MISSING>"
-        if hours == "<MISSING>":
-            r2 = session.get(loc, headers=headers)
-            hours = ""
-            logger.info(loc)
-            try:
-                lines = r2.iter_lines()
-                alltext = str(r2.content).replace("\r", "").replace("\n", "")
-                if '<span class="Hours_day' in alltext:
-                    items = alltext.split('<span class="Hours_day')
-                    for item in items:
-                        if "<html>" not in item:
-                            hrs = (
-                                item.split('">')[1].split("<")[0]
-                                + ": "
-                                + item.split("</span><span>")[1].split("<")[0]
-                            )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
-                if hours == "":
-                    for line2 in lines:
-                        line2 = str(line2.decode("utf-8"))
-                        if '<span class="d-block pt-3 italic newtime">' in line2:
-                            g = next(lines)
-                            g = str(g.decode("utf-8"))
-                            if "By Appointment Only" in g:
-                                hours = "By Appointment Only"
-                            else:
-                                g = next(lines)
-                                g = str(g.decode("utf-8"))
-                                while "m" not in g:
-                                    g = next(lines)
-                                    g = str(g.decode("utf-8"))
-                                hours = (
-                                    g.strip()
-                                    .replace("\t", "")
-                                    .replace("\r", "")
-                                    .replace("\n", "")
-                                )
-                                g = next(lines)
-                                g = str(g.decode("utf-8"))
-                                if "m" in g:
-                                    hours = (
-                                        hours
-                                        + "; "
-                                        + g.split(">")[1]
-                                        .strip()
-                                        .replace("\t", "")
-                                        .replace("\r", "")
-                                        .replace("\n", "")
-                                        .replace("&amp;", "&")
-                                    )
-                                hours = hours.replace("<br/>", "; ")
-                                hours = (
-                                    hours.replace("  ", " ")
-                                    .replace("  ", " ")
-                                    .replace("  ", " ")
-                                    .replace("  ", " ")
-                                    .replace("  ", " ")
-                                    .replace("  ", " ")
-                                    .replace("  ", " ")
-                                )
-                                hours = hours.replace("\t", "")
-                                hours = hours.replace(" ;", ";")
-            except:
-                pass
-            if hours == "":
-                hours = "<MISSING>"
-        hours = (
-            hours.replace("\n", "")
-            .replace("\\n", "")
-            .replace("\t", "")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-        )
+        hours = hours.replace("&amp;", "&")
         if "no-location" not in loc:
             yield SgRecord(
                 locator_domain=website,

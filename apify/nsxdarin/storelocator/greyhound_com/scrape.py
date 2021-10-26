@@ -160,6 +160,8 @@ def fetch_data():
                         phone = "<MISSING>"
                     if loc == "":
                         loc = "<MISSING>"
+                    if "please note" in add:
+                        add = add.split("please note")[0].replace("*", "").strip()
                     if "MEX" not in state and "MEX" not in zc and len(state) == 2:
                         yield SgRecord(
                             locator_domain=website,

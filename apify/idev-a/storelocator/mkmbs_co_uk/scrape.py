@@ -4,9 +4,14 @@ from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
 import json
 from sglogging import SgLogSetup
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 import time
 import ssl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 
 try:
     _create_unverified_https_context = (
@@ -18,10 +23,6 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("mkmbs")
-
-_headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
-}
 locator_domain = "https://www.mkmbs.co.uk/"
 base_url = "https://www.mkmbs.co.uk/mobify/proxy/base/"
 
@@ -56,8 +57,7 @@ def _ah(sp1, driver, idx=0):
     addr = []
     hours = []
     phone = ""
-    if sp1.select_one("div#phone-box a"):
-        phone = sp1.select_one("div#phone-box a").text.strip()
+
     if len(sp1.select("div#address-box")):
         addr = [el.text for el in sp1.select("div#address-box")[idx].select("p")]
         hours = [
@@ -84,11 +84,14 @@ def _ah(sp1, driver, idx=0):
             if addr:
                 break
 
+    if sp1.select_one("div#phone-box a"):
+        phone = sp1.select_one("div#phone-box a").text.strip()
+
     return addr, _h(hours), phone
 
 
 def fetch_data():
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         links = json.loads(
             bs(driver.page_source, "lxml")
@@ -107,6 +110,14 @@ def fetch_data():
             )
             logger.info(page_url)
             driver.get(page_url)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        '//div[@id="address-box"]',
+                    )
+                )
+            )
             sp1 = bs(driver.page_source, "lxml")
             if sp1.select(".grid-container-desktop"):
                 containers = [
@@ -123,7 +134,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
