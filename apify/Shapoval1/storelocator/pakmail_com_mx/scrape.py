@@ -43,58 +43,63 @@ def get_data(url, sgw: SgWriter):
         "Sec-Fetch-User": "?1",
         "TE": "trailers",
     }
-    r = session.get(page_url, headers=headers)
-
-    tree = html.fromstring(r.text)
-    jsBlock = (
-        "".join(tree.xpath('//script[@type="application/ld+json"]/text()'))
-        .replace("//<![CDATA[", "")
-        .replace("//]]>", "")
-        .strip()
-    )
-    js = json.loads(jsBlock)
-    a = js.get("address")
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = "".join(a.get("addressLocality")) or "<MISSING>"
-    if city.find(",") != -1:
-        city = city.split(",")[0].strip()
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = "MX"
-    location_name = js.get("name") or "<MISSING>"
-    phone = js.get("telephone") or "<MISSING>"
-    hours = js.get("openingHours")
     try:
-        hours_s = eval(hours)
-    except:
-        hours_s = "<MISSING>"
-    hours_of_operation = "<MISSING>"
-    if hours_s != "<MISSING>":
-        hours_of_operation = " ".join(hours_s)
+        result = SgRequests.raise_on_err(session.get(page_url, headers=headers))
+        print(f"## Response: {result}")
+        tree = html.fromstring(result.text)
 
-    row = SgRecord(
-        locator_domain=locator_domain,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code=country_code,
-        store_number=SgRecord.MISSING,
-        phone=phone,
-        location_type=SgRecord.MISSING,
-        latitude=SgRecord.MISSING,
-        longitude=SgRecord.MISSING,
-        hours_of_operation=hours_of_operation,
-    )
+        jsBlock = (
+            "".join(tree.xpath('//script[@type="application/ld+json"]/text()'))
+            .replace("//<![CDATA[", "")
+            .replace("//]]>", "")
+            .strip()
+        )
+        js = json.loads(jsBlock)
+        a = js.get("address")
+        street_address = a.get("streetAddress") or "<MISSING>"
+        city = "".join(a.get("addressLocality")) or "<MISSING>"
+        if city.find(",") != -1:
+            city = city.split(",")[0].strip()
+        state = a.get("addressRegion") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
+        country_code = "MX"
+        location_name = js.get("name") or "<MISSING>"
+        phone = js.get("telephone") or "<MISSING>"
+        hours = js.get("openingHours")
+        try:
+            hours_s = eval(hours)
+        except:
+            hours_s = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours_s != "<MISSING>":
+            hours_of_operation = " ".join(hours_s)
 
-    sgw.write_row(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+    except Exception as e:
+        print(f"Err at #L96: {e}")
 
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
