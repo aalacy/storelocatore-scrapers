@@ -120,7 +120,7 @@ def wait_load(driver, wait, number=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.AUSTRALIA],
         max_search_distance_miles=20,
