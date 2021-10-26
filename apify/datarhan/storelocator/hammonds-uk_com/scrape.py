@@ -1,8 +1,6 @@
 import re
 from lxml import etree
 from urllib.parse import urljoin
-from time import sleep
-from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
