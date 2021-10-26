@@ -1,7 +1,5 @@
 import json
 
-from sglogging import SgLogSetup
-
 from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
@@ -10,8 +8,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
-
-log = SgLogSetup().get_logger("cemexusa.com")
 
 
 def fetch_data(sgw: SgWriter):
