@@ -1,0 +1,5 @@
+sgscrape==0.2.2
+tenacity==7.0.0
+requests==2.25.1
+sglogging==0.0.4
+sgvalidator==0.0.71
