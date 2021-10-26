@@ -5,6 +5,7 @@ from sgrequests import SgRequests
 from urllib.parse import urljoin
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 import math
 from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
@@ -60,7 +61,11 @@ def fetch_data():
         for url, sp1 in fetchConcurrentList(links):
             locations = sp1.select("ul.clinicSearch li")
             for _ in locations:
-                addr = list(_.select_one(".col-sm-8").stripped_strings)[-1].split(",")
+                raw_address = list(_.select_one(".col-sm-8").stripped_strings)[-1]
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
                 hours = []
                 page_url = urljoin(locator_domain, _.a["href"])
                 logger.info(page_url)
@@ -77,17 +82,17 @@ def fetch_data():
                 yield SgRecord(
                     page_url=page_url,
                     location_name=sp2.h2.text.split("|")[-1].strip(),
-                    street_address=" ".join(addr[:-3]),
-                    city=addr[-3].strip(),
-                    state=addr[-2].strip(),
-                    zip_postal=addr[-1].strip(),
+                    street_address=street_address,
+                    city=addr.city,
+                    state=addr.state,
+                    zip_postal=addr.postcode,
                     country_code="CA",
                     phone=_.select_one("div.clinicSearchPhone a").text.strip(),
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours)
                     .replace("\xa0", " ")
                     .replace("–", "-"),
-                    raw_address=" ".join(addr),
+                    raw_address=raw_address,
                 )
 
 
