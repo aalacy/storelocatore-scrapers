@@ -143,6 +143,12 @@ def get_data():
             hours = hours + day + " " + hour + ", "
         hours = hours[:-2]
 
+        if "temporarily closed" in r.lower():
+            location_type = "Temporarily Closed"
+
+        elif "coming soon" in r.lower():
+            location_type = "Coming Soon"
+
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
