@@ -36,8 +36,12 @@ def fetch_data():
 
         all_locations = data["items"]
         for poi in all_locations:
-            if poi["store_type"] != 2:
+            if poi["store_type"] == 2:
+                location_type = "Marimekko store"
+            elif poi["store_type"] == 3:
                 continue
+            else:
+                location_type = "Outlet"
             hoo = []
             for e in poi["working_hours"]:
                 hoo.append(f'{e["day"]} {e["hours"]}')
@@ -51,6 +55,9 @@ def fetch_data():
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
+            phone = poi.get("phone")
+            if phone and len(phone.strip()) == 1:
+                phone = ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -62,8 +69,8 @@ def fetch_data():
                 zip_postal=zip_code,
                 country_code=poi["country_id"],
                 store_number=poi["location_id"],
-                phone=poi.get("phone"),
-                location_type="",
+                phone=phone,
+                location_type=location_type,
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
                 hours_of_operation=hoo,
