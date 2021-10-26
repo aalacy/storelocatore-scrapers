@@ -35,7 +35,7 @@ def fetch_data():
             raw_address = "Av " + addresses[x].split("Av")[-1].replace(".", "")
             yield SgRecord(
                 page_url=base_url,
-                location_name=names[x],
+                location_name="Kipling",
                 street_address=raw_address,
                 country_code="Chile",
                 locator_domain=locator_domain,
