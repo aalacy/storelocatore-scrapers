@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -48,21 +47,20 @@ def fetch_data():
                     break
             hours = []
             for hh in temp:
+                if "|" in hh:
+                    continue
                 if "Uber" in hh or "Servicio" in hh:
                     break
                 hours.append(hh)
 
-            addr = parse_address_intl(" ".join(_addr) + ", Mexico")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            street_address = _addr[0]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.find_previous_sibling("h3").text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=_addr[1].split(",")[0].strip(),
+                state=" ".join(_addr[1].split(",")[1].strip().split()[:-1]),
+                zip_postal=_addr[1].split(",")[1].strip().split()[-1],
                 country_code="Mexico",
                 phone=phone,
                 hours_of_operation="; ".join(hours),

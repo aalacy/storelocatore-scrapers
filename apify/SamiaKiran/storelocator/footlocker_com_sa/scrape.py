@@ -83,7 +83,7 @@ def fetch_data():
                 )
                 coords = soup.find("div", {"class": "geolocation"})
                 latitude = coords["data-lat"]
-                longitude = "-" + coords["data-lng"]
+                longitude = coords["data-lng"]
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=url,
