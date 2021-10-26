@@ -22,7 +22,10 @@ def fetch_data():
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
     for lat, lng in all_coords:
-        data = session.get(start_url.format(lat, lng), headers=hdr).json()
+        data = session.get(start_url.format(lat, lng), headers=hdr)
+        if data.status_code != 200:
+            continue
+        data = data.json()
         for poi in data["locations"]:
             page_url = ""
             location_type = poi["locationType"]["locationTypeDesc"]

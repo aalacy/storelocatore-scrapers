@@ -39,7 +39,7 @@ def fetch_data():
                 state = item.split('"state":"')[1].split('"')[0]
                 zc = item.split('"postalCode":"')[1].split('"')[0]
                 add = item.split('"streetAddress":"')[1].split('"')[0]
-                phone = item.split('"')[0]
+                phone = item.split('"displayPhone":"')[1].split('"')[0]
                 try:
                     hours = (
                         item.split('"schemaHours":[')[1]

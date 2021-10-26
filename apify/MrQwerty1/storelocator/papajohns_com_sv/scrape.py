@@ -54,6 +54,14 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation.endswith(";"):
             hours_of_operation = hours_of_operation[:-1]
 
+        if city == "La":
+            state = f"La {state}"
+            city = SgRecord.MISSING
+        if city == "Santa":
+            city = "Santa Tecla"
+        if city == "San":
+            city = "Apopa"
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,
