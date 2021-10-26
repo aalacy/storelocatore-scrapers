@@ -31,6 +31,9 @@ def fetch_data(sgw: SgWriter):
     js1 = json.loads(jsblock2)
     for j in js["resources"]:
         a = j.get("clinic")
+        if not a.get("address"):
+            continue
+
         page_url = "<MISSING>"
         location_name = a.get("name")
         if location_name == "SB1":
