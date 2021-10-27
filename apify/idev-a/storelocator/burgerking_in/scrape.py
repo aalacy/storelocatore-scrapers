@@ -41,7 +41,7 @@ def random_sleep(driver, start=1, limit=2):
 
 
 def fetch_stores(driver, alert=False):
-    if alert == False:
+    if not alert:
         try:
             WebDriverWait(driver, 10).until(EC.alert_is_present())
             driver.switch_to.alert.accept()
