@@ -1,0 +1,7 @@
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+lxml==4.6.2
+sglogging==0.0.4
+sgvalidator==0.0.70
+sgrequests==0.1.12
+sgpostal==0.1.0
+sgscrape==0.1.12

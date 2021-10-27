@@ -1,41 +1,15 @@
-import csv
 import json
 from sgscrape.sgpostal import International_Parser, parse_address
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://amestools.com"
     page_url = "https://amestools.com/store-locator/"
     session = SgRequests()
@@ -73,14 +47,16 @@ def fetch_data():
         if state == "AB" or state == "BC" or state == "MB" or state == "ON":
             country_code = "CA"
         postal = a.postcode or "<MISSING>"
-        store_number = "<MISSING>"
         latitude = j.get("latitude")
         longitude = j.get("longitude")
-        location_type = "<MISSING>"
         hours = j.get("description")
         hours = html.fromstring(hours)
         hoo = " ".join(hours.xpath("//*//text()")).replace("\n", "").strip()
-        phone = hoo.split("Phone:")[1].strip()
+
+        try:
+            phone = hoo.split("Phone:")[1].strip()
+        except:
+            phone = "<MISSING>"
         if phone.find("Email") != -1:
             phone = hoo.split("Email")[0].strip()
         if phone.find("Fax") != -1:
@@ -90,32 +66,32 @@ def fetch_data():
             hours_of_operation = hoo.split("Store Hours:")[1]
         if phone.find("Phone:") != -1:
             phone = phone.split("Phone:")[1].strip()
+        if hoo.find("COMING SOON") != -1:
+            hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

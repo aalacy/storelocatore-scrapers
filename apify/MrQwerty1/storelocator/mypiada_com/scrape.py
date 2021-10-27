@@ -1,45 +1,19 @@
-import csv
 import yaml
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from lxml import html
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+log = sglog.SgLogSetup().get_logger(logger_name="mypiada.com")
 
 
 def fetch_data():
-    out = []
     locator_domain = "https://mypiada.com/"
     page_url = "https://mypiada.com/locations?l=all"
-    location_type = "<MISSING>"
-
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
@@ -65,11 +39,12 @@ def fetch_data():
         postal = line.split()[1]
         country_code = "US"
 
-        store_number = j.get("oloID") or "<MISSING>"
+        store_number = j.get("oloID")
         location_name = j.get("name")
         ph = j.get("phone")
+        location_type = SgRecord.MISSING
         if "Coming Soon" in ph:
-            phone = "<MISSING>"
+            phone = SgRecord.MISSING
             location_type = "Coming Soon"
         else:
             phone = ph.split(">")[-1].replace("Â", "").strip() or "<MISSING>"
@@ -82,30 +57,37 @@ def fetch_data():
         else:
             hours_of_operation = f"{j.get('openTime')} - {j.get('closeTime')}"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
-import csv
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -7,95 +11,80 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
 
-    data = []
+    url = "https://theoriginalpizzaking.com/additional-pizza-king-locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("div", {"class": "fl-callout-content"})
     url = "https://api.storerocket.io/api/user/3MZpoQ2JDN/locations?radius=250&units=miles"
-    p = 0
-    loclist = session.get(url, headers=headers, verify=False).json()["results"][
-        "locations"
-    ]
-    for loc in loclist:
-        title = loc["name"]
-        store = loc["id"]
-        lat = loc["lat"]
-        longt = loc["lng"]
-        street = loc["address_line_1"]
-        city = loc["city"]
-        state = loc["state"]
-        pcode = loc["postcode"]
-        ccode = "US"
-        if str(street) == "None":
-            street, city, state, pcode = loc["address"].split(", ")
-        phone = (
-            loc["phone"]
-            .replace("(", "")
-            .replace(")", "")
-            .replace("-", "")
-            .replace(" ", "")
-        )
-        phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+    loclist = session.get(url, headers=headers).json()["results"]["locations"]
+    for div in divlist:
+        content = div.text.strip().splitlines()
+        title = content[0]
+        phone = content[1]
+        street = content[2]
+
+        try:
+            city, state = content[3].split(", ", 1)
+            state, pcode = state.strip().split(" ", 1)
+        except:
+            city = street.split(",")[-1].strip()
+            state, pcode = content[3].split(" ", 1)
+        link = "<MISSING>"
+        try:
+            link = div.find("a", {"class": "fl-button"})["href"]
+        except:
+            pass
+        for loc in loclist:
+            if (
+                phone.replace("(", "")
+                .replace(")", "")
+                .replace(" ", "")
+                .replace("-", "")
+                .strip()
+                == loc["phone"]
+                .replace(" ", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .strip()
+            ):
+                store = loc["id"]
+                lat = loc["lat"]
+                longt = loc["lng"]
+                break
         if "Indiana" in state:
             state = "IN"
         elif "Illinois" in state:
             state = "IL"
-        data.append(
-            [
-                "https://theoriginalpizzaking.com/",
-                "https://theoriginalpizzaking.com/additional-pizza-king-locations/?location=Y287W2qN8A",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                "<MISSING>",
-            ]
+        state = state.replace(",", "").replace(".", "").upper()
+        yield SgRecord(
+            locator_domain="https://theoriginalpizzaking.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode,
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type="<MISSING>",
+            latitude=lat,
+            longitude=longt,
+            hours_of_operation="<MISSING>",
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
