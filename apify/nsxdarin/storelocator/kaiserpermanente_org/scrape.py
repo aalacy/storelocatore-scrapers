@@ -24,6 +24,7 @@ def fetch_data():
         "https://healthy.kaiserpermanente.org/hawaii/facilities/sitemap",
         "https://healthy.kaiserpermanente.org/maryland-virginia-washington-dc/facilities/sitemap",
         "https://healthy.kaiserpermanente.org/oregon-washington/facilities/sitemap",
+        "https://healthy.kaiserpermanente.org/washington/facilities/sitemap",
     ]
     for url in urls:
         logger.info(url)
