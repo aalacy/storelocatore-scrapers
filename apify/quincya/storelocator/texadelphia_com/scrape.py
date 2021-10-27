@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     stores = session.get(base_link, headers=headers).json()
 
-    data = []
     locator_domain = "https://texadelphia.com"
 
     for store in stores:
