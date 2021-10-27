@@ -45,6 +45,9 @@ def fetch_data(sgw: SgWriter):
         longitude = geo["lng"]
         location_type = ""
         phone = store["phone"]
+        if not phone:
+            phone = store["google_phone"].replace("'", "").strip()
+
         try:
             raw_hours = json.loads(store["opening_hours"])
             hours_of_operation = " ".join(raw_hours["weekday_text"])
