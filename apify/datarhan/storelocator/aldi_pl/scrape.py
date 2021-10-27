@@ -2,6 +2,7 @@ from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
 from random import uniform
+from tqdm import tqdm
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -13,18 +14,28 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="pl")
 
     start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
     domain = "aldi.pl"
 
-    search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=100000"
+    search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=500&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=500"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=10
     )
     for code in all_codes:
-        sleep(uniform(0, 5))
+        sleep(uniform(5, 15))
         response = session.get(search_url.format(code))
+        passed = True
+        if "Die maximale Abfrageanzahl" in response.text:
+            passed = False
+        while not passed:
+            sleep(uniform(5, 15))
+            session = SgRequests(proxy_country="pl")
+            response = session.get(search_url.format(code))
+            if "Die maximale Abfrageanzahl" not in response.text:
+                passed = True
+
         session_id = str(response.url.raw[-1]).split("=")[-1]
         hdr = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -42,7 +53,7 @@ def fetch_data():
             "View": "",
             "ClearParas": "AdminUnitID,AdminUnitName,WhereCondition",
             "ClearGroups": "GeoMap,MapNav",
-            "Locale": "es-ES",
+            "Locale": "pl-PL",
             "Loc": loc,
         }
 
@@ -65,7 +76,7 @@ def fetch_data():
             )
             next_page = dom.xpath('//a[@title="następna strona"]/@href')
 
-        for poi_html in all_locations:
+        for poi_html in tqdm(all_locations):
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
             raw_adr = poi_html.xpath(".//address/text()")
             raw_adr = [e.strip() for e in raw_adr]
