@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("amwarelogistics")
@@ -40,49 +40,9 @@ def fetch_data():
             page_url = link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            try:
-                if sp1.select("table td"):
-                    for _ in sp1.select("table td"):
-                        blocks = list(_.stripped_strings)
-                        addr = []
-                        phone = ""
-                        for x, bb in enumerate(blocks):
-                            phone = bb.split(":")[-1].replace("Phone", "").strip()
-                            if _p(phone):
-                                addr = blocks[:x]
-                                break
-                            else:
-                                phone = ""
-                        if not addr:
-                            for x, bb in enumerate(blocks):
-                                if bb == _.select_one("ul li").text:
-                                    addr = blocks[:x]
-                                    break
-                        yield SgRecord(
-                            page_url=page_url,
-                            location_name=blocks[0],
-                            street_address=addr[-2],
-                            city=addr[-1].split(",")[0].strip(),
-                            state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                            zip_postal=addr[-1]
-                            .split(",")[1]
-                            .strip()
-                            .split(" ")[-1]
-                            .strip(),
-                            country_code="US",
-                            phone=phone,
-                            locator_domain=locator_domain,
-                        )
-                else:
-                    blocks = list(
-                        sp1.find(
-                            "strong",
-                            string=re.compile(r"Fulfillment Services &", re.IGNORECASE),
-                        )
-                        .find_parent()
-                        .find_next_sibling()
-                        .stripped_strings
-                    )
+            if sp1.select("table td"):
+                for _ in sp1.select("table td"):
+                    blocks = list(_.stripped_strings)
                     addr = []
                     phone = ""
                     for x, bb in enumerate(blocks):
@@ -92,10 +52,15 @@ def fetch_data():
                             break
                         else:
                             phone = ""
+                    if not addr:
+                        for x, bb in enumerate(blocks):
+                            if bb == _.select_one("ul li").text:
+                                addr = blocks[:x]
+                                break
                     yield SgRecord(
                         page_url=page_url,
-                        location_name=link.text.strip(),
-                        street_address=" ".join(addr[:-1]),
+                        location_name=blocks[0],
+                        street_address=addr[-2],
                         city=addr[-1].split(",")[0].strip(),
                         state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                         zip_postal=addr[-1]
@@ -107,14 +72,51 @@ def fetch_data():
                         phone=phone,
                         locator_domain=locator_domain,
                     )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            else:
+                blocks = list(
+                    sp1.find(
+                        "strong",
+                        string=re.compile(r"Fulfillment Services &", re.IGNORECASE),
+                    )
+                    .find_parent()
+                    .find_next_sibling()
+                    .stripped_strings
+                )
+                addr = []
+                phone = ""
+                for x, bb in enumerate(blocks):
+                    phone = bb.split(":")[-1].replace("Phone", "").strip()
+                    if _p(phone):
+                        addr = blocks[:x]
+                        break
+                    else:
+                        phone = ""
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=link.text.strip(),
+                    street_address=" ".join(addr[:-1]),
+                    city=addr[-1].split(",")[0].strip(),
+                    state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                    zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                    country_code="US",
+                    phone=phone,
+                    locator_domain=locator_domain,
+                )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

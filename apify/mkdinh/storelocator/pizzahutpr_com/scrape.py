@@ -9,7 +9,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address, USA_Best_Parser
+from sgscrape.sgpostal import International_Parser, parse_address
 
 logger = SgLogSetup().get_logger("pizzahutpr_com")
 
@@ -104,8 +104,12 @@ def fetch_data():
             store_number = location["id"]
             location_name = location["name"]
 
-            address = parse_address(USA_Best_Parser(), location["address"])
-            street_address = address.street_address_1
+            full_address = location["address"]
+            address = parse_address(International_Parser(), full_address)
+
+            street_address = (
+                full_address if "Carr" in full_address else address.street_address_1
+            )
             city = address.city
 
             postal = location["zip_code"]

@@ -1,126 +1,97 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("piefivepizza_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "piefivepizza_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.piefivepizza.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
     url = "https://www.piefivepizza.com/locations/"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     data_list = soup.findAll("div", {"class": "location-map-select"})
-    places = data_list[0].findAll("area")
-    for p in places:
-
-        statelink = p.get("href")
-        r = session.get(statelink, headers=headers, verify=False)
+    state_list = data_list[0].findAll("area")
+    for state in state_list:
+        state_url = state.get("href")
+        log.info(f"Fetching locations from {state_url}")
+        r = session.get(state_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        numOfLocs = soup.findAll("hr")
-        for num in range(0, len(numOfLocs)):
-
-            locName = soup.findAll("span", {"class": "loc-name"})[num]
-            title = locName.text
-            phone = soup.findAll("span", {"class": "loc-phone"})[num]
-            phone = phone.text
-            phone = phone.replace(") ", "-")
-            phone = phone.replace("(", "")
-            words = phone.split(" ")
-            phone = words[1]
-            street = soup.findAll("span", {"class": "loc-address-1"})[num]
-            street = street.text
-            city = soup.findAll("span", {"class": "loc-address-3"})[num]
-            city = city.text
-            location = city.split(",")
-            city = location[0]
-            location = location[1]
-            location = location.lstrip()
-            words = location.split(" ")
-            state = words[0]
-            zcode = words[1]
-            storehours = soup.findAll("div", {"col-hours"})[num]
-            hours = ""
-            for elem in storehours.findAll("span"):
-                el = elem.text
-                el = el.replace(".", "")
-                if ("am" in el) or ("pm" in el):
-                    # print(el)
-                    hours = hours + el + "\n"
-            #            if hours == "Delivery provided by DoorDash":
-            #                hours = "<MISSING>"
-            hours = hours.replace(":", "")
-            hours = hours.replace(";", "")
-            hours = hours.replace("Delivery provided by DoorDash", "")
-            hours = hours.replace("Hours", "")
-
-            if (hours.find("Closed") != -1) or (len(hours.strip("\n")) == 0):
-                hours = "<MISSING>"
-            if hours.find("(breakfast served until 1030 am)") != -1:
-                hours = hours.replace("(breakfast served until 1030 am)", "")
-            data.append(
-                [
-                    "https://www.piefivepizza.com/locations/",
-                    statelink,
-                    title,
-                    street,
-                    city,
-                    state,
-                    zcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    "<INACCESSIBLE>",
-                    "<INACCESSIBLE>",
-                    hours,
-                ]
+        loclist = soup.select("a[href*=location]")
+        for loc in loclist:
+            page_url = loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("h1").text
+            try:
+                street_address = (
+                    soup.find("span", {"class": "address_1"}).text
+                    + " "
+                    + soup.find("span", {"class": "address_2"}).text
+                )
+            except:
+                continue
+            city = soup.find("span", {"class": "city"}).text
+            state = soup.find("span", {"class": "state"}).text
+            zip_postal = soup.find("span", {"class": "zip"}).text
+            phone = soup.find("span", {"class": "phone"}).text
+            hours_of_operation = (
+                soup.find("span", {"class": "hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("(breakfast served until 10:30 a.m.)", "")
+                .replace("Delivery provided by DoorDash", "")
             )
-    return data
+            if "(available to" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("(available to")[0]
+            elif "**" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("**")[0]
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

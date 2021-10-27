@@ -9,48 +9,29 @@ import json
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.googletagmanager.com/"
-    api_url = "https://www.googletagmanager.com/gtm.js?id=GTM-MFVKXDD"
+    locator_domain = "https://www.fivestarseniorliving.com"
+    api_url = "https://www.fivestarseniorliving.com/sitemap.xml"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    block = (
-        "["
-        + r.text.split('"vtp_input":["macro",10],')[1]
-        .split('"vtp_map":["list",')[1]
-        .split("]]")[0]
-        + "]]"
-    )
-    block = eval(block)
-    for b in block:
-        phone = "".join(b[-1]) or "<MISSING>"
-        page_url = "".join(b[2]).replace("\\", "")
-        if page_url.find("https://www.fivestarseniorliving.com") == -1:
-            page_url = "https://www.fivestarseniorliving.com" + page_url
-        if (
-            page_url.find(
-                "https://www.fivestarseniorliving.com/wi/west-allis/meadowmere-mitchell-manor-west-allis"
-            )
-            != -1
-        ):
+    tree = html.fromstring(r.content)
+    div = tree.xpath("//url/loc")
+    for d in div:
+
+        page_url = "".join(d.xpath(".//text()"))
+        if page_url.count("/") != 6 or page_url.find("communities") == -1:
             continue
-        if (
-            page_url
-            == "https://www.fivestarseniorliving.com/communities/ga/ellijay/cameron-hall-ellijay"
-        ):
-            continue
+
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
+
         jsblock = "".join(
             tree.xpath('//script[contains(text(), "addressLocality")]/text()')
         )
-        try:
-            js = json.loads(jsblock)
-        except:
-            continue
+        js = json.loads(jsblock)
         for j in js["@graph"]:
 
             location_name = j.get("name")
@@ -75,6 +56,23 @@ def fetch_data(sgw: SgWriter):
                 city = j.get("address").get("addressLocality")
             except:
                 city = js["@graph"][4].get("address").get("addressLocality")
+            slug = page_url.replace("https://www.fivestarseniorliving.com", "").strip()
+            session = SgRequests()
+            r = session.get(
+                "https://www.googletagmanager.com/gtm.js?id=GTM-MFVKXDD",
+                headers=headers,
+            )
+            text = r.text.replace("\\", "").strip()
+            try:
+                phone = (
+                    text.split(f"{slug}")[1]
+                    .split("]")[0]
+                    .replace('","value","', "")
+                    .replace('"', "")
+                    .strip()
+                )
+            except:
+                phone = "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -99,6 +97,10 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
     ) as writer:
         fetch_data(writer)

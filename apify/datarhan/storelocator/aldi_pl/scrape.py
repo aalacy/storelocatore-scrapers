@@ -2,6 +2,7 @@ from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
 from random import uniform
+from tqdm import tqdm
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -9,22 +10,33 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests(proxy_country="pl")
 
     start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
     domain = "aldi.pl"
 
-    search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=100000"
+    search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=500&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=500"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=10
     )
     for code in all_codes:
-        sleep(uniform(0, 5))
+        sleep(uniform(5, 15))
         response = session.get(search_url.format(code))
-        session_id = response.url.split("=")[-1]
+        passed = True
+        if "Die maximale Abfrageanzahl" in response.text:
+            passed = False
+        while not passed:
+            sleep(uniform(5, 15))
+            session = SgRequests(proxy_country="pl")
+            response = session.get(search_url.format(code))
+            if "Die maximale Abfrageanzahl" not in response.text:
+                passed = True
+
+        session_id = str(response.url.raw[-1]).split("=")[-1]
         hdr = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Content-Type": "application/x-www-form-urlencoded",
@@ -41,7 +53,7 @@ def fetch_data():
             "View": "",
             "ClearParas": "AdminUnitID,AdminUnitName,WhereCondition",
             "ClearGroups": "GeoMap,MapNav",
-            "Locale": "es-ES",
+            "Locale": "pl-PL",
             "Loc": loc,
         }
 
@@ -64,10 +76,15 @@ def fetch_data():
             )
             next_page = dom.xpath('//a[@title="następna strona"]/@href')
 
-        for poi_html in all_locations:
+        for poi_html in tqdm(all_locations):
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
             raw_adr = poi_html.xpath(".//address/text()")
             raw_adr = [e.strip() for e in raw_adr]
+            addr = parse_address_intl(" ".join(raw_adr))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+
             hoo = poi_html.xpath('.//td[contains(@class,"OpeningHours")]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
@@ -75,11 +92,11 @@ def fetch_data():
                 locator_domain=domain,
                 page_url="https://www.aldi.pl/informacje-dla-klienta/wyszukiwarka-sklepu.html",
                 location_name=location_name,
-                street_address=raw_adr[0],
-                city=" ".join(raw_adr[1].split()[1:]),
+                street_address=street_address,
+                city=addr.city,
                 state=SgRecord.MISSING,
-                zip_postal=raw_adr[1].split()[0],
-                country_code="PL",
+                zip_postal=addr.postcode,
+                country_code="",
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,
                 location_type=SgRecord.MISSING,

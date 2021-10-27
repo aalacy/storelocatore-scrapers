@@ -32,7 +32,7 @@ def fetch_data():
         next_page = driver.find_element_by_xpath('//a[contains(@id, "PageFwd")]')
         while next_page:
             next_page.click()
-            sleep(8)
+            sleep(20)
             dom = etree.HTML(driver.page_source)
             all_locations += dom.xpath('//div[@class="location"]')
             try:
@@ -43,9 +43,15 @@ def fetch_data():
                 next_page = ""
 
     for poi_html in all_locations:
+        page_url = "https://www.thechristhospital.com/locations"
+        own_url = poi_html.xpath('.//a[@class="location-header"]/@href')
+        if own_url:
+            page_url = own_url[0]
         location_name = poi_html.xpath(
             './/span[@class="location-header no-details-link"]/text()'
         )
+        if not location_name:
+            location_name = poi_html.xpath('.//a[@class="location-header"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//span[@class="addressline"]/text()')[
             0
@@ -66,19 +72,19 @@ def fetch_data():
         phone = poi_html.xpath('.//span[@class="phonenumber"]/b/text()')
         phone = [e.strip() for e in phone if e.strip()]
         phone = phone[0].strip() if phone else "<MISSING>"
-        hours_of_operation = poi_html.xpath('.//div[@class="hours"]//text()')
+        hours_of_operation = poi_html.xpath(
+            './/h2[contains(text(), "Hours")]/following-sibling::dl//text()'
+        )
         hours_of_operation = [
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
-        if hours_of_operation == ["Hours"]:
-            hours_of_operation = ""
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.thechristhospital.com/locations",
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

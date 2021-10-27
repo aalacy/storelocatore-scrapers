@@ -1,152 +1,113 @@
 from bs4 import BeautifulSoup
-import csv
-import time
+import re
+import json
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape import sgpostal as parser
-
-
-logger = SgLogSetup().get_logger("ombudsman_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
-    data = []
-    all_stores = []
-    all_coords = []
-    search_url = "https://www.ombudsman.com/locations/"
-    stores_req = session.get(search_url, headers=headers)
-    soup = BeautifulSoup(stores_req.text, "html.parser")
-    statelist = soup.find("ul", {"id": "state-list"}).findAll("a")
-    for state in statelist:
-        link = state["href"]
-        stores_req = session.get(link, headers=headers)
-        soup = BeautifulSoup(stores_req.text, "html.parser")
-        coords = soup.find("script", {"id": "mappress-js-after"})
-        coords = str(coords)
-        coords = coords.split('"point":{')
-        for i in coords:
-            if i.find("lat") != -1:
-                i = i.split("},")[0]
-                all_coords.append(i)
-    for state in statelist:
-        link = state["href"]
-        stores_req = session.get(link, headers=headers)
-        soup = BeautifulSoup(stores_req.text, "html.parser")
-        content = soup.findAll("div", {"class": "location-group clearfix"})
-        for locs in content:
-            locs = locs.findAll("ul")
-            for loc in locs:
-                center = str(loc)
-                if center.find("<li") != -1:
-                    center = loc.findAll("li")
-                    for store in center:
-                        all_stores.append(store)
-                else:
-                    all_stores.append(loc)
-    for store, coords in zip(all_stores, all_coords):
-        title = store.find("h4").text
-        address = store.find("p").text.strip()
-        parsed = parser.parse_address_usa(address)
-        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-        street = (
-            (street1 + ", " + parsed.street_address_2)
-            if parsed.street_address_2
-            else street1
+    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.ombudsman.com/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    statelist = soup.select("a[href*=state]")
+    for st in statelist:
+        stlink = st["href"]
+        r = session.get(stlink, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "location-group"})
+        coordlist = (
+            "["
+            + r.text.split("mapp.data.push( ", 1)[1].split("[", 1)[1].split("]", 1)[0]
+            + "]"
         )
-        city = parsed.city if parsed.city else "<MISSING>"
-        state = parsed.state if parsed.state else "<MISSING>"
-        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-        phone = store.text
-        if phone.find("(") != -1:
-            phone = phone.split(pcode)[1].strip()
-        else:
-            phone = "<MISSING>"
-        lat, lng = coords.split(",")
-        lat = lat.split('"lat":"')[1].split('"')[0].strip()
-        lng = lng.split('"lng":"')[1].split('"')[0].strip()
-        if lat == "":
-            lat = "<MISSING>"
-        if lng == "":
-            lng = "<MISSING>"
-        link = "https://www.ombudsman.com/state/" + state.lower()
+        coordlist = json.loads(coordlist)
 
-        if title == "Cartersville":
-            street = "134 Market Sq Shopping Center"
-            city = "Cartersville"
-        data.append(
-            [
-                "https://www.ombudsman.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                lng,
-                "<MISSING>",
-            ]
-        )
-    return data
+        for loc in loclist:
+            divlist = loc.findAll("li")
+            for div in divlist:
+                try:
+                    link = div.find("h4").find("a")["href"]
+                    link = stlink.replace("/locations/", "") + link
+                except:
+                    link = stlink
+                content = re.sub(cleanr, "\n", str(div)).strip()
+                content = re.sub(pattern, "\n", str(content)).strip()
+
+                if (
+                    "(" in content.splitlines()[-1]
+                    or ")" in content.splitlines()[-1]
+                    or "-" in content.splitlines()[-1]
+                ):
+                    title = content.split("\n", 1)[0]
+                    phone = content.splitlines()[-1]
+                    pcode = content.splitlines()[-2]
+                    state = content.splitlines()[-3]
+                    city = content.splitlines()[-4]
+                    title = content.splitlines()[0]
+                    street = (
+                        content.split(title, 1)[1]
+                        .split(city + "\n", 1)[0]
+                        .replace("\n", " ")
+                        .strip()
+                    )
+                else:
+                    if "Learn" in content:
+                        content = content.split("Learn", 1)[0]
+                    content = content.splitlines()
+                    title = content[0]
+                    street = content[1]
+                    try:
+                        state = content[2].strip().split(" ")[-2]
+                        city = content[2].split(" " + state, 1)[0]
+                        pcode = content[2].split(state + " ", 1)[1]
+                    except:
+                        city = content[-2]
+                        state, pcode = content[-1].split(" ", 1)
+                    phone = "<MISSING>"
+                lat = longt = "<MISSING>"
+                for coord in coordlist:
+                    if coord["title"] == title or "Campus" in coord["title"]:
+                        lat = coord["point"]["lat"]
+                        longt = coord["point"]["lng"]
+                        break
+                title = title.encode("ascii", "ignore").decode("ascii")
+                yield SgRecord(
+                    locator_domain="https://www.ombudsman.com/",
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.replace(",", "").strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=SgRecord.MISSING,
+                    phone=phone.strip(),
+                    location_type=SgRecord.MISSING,
+                    latitude=str(lat),
+                    longitude=str(longt),
+                    hours_of_operation=SgRecord.MISSING,
+                )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

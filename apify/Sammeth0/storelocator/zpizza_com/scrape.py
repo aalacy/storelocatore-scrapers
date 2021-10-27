@@ -1,8 +1,4 @@
-import json
 from sgrequests import SgRequests
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from sgselenium import SgSelenium
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -36,60 +32,41 @@ MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
-def wait_load(driver, number=0):
-    number += 1
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-    try:
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "locations"))
-        )
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located(
-                (By.XPATH, '//*[@id="locations"]/div[2]/div')
-            )
-        )
-    except:
-        driver.refresh()
-        if number < 3:
-            log.info(f"Try to Refresh for ({number}) times")
-            return wait_load(driver, number)
-
-
 def fetch_data():
+    script = """
+        return fetch('/graphql', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ "operationName": "restaurantPageContent", "variables": { "draftMode": false, "restaurantId": 6265, "url": "/locations" }, "extensions": { "operationId": "PopmenuClient/8ab8c2ade9f3deb1346d180fa26c7c78" } })
+        })
+        .then(r => r.json())
+    """
     driver = SgSelenium().chrome()
     driver.get("https://www.zpizza.com/locations")
-    wait_load(driver)
-    content_script = driver.find_element_by_xpath("/html/body/script[2]").get_attribute(
-        "innerHTML"
-    )
+    info = driver.execute_script(script)
     driver.quit()
-    info = content_script.split(
-        '"galleryImages":[],"giftCardImages":[],"giftCardShopItem":null,"locations":'
-    )[3].split(',"socialHandles":[]}],"menus":[]', 1)[0]
-    info = info + ',"socialHandles":[]}]'
-    p = 0
-    loclist = json.loads(info)
-    for loc in loclist:
-        page_url = "https://www.zpizza.com/" + loc["slug"]
+    store_info = info["data"]["restaurant"]["pageContent"]["sections"][0]["locations"]
+    for row in store_info:
+        page_url = "https://www.zpizza.com/" + row["slug"]
+        if "moreno-valley-tap-room" in row["slug"]:
+            page_url = page_url = "https://www.zpizza.com/moreno-valley-ca"
+        location_name = row["name"]
         if page_url.find("bend-tap-room") > -1:
             page_url = page_url.split("-")[0]
-        location_name = loc["name"]
-        store_number = loc["id"]
-        street_address = loc["streetAddress"]
-        state = loc["state"]
-        city = loc["city"]
-        zip_postal = loc["postalCode"]
-        country_code = loc["country"]
-        latitude = loc["lat"]
-        longitude = loc["lng"]
-        hourlist = loc["schemaHours"]
-        phone = (
-            loc["phone"][0:3]
-            + "-"
-            + loc["phone"][3:6]
-            + "-"
-            + loc["phone"][6 : len(loc["phone"])]
-        )
+        raw_address = row["fullAddress"]
+        store_number = row["id"]
+        street_address = row["streetAddress"]
+        state = row["state"]
+        city = row["city"]
+        zip_postal = row["postalCode"]
+        country_code = row["country"]
+        latitude = row["lat"]
+        longitude = row["lng"]
+        hourlist = row["schemaHours"]
+        phone = row["displayPhone"]
         location_type = "zpizza"
         hours_of_operation = ""
         hourd = []
@@ -124,7 +101,6 @@ def fetch_data():
             )
         except:
             hours_of_operation = MISSING
-
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -141,9 +117,8 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=f"{street_address}, {city}, {state} {zip_postal}",
+            raw_address=raw_address,
         )
-        p += 1
 
 
 def scrape():
