@@ -49,6 +49,7 @@ def fetch_data():
             hoo = ""
             location_type = poi["type"]
             page_url = ""
+            phone = ""
             if location_type == "PO":
                 page_url = f'https://www.royalmail.com/services-near-you/post-office/{location_name.lower().replace(" ", "-")}-{poi["officeDetails"]["postcode"].lower().replace(" ", "-")}'
             if location_type == "DO":
@@ -59,6 +60,8 @@ def fetch_data():
                 scraped_urls.append(page_url)
                 loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)
+                phone = loc_dom.xpath('//div[@class="phone-number"]/a/text()')
+                phone = phone[0].strip() if phone else ""
                 hoo = loc_dom.xpath('//div[@class="opening-hours-wrapper"]/div//text()')
                 hoo = (
                     " ".join([e.strip() for e in hoo if e.strip()])
@@ -75,6 +78,9 @@ def fetch_data():
                     street_address += " " + addr.street_address_2
                 else:
                     street_address = addr.street_address_2
+            hoo = hoo.replace("Our opening hours have changed ", "")
+            if city:
+                city = city.replace(" Ze2", "")
 
             item = SgRecord(
                 locator_domain=domain,
@@ -86,7 +92,7 @@ def fetch_data():
                 zip_postal=poi["officeDetails"]["postcode"],
                 country_code="",
                 store_number="",
-                phone="",
+                phone=phone,
                 location_type=poi["type"],
                 latitude=poi["locationDetails"]["latitude"],
                 longitude=poi["locationDetails"]["longitude"],

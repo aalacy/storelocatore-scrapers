@@ -24,7 +24,7 @@ def fetch_data():
             hours.append(f"Weekdays: {_['NormalTime']}")
             hours.append(f"Weekends: {_['WeekendTime']}")
             location_name = "Kipling"
-            if "Outlet" in _["Name"]:
+            if "outlet" in _["Name"].lower():
                 location_name = "Kipling Outlet"
             yield SgRecord(
                 page_url=page_url,

@@ -3,6 +3,17 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import parse_address, International_Parser
+
+
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    postal = adr.postcode
+
+    return street_address, postal
 
 
 def fetch_data(sgw: SgWriter):
@@ -18,11 +29,13 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         location_name = j.get("name")
-        slug = j.get("URL_MAP_FOR_CONTENT")
+        slug = j.get("URL_MAP_FOR_CONTENT") or "/"
         page_url = f"https://sea.sunglasshut.com/sg{slug}"
-        street_address = j.get("address")
+        raw_address = j.get("address") or ""
+        street_address, postal = get_international(raw_address)
+        if len(street_address) < 5:
+            street_address = raw_address.split(",")[0].strip()
         city = j.get("city")
-        postal = j.get("zip")
         country_code = j.get("state")
         phone = j.get("phone")
         latitude = j.get("geographicCoordinatesLatitude")
@@ -58,6 +71,7 @@ def fetch_data(sgw: SgWriter):
             longitude=longitude,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         sgw.write_row(row)
