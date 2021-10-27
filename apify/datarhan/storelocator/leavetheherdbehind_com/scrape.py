@@ -127,6 +127,8 @@ def fetch_data():
             if hours_of_operation and hours_of_operation.strip()
             else "<MISSING>"
         )
+        if hours_of_operation == "Opening Hours will be published soon.":
+            continue
 
         item = SgRecord(
             locator_domain=domain,
