@@ -29,15 +29,30 @@ def fetch_data():
                 if _.select_one("img.location-banner"):
                     continue
                 block = list(_.select_one(".location-details p").stripped_strings)
-                addr = parse_address_intl(block[0].replace("-", ","))
+                _addr = (
+                    block[0]
+                    .replace("German Doner Kabab", "")
+                    .replace("German Doner Kebab", "")
+                    .strip()
+                )
+                if _addr.startswith(","):
+                    _addr = _addr[1:].strip()
+                addr = parse_address_intl(_addr)
                 phone = ""
                 if len(block) > 1:
                     phone = block[1].replace("Tel", "").strip()
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
-                if street_address.replace("-", "").strip().isdigit():
-                    street_address = block[0].split(",")[0]
+                if (
+                    not street_address
+                    or street_address.replace("-", "")
+                    .replace(",", "")
+                    .strip()
+                    .isdigit()
+                    or street_address.lower() == "dafza"
+                ):
+                    street_address = _addr.split(",")[0]
                 zip_postal = addr.postcode
                 _hr = _.find("strong", string=re.compile(r"NOW OPEN", re.IGNORECASE))
                 if not _hr:
@@ -77,7 +92,7 @@ def fetch_data():
                     )
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=list(_.h2.stripped_strings)[0],
+                    location_name=list(_.h2.stripped_strings)[0].replace("–", "-"),
                     street_address=street_address,
                     city=addr.city,
                     state=addr.state,

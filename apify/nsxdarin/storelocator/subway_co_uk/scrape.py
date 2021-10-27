@@ -125,6 +125,9 @@ def fetch_data():
             if phone == "":
                 phone = "<MISSING>"
             add = add.replace("Subway", "").strip()
+            add = add.replace("&amp;", "&")
+            name = name.replace("&amp;", "&")
+            hours = hours.replace("&amp;", "&")
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
