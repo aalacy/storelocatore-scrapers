@@ -12,3 +12,7 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
+
+## R&D: 
+- Previously it had 6 locations, now it is has 7 locations as of 6th August 2021
+- One location does not have phone number in the API Endpoint. 

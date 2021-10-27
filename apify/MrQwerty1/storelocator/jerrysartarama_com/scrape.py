@@ -1,125 +1,121 @@
-import csv
-import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_urls():
+    r = session.get("https://www.jerrysartarama.com/retail/store-index")
+    tree = html.fromstring(r.text)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return tree.xpath(
+        "//h2[contains(text(), 'Affiliates')]/preceding-sibling::div[@class='rows']//a[@class='button']/@href"
+    )
 
 
-def get_hours(page_url):
-    session = SgRequests()
+def get_data(page_url, sgw: SgWriter):
+    if "?" in page_url:
+        page_url = page_url.split("?")[0]
+
+    _tmp = []
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    hours = tree.xpath(
-        "//h3[contains(text(), 'Hours')]/following-sibling::p[1]//text()"
-    )
-    if not hours:
-        hours = tree.xpath(
-            "//div[@class='small-24 medium-8 contact-info large-9 columns text-center ']/div[@class='adr']/following-sibling::p//text()"
-        )
-    hours = list(filter(None, [h.strip() for h in hours]))
-    hoo = ";".join(hours).replace(":;", ":") or "<MISSING>"
-    if hoo.startswith("Yes"):
-        hoo = ";".join(hoo.split(";")[1:])
-
-    text = "".join(tree.xpath("//p/a[contains(@href, 'map')]/@href"))
-
+    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
     try:
-        if text.find("ll=") != -1:
-            latitude = text.split("ll=")[1].split(",")[0]
-            longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-        elif text.find("@") != -1:
-            latitude = text.split("@")[1].split(",")[0]
-            longitude = text.split("@")[1].split(",")[1]
+        if "@" not in text:
+            latitude, longitude = text.split("dir/")[1].split("/")[0].split(",")
         else:
-            latitude = text.split("dir/")[1].split(",")[0]
-            longitude = text.split("dir/")[1].split(",")[1].split("/")[0]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+            latitude, longitude = text.split("/@")[1].split(",")[:2]
+    except:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-    return latitude, longitude, hoo, r.url
+    if "wholesale" in str(r.url):
+        location_type = "Wholesale"
+        phone = "".join(
+            tree.xpath("//footer//a[contains(@href, 'tel:')]/text()")
+        ).strip()
+        street_address = "".join(
+            tree.xpath(
+                "//footer//div[@class='street-address']/text()|//footer//div[@class='extended-address']/text()"
+            )
+        ).strip()
+        city = "".join(tree.xpath("//footer//span[@class='locality']/text()")).strip()
+        state = "".join(tree.xpath("//footer//span[@class='region']/text()")).strip()
+        postal = "".join(
+            tree.xpath("//footer//span[@class='postal-code']/text()")
+        ).strip()
+        location_name = f"{city}, {state}"
+
+        lines = tree.xpath("//footer//p//text()")
+        for line in lines:
+            if not line.strip() or "Yes" in line:
+                continue
+            if ":" not in line:
+                _tmp.append(f"{line.strip()};")
+            else:
+                _tmp.append(line.strip())
+        hours_of_operation = "".join(_tmp)[:-1]
+    else:
+        location_type = "Retail"
+        phone = "".join(tree.xpath("//span[@class='location-phone']//text()")).strip()
+        location_name = "".join(
+            tree.xpath("//span[@class='location-phone']/preceding-sibling::h2/text()")
+        ).strip()
+        line = tree.xpath("//h3[text()='Address:']/following-sibling::p[1]/text()")
+        line = list(filter(None, [l.strip() for l in line]))
+        csz = line.pop()
+        street_address = ", ".join(line)
+        city = csz.split(",")[0].strip()
+        csz = csz.split(",")[-1].strip()
+        state, postal = csz.split()
+        lines = tree.xpath(
+            "//h3[contains(text(), 'Hours')]/following-sibling::p[1]//text()"
+        )
+        for line in lines:
+            if not line.strip() or "Yes" in line:
+                continue
+            if ":" not in line:
+                _tmp.append(f"{line.strip()};")
+            else:
+                _tmp.append(line.strip())
+        hours_of_operation = "".join(_tmp)[:-1]
+
+    if "retail" in page_url:
+        location_type = "Retail"
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        location_type=location_type,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://jerrysartarama.com/"
-    api_url = "https://www.jerrysretailstores.com/locations/"
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
 
-    session = SgRequests()
-    r = session.get(api_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), '@vocab')]/text()"))
-    js = json.loads(text)["@graph"]
-
-    for j in js:
-        a = j.get("address")
-        street_address = a.get("streetAddress") or "<MISSING>"
-        city = a.get("addressLocality") or "<MISSING>"
-        state = a.get("addressRegion") or "<MISSING>"
-        postal = a.get("postalCode") or "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = j.get("url").replace("/store-location", "")
-        if page_url.find("greensboro") != -1:
-            page_url = "https://www.jerryswholesalestores.com/greensboro-nc/"
-        location_name = j.get("name").replace("&#8217;", "'")
-        location_type = "<MISSING>"
-        phone = a.get("telephone") or "<MISSING>"
-        latitude, longitude, hours_of_operation, page_url = get_hours(page_url)
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://jerrysartarama.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

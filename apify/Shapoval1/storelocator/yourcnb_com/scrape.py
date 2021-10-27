@@ -1,40 +1,14 @@
-import csv
 import usaddress
-from lxml import html
+import json
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://yourcnb.com/"
     session = SgRequests()
     tag = {
@@ -69,15 +43,18 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
     }
 
-    r = session.get("https://yourcnb.com/locations/branch-locations/", headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//li[@class="li-2"]/h3')
-    for d in div:
+    r = session.get(
+        "https://cdn.storelocatorwidgets.com/json/a3e7ee977dcba1d93845c0f37a9125d2?callback=slw&_=1630749353753",
+        headers=headers,
+    )
+    jsblock = r.text.split("slw(")[1].split("]})")[0].strip() + "]}"
 
-        page_url = "https://yourcnb.com/locations/branch-locations/"
-        ad = d.xpath(".//following-sibling::div[1]/p[1]/text()")
-        ad = list(filter(None, [a.strip() for a in ad]))
-        ad = " ".join(ad)
+    js = json.loads(jsblock)
+    for j in js["stores"]:
+
+        page_url = "https://yourcnb.com/locations/"
+        ad = "".join(j.get("data").get("address")).replace("\r\n", " ").strip()
+
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
@@ -85,62 +62,46 @@ def fetch_data():
         city = a.get("city") or "<MISSING>"
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
-        location_name = "".join(d.xpath(".//text()")).strip()
+        location_name = j.get("name")
         country_code = "US"
-        store_number = "<MISSING>"
-        text = "".join(
-            d.xpath(
-                ".//following-sibling::div[1]//a[text()='View location on map']/@href"
+        store_number = j.get("storeid")
+
+        latitude = j.get("data").get("map_lat")
+        longitude = j.get("data").get("map_lng")
+        location_type = ", ".join(j.get("filters"))
+        hours_of_operation = j.get("data").get("description") or "<MISSING>"
+        if hours_of_operation != "<MISSING>":
+            hours_of_operation = (
+                "".join(hours_of_operation).replace("\r\n", " ").strip()
             )
-        )
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        location_type = "Branch"
-        hours_of_operation = d.xpath(".//following-sibling::div[2]/p[2]/text()")
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = " ".join(hours_of_operation)
-        phone = (
-            "".join(
-                d.xpath(
-                    './/following-sibling::div[2]/p/strong[text()="Phone Number:"]/following-sibling::text()[1]'
-                )
-            )
-            .replace("\n", "")
-            .strip()
+        if hours_of_operation.find("(") != -1:
+            hours_of_operation = hours_of_operation.split("(")[0].strip()
+        phone = j.get("data").get("phone") or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

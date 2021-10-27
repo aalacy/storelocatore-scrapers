@@ -20,10 +20,15 @@ Checked myself, data was valid, because of global data validation needs: --ignor
 Above mentioned All CLubs API was not sufficient to get all data fields which has `pfx:clubs` as `id` and these IDs need to use in 
 another internal API to pull all data fields. 
 
-- First API : https://cde-assets-planetfitness.s3.amazonaws.com/locations.json
+- First API : https://cde-assets-planetfitness.s3.amazonaws.com/locations.json  
 - Parse `"id": "pfx:clubs:25411afd-c286-11e8-999a-a511d4663031",`
-- reconstruct 2nd API URL by using `id` E.g., https://www.planetfitness.com/gyms/pfx/api/clubs/pfx:clubs:25411afd-c286-11e8-999a-a511d4663031 
+- reconstruct 2nd API URL by using `id` E.g., `https://www.planetfitness.com/gyms/pfx/api/clubs/pfx:clubs:25411afd-c286-11e8-999a-a511d4663031` 
 - Parse all locator data from here 
 
+## Note: 
+- First API : `https://cde-assets-planetfitness.s3.amazonaws.com/locations.json`  this API endpoint is not valid now. 
+- New API Endpoint: `https://www.planetfitness.com/gyms/pfx/api/clubs/locations` 
+
 ### Results: 
-Total Locations:  2192 as of May 12, 2021
+- Total Locations:  2192 as of May 12, 2021
+- Total Locations:  2243 as of July 28, 2021
