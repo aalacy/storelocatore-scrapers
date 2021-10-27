@@ -1,86 +1,104 @@
-import csv
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-logger = SgLogSetup().get_logger('independent-bank_com')
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    addresses = []
-    header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
-    return_main_object = []
-    base_url = "https://www.independent-bank.com/"
-    loacation_url = "https://www.independent-bank.com/our-story/general-contact/locations-hours.html"
-    r = session.get(loacation_url,headers = header)
-    soup = BeautifulSoup(r.text,"lxml")
-    ck = soup.find('ul',{'id':'locList'}).find_all('div',{'class':'branchName'})
-    for target_list in ck:
-        # logger.info('https://www.independent-bank.com'+target_list.find('a')['href'])
-        page_url='https://www.independent-bank.com'+target_list.find('a')['href']
-        store_number = page_url.split('=')[1].split('&')[0]
-        # logger.info(store_number)
-        k = session.get('https://www.independent-bank.com'+target_list.find('a')['href'],headers = header)
-        soup = BeautifulSoup(k.text,"lxml")
-        locator_domain = base_url
-        country_code = "US"
-        ul = soup.find('ul',{'id':'locList'}).find('li')
-        location_name = ul['data-title']
-        street_address = ul['data-address1']+ " "+ul['data-address2']
-        city = ul['data-city']
-        state = ul['data-state']
-        zipp = ul['data-zip']
-        latitude= ul['data-latitude']
-        longitude = ul['data-longitude']
-        contact = ul.find('div',class_='contact')
-        if contact != None:
-            list_phone = list(contact.stripped_strings)
-            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(list_phone)))
-            if phone_list:
-                phone = phone_list[0]
-            else:
-                phone = "<MISSING>"
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    start_url = "https://locations.ifinancial.com/index.html"
+    domain = "ifinancial.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+
+    all_locations = []
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath('//a[@class="Directory-listLink"]/@href')
+    for url in all_states:
+        response = session.get(urljoin(start_url, url), headers=hdr)
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath('//a[@class="Directory-listLink"]')
+        for city in all_cities:
+            count = city.xpath("@data-count")[0][1:-1]
+            url = city.xpath("@href")[0]
+            if count == "1":
+                all_locations.append(url)
+                continue
+
+            response = session.get(urljoin(start_url, url), headers=hdr)
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//a[@class="Teaser-titleLink"]/@href')
+
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//span[@class="LocationName-geo"]/text()')[0]
+        street_address = loc_dom.xpath(
+            '//span[@class="Address-field Address-line1"]/text()'
+        )[0]
+        city = loc_dom.xpath('//span[@class="Address-field Address-city"]/text()')[0]
+        state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0]
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+        country_code = loc_dom.xpath("//@data-country")[0]
+        phone = loc_dom.xpath(
+            '//div[@class="Phone Hero-phone"]//span[@itemprop="telephone"]/text()'
+        )
+        phone = phone[0] if phone else SgRecord.MISSING
+        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
+        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
+        if "ATM" in location_name:
+            hoo = loc_dom.xpath(
+                '//div[h2[contains(text(), "ATM Hours")]]//table[@class="c-hours-details"]/tbody//text()'
+            )
+            location_type = "ATM"
         else:
-            phone = "<MISSING>"
-        hours = ul.find('div',class_="hours")
-        if hours != None:
-            hours_of_operation =  " ".join(list(hours.stripped_strings))
-        else:
-            hours_of_operation = "<MISSING>"
-        location_type = "Branch"
-        # loc_type = ul.find('div',class_="hours").nextSibling
-        # logger.info(loc_type.prettify())
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+            hoo = loc_dom.xpath(
+                '//div[h2[contains(text(), "Lobby Hours")]]//table[@class="c-hours-details"]/tbody//text()'
+            )
+            location_type = "BRANCH"
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo)
 
-        if str(store[2]) + str(store[-3]) not in addresses:
-            addresses.append(str(store[2]) + str(store[-3]))
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+        )
 
-            store = [x.strip() if x else "<MISSING>" for x in store]
+        yield item
 
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-                
-        
+
 def scrape():
-    data = fetch_data()    
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

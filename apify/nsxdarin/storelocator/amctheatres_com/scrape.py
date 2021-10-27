@@ -42,67 +42,90 @@ def fetch_data():
                 if lurl not in locs:
                     locs.append(lurl)
     for loc in locs:
-        logger.info("Pulling Location %s..." % loc)
-        website = "amctheatres.com"
-        typ = "<MISSING>"
-        hours = "<MISSING>"
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        country = "US"
-        store = ""
-        phone = "<MISSING>"
-        lat = ""
-        lng = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'property="place:location:latitude" content="' in line2:
-                lat = line2.split('property="place:location:latitude" content="')[
-                    1
-                ].split('"')[0]
-                lng = line2.split('property="place:location:longitude" content="')[
-                    1
-                ].split('"')[0]
-            if 'name="amc:theatre-name" content="' in line2:
-                name = line2.split('name="amc:theatre-name" content="')[1].split('"')[0]
-            if 'street_address" content="' in line2:
-                add = line2.split('street_address" content="')[1].split('"')[0]
-            if 'contact_data:locality" content="' in line2:
-                city = line2.split('contact_data:locality" content="')[1].split('"')[0]
-            if 'data:region" content="' in line2:
-                state = line2.split('data:region" content="')[1].split('"')[0]
-            if 'postal_code" content="' in line2:
-                zc = line2.split('postal_code" content="')[1].split('"')[0]
-            if '"amc:unit-number" content="' in line2:
-                store = line2.split('"amc:unit-number" content="')[1].split('"')[0]
-        if "chicago/amc-oakbrook-center-4" in loc:
-            add = "300 Oakbrook Center, Oakbrook-4"
-            city = "Oak Brook"
-            state = "IL"
-            store = "473"
-            zc = "60523"
-            name = "AMC Oakbrook Center 4"
-            lat = "41.850415"
-            lng = "-87.952809"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        Found = True
+        while Found:
+            try:
+                logger.info("Pulling Location %s..." % loc)
+                website = "amctheatres.com"
+                typ = "<MISSING>"
+                hours = "<MISSING>"
+                name = ""
+                add = ""
+                city = ""
+                state = ""
+                zc = ""
+                country = "US"
+                store = ""
+                phone = "<MISSING>"
+                lat = ""
+                lng = ""
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    line2 = str(line2.decode("utf-8"))
+                    if 'property="place:location:latitude" content="' in line2:
+                        lat = line2.split(
+                            'property="place:location:latitude" content="'
+                        )[1].split('"')[0]
+                        lng = line2.split(
+                            'property="place:location:longitude" content="'
+                        )[1].split('"')[0]
+                        Found = False
+                    if 'name="amc:theatre-name" content="' in line2:
+                        name = line2.split('name="amc:theatre-name" content="')[
+                            1
+                        ].split('"')[0]
+                    if 'street_address" content="' in line2:
+                        add = line2.split('street_address" content="')[1].split('"')[0]
+                    if 'contact_data:locality" content="' in line2:
+                        city = line2.split('contact_data:locality" content="')[1].split(
+                            '"'
+                        )[0]
+                    if 'data:region" content="' in line2:
+                        state = line2.split('data:region" content="')[1].split('"')[0]
+                    if 'postal_code" content="' in line2:
+                        zc = line2.split('postal_code" content="')[1].split('"')[0]
+                    if '"amc:unit-number" content="' in line2:
+                        store = line2.split('"amc:unit-number" content="')[1].split(
+                            '"'
+                        )[0]
+                if "chicago/amc-oakbrook-center-4" in loc:
+                    add = "300 Oakbrook Center, Oakbrook-4"
+                    city = "Oak Brook"
+                    state = "IL"
+                    store = "473"
+                    zc = "60523"
+                    name = "AMC Oakbrook Center 4"
+                    lat = "41.850415"
+                    lng = "-87.952809"
+                if "miami-ft-lauderdale/amc-hialeah-12" in loc:
+                    city = "Hialeah"
+                    state = "FL"
+                    zc = "33012"
+                    name = "AMC Hialeah 12"
+                    store = "4172"
+                    add = "780 W 49th St"
+                    lat = "25.865364"
+                    lng = "-80.297871"
+                name = name.replace("&amp;", "&")
+                add = add.replace("&amp;", "&")
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+            except:
+                pass
 
 
 def scrape():

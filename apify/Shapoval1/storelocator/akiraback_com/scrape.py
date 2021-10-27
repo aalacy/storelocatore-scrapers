@@ -49,15 +49,19 @@ def fetch_data(sgw: SgWriter):
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
+        try:
+            tree = html.fromstring(r.text)
+        except:
+            tree = html.fromstring("<html></html>")
         if (
             slug.find("beverly hills") != -1
             or slug.find("san diego") != -1
             or slug.find("las vegas") != -1
+            or slug.find("SAN DIEGO") != -1
+            or slug.find("Los Angeles") != -1
         ):
             slug = "US"
-        if slug.find("toronto") != -1:
+        if slug.find("toronto") != -1 or slug.find("TORONTO") != -1:
             slug = "CA"
         if slug.find("NORTH ISLAND SEYCHELLES") != -1:
             slug = "NORTH ISLAND"
@@ -67,8 +71,10 @@ def fetch_data(sgw: SgWriter):
             slug = "Vietnam"
         if slug.find("BANGKOK") != -1:
             slug = "Thailand"
+
         country_code = slug
         city = "<MISSING>"
+        street_address = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         phone = "<MISSING>"
@@ -244,11 +250,9 @@ def fetch_data(sgw: SgWriter):
                 .strip()
             )
         if page_url == "https://www.akirabackdubai.com/contact-us":
-            ad = "".join(tree.xpath('//a[@id="hotel-address"]/text()'))
+            ad = "".join(tree.xpath('//input[@class="daddr"]/@value'))
             phone = "".join(
-                tree.xpath(
-                    '//div[@class="hotel-adddress"]//a[contains(@href, "tel")]/text()'
-                )
+                tree.xpath('//div[contains(text(), "Inquiries: ")]/a/text()')
             ).strip()
             hours_of_operation = (
                 " ".join(
@@ -323,64 +327,9 @@ def fetch_data(sgw: SgWriter):
                 .split('"')[0]
                 .strip()
             )
-        if page_url == "https://portal.marriott.com/hanjw-dining/akira-back":
-            ad = "".join(
-                tree.xpath('//i[@class="icon-maps-pin"]/following-sibling::span/text()')
-            )
-            phone = (
-                "".join(
-                    tree.xpath('//div[@class="header-main-details-phone"]/a/text()')
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            hours_of_operation = (
-                "".join(tree.xpath('//ul[@class="hourlist carouselitems"]/li//text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            if hours_of_operation.find("Temporarily closed") != -1:
-                hours_of_operation = "Temporarily closed"
-            latitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"latitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-            longitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"longitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-        if (
-            page_url
-            == "https://bangkokmarriottmarquisqueenspark.com/dining/akira-back/"
-        ):
-            ad = "".join(
-                tree.xpath('//i[@class="icon-maps-pin"]/following-sibling::span/text()')
-            )
-            phone = (
-                "".join(tree.xpath('//span[@class="header-main-phone"]/a/text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            latitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"latitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-            longitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"longitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
+
         if page_url == "https://bangkokmarriottmarquisqueenspark.com/dining/abar/":
-            ad = "".join(
-                tree.xpath('//i[@class="icon-maps-pin"]/following-sibling::span/text()')
-            )
+            continue
         if (
             page_url
             == "https://www.marriott.com/hotels/hotel-information/restaurant/details/sinjw-jw-marriott-hotel-singapore-south-beach/5895579"
@@ -431,10 +380,29 @@ def fetch_data(sgw: SgWriter):
         city = a.city or "<MISSING>"
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
-        if street_address == "<MISSING>":
-            street_address = ad.split(",")[0].strip()
-            city = ad.split(",")[1].strip()
-            country_code = a.country
+        if page_url == "https://portal.marriott.com/hanjw-dining/akira-back":
+            street_address = "No 8 Do Duc Duc Road, Me Tri Ward, South Tu Liem District"
+            city = "Hanoi"
+            state = "Hanoi"
+            phone = "+842438335588"
+            hours_of_operation = "<MISSING>"
+            latitude = "21.007734"
+            longitude = "105.7825177"
+        if (
+            page_url
+            == "https://bangkokmarriottmarquisqueenspark.com/dining/akira-back/"
+        ):
+            street_address = "199 Sukhumvit Soi 22, Klong Ton"
+            city = "Klong Toey"
+            state = "Bangkok"
+            postal = "10110"
+            phone = "+1-66-2-059-5999"
+            latitude = "13.7304211"
+            longitude = "100.5655813"
+        if page_url == "https://www.north-island.com/dining-options/":
+            street_address = "PO Box 1176"
+        if city.find("Los Angeles") != -1:
+            country_code = "US"
 
         row = SgRecord(
             locator_domain=locator_domain,

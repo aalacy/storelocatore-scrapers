@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -25,13 +26,17 @@ def fetch_data(sgw: SgWriter):
             location_name = j.get("Description")[0].get("displayStoreName")
         except:
             location_name = j.get("Description").get("displayStoreName")
-        street_address = "".join(j.get("addressLine")[0]).replace(
+        ad = "".join(j.get("addressLine")[0]).replace(
             "9700 Collins Avenue,", "9700 Collins Avenue"
         )
-        street_address = street_address.split(",")[0].replace("NY", "")
         phone = j.get("telephone1")
-        state = j.get("stateOrProvinceName")
-        postal = j.get("postalCode")
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = ad.split(",")[-1].strip()
+        postal = a.postcode or "<MISSING>"
+        country_code = "CA"
         city = j.get("city")
         hours_of_operation = f'Sunday {j.get("Attribute").get("WH_DAY").get("sunday")} Saturday {j.get("Attribute").get("WH_DAY").get("saturday")} Tuesday {j.get("Attribute").get("WH_DAY").get("tuesday")} Friday {j.get("Attribute").get("WH_DAY").get("friday")} Wednesday {j.get("Attribute").get("WH_DAY").get("wednesday")} Thursday {j.get("Attribute").get("WH_DAY").get("thursday")} Monday {j.get("Attribute").get("WH_DAY").get("monday")}'
         latitude = j.get("latitude")
@@ -52,6 +57,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

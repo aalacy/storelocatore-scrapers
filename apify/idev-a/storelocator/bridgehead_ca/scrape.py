@@ -4,6 +4,10 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import dirtyjson
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import parse_address_intl
+import re
 
 logger = SgLogSetup().get_logger("bridgehead")
 
@@ -32,55 +36,56 @@ def fetch_data():
             page_url = locator_domain + mymap.a["href"]
             logger.info(page_url)
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = list(soup1.select_one("div.page__content.rte p").stripped_strings)
-            if "Fax" in addr[-1]:
-                del addr[-1]
-            if addr[0] == " 50 Rideau St. at Rideau Centre":
-                import pdb
-
-                pdb.set_trace()
-            try:
-                state_zip = (
-                    addr[-3]
-                    .split(",")[1]
-                    .strip()
-                    .replace("&nbsp;", " ")
-                    .replace("\xa0", " ")
-                )
-                state_zip = state_zip.split(" ")
-                street_address = " ".join(addr[:-3]).replace("\xa0", " ")
-                city = addr[-3].split(",")[0]
-                state = state_zip[0]
-                zip_postal = " ".join(state_zip[1:])
-            except:
-                street_address = " ".join(addr[:-4]).replace("\xa0", " ")
-                city = addr[-4].split(",")[0].strip()
-                state = addr[-4].split(",")[1].strip()
-                zip_postal = addr[-3]
+            _addr = list(soup1.select_one("div.page__content.rte p").stripped_strings)
+            raw_address = []
+            for aa in _addr:
+                if "Ph" in aa or "Hour" in aa:
+                    break
+                raw_address.append(aa.replace("&nbsp;", " ").replace("\xa0", " "))
+            addr = parse_address_intl(" ".join(raw_address))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
 
             hours = []
+            phone = ""
             for hh in block[:-1][::-1]:
                 if hh.startswith("Ph"):
+                    phone = hh.split("Ph.")[-1].split("Ph")[-1]
                     break
                 hours.append(hh)
+            if hours and hours[0].lower() == "closed":
+                hours = []
+                for hh in (
+                    soup1.find_all("", string=re.compile(addr.city))[-1]
+                    .find_parent()
+                    .find_next_siblings("p")
+                ):
+                    if not hh.text.replace("\xa0", " ").strip():
+                        continue
+                    hours += list(hh.stripped_strings)
+
+            if hours and "Hours" in hours[0]:
+                del hours[0]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_[0],
                 street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="CA",
                 latitude=_[1],
                 longitude=_[2],
-                phone=addr[-1],
+                phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(hours).replace("\xa0", " "),
+                raw_address=" ".join(raw_address),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
