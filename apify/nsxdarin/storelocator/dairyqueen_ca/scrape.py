@@ -1045,7 +1045,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         logger.info(str(lat) + "-" + str(lng))
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '"address1":"' in line:
                 items = line.split('"address1":"')
                 for item in items:
@@ -1076,7 +1075,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         logger.info(lat + "-" + lng)
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '"address3":"' in line:
                 items = line.split('"address3":"')
                 for item in items:
@@ -1118,7 +1116,6 @@ def fetch_data():
             session = SgRequests()
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
                 if "this page doesn't exist" in line2:
                     Closed = True
                 if '<h1 class="my-1 h2">' in line2:
