@@ -127,8 +127,8 @@ def fetch_data():
         max_search_results=10,
     )
     driver.get(LOCATION_URL)
-    wait_load(driver, "BASE")
     for zipcode in search:
+        wait_load(driver, "BASE")
         driver.find_element_by_xpath('//*[@id="sf-location-search"]').clear()
         driver.find_element_by_xpath('//*[@id="sf-location-search"]').send_keys(zipcode)
         time.sleep(0.5)

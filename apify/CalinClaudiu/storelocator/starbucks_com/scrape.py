@@ -262,12 +262,7 @@ if __name__ == "__main__":
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
-                country_codes=[
-                    SearchableCountries.AUSTRALIA,
-                    SearchableCountries.USA,
-                    SearchableCountries.CANADA,
-                    SearchableCountries.BRITAIN,
-                ],
+                country_codes=SearchableCountries.ALL,
             )
 
             for rec in par_search.run():
