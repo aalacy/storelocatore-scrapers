@@ -36,6 +36,8 @@ def fetch_data():
         del ls[0]
 
         for l in ls:
+            loc = l.find_element_by_tag_name("h2").text.strip()
+            logger.info(loc)
 
             addr, phone = re.findall(
                 r"Address:(.*)Office:(.*)Mailing Address", l.text, re.DOTALL
@@ -90,23 +92,26 @@ def fetch_data():
             city = tagged["PlaceName"]
             state = tagged["StateName"]
             zip = tagged["ZipCode"]
-            trs = l.find_elements_by_tag_name("tbody")[2].find_elements_by_tag_name(
-                "tr"
-            )
-            if "ITM" in trs[-1].text:
-                del trs[-1]
+            if len(l.find_elements_by_tag_name("tbody")) > 2:
+                trs = l.find_elements_by_tag_name("tbody")[2].find_elements_by_tag_name(
+                    "tr"
+                )
+                if "ITM" in trs[-1].text:
+                    del trs[-1]
 
-            tim = ""
-            for tr in trs:
-                tds = tr.find_elements_by_tag_name("td")
-                if len(tds) >= 3:
-                    tim += tds[0].text + ": " + tds[2].text + " "
-                elif len(tds) == 2:
-                    tim += tds[0].text + ": " + tds[1].text + " "
+                tim = ""
+                for tr in trs:
+                    tds = tr.find_elements_by_tag_name("td")
+                    if len(tds) >= 3:
+                        tim += tds[0].text + ": " + tds[2].text + " "
+                    elif len(tds) == 2:
+                        tim += tds[0].text + ": " + tds[1].text + " "
 
-            tim = tim.strip()
+                tim = tim.strip()
+            else:
+                tim = "<MISSING>"
             phone = phone.strip()
-            loc = l.find_element_by_tag_name("h2").text.strip()
+
             yield SgRecord(
                 locator_domain="https://newpeoples.bank",
                 page_url="https://newpeoples.bank/Locations.aspx",
