@@ -101,11 +101,6 @@ class _SearchIteration(SearchIteration):
                     latitude = store["geoCoordinates"]["latitude"]
                     longitude = store["geoCoordinates"]["longitude"]
 
-                    rec_count = self.__state.get_misc_value(
-                        current_country, default_factory=lambda: 0
-                    )
-                    self.__state.set_misc_value(current_country, rec_count + 1)
-
                     found_location_at(lat, lng)
                     yield SgRecord(
                         locator_domain=locator_domain,
@@ -136,7 +131,7 @@ def scrape():
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         expected_search_radius_miles=100,
-        granularity=Grain_8(),
+        max_search_results=100,
     )
 
     with SgWriter(
@@ -152,15 +147,6 @@ def scrape():
 
             for rec in par_search.run():
                 writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
-    log.info("Printing number of records by country-code:")
-    for country_code in SearchableCountries.ALL:
-        log.info(
-            country_code,
-            ": ",
-            state.get_misc_value(country_code, default_factory=lambda: 0),
-        )
 
 
 if __name__ == "__main__":
