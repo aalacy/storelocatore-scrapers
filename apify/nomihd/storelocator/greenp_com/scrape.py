@@ -57,12 +57,7 @@ def fetch_data():
             city = formatted_addr.city
             state = formatted_addr.state
             zip = formatted_addr.postcode
-            country_code = "US"
-            if city:
-                city = city.replace("Minor", "").strip().replace("Parks", "").strip()
-                if "toronto" in city.lower():
-                    country_code = "CA"
-
+            country_code = "CA"
             store_number = store["id"]
             location_name = location_name + " " + str(store_number)
             location_type = store["carpark_type_str"]
@@ -140,12 +135,7 @@ def fetch_data():
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
-
-                if zip and " " in zip:  # should be changed
-                    country_code = "CA"
-                else:
-                    country_code = "US"
-
+                country_code = "CA"
                 phone = "<MISSING>"
 
                 hours_of_operation = "<MISSING>"
