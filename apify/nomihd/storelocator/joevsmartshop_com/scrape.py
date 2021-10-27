@@ -7,6 +7,7 @@ import lxml.html
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
+import ssl
 
 website = "joevsmartshop.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
