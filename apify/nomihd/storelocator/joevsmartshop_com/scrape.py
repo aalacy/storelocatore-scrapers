@@ -11,6 +11,15 @@ from sgselenium import SgChrome
 website = "joevsmartshop.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 def get_latlng(map_link):
     if "z/data" in map_link:
