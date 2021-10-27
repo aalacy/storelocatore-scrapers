@@ -2,7 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
-from urllib3 import exceptions as urllibException
 
 logger = SgLogSetup().get_logger("walmart_com/pharmacy")
 
@@ -12,7 +11,7 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    max_search_distance_miles=None,
     max_search_results=50,
 )
 
@@ -22,13 +21,8 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     session = SgRequests()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
-
-    except urllibException.SSLError as urlException:
-        if "BAD_RECORD_MAC" in str(urlException):
-            attempts += 1
-            error = True
-        else:
-            raise urllibException
+    except:
+        error = True
 
     if error:
         if attempts < maxRetries:
@@ -60,7 +54,7 @@ def fetch_data():
         )
         try:
             r2 = session.get(url, headers=headers, timeout=15).json()
-        except:
+        except Exception:
             r2 = api_get(url, headers, 15, 0, 15).json()
         if r2["payload"]["nbrOfStores"]:
             if int(r2["payload"]["nbrOfStores"]) > 0:
@@ -79,43 +73,34 @@ def fetch_data():
 
 
 def human_hours(k):
-    AllTheHours = k
-    for hrSet in AllTheHours:
-        if hrSet["id"] == 21 or hrSet["name"] == "PHARMACY":
-            k = hrSet["operationalHours"]
-            if not k["open24Hours"]:
-                unwanted = ["open24", "todayHr", "tomorrowHr"]
-                h = []
-                for day in list(k):
-                    if not any(i in day for i in unwanted):
-                        if k[day]:
-                            if "temporaryHour" not in day:
-                                if k[day]["closed"]:
-                                    h.append(str(day).capitalize() + ": Closed")
-                                else:
-                                    if k[day]["openFullDay"]:
-                                        h.append(str(day).capitalize() + ": 24Hours")
-                                    else:
-                                        h.append(
-                                            str(day).capitalize()
-                                            + ": "
-                                            + str(k[day]["startHr"])
-                                            + "-"
-                                            + str(k[day]["endHr"])
-                                        )
-                            else:
-                                if k[day]:
-                                    h.append("Temporary hours: " + str(k[day].items()))
+    if not k["open24Hours"]:
+        unwanted = ["open24", "todayHr", "tomorrowHr"]
+        h = []
+        for day in list(k):
+            if not any(i in day for i in unwanted):
+                if k[day]:
+                    if "temporaryHour" not in day:
+                        if k[day]["closed"]:
+                            h.append(str(day).capitalize() + ": Closed")
                         else:
-                            h.append(str(day).capitalize() + ": <MISSING>")
-                return (
-                    "; ".join(h)
-                    .replace("Montofrihrs", "Mon-Fri")
-                    .replace("hrs:", ":")
-                    .replace("; Temporaryhours: <MISSING>", "")
-                )
-            else:
-                return "24/7"
+                            if k[day]["openFullDay"]:
+                                h.append(str(day).capitalize() + ": 24Hours")
+                            else:
+                                h.append(
+                                    str(day).capitalize()
+                                    + ": "
+                                    + str(k[day]["startHr"])
+                                    + "-"
+                                    + str(k[day]["endHr"])
+                                )
+                    else:
+                        if k[day]:
+                            h.append("Temporary hours: " + str(k[day].items()))
+                else:
+                    h.append(str(day).capitalize() + ": <MISSING>")
+        return "; ".join(h)
+    else:
+        return "24/7"
 
 
 def add_walmart(x):
@@ -167,9 +152,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["featuredServices"],
-            raw_value_transform=human_hours,
-            is_required=False,
+            mapping=["operationalHours"], raw_value_transform=human_hours
         ),
         location_type=sp.MappingField(
             mapping=["storeType", "displayName"],

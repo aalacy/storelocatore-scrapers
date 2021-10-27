@@ -1,48 +1,16 @@
-import csv
 from urllib.parse import urljoin
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, DynamicZipSearch
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-    scraped_items = []
-
+    session = SgRequests()
     start_url = "https://locator.chase.com/"
     post_url = "https://locator.chase.com/search?q={}&l=en&offset=0"
     domain = "chase.com"
@@ -53,7 +21,7 @@ def fetch_data():
 
     all_locations = []
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=500
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
     )
     for code in all_codes:
         url = post_url.format(code)
@@ -83,7 +51,7 @@ def fetch_data():
         country_code = poi["profile"]["address"]["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["distance"]["id"].split("-")[-1]
-        phone = poi["profile"]["mainPhone"]["display"]
+        phone = poi["profile"].get("mainPhone", {}).get("display")
         phone = phone if phone else "<MISSING>"
         location_type = poi["profile"]["c_bankLocationType"]
         latitude = poi["profile"]["yextDisplayCoordinate"]["lat"]
@@ -103,33 +71,36 @@ def fetch_data():
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
