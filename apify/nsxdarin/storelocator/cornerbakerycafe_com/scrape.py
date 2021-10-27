@@ -79,6 +79,17 @@ def fetch_data(sgw: SgWriter):
         else:
             hours = " ".join(list(base.find(class_="dl-hours").stripped_strings))
 
+        try:
+            add = (
+                base.find(class_="loc-icon-home")
+                .get_text(" ")
+                .replace("\r\n", "")
+                .replace("Temporarily Closed", "")
+            )
+            add = add[: add.rfind(city)].split("ENTRANCE")[0].strip()
+        except:
+            pass
+
         sgw.write_row(
             SgRecord(
                 locator_domain=website,
