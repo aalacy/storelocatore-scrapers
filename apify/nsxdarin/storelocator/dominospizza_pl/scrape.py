@@ -23,7 +23,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         if (
-            '<h5 class="PlaceInfo__street"><a href="https://dominospizza.pl/Lokale/'
+            '<h5 class="PlaceInfo__street"><a href="https://www.dominospizza.pl/Lokale/'
             in line
         ):
             locs.append(line.split('href="')[1].split('"')[0])
