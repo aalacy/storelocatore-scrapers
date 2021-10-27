@@ -35,7 +35,9 @@ def fetch_data():
                     for hh in _hr.find_next_siblings("div")
                 ]
             if not hours:
-                import pdb; pdb.set_trace()
+                import pdb
+
+                pdb.set_trace()
             street_address = _["address1"].strip()
             if _.get("address2"):
                 street_address += " " + _["address1"].strip()
