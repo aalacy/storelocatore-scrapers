@@ -54,10 +54,10 @@ def fetch_data():
             street_address = addr.street_address_1 + " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
         city = addr.city
-        city = city if city else "<MISSING>"
-        if city == "<MISSING>":
-            if len(" ".join(address_raw).split(", ")) == 3:
-                city = " ".join(address_raw).split(", ")[1]
+        city = city if city else ""
+        if not city:
+            if len(address_raw) > 2:
+                city = address_raw[-2]
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
@@ -127,6 +127,8 @@ def fetch_data():
             if hours_of_operation and hours_of_operation.strip()
             else "<MISSING>"
         )
+        if hours_of_operation == "Opening Hours will be published soon.":
+            continue
 
         item = SgRecord(
             locator_domain=domain,
