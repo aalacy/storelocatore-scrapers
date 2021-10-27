@@ -11,7 +11,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("dairyqueen_com")
+logger = SgLogSetup().get_logger("dairyqueen_ca")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA],
@@ -1055,7 +1055,13 @@ def fetch_data():
                             + item.split('"url":"')[1].split('"')[0]
                         )
                         if lurl not in locs:
-                            locs.append(lurl)
+                            locs.append(
+                                lurl(
+                                    lurl.replace("&amp;", "&")
+                                    .replace("&#39;", "'")
+                                    .replace("&#039;", "'")
+                                )
+                            )
     for coord in allcities:
         lat = coord.split("|")[0]
         lng = coord.split("|")[1]
@@ -1080,7 +1086,11 @@ def fetch_data():
                             + item.split('"url":"')[1].split('"')[0]
                         )
                         if lurl not in locs:
-                            locs.append(lurl)
+                            locs.append(
+                                lurl.replace("&amp;", "&")
+                                .replace("&#39;", "'")
+                                .replace("&#039;", "'")
+                            )
     website = "dairyqueen.ca"
     typ = "<MISSING>"
     country = "CA"
@@ -1181,7 +1191,7 @@ def fetch_data():
                     longitude=lng,
                     hours_of_operation=hours,
                 )
-            if count >= 3:
+            if count >= 5:
                 PFound = True
 
 
