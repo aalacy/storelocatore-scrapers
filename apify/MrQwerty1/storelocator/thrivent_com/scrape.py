@@ -36,8 +36,11 @@ def get_urls(states):
 
 
 def get_data(url, sgw: SgWriter):
-    r = session.get(url)
-    j = r.json()["profile"]
+    try:
+        r = session.get(url)
+        j = r.json()["profile"]
+    except:
+        return
 
     page_url = url.replace(".json", "")
     location_name = j.get("name")
