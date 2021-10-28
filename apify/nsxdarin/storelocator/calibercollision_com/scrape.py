@@ -48,7 +48,10 @@ def fetch_data():
         add = item["address_info"][0]["address"].replace('"', "'")
         city = item["address_info"][0]["city"]
         state = item["address_info"][0]["state_province"]
-        zc = item["address_info"][0]["zip"]
+        try:
+            zc = item["address_info"][0]["zip"]
+        except:
+            zc = "<MISSING>"
         try:
             lat = item["address_info"][0]["latitude"]
             lng = item["address_info"][0]["longitude"]
