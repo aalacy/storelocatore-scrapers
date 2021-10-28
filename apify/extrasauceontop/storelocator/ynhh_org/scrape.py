@@ -74,7 +74,6 @@ def get_data():
             location_name = grid.find(
                 "a", attrs={"class": "CoveoResultLink"}
             ).text.strip()
-            print(location_name)
             locator_domain = "ynhh.org"
             page_url = (
                 "https://www.ynhh.org"
@@ -161,7 +160,6 @@ def get_data():
                     hours = hours + part + " "
 
             hours = hours.strip()
-            print(location_name)
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
