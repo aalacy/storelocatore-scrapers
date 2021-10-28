@@ -72,7 +72,6 @@ def fetch_data():
                 if '"storeHours": "' in line:
                     days = (
                         line.split('"storeHours": "')[1]
-                        .split('"')[0]
                         .split('</div>\\n",')[0]
                         .split("<div class='store-hours-day'>")
                     )
@@ -88,7 +87,6 @@ def fetch_data():
                                 hours = hrs
                             else:
                                 hours = hours + "; " + hrs
-
                     cas = [
                         "AB",
                         "BC",
@@ -106,6 +104,7 @@ def fetch_data():
                         country = "CA"
                     if store not in ids and country == "CA":
                         ids.append(store)
+                        cstore = store.replace("store_", "")
                         logger.info(("Pulling Store ID #%s..." % store))
                         if store == "store_10777":
                             zc = "06473"
@@ -127,7 +126,7 @@ def fetch_data():
                             country_code=country,
                             phone=phone,
                             location_type=typ,
-                            store_number=store,
+                            store_number=cstore,
                             latitude=lat,
                             longitude=lng,
                             hours_of_operation=hours,
@@ -186,7 +185,6 @@ def fetch_data():
                 if '"storeHours": "' in line:
                     days = (
                         line.split('"storeHours": "')[1]
-                        .split('"')[0]
                         .split('</div>\\n",')[0]
                         .split("<div class='store-hours-day'>")
                     )
@@ -203,6 +201,7 @@ def fetch_data():
                             else:
                                 hours = hours + "; " + hrs
                     if store not in ids and " " not in zc:
+                        cstore = store.replace("store_", "")
                         ids.append(store)
                         logger.info(("Pulling Store ID #%s..." % store))
                         country = "US"
@@ -230,7 +229,7 @@ def fetch_data():
                             country_code=country,
                             phone=phone,
                             location_type=typ,
-                            store_number=store,
+                            store_number=cstore,
                             latitude=lat,
                             longitude=lng,
                             hours_of_operation=hours,
