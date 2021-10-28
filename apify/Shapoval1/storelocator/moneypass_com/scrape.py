@@ -78,7 +78,7 @@ def get_data(_zip, sgw: SgWriter):
             postal = a.get("Postalcode") or "<MISSING>"
             if postal == "0":
                 postal = "<MISSING>"
-            country_code = "US"
+            country_code = a.get("Country") or "<MISSING>"
             store_number = a.get("LocationId")
             phone = "<MISSING>"
             latitude = a.get("Latitude") or "<MISSING>"
@@ -110,7 +110,7 @@ def get_data(_zip, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
+        country_codes=[SearchableCountries.JAPAN, SearchableCountries.USA],
         max_search_distance_miles=1,
         granularity=Grain_1_KM(),
     )

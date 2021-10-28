@@ -56,6 +56,8 @@ def fetch_data():
         else:
             page_url = url
         page_url = page_url.replace("/../", "/")
+        if "1000-premium-outlets-drive-1871" in page_url:
+            continue
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 

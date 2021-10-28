@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_1_KM
+from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import SgLogSetup
 from typing import Iterable, Tuple, Callable
@@ -30,8 +30,8 @@ days = [
 
 
 class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self._http = http
+    def __init__(self):
+        pass
 
     def do(
         self,
@@ -42,13 +42,13 @@ class ExampleSearchIteration(SearchIteration):
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
 
-        lat = coord[0]
-        lng = coord[1]
-        try:
-            res = self._http.get(base_url.format(lat, lng), headers=_headers)
+        with SgRequests(proxy_country="us") as http:
+            lat = coord[0]
+            lng = coord[1]
+            res = http.get(base_url.format(lat, lng), headers=_headers)
             if res.status_code == 200:
                 locations = res.json()["closerStores"]
-                logger.info(f"{len(locations)}")
+                logger.info(f"{current_country, len(locations)}")
                 if len(locations):
                     found_location_at(lat, lng)
                 for store in locations:
@@ -93,26 +93,22 @@ class ExampleSearchIteration(SearchIteration):
                         locator_domain=locator_domain,
                     )
 
-        except:
-            pass
-
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_1_KM()
+        search_type="DynamicGeoSearch", granularity=Grain_4()
     )
     with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
-        with SgRequests(proxy_country="us") as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=SearchableCountries.ALL,
+        )
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+        for rec in par_search.run():
+            writer.write_row(rec)
