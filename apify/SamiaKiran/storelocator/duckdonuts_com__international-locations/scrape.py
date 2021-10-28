@@ -33,6 +33,20 @@ def fetch_data():
                 .replace("|", " ")
             )
             log.info(location_name)
+            page_url = loc.find("a")["href"]
+            page_url = "https://www.duckdonuts.com" + page_url
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                longitude, latitude = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+            except:
+                longitude = MISSING
+                latitude = MISSING
             try:
                 phone = loc.find("div", {"class": "phone"}).text
             except:
@@ -56,7 +70,7 @@ def fetch_data():
             country_code = country_code.strip() if country_code else MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -66,8 +80,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=MISSING,
                 raw_address=raw_address,
             )

@@ -72,7 +72,11 @@ def fetch_data(sgw: SgWriter):
             f"{b.get('address1')} {b.get('address2')}".replace("None", "").strip()
             or "<MISSING>"
         )
-
+        street_address = (
+            street_address.replace("Lincoln Square", "")
+            .replace("Rockbrook Village", "")
+            .strip()
+        )
         state = a.get("state_code") or "<MISSING>"
         postal = a.get("postal_code") or "<MISSING>"
         country_code = "US"
