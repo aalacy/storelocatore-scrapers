@@ -26,16 +26,18 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.find("div", {"class": "dropdown-menu"}).findAll("a")[1:]
         for link in linklist:
-            link = link['href']
+            link = link["href"]
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.find("div", {"class": "table-responsive"}).findAll("tr")
             for loc in loclist:
-                loc = loc.findAll('td')
+                loc = loc.findAll("td")
                 location_name = loc[1].text
                 log.info(location_name)
-                phone = loc[-1].get_text(separator='|', strip=True).replace('|',"")
-                raw_address =loc[2].get_text(separator='|', strip=True).replace('|'," ")
+                phone = loc[-1].get_text(separator="|", strip=True).replace("|", "")
+                raw_address = (
+                    loc[2].get_text(separator="|", strip=True).replace("|", " ")
+                )
                 log.info(raw_address)
                 pa = parse_address_intl(raw_address)
 
@@ -51,7 +53,7 @@ def fetch_data():
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-                country_code = 'GA'
+                country_code = "GA"
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=link,
@@ -73,11 +75,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.RAW_ADDRESS}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
