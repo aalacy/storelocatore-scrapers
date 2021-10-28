@@ -72,23 +72,29 @@ def fetch_stores(driver, alert=False):
 
 def get_address(raw_address):
     try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+        if raw_address and raw_address != MISSING:
+            raw_address = raw_address.split(":")[0].replace("-", " ").replace("–", " ")
+            data = parse_address_intl(raw_address + ", India")
             street_address = data.street_address_1
-            if data.street_address_2 is not None:
+            if data.street_address_2:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
+            if city:
+                if city == "City":
+                    city = raw_address.split(city)[-1].strip()
+                city = " ".join(
+                    [
+                        cc.strip()
+                        for cc in city.split()
+                        if cc.strip() and not cc.isdigit()
+                    ]
+                )
+                if "Mcdoanlds" in city or "Arneja" in city or "Sec" in city:
+                    city = ""
+                if "Up" == city:
+                    city = ""
             return street_address, city, state, zip_postal
     except Exception as e:
         log.info(f"Address Missing: {e}")
@@ -127,7 +133,7 @@ def fetch_data(driver):
         latitude = store["lat"]
         longitude = store["long"]
         phone = store["phone_no"]
-        raw_address = f"{store['address']}"
+        raw_address = store["address"]
         street_address, city, state, zip_postal = get_address(raw_address)
         hours_of_operation = f"{store['opens_at']}-{store['closes_at']}"
         if "---" in hours_of_operation:
@@ -195,7 +201,6 @@ def fetch_data(driver):
             if store["is_closed"]:
                 close_stores = close_stores + 1
 
-            location_type = MISSING
             location_name = store["outlet_name"]
             latitude = store["lat"]
             longitude = store["long"]
@@ -211,7 +216,6 @@ def fetch_data(driver):
                 store_number=store_number,
                 page_url=page_url,
                 location_name=location_name,
-                location_type=location_type,
                 street_address=street_address,
                 city=city,
                 zip_postal=zip_postal,
