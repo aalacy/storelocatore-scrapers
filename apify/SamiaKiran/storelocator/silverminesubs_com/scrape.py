@@ -41,9 +41,10 @@ def fetch_data():
                 location_name = strip_accents(loc[0])
                 log.info(location_name)
                 city = location_name.split()[0]
+                street_address = loc[1]
+                raw_address = street_address + " " + city + " " + state
                 if "Fort" in city:
                     city = "Fort Collins"
-                street_address = loc[1]
                 phone = loc[2]
                 yield SgRecord(
                     locator_domain=DOMAIN,
@@ -60,6 +61,7 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=MISSING,
+                    raw_address=raw_address,
                 )
 
 
