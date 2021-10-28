@@ -48,6 +48,9 @@ def check_is_in_france(addr, tracker, session):
 
 def is_french_city(city, session, retry=0):
     try:
+        if "France" in city:
+            return True
+
         params = {
             "q": city,
             "appid": "F2DD9E3AA45F7512D9C6CA9A150CBA7F76556B81",

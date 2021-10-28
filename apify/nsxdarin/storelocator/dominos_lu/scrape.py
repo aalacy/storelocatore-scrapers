@@ -50,7 +50,6 @@ def fetch_data():
                 )
             if 'href="http://maps.google.com/' in line2 and "open-map" not in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 add = g.split(",")[0].strip().replace("\t", "").replace(",", "")
                 city = g.split("<br/>")[1].split(" LU")[0]
                 zc = g.split("<br/>")[1].strip().rsplit(" ", 1)[1]
@@ -58,11 +57,9 @@ def fetch_data():
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
             if '<span class="trading-day" aria-hidden="true">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 day = g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
             if '<span class="visually-hidden">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 hrs = (
                     day
                     + ": "
@@ -72,6 +69,18 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+            if 'name="store-lat" id="store-lat" value="' in line2:
+                lat = (
+                    line2.split('name="store-lat" id="store-lat" value="')[1]
+                    .split('"')[0]
+                    .replace(",", ".")
+                )
+            if 'name="store-lon" id="store-lon" value="' in line2:
+                lng = (
+                    line2.split('name="store-lon" id="store-lon" value="')[1]
+                    .split('"')[0]
+                    .replace(",", ".")
+                )
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
