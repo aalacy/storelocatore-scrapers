@@ -6,7 +6,6 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import lxml.html
 
 website = "quicknclean.net"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -55,7 +54,6 @@ def fetch_data():
             store_number = store["id"]
 
             location_type = "<MISSING>"
-            hours = ""
             desc = store["description"]
             phone = ""
             try:
