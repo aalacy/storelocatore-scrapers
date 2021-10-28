@@ -4,22 +4,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
-import pandas as pd
+from sgscrape import simple_scraper_pipeline as sp
+import ssl
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, class_name, driver=None):
@@ -54,126 +42,143 @@ def get_driver(url, class_name, driver=None):
     return driver
 
 
-driver = get_driver("https://thedump.com/locations", "thedump-location-title")
+def get_data():
+    driver = get_driver("https://thedump.com/locations", "thedump-location-title")
 
-soup = bs(driver.page_source, "html.parser")
-grids = soup.find_all("div", attrs={"class": "col-md-4 thedump-location-block"})
+    soup = bs(driver.page_source, "html.parser")
+    grids = soup.find_all("div", attrs={"class": "col-md-4 thedump-location-block"})
 
-for grid in grids:
-    locator_domain = "theudmp.com"
-    page_url = locator_domain + grid.find("h3").find("a")["href"]
-    location_name = grid.find("h3").text.strip()
+    for grid in grids:
+        locator_domain = "thedump.com"
+        page_url = locator_domain + grid.find("h3").find("a")["href"]
+        location_name = grid.find("h3").text.strip()
 
-    address_part = grid.find(
-        "div", attrs={"class": "thedump-location-address"}
-    ).text.strip()
-    if "Newport News" in address_part:
-        address_pieces = address_part.split(",")[0].split(" ")
-        address = ""
-        for x in range(len(address_pieces) - 2):
-            address = address + address_pieces[x] + " "
+        address_part = bs(
+            str(grid.find("div", attrs={"class": "thedump-location-address"})).replace(
+                "<br/>", " "
+            ),
+            "html.parser",
+        ).text.strip()
 
-        city = address_pieces[-2] + " " + address_pieces[-1]
-    else:
-        address_pieces = address_part.split(",")[0].split(" ")
-        address = ""
-        for x in range(len(address_pieces) - 1):
-            address = address + address_pieces[x] + " "
+        if "Newport News" in address_part:
+            address_pieces = address_part.split(",")[0].split(" ")
+            address = ""
+            for x in range(len(address_pieces) - 2):
+                address = address + address_pieces[x] + " "
 
-        city = address_pieces[-1]
+            city = address_pieces[-2] + " " + address_pieces[-1]
+        else:
+            address_pieces = address_part.split(",")[0].split(" ")
+            address = ""
+            for x in range(len(address_pieces) - 1):
+                address = address + address_pieces[x] + " "
 
-    state = location_name.split(", ")[1]
-    zipp = address_part.split(", ")[1].split(" ")[-1]
-    country_code = "US"
-    store_number = "<MISSING>"
+            city = address_pieces[-1]
 
-    try:
-        phone = (
-            grid.find("div", attrs={"class": "thedump-location-phone"})
-            .find("a")["href"]
-            .replace("tel:", "")
-        )
-    except Exception:
-        phone = "<MISSING>"
+        state = location_name.split(", ")[1]
+        zipp = address_part.split(", ")[1].split(" ")[-1]
+        country_code = "US"
+        store_number = "<MISSING>"
 
-    if "warehouse" in location_name.lower():
-        location_type = "Warehouse"
-    else:
-        location_type = "Store"
+        try:
+            phone = (
+                grid.find("div", attrs={"class": "thedump-location-phone"})
+                .find("a")["href"]
+                .replace("tel:", "")
+            )
+        except Exception:
+            phone = "<MISSING>"
 
-    lat_lon_url = grid.find_all("a")[-1]["href"]
+        if "warehouse" in location_name.lower():
+            location_type = "Warehouse"
+        else:
+            location_type = "Store"
 
-    latitude = lat_lon_url.split("!3d")[1].split("!4d")[0]
-    longitude = lat_lon_url.split("!4d")[1].split("?")[0]
-
-    try:
-        hours = (
-            grid.text.strip()
-            .split(phone[-4:])[1]
-            .split("View on Map")[0]
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .strip()
-        )
-    except Exception:
-        hours = (
-            grid.text.strip()
-            .split("Pickups Only")[1]
-            .split("View on Map")[0]
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .strip()
+        driver.get("https://" + page_url)
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "dump_store_home_container"))
         )
 
-    locator_domains.append(locator_domain)
-    page_urls.append(page_url)
-    location_names.append(location_name)
-    street_addresses.append(address)
-    citys.append(city)
-    states.append(state)
-    zips.append(zipp)
-    country_codes.append(country_code)
-    store_numbers.append(store_number)
-    phones.append(phone)
-    location_types.append(location_type)
-    latitudes.append(latitude)
-    longitudes.append(longitude)
-    hours_of_operations.append(hours)
+        lat_lon_soup = bs(driver.page_source, "html.parser")
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
-    }
-)
+        iframes = lat_lon_soup.find_all("iframe")
+
+        for iframe in iframes:
+            try:
+                if "https://www.google.com/maps/embed?pb" in iframe["src"]:
+                    lat_lon_url = iframe["src"]
+                    break
+
+            except Exception:
+                continue
+
+        latitude = lat_lon_url.split("!3d")[1].split("!")[0]
+        longitude = lat_lon_url.split("!2d")[1].split("!3d")[0]
+
+        try:
+            hours = (
+                grid.text.strip()
+                .split(phone[-4:])[1]
+                .split("View on Map")[0]
+                .replace("  ", " ")
+                .replace("  ", " ")
+                .strip()
+            )
+        except Exception:
+            hours = (
+                grid.text.strip()
+                .split("Pickups Only")[1]
+                .split("View on Map")[0]
+                .replace("  ", " ")
+                .replace("  ", " ")
+                .strip()
+            )
+        hours = hours.split("More")[0]
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"]),
+        location_name=sp.MappingField(mapping=["location_name"]),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"]),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=False)
+scrape()

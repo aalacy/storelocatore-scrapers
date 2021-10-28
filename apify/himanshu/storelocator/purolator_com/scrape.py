@@ -10,7 +10,7 @@ session = SgRequests()
 
 
 def fetch_data():
-    base_url = "https://api.purolator.com/"
+    base_url = "purolator.com"
     headers = {
         "authority": "api.purolator.com",
         "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',

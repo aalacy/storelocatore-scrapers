@@ -1,83 +1,71 @@
-import csv
+from sglogging import sglog
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+website = "foodcountryusainc_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.foodcountryusainc.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    url = "https://api.freshop.com/1/stores?app_key=food_country_usa&has_address=true&limit=-1&token=5c151df12a97fc5930d36c044ddfaf9e"
-    loclist = session.get(url, headers=headers, verify=False).json()["items"]
-    for loc in loclist:
-        title = loc["name"]
-        store = loc["store_number"]
-        lat = loc["latitude"]
-        longt = loc["longitude"]
-        street = loc["address_1"]
-        city = loc["city"]
-        state = loc["state"]
-        pcode = loc["postal_code"]
-        hours = loc["hours_md"].replace("\n", " ").strip()
-        phone = loc["phone"]
-        link = loc["url"]
-        data.append(
-            [
-                "https://www.foodcountryusainc.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
-        )
-    return data
+    if True:
+        url = "https://api.freshop.com/1/stores?app_key=food_country_usa&has_address=true&limit=-1"
+        loclist = session.get(url, headers=headers, verify=False).json()["items"]
+        for loc in loclist:
+            location_name = loc["name"]
+            store_number = loc["store_number"]
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
+            street_address = loc["address_1"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["postal_code"]
+            hours_of_operation = loc["hours_md"].replace("\n", " ").strip()
+            phone = loc["phone"]
+            page_url = loc["url"]
+            log.info(page_url)
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-    data = fetch_data()
-    write_output(data)
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

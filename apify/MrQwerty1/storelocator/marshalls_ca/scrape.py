@@ -1,43 +1,14 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.marshalls.ca/"
+def fetch_data(sgw: SgWriter):
     api_url = "https://marketingsl.tjx.com/storelocator/GetAllStoresForChain"
     data = {"chain": "93", "lang": "en"}
 
-    session = SgRequests()
     r = session.post(api_url, data=data)
     js = r.json()["Stores"]
 
@@ -46,44 +17,43 @@ def fetch_data():
             f"{j.get('Address')} {j.get('Address2') or ''}".replace("<br>", "").strip()
             or "<MISSING>"
         )
-        city = j.get("City") or "<MISSING>"
-        state = j.get("State") or "<MISSING>"
-        postal = j.get("Zip") or "<MISSING>"
-        country_code = j.get("Country") or "<MISSING>"
-        store_number = j.get("StoreID") or "<MISSING>"
+        city = j.get("City")
+        state = j.get("State")
+        postal = j.get("Zip")
+        country_code = j.get("Country")
+        store_number = j.get("StoreID")
         location_name = j.get("Name")
-        phone = j.get("Phone") or "<MISSING>"
-        latitude = j.get("Latitude") or "<MISSING>"
-        longitude = j.get("Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = j.get("Hours") or "<MISSING>"
+        phone = j.get("Phone")
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
+        hours_of_operation = j.get("Hours")
         page_url = f"https://www.marshalls.ca/en/storelocator?store={store_number}"
+        status = j.get("NewStore")
+        if status == "Y" and not hours_of_operation:
+            hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.marshalls.ca/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

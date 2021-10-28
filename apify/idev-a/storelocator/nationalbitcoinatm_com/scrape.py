@@ -65,7 +65,7 @@ def fetch_data():
         hours = ""
         _hr = sp1.find("p", string=re.compile(r"HOURS"))
         if _hr:
-            hours = _hr.find_parent().find_next_sibling().text.strip()
+            hours = "; ".join(_hr.find_parent().find_next_sibling().stripped_strings)
         yield SgRecord(
             page_url=page_url,
             store_number=link.select_one("div.locations-map-item__number").text.strip(),
@@ -73,7 +73,7 @@ def fetch_data():
             street_address=street_address,
             city=addr.city,
             state=addr.state,
-            zip_postal=link["data-post-id"],
+            zip_postal=addr.postcode,
             country_code="US",
             locator_domain=locator_domain,
             latitude=link["data-lat"],
