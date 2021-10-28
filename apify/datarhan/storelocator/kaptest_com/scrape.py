@@ -55,8 +55,10 @@ def fetch_data():
                     raw_address = ", ".join(raw_data[-2:])
                     addr = parse_address_intl(raw_address)
                     street_address = addr.street_address_1
-                    if addr.street_address_2:
+                    if street_address and addr.street_address_2:
                         street_address += ", " + addr.street_address_2
+                    else:
+                        street_address = addr.street_address_2
 
                     item = SgRecord(
                         locator_domain=domain,
@@ -82,7 +84,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.CITY}),
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS}),
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:

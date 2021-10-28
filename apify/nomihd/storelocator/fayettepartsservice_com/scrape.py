@@ -33,9 +33,18 @@ def fetch_data():
         locator_domain = website
         location_name = "".join(store_sel.xpath("//h1/span/text()")).strip()
 
+        latitude = "".join(
+            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lat')
+        ).strip()
+        longitude = "".join(
+            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lng')
+        ).strip()
+
         raw_address = ""
         if "/newpage7fe6dbf7" in page_url:
             raw_address = "531 Rodi Rd, Pittsburgh, PA"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
         else:
             raw_address = "".join(
                 store_sel.xpath('//div[@data-type="inlineMap"]/@data-address')
@@ -82,13 +91,6 @@ def fetch_data():
         for sec in sections:
             if "am " in "".join(sec.xpath("text()")).strip():
                 hours_of_operation = "; ".join(sec.xpath("text()")).strip()
-
-        latitude = "".join(
-            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lat')
-        ).strip()
-        longitude = "".join(
-            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lng')
-        ).strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
