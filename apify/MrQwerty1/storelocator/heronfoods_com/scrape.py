@@ -21,13 +21,16 @@ def get_urls(lat, lng):
         "distance:from": f"{lat}|{lng}",
     }
 
-    r = session.post(api_url, data=data)
+    try:
+        r = session.post(api_url, data=data)
+    except:
+        return set()
     u = r.url
 
     for i in range(0, 60000, 6):
         url = f"{u}/P{i}"
-        r = session.get(url)
         try:
+            r = session.get(url)
             tree = html.fromstring(r.text.replace("<!--p>", "").replace("</p-->", ""))
         except:
             continue
@@ -45,9 +48,11 @@ def get_urls(lat, lng):
 
 
 def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
+    try:
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+    except:
+        return
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     line = tree.xpath("//div[@class='box2col store-details']/p/text()")
     line = list(filter(None, [l.strip() for l in line]))
