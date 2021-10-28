@@ -129,6 +129,9 @@ def fetch_data():
         )
         if hours_of_operation == "Opening Hours will be published soon.":
             continue
+        if "Unit 5/6" in address_raw[0]:
+            street_address = "Unit 5/6, Windsor Royal Station Shopping Centre"
+            zip_code = "SL4 1PJ"
 
         item = SgRecord(
             locator_domain=domain,
@@ -145,6 +148,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=" ".join(address_raw),
         )
 
         yield item
