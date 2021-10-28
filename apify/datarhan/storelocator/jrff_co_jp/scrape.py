@@ -33,8 +33,7 @@ def get_address(raw_address):
             if zip_postal is None or len(zip_postal) == 0:
                 zip_postal = MISSING
             return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"Address Err: {e}")
+    except Exception:
         pass
     return MISSING, MISSING, MISSING, MISSING
 
