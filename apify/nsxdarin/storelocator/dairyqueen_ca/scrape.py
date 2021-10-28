@@ -11,7 +11,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("dairyqueen_com")
+logger = SgLogSetup().get_logger("dairyqueen_ca")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA],
@@ -1045,7 +1045,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         logger.info(str(lat) + "-" + str(lng))
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '"address1":"' in line:
                 items = line.split('"address1":"')
                 for item in items:
@@ -1055,7 +1054,13 @@ def fetch_data():
                             + item.split('"url":"')[1].split('"')[0]
                         )
                         if lurl not in locs:
-                            locs.append(lurl)
+                            locs.append(
+                                lurl(
+                                    lurl.replace("&amp;", "&")
+                                    .replace("&#39;", "'")
+                                    .replace("&#039;", "'")
+                                )
+                            )
     for coord in allcities:
         lat = coord.split("|")[0]
         lng = coord.split("|")[1]
@@ -1070,7 +1075,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         logger.info(lat + "-" + lng)
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '"address3":"' in line:
                 items = line.split('"address3":"')
                 for item in items:
@@ -1080,7 +1084,11 @@ def fetch_data():
                             + item.split('"url":"')[1].split('"')[0]
                         )
                         if lurl not in locs:
-                            locs.append(lurl)
+                            locs.append(
+                                lurl.replace("&amp;", "&")
+                                .replace("&#39;", "'")
+                                .replace("&#039;", "'")
+                            )
     website = "dairyqueen.ca"
     typ = "<MISSING>"
     country = "CA"
@@ -1108,7 +1116,6 @@ def fetch_data():
             session = SgRequests()
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
                 if "this page doesn't exist" in line2:
                     Closed = True
                 if '<h1 class="my-1 h2">' in line2:
@@ -1181,7 +1188,7 @@ def fetch_data():
                     longitude=lng,
                     hours_of_operation=hours,
                 )
-            if count >= 3:
+            if count >= 5:
                 PFound = True
 
 
