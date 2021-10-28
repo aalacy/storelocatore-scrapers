@@ -1,31 +1,45 @@
 from lxml import etree
-from time import sleep
-from random import uniform
+import tenacity
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sglogging import sglog
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+domain = "groceryoutlet.com"
+log = sglog.SgLogSetup().get_logger(logger_name=domain)
+
+
+@tenacity.retry(wait=tenacity.wait_fixed(3))
+def get_with_retry(driver, url):
+    driver.get(url)
+    driver.implicitly_wait(30)
+    return driver.page_source
 
 
 def fetch_data():
     start_url = (
         "https://www.groceryoutlet.com/store-locator?store_location={}&store_region="
     )
-    domain = "groceryoutlet.com"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
     )
-    with SgFirefox() as driver:
+
+    with SgChrome() as driver:
         for code in all_codes:
-            driver.get(start_url.format(code))
-            sleep(uniform(5, 30))
-            dom = etree.HTML(driver.page_source)
+            log.info(f"Crawling page: {start_url.format(code)}")
+            html_page = get_with_retry(driver, start_url.format(code))
+            dom = etree.HTML(html_page)
 
             all_locations = dom.xpath("//li[@data-store-number]")
+            log.info(f"Location Found : {len(all_locations)} in {code}")
             for poi_html in all_locations:
                 location_name = poi_html.xpath(".//h6/text()")[0]
                 page_url = poi_html.xpath('.//a[contains(text(), "See This")]/@href')[0]

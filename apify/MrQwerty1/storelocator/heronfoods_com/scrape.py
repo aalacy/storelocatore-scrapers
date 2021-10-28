@@ -10,30 +10,36 @@ from sgscrape.sgpostal import parse_address, International_Parser
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def get_urls(coord):
-    urls = []
+def get_urls(lat, lng):
+    urls = set()
     api_url = "https://heronfoods.com/index.php"
 
     data = {
         "params": "eyJyZXN1bHRfcGFnZSI6InN0b3JlbG9jYXRvciJ9",
         "ACT": "29",
         "site_id": "1",
-        "distance:from": "|".join(coord),
+        "distance:from": f"{lat}|{lng}",
     }
 
-    r = session.post(api_url, data=data)
+    try:
+        r = session.post(api_url, data=data)
+    except:
+        return set()
     u = r.url
 
     for i in range(0, 60000, 6):
         url = f"{u}/P{i}"
-        r = session.get(url)
-        tree = html.fromstring(r.text.replace("<!--p>", "").replace("</p-->", ""))
+        try:
+            r = session.get(url)
+            tree = html.fromstring(r.text.replace("<!--p>", "").replace("</p-->", ""))
+        except:
+            continue
         divs = tree.xpath("//div[contains(@class, 'box2col store-details-container')]")
         for d in divs:
             page_url = "".join(
                 d.xpath(".//a[contains(@href, '/store-details/')]/@href")
             )
-            urls.append(page_url)
+            urls.add(page_url)
 
         if len(divs) < 6:
             break
@@ -42,9 +48,11 @@ def get_urls(coord):
 
 
 def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
+    try:
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+    except:
+        return
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     line = tree.xpath("//div[@class='box2col store-details']/p/text()")
     line = list(filter(None, [l.strip() for l in line]))
@@ -99,8 +107,8 @@ def fetch_data(sgw: SgWriter):
         expected_search_radius_miles=15,
     )
 
-    for coord in search:
-        links = get_urls(coord)
+    for lat, lng in search:
+        links = get_urls(lat, lng)
         for link in links:
             urls.add(link)
 
@@ -113,5 +121,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://heronfoods.com/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
