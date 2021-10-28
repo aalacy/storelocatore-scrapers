@@ -186,7 +186,7 @@ def fetch_data(search):
             )
         if totalZip % 15 == 0:
             log.info("Refreshing Driver")
-            driver = initiate_driver(urlForDriver, "zipField")
+            initiate_driver(urlForDriver, "zipField")
         log.info(
             f"{totalZip}. zip {zipCode} => {len(data)} stores; total store = {count}"
         )
