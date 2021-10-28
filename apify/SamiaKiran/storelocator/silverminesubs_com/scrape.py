@@ -30,20 +30,19 @@ def fetch_data():
     if True:
         url = "https://www.silverminesubs.com/locations/"
         r = session.get(url, headers=headers)
-        state_list = r.text.split('<h2>')[2:]
+        state_list = r.text.split("<h2>")[2:]
         for temp_state in state_list:
-           state = temp_state.split('</h2>')[0]
-           print(state)
-           loclist =temp_state.split('<div class="storerow">')[1:]
-           for loc in loclist:
+            state = temp_state.split("</h2>")[0]
+            loclist = temp_state.split('<div class="storerow">')[1:]
+            for loc in loclist:
                 loc = loc.split('<div class="break"></div>')[0]
                 loc = BeautifulSoup(loc, "html.parser")
                 loc = loc.get_text(separator="|", strip=True).split("|")
                 location_name = strip_accents(loc[0])
                 log.info(location_name)
                 city = location_name.split()[0]
-                if 'Fort' in city:
-                    city = 'Fort Collins'
+                if "Fort" in city:
+                    city = "Fort Collins"
                 street_address = loc[1]
                 phone = loc[2]
                 yield SgRecord(
