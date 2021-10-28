@@ -1,0 +1,4 @@
+--ignore StreetAddressHasNumber     (Confirmed scrape correctly)
+--ignore StreetAddressHasStateName  (Confirmed scrape correctly)
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+--ignore CountryValidator (Not us/ca)

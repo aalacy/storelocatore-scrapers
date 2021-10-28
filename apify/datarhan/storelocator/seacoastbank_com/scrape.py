@@ -51,9 +51,15 @@ def fetch_data():
         longitude = geo[1]
         hoo = []
         if poi.get("hoursTableHTML"):
-            hoo = etree.HTML(poi["hoursTableHTML"]).xpath("//td//text()")
-            hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            hours = []
+            hours = etree.HTML(poi["hoursTableHTML"]).xpath("//tr")
+            for e in hours:
+                hoo.append(" ".join(e.xpath(".//text()")[:-1]))
+        hours_of_operation = (
+            " ".join(hoo).replace("N/A", "").replace("Lobby ", "")
+            if hoo
+            else "<MISSING>"
+        )
 
         item = SgRecord(
             locator_domain=domain,

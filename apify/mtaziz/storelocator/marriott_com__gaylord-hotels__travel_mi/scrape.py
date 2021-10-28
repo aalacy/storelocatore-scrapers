@@ -3,6 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 import json
@@ -10,6 +11,7 @@ import time
 from lxml import html
 import re
 import ssl
+from tenacity import retry, stop_after_attempt
 
 
 try:
@@ -21,15 +23,13 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-
+MISSING = SgRecord.MISSING
 DOMAIN = "marriott.com/gaylord-hotels/travel.mi"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
-
 logger = SgLogSetup().get_logger("marriott_com__gaylord-hotels__travel_mi")
-
 headers_api = {
     "accept": "application/json, text/plain, */*",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
 
 
@@ -39,16 +39,22 @@ headers_api = {
 # MV (Marriott Vacation Club) brands as well.
 # The data for 4 brands is obtained from Manual Method.
 # Please see other crawler which crawls the data from 22 API ENDPOINT URLs
-# with API based crawling
+# with API based crawling.
+
+
+@retry(stop=stop_after_attempt(5))
+def get_response(url, headers_custom):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers_custom)
+        return response
 
 
 def get__regions_submit_search_urls():
 
     # This returns the list of URLs against each region across the world.
     # Regional Search URLs have been filtered followed by 7 brands those not having API ENDPOINT URLs.
-    #  search URL filtered Filter followed by 7
 
-    # There are 7 brands those not having API Endpoints so we have to manually scrape
+    # There are 7 brands those not having API Endpoints so we have to manually scrape.
     # "BG Hotel" refers to "Bulgari Hotel"
     # "BR Hotel" refers to "Renaissance Hotel"
     # "EB Hotel" refers to "EDITION Hotel"
@@ -57,25 +63,15 @@ def get__regions_submit_search_urls():
     # "PR Hotel" refers to "Protea Hotel"
     # "RZ Hotel" refers to "the Ritz-Carlton Hotel"
 
-    # NOTE: We need to make sure that these 4 brands (i.e., BR, EB, GE, RZ ) individually meet
-    # store count
+    # non-API-based marriottBrands include EB,RZ,BG,BR,GE,PR,ER".
+    # non-API-based 4 brands has the tickets, these 4 brands include BR, EB, GE, RZ.
 
-    session = SgRequests()
-    v = 0
-    while True:
-        v = v + 1
-        try:
-            r_count = session.get(URL_LOCATION, headers=headers_api)
-            break
-        except Exception as e:
-            logger.info("")
-            logger.info(e)
-            if v == 5:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
+    # NOTE: Initially the scrape for 7 brands were merged in a sinlge crawler, later on,
+    # it was decided to build the scrape for each brand, in this case, for Gaylord Hotel; that means,
+    # This scrape returns the data for Gaylord Hotel accross the world. Above information are kept as a reference
+    # to the earlier merged crawler.
 
+    r_count = get_response(URL_LOCATION, headers_api)
     logger.info("Pulling Regional Search URLs")
     time.sleep(30)
     sel_count = html.fromstring(r_count.text, "lxml")
@@ -86,8 +82,9 @@ def get__regions_submit_search_urls():
     lis = ["https://www.marriott.com" + i for i in lis]
     lis = [i.replace("filterApplied=false", "filterApplied=true") for i in lis]
 
-    # Filtered followed by 7 brands
-    lis = [i + "&" + "marriottBrands=EB,RZ,BG,BR,GE,PR,ER" for i in lis]
+    # Filtered followed by a single brand
+    # Gaylord Hotel (GE)
+    lis = [i + "&" + "marriottBrands=GE" for i in lis]
 
     # Replace any white space with %20
     lis = [url.replace(" ", "%20") for url in lis]
@@ -99,7 +96,9 @@ def get__regions_submit_search_urls():
 
 
 # Get the cookies from URL LOCATION
-with SgChrome() as driver:
+with SgChrome(
+    executable_path=ChromeDriverManager().install(), is_headless=True
+) as driver:
     driver.get(URL_LOCATION)
     time.sleep(10)
     test_cookies_list = driver.get_cookies()
@@ -116,8 +115,8 @@ cookies_string = (
 )
 
 
-def fetch_data_for_7_child_brands():
-    session = SgRequests()
+def fetch_data_for_non_api_based_child_brands():
+    # This scrapes the Data for Edition Hotels across the world
     regions_submit_search_urls = get__regions_submit_search_urls()
     total = 0
     for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:]):
@@ -131,28 +130,12 @@ def fetch_data_for_7_child_brands():
             "path": path2,
             "scheme": "https",
             "cookie": cookies_string,
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "accept": "application/json, text/plain, */*",
             "accept-encoding": "gzip, deflate, br",
             "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
         }
 
-        x = 0
-        while True:
-            x = x + 1
-            try:
-                r1 = session.get(
-                    url_base_city_state, headers=headers_path_ak, timeout=500
-                )
-                break
-            except Exception as e:
-                logger.info("")
-                logger.info(e)
-                if x == 5:
-                    raise Exception(
-                        "Make sure this ran with a Proxy, will fail without one"
-                    )
-                continue
-
+        r1 = get_response(url_base_city_state, headers_path_ak)
         time.sleep(15)
         search_list_records_total = re.findall(
             r"search_list_records_total\":\s\d+,", r1.text
@@ -188,6 +171,7 @@ def fetch_data_for_7_child_brands():
                         for location in divs:
                             locator_domain = DOMAIN
                             slug = location.xpath("./@data-marsha")[0]
+                            logger.info(f"[{idx}] Slug: {slug}")
                             data_property = location.xpath("./@data-property")[0]
                             data_property = json.loads(data_property)
                             logger.info(f"[{idx}] Data Property: {data_property}")
@@ -200,57 +184,51 @@ def fetch_data_for_7_child_brands():
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
                             logger.info(f"[{idx}] Street Address: {street_address}")
 
-                            city = location.xpath("./@data-city")[0] or SgRecord.MISSING
-                            state = (
-                                location.xpath("./@data-statecode")[0]
-                                or SgRecord.MISSING
-                            )
+                            city = location.xpath("./@data-city")[0] or MISSING
+                            state = location.xpath("./@data-statecode")[0] or MISSING
 
                             zip_postal = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
                             country_code = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-country-description'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
                             logger.info(
                                 f"Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
                             )
-                            store_number = SgRecord.MISSING
-                            store_number = SgRecord.MISSING
+                            store_number = slug or MISSING
                             phone = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-contact'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
-                            phone = phone if phone else SgRecord.MISSING
+                            phone = phone if phone else MISSING
                             location_type = (
-                                location.xpath("./@data-brand")[0] or SgRecord.MISSING
+                                location.xpath("./@data-brand")[0] or MISSING
                             )
                             location_type = location_type + " Hotels"
-                            latitude = data_property["lat"] or SgRecord.MISSING
-                            longitude = data_property["longitude"] or SgRecord.MISSING
+                            latitude = data_property["lat"] or MISSING
+                            longitude = data_property["longitude"] or MISSING
                             logger.info(
                                 f"[{idx}] Latitude: {latitude} | Longitude: {longitude}"
                             )
-                            hours_of_operation = SgRecord.MISSING
+                            hours_of_operation = MISSING
                             raw_address = location.xpath(
                                 './/div[contains(@class, "m-hotel-address")]/text()'
                             )[0]
                             raw_address = " ".join(raw_address.split())
-                            raw_address = (
-                                raw_address if raw_address else SgRecord.MISSING
-                            )
+                            raw_address = raw_address if raw_address else MISSING
                             logger.info(f"[{idx}] Raw Address: {raw_address}")
                             logger.info(f"[{idx}] Data Property: {data_property}")
                             yield SgRecord(
@@ -272,7 +250,7 @@ def fetch_data_for_7_child_brands():
                             )
 
                     if i > 1:
-                        referrer_custom = f"{url_base_findHotels}?page={i-1}"
+                        referer_custom = f"{url_base_findHotels}?page={i-1}"
                         url_base_findHotels_custom = f"{url_base_findHotels}?page={i}"
                         request_headers_path = url_base_findHotels_custom.replace(
                             "https://www.marriott.com", ""
@@ -286,28 +264,12 @@ def fetch_data_for_7_child_brands():
                             "accept-encoding": "gzip, deflate, br",
                             "upgrade-insecure-requests": "1",
                             "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-                            "referrer": referrer_custom,
+                            "referer": referer_custom,
                         }
 
-                        c = 0
-                        while True:
-                            c = c + 1
-                            try:
-                                r_chicago = session.get(
-                                    url_base_findHotels_custom,
-                                    headers=headers_pagination_enabled,
-                                    timeout=500,
-                                )
-                                break
-                            except Exception as e:
-                                logger.info("")
-                                logger.info(e)
-                                if c == 5:
-                                    raise Exception(
-                                        "Make sure this ran with a Proxy, will fail without one"
-                                    )
-                                continue
-
+                        r_chicago = get_response(
+                            url_base_findHotels_custom, headers_pagination_enabled
+                        )
                         time.sleep(15)
                         logger.info(
                             f"URL Base find Hotels Custom: {url_base_findHotels_custom} "
@@ -319,6 +281,7 @@ def fetch_data_for_7_child_brands():
                         for location in divs:
                             locator_domain = DOMAIN
                             slug = location.xpath("./@data-marsha")[0]
+                            logger.info(f"Slug: {slug}")
                             data_property = location.xpath("./@data-property")[0]
                             data_property = json.loads(data_property)
                             logger.info(f"[{idx}] Data Property: {data_property}")
@@ -331,56 +294,51 @@ def fetch_data_for_7_child_brands():
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
                             logger.info(f"[{idx}] Street Address: {street_address}")
 
-                            city = location.xpath("./@data-city")[0] or SgRecord.MISSING
-                            state = (
-                                location.xpath("./@data-statecode")[0]
-                                or SgRecord.MISSING
-                            )
+                            city = location.xpath("./@data-city")[0] or MISSING
+                            state = location.xpath("./@data-statecode")[0] or MISSING
                             zip_postal = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
                             country_code = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-country-description'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
                             logger.info(
                                 f"[{idx}] Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
                             )
-                            store_number = SgRecord.MISSING
-                            store_number = SgRecord.MISSING
+                            store_number = slug or MISSING
+                            logger.info(f"store_number: {store_number}")
                             phone = (
                                 location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/@data-contact'
                                 )[0]
-                                or SgRecord.MISSING
+                                or MISSING
                             )
-                            phone = phone if phone else SgRecord.MISSING
+                            phone = phone if phone else MISSING
                             location_type = (
-                                location.xpath("./@data-brand")[0] or SgRecord.MISSING
+                                location.xpath("./@data-brand")[0] or MISSING
                             )
                             location_type = location_type + " Hotels"
-                            latitude = data_property["lat"] or SgRecord.MISSING
-                            longitude = data_property["longitude"] or SgRecord.MISSING
+                            latitude = data_property["lat"] or MISSING
+                            longitude = data_property["longitude"] or MISSING
                             logger.info(
                                 f"Latitude: {latitude} | Longitude: {longitude}"
                             )
-                            hours_of_operation = SgRecord.MISSING
+                            hours_of_operation = MISSING
                             raw_address = location.xpath(
                                 './/div[contains(@class, "m-hotel-address")]/text()'
                             )[0]
                             raw_address = " ".join(raw_address.split())
-                            raw_address = (
-                                raw_address if raw_address else SgRecord.MISSING
-                            )
+                            raw_address = raw_address if raw_address else MISSING
                             logger.info(f"Raw Address: {raw_address}")
                             logger.info(f"Data Property: {data_property}")
                             yield SgRecord(
@@ -402,7 +360,7 @@ def fetch_data_for_7_child_brands():
                             )
 
             else:
-                # No need to update referrer
+                # No need to update referer
                 sel_chicago = html.fromstring(r1.text, "lxml")
                 divs = sel_chicago.xpath(
                     '//div[contains(@class, "js-property-results")]/div/div/div[contains(@class, "l-row t-bg-standard-20 property-record-item")]'
@@ -410,6 +368,7 @@ def fetch_data_for_7_child_brands():
                 for location in divs:
                     locator_domain = DOMAIN
                     slug = location.xpath("./@data-marsha")[0]
+                    logger.info(f"slug: {slug}")
                     data_property = location.xpath("./@data-property")[0]
                     data_property = json.loads(data_property)
                     logger.info(f"[{idx}] Data Property: {data_property}")
@@ -421,22 +380,22 @@ def fetch_data_for_7_child_brands():
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-address-line1'
                         )[0]
-                        or SgRecord.MISSING
+                        or MISSING
                     )
 
                     logger.info(f"[{idx}] Street Address: {street_address}")
 
-                    city = location.xpath("./@data-city")[0] or SgRecord.MISSING
+                    city = location.xpath("./@data-city")[0] or MISSING
                     logger.info(f"[{idx}] City: {city}")
 
-                    state = location.xpath("./@data-statecode")[0] or SgRecord.MISSING
+                    state = location.xpath("./@data-statecode")[0] or MISSING
                     logger.info(f"[{idx}] State: {state}")
 
                     zip_postal = (
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-postal-code'
                         )[0]
-                        or SgRecord.MISSING
+                        or MISSING
                     )
                     logger.info(f"[{idx}] ZipCode: {zip_postal}")
 
@@ -444,39 +403,37 @@ def fetch_data_for_7_child_brands():
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-country-description'
                         )[0]
-                        or SgRecord.MISSING
+                        or MISSING
                     )
                     logger.info(f"[{idx}] Country Code: {country_code}")
 
                     logger.info(
                         f"[{idx}] Street Address: {street_address} | City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}"
                     )
-                    store_number = SgRecord.MISSING
-                    store_number = SgRecord.MISSING
+                    store_number = slug or MISSING
+                    logger.info(f"store_number: {store_number}")
                     phone = (
                         location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/@data-contact'
                         )[0]
-                        or SgRecord.MISSING
+                        or MISSING
                     )
 
-                    phone = phone if phone else SgRecord.MISSING
-                    location_type = (
-                        location.xpath("./@data-brand")[0] or SgRecord.MISSING
-                    )
+                    phone = phone if phone else MISSING
+                    location_type = location.xpath("./@data-brand")[0] or MISSING
                     location_type = location_type + " Hotels"
-                    latitude = data_property["lat"] or SgRecord.MISSING
-                    longitude = data_property["longitude"] or SgRecord.MISSING
+                    latitude = data_property["lat"] or MISSING
+                    longitude = data_property["longitude"] or MISSING
                     logger.info(
                         f"[{idx}] Latitude: {latitude} | Longitude: {longitude}"
                     )
 
-                    hours_of_operation = SgRecord.MISSING
+                    hours_of_operation = MISSING
                     raw_address = location.xpath(
                         './/div[contains(@class, "m-hotel-address")]/text()'
                     )[0]
                     raw_address = " ".join(raw_address.split())
-                    raw_address = raw_address if raw_address else SgRecord.MISSING
+                    raw_address = raw_address if raw_address else MISSING
                     logger.info(f"Raw Address: {raw_address}")
                     logger.info(f"Data Property: {data_property}")
                     yield SgRecord(
@@ -504,8 +461,8 @@ def scrape():
     logger.info("Started")
     count = 0
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results_7_brands = fetch_data_for_7_child_brands()
-        for rec in results_7_brands:
+        results = fetch_data_for_non_api_based_child_brands()
+        for rec in results:
             writer.write_row(rec)
             count = count + 1
 
