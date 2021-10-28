@@ -19,11 +19,29 @@ base_url = "https://www.tenren.com/store-locations.html"
 data = []
 
 
+def _p(val):
+    if (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
+
+
 def _fill(page_url, country, location_name, _addr, phone, hours):
     if len(_addr) == 1:
         _addr = [location_name] + _addr
 
-    raw_address = " ".join(_addr)
+    raw_address = " ".join(_addr).replace(".", " ")
+    raw_address = raw_address.replace("N Y", "NY").replace("N S W", "NSW")
     addr = parse_address_intl(raw_address)
     street_address = addr.street_address_1
     if addr.street_address_2:
@@ -59,8 +77,11 @@ def _d(page_url, loc, country):
                     hours = _.strip()
                 if "Tel:" in _:
                     phone = _.replace("Tel:", "").split("Fax")[0].strip()
-                if not phone and "Tel" not in _:
+                if not phone and "Tel" not in _ and "Fax" not in _:
                     _addr.append(_.replace("\n", " ").strip())
+
+        if isinstance(_, bs4.element.Tag) and _p(_.text.strip()):
+            phone = _.text.strip()
 
         if not location_name:
             if isinstance(_, bs4.element.NavigableString):
@@ -92,14 +113,13 @@ def _d(page_url, loc, country):
 
         if location_name and _addr:
             scraped = False
+
             if x == len(loc.contents) - 1 or x == len(loc.contents) - 2:
                 scraped = _fill(page_url, country, location_name, _addr, phone, hours)
+            elif _.next_sibling.name == "p":
+                scraped = _fill(page_url, country, location_name, _addr, phone, hours)
             elif isinstance(_, bs4.element.Tag):
-                if _.next_sibling.name == "p":
-                    scraped = _fill(
-                        page_url, country, location_name, _addr, phone, hours
-                    )
-                elif _.name == "br":
+                if _.name == "br":
                     if _.next_sibling.name == "br":
                         scraped = _fill(
                             page_url, country, location_name, _addr, phone, hours

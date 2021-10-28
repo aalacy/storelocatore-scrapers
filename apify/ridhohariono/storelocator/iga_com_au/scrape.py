@@ -112,10 +112,12 @@ def wait_load(driver, wait, number=0):
                 )
             )
         except:
+            driver.delete_all_cookies()
             driver.refresh()
             if number < 3:
                 log.info(f"Try to Refresh for ({number}) times")
                 return wait_load(driver, wait, number)
+    return driver
 
 
 def fetch_data():
@@ -128,9 +130,9 @@ def fetch_data():
     )
     driver.get(LOCATION_URL)
     for zipcode in search:
-        wait_load(driver, "BASE")
-        driver.find_element_by_xpath('//*[@id="sf-location-search"]').clear()
-        driver.find_element_by_xpath('//*[@id="sf-location-search"]').send_keys(zipcode)
+        driver = wait_load(driver, "BASE")
+        input = driver.find_element_by_xpath('//*[@id="sf-location-search"]')
+        input.send_keys(zipcode)
         time.sleep(0.5)
         try:
             WebDriverWait(driver, 5).until(
@@ -139,11 +141,12 @@ def fetch_data():
                 )
             )
         except:
+            input.clear()
             continue
         driver.find_element_by_css_selector(
             "div.autocomplete-suggestions > div"
         ).click()
-        wait_load(driver, "STORE")
+        driver = wait_load(driver, "STORE")
         data = (
             bs(driver.page_source, "lxml")
             .find("div", {"id": "sf-stores-list"})
