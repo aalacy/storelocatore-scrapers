@@ -86,7 +86,7 @@ if __name__ == "__main__":
             ).select_one("div.select-country__default-contries")["data-url"]
             com1 = link.split("demandware.store/")[1].split("/")[0]
             com2 = country["data-locale"]
-            country_map[cn] = [com1, com2]
+            country_map[d_cc] = [com1, com2]
         search = DynamicGeoSearch(
             country_codes=list(set(countries)),
         )
