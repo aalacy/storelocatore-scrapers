@@ -49,7 +49,6 @@ def fetch_data():
                 except:
                     latitude = MISSING
                     longitude = MISSING
-                print(latitude)
                 try:
                     location_name = temp.find("h3").text
                 except:
