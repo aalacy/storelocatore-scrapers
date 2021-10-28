@@ -1,5 +1,5 @@
 import json
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
 
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -64,56 +64,58 @@ def get_data(_zip, sgw: SgWriter):
     }
 
     r = get_response(_zip, data)
-    try:
-        js = r.json()["Features"]
+
+    js = r.json()["Features"]
+    if js:
         log.debug(f"From {_zip} stores = {len(js)}")
-    except:
-        return
-    for j in js:
-        a = j.get("Properties")
-        location_name = a.get("LocationName") or "<MISSING>"
-        street_address = a.get("Address") or "<MISSING>"
-        city = a.get("City") or "<MISSING>"
-        state = a.get("State") or "<MISSING>"
-        postal = a.get("Postalcode") or "<MISSING>"
-        if postal == "0":
-            postal = "<MISSING>"
-        country_code = "US"
-        store_number = a.get("LocationId")
-        phone = "<MISSING>"
-        latitude = a.get("Latitude") or "<MISSING>"
-        longitude = a.get("Longitude") or "<MISSING>"
-        location_type = a.get("LocationCategory") or "<MISSING>"
-        hours_of_operation = (
-            j.get("LocationFeatures").get("TwentyFourHours") or "<MISSING>"
-        )
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-        )
+        for j in js:
+            a = j.get("Properties")
+            location_name = a.get("LocationName") or "<MISSING>"
+            street_address = a.get("Address") or "<MISSING>"
+            city = a.get("City") or "<MISSING>"
+            state = a.get("State") or "<MISSING>"
+            postal = a.get("Postalcode") or "<MISSING>"
+            if postal == "0":
+                postal = "<MISSING>"
+            country_code = a.get("Country") or "<MISSING>"
+            store_number = a.get("LocationId")
+            phone = "<MISSING>"
+            latitude = a.get("Latitude") or "<MISSING>"
+            longitude = a.get("Longitude") or "<MISSING>"
+            location_type = a.get("LocationCategory") or "<MISSING>"
+            hours_of_operation = (
+                j.get("LocationFeatures").get("TwentyFourHours") or "<MISSING>"
+            )
 
-        sgw.write_row(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
+        country_codes=[SearchableCountries.JAPAN, SearchableCountries.USA],
+        max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()
