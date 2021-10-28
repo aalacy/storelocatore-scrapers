@@ -1,4 +1,5 @@
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -43,11 +44,13 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//p[label[contains(text(), "Hours of Operation:")]]/following-sibling::p[1]/text()'
         )
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@class="hours-of-operation"]//text()')
         hoo = " ".join(hoo)
 
         with SgFirefox() as driver:
             driver.get(page_url)
-            driver.implicitly_wait(10)
+            sleep(10)
             driver.switch_to.frame(
                 driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
             )
