@@ -23,7 +23,6 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(j.get("name"))
         if location_name.find("salon zamknięty") != -1:
             continue
-        country_code = j.get("countryCode") or "<MISSING>"
         location_type = j.get("storeType") or "<MISSING>"
         street_address = (
             f"{j.get('address1')} {j.get('address2')} {j.get('address3')}".replace(
@@ -56,7 +55,7 @@ def fetch_data(sgw: SgWriter):
 
         city = str(j.get("city")).replace("None", "").strip() or "<MISSING>"
 
-        if country_code == "JP" and postal == "<MISSING>":
+        if postal == "<MISSING>":
             a = parse_address(International_Parser(), street_address)
             street_address = f"{a.street_address_1} {a.street_address_2}".replace(
                 "None", ""
@@ -64,7 +63,6 @@ def fetch_data(sgw: SgWriter):
             city = a.city or "<MISSING>"
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
-            country_code = a.country or "<MISSING>"
 
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
@@ -101,6 +99,17 @@ def fetch_data(sgw: SgWriter):
         if phone.find("＊") != -1:
             phone = phone.split("＊")[0].replace("電話番号", "").strip()
         phone = phone.replace("Tél", "").strip()
+        country_code = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="flyout__country-selector"]//a[@class="country-selector-toggle modalbox"]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        if country_code.find("(") != -1:
+            country_code = country_code.split("(")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

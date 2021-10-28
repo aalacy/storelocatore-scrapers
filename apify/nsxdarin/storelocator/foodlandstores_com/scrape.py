@@ -1,23 +1,48 @@
+import ssl
+import time
+
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+from sgselenium.sgselenium import SgChrome
+
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
-    url = "https://api.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&limit=-1&token=4c137e263f44eb7fc616859a23238e13"
+
+    base_link = "https://www.foodlandstores.com/my-store/store-locator"
+
+    driver = SgChrome(user_agent=user_agent).driver()
+    driver.get(base_link)
+    time.sleep(5)
+
+    token = ""
+    cookies = driver.get_cookies()
+    for cook in cookies:
+        if cook["name"] == "fp-session":
+            token = cook["value"].split("A%22")[1].split("%22")[0]
+            break
+    driver.close()
+
+    url = (
+        "https://api.freshop.com/1/stores?app_key=foodland_unfi&has_address=true&limit=-1&token="
+        + token
+    )
     r = session.get(url, headers=headers)
     website = "foodlandstores.com"
     country = "US"
     typ = "<MISSING>"
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+        line = str(line)
         if '{"id":"' in line:
             items = line.split('{"id":"')
             for item in items:
