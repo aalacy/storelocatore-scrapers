@@ -48,7 +48,6 @@ def fetch_data():
                         phone = raw_data[0]
                         raw_data = raw_data = [""] + raw_data[1:]
                     location_name = raw_data[0]
-                    print(page_url, location_name)
                     if not location_name:
                         location_name = "<MISSING>"
                     raw_address = ", ".join(raw_data[1:])
