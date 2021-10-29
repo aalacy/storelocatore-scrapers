@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_usa
 import json
-import re
 
 DOMAIN = "surcheros.com"
 LOCATION_URL = "https://www.surcheros.com/locations/"
