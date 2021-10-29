@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             state = ad.split(",")[-1].strip()
             postal = a.postcode or "<MISSING>"
-            country_code = "CA"
+            country_code = "US"
             city = j.get("city")
             hours_of_operation = f'Sunday {j.get("Attribute").get("WH_DAY").get("sunday")} Saturday {j.get("Attribute").get("WH_DAY").get("saturday")} Tuesday {j.get("Attribute").get("WH_DAY").get("tuesday")} Friday {j.get("Attribute").get("WH_DAY").get("friday")} Wednesday {j.get("Attribute").get("WH_DAY").get("wednesday")} Thursday {j.get("Attribute").get("WH_DAY").get("thursday")} Monday {j.get("Attribute").get("WH_DAY").get("monday")}'
             latitude = j.get("latitude")
