@@ -46,11 +46,10 @@ def fetch_data():
         "extensions": {
             "persistedQuery": {
                 "version": 1,
-                "sha256Hash": "4e8b93beb8554126cfe7b082c716d13297910daae0eb4691387679eef7c1c09c",
+                "sha256Hash": "200466567f80973aacb4e7a7b6df609c2ea071cea84680c2cef0dc6265e220fc",
                 "sender": "vtex.store-locator@0.x",
                 "provider": "vtex.store-locator@0.x",
             },
-            "variables": "eyJsYXRpdHVkZSI6bnVsbCwibG9uZ2l0dWRlIjpudWxsfQ==",
         },
     }
     stores_req = session.post(
@@ -90,13 +89,19 @@ def fetch_data():
             5: "Friday",
             6: "Saturday",
         }
+        days_list = []
         if store["businessHours"]:
             hours = store["businessHours"]
             hours_list = []
             for hour in hours:
                 day = weekdays_dict[hour["dayOfWeek"]]
                 time = hour["openingTime"] + " - " + hour["closingTime"]
+                days_list.append(day)
                 hours_list.append(day + ":" + time)
+
+        for day in weekdays_dict.values():
+            if day not in days_list:
+                hours_list.append(day + ":Closed")
 
         hours_of_operation = "; ".join(hours_list).strip()
 
