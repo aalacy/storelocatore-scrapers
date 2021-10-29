@@ -77,7 +77,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
