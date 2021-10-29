@@ -1,46 +1,17 @@
 import re
-import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
+    session = SgRequests()
 
     start_url = "https://whiplash.com/about/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
@@ -59,8 +30,9 @@ def fetch_data():
             '//i[contains(@class, "fa-map-marker text-orange")]/following-sibling::div[1]'
         )
 
-        data = dom.xpath('//script[contains(@data-schema, "location-App")]/text()')[0]
-        data = json.loads(data)
+        data = dom.xpath('//script[contains(@data-schema, "location-App")]/text()')
+        if data:
+            data = json.loads(data[0])
 
         for poi_html in all_locations:
             raw_address = poi_html.xpath(".//p/text()")[1:]
@@ -108,39 +80,45 @@ def fetch_data():
                         latitude = e["itemReviewed"]["geo"]["latitude"]
                         longitude = e["itemReviewed"]["geo"]["longitude"]
             if latitude == "<MISSING>" and len(all_locations) == 1:
-                data = dom.xpath('//script[contains(text(), "latitude")]/text()')[0]
-                data = json.loads(data)
-                if type(data) == list:
-                    data = data[0]
-                latitude = data["geo"]["latitude"]
-                longitude = data["geo"]["longitude"]
+                data = dom.xpath('//script[contains(text(), "latitude")]/text()')
+                if data:
+                    data = json.loads(data[0])
+                    if type(data) == list:
+                        data = data[0]
+                    latitude = data["geo"]["latitude"]
+                    longitude = data["geo"]["longitude"]
             hours_of_operation = "<MISSING>"
 
-            item = [
-                domain,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-            items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -1,57 +1,17 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-import time
 
-logger = SgLogSetup().get_logger("bluesushisakegrill_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+    domain = "https://bluesushisakegrill.com"
     get_url = "https://bluesushisakegrill.com/locations"
     r = session.get(get_url)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -61,6 +21,8 @@ def fetch_data():
         link = i.find("a")["href"]
         r1 = session.get(link)
         soup1 = BeautifulSoup(r1.text, "html.parser")
+        if "coming soon" in soup1.h1.text.lower():
+            continue
         main1 = soup1.find("div", {"class": "location_details-address"})
         data = list(main1.stripped_strings)
         address = data[2]
@@ -130,16 +92,12 @@ def fetch_data():
             )
         if phone == "":
             phone = "<MISSING>"
-        hour = hour.rstrip(":").strip()
+        hour = hour.rstrip(":").replace("NOW OPEN!", "").strip()
 
-        if (
-            link
-            == "https://bluesushisakegrill.com/locations/illinois/chicago/lincoln-park"
-        ):
-            if street == "Chicago, IL":
-                street = "<MISSING>"
+        store_number = ""
+        location_type = ""
+
         store = list()
-        store.append("https://bluesushisakegrill.com")
         store.append(link)
         store.append(title)
         store.append(street)
@@ -153,14 +111,26 @@ def fetch_data():
         store.append(lat)
         store.append(lng)
         store.append(hour)
-        yield store
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=domain,
+                page_url=link,
+                location_name=title,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=pcode,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hour,
+            )
+        )
 
 
-def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

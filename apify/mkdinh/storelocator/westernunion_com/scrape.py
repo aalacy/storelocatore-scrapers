@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgzip.static import static_zipcode_list, SearchableCountries
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("westernunion_com")
@@ -35,27 +35,29 @@ FIELDS = [
 
 
 def write_output(data):
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         for row in data:
             writer.write_row(row)
 
 
 def fetch(session, postal, country_code, tracker):
-    locations = fetch_pages(session, postal, country_code, [])
+    try:
+        locations = fetch_pages(session, postal, country_code, [])
 
-    new = []
-    for location in locations:
-        id = location.get("id")
-        if id in tracker:
-            continue
-        tracker.append(id)
+        new = []
+        for location in locations:
+            id = location.get("id")
+            if id in tracker:
+                continue
+            tracker.append(id)
 
-        poi = extract(location)
-        new.append([poi[field] for field in FIELDS])
+            poi = extract(location)
+            new.append(poi)
 
-    return new
+        return new
+    except Exception as e:
+        logger.error(e)
+        return []
 
 
 MISSING = "<MISSING>"
@@ -103,7 +105,7 @@ def extract(location):
     phone = get(location, "phone")
     hours_of_operation = get_hours(location)
 
-    SgRecord(
+    return SgRecord(
         locator_domain=locator_domain,
         location_type=location_type,
         location_name=location_name,
@@ -173,7 +175,7 @@ def scrape():
         )
 
         for future in as_completed(futures):
-            yield future.result()
+            yield from future.result()
 
 
 if __name__ == "__main__":
