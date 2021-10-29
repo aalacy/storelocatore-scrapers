@@ -5,17 +5,22 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
 
 session = SgRequests()
+DOMAIN = "extremepizza.com"
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+MISSING = "<MISSING>"
 
 
 def fetch_data():
     url = "https://www.extremepizza.com/store-locator/"
     cleanr = re.compile(r"<[^>]+>")
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     loclist = r.text.split('{"@type": "FoodEstablishment", ')
     loclist = r.text.split('"hours"')[1:]
     for loc in loclist:
@@ -25,32 +30,31 @@ def fetch_data():
             break
         link = "https://www.extremepizza.com" + link.replace('"', "")
 
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "lxml")
         address = r.text.split('"location": ', 1)[1].split("}", 1)[0]
         try:
             address = soup.find("section", {"id": "intro"}).findAll("a")[0].text.strip()
         except:
             continue
+        check_content = soup.find("section", {"id": "intro"}).text.lower()
         if (
-            "Coming Soon!" in soup.find("section", {"id": "intro"}).text
-            or "temporarily closed"
-            in soup.find("section", {"id": "intro"}).text.lower()
-            or "soon!" in soup.find("section", {"id": "intro"}).text
+            "coming" in check_content
+            or "temporarily closed" in check_content
+            or "soon!" in check_content
         ):
             continue
         try:
             phone = soup.find("section", {"id": "intro"}).findAll("a")[1].text
         except:
             if (
-                "Coming Soon!" in soup.find("section", {"id": "intro"}).text
-                or "temporarily closed"
-                in soup.find("section", {"id": "intro"}).text.lower()
-                or "soon!" in soup.find("section", {"id": "intro"}).text
+                "coming" in check_content
+                or "temporarily closed" in check_content
+                or "soon!" in check_content
             ):
                 continue
             else:
-                phone = "<MISSING>"
+                phone = MISSING
         hourlist = soup.find("section", {"id": "intro"}).findAll("p")
         hours = ""
         for hr in hourlist:
@@ -72,7 +76,7 @@ def fetch_data():
         lat = r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0]
         longt = r.text.split('data-gmaps-lng="', 1)[1].split('"', 1)[0]
         if len(hours) < 3:
-            hours = "<MISSING>"
+            hours = MISSING
         else:
             hours = hours.replace("&amp;", "&").replace(".", "")
         try:
@@ -92,7 +96,8 @@ def fetch_data():
         except:
             pass
         if "Order Online" in phone:
-            phone = "<MISSING>"
+            phone = MISSING
+        log.info("Append {} => {}".format(title, street))
         yield SgRecord(
             locator_domain="https://www.extremepizza.com/",
             page_url=link,
@@ -102,9 +107,9 @@ def fetch_data():
             state=state.strip(),
             zip_postal=pcode.strip(),
             country_code="US",
-            store_number="<MISSING>",
+            store_number=MISSING,
             phone=phone.strip(),
-            location_type="<MISSING>",
+            location_type=MISSING,
             latitude=lat,
             longitude=longt.replace("\n", "").strip(),
             hours_of_operation=hours.strip(),
@@ -112,13 +117,17 @@ def fetch_data():
 
 
 def scrape():
-
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

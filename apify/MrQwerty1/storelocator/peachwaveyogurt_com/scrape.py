@@ -105,6 +105,8 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(f"{day}: {time}")
 
     hours_of_operation = ";".join(_tmp)
+    if tree.xpath("//p[contains(text(), 'Opening')]"):
+        hours_of_operation = "Coming Soon"
 
     row = SgRecord(
         page_url=page_url,

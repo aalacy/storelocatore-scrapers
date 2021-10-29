@@ -9,17 +9,36 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import time
 from sgpostal import sgpostal as parser
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 website = "timhortonsgcc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
+}
 
 
 def fetch_data():
     # Your scraper here
 
     search_url = "https://timhortonsgcc.com/location/"
-    with SgRequests(dont_retry_status_codes=([404])) as session:
-        search_res = session.get(search_url)
+    with SgRequests(dont_retry_status_codes=([404]), verify_ssl=False) as session:
+        search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
         map_url = "".join(
             search_sel.xpath('//a[.//span[text()="VIEW FULL MAP"]]/@href')
@@ -70,6 +89,8 @@ def fetch_data():
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
+                if zip:
+                    zip = zip.replace("UAE", "").strip().replace("KSA", "").strip()
                 country_code = formatted_addr.country
 
                 store_number = "<MISSING>"

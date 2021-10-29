@@ -30,6 +30,8 @@ def fetch_data(sgw: SgWriter):
         line = root.xpath("//div[@class='location-address']/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = ", ".join(line[:-1])
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         line = line[-1]
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
@@ -51,9 +53,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
