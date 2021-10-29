@@ -1,16 +1,28 @@
 import usaddress
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = h.get("day")
+        opens = h.get("open")
+        closes = h.get("close")
+        line = f"{day} {opens} - {closes}"
+        tmp.append(line)
+    hours_of_operation = "; ".join(tmp) or "<MISSING>"
+    return hours_of_operation
 
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.savoryspiceshop.com/locations"
-    session = SgRequests()
+    locator_domain = "https://www.savoryspiceshop.com/"
+    api_url = "https://twrbhpz6v5.execute-api.us-west-2.amazonaws.com/Prod/locations"
+
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -43,111 +55,37 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//a[contains(@id, "store")]')
+    js = r.json()
+    for j in js:
 
-    for d in div:
-        slug = "".join(d.xpath(".//@href"))
-        page_url = f"{locator_domain}{slug}"
-        if page_url.find("st. P") != -1:
-            page_url = page_url.replace("st. Petersburg.html", "st.%20Petersburg.html")
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        location_name = (
-            "".join(tree.xpath('//h1[@style="font-weight: bold;"]//text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        adr = (
-            " ".join(
-                tree.xpath(
-                    '//h3[contains(text(), "Address")]/following-sibling::p[1]/text()'
-                )
-            )
-            .replace("Sonoma Market Place", "")
-            .replace("Southlands Shopping Center", "")
-            .replace("Atherton Mill", "")
-            .replace("Birkdale Village", "")
-            .replace("\n", "")
-            .strip()
-        )
-        a = usaddress.tag(adr, tag_mapping=tag)[0]
+        a = j.get("address")
+        slug = j.get("id")
+        page_url = f"https://www.savoryspiceshop.com/pages/locations/{slug}"
+        location_name = j.get("location_title")
+        ad = f"{a.get('line_01')} {a.get('line_02')}".strip()
+        try:
+            b = usaddress.tag(ad, tag_mapping=tag)[0]
+        except:
+            ad = f"{a.get('line_02')}".strip()
+            b = usaddress.tag(ad, tag_mapping=tag)[0]
         street_address = (
-            f"{a.get('address1')} {a.get('address2')}".replace("None", "")
+            f"{b.get('address1')} {b.get('address2')}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        street_address = (
+            street_address.replace("Lincoln Square", "")
             .replace("Rockbrook Village", "")
-            .replace("Lincoln Square", "")
             .strip()
         )
-
-        phone = (
-            "".join(
-                tree.xpath(
-                    '//h3[contains(text(), "Contact")]/following-sibling::p[1]/text()[1]'
-                )
-            )
-            .replace("P:", "")
-            .strip()
-        )
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("postal") or "<MISSING>"
+        state = a.get("state_code") or "<MISSING>"
+        postal = a.get("postal_code") or "<MISSING>"
         country_code = "US"
         city = a.get("city") or "<MISSING>"
-        if state.find("Fe, New Mexico") != -1:
-            city = city + " " + state.split(",")[0].strip()
-            state = state.replace("Fe,", "").strip()
-
-        ll = (
-            "".join(tree.xpath('//script[contains(text(), "googleMap")]/text()'))
-            .split("center: '(")[1]
-            .split(")',")[0]
-            .strip()
-        )
-
-        latitude = ll.split(",")[0].strip()
-        longitude = ll.split(",")[1].strip()
-        if latitude == "0.0000000":
-            latitude = "<MISSING>"
-        if longitude == "0.0000000":
-            longitude = "<MISSING>"
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//h3[contains(text(), "Hours")]/following-sibling::p[1]//text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        if hours_of_operation.find("hours:") != -1:
-            hours_of_operation = hours_of_operation.split("hours:")[1].strip()
-        if hours_of_operation.find("Spice Experts.") != -1:
-            hours_of_operation = hours_of_operation.split("Spice Experts.")[1].strip()
-        if hours_of_operation.find("*") != -1:
-            hours_of_operation = hours_of_operation.split("*")[0].strip()
-        if hours_of_operation.find("We will be OPEN") != -1:
-            hours_of_operation = hours_of_operation.split("We will be OPEN")[0].strip()
-        if (
-            hours_of_operation.find("or on our website.") != -1
-            and hours_of_operation.find("908.264.8947") == -1
-        ):
-            hours_of_operation = hours_of_operation.split("or on our website.")[
-                1
-            ].strip()
-        if hours_of_operation.find("HOLIDAY NOTICE:") != -1:
-            hours_of_operation = hours_of_operation.split("HOLIDAY NOTICE:")[0].strip()
-        hours_of_operation = (
-            hours_of_operation.replace("Curbside Pick Up Available", "")
-            .replace("SPRING HOURS", "")
-            .replace("?", "")
-            .replace("STORE HOURS", "")
-            .replace("(Closed Easter Sunday)", "")
-            .replace("Curbside Pick Up available", "")
-            .replace("SPRING/SUMMER HOURS", "")
-            .strip()
-        )
-        if hours_of_operation.find("We can") != -1:
-            hours_of_operation = hours_of_operation.split("We can")[0].strip()
+        phone = a.get("phone")
+        hours = j.get("store_hours") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -161,8 +99,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
         )
 
@@ -171,6 +109,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://www.savoryspiceshop.com"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

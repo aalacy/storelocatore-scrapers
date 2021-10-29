@@ -1,5 +1,5 @@
 from sgselenium import SgChrome
-
+import tenacity
 import time
 import json
 from lxml import etree
@@ -26,6 +26,13 @@ user_agent = (
 start_url = "https://www.napacanada.com/en/store-finder?q=H1N+3E2&page=7"
 
 
+@tenacity.retry(wait=tenacity.wait_fixed(3))
+def get_with_retry(driver, url):
+    driver.get(url)
+    driver.set_page_load_timeout(20)
+    return driver.page_source
+
+
 def extract_details(html):
     loc_dom = etree.HTML(html)
     scripts = loc_dom.xpath('//script[@type="application/ld+json"]/text()')
@@ -39,7 +46,7 @@ def fetch_data():
 
     with SgChrome(is_headless=True, user_agent=user_agent) as driver:
         driver.get(start_url)
-        time.sleep(8)
+        time.sleep(30)
         htmlSource = driver.page_source
         dom = etree.HTML(htmlSource)
         all_locations = dom.xpath('//li[@class="aadata-store-item"]')
@@ -47,9 +54,7 @@ def fetch_data():
         for poi_html in all_locations:
             store_url = poi_html.xpath('.//a[@class="storeWebsiteLink"]/@href')[0]
             store_url = urljoin(start_url, store_url)
-            driver.get(store_url)
-            time.sleep(10)
-            html = driver.page_source
+            html = get_with_retry(driver, store_url)
             poi = extract_details(html)
             location_name = poi["name"]
             log.info(f"Now Crawling: {location_name} => {store_url}")
