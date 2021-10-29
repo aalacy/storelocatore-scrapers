@@ -35,6 +35,8 @@ def fetch_data():
                 phone = _.select_one("p.loc-res-phone").text.strip()
             if _.select_one("span.open-until"):
                 hours_of_operation = _.select_one("span.open-until").text.strip()
+            if hours_of_operation == "Открыто":
+                hours_of_operation = ""
             yield SgRecord(
                 page_url=base_url,
                 store_number=_.h2.a["data-store"],
