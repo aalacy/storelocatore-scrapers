@@ -125,7 +125,8 @@ class _SearchIteration(SearchIteration):
                         else:
                             time = hour["openingTime"] + "-" + hour["closingtime"]
 
-                        hours_list.append(day + ":" + time)
+                        if day:
+                            hours_list.append(day + ":" + time)
 
                     hours_of_operation = "; ".join(hours_list).strip()
                     latitude = store["latitude"]
