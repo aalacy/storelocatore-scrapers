@@ -38,8 +38,8 @@ def fetch_data():
             store_number=store_number,
             phone=poi["phone"],
             location_type=poi["storeType"],
-            latitude=poi["latitude"],
-            longitude=poi["longitude"],
+            latitude=poi["latitude"].replace(",", "."),
+            longitude=poi["longitude"].replace(",", "."),
             hours_of_operation=hoo,
         )
 
