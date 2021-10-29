@@ -148,7 +148,7 @@ class _SearchIteration(SearchIteration):
                         hours_of_operation=hours_of_operation,
                     )
 
-        except SgRequestError as e:
+        except SgRequestError:
             pass
 
 
