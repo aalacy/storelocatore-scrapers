@@ -65,8 +65,8 @@ def get_response(url):
             return response
         raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
-
 def get_domain(page_url):
+    # Identify the domain for each country
     locator_domain = ""
     # 1 - Bahrain
     if "ikea.com/bh/en" in page_url:
