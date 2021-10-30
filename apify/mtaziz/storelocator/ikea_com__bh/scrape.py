@@ -837,7 +837,6 @@ def fetch_records_mx(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 10 - Morocco (MA)
 def get_address_n_hoo_ma(retat1):
     address = ""
     hoo = ""
@@ -860,6 +859,9 @@ def get_address_n_hoo_ma(retat1):
         address = MISSING
         hoo = MISSING
     return address, hoo
+
+
+# 10 - Morocco (MA)
 
 
 def fetch_records_ma(sgw: SgWriter):
