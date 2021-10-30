@@ -19,7 +19,6 @@ MISSING = "<MISSING>"
 
 def fetch_data():
     url = "https://www.extremepizza.com/store-locator/"
-    cleanr = re.compile(r"<[^>]+>")
     r = session.get(url, headers=headers)
     loclist = r.text.split('{"@type": "FoodEstablishment", ')
     loclist = r.text.split('"hours"')[1:]
@@ -29,7 +28,7 @@ def fetch_data():
         except:
             break
         link = "https://www.extremepizza.com" + link.replace('"', "")
-
+        log.info("Pull content => " + link)
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
         address = r.text.split('"location": ', 1)[1].split("}", 1)[0]
@@ -38,35 +37,15 @@ def fetch_data():
         except:
             continue
         check_content = soup.find("section", {"id": "intro"}).text.lower()
-        if (
-            "coming" in check_content
-            or "temporarily closed" in check_content
-            or "soon!" in check_content
-        ):
+        if "coming" in check_content or "soon!" in check_content:
             continue
         try:
             phone = soup.find("section", {"id": "intro"}).findAll("a")[1].text
         except:
-            if (
-                "coming" in check_content
-                or "temporarily closed" in check_content
-                or "soon!" in check_content
-            ):
+            if "coming" in check_content or "soon!" in check_content:
                 continue
             else:
                 phone = MISSING
-        hourlist = soup.find("section", {"id": "intro"}).findAll("p")
-        hours = ""
-        for hr in hourlist:
-            if (
-                "am " in hr.text.lower()
-                or "day " in hr.text.lower()
-                or "am -" in hr.text.lower()
-                or "pm" in hr.text.lower()
-            ):
-
-                hrnow = re.sub(cleanr, " ", str(hr)).strip()
-                hours = hours + hrnow + " "
         address = address.split(", ")
         state = address[-1]
         city = address[-2]
@@ -75,26 +54,19 @@ def fetch_data():
         title = soup.find("title").text.split(" |", 1)[0]
         lat = r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0]
         longt = r.text.split('data-gmaps-lng="', 1)[1].split('"', 1)[0]
-        if len(hours) < 3:
-            hours = MISSING
-        else:
-            hours = hours.replace("&amp;", "&").replace(".", "")
-        try:
-            hours = hours.split("Try", 1)[0]
-        except:
-            pass
-        try:
-            hours = hours.split("Thirst", 1)[0]
-        except:
-            pass
-        try:
-            hours = hours.split("PINTS", 1)[0]
-        except:
-            pass
-        try:
-            hours = hours.split("We ", 1)[0]
-        except:
-            pass
+        hoo = soup.find("section", {"id": "intro"}).find("div", {"class": "col-md-6"})
+        hoo.find("h2").decompose()
+        for remove_element in hoo.find_all("a"):
+            remove_element.decompose()
+        hoo = (
+            hoo.get_text(strip=True, separator=" ")
+            .replace("Dine in at 50% capacity due to current regulations", "")
+            .replace("NEW HOURS", "")
+        )
+        hours_of_operation = re.sub(r"(Delivering to.*)|(PINTS ON.*)", "", hoo).strip()
+        location_type = MISSING
+        if "temporarily closed" in check_content:
+            location_type = "TEMP_CLOSED"
         if "Order Online" in phone:
             phone = MISSING
         log.info("Append {} => {}".format(title, street))
@@ -109,10 +81,10 @@ def fetch_data():
             country_code="US",
             store_number=MISSING,
             phone=phone.strip(),
-            location_type=MISSING,
+            location_type=location_type,
             latitude=lat,
             longitude=longt.replace("\n", "").strip(),
-            hours_of_operation=hours.strip(),
+            hours_of_operation=hours_of_operation,
         )
 
 
