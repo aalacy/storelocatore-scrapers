@@ -193,7 +193,7 @@ def get_parsed_address(address1):
     return street_address, city, state, zip_postal
 
 
-# 1 - Bahrain
+# Bahrain
 def fetch_records_bh(sgw: SgWriter):
     store_locator_url = "https://www.ikea.com/bh/en/stores"
     r = get_response(store_locator_url)
@@ -265,7 +265,7 @@ def get_hoo_clean(hours):
     return hours_of_operation
 
 
-# 2 - Bulgaria (BG)
+# Bulgaria (BG)
 def fetch_records_bg(sgw: SgWriter):
     page_urls = get_store_urls_bg()
     for page_url in page_urls:
@@ -320,7 +320,7 @@ def fetch_records_bg(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 3 - Croatia ( HR )
+# Croatia
 
 
 def fetch_records_hr(sgw: SgWriter):
@@ -379,7 +379,7 @@ def fetch_records_hr(sgw: SgWriter):
     sgw.write_row(rec)
 
 
-# 4 - Cyprus ( CY )
+# Cyprus
 
 
 def cy_get_store_urls():
@@ -459,7 +459,7 @@ def fetch_records_cy(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 5 - India (IN)
+# India
 
 
 def fetch_records_in(sgw: SgWriter):
@@ -534,7 +534,7 @@ def fetch_records_in(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 6 - Ireland (IE)
+# Ireland
 
 
 def fetch_records_ie(sgw: SgWriter):
@@ -614,7 +614,7 @@ def fetch_records_ie(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 7 - Jordan (JO)
+# Jordan
 
 
 def fetch_records_jo(sgw: SgWriter):
@@ -694,7 +694,7 @@ def fetch_records_jo(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 8 - Kuwait (KW)
+# Kuwait
 
 
 def fetch_records_kw(sgw: SgWriter):
@@ -777,7 +777,7 @@ def get_phone(sel2):
     return phone
 
 
-# 9 - Mexico (MX)
+# Mexico
 def fetch_records_mx(sgw: SgWriter):
     mx_store_locator_url = "https://www.ikea.com/mx/en/stores/"
     r1 = get_response(mx_store_locator_url)
@@ -861,7 +861,7 @@ def get_address_n_hoo_ma(retat1):
     return address, hoo
 
 
-# 10 - Morocco (MA)
+# Morocco
 
 
 def fetch_records_ma(sgw: SgWriter):
@@ -918,7 +918,7 @@ def fetch_records_ma(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 11 - Puerto Rico (PR)
+# Puerto Rico
 
 
 def get_add_ph_n_hoo_pr(sel):
@@ -994,7 +994,7 @@ def fetch_records_pr(sgw: SgWriter):
     sgw.write_row(rec)
 
 
-# 12 - Qatar (QA)
+# Qatar
 
 
 def remove_comma(d):
@@ -1085,7 +1085,7 @@ def fetch_records_qa(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# 13 - Serbia (RS)
+# Serbia
 def fetch_records_rs(sgw: SgWriter):
     rs_store_locator_url = "https://www.ikea.com/rs/sr/stores/"
     r = get_response(rs_store_locator_url)
@@ -1145,7 +1145,7 @@ def fetch_records_rs(sgw: SgWriter):
     sgw.write_row(rec)
 
 
-# 14 - Slovakia (SK)
+# Slovakia
 def fetch_records_sk(sgw: SgWriter):
     sk_store_locator_url = "https://www.ikea.com/sk/sk/stores/bratislava/"
     r = get_response(sk_store_locator_url)
@@ -1208,7 +1208,7 @@ def fetch_records_sk(sgw: SgWriter):
     sgw.write_row(rec)
 
 
-# 15 - Slovenia
+# Slovenia
 
 
 def fetch_records_si(sgw: SgWriter):
@@ -1220,7 +1220,6 @@ def fetch_records_si(sgw: SgWriter):
     location_name = sel.xpath(xpath_locname)[0]
     logger.info(f"Location Name: {location_name}")
     xpath_address = '//*[*[contains(text(), "Naslov")]]/p/text()'
-    # Naslov ( Address )
     at = sel.xpath(xpath_address)
     address1 = " ".join(at)
     logger.info(f"Address: {address1}")
@@ -1246,7 +1245,6 @@ def fetch_records_si(sgw: SgWriter):
         lng = MISSING
 
     xpath_hours = '//div[*[contains(text(), "Obratovalni čas")]]/p/text()'
-    # Obratovalni čas
     hours = sel.xpath(xpath_hours)[0]
     hoo = hours.strip()
     hours_of_operation = hoo if hoo else MISSING
@@ -1274,7 +1272,7 @@ def fetch_records_si(sgw: SgWriter):
     sgw.write_row(rec)
 
 
-# 16 - Ukraine (UA)
+# Ukraine
 def fetch_records_ua(sgw: SgWriter):
     ua_store_locator_url = "https://www.ikea.com/ua/uk/stores/"
     r = get_response(ua_store_locator_url)
@@ -1299,7 +1297,7 @@ def fetch_records_ua(sgw: SgWriter):
     except:
         phone = MISSING
 
-    # Get directions - Прокласти маршрут
+    # Get directions Прокласти маршрут
     xpath_gmap_url = '//a[contains(text(), "Прокласти маршрут")]/@href'
     gurl = sel.xpath(xpath_gmap_url)
     lat = ""
@@ -1313,7 +1311,6 @@ def fetch_records_ua(sgw: SgWriter):
     except:
         lat = MISSING
         lng = MISSING
-    # Work Schedule - Графік роботи
     xpath_hours = '//div[*[*[contains(text(), "Графік роботи")]]]/p/text()'
     hoo = " ".join(sel.xpath(xpath_hours))
     hours_of_operation = hoo if hoo else MISSING
