@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 from sgpostal.sgpostal import parse_address_intl
 import tenacity
-from datetime import datetime
 from lxml import html
 import time
 import ssl
@@ -954,9 +953,6 @@ def fetch_records_pr(sgw: SgWriter):
     logger.info(f"Address: {address1}")
     street_address, city, state, zip_postal = get_parsed_address(address1)
     phone = ph.strip() if ph else MISSING
-    xpath_gmap_url1 = '//a[*[*[contains(text(), "Get directions")]]]/@href'
-    xpath_gmap_url2 = '//a[contains(@href, "https://www.google.com/maps")]/@href'
-    xpath_gmap_url12 = f"{xpath_gmap_url1} | {xpath_gmap_url2}"
     xpath_gmap_url = '//div[contains(@class, "google-maps-link")]/a/@href'
     gurl = sel.xpath(xpath_gmap_url)
     lat = ""
@@ -1107,9 +1103,6 @@ def fetch_records_rs(sgw: SgWriter):
     ph = sel.xpath(xpath_phone)[0].replace("tel:", "")
     phone = ph.strip() if ph else MISSING
 
-    xpath_gmap_url1 = '//a[*[*[contains(text(), "Get directions")]]]/@href'
-    xpath_gmap_url2 = '//a[contains(@href, "https://www.google.com/maps")]/@href'
-    xpath_gmap_url12 = f"{xpath_gmap_url1} | {xpath_gmap_url2}"
     xpath_gmap_url = '//div[contains(@class, "google-maps-link")]/a/@href'
     gurl = sel.xpath(xpath_gmap_url)
     lat = ""
