@@ -34,7 +34,7 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         hoo = loc_dom.xpath('//table[@class="location-hours-table"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo)
+        hours_of_operation = " ".join(hoo).split(" Δευτέρα")[0]
         if poi["latlng"].get("street_name"):
             if poi["latlng"].get("street_number"):
                 street_address = (
