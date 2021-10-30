@@ -265,7 +265,9 @@ def get_hoo_clean(hours):
     return hours_of_operation
 
 
-# Bulgaria (BG)
+# Bulgaria
+
+
 def fetch_records_bg(sgw: SgWriter):
     page_urls = get_store_urls_bg()
     for page_url in page_urls:
