@@ -108,7 +108,7 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(f"Crawling Started...")
+    logger.info("Crawling Started...")
     count = 0
     with SgWriter(
         SgRecordDeduper(
