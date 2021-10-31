@@ -57,6 +57,8 @@ def fetch_data():
                         street_address += ", " + addr.street_address_2
                     else:
                         street_address = addr.street_address_2
+                    if not street_address:
+                        street_address = raw_address.split(", ")[0].split(" - ")[-1]
 
                     item = SgRecord(
                         locator_domain=domain,
