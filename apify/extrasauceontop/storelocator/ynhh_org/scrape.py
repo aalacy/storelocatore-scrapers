@@ -8,8 +8,8 @@ from sgscrape import simple_scraper_pipeline as sp
 import time
 import ssl
 from sglogging import sglog
-from tenacity import retry
-from tenacity import stop_after_attempt
+from tenacity import retry  # noqa
+from tenacity import stop_after_attempt  # noqa
 
 ssl._create_default_https_context = ssl._create_unverified_context
 log = sglog.SgLogSetup().get_logger(logger_name="ynhh")
