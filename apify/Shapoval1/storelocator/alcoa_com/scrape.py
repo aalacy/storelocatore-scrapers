@@ -88,12 +88,12 @@ def fetch_data(sgw: SgWriter):
             page_url = api_url
             location_name = "".join(d.xpath(".//text()"))
             ad = d.xpath(".//following-sibling::div//text()")
-            adr = []
+            adr_a = []
             for a in ad:
-                adr.append(a)
+                adr_a.append(a)
                 if "+" in a or ") " in a:
                     break
-            address = " ".join(adr[:-1])
+            address = " ".join(adr_a[:-1])
             if location_name.find("(closed") != -1:
                 continue
             if location_name.find("Corporate Office") != -1:
@@ -114,7 +114,7 @@ def fetch_data(sgw: SgWriter):
             postal = a.postcode.replace("CEP", "").strip() or "<MISSING>"
             country_code = page_url.split("/")[-3].strip()
             city = a.city or "<MISSING>"
-            phone = "".join(adr[-1]).replace("Phone:", "").strip()
+            phone = "".join(adr_a[-1]).replace("Phone:", "").strip()
             if phone.find("/") != -1:
                 phone = phone.split("/")[0].strip()
             hours_of_operation = "<MISSING>"
