@@ -142,7 +142,6 @@ def get_data():
                     hours = "<MISSING>"
             except Exception:
                 hours = "<MISSING>"
-
             else:
                 hours = ""
                 for part in hours_parts:
@@ -160,6 +159,7 @@ def get_data():
                     hours = hours + part + " "
 
             hours = hours.strip()
+
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
