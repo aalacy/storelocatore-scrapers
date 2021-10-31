@@ -137,9 +137,11 @@ def get_data():
                 if part != "" and part.lower() != "hours"
             ]
 
-            if hours_parts[0] != "M":
+            try:
+                if hours_parts[0] != "M":
+                    hours = "<MISSING>"
+            except Exception:
                 hours = "<MISSING>"
-
             else:
                 hours = ""
                 for part in hours_parts:

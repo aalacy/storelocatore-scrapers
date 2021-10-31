@@ -4,7 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
 
 
@@ -26,11 +26,15 @@ def get_data(page_url, sgw: SgWriter):
 
     location_name = "".join(tree.xpath("//div[@class=' bf-location-info']/h2/text()"))
     a = js.get("address")
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("addressCountry").get("name")
+    street_address = tree.xpath("//div[@class='bf-li-address']//p/text()")[0].strip()
+    city = a.get("addressLocality")
+    state = a.get("addressRegion")
+    postal = a.get("postalCode") or ""
+    country_code = "US"
+    if " " in postal:
+        country_code = "CA"
+    if "252 Caha" in street_address and "AL" in location_name:
+        return
     phone = "".join(tree.xpath("//a[@class='bf-li-item_phone']/text()")).strip()
     g = js.get("geo") or {}
     latitude = g.get("latitude")
@@ -77,5 +81,7 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.bathfitter.com/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
         fetch_data(writer)

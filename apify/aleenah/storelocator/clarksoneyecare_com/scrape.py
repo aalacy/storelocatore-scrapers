@@ -49,14 +49,13 @@ def fetch_data():
 
         tim = tim.strip(", ")
 
-        if "address2" in loc and "address3" in loc:
-            street = (
-                loc["address1"] + " " + loc["address2"] + " " + loc["address3"].strip()
-            )
-        elif "address3" not in loc and "address2" in loc:
-            street = loc["address1"] + " " + loc["address2"].strip()
-        elif "address2" in loc and "address3" in loc:
-            street = loc["address1"].strip()
+        street = loc["address1"].strip()
+
+        if "address2" in loc:
+            street += " " + loc["address2"].strip()
+
+        if "address3" in loc:
+            street += " " + loc["address3"].strip()
 
         yield SgRecord(
             locator_domain="https://www.clarksoneyecare.com",
