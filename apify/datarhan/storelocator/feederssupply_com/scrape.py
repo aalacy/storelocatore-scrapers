@@ -1,23 +1,33 @@
 from lxml import etree
 from time import sleep
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
+from sglogging import sglog
+import ssl
+
+domain = "feederssupply.com"
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+logger = sglog.SgLogSetup().get_logger(logger_name=domain)
+
 
 def fetch_data():
-    domain = "feederssupply.com"
+
     start_url = "https://www.feederssupply.com/store-locator"
 
-    with SgFirefox(is_headless=True) as driver:
-        driver.set_window_position(0, 0)
-        driver.set_window_size(1024, 4068)
+    with SgChrome() as driver:
+
         driver.get(start_url)
         try:
-            driver.find_element_by_xpath('//div[@aria-label="Back to site"]').click()
+            driver.find_element(By.XPATH, '//div[@aria-label="Back to site"]').click()
         except Exception:
             pass
 
@@ -29,10 +39,10 @@ def fetch_data():
             poi.location_once_scrolled_into_view
             try:
                 driver.execute_script("window.scrollBy(0, -400);")
-                poi.click()
+                driver.execute_script("arguments[0].click();", poi)
             except Exception:
                 driver.execute_script("window.scrollBy(0, -200);")
-                poi.click()
+                driver.execute_script("arguments[0].click();", poi)
             sleep(30)
             poi_html = etree.HTML(driver.page_source)
             raw_data = poi_html.xpath(
@@ -42,6 +52,7 @@ def fetch_data():
             store_url = start_url
             location_name = raw_data[0]
             location_name = location_name if location_name else "<MISSING>"
+            logger.info(f"Location Name: {location_name}")
             street_address = raw_data[1]
             city = raw_data[2].split(", ")[0]
             state = raw_data[2].split(", ")[-1].split()[0]
@@ -71,8 +82,9 @@ def fetch_data():
             if "http" in latitude:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            driver.find_element_by_xpath(
-                '//div[@data-testid="popupCloseIconButtonRoot"]'
+
+            driver.find_element(
+                By.XPATH, '//div[@data-testid="popupCloseIconButtonRoot"]'
             ).click()
 
             item = SgRecord(
@@ -96,6 +108,8 @@ def fetch_data():
 
 
 def scrape():
+    logger.info(f"Crawling Started...")
+    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -105,6 +119,9 @@ def scrape():
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
+            count = count + 1
+
+    logger.info(f"Total Locations: {count}")
 
 
 if __name__ == "__main__":
