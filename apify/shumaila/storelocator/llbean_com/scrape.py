@@ -16,12 +16,12 @@ def fetch_data():
 
     pattern = re.compile(r"\s\s+")
     url = "https://www.llbean.com/llb/shop/1000001703?nav=gn-"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     link_list = soup.find("div", {"class": "wcm-grid-container"}).findAll("a")
 
     url = "https://global.llbean.com/Retail.html"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     link_list1 = soup.findAll("div", {"class": "row_intl"})[1].findAll("a")
     for link in link_list1:
@@ -37,7 +37,7 @@ def fetch_data():
                 pass
             else:
                 link = "https://www.llbean.com" + alink["href"]
-            r = session.get(link, headers=headers, verify=False)
+            r = session.get(link, headers=headers)
 
             soup = BeautifulSoup(r.text, "html.parser")
             if "Temporarily Closed" in soup.text or "opening" in soup.text.lower():
