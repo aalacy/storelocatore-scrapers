@@ -77,7 +77,7 @@ def fetch_data():
                 )
             if 'name="store-lon" id="store-lon" value="' in line2:
                 lng = (
-                    line2.split('name="store-lat" id="store-lon" value="')[1]
+                    line2.split('name="store-lon" id="store-lon" value="')[1]
                     .split('"')[0]
                     .replace(",", ".")
                 )
