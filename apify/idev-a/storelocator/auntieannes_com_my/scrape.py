@@ -41,6 +41,7 @@ def fetch_data():
                                 temp.append(_hh)
                 if temp:
                     hours = "; ".join(temp)
+                    
             phone = ""
             if "Telephone" in block[-1]:
                 phone = block[-1].split(":")[-1].strip()
