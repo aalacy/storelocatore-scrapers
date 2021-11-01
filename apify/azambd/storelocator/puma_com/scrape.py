@@ -12,14 +12,25 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
+import pycountry
+
 website = "puma.com"
 MISSING = SgRecord.MISSING
-STORE_JSON_URL = "https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator?coordinates={}%2C{}8&loadMore=5"
+STORE_JSON_URL = "https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator?coordinates={}%2C{}8&loadMore=50"
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
 }
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+
+def do_fuzzy_search(country):
+    try:
+        result = pycountry.countries.search_fuzzy(country)
+    except Exception:
+        return np.nan
+    else:
+        return result[0].alpha_2
 
 
 def get_var_name(value):
@@ -43,7 +54,7 @@ def get_json_objectVariable(Object, varNames, noVal=MISSING):
 
 
 def fetch_single_store(http, store, countryCode):
-    country_code = countryCode
+    country_code = do_fuzzy_search(store["Country"])
     store_number = store["StoreId"]
     location_name = store["StoreName"]
     phone = store["PhoneNumber"]
@@ -120,9 +131,7 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     country_codes = SearchableCountries.ALL
-    search = DynamicGeoSearch(
-        country_codes=country_codes, expected_search_radius_miles=50
-    )
+    search = DynamicGeoSearch(country_codes=country_codes, max_search_results=50)
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         with SgRequests() as http:
