@@ -103,28 +103,22 @@ def fetch_records(http):
             for hh in sp1.select("div.center-details__hours div.seg-center-hours ul li")
         ]
         country_code = "US"
-        try:
+        if state and state in ca_provinces_codes:
+            country_code = "CA"
 
-            if state and state in ca_provinces_codes:
-                country_code = "CA"
-
-            yield SgRecord(
-                page_url=page_url,
-                location_name=sp1.h1.text.strip(),
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                phone=phone,
-                hours_of_operation="; ".join(hours),
-                locator_domain=locator_domain,
-                raw_address=" ".join(addr),
-            )
-        except:
-            import pdb
-
-            pdb.set_trace()
+        yield SgRecord(
+            page_url=page_url,
+            location_name=sp1.h1.text.strip(),
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            phone=phone,
+            hours_of_operation="; ".join(hours),
+            locator_domain=locator_domain,
+            raw_address=" ".join(addr),
+        )
 
 
 if __name__ == "__main__":
