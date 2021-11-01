@@ -26,7 +26,7 @@ def fetch_data():
         divlist = soup.findAll("div", {"class": "info"})
         hours = divlist[1].text.replace("\n", " ").replace("Hours", "").strip()
         location = divlist[2].text.strip().splitlines()
-        street = location[2]
+        street = location[1]
         city, state = location[2].split(", ", 1)
         state, pcode = state.split(" ", 1)
         phone = location[-1]
