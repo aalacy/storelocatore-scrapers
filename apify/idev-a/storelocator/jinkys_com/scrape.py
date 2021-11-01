@@ -30,7 +30,7 @@ def fetch_data():
                 state=addr["addressRegion"],
                 zip_postal=addr["postalCode"],
                 country_code="US",
-                phone=_["telephone"],
+                phone=_.get("telephone"),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(_.get("openingHours", [])),
             )
