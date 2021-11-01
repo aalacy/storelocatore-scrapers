@@ -24,9 +24,9 @@ def fetch_data():
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         divlist = soup.findAll("div", {"class": "info"})
-        hours = divlist[0].text.replace("\n", " ").replace("Hours", "").strip()
-        location = divlist[1].text.strip().splitlines()
-        street = location[1]
+        hours = divlist[1].text.replace("\n", " ").replace("Hours", "").strip()
+        location = divlist[2].text.strip().splitlines()
+        street = location[2]
         city, state = location[2].split(", ", 1)
         state, pcode = state.split(" ", 1)
         phone = location[-1]
