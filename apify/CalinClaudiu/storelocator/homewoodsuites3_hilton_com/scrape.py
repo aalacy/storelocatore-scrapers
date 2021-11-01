@@ -13,9 +13,12 @@ from bs4 import BeautifulSoup as b4
 
 import json
 import time
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def cleanup_json(x, url):
@@ -123,7 +126,11 @@ def gen_countries(session):
         links = alist.find_all("a")
         for link in links:
             countries.append(
-                {"text": link.text, "link": link["href"], "complete": False}
+                {
+                    "text": link.text,
+                    "link": link["href"].replace("https", "http"),
+                    "complete": False,
+                }
             )
     return countries
 
@@ -149,7 +156,7 @@ def fetch_data():
 def data_fetcher(country, state, sleep):
     url = country["link"]
     masterdata = []
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(url.replace("https", "http"))
         time.sleep(sleep)
         for r in driver.requests:
