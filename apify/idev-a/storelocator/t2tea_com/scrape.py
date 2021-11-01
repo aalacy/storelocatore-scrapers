@@ -54,7 +54,7 @@ def fetch_records(http, search, country_map):
                 store_number=_["ID"],
                 street_address=street_address,
                 city=_["city"],
-                state=_.get("stateCode").replace(".", ""),
+                state=_.get("stateCode"),
                 zip_postal=_.get("postalCode"),
                 country_code=_["countryCode"],
                 phone=_.get("phone"),
