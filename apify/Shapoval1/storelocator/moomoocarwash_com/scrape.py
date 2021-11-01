@@ -10,13 +10,12 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://moomoocarwash.com/"
     api_url = "https://moomoocarwash.com/locations/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="popup location_details"]')
+    div = tree.xpath('//div[@class="popup_detail_content"]')
     for d in div:
 
         page_url = "https://moomoocarwash.com/locations/"
