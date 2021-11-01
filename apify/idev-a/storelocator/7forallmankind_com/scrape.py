@@ -62,7 +62,7 @@ def fetch_data():
                 page_url=_["store_url"],
                 location_name=_["storename"],
                 store_number=_["storelocator_id"],
-                street_address=", ".join(_["address"]),
+                street_address=" ".join(_["address"]).strip(),
                 city=_["city"],
                 state=_["region"],
                 zip_postal=_["zipcode"],
