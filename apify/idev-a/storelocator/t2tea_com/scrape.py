@@ -9,6 +9,7 @@ from sgzip.utils import country_names_by_code
 from bs4 import BeautifulSoup as bs
 from fuzzywuzzy import process
 import httpx
+
 timeout = httpx.Timeout(5.0)
 logger = SgLogSetup().get_logger("t2tea")
 
