@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import re
 import json
 from sgscrape.sgrecord_id import SgRecordID
@@ -61,9 +61,6 @@ def fetch_data():
             street_address = _addr[0]
             if addr.postcode in street_address:
                 street_address = street_address.split(addr.city)[0].strip()
-
-            if street_address.endswith(","):
-                street_address = street_address[:-1]
 
             phone = ""
             if link.find("a", href=re.compile(r"tel:")):
