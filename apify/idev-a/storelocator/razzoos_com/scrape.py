@@ -62,6 +62,9 @@ def fetch_data():
             if addr.postcode in street_address:
                 street_address = street_address.split(addr.city)[0].strip()
 
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+
             phone = ""
             if link.find("a", href=re.compile(r"tel:")):
                 phone = link.find("a", href=re.compile(r"tel:")).text.strip()
