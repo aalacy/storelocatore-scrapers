@@ -47,8 +47,9 @@ def fetch_data():
             if "Teléfono" in hr[-1]:
                 del hr[-1]
             hours = []
-            for hh in hr[-1].split("#"):
-                hours.append(": ".join([_hh.strip() for _hh in hh.split()]))
+            if "Dirección" not in hr[-1] and "C.P." not in hr[-1]:
+                for hh in hr[-1].split("#"):
+                    hours.append(": ".join([_hh.strip() for _hh in hh.split()]))
             addr = parse_address_intl(raw_address + ", Mexico")
             street_address = addr.street_address_1
             if addr.street_address_2:
