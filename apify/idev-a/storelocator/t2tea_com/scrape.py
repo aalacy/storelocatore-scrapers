@@ -11,7 +11,6 @@ from fuzzywuzzy import process
 import httpx
 
 timeout = httpx.Timeout(5.0)
-
 logger = SgLogSetup().get_logger("t2tea")
 
 _headers = {
