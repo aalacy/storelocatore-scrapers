@@ -13,6 +13,9 @@ headers = {
 }
 
 
+MISSING = SgRecord.MISSING
+
+
 def fetch_data():
 
     pattern = re.compile(r"\s\s+")
