@@ -19,7 +19,7 @@ HEADERS = {
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests(proxy_country="jp")
+session = SgRequests()
 
 
 def getAddress(raw_address):

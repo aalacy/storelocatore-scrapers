@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
-import time
 
 session = SgRequests()
 headers = {
@@ -26,7 +25,6 @@ def fetch_data():
     r = session.get(url, headers=headers)
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '{"id":' in line and 'name="advance-search"' in line:
             items = line.split('"id":')
             for item in items:
@@ -37,7 +35,6 @@ def fetch_data():
                         + item.split('"title":"')[1].split('"')[0]
                     )
     for sid in states:
-        time.sleep(3)
         sname = sid.split("|")[1]
         sidnum = sid.split("|")[0]
         surl = "https://www.dominos.co.in/store-locations/api/get-cities/" + sidnum
@@ -49,7 +46,6 @@ def fetch_data():
         except:
             pass
     for cid in cities:
-        time.sleep(3)
         sname = cid.split("|")[1]
         curl = (
             "https://www.dominos.co.in/store-locations/api/get-localities/"
@@ -68,7 +64,6 @@ def fetch_data():
         except:
             pass
     for curl in places:
-        time.sleep(3)
         logger.info(curl)
         try:
             r2 = session.get(curl.split("|")[0], headers=headers)
@@ -85,7 +80,6 @@ def fetch_data():
             lng = ""
             lines = r2.iter_lines()
             for line2 in lines:
-                line2 = str(line2.decode("utf-8"))
                 if (
                     '<a class="nav-link" href="https://www.dominos.co.in/store-location/'
                     in line2
@@ -98,14 +92,12 @@ def fetch_data():
                     phone = ""
                     lat = ""
                     lng = ""
-                    g = str(g.decode("utf-8"))
                     name = (
                         g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
                     )
                 if 'fa fa-map-marker">' in line2 and add == "":
                     next(lines)
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     add = (
                         g.split('">')[1]
                         .strip()
@@ -115,7 +107,6 @@ def fetch_data():
                     )
                 if '<i class="fa fa-phone"></i></span>' in line2 and phone == "":
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     phone = g.split(">")[1].split("<")[0].strip()
                 if 'data-lat="' in line2:
                     lat = line2.split('data-lat="')[1].split('"')[0]
