@@ -28,7 +28,7 @@ def do_fuzzy_search(country):
     try:
         result = pycountry.countries.search_fuzzy(country)
     except Exception:
-        return np.nan
+        return MISSING
     else:
         return result[0].alpha_2
 
