@@ -1,6 +1,6 @@
---extra-index-url https://dl.cloudsmith.io/snjnnLURl1gQtgOE/crawl/sgzip/python/simple/
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 sgselenium==0.1.4
-sgscrape==0.0.23
+sgscrape==0.2.4
 sglogging==0.0.4
-sgrequests==0.1.12
+sgrequests==0.1.13
 usaddress==0.5.10
