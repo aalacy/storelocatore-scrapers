@@ -11,7 +11,6 @@ from fuzzywuzzy import process
 import httpx
 
 timeout = httpx.Timeout(5.0)
-
 logger = SgLogSetup().get_logger("t2tea")
 
 _headers = {
@@ -55,7 +54,7 @@ def fetch_records(http, search, country_map):
                 store_number=_["ID"],
                 street_address=street_address,
                 city=_["city"],
-                state=_.get("stateCode").replace(".", ""),
+                state=_.get("stateCode"),
                 zip_postal=_.get("postalCode"),
                 country_code=_["countryCode"],
                 phone=_.get("phone"),
@@ -86,7 +85,7 @@ if __name__ == "__main__":
             ).select_one("div.select-country__default-contries")["data-url"]
             com1 = link.split("demandware.store/")[1].split("/")[0]
             com2 = country["data-locale"]
-            country_map[cn] = [com1, com2]
+            country_map[d_cc] = [com1, com2]
         search = DynamicGeoSearch(
             country_codes=list(set(countries)),
         )
