@@ -3,23 +3,30 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
-from sgrequests import SgRequests
+from sgselenium.sgselenium import SgChrome
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 locator_domain = "https://www.7forallmankind.com/"
 base_url = "https://www.7forallmankind.com/storelocator/index/ajax/?_=1611046887442"
-_headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9",
-    "cache-control": "no-cache",
-    "cookie": "PHPSESSID=0c51044eabf0940da94e25a619ab3946; visid_incap_2654306=WM72uSRAQo+KogdKrHooIZ65f2EAAAAAQUIPAAAAAAAANbUYQ9OPO9YlM16hIhfZ; incap_ses_882_2654306=4VHjaQ7HyHPVnX7dvn49DJ65f2EAAAAAJ069zwM2TM/RLp1+bald+g==",
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
-    with SgRequests() as session:
-        store_list = session.get(base_url, headers=_headers).json()
+    with SgChrome(user_agent=user_agent) as driver:
+        driver.get(base_url)
+        rr = driver.wait_for_request("storelocator/index")
+        store_list = json.loads(rr.response.body)
         for _ in store_list:
             hours = []
             try:
@@ -55,7 +62,7 @@ def fetch_data():
                 page_url=_["store_url"],
                 location_name=_["storename"],
                 store_number=_["storelocator_id"],
-                street_address=", ".join(_["address"]),
+                street_address=" ".join(_["address"]).strip(),
                 city=_["city"],
                 state=_["region"],
                 zip_postal=_["zipcode"],
