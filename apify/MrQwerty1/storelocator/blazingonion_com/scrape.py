@@ -1,3 +1,4 @@
+import typing
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -43,7 +44,7 @@ def get_data(page_url, sgw: SgWriter):
         .strip()
     )
 
-    _tmp = []  # type: List[str]
+    _tmp = []  # type: typing.List[str]
     hours = tree.xpath("//div[@id='ctl01_pSpanDesc']//text()")
     hours = list(filter(None, [h.strip() for h in hours]))
 
