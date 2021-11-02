@@ -88,7 +88,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.PAGE_URL,
