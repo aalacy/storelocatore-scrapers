@@ -120,13 +120,22 @@ def fetch_data(sgw: SgWriter):
                     c_loc = str_up.find(c_up)
                     street_address = street_address[:c_loc].strip()
 
+                if zip_code:
+                    if zip_code in street_address:
+                        street_address = street_address.replace(zip_code, "")
+
                 if "Jardim Pirajussara" in street_address:
                     city = "Jardim Pirajussara"
                     street_address = street_address.replace(
                         "Jardim Pirajussara", ""
                     ).strip()
 
-                street_address = street_address.split("- Cambridge")[0].strip()
+                street_address = (
+                    street_address.replace("23 AL-", "")
+                    .replace("Alger", "")
+                    .split("- Cambridge")[0]
+                    .strip()
+                )
 
                 store_number = "<MISSING>"
                 phone = item.find(class_="off-phone").text.replace("Phone:", "").strip()
