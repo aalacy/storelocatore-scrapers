@@ -1,4 +1,4 @@
-# The lis of countries provided below:
+# The list of countries provided below:
 
 | contitent | country_name | country_code |
 | --------- | ------------ | ------------ |
