@@ -1,4 +1,3 @@
-import typing
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -44,7 +43,7 @@ def get_data(page_url, sgw: SgWriter):
         .strip()
     )
 
-    _tmp = []  # type: typing.List[str]
+    _tmp = []  # type: List[str]
     hours = tree.xpath("//div[@id='ctl01_pSpanDesc']//text()")
     hours = list(filter(None, [h.strip() for h in hours]))
 
@@ -64,11 +63,13 @@ def get_data(page_url, sgw: SgWriter):
         ):
             rec = True
 
-    hours_of_operation = ";".join(_tmp)
+    hours_of_operation = " ".join(_tmp).strip().replace("pm ", "pm;")
     if "We" in hours_of_operation:
         hours_of_operation = hours_of_operation.split("We")[0]
     if "There's" in hours_of_operation:
         hours_of_operation = hours_of_operation.split("There's")[0]
+    if hours_of_operation.endswith(";"):
+        hours_of_operation = hours_of_operation[:-1]
 
     row = SgRecord(
         page_url=page_url,
