@@ -37,6 +37,7 @@ def fetch_data():
                 continue
             total += len(locations)
             for store in locations:
+
                 store["page_url"] = (
                     "https://www.76.com/station/"
                     + store["Brand"]
@@ -97,7 +98,9 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["EntityID"],
         ),
-        location_type=sp.MissingField(),
+        location_type=sp.MappingField(
+            mapping=["Brand"],
+        ),
         raw_address=sp.MissingField(),
     )
 

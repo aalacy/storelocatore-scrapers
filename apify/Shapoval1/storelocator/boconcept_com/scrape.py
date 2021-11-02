@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.boconcept.com/"
     api_url = "https://www.boconcept.com/on/demandware.store/Sites-AF-Site/en_AF/Storelocator-GetStores?topLeftLat=89.9600751224322&topLeftLong=-180&bottomRightLat=-89.24430995711447&bottomRightLong=180&centerLat=64.11066418890735&centerLon=-314.25506842812297"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -73,7 +73,7 @@ def fetch_data(sgw: SgWriter):
         if phone == "＊5/1(金)まではメールにてお問合せください。" or phone == "bc1@boconcept.ru":
             phone = "<MISSING>"
         phone = phone.replace("None", "").strip() or "<MISSING>"
-        session = SgRequests()
+
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -100,14 +100,11 @@ def fetch_data(sgw: SgWriter):
             phone = phone.split("＊")[0].replace("電話番号", "").strip()
         phone = phone.replace("Tél", "").strip()
         country_code = (
-            "".join(
-                tree.xpath(
-                    '//div[@class="flyout__country-selector"]//a[@class="country-selector-toggle modalbox"]//text()'
-                )
-            )
+            "".join(tree.xpath('//a[@class="country-selector-toggle modalbox"]/text()'))
             .replace("\n", "")
             .strip()
         )
+
         if country_code.find("(") != -1:
             country_code = country_code.split("(")[0].strip()
 

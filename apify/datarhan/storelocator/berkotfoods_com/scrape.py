@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -42,8 +43,11 @@ def fetch_data():
         phone = loc_dom.xpath('//p[@class="PhoneNumber"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        geo = re.findall(r"initializeMap\((.+?)\);", loc_response.text)[0][1:-1].split(
+            ","
+        )
+        latitude = geo[0][:-1]
+        longitude = geo[1][1:]
         hours_of_operation = loc_dom.xpath('//table[@id="hours_info-BS"]//dd/text()')
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
