@@ -73,7 +73,7 @@ if __name__ == "__main__":
     }
     locator_domain = "https://www.capitalone.com/bank/atm/"
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=25
     )
     with SgWriter(
         SgRecordDeduper(
