@@ -43,7 +43,7 @@ def get_data(page_url, sgw: SgWriter):
         .strip()
     )
 
-    _tmp = []
+    _tmp = []  # type: List[str]
     hours = tree.xpath("//div[@id='ctl01_pSpanDesc']//text()")
     hours = list(filter(None, [h.strip() for h in hours]))
 
