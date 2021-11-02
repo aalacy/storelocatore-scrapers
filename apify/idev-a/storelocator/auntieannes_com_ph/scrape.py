@@ -24,7 +24,7 @@ def fetch_data():
         )["merchant"]["locations"]
         for _ in locations:
             addr = _["address"]
-            street_address = addr["street_no"] + addr["street"]
+            street_address = f'{addr["floor_unit_no"]} { addr["building"]} {addr["street_no"]} {addr["street"]} {addr["corner_street"]} {addr["neighborhood"]}'
             temp = {}
             hours = []
             for hh in _["schedules"]:
