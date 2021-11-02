@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgChrome
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -18,9 +18,8 @@ base_url = "https://www.kipling.com.br/institucional/nossas-lojas"
 
 
 def fetch_data():
-    with SgChrome() as driver:
-        driver.get(base_url)
-        soup = bs(driver.page_source, "lxml")
+    with SgRequests() as http:
+        soup = bs(http.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.endereco")
         for _ in locations:
             block = _.p.text.split(",")
