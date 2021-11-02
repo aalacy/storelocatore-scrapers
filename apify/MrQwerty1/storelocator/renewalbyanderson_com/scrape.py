@@ -35,8 +35,10 @@ def get_data(page_url, sgw: SgWriter):
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
-        postal = line.split()[1]
+        postal = line.replace(state, "").strip()
         country_code = "US"
+        if len(postal) > 5:
+            country_code = "CA"
         phone = "".join(d.xpath(".//a/text()")).strip()
 
         _tmp = []

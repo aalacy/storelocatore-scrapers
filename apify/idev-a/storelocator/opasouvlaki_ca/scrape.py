@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
-import us
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -65,27 +64,23 @@ def fetch_data():
             zip_postal = addr.postcode
             if not state:
                 state = addr.state
-            country_code = "CA"
-            if state:
-                if us.states.lookup(state):
-                    country_code = "US"
-                elif (
-                    state.lower() in ca_provinces_codes or state.lower() in ca_provinces
-                ):
-                    country_code = "CA"
             if zip_postal and zip_postal.isdigit():
-                country_code = "US"
+                zip_postal = ""
+            city = _["city"]
+            street_address = _["address"]
+            if city and city in street_address:
+                street_address = street_address.split(city)[0].strip()[:-1]
             yield SgRecord(
                 page_url="https://opasouvlaki.ca/locations/?updateLocation=1",
                 store_number=_["id"],
                 location_name=_["location"],
-                street_address=_["address"],
-                city=_["city"],
+                street_address=street_address,
+                city=city,
                 state=state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 latitude=_["latitude"],
                 longitude=_["longitude"],
-                country_code=country_code,
+                country_code="CA",
                 phone=_["phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),

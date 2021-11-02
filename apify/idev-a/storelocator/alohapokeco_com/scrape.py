@@ -22,6 +22,7 @@ def _p(val):
         .replace(".", " ")
         .replace("to", "")
         .replace(" ", "")
+        .replace("\u202d", "")
         .strip()
         .isdigit()
     ):

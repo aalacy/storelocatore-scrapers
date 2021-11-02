@@ -3,9 +3,11 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import re
 import json
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("razzoos")
 
@@ -65,6 +67,12 @@ def fetch_data():
                 phone = link.find("a", href=re.compile(r"tel:")).text.strip()
             if not phone and sp1.find("a", href=re.compile(r"tel:")):
                 phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
+            if not phone and sp1.find("strong", string=re.compile(r"Phone:")):
+                phone = list(
+                    sp1.find("strong", string=re.compile(r"Phone:"))
+                    .find_parent()
+                    .stripped_strings
+                )[-1]
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.select_one("div.summary-title").text.strip(),
@@ -81,7 +89,15 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

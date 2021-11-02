@@ -1,111 +1,92 @@
-from bs4 import BeautifulSoup
-import csv
-import time
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape import sgpostal as parser
-
-logger = SgLogSetup().get_logger("bellcold_com")
-
-session = SgRequests()
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
-}
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.bellcold.com"
+    api_url = "https://www.bellcold.com/contact/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="et_pb_blurb_container"]')
+    for d in div:
+
+        page_url = "https://www.bellcold.com/contact/"
+        location_name = "".join(d.xpath(".//h4//text()"))
+        ad = (
+            " ".join(d.xpath('.//div[@class="et_pb_blurb_description"]/p[1]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = " ".join(ad.split())
+        street_address = " ".join(ad.split(",")[0].split()[:-1])
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].split()[-1].strip()
+        map_link = "".join(d.xpath(".//preceding::iframe[1]/@src"))
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if "Bellingham Waterfront Warehouse" in location_name:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        phone = (
+            "".join(d.xpath('.//p[contains(text(), "Tel:")]/a[1]/text()'))
+            or "<MISSING>"
+        )
+        r = session.get("https://www.bellcold.com/locations/", headers=headers)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            "".join(
+                tree.xpath('//strong[contains(text(), "Hours of Operation")]/text()')
+            )
+            .replace("Hours of Operation", "")
+            .strip()
+        )
+        slug = tree.xpath(
+            '//strong[contains(text(), "Hours of Operation")]/following-sibling::text()'
+        )
+        for s in slug:
+            s_slug = str(s).split(":")[0].strip()
+            if (
+                s_slug.lower() in location_name.lower()
+                or s_slug.lower() in street_address.lower()
+            ):
+                hours_of_operation = (
+                    hours_of_operation + " " + str(s).split(":")[1].strip()
+                )
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+        sgw.write_row(row)
 
 
-def fetch_data():
-    data = []
-    search_url = "https://www.bellcold.com/contact/"
-    stores_req = session.get(search_url, headers=headers)
-    soup = BeautifulSoup(stores_req.text, "html.parser")
-    locations = soup.findAll("div", {"class": "et_pb_blurb_content"})
-    for loc in locations:
-        title = loc.find("h4").text.strip()
-        address = loc.find("div", {"class": "et_pb_blurb_description"}).text.strip()
-        address, phone = address.split("\n")
-        address = address.strip()
-        phone = phone.split("Fax")[0]
-        phone = phone.replace("Tel: ", "")
-        parsed = parser.parse_address_usa(address)
-        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-        street = (
-            (street1 + ", " + parsed.street_address_2)
-            if parsed.street_address_2
-            else street1
-        )
-        city = parsed.city if parsed.city else "<MISSING>"
-        state = parsed.state if parsed.state else "<MISSING>"
-        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-
-        data.append(
-            [
-                "https://www.bellcold.com/",
-                search_url,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-            ]
-        )
-    return data
-
-
-def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
