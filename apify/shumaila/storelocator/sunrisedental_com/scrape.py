@@ -46,12 +46,14 @@ def fetch_data():
 
             hours = "Monday" + hours.split("Your", 1)[0].replace("pm", "pm ")
         except:
-            phone = (
-                soup.find("div", {"class": "elementor-text-editor"})
-                .find("h2")
-                .text.split("\n", 1)[0]
-            )
-
+            try:
+                phone = (
+                    soup.find("div", {"class": "elementor-text-editor"})
+                    .find("h2")
+                    .text.split("\n", 1)[0]
+                )
+            except:
+                phone = "360-639-3355"
             if len(phone) < 3:
                 phone = soup.findAll("h2", {"class": "elementor-heading-title"})[
                     2
