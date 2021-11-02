@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -12,11 +11,11 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
 
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
     url = "https://resources.sears.com.mx/medios-plazavip/swift/v1/Sears/assets/js/scriptSucursalesSears7_6.js"
     r = session.get(url, headers=headers)
     divlist = r.text.split("<option")[1:]
