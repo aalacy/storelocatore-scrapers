@@ -62,7 +62,7 @@ def fetch_data():
                     citylink = "https://stores.sunglasshut.com/" + citynow["href"]
                     citylink = citylink.replace("../", "")
 
-                    r = session.get(citylink, headers=headers, verify=False)
+                    r = session.get(citylink, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
                 else:
                     branchlist = []
