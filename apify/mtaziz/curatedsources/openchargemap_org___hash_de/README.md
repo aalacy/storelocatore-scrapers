@@ -11,7 +11,7 @@ In order to get the API Key, we have to signup at https://openchargemap.org/site
 
 - https://community.openchargemap.org/t/notice-some-http-user-agents-are-now-banned-api-web/79
 
-`User-Agent` must be the app name in this case, app name is `Openchargemap Data`, therefore headers would like below. 
+It is noted that `User-Agent` in `headers` must be the app name.  In this case, the app name is `Openchargemap Data`, and `headers` would be like below. 
 
 
 ```
