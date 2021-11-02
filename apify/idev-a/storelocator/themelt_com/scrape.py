@@ -5,7 +5,6 @@ import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
-from bs4 import BeautifulSoup as bs
 
 try:
     _create_unverified_https_context = (
@@ -40,55 +39,36 @@ def fetch_data():
     json_url = "/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw"
     with SgChrome() as driver:
         driver.get(base_url)
-        rr = driver.wait_for_request(json_url)
-        locations = json.loads(rr.response.body)
-        for _ in locations["result"]["items"]:
-            hours = []
-            if _["days_01"]:
-                hours.append(f"{_['days_01']}: {_['hours_01']}")
-            if _.get("days_02", "").strip():
-                hours.append(f"{_['days_02']}: {_['hours_02']}")
-            if _.get("days_03", "").strip():
-                hours.append(f"{_['days_03']}: {_['hours_03']}")
-            street_address = _["address"]
-            cross_street = _["cross_streets"].split("\n")[-1]
-            if "St." not in street_address and "St." in cross_street:
-                street_address = cross_street
-            if cross_street.split(" ")[0].strip().isdigit():
-                street_address = cross_street
-            yield SgRecord(
-                page_url=base_url,
-                location_name=_["address"],
-                street_address=street_address,
-                city=_["city"],
-                state=_["state"],
-                country_code="US",
-                phone=_p(_["phone_number"]),
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+        driver.wait_for_request(json_url, 20)
+        for rr in driver.iter_requests():
+            if json_url in rr.url:
+                locations = json.loads(rr.response.body)
 
-        south_california = bs(driver.page_source, "lxml").select(
-            'div._1Bme7 div[role="gridcell"] > div > div[data-testid="inline-content"] > div[data-testid="mesh-container-content"]'
-        )[-3:]
-        for _ in south_california:
-            p = _.select("p")
-            hours = []
-            temp = list(_.findChildren("div", recursive=False)[4].stripped_strings)[1:]
-            for x in range(0, len(temp), 2):
-                hours.append(f"{temp[x]} {temp[x+1]}")
-            phone = _.findChildren("div", recursive=False)[5].p.text.strip()
-            yield SgRecord(
-                page_url=base_url,
-                location_name=_.h5.text.strip(),
-                street_address=street_address,
-                city=p[0].text.strip(),
-                state="ca",
-                country_code="US",
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+                for _ in locations["result"]["items"]:
+                    hours = []
+                    if _["days_01"]:
+                        hours.append(f"{_['days_01']}: {_['hours_01']}")
+                    if _.get("days_02", "").strip():
+                        hours.append(f"{_['days_02']}: {_['hours_02']}")
+                    if _.get("days_03", "").strip():
+                        hours.append(f"{_['days_03']}: {_['hours_03']}")
+                    street_address = _["address"]
+                    cross_street = _["cross_streets"].split("\n")[-1]
+                    if "St." not in street_address and "St." in cross_street:
+                        street_address = cross_street
+                    if cross_street.split(" ")[0].strip().isdigit():
+                        street_address = cross_street
+                    yield SgRecord(
+                        page_url=base_url,
+                        location_name=_["address"],
+                        street_address=street_address,
+                        city=_["city"],
+                        state=_["state"],
+                        country_code="US",
+                        phone=_p(_["phone_number"]),
+                        locator_domain=locator_domain,
+                        hours_of_operation="; ".join(hours),
+                    )
 
 
 if __name__ == "__main__":

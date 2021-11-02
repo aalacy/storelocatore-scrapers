@@ -92,16 +92,21 @@ def get_data():
             longitude = "<MISSING>"
 
             hour = (
-                grid.find("div", attrs={"class": "hours"})
-                .text.split(" Happy")[0]
-                .split(" Kitchen")[0]
+                (
+                    grid.find("div", attrs={"class": "hours"})
+                    .text.split(" Happy")[0]
+                    .split(" Kitchen")[0]
+                )
+                .replace("Â ", " ")
+                .replace("Open early for Playoff Baseball!", "")
             )
 
-            location_url_format = (
-                name.replace(" ", "-").replace("&", "-and-").replace(".", "").lower()
-            )
-            page_url = "https://www.rockandbrews.com/" + location_url_format
+            hour = "".join(c for c in hour if ord(c) < 128)
 
+            page_url = (
+                "https://www.rockandbrews.com"
+                + grid.find("a", attrs={"class": "details-button"})["href"]
+            )
             driver.get(page_url)
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located(
@@ -180,3 +185,5 @@ def scrape():
 
 
 scrape()
+
+# https://www.rockandbrews.com/yaamava'-resort--and--casino
