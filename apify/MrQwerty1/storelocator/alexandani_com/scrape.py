@@ -66,7 +66,6 @@ def fetch_data():
     stores = fetch_stores()
     log.info(f"Total stores = {len(stores)}")
     for store in stores:
-        location_type = MISSING
 
         store_number = str(get_JSON_object_variable(store, "id"))
         location_name = get_JSON_object_variable(store, "name")
@@ -85,6 +84,7 @@ def fetch_data():
         phone = get_JSON_object_variable(store, "phone")
         latitude = get_JSON_object_variable(store, "latitude")
         longitude = get_JSON_object_variable(store, "longitude")
+        location_type = get_JSON_object_variable(store, "filters.0.name")
         hours_of_operation = get_hoo(get_JSON_object_variable(store, "custom_fields"))
 
         raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
