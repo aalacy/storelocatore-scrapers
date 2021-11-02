@@ -58,6 +58,8 @@ def fetch_data(sgw: SgWriter, http: SgRequests):
             state = j.get("region") or MISSING
             postal = j.get("post_code") or MISSING
             country_code = j.get("country") or MISSING
+            if "MX" in str(country_code):
+                continue
             store_number = j.get("fid") or MISSING
             phone = j.get("local_phone") or MISSING
             latitude = js_markers[idx].get("lat") or MISSING
