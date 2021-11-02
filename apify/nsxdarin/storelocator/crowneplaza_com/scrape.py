@@ -140,13 +140,13 @@ def fetch_data():
             state = "<MISSING>"
         if rawadd.count("|") == 2:
             add = rawadd.split("|")[0].split(",")[0].strip()
-            city = rawadd.split("|")[0].split(",")[1].strip()
+            city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
             state = "<MISSING>"
             zc = rawadd.split("|")[1].strip()
             country = rawadd.split("|")[2].strip()
         if rawadd.count("|") == 3:
             add = rawadd.split("|")[0].split(",")[0].strip()
-            city = rawadd.split("|")[0].split(",")[1].strip()
+            city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
             state = rawadd.split("|")[1].strip()
             zc = rawadd.split("|")[2].strip()
             country = rawadd.split("|")[3].strip()

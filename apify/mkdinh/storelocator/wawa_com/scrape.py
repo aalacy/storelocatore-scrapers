@@ -1,4 +1,5 @@
 import re
+import json
 import threading
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup
@@ -43,54 +44,59 @@ def format_hours(start, end):
     return f"{start}-{end}" if end else start
 
 
-def fetch_location(store_number, driver):
-    page_url = f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={store_number}"
-    result = driver.execute_async_script(
-        f"""
-        fetch("{page_url}")
-            .then(res => res.json())
-            .then(arguments[0])
-    """
-    )
+def fetch_location(store_number, retry_count=0):
+    try:
+        page_url = f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={store_number}"
 
-    location_name = get(result, "storeName")
-    location_type = SgRecord.MISSING
+        with SgChrome().driver() as driver:
+            driver.get(page_url)
 
-    addresses = result.get("addresses", [])
-    if not len(addresses):
-        return None
+            soup = BeautifulSoup(driver.page_source)
+            result = json.loads(soup.pre.text)
 
-    address = find_address_by_context("friendly", addresses)
-    street_address = get(address, "address")
-    city = get(address, " city")
-    state = get(address, "state")
-    zip_postal = get(address, "zip")
-    country_code = "US"
+            location_name = get(result, "storeName")
+            location_type = SgRecord.MISSING
 
-    geo = find_address_by_context("physical")
-    latitude, longitude = get(geo, "loc", [SgRecord.MISSING, SgRecord.MISSING])
+            addresses = result.get("addresses", [])
+            if not len(addresses):
+                return None
 
-    hours_of_operation = format_hours(
-        get(result, "storeOpen"), get(result, "storeClose")
-    )
-    phone = get(result, "telephone")
+            address = find_address_by_context("friendly", addresses)
+            street_address = get(address, "address")
+            city = get(address, "city")
+            state = get(address, "state")
+            zip_postal = get(address, "zip")
+            country_code = "US"
 
-    return SgRecord(
-        locator_domain="wawa.com",
-        page_url=page_url,
-        store_number=store_number,
-        location_name=location_name,
-        location_type=location_type,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=country_code,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hours_of_operation,
-        phone=phone,
-    )
+            geo = find_address_by_context("physical", addresses)
+            latitude, longitude = get(geo, "loc", [SgRecord.MISSING, SgRecord.MISSING])
+
+            hours_of_operation = format_hours(
+                get(result, "storeOpen"), get(result, "storeClose")
+            )
+            phone = get(result, "telephone")
+
+            return SgRecord(
+                locator_domain="wawa.com",
+                page_url=page_url,
+                store_number=store_number,
+                location_name=location_name,
+                location_type=location_type,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                latitude=str(latitude),
+                longitude=str(longitude),
+                hours_of_operation=hours_of_operation,
+                phone=phone,
+            )
+    except:
+        if retry_count < 5:
+            return fetch_location(store_number, retry_count + 1)
+        else:
+            raise Exception(f"fail to fetch: {page_url}")
 
 
 def write_data(data):
@@ -108,16 +114,10 @@ def write_data(data):
 def fetch_data():
     store_numbers = fetch_store_numbers()
 
-    locations = []
-    with SgChrome().driver() as driver:
-        driver.set_script_timeout(300)
-
-        for num in store_numbers:
-            location = fetch_location(num, driver)
-            if location:
-                locations.append(location)
-
-    return locations
+    for num in store_numbers:
+        location = fetch_location(num)
+        if location:
+            yield location
 
 
 if __name__ == "__main__":
