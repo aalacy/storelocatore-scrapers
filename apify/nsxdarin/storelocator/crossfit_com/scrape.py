@@ -60,7 +60,7 @@ def fetch_data():
         if country == "United States" or country == "Canada":
             yield SgRecord(
                 locator_domain=website,
-                page_url=lurl,
+                page_url=purl,
                 location_name=name,
                 street_address=add,
                 city=city,
