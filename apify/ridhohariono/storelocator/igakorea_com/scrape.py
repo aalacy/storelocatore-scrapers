@@ -55,9 +55,9 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    i = 1
+    num = 1
     while True:
-        page_url = LOCATION_URL.format(page=i)
+        page_url = LOCATION_URL.format(page=num)
         soup = pull_content(page_url)
         phone = (
             soup.find("div", {"class": "footer-area"})
@@ -96,7 +96,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-        i += 1
+        num += 1
 
 
 def scrape():
