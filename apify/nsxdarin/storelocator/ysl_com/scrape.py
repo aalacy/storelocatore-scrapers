@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -11,43 +14,15 @@ headers = {
 logger = SgLogSetup().get_logger("ysl_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     ccodes = []
     url_home = "https://www.ysl.com/en-us/storelocator"
     r = session.get(url_home, headers=headers)
     Found = False
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "Select a Region / Country" in line:
+        if "SELECT A REGION" in line:
             Found = True
-        if Found and '<option value="' in line and "Select a Region" not in line:
+        if Found and '<option value="' in line and "SELECT A REGION" not in line:
             ccodes.append(line.split('<option value="')[1].split('"')[0])
         if Found and '<div class="c-form__error"></div>' in line:
             Found = False
@@ -68,7 +43,10 @@ def fetch_data():
             city = item["city"]
             zc = item["postalCode"]
             state = item["stateCode"]
-            phone = item["phone"]
+            try:
+                phone = item["phone"]
+            except:
+                phone = "<MISSING>"
             lat = item["latitude"]
             lng = item["longitude"]
             loc = item["detailsUrl"]
@@ -79,27 +57,29 @@ def fetch_data():
             hours = hours + "; Thu: " + item["thuHours"]
             hours = hours + "; Fri: " + item["friHours"]
             hours = hours + "; Sat: " + item["satHours"]
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
