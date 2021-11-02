@@ -62,7 +62,7 @@ def fetch_single_store(http, store, countryCode):
     longitude = store["Lng"]
     page_url = f"https://about.puma.com{store['Url']}"
     location_type = "Outlet" if "Outlet" in location_name else "Store"
-    log.debug(f"Scrapping {page_url}...")
+    log.info(f"Scrapping {page_url}...")
     response = http.get(page_url)
     body = html.fromstring(response.text, "lxml")
 
@@ -115,7 +115,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         data = json.loads(decoded_data)
         if "StoreLocatorItems" in data:
             stores = data["StoreLocatorItems"]
-            log.debug(f"Total stores from {lat}, {lng} ={len(stores)}")
+            log.info(f"Total stores from {lat}, {lng} ={len(stores)}")
             for store in stores:
                 try:
                     yield fetch_single_store(http, store, countryCode.upper())
@@ -133,17 +133,21 @@ def scrape():
     country_codes = SearchableCountries.ALL
     search = DynamicGeoSearch(country_codes=country_codes, max_search_results=50)
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         with SgRequests() as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)
 
     state = CrawlStateSingleton.get_instance()
-    log.debug("Printing number of records by country-code:")
+    log.info("Printing number of records by country-code:")
     for country_code in SearchableCountries.ALL:
         try:
             count = state.get_misc_value(country_code, default_factory=lambda: 0)
-            log.debug(f"{country_code}: {count}")
+            log.info(f"{country_code}: {count}")
         except Exception as e:
             log.info(f"Country codes: {country_code}, message={e}")
             pass

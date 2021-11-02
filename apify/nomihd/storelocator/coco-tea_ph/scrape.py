@@ -78,8 +78,8 @@ def fetch_data():
                 location_name = " ".join(
                     store.xpath("h3[@class='wk-panel-title']/text()")
                 ).strip()
-                if "Opening Soon" in location_name:
-                    continue
+                # if "Opening Soon" in location_name:
+                #     continue
                 locator_domain = website
 
                 raw_info = store.xpath("p[1]/text()")
@@ -94,10 +94,14 @@ def fetch_data():
                     if (
                         "Monday" in raw_info_list[index]
                         or "Sunday" in raw_info_list[index]
+                        or "Temporarily Closed" in raw_info_list[index]
                     ):
                         hours_of_operation = "; ".join(raw_info_list[index:]).strip()
                         raw_address = ", ".join(raw_info_list[:index]).strip()
                         break
+
+                if raw_address == "":
+                    raw_address = ", ".join(raw_info_list).strip()
 
                 street_address = ", ".join(raw_address.split(",")[:-1]).strip()
                 city = raw_address.split(",")[-1].strip()
