@@ -34,11 +34,15 @@ def fetch_data():
             if len(coord) == 1:
                 coord = coord[0].split("-")
                 coord[1] = "-" + coord[1]
-            raw_address = " ".join(bs(_["address"], "lxml").stripped_strings).strip()
+            raw_address = (
+                " ".join(bs(_["address"], "lxml").stripped_strings)
+                .replace("&nbsp;", " ")
+                .strip()
+            )
             street_address = zip_postal = city = ""
             if raw_address:
                 addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
+                street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 if raw_address.split(_["county"])[-1].strip():
@@ -46,15 +50,23 @@ def fetch_data():
                 city = addr.city
             if not city:
                 city = _["town"]
+            if street_address:
+                street_address = (
+                    street_address.replace("Spar Express", "")
+                    .replace("Spar", "")
+                    .strip()
+                )
+            if zip_postal and zip_postal.isdigit():
+                zip_postal = ""
+            if city and city == zip_postal:
+                city = ""
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["name"].replace("&#8217;", "'"),
-                street_address=street_address.replace("Spar Express", "")
-                .replace("Spar", "")
-                .strip(),
+                street_address=street_address,
                 city=city,
                 state=_["county"],
-                zip_postal=zip_postal,
+                zip_postal=zip_postal.replace(",", "").strip(),
                 latitude=coord[0].replace(",", ".").strip(),
                 longitude=coord[1].replace(",", ".").strip(),
                 country_code="Ireland",

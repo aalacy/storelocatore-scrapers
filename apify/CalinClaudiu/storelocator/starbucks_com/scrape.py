@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_4
+from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 
@@ -153,8 +153,7 @@ class ExampleSearchIteration(SearchIteration):
     a method to register found locations.
     """
 
-    def __init__(self, http: SgRequests):
-        self.__http = http
+    def __init__(self):
         self.__state = CrawlStateSingleton.get_instance()
 
     def do(
@@ -165,19 +164,19 @@ class ExampleSearchIteration(SearchIteration):
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
+        """
+        This method gets called on each iteration of the search.
+        It provides you with all the data you could get from the search instance, as well as
+        a method to register found locations.
+
+        :param coord: The current coordinate (lat, long)
+        :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
+        :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
+        :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
+        :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
+        """
+
         with SgRequests() as http:
-            """
-            This method gets called on each iteration of the search.
-            It provides you with all the data you could get from the search instance, as well as
-            a method to register found locations.
-
-            :param coord: The current coordinate (lat, long)
-            :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
-            :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
-            :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
-            :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
-            """
-
             lat, lng = coord
             url = str(
                 f"https://www.starbucks.com/bff/locations?lat={round(lat,6)}&lng={round(lng,6)}&mop=true"
@@ -188,7 +187,9 @@ class ExampleSearchIteration(SearchIteration):
                 "user-agent"
             ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             try:
-                locations = http.get(url, headers=headers).json()
+                locations = SgRequests.raise_on_err(
+                    http.get(url, headers=headers)
+                ).json()
                 if locations["paging"]["total"] > 0:
                     for record in locations["stores"]:
                         try:
@@ -223,9 +224,9 @@ class ExampleSearchIteration(SearchIteration):
                                 raw_address=str(e),
                             )
             except Exception as e:
-                logzilla.error(f"{e}")
+                # logzilla.error(f"{e}")
+                logzilla.info(f"Error on url: {url}")
                 locations = {"paging": {"total": 0}}
-                pass
                 yield SgRecord(
                     page_url=url,
                     location_name="<ERROR>",
@@ -247,26 +248,22 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        granularity=Grain_4(),
-        max_search_results=50,
-        expected_search_radius_miles=50,
+        search_type="DynamicGeoSearch", granularity=Grain_8()
     )
 
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
-    ) as writer:
-        search_iter = ExampleSearchIteration(http=None)
-        par_search = ParallelDynamicSearch(
-            search_maker=search_maker,
-            search_iteration=search_iter,
-            country_codes=[
-                SearchableCountries.AUSTRALIA,
-                SearchableCountries.USA,
-                SearchableCountries.CANADA,
-                SearchableCountries.BRITAIN,
-            ],
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumAndPageUrlId,
+            duplicate_streak_failure_factor=-1,
         )
+    ) as writer:
+        with SgRequests() as http1:
+            search_iter = ExampleSearchIteration()
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=SearchableCountries.ALL,
+            )
 
-        for rec in par_search.run():
-            writer.write_row(rec)
+            for rec in par_search.run():
+                writer.write_row(rec)

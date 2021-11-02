@@ -30,8 +30,10 @@ def fetch_data():
         loclist = soup.findAll("item")
         for loc in loclist:
             location_name = loc.find("location").text
-            log.info(location_name)
-            raw_address = loc.find("address").text.replace(",", " ")
+            raw_address = loc.find("address").text
+            if "6140 Cote St Luc  Montreal" in raw_address:
+                raw_address = "6142 Cote Saint Luc Rd  Montreal,  QC H3X 2G9"
+            log.info(raw_address)
             store_number = loc.find("sortord").text
             latitude = loc.find("latitude").text
             longitude = loc.find("longitude").text
