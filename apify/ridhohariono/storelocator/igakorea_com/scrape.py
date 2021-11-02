@@ -4,8 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import re
 
 DOMAIN = "igakorea.com"
@@ -32,7 +32,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -56,9 +55,9 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    i = 1
+    num = 1
     while True:
-        page_url = LOCATION_URL.format(page=i)
+        page_url = LOCATION_URL.format(page=num)
         soup = pull_content(page_url)
         phone = (
             soup.find("div", {"class": "footer-area"})
@@ -97,21 +96,13 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-        i += 1
+        num += 1
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
