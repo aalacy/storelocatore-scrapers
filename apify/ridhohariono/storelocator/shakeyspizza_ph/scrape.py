@@ -6,10 +6,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import re
 
-DOMAIN = "igakorea.com"
-LOCATION_URL = "http://igakorea.com/sub_05d.aspx?page={page}&sido=&gugun=&store=&act=info.page&pcode=sub5_4"
+DOMAIN = "shakeyspizza.ph"
+LOCATION_URL = "https://www.shakeyspizza.ph/store-locator?view=all&page={page}"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -55,27 +54,39 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    num = 1
+    i = 0
     while True:
-        page_url = LOCATION_URL.format(page=num)
-        soup = pull_content(page_url)
-        phone = (
-            soup.find("div", {"class": "footer-area"})
-            .find("p", {"class": "footer-info"})
-            .find("a", {"href": re.compile(r"tel:.*")})["href"]
-            .replace("tel:", "")
+        store_url = LOCATION_URL.format(page=i)
+        soup = pull_content(store_url)
+        store_numbers = soup.find_all(
+            "input",
+            {"class": "edit-storeinformation button js-form-submit form-submit"},
         )
-        contents = soup.find("table", {"id": "htblList"}).find_all("tr")
-        if not contents[1].find("a", {"class": "news"}):
+        if not store_numbers:
             break
-        for row in contents[1:]:
-            location_name = row.find("a", {"class": "news"}).text.strip()
-            raw_address = row.select_one("td:nth-child(3)").text.strip()
+        for number in store_numbers:
+            store_number = number["name"].replace("store_", "")
+            page_url = f"https://www.shakeyspizza.ph/store-locator?view=details&store={store_number}&destination=/store-locator%3Fview%3Dall%26page%3D0"
+            store = pull_content(page_url)
+            location_name = store.find("div", id="edit-name").text.strip()
+            raw_address = store.find("textarea", id="edit-address").text.strip()
             street_address, city, state, zip_postal = getAddress(raw_address)
-            country_code = "KR"
-            store_number = re.sub(r"\D+", "", row.find("td").text).strip()
-            hours_of_operation = MISSING
+            phone = store.find("a", {"class": "store-finder-tel"}).text.strip()
+            country_code = "PH"
             location_type = MISSING
+            hours_24 = store.find(
+                "div",
+                {"class": "store-details-twentyfourhours js-form-wrapper form-wrapper"},
+            )
+            if not hours_24:
+                hours_of_operation = (
+                    store.find("div", id="weekdays-container")
+                    .get_text(strip=True, separator=",")
+                    .replace("day,", "day: ")
+                    .strip()
+                )
+            else:
+                hours_of_operation = hours_24.text.strip()
             latitude = MISSING
             longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
@@ -96,7 +107,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-        num += 1
+        i += 1
 
 
 def scrape():
