@@ -63,13 +63,28 @@ def fetch_data():
         phone = store_sel.xpath('//a[contains(@href,"tel:")]')
         if len(phone) > 0:
             phone = "".join(phone[0].xpath("text()")).strip()
+        else:
+            phone = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
 
         store_number = "<MISSING>"
 
+        map_link = "".join(
+            store_sel.xpath('//a[contains(text(),"Get directions")]/@href')
+        ).strip()
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        if len(map_link) > 0:
+            try:
+                latitude = map_link.split("/place/")[1].strip().split(",")[0].strip()
+            except:
+                pass
+
+            try:
+                longitude = map_link.split("/place/")[1].strip().split(",")[-1].strip()
+            except:
+                pass
 
         yield SgRecord(
             locator_domain=locator_domain,
