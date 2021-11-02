@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
+from sgselenium.sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -18,9 +18,10 @@ base_url = "https://www.kipling.com.br/institucional/nossas-lojas"
 
 
 def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("section.institucional-loja div.loja-revendedores")
+    with SgChrome() as driver:
+        driver.get(base_url)
+        soup = bs(driver.page_source, "lxml")
+        locations = soup.select("div.endereco")
         for _ in locations:
             block = _.p.text.split(",")
             phone = ""
@@ -31,14 +32,20 @@ def fetch_data():
                 del block[-1]
             raw_address = ", ".join(block)
             addr = parse_address_intl(raw_address + ", Brazil")
+            location_name = "Kipling"
+            name = _.h2.text.lower().strip()
+            if "kipling" not in name:
+                location_name = "Kipling Outlet"
             yield SgRecord(
                 page_url=base_url,
-                location_name=_.h2.text.strip(),
+                location_name=location_name,
                 street_address=block[0],
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Brazil",
+                latitude=_.select_one("div.latitude").text.strip(),
+                longitude=_.select_one("div.longitude").text.strip(),
                 phone=phone,
                 locator_domain=locator_domain,
                 raw_address=raw_address,
