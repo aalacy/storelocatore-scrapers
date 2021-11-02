@@ -128,7 +128,7 @@ def get_response(url):
 
 def get_api_urls():
     api_urls = []
-    for idx, country_a2 in enumerate(country_list[0:10]):
+    for idx, country_a2 in enumerate(country_list[0:]):
         API_ENDPOINT_URL = f"{BASE_API}&key={str(API_KEY)}&output=json&countrycode={str(country_a2['country_code'])}&maxresults={str(MAX_RESULTS)}&compact=false"
         api_urls.append((country_a2["country_code"], API_ENDPOINT_URL))
     return api_urls
