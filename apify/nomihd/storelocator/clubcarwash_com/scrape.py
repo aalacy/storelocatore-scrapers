@@ -58,7 +58,7 @@ def fetch_data():
 
             location_type = "<MISSING>"
             hours = store["description"]
-            if "coming" in hours.lower():
+            if "coming" in hours.lower() or "opening" in hours.lower():
                 continue
             hours_sel = lxml.html.fromstring(hours)
             hours_info = hours_sel.xpath("//text()")[1:]
