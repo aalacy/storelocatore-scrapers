@@ -63,20 +63,11 @@ def fetch_data():
             )
         )
 
-        full_address = " ".join(store_info[1:-1])
-
-        street_address = full_address.split("Address:")[1].strip()
-        city = (
-            full_address.split("Address")[0]
-            .split("State:")[0]
-            .split("Zip:")[0]
-            .split("City:")[1]
-            .strip()
-        )
-        state = full_address.split("Address")[0].split("State:")[1].strip()
-        zip = (
-            full_address.split("Address")[0].split("State:")[0].split("Zip:")[1].strip()
-        )
+        full_address = store_info[1:-1]
+        street_address = full_address[1].split(":")[-1].strip()
+        city = full_address[2].split(":")[-1].strip()
+        state = full_address[3].split(":")[-1].strip()
+        zip = full_address[4].split(":")[-1].strip()
         country_code = "US"
 
         location_name = store_info[0].strip()
@@ -92,6 +83,8 @@ def fetch_data():
         )
         if len(phone) > 0:
             phone = phone[0].strip()
+        else:
+            phone = "<MISSING>"
 
         store_number = "".join(store.xpath("./@data-amid"))
 
