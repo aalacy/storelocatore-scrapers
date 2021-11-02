@@ -26,6 +26,8 @@ def fetch_data():
             for e in poi["hours"]:
                 hoo.append(f'{e["weekDay"]}: {e["openTime"]} - {e["closeTime"]}')
             hoo = " ".join(hoo)
+            if "SUN:" not in hoo:
+                hoo += " " + "SUN: closed"
 
             item = SgRecord(
                 locator_domain=domain,

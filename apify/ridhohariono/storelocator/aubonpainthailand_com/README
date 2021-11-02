@@ -1,0 +1,21 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+--ignore StreetAddressHasNumber (Confirmed Scrape Correctly)
+Found 6 concerning rows. Examples:
+                                       street_address              REASON  rowNumber
+31    Piyavate Hospital Rama9 Road Bangkapi Huaikwang  ADDR_HAS_NO_NUMBER         31
+35  8/9 Kanchanaphisek Rd. Sala Thammasop Thawi Wa...  ADDR_HAS_NO_NUMBER         35
+45                                                 99  ADDR_HAS_NO_NUMBER         45
+48                                                  1  ADDR_HAS_NO_NUMBER         48
+49  111Phetkasemrd Pak Khlongphasicharoen Phasicha...  ADDR_HAS_NO_NUMBER         49
+
+
+--ignore GeoConsistencyValidator (Not US zip/state)
+Found 1 concerning rows. Examples:
+      zip    state                REASON  rowNumber
+47  10700  Bangkok  ZIPCODE_NOT_IN_STATE         47
+
+
+--ignore CountryValidator (Not US zip)
+Found 1 concerning rows. Examples:
+      state       phone    zip            REASON  rowNumber
+47  Bangkok  0659407084  10700  INVALID_US_STATE         47
