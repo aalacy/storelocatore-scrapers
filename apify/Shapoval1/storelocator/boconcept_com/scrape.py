@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()["stores"]
+    js = r.json()["stores"][:10]
     for j in js:
         id = j.get("ID")
         page_url = f"https://www.boconcept.com/on/demandware.store/Sites-US-Site/en_US/Storelocator-Detail?storeid={id}"
@@ -30,7 +30,6 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             or "<MISSING>"
         )
-
         state = str(j.get("stateCode")).replace("None", "").strip() or "<MISSING>"
         if state == "graz@boconcept.at":
             state = "<MISSING>"
@@ -107,6 +106,12 @@ def fetch_data(sgw: SgWriter):
 
         if country_code.find("(") != -1:
             country_code = country_code.split("(")[0].strip()
+        raw_adr = f"{j.get('address1')} {j.get('address2')} {j.get('city')}, {j.get('stateCode')} {j.get('zipCode')}".replace(
+            "None", ""
+        ).strip()
+        raw_adr = " ".join(raw_adr.split())
+        if raw_adr.endswith(",") != -1:
+            raw_adr = raw_adr.replace(f"{raw_adr[-1]}", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -123,6 +128,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_adr,
         )
 
         sgw.write_row(row)
