@@ -1,4 +1,5 @@
 import re
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -28,6 +29,32 @@ def fetch_data():
         hours = loc["hours"]
         hours = re.sub(cleanr, " ", hours).replace("\n", " ").strip()
         link = loc["url"]
+        if len(phone) < 3:
+            r = session.get(link, headers=headers)
+            r.encoding = "utf-8-sig"
+            soup = BeautifulSoup(r.text, "html.parser").text
+            phone = (
+                soup.split("Call:", 1)[1]
+                .split("\n", 1)[1]
+                .split("\n", 1)[0]
+                .replace("\n", "")
+                .strip()
+            )
+            hours = (
+                soup.split("Hours of Operation", 1)[1]
+                .split("Spa", 1)[0]
+                .replace("\n", " ")
+                .replace(": Mon", "Mon")
+                .strip()
+            )
+            hours = (
+                str(hours.encode(encoding="ascii", errors="replace"))
+                .replace("?", "-")
+                .replace("b'", "")
+                .strip()
+                .replace("'", "")
+                .replace("-- ", "-")
+            )
         yield SgRecord(
             locator_domain="https://www.zenmassageusa.com/",
             page_url=link,
