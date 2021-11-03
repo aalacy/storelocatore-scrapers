@@ -76,6 +76,7 @@ class ExampleSearchIteration(SearchIteration):
         :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
         :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
         """
+        print(coord)
         with SgRequests() as http:
             # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
             lat, lng = coord
@@ -97,6 +98,9 @@ class ExampleSearchIteration(SearchIteration):
                 logzilla.error(f"{e}")
             MISSING = "<MISSING>"
             if locations:
+                print('\n\n')
+                print(url)
+                print(locations)
                 if locations["Status"] == 0:
                     for rec in locations["Stores"]:
                         location_name = str(
@@ -177,8 +181,8 @@ if __name__ == "__main__":
     tocrawl = []
     tocrawl.append(SearchableCountries.USA)
     tocrawl.append(SearchableCountries.CANADA)
-    tocrawl.append(SearchableCountries.AUSTRALIA)
-    tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
+    # tocrawl.append(SearchableCountries.AUSTRALIA)
+    # tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
