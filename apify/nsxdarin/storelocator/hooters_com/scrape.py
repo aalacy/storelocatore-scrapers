@@ -29,6 +29,7 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
     for loc in locs:
+        TC = False
         logger.info(loc)
         name = ""
         add = ""
@@ -43,6 +44,8 @@ def fetch_data():
         phone = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if "temporarily closed" in line2:
+                TC = True
             if '"c-location-meta__address-line-1">' in line2:
                 add = line2.split('"c-location-meta__address-line-1">')[1].split("<")[0]
             if '"c-location-meta__address-line-2">' in line2:
@@ -68,20 +71,25 @@ def fetch_data():
             if 'c-location-hours__day">' in line2:
                 day = line2.split('c-location-hours__day">')[1].split("<")[0]
             if '{"@type":"OpeningHoursSpecification",' in line2:
-                days = line2.split('{"@type":"OpeningHoursSpecification",')
-                for day in days:
-                    if '"dayOfWeek":["' in day:
-                        hrs = (
-                            day.split('"dayOfWeek":["')[1].split('"')[0]
-                            + ": "
-                            + day.split('"opens":"')[1].split(':00"')[0]
-                            + "-"
-                            + day.split('"closes":"')[1].split(':00"')[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+                try:
+                    days = line2.split('{"@type":"OpeningHoursSpecification",')
+                    for day in days:
+                        if '"dayOfWeek":["' in day:
+                            hrs = (
+                                day.split('"dayOfWeek":["')[1].split('"')[0]
+                                + ": "
+                                + day.split('"opens":"')[1].split(':00"')[0]
+                                + "-"
+                                + day.split('"closes":"')[1].split(':00"')[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                except:
+                    hours = "<MISSING>"
+        if TC:
+            hours = "Temporarily Closed"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
