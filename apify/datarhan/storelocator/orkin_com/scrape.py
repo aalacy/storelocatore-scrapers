@@ -48,11 +48,9 @@ def fetch_data():
                 if page_url in scraped_urls:
                     continue
                 scraped_urls.append(page_url)
-                print(page_url)
                 loc_response = session.get(page_url, headers=headers)
                 code = loc_response.status_code
                 while code != 200:
-                    print("RETRY -- ", page_url)
                     session = SgRequests()
                     loc_response = session.get(page_url, headers=headers)
                     code = loc_response.status_code
