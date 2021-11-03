@@ -129,7 +129,6 @@ def fetch_records(http, search):
             except Exception as err:
                 http._client().cookies.clear()
                 http._refresh_ip()
-                print(err)
                 count += 1
 
         if "centers" in locations:
