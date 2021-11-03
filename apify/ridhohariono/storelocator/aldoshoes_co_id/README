@@ -1,0 +1,24 @@
+--ignore CountryCodeFillRateChecker (Not us/ca)
+
+--ignore StreetAddressHasNumber (Address has number)
+Found 20 concerning rows. Examples:
+                                      street_address              REASON  rowNumber
+0  Unit Sb2-03A Jl. Mh Thamrin No.1 Rw.5 Menteng....  ADDR_HAS_NO_NUMBER          0
+1  Level No. 030 & 031 Jalan Metro Pondok Indah K...  ADDR_HAS_NO_NUMBER          1
+2  227 Jl. Mandiri Utara Rt.13/Rw.18 Kelapa. Gadi...  ADDR_HAS_NO_NUMBER          2
+3                 No.19 Rt.1/Rw.3 Gelora Dki Jakarta  ADDR_HAS_NO_NUMBER          3
+4          No.8 Rt.1/Rw.3 Gelora Dki Jakarta Level 2  ADDR_HAS_NO_NUMBER          4
+
+
+--ignore GeoConsistencyValidator (Not US Zip code)
+Found 2 concerning rows. Examples:
+      zip   state                REASON  rowNumber
+8   15810  Banten  ZIPCODE_NOT_IN_STATE          8
+16  80361    Bali  ZIPCODE_NOT_IN_STATE         16
+
+
+--ignore CountryValidator (Not US state)
+Found 2 concerning rows. Examples:
+     state      phone    zip            REASON  rowNumber
+8   Banten  <MISSING>  15810  INVALID_US_STATE          8
+16    Bali  <MISSING>  80361  INVALID_US_STATE         16
