@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import time
-import json
+import dirtyjson as json
 import ssl
 
 try:
@@ -42,9 +42,40 @@ list_url = "/store/list_ajax.php"
 detail_url = "http://m.baskinrobbins.co.kr/store/store_info_ajax.php?S={}"
 
 
+def _d(_, http):
+    logger.info(_["storeCode"])
+    res = http.get(detail_url.format(_["storeCode"]), headers=_headers)
+    try:
+        loc = json.loads(res.text.split("\n")[-1])
+        return SgRecord(
+            page_url=base_url,
+            store_number=_["storeCode"],
+            location_name=_["name"],
+            street_address=_["address3"],
+            city=_["address2"],
+            state=_["address1"],
+            country_code="Korea",
+            phone=_["tel"],
+            latitude=_["pointY"],
+            longitude=_["pointX"],
+            locator_domain=locator_domain,
+            hours_of_operation=loc.get("time", "").replace("&#58;", "-"),
+            raw_address=_["address"],
+        )
+    except:
+        pass
+
+
 def fetch_data():
     with SgChrome() as driver:
         with SgRequests() as http:
+            # get initial page
+            locations = http.get(
+                "http://www.baskinrobbins.co.kr/store/list_ajax.php?ScS=&ScG=&ScWord="
+            ).json()["list"]
+            for _ in locations:
+                yield _d(_, http)
+
             driver.get(base_url)
             states = driver.find_elements_by_css_selector("select.location_1 option")
             logger.info(f"{len(states)} states")
@@ -70,41 +101,25 @@ def fetch_data():
                         'div.search button[type="submit"]'
                     ).click()
                     lr = driver.wait_for_request(list_url)
-                    res = json.loads(lr.response.body)
+                    try:
+                        res = json.loads(lr.response.body)
+                    except:
+                        try:
+                            res = http.get(lr.url).json()
+                        except:
+                            continue
                     if res.get("cnt") > 0:
                         locations = res["list"]
                     else:
                         continue
                     logger.info(f"[{gun_val}] {len(locations)} locations")
                     for _ in locations:
-                        res = http.get(
-                            detail_url.format(_["storeCode"]), headers=_headers
-                        )
-                        try:
-                            loc = json.loads(res.text.split("\n")[-1])
-                        except:
-                            import pdb
-
-                            pdb.set_trace()
-                        yield SgRecord(
-                            page_url=base_url,
-                            store_number=_["storeCode"],
-                            location_name=_["name"],
-                            street_address=_["address3"],
-                            city=_["address2"],
-                            state=_["address1"],
-                            country_code="Korea",
-                            phone=_["tel"],
-                            latitude=_["pointY"],
-                            longitude=_["pointX"],
-                            locator_domain=locator_domain,
-                            hours_of_operation=loc["time"],
-                            raw_address=_["address"],
-                        )
+                        yield _d(_, http)
 
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)
