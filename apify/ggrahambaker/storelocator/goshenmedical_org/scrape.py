@@ -157,10 +157,33 @@ def fetch_data():
                         )
                 except:
                     pass
-                hours_of_operation = "; ".join(hours_list)
+                hours_of_operation = (
+                    "; ".join(hours_list)
+                    .strip()
+                    .replace(
+                        "Monday - Thursday                    7:00 - 6:00                      Closed Friday: Closed for Lunch                      Monday-Thursday 1-2 pm",
+                        "Monday - Thursday: 7:00 - 6:00, Friday: Closed",
+                    )
+                )
+
                 if hours_of_operation.find("*") != -1:
                     hours_of_operation = hours_of_operation.split("*")[0].strip()
 
+                final_hours_list = []
+                try:
+                    temp_hours = hours_of_operation.split(";")
+                    for hour in temp_hours:
+                        try:
+                            day = hour.split(":", 1)[0].strip()
+                            temp_time = hour.split(":", 1)[1].strip().split("-")
+                            time = temp_time[0].strip() + "-" + temp_time[1].strip()
+                            final_hours_list.append(day + ":" + time)
+                        except:
+                            pass
+
+                    hours_of_operation = "; ".join(final_hours_list).strip()
+                except:
+                    pass
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,

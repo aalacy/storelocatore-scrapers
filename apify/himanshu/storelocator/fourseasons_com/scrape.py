@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -21,15 +22,25 @@ def fetch_data():
             api_url = urljoin(start_url, e["urlApi"])
             poi = session.get(api_url).json()
             page_url = "https://www.fourseasons.com/" + poi["urlName"]
+            raw_address = f'{poi.get("street")} {poi.get("city")} {poi.get("state")} {poi.get("zipcode")}'.replace(
+                "None", ""
+            ).strip()
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            zip_code = addr.postcode
+            if zip_code:
+                zip_code = zip_code.replace("DUBAI", "").strip()
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["shortName"],
-                street_address=poi.get("street"),
-                city=poi.get("city"),
-                state=poi.get("state"),
-                zip_postal=poi.get("zipcode"),
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=zip_code,
                 country_code=poi["enCountry"],
                 store_number=poi["owsCode"],
                 phone=poi["propertyPhone"],

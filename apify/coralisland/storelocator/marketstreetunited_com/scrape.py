@@ -31,7 +31,7 @@ def fetch_data():
         store_list = json.loads("".join(stores_sel.xpath("//body//text()")).strip())
         for store in store_list:
             locator_domain = website
-            page_url = "<MISSING>"
+            page_url = "https://www.marketstreetunited.com/rs/StoreLocator?id={}"
             location_name = store["StoreName"]
             street_address = store["Address1"]
             if store["Address2"] and len(store["Address2"]) > 0:
@@ -42,6 +42,7 @@ def fetch_data():
             zip = store["Zipcode"]
             country_code = "US"
             store_number = store["StoreID"]
+            page_url = page_url.format(str(store_number))
             phone = store["PhoneNumber"]
             location_type = "<MISSING>"
             latitude = store["Latitude"]
