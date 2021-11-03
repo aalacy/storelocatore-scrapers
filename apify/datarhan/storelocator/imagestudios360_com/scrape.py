@@ -43,7 +43,7 @@ def fetch_data():
             zip_code = "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = loc_dom.xpath('//ul[@class="contact-list"]/li[2]/text()')
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         if "coming-soon" in store_url:
