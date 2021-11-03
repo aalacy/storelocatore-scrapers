@@ -30,7 +30,7 @@ def fetch_data():
         .replace('<script id="__NEXT_DATA__" type="application/json">', "")
         .replace("</script>", "")
     )
-    print(script)
+
     loc_list = json.loads(script)["props"]["pageProps"]["locations"]
     logger.info(len(loc_list))
 
