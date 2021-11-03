@@ -1,7 +1,6 @@
 import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 import gzip
-import os
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -10,18 +9,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("westernunion_ca")
 
-
-def override_retries():
-    import requests
-
-    def new_init(self):
-        requests.packages.urllib3.disable_warnings()
-        self.session = self.requests_retry_session(retries=0)
-
-    SgRequests.__init__ = new_init
-
-
-override_retries()
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -30,8 +17,6 @@ headers = {
 
 def get(url, headers, attempts=0):
     global session
-
-    max_attempts = 10
 
     try:
         r = session.get(url, headers=headers)
