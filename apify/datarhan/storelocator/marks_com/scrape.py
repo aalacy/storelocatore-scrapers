@@ -109,7 +109,6 @@ def fetch_data():
             if "error.storelocator.find.nostores.error" not in str(data):
                 if not data.get("storeLocatorPageData"):
                     continue
-                print(Point, len(data["storeLocatorPageData"]["results"]))
                 for fullRecord in data["storeLocatorPageData"]["results"]:
                     record = clean_record(fullRecord)
                     yield record
