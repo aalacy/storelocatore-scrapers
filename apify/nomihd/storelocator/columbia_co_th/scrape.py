@@ -56,8 +56,6 @@ def get_latlng(map_link):
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.columbiasportswear.com.tw/v2/Shop/StoreList/38253"
-
     with SgRequests(dont_retry_status_codes=([404])) as session:
         search_res = session.get("https://columbia.co.th/store", headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
