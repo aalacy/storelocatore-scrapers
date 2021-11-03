@@ -29,6 +29,19 @@ def fetch_data():
                 if hours.startswith(":"):
                     hours = hours[1:]
                 del block[-1]
+            if not hours:
+                temp = []
+                for x, bb in enumerate(block):
+                    if "Hour" in bb:
+                        for hh in block[x:]:
+                            _hh = hh.split("Opening Hours")[-1].strip()
+                            if _hh.startswith(":"):
+                                _hh = _hh[1:]
+                            if _hh:
+                                temp.append(_hh)
+                if temp:
+                    hours = "; ".join(temp)
+
             phone = ""
             if "Telephone" in block[-1]:
                 phone = block[-1].split(":")[-1].strip()
