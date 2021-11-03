@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator (MX locations)
