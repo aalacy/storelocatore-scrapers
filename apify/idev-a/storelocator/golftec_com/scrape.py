@@ -126,7 +126,7 @@ def fetch_records(http, search):
             try:
                 res = http.get(url, headers=headers)
                 locations = res.json()
-            except Exception as err:
+            except Exception:
                 http._client().cookies.clear()
                 http._refresh_ip()
                 count += 1
