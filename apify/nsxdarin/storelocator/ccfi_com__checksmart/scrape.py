@@ -4,7 +4,7 @@ from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 logger = SgLogSetup().get_logger("ccfi_com__checksmart")
 
@@ -40,7 +40,10 @@ def fetch_data():
                         city = item.split('"city":"')[1].split('"')[0]
                         state = item.split('"state":"')[1].split('"')[0]
                         zc = item.split('"zip":"')[1].split('"')[0]
-                        phone = item.split('"phone":"')[1].split('"')[0]
+                        try:
+                            phone = item.split('"phone":"')[1].split('"')[0]
+                        except:
+                            phone = "<MISSING>"
                         try:
                             typ = item.split('"brand_link":"')[1].split('"')[0]
                         except:
@@ -124,7 +127,8 @@ def scrape():
     results = fetch_data()
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.PhoneNumberId, duplicate_streak_failure_factor=-1
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for rec in results:
