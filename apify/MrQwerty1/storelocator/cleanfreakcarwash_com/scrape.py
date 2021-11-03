@@ -67,7 +67,7 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     raw_address = "".join(
         tree.xpath(
-            "//div[@data-slide-id='et_pb_slide_0']//h2[@class='et_pb_slide_title']/following-sibling::div//h2[1]//text()"
+            "//div[@data-slide-id='et_pb_slide_0']//h2[@class='et_pb_slide_title']/following-sibling::div//h2//text()"
         )
     ).strip()
     street_address, city, state, postal = get_address(raw_address)

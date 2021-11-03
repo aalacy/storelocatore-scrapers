@@ -11,7 +11,6 @@ from fuzzywuzzy import process
 import httpx
 
 timeout = httpx.Timeout(5.0)
-
 logger = SgLogSetup().get_logger("t2tea")
 
 _headers = {
@@ -47,7 +46,7 @@ def fetch_records(http, search, country_map):
                 street_address += " " + _["address2"]
             page_url = f"https://www.t2tea.com/en/us/store-locations?storeID={_['ID']}"
             hours = []
-            if _["storeHours"]:
+            if _.get("storeHours"):
                 hours = bs(_["storeHours"], "lxml").stripped_strings
             yield SgRecord(
                 page_url=page_url,
@@ -55,7 +54,7 @@ def fetch_records(http, search, country_map):
                 store_number=_["ID"],
                 street_address=street_address,
                 city=_["city"],
-                state=_.get("stateCode").replace(".", ""),
+                state=_.get("stateCode"),
                 zip_postal=_.get("postalCode"),
                 country_code=_["countryCode"],
                 phone=_.get("phone"),
