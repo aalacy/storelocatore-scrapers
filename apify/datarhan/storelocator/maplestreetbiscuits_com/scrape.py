@@ -52,11 +52,11 @@ def fetch_data():
             location_name = raw_data[0].replace("WELCOME TO ", "")
             if "STORE HOURS" in raw_data[0] or "STORE HOURS" in raw_data[1]:
                 location_name = page_url.split("/")[-1].replace("-", " ").capitalize()
-                street_address = ""
-                city = ""
-                state = ""
-                zip_code = ""
-                phone = ""
+                street_address = "<INACCESSIBLE>"
+                city = "<INACCESSIBLE>"
+                state = "<INACCESSIBLE>"
+                zip_code = "<INACCESSIBLE>"
+                phone = "<INACCESSIBLE>"
             else:
                 raw_address = raw_data[1:3]
                 if "Suit" in raw_data[2]:
