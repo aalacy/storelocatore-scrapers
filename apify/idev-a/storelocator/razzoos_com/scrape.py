@@ -76,10 +76,11 @@ def fetch_data():
                 _addr.append(aa)
             raw_address = " ".join(_addr)
             addr = parse_address_intl(raw_address)
-            street_address = _addr[0]
-            if addr.postcode in street_address:
-                street_address = street_address.split(addr.city)[0].strip()
-
+            street_address = " ".join(_addr[:-1])
+            if not street_address:
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
             phone = ""
             hours = []
             _hr = sp1.find("", string=re.compile(r"^Phone"))
