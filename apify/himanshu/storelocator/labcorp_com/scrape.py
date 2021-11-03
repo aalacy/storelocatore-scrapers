@@ -41,10 +41,10 @@ def fetch_data():
     addresses = []
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=84,
-        max_search_results=75,
+        max_radius_miles=25,
+        max_search_results=200,
     )
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 200
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
@@ -63,8 +63,8 @@ def fetch_data():
             r = session.get(location_url, headers=headers)
         except:
             r = ""
-            continue
-        soup = BeautifulSoup(r.text, "lxml")
+            pass
+        soup = BeautifulSoup(r.text, "html5lib")
         data = soup.find("script", {"type": "application/json"}).text
         json_data = json.loads(data)
         if "lc_psc_locator" in json_data:
@@ -241,9 +241,9 @@ def fetch_data():
                         .replace("\t", "")
                         .replace("\r", "")
                     )
-                    if store[2] in addresses:
+                    if store[1] + store[2] + store[5] in addresses:
                         continue
-                    addresses.append(store[2])
+                    addresses.append(store[1] + store[2] + store[5])
                     yield store
 
 

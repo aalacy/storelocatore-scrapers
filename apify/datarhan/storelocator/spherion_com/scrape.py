@@ -1,140 +1,117 @@
-import csv
+import re
 import json
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests().requests_retry_session(retries=1, backoff_factor=0.3)
 
-    items = []
-
-    DOMAIN = "spherion.com"
-    start_url = "https://www.spherion.com/job-seekers/our-locations/"
+    domain = "spherion.com"
+    start_url = "https://www.spherion.com/our-offices/"
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
     }
-    all_locations = []
+
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-    all_dirs = dom.xpath('//div[@class="branch-loc-search-list-btns"]/a/@href')
-    for url in all_dirs:
-        response = session.get(urljoin(start_url, url))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//div[@class="branch-loc-search-address"]/a/@href')
 
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
-        if "spherion.com" not in store_url:
+    data = dom.xpath('//script[contains(text(), "searchResults")]/text()')[0]
+    data = re.findall("ROUTE_DATA__ =(.+)", data)[0]
+    data = json.loads(data)
+
+    all_locations = data["searchResults"]["hits"]["hits"]
+    next_page = dom.xpath('//a[@rel="next"]/@href')
+    while next_page:
+        response = session.get(urljoin(start_url, next_page[0]), headers=headers)
+        dom = etree.HTML(response.text)
+
+        data = dom.xpath('//script[contains(text(), "searchResults")]/text()')[0]
+        data = re.findall("ROUTE_DATA__ =(.+)", data)[0]
+        data = json.loads(data)
+
+        all_locations += data["searchResults"]["hits"]["hits"]
+        next_page = dom.xpath('//a[@rel="next"]/@href')
+
+    for poi in all_locations:
+        store_url = urljoin(start_url, poi["_source"]["url"][0])
+        if "applyohio.com" in store_url:
             continue
         loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
-        store_data = loc_dom.xpath(
-            '//script[@type="application/ld+json" and contains(text(), "address")]/text()'
-        )
-        if not store_data:
-            store_data = loc_response.text.split('application/ld+json">')[-1].split(
-                "</script>"
-            )
-        store_data = json.loads(store_data[0])
 
-        location_name = store_data["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = store_data["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = store_data["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
-        state = store_data["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
-        zip_code = store_data["address"]["postalCode"]
+        location_name = poi["_source"]["title_office"]
+        location_name = location_name[0] if location_name else "<MISSING>"
+        street_address = poi["_source"]["address_line1"][0]
+        if poi["_source"]["address_line2"]:
+            street_address += ", " + poi["_source"]["address_line2"][0]
+        street_address = street_address.strip()
+        if "virtual office" in street_address:
+            continue
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        city = poi["_source"]["locality_1"]
+        city = city[0] if city else "<MISSING>"
+        state = poi["_source"]["administrative_area"]
+        state = state[0].upper() if state else "<MISSING>"
+        zip_code = poi["_source"]["postal_code"][0]
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = store_data["address"]["addressCountry"]
-        country_code = country_code if country_code else "<MISSING>"
+        country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = store_data["address"]["telephone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = store_data["@type"]
-        location_type = location_type if location_type else "<MISSING>"
+        phone = poi["_source"].get("field_phone")
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        if "office is closed" in street_address:
+            street_address = "<MISSING>"
+            location_type = "closed"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        if poi["_source"].get("lat_lon"):
+            latitude = poi["_source"]["lat_lon"][0].split(",")[0]
+            longitude = poi["_source"]["lat_lon"][0].split(",")[-1]
         hours_of_operation = loc_dom.xpath(
-            '//div[@class="branch-loc-details--opening-hours"]//text()'
+            '//*[contains(@class, "time-table__item")]/span/text()'
         )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        if hours_of_operation:
-            hours_of_operation = " ".join(hours_of_operation[1:]).strip()
-            if not hours_of_operation.strip():
-                hours_of_operation = "<MISSING>"
-        else:
-            hours_of_operation = "<MISSING>"
-        hours_of_operation = hours_of_operation.split("with")[0]
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = loc_dom.xpath(
-                '//div[@id="ctl08_ctl03_OpeningHoursWrapperDiv"]/p[1]/text()'
-            )
-            hours_of_operation = hours_of_operation[0] if hours_of_operation else ""
-        hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
 
-website = "clarks_co.uk"
+website = "clarks.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {

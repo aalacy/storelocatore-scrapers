@@ -50,7 +50,6 @@ def fetch_data():
     locator_domain = "giovannispizzapower.com"
 
     found_poi = []
-    data = []
 
     max_results = 100
     max_distance = 500
@@ -105,10 +104,9 @@ def fetch_data():
 
             latitude = store["lat"]
             longitude = store["lng"]
-            search.mark_found([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
-            data.append(
-                [
+            yield [
                     locator_domain,
                     page_url,
                     location_name,
@@ -124,10 +122,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-
-    return data
-
 
 def scrape():
     data = fetch_data()

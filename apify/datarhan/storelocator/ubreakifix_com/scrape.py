@@ -61,8 +61,10 @@ def fetch_data():
         store_dom = etree.HTML(store_response.text)
 
         store_url = full_store_url
-        location_name = store_dom.xpath('//h1[@class="title"]/text()')[0].strip()
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = store_dom.xpath('//h1[@class="title"]/text()')
+        location_name = (
+            " ".join(location_name[0].strip().split()) if location_name else "<MISSING>"
+        )
         street_address = store_dom.xpath('//meta[@itemprop="streetAddress"]/@content')
         street_address = street_address[0] if street_address else "<MISSING>"
         city = store_dom.xpath('//meta[@itemprop="addressLocality"]/@content')
@@ -71,20 +73,22 @@ def fetch_data():
         state = state[0] if state else "<MISSING>"
         zip_code = store_dom.xpath('//meta[@itemprop="postalCode"]/@content')
         zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = store_dom.xpath('//meta[@itemprop="addressCountry"]/@content')[0]
-        country_code = country_code if country_code else "<MISSING>"
+        country_code = store_dom.xpath('//meta[@itemprop="addressCountry"]/@content')
+        country_code = country_code[0] if country_code else "<MISSING>"
         store_number = ""
         store_number = store_number if store_number else "<MISSING>"
         phone = store_dom.xpath(
             '//div[@class="content-group"]//a[contains(@href, "tel")]/text()'
         )
+        if not phone:
+            continue
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = ""
         location_type = location_type if location_type else "<MISSING>"
         latitude = store_dom.xpath('//meta[@itemprop="latitude"]/@content')
         latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = store_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
-        longitude = longitude if longitude else "<MISSING>"
+        longitude = store_dom.xpath('//meta[@itemprop="longitude"]/@content')
+        longitude = longitude[0] if longitude else "<MISSING>"
         hours_of_operation = store_dom.xpath(
             '//meta[@itemprop="openingHours"]/@content'
         )

@@ -1,0 +1,6 @@
+--ignore CountryCodeFillRateChecker (not only US and CA in store locator)
+--ignore StreetAddressHasStateName (no state name in street address)
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+--ignore CentroidValidator (Confirmed scrape correctly because data on the website (API))
+--ignore CountryValidator (Confirmed scrape correctly because data on the website (API))
+--ignore LatLngDuplicationValidator (Some store locations are have same address and lat long, but with different store name)

@@ -1,107 +1,140 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+import csv
 import json
-from sglogging import SgLogSetup
+from lxml import etree
 
-logger = SgLogSetup().get_logger('pendryhotels_com')
+from sgselenium import SgFirefox
+from sgscrape.sgpostal import parse_address_intl
 
-
-
-
-
-
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
+    # Your scraper here
+    items = []
 
+    start_url = "https://www.pendry.com/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
 
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    }
+    all_locations = dom.xpath(
+        '//h2[contains(text(), "Hotels & Resorts")]/following-sibling::ul[1]//a/@href'
+    )
+    for store_url in all_locations:
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
+        poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')
+        if poi:
+            poi = json.loads(poi[0])
 
-    # it will used in store data.
-   
-    locator_domain = "https://pendryhotels.com"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+            location_name = poi["name"]
+            location_name = location_name if location_name else "<MISSING>"
+            street_address = poi["address"]["streetAddress"]
+            street_address = street_address if street_address else "<MISSING>"
+            city = poi["address"]["addressLocality"]
+            city = city if city else "<MISSING>"
+            state = poi["address"]["addressRegion"]
+            state = state if state else "<MISSING>"
+            zip_code = poi["address"]["postalCode"]
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = poi["address"]["addressCountry"]
+            country_code = country_code if country_code else "<MISSING>"
+            store_number = "<MISSING>"
+            phone = poi["telephone"]
+            phone = phone if phone else "<MISSING>"
+            location_type = poi["@type"]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
+        else:
+            location_name = loc_dom.xpath('//meta[@property="og:site_name"]/@content')
+            location_name = location_name[0] if location_name else "<MISSING>"
+            raw_address = loc_dom.xpath(
+                '//span[@class="page-footer__address page-footer__address--small"]/a/text()'
+            )
+            if not raw_address:
+                continue
+            addr = parse_address_intl(" ".join(raw_address))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += addr.street_address_2
+            street_address = street_address if street_address else "<MISSING>"
+            city = addr.city
+            city = city if city else "<MISSING>"
+            state = addr.state
+            state = state if state else "<MISSING>"
+            zip_code = addr.postcode
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = loc_dom.xpath(
+                '//span[@class="page-footer__address page-footer__address--small"]/text()'
+            )
+            phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
+            location_type = "<MISSING>"
+            geo = (
+                loc_dom.xpath(
+                    '//span[@class="page-footer__address page-footer__address--small"]/a/@href'
+                )[0]
+                .split("/@")[-1]
+                .split(",")[:2]
+            )
+            latitude = geo[0]
+            longitude = geo[1]
 
-    r = session.get('https://www.pendry.com/',headers = headers)
-    soup = BeautifulSoup(r.text,'lxml')
-    info = soup.find('div',{'class':'menu-pendry'}).find('div',class_='col-md-4 order-md-5 menu-pendry__column-outer')
-    for a in info.find_all('a'):
-        # logger.info(a['href'])
-        r_loc = session.get(a['href'],headers = headers)
-        soup_loc =BeautifulSoup(r_loc.text,'lxml')
-        loc = soup_loc.find('span',class_= 'page-footer__address page-footer__address--small')
-        list_loc = list(loc.stripped_strings)
-        if list_loc != []:
-            page_url = a['href'].strip()
-            phone = list_loc[0].replace('Tel:','').strip()
-            address = list_loc[-1].split(',')
-            street_address = address[0].strip()
-            city = address[1].strip()
-            location_name =city
-            # logger.info(location_name)
-            if len(address) >3:
+        hours_of_operation = "<MISSING>"
 
-                state = address[2].strip()
-                zipp= address[-1].strip()
-            else:
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-                state = address[-1].split()[0].strip()
-                zipp = address[-1].split()[-1].strip()
-            # logger.info(city,zipp,state,street_address)
-            latitude = loc.find('a')['href'].split('@')[-1].split(',')[0].strip()
-            longitude = loc.find('a')['href'].split('@')[-1].split(',')[1].strip()
+        items.append(item)
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == "" or x == None  else x for x in store]
-
-            #logger.info("data = " + str(store))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            return_main_object.append(store)
-
-
-
-
-
-    return return_main_object
-
-
+    return items
 
 
 def scrape():
@@ -109,4 +142,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

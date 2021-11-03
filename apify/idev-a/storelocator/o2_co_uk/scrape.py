@@ -65,7 +65,7 @@ def fetch_data():
         )
 
         _item = [
-            base_url,
+            "https://www.o2.co.uk/",
             page_url,
             location_name,
             street_address,

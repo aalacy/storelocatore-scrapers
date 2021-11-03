@@ -1,41 +1,14 @@
-import csv
-
 from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.byron.co.uk/locations"
 
@@ -46,24 +19,22 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
-    items = base.find_all(class_="image-card sqs-dynamic-text-container")
+    items = base.find_all(class_="Locations-item")
     locator_domain = "byron.co.uk"
 
     for item in items:
-        location_name = item.p.text.strip()
-        location_type = item.find_all("p")[2].text.strip()
-        raw_address = item.find_all("p")[3].text.strip()
-        if ", " in location_type:
-            raw_address = item.find_all("p")[2].text.strip()
-            location_type = item.find_all("p")[1].text.strip()
-        zip_code = raw_address.split()[-1]
+        location_name = item.h2.text.strip()
+        link = item.find(class_="Locations-itemLink")["href"]
+
+        raw_address = list(item.find(class_="Address-physical").stripped_strings)
+
+        zip_code = raw_address[-1].split()[-1]
         if len(zip_code) < 5:
-            zip_code = " ".join(raw_address.split()[-2:])
-        raw_address = raw_address[: raw_address.rfind(zip_code)].strip()
-        city = raw_address.split()[-1]
-        street_address = raw_address[: raw_address.rfind(city)].strip()
+            zip_code = " ".join(raw_address[-1].split()[-2:])
+        addr_text = " ".join(raw_address)
+        addr_text = addr_text[: addr_text.rfind(zip_code)].strip()
+        city = addr_text.split()[-1]
+        street_address = addr_text[: addr_text.rfind(city)].strip()
 
         if city == "Edmunds":
             city = "Bury St Edmunds"
@@ -75,43 +46,62 @@ def fetch_data():
 
         if street_address[-1:] == ",":
             street_address = street_address[:-1].strip()
+        if " " not in zip_code:
+            street_address = street_address + " " + city
+            city = zip_code
+            zip_code = "<MISSING>"
+
+        if "Road" in zip_code:
+            street_address = street_address + " " + city + " " + zip_code
+            city = location_name.split("-")[0].strip()
+            zip_code = "<MISSING>"
+        if city == "Mall" or ":" in city:
+            street_address = street_address + " " + city
+            city = location_name.split("-")[0].strip()
+
+        city = city.replace(",", "")
         state = "<MISSING>"
         store_number = "<MISSING>"
         country_code = "GB"
+        location_type = "<MISSING>"
+
         try:
-            phone = item.a.text.strip()
+            phone = item.find(class_="Address-phone").text.strip()
         except:
-            phone = item.span.text
-        hours_of_operation = " ".join(list(item.ul.stripped_strings))
+            phone = "<MISSING>"
+
+        if "locations" in link:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hours_of_operation = " ".join(
+                list(base.find(class_="OpeningHours").ul.stripped_strings)
+            )
+        else:
+            link = base_link
+            hours_of_operation = "<MISSING>"
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                "https://www.byron.co.uk/locations",
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

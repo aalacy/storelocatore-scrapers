@@ -1,14 +1,9 @@
-from bs4 import BeautifulSoup
 import csv
-import usaddress
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
 from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    "x-requested-with": "XMLHttpRequest",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 }
 
 
@@ -42,159 +37,91 @@ def write_output(data):
             writer.writerow(row)
 
 
+def settime(timenow, flag):
+    endt = "00"
+    if timenow == "0":
+        return " Closed"
+    if len(timenow) == 3:
+        st = (int)(timenow[0:1])
+        endt = timenow[1:3]
+    elif len(timenow) == 4:
+        st = (int)(timenow[0:2])
+        endt = timenow[2:4]
+    if st > 12:
+        st = st - 12
+    zone = " AM - "
+    if flag == 2:
+        zone = " PM "
+    return str(st) + ":" + endt + zone
+
+
 def fetch_data():
     p = 0
     data = []
     titlelist = []
-    zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
-    for zip_code in zips:
-        url = (
-            "https://www.sperry.com/en/stores?distanceMax=300&distanceUnit=mi&country=US&zip="
-            + zip_code
-            + "&formType=findbyzipandcountry&start=0&sz=100"
-        )
-        obj = {"format": "ajax"}
-        r = session.post(url, data=obj, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        try:
-            divlist = soup.find("table").findAll("tr")
-        except:
-            continue
-        for div in divlist:
-            title = div.find("span").text.split(".")[1].replace("\n", "")
-            try:
-                hours = div.find("div", {"class": "store-hours"}).text
-            except:
-                hours = div.find("td", {"class": "store-hours"}).text
-            store = div.find("a", {"class": "editbutton"})["id"]
-            if "Check store inventory" not in hours or store in titlelist:
-                continue
-            titlelist.append(store)
-            hours = (
-                hours.replace("Check store inventory", "")
-                .replace("\n", " ")
-                .replace("pm", "pm ")
-                .strip()
-            )
-            address = (
-                div.find("a", {"class": "getdirection"})["href"]
-                .split("q=", 1)[1]
-                .replace(",", "")
-            )
-            phone = div.find("td", {"class": "store-phone"}).text
-            lat = (
-                div.find("a", {"class": "editbutton"})["data-location"]
-                .split("'latitude':'", 1)[1]
-                .split("'", 1)[0]
-            )
-            longt = (
-                div.find("a", {"class": "editbutton"})["data-location"]
-                .split("'longitude':'", 1)[1]
-                .split("'", 1)[0]
-            )
-            link = (
-                "https://www.sperry.com"
-                + div.find("a", {"class": "editbutton"})["href"]
-            )
-            address = usaddress.parse(address)
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
-            street = street.lstrip().replace(",", "")
-            city = city.lstrip().replace(",", "")
-            state = state.lstrip().replace(",", "")
-            pcode = pcode.lstrip().replace(",", "")
-            try:
-                temp, city = city.split("OUTLETS ", 1)
-                street = street + " " + temp + " OUTLETS"
-            except:
-                pass
-            try:
-                temp, city = city.split("OUTLET ", 1)
-                street = street + " " + temp + " OUTLETS"
-            except:
-                pass
-            try:
-                temp, city = city.split("GALLERIA ", 1)
-                street = street + " " + temp + " GALLERIA"
-            except:
-                pass
-            try:
-                temp, city = city.split("CENTER ", 1)
-                street = street + " " + temp + " CENTER"
-            except:
-                pass
-            try:
-                temp, city = city.split("PLACE ", 1)
-                street = street + " " + temp + " PLACE"
-            except:
-                pass
-            try:
-                temp, city = city.split("BEACH ", 1)
-                street = street + " " + temp + " BEACH"
-            except:
-                pass
-            try:
-                temp, city = city.split("NORTH ", 1)
-                street = street + " " + temp + " NORTH"
-            except:
-                pass
-            try:
-                temp, city = city.split("ISLAND ", 1)
-                street = street + " " + temp + " ISLAND"
-            except:
-                pass
-            try:
-                temp = city.split(" ")
-                if temp[0] == temp[1] or temp[0] == "null":
-                    city = temp[1]
-            except:
-                pass
-            if len(phone) < 3:
-                phone = "<MISSING>"
-            if len(hours) < 3:
-                hours = "<MISSING>"
-            data.append(
-                [
-                    "https://www.sperry.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
+    weeklist = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
-            p += 1
+    url = "https://sperry.locally.com/stores/conversion_data?has_data=true&company_id=1566&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.73218673716792&map_center_lng=-73.98935000000014&map_distance_diag=5000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=.json"
+    url = "https://sperry.locally.com/stores/conversion_data?has_data=true&company_id=1566&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.73218673716792&map_center_lng=-73.98935000000014&map_distance_diag=5000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=.json"
+    loclist = session.get(url, headers=headers, verify=False)
+    loclist = loclist.json()["markers"]
+
+    for loc in loclist:
+
+        store = loc["id"]
+        title = loc["name"]
+        city = loc["city"]
+        state = loc["state"]
+        street = loc["address"]
+        lat = loc["lat"]
+        longt = loc["lng"]
+        phone = loc["phone"]
+        ccode = loc["country"]
+        pcode = loc["zip"]
+        if store in titlelist:
+            continue
+        titlelist.append(store)
+        if "Sperry" in title:
+            ltype = "Store"
+        else:
+            ltype = "Dealer"
+        link = "https://sperry.locally.com/store/" + str(store)
+        hours = ""
+        try:
+            for day in weeklist:
+
+                start = settime(str(loc[day + "_time_open"]), 1)
+                if "Closed" in start:
+                    end = " "
+                else:
+                    end = settime(str(loc[day + "_time_close"]), 2)
+                hours = hours + day + " " + start + end
+        except:
+            hours = "<MISSING>"
+        if len(phone) < 3:
+            phone = "<MISSING>"
+        if "mon  Closed" in hours and "tue  Closed" in hours:
+            hours = "Mon-Sun Closed"
+        data.append(
+            [
+                "https://www.sperry.com/",
+                link,
+                title.encode("ascii", "ignore").decode("ascii").strip(),
+                street.encode("ascii", "ignore").decode("ascii").strip(),
+                city.encode("ascii", "ignore").decode("ascii").strip(),
+                state.encode("ascii", "ignore").decode("ascii").strip(),
+                pcode,
+                ccode.encode("ascii", "ignore").decode("ascii").strip(),
+                store,
+                phone.encode("ascii", "ignore").decode("ascii").strip(),
+                ltype.encode("ascii", "ignore").decode("ascii").strip(),
+                lat.encode("ascii", "ignore").decode("ascii").strip(),
+                longt.encode("ascii", "ignore").decode("ascii").strip(),
+                hours.encode("ascii", "ignore").decode("ascii").strip(),
+            ]
+        )
+
+        p += 1
     return data
 
 

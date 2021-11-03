@@ -120,9 +120,20 @@ def fetch_data():
 
         hours_of_operation = ""
         if store["Hours"] is not None:
-            hours_of_operation = "; ".join(
-                BS(store["Hours"], "html.parser").get_text().split("\n")
-            ).strip()
+            hours_of_operation = (
+                "; ".join(BS(store["Hours"], "html.parser").get_text().split("\n"))
+                .strip()
+                .encode("ascii", "replace")
+                .decode("utf-8")
+                .replace("?", "-")
+                .strip()
+            )
+            try:
+                hours_of_operation = hours_of_operation.split("; Custom Breakfast")[
+                    0
+                ].strip()
+            except:
+                pass
 
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"

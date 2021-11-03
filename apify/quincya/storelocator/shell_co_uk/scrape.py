@@ -1,12 +1,8 @@
 import csv
 
-from sglogging import sglog
-
 from sgrequests import SgRequests
 
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-log = sglog.SgLogSetup().get_logger(logger_name="shell.co.uk")
 
 
 def write_output(data):
@@ -46,13 +42,12 @@ def fetch_data():
 
     session = SgRequests()
 
-    data = []
     found_poi = []
 
     locator_domain = "shell.co.uk"
 
     max_results = None
-    max_distance = 100
+    max_distance = 20
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
@@ -61,10 +56,6 @@ def fetch_data():
     )
 
     for lat, lng in search:
-        log.info(
-            "Searching: %s, %s | Items remaining: %s"
-            % (lat, lng, search.items_remaining())
-        )
 
         base_link = (
             "https://shellgsllocator.geoapp.me/api/v1/locations/nearest_to?lat=%s&lng=%s&autoload=true&&corridor_radius=%s&format=json"
@@ -73,9 +64,12 @@ def fetch_data():
 
         stores = session.get(base_link, headers=headers).json()
 
-        new_coordinates = []
         for store in stores:
-            location_name = (store["brand"] + " " + store["name"]).upper()
+            location_name = (
+                (store["brand"] + " " + store["name"])
+                .upper()
+                .replace("SHELL SHELL", "SHELL")
+            )
             street_address = store["address"].strip()
             city = store["city"]
             state = store["state"]
@@ -98,33 +92,27 @@ def fetch_data():
 
             latitude = store["lat"]
             longitude = store["lng"]
-            new_coordinates.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
             link = store["website_url"]
 
             # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-        if len(new_coordinates) > 0:
-            search.mark_found(new_coordinates)
-    return data
+            yield [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
 
 def scrape():

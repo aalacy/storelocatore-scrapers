@@ -6,7 +6,7 @@ from lxml import etree
 
 # set to True to see more detailed logs
 # set to False before commit
-IS_TESTING = True
+IS_TESTING = False
 
 website = "1stnb.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website, stdout_log_level="INFO")
@@ -87,7 +87,7 @@ def fetch_data():
 
         response_text = response.text
 
-        if check_results(response_text) > 0:
+        if check_results(response_text):
             locations_list.append(response_text)
             log_testing(f"Store list page = {page} - DONE")
         else:

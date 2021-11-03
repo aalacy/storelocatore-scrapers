@@ -50,6 +50,16 @@ def handle_missing(field):
     return field
 
 
+def get_hours(store_id):
+    url = "{}/{}".format(LOCATION_URL, store_id)
+    detail = session.get(url, headers=HEADERS).json()
+    hours = []
+    for x in detail["foodServiceTimes"]["periods"]:
+        parse_hours = "{}: {}".format(x["days"]["text"], x["times"][0]["text"])
+        hours.append(parse_hours)
+    return ", ".join(hours)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     store_info = session.get(LOCATION_URL, headers=HEADERS).json()
@@ -69,10 +79,10 @@ def fetch_data():
         country_code = handle_missing(address["country"])
         store_number = handle_missing(row["bunCode"])
         phone = handle_missing(row["telephoneNumber"])
-        location_type = "<MISSING>"
-        latitude = row["gpsCoordinates"]["latitude"]
-        longitude = row["gpsCoordinates"]["longitude"]
-        hours_of_operation = "<MISSING>"
+        location_type = handle_missing(row["status"])
+        latitude = handle_missing(row["gpsCoordinates"]["latitude"])
+        longitude = handle_missing(row["gpsCoordinates"]["longitude"])
+        hours_of_operation = handle_missing(get_hours(row["bunCode"]))
         log.info("Append {} => {}".format(location_name, street_address))
         locations.append(
             [

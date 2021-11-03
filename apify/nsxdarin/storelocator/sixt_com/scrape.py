@@ -1,11 +1,10 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import cloudscraper
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+scraper = cloudscraper.create_scraper(sess=session)
 
 logger = SgLogSetup().get_logger("sixt_com")
 
@@ -41,7 +40,7 @@ def fetch_data():
     locs = []
     states = []
     url = "https://www.sixt.com/car-rental/#/"
-    r = session.get(url, headers=headers)
+    r = scraper.get(url)
     website = "sixt.com"
     typ = "<MISSING>"
     country = "US"
@@ -60,7 +59,7 @@ def fetch_data():
                     )
     for state in states:
         logger.info(state)
-        r2 = session.get(state, headers=headers)
+        r2 = scraper.get(state)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'locationLink: "' in line2:
@@ -80,24 +79,65 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        r2 = session.get(loc, headers=headers)
+        r2 = scraper.get(loc)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if "<h1>" in line2:
                 name = line2.split("<h1>")[1].split("<")[0].strip()
+            if "orlando-lake-buena-vista" in loc:
+                add = "12205 S Apopka Vineland Rd"
+                city = "Orlando"
+                state = "FL"
+                zc = "32836-6804"
+                lat = "28.386945724487"
+                lng = "-81.504974365234"
+                hours = "MO - FR: 07:00 - 18:00; SA - SU: 09:00 - 17:00"
             if '"@id": "' in line2:
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
                 state = "<MISSING>"
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                lat = line2.split(',"latitude":')[1].split(",")[0]
-                lng = line2.split('"longitude":')[1].split("}")[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
+                try:
+                    add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    zc = line2.split('"postalCode":"')[1].split('"')[0]
+                    city = line2.split('"addressLocality":"')[1].split('"')[0]
+                    lat = line2.split(',"latitude":')[1].split(",")[0]
+                    lng = line2.split('"longitude":')[1].split("}")[0]
+                    add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    hours = (
+                        line2.split('"openingHours":["')[1]
+                        .split('"]')[0]
+                        .replace('","', "; ")
+                    )
+                except:
+                    pass
+            if "address</h3>" in line2 and add == "":
+                addinfo = (
+                    line2.split("<p>")[1].split("<")[0].replace(", Suite", " Suite")
+                )
+                add = addinfo.split(",")[0]
+                zc = addinfo.split(",")[1].strip().split(" ")[0]
+                try:
+                    city = addinfo.split(",")[1].strip().split(" ")[1]
+                except:
+                    city = "<MISSING>"
+            if "coordinates: { lat:" in line2:
+                lat = line2.split("coordinates: { lat:")[1].split(",")[0].strip()
+                lng = (
+                    line2.split("coordinates: { lat:")[1]
+                    .split("lng:")[1]
+                    .split(",")[0]
+                    .strip()
+                )
+            if 'openhours-scheduler_week">' in line2:
                 hours = (
-                    line2.split('"openingHours":["')[1]
-                    .split('"]')[0]
-                    .replace('","', "; ")
+                    line2.split('openhours-scheduler_week">')[1]
+                    .split("</p> </div>")[0]
+                    .replace('<div data-component="text">', "")
+                    .replace("<p>", "")
+                    .replace("</div>", "")
+                    .replace("<div>", "")
+                    .replace("  ", " ")
+                    .replace("  ", " ")
+                    .replace("  ", " ")
                 )
         hours = hours.replace("24 HRS RETURN;", "").strip()
         yield [
@@ -119,7 +159,7 @@ def fetch_data():
     locs = []
     states = []
     url = "https://www.sixt.com/car-rental/united-kingdom/#/"
-    r = session.get(url, headers=headers)
+    r = scraper.get(url)
     website = "sixt.com"
     typ = "<MISSING>"
     country = "GB"
@@ -137,7 +177,7 @@ def fetch_data():
                     )
     for state in states:
         logger.info(state)
-        r2 = session.get(state, headers=headers)
+        r2 = scraper.get(state)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if 'locationLink: "' in line2:
@@ -157,7 +197,7 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        r2 = session.get(loc, headers=headers)
+        r2 = scraper.get(loc)
         try:
             for line2 in r2.iter_lines():
                 line2 = str(line2.decode("utf-8"))

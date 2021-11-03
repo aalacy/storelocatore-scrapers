@@ -1,5 +1,5 @@
 lxml==4.3.4
-sgrequests
+sgrequests==0.1.6
+html5lib==1.1
 beautifulsoup4==4.7.1
-sglogging
-html5lib
+sglogging==0.0.4

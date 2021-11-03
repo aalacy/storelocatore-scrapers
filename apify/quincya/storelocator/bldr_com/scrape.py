@@ -56,6 +56,8 @@ def fetch_data():
         store_number = store["Id"]
         location_type = "<MISSING>"
         phone = store["PhoneNo"].replace("Call to make an appointment", "").strip()
+        if not phone:
+            phone = "<MISSING>"
         try:
             mon_fri = "Mon-Fri " + store["HoursMFNew"]
         except:
@@ -72,12 +74,15 @@ def fetch_data():
             (mon_fri + sat + sun).replace(",", "-").replace("0-0", "Closed").strip()
         )
 
+        hours_of_operation = hours_of_operation.replace(
+            "Sat  Sun", "Sat-Sun Closed"
+        ).replace("Sat Closed Sun Closed", "Sat-Sun Closed")
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
         latitude = store["Latitude"]
         longitude = store["Longitude"]
-        link = "https://bldr.com" + store["Url"]
+        link = "https://bldr.com/location_" + store["Alias"]
 
         # Store data
         data.append(

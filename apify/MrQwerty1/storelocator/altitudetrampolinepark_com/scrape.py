@@ -39,7 +39,9 @@ def get_urls():
     session = SgRequests()
     r = session.get("https://www.altitudetrampolinepark.com/locations/")
     tree = html.fromstring(r.text)
-    uls = tree.xpath("//ul[@class='region list-unstyled']")
+    uls = tree.xpath(
+        "//div[@class='col-md-3']//ul[contains(@class, 'region list-unstyled')]"
+    )
 
     for ul in uls:
         state = "".join(ul.xpath("./li/strong/text()")).strip()
@@ -52,6 +54,23 @@ def get_urls():
             )
 
     return urls
+
+
+def get_hours(page_url):
+    session = SgRequests()
+    r = session.get(page_url)
+    if r.status_code == 404:
+        return "<MISSING>"
+
+    tree = html.fromstring(r.text)
+    li = tree.xpath("//h3[text()='Hours of Operation']/following-sibling::ul[1]/li")
+    _tmp = []
+    for l in li:
+        day = " ".join("".join(l.xpath("./strong/text()")).split())
+        time = "".join(l.xpath("./text()")).strip()
+        _tmp.append(f"{day} {time}")
+
+    return ";".join(_tmp) or "<MISSING>"
 
 
 def get_data(url):
@@ -86,16 +105,7 @@ def get_data(url):
         latitude = "".join(d.xpath("./@data-lat")) or "<MISSING>"
         longitude = "".join(d.xpath("./@data-lng")) or "<MISSING>"
         location_type = "<MISSING>"
-        hours_of_operation = "".join(
-            d.xpath(".//small[@class='text-uppercase text-white']/strong/text()")
-        )
-
-        if hours_of_operation.lower().find("soon") != -1:
-            continue
-        elif hours_of_operation.lower().find("closed") != -1:
-            hours_of_operation = "Closed"
-        elif hours_of_operation.lower().find("open") != -1:
-            hours_of_operation = "<MISSING>"
+        hours_of_operation = get_hours(page_url)
 
         row = [
             locator_domain,

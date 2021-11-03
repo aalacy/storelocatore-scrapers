@@ -52,7 +52,7 @@ def fetch_data():
     all_locations = dom.xpath('//a[@class="btn info"]/@href')
 
     for store_url in all_locations:
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h2[@class="lightblue h3"]/text()')

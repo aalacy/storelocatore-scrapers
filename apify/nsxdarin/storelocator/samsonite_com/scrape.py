@@ -130,7 +130,7 @@ def fetch_data():
                         add = add.split("Galleria,")[1].strip()
                     if "Outlets -" in add:
                         add = add.split("Outlets -")[1].strip()
-                    hours = hours.replace("Opened with Reduced Hourse", "").strip()
+                    hours = hours.replace("Opened with Reduced Hours", "").strip()
                     if "Temporarily Closed" in hours:
                         hours = "Temporarily Closed"
                     if "Permanently" not in hours:

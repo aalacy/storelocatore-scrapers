@@ -4,6 +4,8 @@ from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
 log = SgLogSetup().get_logger("meijer.com")
 
 
@@ -40,52 +42,65 @@ def fetch_data():
 
     session = SgRequests()
 
-    data = []
-    locator_domain = "meijer.com"
-    for page_num in range(50):
-        base_link = (
-            "https://www.meijer.com/shop/en/store-finder/search?q=60010&page=%s&radius=4500"
-            % page_num
-        )
-        log.info(base_link)
+    max_results = 40
+    max_distance = 200
 
-        stores = session.get(base_link, headers=headers).json()["data"]
-        if len(stores) == 0:
-            break
+    dup_tracker = []
+
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=max_distance,
+        max_search_results=max_results,
+    )
+
+    locator_domain = "meijer.com"
+
+    for postcode in search:
+        log.info(
+            "Searching: %s | Items remaining: %s" % (postcode, search.items_remaining())
+        )
+        base_link = (
+            "https://www.meijer.com/bin/meijer/store/search?locationQuery=%s&radius=%s"
+            % (postcode, max_distance)
+        )
+
+        log.info(base_link)
+        stores = session.get(base_link, headers=headers).json()["pointsOfService"]
         for store in stores:
             location_name = store["displayName"]
-            street_address = (store["line1"] + " " + store["line2"]).strip()
-            city = store["town"]
-            state = store["state"]
-            zip_code = store["postalCode"]
+            street_address = store["address"]["line1"].strip()
+            city = store["address"]["town"]
+            state = store["address"]["region"]["isocode"].replace("US-", "")
+            zip_code = store["address"]["postalCode"]
             country_code = "US"
+            latitude = store["geoPoint"]["latitude"]
+            longitude = store["geoPoint"]["longitude"]
+            search.found_location_at(latitude, longitude)
             store_number = store["name"]
+            if store_number in dup_tracker:
+                continue
+            dup_tracker.append(store_number)
             location_type = "<MISSING>"
             phone = store["phone"]
             hours_of_operation = "<INACCESSIBLE>"
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-            link = "https://www.meijer.com/shop/en/store/" + store_number
+            link = "<MISSING>"
             # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-    return data
+            yield [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
 
 def scrape():

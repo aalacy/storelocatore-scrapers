@@ -1,81 +1,153 @@
-import csv
-import os
-from sgselenium import SgSelenium
-import re
 import json
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+session = SgRequests()
+website = "armani.com"
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "authority": "www.armani.com",
+    "path": "/api/armani/wcs/resources/store/armanigroup_US/storelocator/boutiques/?pageSize=1000&pageNumber=1",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+    "sec-ch-ua-mobile": "?0",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "x-dtpc": "3$370197139_564h3vDWDKQSNBJCCMBJPFHEJUGBWWQHUMMKER-0e8",
+    "x-ibm-client-id": "d96f05f8-4f2f-4444-9787-bb6f0ea29bc8",
+    "x-requested-with": "XMLHttpRequest",
+}
 
 
-def rreplace(s, old, new, count):
-    return (s[::-1].replace(old[::-1], new[::-1], count))[::-1]
+def fetch_data(sgw: SgWriter):
+    stores_req = session.get(
+        "https://www.armani.com/api/armani/wcs/resources/store/armanigroup_US/storelocator/boutiques/?pageSize=1000&pageNumber=1",
+        headers=headers,
+    )
 
-
-def fetch_data():
-    driver = SgSelenium().firefox()
-    driver.get(
-        'https://www.armani.com/experience/us/?yoox_storelocator_action=true&action=yoox_storelocator_get_all_stores')
-
-    json_str = driver.find_element_by_tag_name('body').text
-    dict_from_json = json.loads(json_str)
+    found = []
+    dict_from_json = json.loads(stores_req.text)["data"]
     for store_data in dict_from_json:
-        store = []
-        if "location" not in store_data:
+        location_name = store_data["storeName"].replace("&amp;", "&")
+        raw_address = store_data["address"]["line1"]
+        formatted_addr = parser.parse_address_intl(raw_address)
+
+        street_address = formatted_addr.street_address_1
+        if street_address is not None and formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
+        if not street_address and formatted_addr.street_address_2:
+            street_address = formatted_addr.street_address_2
+
+        state = formatted_addr.state
+        if state is None:
+            state = "<MISSING>"
+
+        zip = formatted_addr.postcode
+
+        if zip and ";" in zip:
+            street_address = street_address + ", " + zip.split(";")[-1]
+            zip = zip.split(";")[1]
+
+        city = store_data["address"]["city"]
+
+        if not street_address or len(street_address) < 4 or street_address == "Cancun":
+            street_address = raw_address[: raw_address.rfind(city)].strip()
+            if ";" in street_address:
+                street_address = street_address[: street_address.rfind(";")].strip()
+            if street_address[-1:] == ",":
+                street_address = street_address[:-1]
+
+        country_code = store_data["address"]["countryCode"].upper()
+        store_number = store_data["storeNumber"]
+
+        if not zip and country_code == "GB":
+            if " W1" in street_address:
+                zip = street_address[street_address.find("W1") :]
+            elif "Sw1X7Xl" in street_address:
+                zip = "Sw1X7Xl"
+            if zip:
+                street_address = (
+                    street_address.replace(zip, "").replace(" ,", ",").strip()
+                )
+
+        if location_name.strip() + street_address.strip() in found:
             continue
-        if store_data["wpcf-yoox-store-country-iso"].lower() != "us" and store_data["wpcf-yoox-store-country-iso"].lower() != "ca":
-            continue
-        store.append("https://www.armani.com")
-        store.append(store_data["post_title"])
-        address = rreplace(store_data["wpcf-yoox-store-address"],
-                           store_data["location"]["city"]["name"], "", 1)
-        street_address = " ".join(address.split("|")[:-1])
-        store_zip = address.split("|")[-1].split(",")[0]
-        store.append(street_address)
-        store.append(store_data["location"]["city"]["name"])
-        store.append(address.split(
-            "|")[-1].split(",")[-1] if len(address.split("|")[-1].split(",")) == 3 else "<MISSING>")
-        if "new york" in store[-2].lower():
-            store[-1] = "NY"
-        # if store[-1] in addresses:
-        #     continue
-        # addresses.append(store[-1])
-        store.append(store_zip)
-        store.append(store_data["wpcf-yoox-store-country-iso"].upper())
-        if store[-1] == "US":
-            zip_split = re.findall(r"\b[0-9]{5}(?:-[0-9]{4})?\b", store[-2])
-            if zip_split:
-                store[-2] = zip_split[-1]
-        if store[-1] == "CA":
-            if len(store[-2]) == 3:
-                store[-3] = address.split("|")[-1].split(",")[-1].split(" ")[1]
-                store[-2] = " ".join(address.split("|")
-                                     [-1].split(",")[-1].split(" ")[2:])
-        store.append(store_data["ID"])
-        store.append(store_data["wpcf-yoox-store-phone"].replace("\xa0", "").split("Suggest")[0].split("|")[
-                     0] if "wpcf-yoox-store-phone" in store_data and store_data["wpcf-yoox-store-phone"] else "<MISSING>")
-        store.append(store_data["wpcf-store-main-store-brand"])
-        store.append(store_data["_yoox-store-lat"])
-        store.append(store_data["_yoox-store-lng"])
-        store.append("<MISSING>")
-        store.append(
-            "https://www.armani.com/experience/us/store-locator/#store/"+str(store_data["ID"]))
-        yield store
-    driver.quit()
+        found.append(location_name.strip() + street_address.strip())
+
+        try:
+            phone = store_data["address"]["phone1"]
+        except:
+            phone = ""
+        location_type = ""
+        raw_types = store_data["attributes"]
+        for row in raw_types:
+            if row["name"] == "Store Type":
+                types = row["values"]
+                for t in types:
+                    location_type = (location_type + ", " + t["value"]).strip()
+                location_type = location_type[1:].strip()
+        latitude = store_data["spatialData"]["latitude"]
+        longitude = store_data["spatialData"]["longitude"]
+        hours_of_operation = ""
+        raw_hours = store_data["openingTimes"]
+        for row in raw_hours:
+            if row["dayNumber"] == 1:
+                day = "Mon"
+            elif row["dayNumber"] == 2:
+                day = "Tue"
+            elif row["dayNumber"] == 3:
+                day = "Wed"
+            elif row["dayNumber"] == 4:
+                day = "Thu"
+            elif row["dayNumber"] == 5:
+                day = "Fri"
+            elif row["dayNumber"] == 6:
+                day = "Sat"
+            elif row["dayNumber"] == 7:
+                day = "Sun"
+
+            slots = row["slots"]
+            day_times = day
+            for slot in slots:
+                day_times = (
+                    day_times + " " + slot["openTime"] + "-" + slot["closeTime"]
+                ).strip()
+            hours_of_operation = (hours_of_operation + " " + day_times).strip()
+
+        page_url = "https://www.armani.com/en-us/store-locator#store/" + str(
+            store_data["storeNumber"]
+        )
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=website,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

@@ -1,0 +1,5 @@
+sgrequests==0.0.16
+sglogging==0.0.4
+beautifulsoup4==4.7.1
+lxml==4.6.2
+usaddress==0.5.10

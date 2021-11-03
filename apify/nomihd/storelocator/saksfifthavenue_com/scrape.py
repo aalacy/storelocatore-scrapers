@@ -60,7 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     timestamp = str(datetime.datetime.now().timestamp()).split(".")[0].strip()
     current_page = 0
@@ -162,26 +161,24 @@ def fetch_data():
             if phone == "" or phone is None:
                 phone = "<MISSING>"
 
-            if country_code == "US" or country_code == "CA":
-                curr_list = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                loc_list.append(curr_list)
+            curr_list = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
-    return loc_list
+            yield curr_list
 
 
 def scrape():

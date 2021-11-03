@@ -1,0 +1,84 @@
+from sglogging import sglog
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+
+session = SgRequests()
+website = "moncler_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
+
+DOMAIN = "https://www.moncler.com/en-us/"
+MISSING = "<MISSING>"
+
+
+def fetch_data():
+    if True:
+        url = "https://www.moncler.com/on/demandware.store/Sites-MonclerUS-Site/en_US/StoresApi-FindAll"
+        loclist = session.get(url, headers=headers).json()["stores"]
+        for loc in loclist:
+            if loc["countryCode"]["value"] != "US":
+                if loc["countryCode"]["value"] != "CA":
+                    if loc["countryCode"]["value"] != "GB":
+                        continue
+            store_number = loc["ID"]
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
+            location_name = loc["name"]
+            phone = loc["phone"]
+            hours_of_operation = ""
+            try:
+                street_address = loc["address1"] + " " + loc["address2"]
+            except:
+                street_address = loc["address1"]
+            city = loc["city"]
+            state = loc["stateCode"]
+            try:
+                zip_postal = loc["postalCode"]
+            except:
+                zip_postal = MISSING
+            country_code = loc["countryCode"]["value"]
+            page_url = "https://www.moncler.com/en-us/storelocator/" + loc["slug"]
+            log.info(page_url)
+            hour_list = loc["storeHours"]
+            for hour in hour_list:
+                hours_of_operation = (
+                    hours_of_operation + " " + hour["day"] + " " + hour["text"]
+                )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
+
+
+def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

@@ -103,6 +103,8 @@ def fetch_data():
         longitude = store_json["Longitude"]
 
         country_code = store_json["CountryCode"]
+        if country_code == "IE":
+            country_code = "GB"
         if country_code == "":
             country_code = "<MISSING>"
 
@@ -144,7 +146,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        if country_code == "US" or country_code == "CA":
+        if country_code == "US" or country_code == "CA" or country_code == "GB":
             loc_list.append(curr_list)
         # break
         # break

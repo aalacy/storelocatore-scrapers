@@ -61,8 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://storefinderapi.game.co.uk/api/game/stores"
     stores_req = session.get(search_url, headers=headers)
     results = json.loads(stores_req.text)
@@ -70,6 +68,7 @@ def fetch_data():
     for res in results:
         stores = res["stores"]
         for store in stores:
+
             page_url = str(store["StoreNumber"]) + "/" + store["StoreName"]
             page_url = "https://storefinder.game.co.uk/game/stores/" + quote(page_url)
 
@@ -79,23 +78,59 @@ def fetch_data():
 
             store_number = str(store["StoreNumber"])
 
-            store_resp = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_resp.text)
-            store_json = json.loads(
-                "".join(
-                    store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                ).strip()
-            )
-            location_name = store_json["name"]
+            location_name = ""
+            street_address = ""
+            city = ""
+            state = ""
+            zip = ""
+            country_code = "GB"
+            latitude = ""
+            longitude = ""
+            hours_of_operation = ""
+            location_type = "<MISSING>"
+            phone = ""
+            try:
+                store_resp = session.get(page_url, timeout=30, headers=headers)
+
+                store_sel = lxml.html.fromstring(store_resp.text)
+                store_json = json.loads(
+                    "".join(
+                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
+                    ).strip()
+                )
+                location_name = store_json["name"]
+
+                street_address = store_json["address"]["streetAddress"]
+                city = store_json["address"]["addressLocality"]
+                state = store_json["address"]["addressRegion"]
+                zip = store_json["address"]["postalCode"]
+
+                phone = store_json["telephone"]
+
+                hours_of_operation = "<MISSING>"
+                hour_list = []
+                try:
+                    hours = store_json["openingHours"]
+                    for hour in hours:
+                        hour_list.append(hour.replace('"', "").strip())
+                except:
+                    pass
+
+                hours_of_operation = ";".join(hour_list).strip()
+
+                latitude = store_json["geo"]["latitude"]
+                longitude = store_json["geo"]["longitude"]
+
+            except:
+                location_name = store["StoreName"]
+                street_address = store["Address1"]
+                if len(store["Address2"]) > 0:
+                    street_address = street_address + ", " + store["Address2"]
+
+                city = store["TownCity"]
+
             if location_name == "":
                 location_name = "<MISSING>"
-
-            street_address = store_json["address"]["streetAddress"]
-            city = store_json["address"]["addressLocality"]
-            state = store_json["address"]["addressRegion"]
-            zip = store_json["address"]["postalCode"]
-
-            country_code = "GB"
 
             if street_address == "" or street_address is None:
                 street_address = "<MISSING>"
@@ -108,23 +143,6 @@ def fetch_data():
 
             if zip == "" or zip is None:
                 zip = "<MISSING>"
-
-            phone = store_json["telephone"]
-
-            location_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-            hour_list = []
-            try:
-                hours = store_json["openingHours"]
-                for hour in hours:
-                    hour_list.append(hour.replace('"', "").strip())
-            except:
-                pass
-
-            hours_of_operation = ";".join(hour_list).strip()
-
-            latitude = store_json["geo"]["latitude"]
-            longitude = store_json["geo"]["longitude"]
 
             if latitude == "" or latitude is None:
                 latitude = "<MISSING>"
@@ -154,9 +172,7 @@ def fetch_data():
                 hours_of_operation,
             ]
 
-            loc_list.append(curr_list)
-
-    return loc_list
+            yield curr_list
 
 
 def scrape():

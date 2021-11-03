@@ -8,8 +8,18 @@ website = "jockey.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "www.jockey.com",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
@@ -69,16 +79,19 @@ def fetch_data():
     for store in stores:
         page_url = search_url
         locator_domain = website
-        location_name = store["AddressLine2"]
+        location_name = store["DisplayName"]
         if location_name == "":
             location_name = "<MISSING>"
 
-        street_address = store["AddressLine1"]
-        city = store["City"]
-        state = store["State"]
-        zip = store["PostalCode"]
+        street_address = store["Address"]["Line1"]
+        if store["Address"]["Line2"] is not None and len(store["Address"]["Line2"]) > 0:
+            street_address = street_address + store["Address"]["Line2"]
 
-        country_code = store["CountryCode"]
+        city = store["Address"]["City"]
+        state = store["Address"]["State"]["Short"]
+        zip = store["Address"]["PostalCode"]
+
+        country_code = store["Address"]["Country"]
 
         if street_address == "":
             street_address = "<MISSING>"
@@ -93,16 +106,13 @@ def fetch_data():
             zip = "<MISSING>"
 
         store_number = str(store["StoreCode"])
-        phone = store["MainPhone"]
+        phone = store["Contact"]["Phone"]
 
         location_type = "<MISSING>"
-        hours_of_operation = store["Hours"].replace(",", " ").strip()
-        try:
-            hours_of_operation = " ".join(hours_of_operation.split("\n")).strip()
-        except:
-            pass
-        latitude = store["Latitude"]
-        longitude = store["Longitude"]
+        hours_of_operation = "; ".join(store["Hours"]["Display"])
+
+        latitude = store["Address"]["LngLat"][1]
+        longitude = store["Address"]["LngLat"][0]
 
         if latitude == "":
             latitude = "<MISSING>"

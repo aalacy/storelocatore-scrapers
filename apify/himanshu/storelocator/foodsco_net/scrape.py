@@ -1,100 +1,133 @@
 import csv
-from bs4 import BeautifulSoup
-import re
 import json
+
+from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
-import phonenumbers
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('foodsco_net')
-
-
-
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    states = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
-    addresses = []
-    locator_domain = 'https://www.foodsco.net/'
 
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.100 Safari/537.36',
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    }
-    for state in states:
-        logger.info(state)
-        r = session.get("https://www.foodsco.net/stores/search?searchText="+str(state), headers=headers)
-        soup = BeautifulSoup(r.text, "lxml")
-        str1 = '{"stores":'+soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split('"stores":')[1].split(',"shouldShowFuelMessage":true}')[0]+"}"
-        json_data = json.loads(str1.replace("\\",""))
-        # logger.info(json_data)
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        
-    ##### store
-    
-        datas = json_data['stores']
-        for key in datas:
-            if key["banner"]:
-                if "FOODSCO" not in key["banner"]:
-                    continue
-                    # logger.info("ltype == ",key["banner"])
-                location_type = "foodsco"
-                # logger.info(location_type)
-                location_name = key['vanityName']
-                street_address = key['address']['addressLine1'].capitalize()
-                city = key['address']['city'].capitalize()
-                state = key['address']['stateCode']
-                zipp =  key['address']['zip']
-                country_code = key['address']['countryCode']
-                store_number = key['storeNumber']
-                if key['phoneNumber']:
-                    phone = phonenumbers.format_number(phonenumbers.parse(str(key['phoneNumber']), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-                else:
-                    phone = "<MISSING>"
-                latitude = key['latitude']
-                longitude = key['longitude']  
-                page_url = "https://www.foodsco.net/stores/details/"+str(key['divisionNumber'])+"/"+str(store_number)
-                hours_of_operation = ""
-                for day_hours in key["ungroupedFormattedHours"]:
-                    hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
-                
+    base_link = "https://www.foodsco.net/storelocator-sitemap.xml"
 
-                store = []
-                store.append(locator_domain if locator_domain else '<MISSING>')
-                store.append(location_name if location_name else '<MISSING>')
-                store.append(street_address if street_address else '<MISSING>')
-                store.append(city if city else '<MISSING>')
-                store.append(state if state else '<MISSING>')
-                store.append(zipp if zipp else '<MISSING>')
-                store.append(country_code if country_code else '<MISSING>')
-                store.append(store_number if store_number else '<MISSING>')
-                store.append(phone if phone else '<MISSING>')
-                store.append(location_type if location_type else '<MISSING>')
-                store.append(latitude if latitude else '<MISSING>')
-                store.append(longitude if longitude else '<MISSING>')
-                store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-                store.append(page_url)
-                if (store[-7]) in addresses:
-                    continue
-                addresses.append(store[-7])
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
-                yield store
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    
+    session = SgRequests()
+
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    items = base.find_all("loc")
+
+    data = []
+    locator_domain = "foodsco.net"
+
+    for item in items:
+        link = item.text
+        if "stores/details" in link:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            script = (
+                base.find("script", attrs={"type": "application/ld+json"})
+                .contents[0]
+                .replace("\n", "")
+                .strip()
+            )
+            store = json.loads(script)
+
+            location_name = store["name"]
+
+            try:
+                street_address = store["address"]["streetAddress"]
+                city = store["address"]["addressLocality"]
+                state = store["address"]["addressRegion"]
+                zip_code = store["address"]["postalCode"]
+            except:
+                raw_address = (
+                    base.find(class_="StoreAddress-storeAddressGuts")
+                    .get_text(" ")
+                    .replace(",", "")
+                    .replace(" .", ".")
+                    .replace("..", ".")
+                    .split("  ")
+                )
+                street_address = raw_address[0].strip()
+                city = raw_address[1].strip()
+                state = raw_address[2].strip()
+                zip_code = raw_address[3].split("Get")[0].strip()
+
+            country_code = "US"
+            store_number = link.split("/")[-1]
+            location_type = "<MISSING>"
+            phone = store["telephone"]
+            hours_of_operation = (
+                " ".join(store["openingHours"])
+                .replace("Su-Sa", "Sun - Sat:")
+                .replace("Su-Fr", "Sun - Fri:")
+                .replace("-00:00", " - Midnight")
+                .replace("Su ", "Sun")
+                .replace("Mo-Fr", "Mon - Fri")
+                .replace("Sa ", "Sat ")
+                .replace("  ", " ")
+            ).strip()
+            latitude = store["geo"]["latitude"]
+            longitude = store["geo"]["longitude"]
+
+            # Store data
+            data.append(
+                [
+                    locator_domain,
+                    link,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+            )
+
+    return data
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

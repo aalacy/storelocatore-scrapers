@@ -38,7 +38,7 @@ def write_output(data):
 def fetch_data():
     addresses1 = []
     headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
     r = session.get(
         "https://www.bentleymotors.com/en/apps/dealer-locator/_jcr_content.api.jsonx",
@@ -61,28 +61,28 @@ def fetch_data():
         for address in addresses:
             store = []
             store.append("https://www.bentleymotors.com")
-            store.append(store_data["dealerName"])
+            store.append(store_data["dealerName"].strip())
             store.append(
-                address["street"] + address["secondLine"]
+                address["street"].strip() + address["secondLine"].strip()
                 if "secondLine" in address
-                else address["street"]
+                else address["street"].strip()
             )
             if store[-1].count(",") == 2:
                 store[-1] = store[-1].split(",")[0]
-            store.append(address["city"])
-            store.append(address["county"].replace("Washington", "WA"))
-            store.append(address["postcode"])
-            store.append(store_data["countryId"])
-            store.append(address["id"])
+            store.append(address["city"].strip())
+            store.append(address["county"].strip().replace("Washington", "WA"))
+            store.append(address["postcode"].strip())
+            store.append(store_data["countryId"].strip())
+            store.append(address["id"].strip())
             phone = ""
             for department in address["departments"]:
                 if phone == "" and "phone" in department:
                     if department["phone"]:
                         phone = department["phone"]
-            store.append(phone if phone else "<MISSING>")
+            store.append(phone.strip() if phone else "<MISSING>")
             store.append("<MISSING>")
-            store.append(address["gcj02"]["lat"])
-            store.append(address["gcj02"]["lng"])
+            store.append(address["gcj02"]["lat"].strip())
+            store.append(address["gcj02"]["lng"].strip())
             hours = ""
             for department in address["departments"]:
                 if department["openingHours"] == []:
@@ -102,7 +102,8 @@ def fetch_data():
                             + hour["periods"][0]["close"]
                         )
             store.append(
-                hours.split("pre-owned")[0]
+                hours.strip()
+                .split("pre-owned")[0]
                 .replace("sales", "")
                 .split("  service")[0]
                 .replace("0 Sunday  ", "0 Sunday closed")
@@ -119,7 +120,7 @@ def fetch_data():
                 except:
                     page_url = "<MISSING>"
 
-            store.append(page_url)
+            store.append(page_url.strip())
 
             for i in range(len(store)):
                 if isinstance(store[i], str):

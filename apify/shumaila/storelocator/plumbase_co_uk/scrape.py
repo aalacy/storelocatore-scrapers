@@ -91,7 +91,7 @@ def fetch_data():
             )
             if sun.find("Closed") != -1:
                 sun = sun.replace("-", "").rstrip()
-            hours_of_operation = weekday + "\n" + sat + "\n" + sun
+            hours_of_operation = weekday + " " + sat + " " + sun
         else:
             hours_of_operation = "<MISSING>"
         data.append(

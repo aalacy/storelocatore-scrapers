@@ -1,158 +1,144 @@
-from sgrequests import SgRequests
+import json
+
 from bs4 import BeautifulSoup
-import csv
-import time
-import re
-from random import randint
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('sprouts_com')
+from sglogging import sglog
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+log = sglog.SgLogSetup().get_logger("sprouts.com")
+
+session = SgRequests()
+
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
 
 
+def fetch_data(sgw: SgWriter):
+    url = "https://shop.sprouts.com/api/v2/stores"
+    loclist = session.get(url, headers=headers, verify=False).json()["items"]
+
+    base_link = "https://www.sprouts.com/stores/"
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    all_links = []
+    state_links = base.find_all(class_="grid-x")[1].find_all("a")
+    for state_link in state_links:
+        req = session.get(state_link["href"], headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        cities = base.find(class_="grid-x").find_all(class_="cell")
+        for city in cities:
+            if (
+                "opening" not in city.text.lower()
+                and "coming soon" not in city.text.lower()
+            ):
+                all_links.append([city.a["href"], city, state_link["href"]])
+
+    for i in all_links:
+        link = i[0]
+        log.info(link)
+
+        store_num = i[1].find(class_="store-num").text.split("#")[-1].split(")")[0]
+
+        try:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            if (
+                store_num
+                == base.find(class_="store-number").text.split("#")[-1].strip()
+            ):
+                got_page = True
+            else:
+                got_page = False
+        except:
+            got_page = False
+
+        if got_page:
+            script = base.find(
+                "script", attrs={"type": "application/ld+json"}
+            ).contents[0]
+            store = json.loads(script)
+
+            location_name = base.h1.text.strip()
+            street_address = store["address"]["streetAddress"]
+            city = store["address"]["addressLocality"]
+            state = store["address"]["addressRegion"]
+            zip_code = store["address"]["postalCode"]
+            country_code = store["address"]["addressCountry"]
+            store_number = store_num
+            location_type = ""
+            phone = store["telephone"]
+            hours_of_operation = store["openingHours"]
+            latitude = store["geo"]["latitude"]
+            longitude = store["geo"]["longitude"]
+        else:
+            log.info("2nd Method..")
+            store = i[1]
+            store_number = ""
+            hours_of_operation = ""
+            location_type = ""
+            latitude = ""
+            longitude = ""
+            link = i[2]
+            for loc in loclist:
+                if store_num == loc["id"]:
+                    street_address = loc["address"]["address1"]
+                    if str(loc["address"]["address2"]) != "None":
+                        street_address = (
+                            street_address + " " + str(loc["address"]["address2"])
+                        )
+                    city = loc["address"]["city"]
+                    zip_code = loc["address"]["postal_code"]
+                    state = loc["address"]["province"]
+                    phone = loc["phone_number"]
+                    store_number = loc["id"]
+                    location_name = loc["name"]
+                    latitude = loc["location"]["latitude"]
+                    longitude = loc["location"]["longitude"]
+                    break
+            if not store_number:
+                log.info("3rd Method..")
+                store_number = store_num
+                location_name = store.h4.text
+                raw_address = list(store.find_all("p")[-1].stripped_strings)
+                street_address = raw_address[0]
+                city_line = raw_address[1].strip().split(",")
+                city = city_line[0].strip()
+                state = city_line[-1].strip().split()[0].strip()
+                zip_code = city_line[-1].strip().split()[1].strip()
+                phone = raw_address[-1]
+                if "-" not in phone:
+                    phone = ""
+
+        if "moved to a new location" in street_address:
+            continue
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain="https://www.sprouts.com/",
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-
-# Begin scraper
-
-	base_url="https://www.sprouts.com"
-	location_url ="https://www.sprouts.com/stores/"
-	locs = []
-	streets = []
-	states=[]
-	cities = []
-	types=[]
-	phones = []
-	zips = []
-	longs = []
-	lats = []
-	timing = []
-	ids=[]
-	pages_url=[]
-	urls=[]
-	res = []	
-
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
-
-	session = SgRequests()
-
-	req = session.get(location_url, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		item = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
-
-	locations = item.find_all(class_="cell small-6 medium-3 store-states")
-	for location in locations:
-		pages_url.append(location.a['href'])
-	
-	for u in pages_url:
-
-		req = session.get(u, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(u)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
-
-		stores=item.find_all(class_="cell medium-4 large-3 list-by-state")
-
-		for s in stores:
-			urls.append(s.a['href'])
-
-	total_links = len(urls)
-	for i, u in enumerate(urls):
-		logger.info("Link %s of %s" %(i+1,total_links))
-
-		req = session.get(u, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(u)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
-
-		locs.append(item.find('h1').text.strip())
-		try:
-			streets.append(item.find(class_='store-address').text.strip().split('\n')[-2].strip())
-		except:
-			streets.append("<MISSING>")
-		try:
-			cities.append(item.find(class_='store-address').text.strip().split('\n')[-1].split(',')[0].strip())
-		except:
-			cities.append("<MISSING>")
-		try:
-			states.append(item.find(class_='store-address').text.strip().split(',')[-1].split(' ')[1])
-		except:
-			states.append("<MISSING>")
-		try:
-			zips.append(item.find(class_='store-address').text.strip().split(',')[-1].split(' ')[-1])
-		except:
-			zips.append("<MISSING>")
-		try:
-			ids.append(item.find(class_='store-number').text.strip().split('#')[1])
-		except:
-			ids.append("<MISSING>")
-		try:
-			phones.append(item.find(class_='store-phone').text.strip())
-		except:
-			phones.append("<MISSING>")
-
-		types_list=item.find(class_='cell medium-6 store-services').find_all("li")
-		loc_type=''
-		for t in types_list:
-			loc_type=loc_type+' '+t.text.replace('\n',' ')
-		types.append(loc_type.strip())
-		lats.append(item.find(id='store-map')['lat'])
-		longs.append(item.find(id='store-map')['lon'])
-		try:
-			hours = item.find(id="open-hours").text.replace('\n',' ').strip()
-			hours = (re.sub(' +', ' ', hours)).strip()
-			timing.append(hours)
-		except:
-			timing.append("<MISSING>")
-		
-	return_main_object = []	
-	for l in range(len(locs)):
-		row = []
-		row.append(base_url)
-		row.append(locs[l] if locs[l] else "<MISSING>")
-		row.append(streets[l].strip() if streets[l] else "<MISSING>")
-		row.append(cities[l] if cities[l] else "<MISSING>")
-		row.append(states[l] if states[l] else "<MISSING>")
-		row.append(zips[l] if zips[l] else "<MISSING>")
-		row.append("US")
-		row.append(ids[l] if ids[l] else "<MISSING>")
-		row.append(phones[l] if phones[l] else "<MISSING>")
-		row.append(types[l] if types[l] else "<MISSING>")
-		row.append(lats[l] if lats[l] else "<MISSING>")
-		row.append(longs[l] if longs[l] else "<MISSING>")
-		row.append(timing[l] if timing[l] else "<MISSING>") 
-		row.append(urls[l] if urls[l] else "<MISSING>") 
-		
-		return_main_object.append(row)
-	
-    # End scraper
-	return return_main_object
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

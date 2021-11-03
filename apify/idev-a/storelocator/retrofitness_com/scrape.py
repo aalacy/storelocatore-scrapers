@@ -1,42 +1,12 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import json
 from sgrequests import SgRequests
 
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
 
 def fetch_data():
-    base_url = "https://retrofitness.com/"
+    locator_domain = "https://retrofitness.com/"
+    base_url = "https://retrofitness.com/find-a-gym-near-me/"
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept-language": "en-US,en;q=0.9",
@@ -46,54 +16,31 @@ def fetch_data():
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }
-    res = session.get("https://retrofitness.com/find-a-gym-near-me/", headers=headers)
-
-    store_list = json.loads(
-        res.text.split('$("#map4").maps(')[1].split(').data("wpgmp_maps")')[0]
-    )["places"]
-    data = []
-    for store in store_list:
-        page_url = store["location"]["extra_fields"]["website"]
-        location_name = store["title"]
-        street_address = store["address"].split(",")[0]
-        city = store["location"]["city"]
-        zip = store["location"]["postal_code"]
-        zip = "0" + zip if len(zip) == 4 else zip
-        state = store["location"]["state"]
-        latitude = store["location"]["lat"]
-        longitude = store["location"]["lng"]
-        country_code = store["location"]["country"]
-        store_number = store["id"]
-        location_type = "<MISSING>"
-        phone = store["location"]["extra_fields"]["phone"]
-        hours_of_operation = "<MISSING>"
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgRequests() as session:
+        res = session.get(base_url, headers=headers)
+        store_list = json.loads(
+            res.text.split('$("#map4").maps(')[1].split(').data("wpgmp_maps")')[0]
+        )["places"]
+        for store in store_list:
+            zip = store["location"]["postal_code"]
+            yield SgRecord(
+                store_number=store["id"],
+                page_url=store["location"]["extra_fields"]["website"],
+                location_name=store["title"],
+                street_address=store.get("address", "").split(",")[0],
+                city=store["location"]["city"],
+                state=store["location"]["state"],
+                latitude=store["location"]["lat"],
+                longitude=store["location"]["lng"],
+                zip_postal="0" + zip if len(zip) == 4 else zip,
+                country_code=store["location"]["country"],
+                phone=store["location"]["extra_fields"]["phone"],
+                locator_domain=locator_domain,
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

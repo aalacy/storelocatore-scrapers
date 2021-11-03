@@ -67,12 +67,10 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if 'store-name-breadcrumb" itemprop="title">' in line2:
-                name = (
-                    line2.split('store-name-breadcrumb" itemprop="title">')[1]
-                    .split("<")[0]
-                    .strip()
-                )
+            if '"au-sl-store-name-breadcrumb" itemprop="name">' in line2:
+                name = line2.split('"au-sl-store-name-breadcrumb" itemprop="name">')[
+                    1
+                ].split("<")[0]
             if 'itemprop="streetAddress">' in line2 and add == "":
                 add = line2.split('itemprop="streetAddress">')[1].split("<")[0].strip()
             if 'itemprop="addressLocality">' in line2 and city == "":

@@ -13,7 +13,7 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -59,13 +59,7 @@ def fetch_data():
     url = "https://www.royrogersrestaurants.com/locations"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find(
-        "div",
-        {
-            "class": "locations-overview js-view-dom-id-61741900e5dbe22a472378ccbca05138fc8e90f003892f0ae33accb94c3291a9"
-        },
-    )
-    locations = linklist.findAll("ul", {"class": "locations"})
+    locations = soup.findAll("ul", {"class": "locations"})
     for loc in locations:
         allloc = loc.findAll("li")
         for l in allloc:
@@ -76,6 +70,15 @@ def fetch_data():
             phone = l.find("p", {"class": "phone-number"}).text
             phone = phone.strip()
             street = l.find("span", {"class": "address-line1"}).text
+            street2 = l.find("span", {"class": "address-line2"})
+            if street2 is not None:
+                street2 = street2.text
+                street = street + " " + street2
+            if (
+                street
+                == "Highspire Travel Plaza Exit 247 Eastbound, Milepost 249.7, 300 Industrial Lane, Middletown, PA 17057"
+            ):
+                street = "Highspire Travel Plaza Exit 247 Eastbound, Milepost 249.7, 300 Industrial Lane"
             street = street.strip()
             city = l.find("span", {"class": "locality"}).text
             city = city.strip()
@@ -89,12 +92,43 @@ def fetch_data():
             p = session.get(pagelink, headers=headers, verify=False)
             soup = BeautifulSoup(p.text, "html.parser")
             content = soup.find("div", {"class": "region-content"})
-            hours = content.findAll("p")[-1].text
-            hours = hours.replace("\n", " ")
-            hours = hours.replace(",", ":").strip()
-            if hours == "":
-                hours = "<MISSING>"
+            hours = content.findAll("p")
+            if len(hours) == 2:
+                HOO = "<MISSING>"
+            if len(hours) == 3:
+                HOO = hours[-1].text.strip()
+            if len(hours) == 4:
+                HOO = hours[-1].text.strip()
+                if (
+                    pagelink
+                    == "https://www.royrogersrestaurants.com/locations/manchester-lakes"
+                ):
+                    hr1 = hours[-1].text.strip()
+                    hr2 = hours[-2].text.strip()
+                    HOO = hr1 + " " + hr2
+            if len(hours) == 5:
+                hr1 = hours[-1].text.strip()
+                hr2 = hours[-2].text.strip()
+                HOO = hr1 + " " + hr2
+            if len(hours) == 6:
+                hr1 = hours[-1].text.strip()
+                hr2 = hours[-2].text.strip()
+                hr3 = hours[-3].text.strip()
+                HOO = hr1 + " " + hr2 + " " + hr3
+            HOO = HOO.replace("\n", " ")
+            HOO = HOO.replace(",", ":").strip()
+            if HOO == "":
+                HOO = "<MISSING>"
+            coords = soup.find("script", {"type": "application/json"})
+            coord = str(coords)
 
+            if coord.find("coordinates") != -1:
+                coord = coord.split('"coordinates":[')[1].split("]}")[0]
+                lng = coord.split(",")[0].strip()
+                lat = coord.split(",")[1].strip()
+            else:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
             data.append(
                 [
                     "https://www.royrogersrestaurants.com/",
@@ -108,9 +142,9 @@ def fetch_data():
                     "<MISSING>",
                     phone,
                     "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    hours,
+                    lat,
+                    lng,
+                    HOO,
                 ]
             )
     return data

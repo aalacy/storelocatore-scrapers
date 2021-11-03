@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import json
 
-website = "matalan_co.uk"
+website = "matalan.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -84,6 +84,7 @@ def fetch_data():
                 street_address + ", " + store["attributes"]["address_line_2"]
             )
 
+        street_address = street_address.replace("Matalan - ", "").strip()
         city = store["attributes"]["city"]
         zip = store["attributes"]["postcode"]
         country_code = "GB"
@@ -124,7 +125,8 @@ def fetch_data():
                 open_time = store["attributes"][day + "_opening_time"]
                 if open_time is not None:
                     close_time = store["attributes"][day + "_closing_time"]
-                    hours_list.append(day + ":" + open_time + "-" + close_time)
+                    if close_time is not None:
+                        hours_list.append(day + ":" + open_time + "-" + close_time)
 
         hours_of_operation = "; ".join(hours_list).strip()
 

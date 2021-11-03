@@ -7,11 +7,12 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
+    with open("data.csv", mode="w", newline="") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,6 +31,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -57,8 +59,8 @@ def fetch_data():
 
     r = session.get("https://www.graduatehotels.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    for li in soup.find("ul", class_="directory-navigation").find_all(
-        "a", class_="location-item"
+    for li in soup.find("ul", {"class": "directory-navigation"}).find_all(
+        "a", {"class": "location-item"}
     ):
         page_url = li["href"]
         r_loc = session.get(page_url, headers=headers)
@@ -70,6 +72,15 @@ def fetch_data():
                 .stripped_strings
             )
             street_address = address[0].strip()
+            openings = soup_loc.find("p", class_="lead banner-copy")[
+                "data-main-subtitle"
+            ]
+            if "Opening Summer 2021" in openings:
+                location_type = "Coming Soon"
+            elif "Opening Spring 2021" in openings:
+                location_type = "Coming Soon"
+            else:
+                location_type = "Graduate Hotel"
             city = address[1].split(",")[0].strip()
             state = address[1].split(",")[1].split()[0].strip()
             zipp = address[1].split(",")[1].split()[-1].strip()
@@ -106,6 +117,7 @@ def fetch_data():
             )
         except:
             pass
+
         if "View Tucson on" in city:
             city = "Tucson"
             location_name = city
@@ -124,7 +136,9 @@ def fetch_data():
             phone = "517 348 0900"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-        location_type = "Graduate Hotel"
+        if "New York" in location_name:
+            location_name = "Roosevelt Island"
+
         store = [
             locator_domain,
             location_name,

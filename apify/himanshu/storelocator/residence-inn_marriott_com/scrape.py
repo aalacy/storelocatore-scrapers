@@ -81,12 +81,12 @@ def fetch_data():
                                 )
                                 if street_address
                                 else "<MISSING>"
-                            )
+                            )  # address
                             output.append(city if city else "<MISSING>")
                             output.append(state if state else "<MISSING>")
                             output.append(zipp if zipp else "<MISSING>")
                             output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
+                            output.append(key)
                             output.append(phone if phone else "<MISSING>")
                             output.append("Residence Inn by Marriott")
                             output.append(latitude if latitude else "<MISSING>")
@@ -130,12 +130,12 @@ def fetch_data():
                                 )
                                 if street_address
                                 else "<MISSING>"
-                            )
+                            )  # address
                             output.append(city if city else "<MISSING>")
                             output.append(state if state else "<MISSING>")
                             output.append(zipp if zipp else "<MISSING>")
                             output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
+                            output.append(key)
                             output.append(phone if phone else "<MISSING>")
                             output.append("Residence Inn by Marriott")
                             output.append(latitude if latitude else "<MISSING>")
@@ -179,12 +179,12 @@ def fetch_data():
                                 )
                                 if street_address
                                 else "<MISSING>"
-                            )
+                            )  # address
                             output.append(city if city else "<MISSING>")
                             output.append(state if state else "<MISSING>")
                             output.append(zipp if zipp else "<MISSING>")
                             output.append(country_code if country_code else "<MISSING>")
-                            output.append("<MISSING>")
+                            output.append(key)
                             output.append(phone if phone else "<MISSING>")
                             output.append("Residence Inn by Marriott")
                             output.append(latitude if latitude else "<MISSING>")

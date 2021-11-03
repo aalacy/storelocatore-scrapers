@@ -1,5 +1,2 @@
 bs4==0.0.1
-usaddress
-sgrequests
-lxml
-sglogging
+sgrequests==0.1.4

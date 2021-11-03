@@ -1,118 +1,112 @@
-from sgselenium import SgSelenium
+import json
+
 from bs4 import BeautifulSoup
-import csv
-import time
-import re
-from random import randint
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('abcstores_com')
+from geopy.geocoders import Nominatim
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgpostal.sgpostal import parse_address_usa
+
+from sgrequests import SgRequests
+
+geolocator = Nominatim(user_agent="geoapiExercises")
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/6973/stores.js?callback=SMcallback2"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-	
-	base_link = "https://abcstores.com/store-mapper/"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	driver = SgSelenium().chrome()
-	time.sleep(2)
-	driver.get(base_link)
-	time.sleep(randint(8,10))
+    stores = json.loads(base.text.split('stores":')[1].split("})")[0])
 
-	base = BeautifulSoup(driver.page_source,"lxml")
-	
-	data = []
-	items = base.find(id="storemapper-list").find_all('li')
+    for store in stores:
+        locator_domain = "abcstores.com"
+        location_name = store["name"]
 
-	for i, item in enumerate(items):
-		logger.info("Link %s of %s" %(i+1,len(items)))
-		locator_domain = "abcstores.com"
-		location_name = item.h4.text.strip()
-		logger.info(location_name)
+        addr = parse_address_usa(store["address"])
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address = street_address + " " + addr.street_address_2
+        city = addr.city
+        try:
+            state = addr.state.split(",")[0].strip().upper()
+        except:
+            state = addr.state
+        zip_code = addr.postcode
+        country_code = addr.country
 
-		map_link = item.find(class_="storemapper_directions").a['href']
-		driver.get(map_link)
-		time.sleep(randint(8,10))
-		map_base = BeautifulSoup(driver.page_source,"lxml")
-		raw_address_line = map_base.find_all(class_="tactile-searchbox-input")[1]['aria-label'].replace("Destination","").strip()
-		raw_address = raw_address_line.split(',')
-		try:
-			street_address = raw_address[0].strip()
-			city = raw_address[1].strip()
-			state = raw_address[2].split()[0].strip()
-			try:
-				zip_code = re.findall(r'[0-9]{5}', raw_address_line)[0]
-			except:
-				zip_code = "<MISSING>"
-		except:
-			street_address = item.find(class_="storemapper-address").text.strip()
-			city = "<MISSING>"
-			state = "<MISSING>"
-			try:
-				zip_code = re.findall(r'[0-9]{5}', raw_address_line)[0]
-			except:
-				zip_code = "<MISSING>"
-		if state.isnumeric():
-			state = "<MISSING>"
-		if "ABC Store" in street_address or "Ritz Carlton" in street_address:
-			street_address = city
-			city = state
-			state = "<MISSING>"
-		if street_address == "Office Road":
-			street_address = item.find(class_="storemapper-address").text.strip()
-			city = "Lahaina"
-			state = "HI"
-			zip_code = "96761"
-		if "building" in street_address.lower():
-			raw_address = item.find(class_="storemapper-address").text.strip()
-			street_address = raw_address[:raw_address.find(", Saipan")].strip()
-			city = "Saipan"
-			state = "Northern Mariana Islands"
-			try:
-				zip_code = re.findall(r'[0-9]{5}', raw_address)[0]
-			except:
-				zip_code = "<MISSING>"
-		if street_address == "23 Fremont St":
-			city = "Las Vegas"
-			state = "NV"
-			zip_code = "89101"
-		if city == "Dededo" or city == "Tamuning" or city == "Tumon Bay":
-			state = "Guam"
-		if "Tumon" in city:
-			city == "Tumon Bay"
-			state = "Guam"
-		country_code = "US"
-		phone = item.find(class_="storemapper-phone").text.strip()
-		location_type = "<MISSING>"
-		try:
-			hours_of_operation = item.find(class_="storemapper-custom-1").text.replace("~","-").replace("Hours:","").strip()
-		except:
-			hours_of_operation = "<MISSING>"
-		try:
-			store_number = re.findall(r'\#[0-9]{1,5}', location_name)[0][1:]
-		except:
-			store_number = "<MISSING>"
+        try:
+            if "Northern" in country_code:
+                continue
+        except:
+            pass
 
-		lat = item.find(class_="storemapper-storelink")["data-lat"]
-		longit = item.find(class_="storemapper-storelink")["data-lng"]
+        if "Bayview Phase" in street_address:
+            street_address = store["address"]
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, lat, longit, hours_of_operation])
+        latitude = store["latitude"]
+        longitude = store["longitude"]
 
-	driver.close()
-	return data
+        location = geolocator.reverse(str(latitude) + "," + str(longitude))
+        address = parse_address_usa(location.address)
+        add_split = location.address.split(",")
+        if not state:
+            state = address.state
+        if not city:
+            city = address.city
+        if not country_code:
+            country_code = address.country
+        if not zip_code:
+            zip_code = address.postcode
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+        if not state:
+            state = add_split[-3].strip()
+        if not city:
+            city = add_split[-4].replace("County", "").strip()
+        if not zip_code:
+            zip_code = add_split[-2].strip()
 
-scrape()
+        store_number = location_name.split("#")[-1].strip().split("-")[0].strip()
+        if not store_number[0].isdigit():
+            store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = store["phone"]
+
+        hours_of_operation = store["custom_field_1"]
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
+
+        link = "https://abcstores.com/store-mapper/"
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

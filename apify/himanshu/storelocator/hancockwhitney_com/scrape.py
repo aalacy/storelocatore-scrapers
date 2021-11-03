@@ -1,67 +1,95 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
-import sgzip
-from datetime import datetime
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
-logger = SgLogSetup().get_logger('hancockwhitney_com')
+from sgrequests import SgRequests
 
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
+    }
+    base_link = "https://maps.locations.hancockwhitney.com/api/getAsyncLocations?template=search&radius=1000&level=search&search=36608"
+    data = session.get(base_link, headers=headers).json()["maplist"]
 
-def fetch_data():
-    return_main_object = []
-    addresses = []
-    cords = sgzip.coords_for_radius(200)
-    for cord in cords:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-        }
-        # logger.info("https://hancockwhitney-api-production.herokuapp.com/location?latitude=" + str(cord[0]) + "&locationTypes=atm,branch,business&longitude=" + str(cord[1]) + "&pageSize=100&radius=200&searchByState=&sort=distance&sortDir=-1")
-        r = session.get("https://hancockwhitney-api-production.herokuapp.com/location?latitude=" + str(cord[0]) + "&locationTypes=atm,branch,business&longitude=" + str(cord[1]) + "&pageSize=100&radius=200&searchByState=&sort=distance&sortDir=-1",headers=headers)
-        data = r.json()["data"]
-        for store_data in data:
-            store = []
-            store.append("https://www.hancockwhitney.com")
-            store.append(store_data["name"])
-            store.append(store_data["address"]["street"])
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(store_data["address"]["city"])
-            store.append(store_data["address"]["state"])
-            store.append(store_data["address"]["zip"])
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(store_data["phone"].replace("_","-") if "phone" in store_data and store_data["phone"] and store_data["phone"] != "TBD" else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(store_data["geo"]["coordinates"][1])
-            store.append(store_data["geo"]["coordinates"][0])
-            hours = ""
-            for key in store_data:
-                if "Hours" in key:
-                    hours = hours + key + " " + store_data[key] + " "
-            store.append(hours if hours else "<MISSING>")
-            store.append("<MISSING>")
-            yield store
+    base = BeautifulSoup(data, "lxml")
+    js = (
+        "["
+        + base.text.replace("\r\n", "")
+        .replace("\\", "")
+        .replace("    ", "")
+        .replace(': "{', ": {")
+        .replace('}",', "},")[:-1]
+        + "]"
+    )
+    stores = json.loads(js)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    for store_data in stores:
+        store = []
+        store.append("https://www.hancockwhitney.com")
+        store.append("Hancock Whitney " + store_data["location_name"])
+        try:
+            street_address = store_data["address_1"] + " " + store_data["address_2"]
+        except:
+            street_address = store_data["address_1"]
+        store.append(store_data["city"])
+        store.append(store_data["region"])
+        store.append(store_data["post_code"])
+        store.append(store_data["country"])
+        store.append(store_data["lid"])
+        store.append(store_data["local_phone"])
+        store.append(store_data["Location Type_CS"])
+        store.append(store_data["lat"])
+        store.append(store_data["lng"])
+        hours = ""
+        try:
+            raw_days = store_data["hours_sets:primary"]["days"]
+        except:
+            hours = "<MISSING>"
 
-scrape()
+        if not hours:
+            for day in raw_days:
+                hour = raw_days[day]
+                try:
+                    if hour == "closed":
+                        clean_hours = day + " " + hour.title()
+                    else:
+                        opens = hour[0]["open"]
+                        closes = hour[0]["close"]
+                        clean_hours = day + " " + opens + "-" + closes
+                    hours = (hours + " " + clean_hours).strip()
+                except:
+                    try:
+                        hours = (hours + " " + day + " " + hour).strip()
+                    except:
+                        hours = "SOME OFF"
+        link = store_data["url"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=store[0],
+                page_url=link,
+                location_name=store[1],
+                street_address=street_address,
+                city=store[2],
+                state=store[3],
+                zip_postal=store[4],
+                country_code=store[5],
+                store_number=store[6],
+                phone=store[7],
+                location_type=store[8],
+                latitude=store[9],
+                longitude=store[10],
+                hours_of_operation=hours,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

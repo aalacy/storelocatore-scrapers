@@ -1,2 +1,1 @@
 --ignore StreetAddressHasNumber --ignore GeoConsistencyValidator (Confirmed on website)
---ignore LatLngDuplicationValidator (2 POI at same address)

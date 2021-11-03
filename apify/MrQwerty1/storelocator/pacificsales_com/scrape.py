@@ -1,5 +1,4 @@
 import csv
-import re
 
 from concurrent import futures
 from lxml import html
@@ -41,14 +40,12 @@ def get_ids():
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0"
     }
     cookies = {"intl_splash": "false"}
-    regex = r"storeID: '(\d{4})'"
 
     session = SgRequests()
     r = session.get(url, headers=headers, cookies=cookies)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'loadStoreData()')]/text()"))
 
-    return re.findall(regex, text)
+    return tree.xpath("//*[@data-store-id]/@data-store-id")
 
 
 def get_data(_id):
@@ -76,6 +73,9 @@ def get_data(_id):
 
     _tmp = []
     tr = tree.xpath("//tr[contains(@class, 'c-location-hours-details-row')]")
+    if len(tr) > 7:
+        tr = tr[:7]
+
     for t in tr:
         day = "".join(t.xpath("./td[1]/text()")).strip()
         time = "".join(

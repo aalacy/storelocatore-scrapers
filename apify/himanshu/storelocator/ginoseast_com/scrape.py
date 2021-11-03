@@ -1,4 +1,5 @@
 import csv
+import usaddress
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
@@ -42,43 +43,74 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
     r = session.get("https://www.ginoseast.com/locations", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+    soup = BeautifulSoup(r.text, "html.parser")
     for data in soup.find("div", {"id": "page-5db3337c9f175d60ba85158a"}).find_all(
         "h3"
     ):
         for link in data.find_all("a"):
             page_url = "https://www.ginoseast.com" + link["href"]
             r1 = session.get(page_url, headers=headers)
-            soup1 = BeautifulSoup(r1.text, "lxml")
+            soup1 = BeautifulSoup(r1.text, "html.parser")
             name = soup1.h1.text.strip()
             full = list(
                 soup1.find_all("div", {"class": "col sqs-col-6 span-6"})[1]
                 .find("div", {"class": "row sqs-row"})
                 .stripped_strings
             )
-            phone = full[-1]
+
+            phone = "".join(full).split("Phone")[1].strip()
+            if phone.find("Address") != -1:
+                phone = phone.split("Address")[0].strip()
+
             if "coming soon" in phone.lower():
                 continue
 
-            try:
-                city = full[-3].split(",")[0]
-            except:
-                city = "<MISSING>"
-
-            try:
-                state = full[-3].split(",")[1].strip().split()[0]
-            except:
-                state = "<MISSING>"
-
-            try:
-                zipcode = full[-3].split(",")[1].strip().split()[-1]
-            except:
-                zipcode = "<MISSING>"
+            adr = " ".join(full).split("Address")[1].strip()
+            if adr.find("Phone") != -1:
+                adr = adr.split("Phone")[0].strip()
+            a = usaddress.tag(adr, tag_mapping=tag)[0]
+            city = a.get("city") or "<MISSING>"
+            state = a.get("state") or "<MISSING>"
+            zipcode = a.get("postal") or "<MISSING>"
 
             if zipcode == "60665":
                 zipcode = "60605"
-            street = full[-4]
-            hours = " ".join(full[1:-5])
+            street = f"{a.get('address1')} {a.get('address2')}".replace(
+                "None", ""
+            ).strip()
+            hours = (
+                " ".join(full[1:-5])
+                .replace("Now Open For Safe Indoor Dining Service", "")
+                .strip()
+            )
             if not hours:
                 hours = "<MISSING>"
             store = []

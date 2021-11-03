@@ -34,10 +34,7 @@ def write_output(data):
 def fetch_data():
     out = []
     url = "https://www.urbanoutfitters.com/stores/"
-    api_url = (
-        "https://www.urbanoutfitters.com/api/misl/v1/stores/search?&country=US,"
-        "CA&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5&brandId=51|01"
-    )
+    api_url = "https://www.urbanoutfitters.com/api/misl/v1/stores/search?&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5&brandId=51|01"
 
     session = SgRequests()
     r = session.get(api_url)
@@ -63,9 +60,10 @@ def fetch_data():
         postal = j.get("zip") or "<MISSING>"
         store_number = j.get("storeNumber") or "<MISSING>"
         page_url = f'https://www.urbanoutfitters.com/stores/{j.get("slug")}'
-        phone = j.get("storePhoneNumber") or "<MISSING>"
-        if phone.find("?") != -1:
-            phone = "<MISSING>"
+        phone = (
+            j.get("addresses", {}).get("marketing", {}).get("phoneNumber")
+            or "<MISSING>"
+        )
         country_code = j["country"]
         latitude = j.get("loc")[1] if j.get("loc") else "<MISSING>"
         longitude = j.get("loc")[0] if j.get("loc") else "<MISSING>"
@@ -92,7 +90,7 @@ def fetch_data():
 
         hours_of_operation = ";".join(_tmp)
         if hours_of_operation.count("CLOSED") == 7:
-            continue
+            hours_of_operation = "Closed"
 
         row = [
             locator_domain,

@@ -40,33 +40,38 @@ def fetch_data():
     items = []
 
     DOMAIN = "bibibop.com"
-    start_url = "https://bibibop.com/locations-all"
+    start_url = "https://bibibop.com/locations/"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//p[contains(@class, "store-info")]')
+    all_locations = dom.xpath('//span[@class="location-info"]/a/@href')
 
-    for poi_html in all_locations:
-        store_url = poi_html.xpath('.//a[@class="location-order-button"]/@href')
-        store_url = store_url[0] if store_url else "<MISSING>"
-        location_name = poi_html.xpath('.//strong[@class="store-name"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_data = poi_html.xpath("text()")
-        raw_data = [elem.strip() for elem in raw_data if elem.strip()]
-        street_address = raw_data[0]
-        city = raw_data[1].split(", ")[0]
-        state = raw_data[1].split(", ")[-1].split()[0]
-        zip_code = raw_data[1].split(", ")[-1].split()[-1]
+    for store_url in list(set(all_locations)):
+        if "menu" in store_url:
+            continue
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//div[@id="single-location-body"]//h1/text()')[
+            0
+        ].strip()
+        raw_address = loc_dom.xpath('//p[@class="address-container"]/text()')
+        raw_address = [e.strip() for e in raw_address]
+        street_address = raw_address[0]
+        city = raw_address[1].split(", ")[0]
+        state = raw_address[1].split(", ")[-1].split()[0]
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = raw_data[2]
+        phone = loc_dom.xpath('//p[@class="telephone"]/a/text()')[0]
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = raw_data[-2:]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        latitude = loc_dom.xpath("//@data-latitude")[0]
+        longitude = loc_dom.xpath("//@data-longitude")[0]
+        hoo = loc_dom.xpath(
+            '//div[@class="tabs-panel is-active"]//tbody[tr[@class="today"]]//text()'
         )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         if store_url == "<MISSING>":
             location_type = "coming soon"

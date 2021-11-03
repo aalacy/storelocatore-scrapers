@@ -11,6 +11,7 @@ def write_output(data):
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
 
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -29,6 +30,7 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
@@ -45,18 +47,22 @@ def fetch_data():
         location_soup = BeautifulSoup(location_request.text, "lxml")
         name = location.find("a")["href"].split("/")[-2]
         phone = location_soup.find("span", {"class": "phone"}).text
-        hours = " ".join(
-            list(
-                location_soup.find("aside", {"id": "sidebar_location"}).stripped_strings
+        hours = (
+            " ".join(
+                list(
+                    location_soup.find(
+                        "aside", {"id": "sidebar_location"}
+                    ).stripped_strings
+                )
             )
-        )
+        ).split("Happy Hour")[0]
         address = list(
             location_soup.find(
                 "div", {"class": "address-information col_5"}
             ).stripped_strings
         )
-        lat = "<MISSING>"
-        lng = "<MISSING>"
+        lat = ""
+        lng = ""
         for script in location_soup.find_all("script"):
             if "center: { lat: " in script.text:
                 lat = script.text.split("center: { lat: ")[1].split(",")[0]
@@ -78,9 +84,13 @@ def fetch_data():
         store.append("mary's pizza shack")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
-        store.append(hours if hours != "" else "<MISSING>")
-        store.append(location.find("a")["href"] if location.find("a") else "<MISSING>")
-        return_main_object.append(store if store else "<MISSING>")
+        store.append(
+            hours.replace("Store Hours ", "").strip() if hours != "" else "<MISSING>"
+        )
+        store.append(
+            location.find("a")["href"] if location.find("a")["href"] else "<MISSING>"
+        )
+        return_main_object.append(store)
     return return_main_object
 
 

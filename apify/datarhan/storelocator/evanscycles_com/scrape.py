@@ -1,3 +1,4 @@
+import re
 import csv
 from lxml import etree
 from urllib.parse import urljoin
@@ -52,7 +53,7 @@ def fetch_data():
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath('//a[@id="lnkStoreUrl"]/@href')
+    all_locations = dom.xpath('//div[@class="letItems"]/a/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url.lower())
         loc_response = session.get(store_url, headers=headers)
@@ -78,19 +79,18 @@ def fetch_data():
             '//div[@itemprop="address"]/following-sibling::div[4]/text()'
         )
         zip_code = zip_code[0].strip() if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = re.findall('countryCode":"(.+?)",', loc_response.text)[0]
+        if country_code not in ["US", "GB", "CA"]:
+            continue
         store_number = store_url.split("-")[-1]
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
+        phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         hours_of_operation = loc_dom.xpath(
-            '//div[@class="col-xs-12 col-md-6 Storesecondcollum"]/text()'
+            '//meta[@itemprop="openingHours"]/following-sibling::span/text()'
         )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

@@ -1,72 +1,100 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
-import re
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sglogging import sglog
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+from sgrequests import SgRequests
 
-def fetch_data():
-	
-	base_link = "https://www.kumandgo.com/location-sitemap.xml"
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+log = sglog.SgLogSetup().get_logger(logger_name="kumandgo.com")
 
-	data = []
 
-	items = base.find_all("loc")
-	locator_domain = "kumandgo.com"
+def fetch_data(sgw: SgWriter):
 
-	for item in items:
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-		link = item.text
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+    session = SgRequests()
+    session1 = SgRequests()
 
-		raw_data = base.find(id="kng-map")
+    locator_domain = "kumandgo.com"
 
-		location_name = base.h1.text.strip()
-		street_address = raw_data["data-address"].strip()
-		city = raw_data["data-city"].strip()
-		state = raw_data["data-state"].strip()
-		zip_code = raw_data["data-zip"].strip()
-		if zip_code == "72713":
-			zip_code = "72712"
-		country_code = "US"
-		store_number = link.split("/")[-2]
-		phone = raw_data["data-phone"].strip()
+    found = []
+    max_distance = 500
+    max_results = 100
 
-		location_type = base.find(class_="no-decoration feature-icons").text.strip().replace("\n\n\n\n\n",",").strip()
-		location_type = (re.sub(' +', ' ', location_type)).replace(" , ",",").strip()
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_radius_miles=max_distance,
+        max_search_results=max_results,
+    )
 
-		try:
-			hours_of_operation = base.find(class_="hours-24").text.strip()
-		except:
-			raw_hours = str(base.find(class_="hours")).replace("<br/>"," ").strip()[:-6]
-			raw_hours = raw_hours[raw_hours.rfind(">")+1:].strip()
-			hours_of_operation = (re.sub(' +', ' ', raw_hours)).strip()
+    for lat, lng in search:
+        log.info(
+            "Searching: %s, %s | Items remaining: %s"
+            % (lat, lng, search.items_remaining())
+        )
 
-		latitude = raw_data["data-latitude"].strip()
-		longitude = raw_data["data-longitude"].strip()
+        base_link = (
+            "https://www.kumandgo.com/wordpress/wp-admin/admin-ajax.php?action=store_search&lat=%s&lng=%s&max_results=100&search_radius=%s"
+            % (lat, lng, max_distance)
+        )
+        stores = session.get(base_link, headers=headers).json()
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        for store in stores:
+            location_name = "KUM & GO #" + store["store"]
+            street_address = store["address"]
+            city = store["city"]
+            state = store["state"]
+            zip_code = store["zip"]
+            country_code = store["country"]
+            store_number = store["store"]
+            phone = store["phone"]
+            hours_of_operation = store["hours"]
+            if not hours_of_operation:
+                hours_of_operation = "<MISSING>"
+            latitude = store["lat"]
+            longitude = store["lng"]
+            search.found_location_at(float(latitude), float(longitude))
 
-	return data
+            if store_number in found:
+                continue
+            found.append(store_number)
+            link = store["permalink"]
+            req = session1.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+            location_type = ", ".join(
+                list(base.find(class_="no-decoration feature-icons").stripped_strings)
+            )
 
-scrape()
+            if "Open 24hrs" in location_type:
+                hours_of_operation = "Open 24 Hours"
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

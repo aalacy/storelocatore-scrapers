@@ -1,57 +1,136 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-import json
+from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+logger = SgLogSetup().get_logger("fiveguys_com")
+
 
 def fetch_data():
-    url = 'https://www.fiveguys.com/5gapi/stores/ByDistance?lat=40.7135097&lng=-73.9859414&distance=2500000&secondaryDistance=25000000&lang=en&units=M'
+    locs = [
+        "https://restaurants.fiveguys.com/concourse-b-gate-b71-dulles-international-airport"
+    ]
+    url = "https://restaurants.fiveguys.com/sitemap.xml"
     r = session.get(url, headers=headers)
-    for item in json.loads(r.content):
-        store = item['ClientKey']
-        name = item['LocationName']
-        cs = item['ComingSoon']
-        hours = item['Hours']
-        phone = item['PhoneNumber']
-        add = item['AddressLine1'] + ' ' + item['AddressLine2']
-        add = add.strip().replace('<p>','').replace('</p>','').replace('\\n','')
-        city = item['City']
-        state = item['StateOrProvince']
-        zc = item['PostalCode']
-        country = item['Country']
-        lat = item['Latitude']
-        lng = item['Longitude']
-        website = 'fiveguys.com'
-        typ = 'Restaurant'
-        purl = '<MISSING>'
-        if 'style' in hours:
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        if hours == '':
-            hours = '<MISSING>'
-        if city == 'ON':
-            state = 'ON'
-            city = 'Burlington'
-        if lat == '0.0':
-            lat = '<MISSING>'
-            lng = '<MISSING>'
-        if country == 'CA' or country == 'US':
-            if cs is not True:
-                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    website = "fiveguys.com"
+    typ = "<MISSING>"
+    country = "US"
+    logger.info("Pulling Stores")
+    Found = True
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "https://restaurants.fiveguys.com/al" in line:
+            Found = False
+        if (
+            "<loc>https://restaurants.fiveguys.com/" in line
+            and Found
+            and "concourse-b-gate-b71-dulles" not in line
+        ):
+            locs.append(line.split("<loc>")[1].split("<")[0].replace("&#39;", "'"))
+    url = "https://restaurants.fiveguys.ca/sitemap.xml"
+    r = session.get(url, headers=headers)
+    Found = True
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if "https://restaurants.fiveguys.ca/ab</loc>" in line:
+            Found = False
+        if 'hreflang="en-CA" href="https://restaurants.fiveguys.ca/' in line and Found:
+            locs.append(line.split('href="')[1].split('"')[0].replace("&#39;", "'"))
+    for loc in locs:
+        CS = False
+        logger.info(loc)
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = "<MISSING>"
+        phone = ""
+        lat = ""
+        lng = ""
+        if "fiveguys.ca/" in loc:
+            country = "CA"
+        else:
+            country = "US"
+        hours = ""
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if "is opening soon" in line2:
+                CS = True
+            if 'ntityType":"restaurant","id":"' in line2:
+                store = line2.split('ntityType":"restaurant","id":"')[1].split('"')[0]
+            if name == "" and '<span class="LocationName-geo">' in line2:
+                name = line2.split('<span class="LocationName-geo">')[1].split("<")[0]
+            if 'itemprop="streetAddress" content="' in line2:
+                add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
+                state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
+                city = line2.split('temprop="addressLocality" content="')[1].split('"')[
+                    0
+                ]
+                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if 'id="phone-main">' in line2:
+                phone = line2.split('id="phone-main">')[1].split("<")[0]
+            if '<meta itemprop="latitude" content="' in line2:
+                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[
+                    0
+                ]
+                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[
+                    0
+                ]
+            if 'itemprop="openingHours" content="' in line2:
+                days = line2.split('itemprop="openingHours" content="')
+                dc = 0
+                for day in days:
+                    if "<!doctype html>" not in day:
+                        dc = dc + 1
+                        if dc <= 7:
+                            hrs = day.split('"')[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+        if hours == "":
+            hours = "<MISSING>"
+        if "-" not in phone:
+            phone = "<MISSING>"
+        if "{: Closed; MONDAY: Closed" in hours:
+            hours = "Sun-Sat: Closed"
+        hours = hours.replace("</div></div></div></div><div class=;", "").strip()
+        name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
+        city = city.replace("&#39;", "'")
+        if CS is False:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

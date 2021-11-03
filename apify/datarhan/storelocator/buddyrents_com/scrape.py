@@ -1,6 +1,8 @@
 import csv
 import json
-from sgrequests import SgRequests
+from lxml import etree
+
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -35,22 +37,26 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
-
     items = []
+    scraped_items = []
 
     DOMAIN = "buddyrents.com"
     start_url = "https://www.buddyrents.com/storelocator/storelocator_data.php?origLat=37.09024&origLng=-95.712891&origAddress=5000+Estate+Enighed%2C+Independence%2C+KS+67301%2C+%D0%A1%D0%A8%D0%90&formattedAddress=&boundsNorthEast=&boundsSouthWest="
-    response = session.get(start_url)
-    data = json.loads(response.text)
 
-    for poi in data:
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
+        data = dom.xpath('//div[@id="json"]/text()')[0]
+        all_locations = json.loads(data)
+
+    for poi in all_locations:
         store_url = poi["web"]
+        store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
         if poi["address2"]:
-            street_address += ", " + poi["address2"]
+            street_address += " " + poi["address2"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
@@ -59,9 +65,7 @@ def fetch_data():
         zip_code = poi["postal"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        store_number = ""
-        if "#" in location_name:
-            store_number = location_name.split("#")[-1]
+        store_number = poi["id"]
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
@@ -69,9 +73,7 @@ def fetch_data():
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "{} {} {}".format(
-            poi["hours1"], poi["hours2"], poi["hours3"]
-        )
+        hours_of_operation = f'{poi["hours1"]} {poi["hours2"]} {poi["hours3"]}'
 
         item = [
             DOMAIN,
@@ -89,8 +91,10 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        check = f"{location_name} {street_address}"
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
 
     return items
 

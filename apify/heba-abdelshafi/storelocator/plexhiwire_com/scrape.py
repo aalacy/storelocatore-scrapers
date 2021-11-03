@@ -1,52 +1,113 @@
-from selenium import webdriver
-from time import sleep
-import pandas as pd
+import re
+import csv
+import json
+from lxml import etree
 
-from selenium.webdriver.chrome.options import Options
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+from sgrequests import SgRequests
 
 
 def write_output(data):
-    df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
- 
-    
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+
 def fetch_data():
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
-        
-    driver.get('http://plexhiwire.com/')
-    
-    location_data_urls=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//a[@class="location-btn"]')]
-    
-    for url in location_data_urls:
-        driver.get(url)
-        location_data=[i.text for i in driver.find_elements_by_xpath('//div[@class="col-lg-3 footer-menu"]')]    
-        for i in location_data:
-            
-            data['locator_domain'].append('http://plexhiwire.com/')
-            data['location_name'].append(url.split('/')[-1])
-            data['street_address'].append(i.split('\n')[1])
-            data['city'].append(i.split('\n')[2].split(',')[0])
-            data['state'].append(i.split('\n')[2].split(',')[1].split()[0])
-            data['zip'].append(i.split('\n')[2].split(',')[1].split()[1])
-            data['country_code'].append('US')
-            data['store_number'].append('<MISSING>')
-            data['phone'].append(i.split('\n')[3])
-            data['location_type'].append('<INACCESSIBLE>')
-            data['longitude'].append('<MISSING>')
-            data['latitude'].append('<MISSING>')
-            data['hours_of_operation'].append('<MISSING>')
-            
-    driver.close()
-    return data
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://flightadventurepark.com/locations/"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "loc_info =")]/text()')[0]
+    data = re.findall("locations =(.+);", data)[0]
+    data = json.loads(data)
+
+    all_locations = dom.xpath('//div[@class="single_locations"]')
+    for poi_html in all_locations:
+        store_url = poi_html.xpath(".//a/@onclick")[0].split("('")[-1][:-2]
+        loc_response = session.get(store_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = poi_html.xpath(".//h2/text()")
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = poi_html.xpath('.//p[@class="adds"]/text()')[0].split(", ")
+        if len(raw_address) == 5:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+        street_address = raw_address[0]
+        city = raw_address[1]
+        state = raw_address[2]
+        zip_code = raw_address[-1]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi_html.xpath('.//p[@class="tel"]/text()')
+        phone = phone[0].strip() if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        geo = [e for e in data if e[0] == location_name][0][1:3]
+        latitude = geo[0]
+        longitude = geo[1]
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "Hours")]/following-sibling::p//text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
-scrape()
+
+
+if __name__ == "__main__":
+    scrape()

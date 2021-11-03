@@ -33,9 +33,8 @@ def get_session(reset=False):
         or (hasattr(thread_local, "request_count") and thread_local.request_count == 10)
         or (reset is True)
     ):
-        thread_local.session = SgRequests().requests_retry_session(
-            retries=0, backoff_factor=0
-        )
+        thread_local.session = SgRequests(retry_behavior=False)
+
         reset_request_count()
 
     return thread_local.session
@@ -78,7 +77,7 @@ def get(url, attempt=1):
         sleep()
         session = get_session()
 
-        session.session.cookies.clear()
+        session.clear_cookies()
         r = session.get(url, headers=headers)
         r.raise_for_status()
 
