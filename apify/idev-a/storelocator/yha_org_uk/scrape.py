@@ -33,6 +33,7 @@ def fetch_data():
     with SgChrome(is_headless=True, user_agent=user_agent) as driver:
         driver.get(base_url)
         time.sleep(5)
+        driver.wait_for_request("/hostels/all-youth-hostels")
         locations = json.loads(
             bs(driver.page_source, "lxml")
             .select_one('script[data-drupal-selector="drupal-settings-json"]')

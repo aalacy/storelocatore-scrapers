@@ -21,7 +21,7 @@ def fetch_data():
         for _ in locations:
             if not _.p:
                 continue
-            block = [bb.text.strip() for bb in _.select("p")]
+            block = list(_.stripped_strings)
             raw_address = " ".join(block[2:-1])
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
