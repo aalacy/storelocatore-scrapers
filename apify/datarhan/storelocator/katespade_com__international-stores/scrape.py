@@ -16,10 +16,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36"
     }
 
-    import requests
-
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
-    response = requests.get(start_url, headers=hdr, proxies=proxies)
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@class="see-in-shop"]/div[@class="vcard"]')
     for poi_html in all_locations:
