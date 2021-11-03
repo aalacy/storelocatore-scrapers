@@ -81,7 +81,6 @@ def fetch_data():
         raw_address = " ".join(", ".join(info[1:]).split()).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = get_phone(page_url)
-        print(phone)
         country_code = "TH"
         location_type = MISSING
         store_number = row["id"]
