@@ -1,0 +1,21 @@
+--ignore CountryCodeFillRateChecker (Not us/ca)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+                                 street_address              REASON  rowNumber
+9  Lauro Villar Y Mar Caribe Col Treviño Zapata  ADDR_HAS_NO_NUMBER          9
+
+
+--ignore GeoConsistencyValidator (Not US zip_code)
+Found 3 concerning rows. Examples:
+      zip       state                REASON  rowNumber
+9   88000  Tamaulipas  ZIPCODE_NOT_IN_STATE          9
+10  87456  Tamaulipas  ZIPCODE_NOT_IN_STATE         10
+26  88779  Tamaulipas  ZIPCODE_NOT_IN_STATE         26
+
+--ignore CountryValidator (not us state)
+Found 3 concerning rows. Examples:
+         state         phone    zip            REASON  rowNumber
+9   Tamaulipas  (868)8134481  88000  INVALID_US_STATE          9
+10  Tamaulipas  (868)8177391  87456  INVALID_US_STATE         10
+26  Tamaulipas  (899)9290794  88779  INVALID_US_STATE         26

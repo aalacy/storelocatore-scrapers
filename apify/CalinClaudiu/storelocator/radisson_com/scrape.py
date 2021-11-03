@@ -69,11 +69,15 @@ def no_json(soup):
 def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
-        response = session.get(url, headers=headers)
-        soup = b4(response.text, "lxml")
-        logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
-        if len(response.text) < 400:
-            logzilla.info(f"Content\n{response.text}\n\n")
+        try:
+            response = session.get(url, headers=headers)
+            soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
+        except Exception as e:
+            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
+
         try:
             data = json.loads(
                 str(
@@ -89,7 +93,10 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
                 strict=False,
             )
         except Exception:
-            data = no_json(response.text)
+            try:
+                data = no_json(response.text)
+            except Exception:
+                data = {}
         data["index"] = index
         data["requrl"] = url
         data["STATUS"] = True
@@ -340,6 +347,12 @@ def start():
     logzilla.info(f"Finished grabbing data!!\n expected total {EXPECTED_TOTAL}")  # noqa
 
 
+def fix_phone(x):
+    if len(x) < 3:
+        return "<MISSING>"
+    return x
+
+
 def scrape():
     url = "https://www.radissonhotels.com/en-us/destination"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -375,9 +388,12 @@ def scrape():
         state=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressRegion"],
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         zipcode=sp.MappingField(
-            mapping=["sub", "mainEntity", "address", "postalCode"], is_required=False
+            mapping=["sub", "mainEntity", "address", "postalCode"],
+            is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         country_code=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressCountry"],
@@ -386,6 +402,7 @@ def scrape():
         phone=sp.MappingField(
             mapping=["sub", "mainEntity", "telephone", 0],
             is_required=False,
+            value_transform=fix_phone,
         ),
         store_number=sp.MappingField(
             mapping=["main", "code"],

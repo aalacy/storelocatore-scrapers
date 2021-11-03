@@ -64,8 +64,6 @@ def fetch_data():
             )
             addr = raw_address.split(",")
             street_address = ", ".join(addr[:-1])
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
             page_url = locator_domain + _.select_one("a")["href"]
             logger.info(page_url)
             res = session.get(page_url, headers=_headers).text
