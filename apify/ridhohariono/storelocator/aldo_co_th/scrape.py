@@ -84,7 +84,7 @@ def fetch_data():
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
         try:
-            phone = soup.find(
+            phone = store.find(
                 "a", {"class": "font-bold underline contact-link"}
             ).text.strip()
         except:
