@@ -46,7 +46,7 @@ def fetch_records(http, search, country_map):
                 street_address += " " + _["address2"]
             page_url = f"https://www.t2tea.com/en/us/store-locations?storeID={_['ID']}"
             hours = []
-            if _["storeHours"]:
+            if _.get("storeHours"):
                 hours = bs(_["storeHours"], "lxml").stripped_strings
             yield SgRecord(
                 page_url=page_url,
