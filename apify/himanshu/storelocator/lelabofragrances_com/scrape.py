@@ -1,141 +1,133 @@
-import csv
-from bs4 import BeautifulSoup
 import re
-import json
-from sgselenium import SgSelenium
-import time
+import csv
+from lxml import etree
+from time import sleep
+
+from sgselenium import SgFirefox
+from sgscrape.sgpostal import parse_address_intl
+
+
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
         for row in data:
             writer.writerow(row)
+
+
 def fetch_data():
-    driver = SgSelenium().firefox()
-    adressess = []
-    base_url = "https://www.lelabofragrances.com"
-    driver.get('https://www.lelabofragrances.com/front/app/store/search')
-    driver.find_element_by_xpath("//div[@class='selectize-input items has-options full has-items']").click()
-    driver.find_element_by_xpath("//div[@data-value='US']").click()
-    driver.find_element_by_xpath("//button[@type='submit']").click()
-    driver.find_element_by_xpath("//a[@class='locations-toggle-btn tablet-hidden']").click()
-    driver.find_element_by_xpath('//*[@id="location-links"]/ul/li[1]/a').click()
-    soup = BeautifulSoup(driver.page_source,"lxml")
-    for location in soup.find_all("li",{"class":"store-country-US"}):
-        location_name = location.find("div",{"class":"store-name"}).text.strip()
-        rm = ["SEOUL - SHINSEGAE GANGNAM DUTY FREE",
-        "SEOUL - HYUNDAI DUTY FREE","WELLINGTON - MECCA WELLINTON",
-        "AUCKLAND - MECCA COSMETICA TAKAPUNA",
-        "AUCKLAND - MECCA COSMETICA NEWMARKET",
-        "AUCKLAND - MECCA AUCKLAND",
-        "SEOUL - SHILLA I-PARK DUTY FREE",
-        "BELGRADE - METROPOLITEN",
-        "CHRISTCHURCH - MECCA COSMETICA BALLANTYNES"]
-        if location_name in rm:
+    # Your scraper here
+    items = []
+    scraped_items = []
+
+    start_url = "https://www.lelabofragrances.com/"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        driver.find_element_by_xpath('//button[@data-category="Landing Page"]').click()
+        sleep(3)
+        driver.find_element_by_xpath(
+            '//button[@class="optanon-allow-all accept-cookies-button"]'
+        ).click()
+        sleep(3)
+        driver.find_element_by_xpath('//a[@data-label="Store Locator"]').click()
+        sleep(3)
+        driver.find_element_by_xpath(
+            '//a[contains(text(), "View all locations")]'
+        ).click()
+        sleep(3)
+        driver.find_element_by_xpath('//a[@data-country="US"]').click()
+        sleep(3)
+        dom = etree.HTML(driver.page_source)
+
+    all_locations = dom.xpath('//ul[contains(@class, "list-locations")]/li')
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath(".//a/h4/text()")
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = poi_html.xpath('.//div[@class="store-address"]/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        addr = parse_address_intl(" ".join(raw_address))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address if street_address else "<MISSING>"
+        city = addr.city
+        city = city if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
+        if country_code not in ["United Kingdom", "United States", "Canada"]:
             continue
-        add = list(location.find("div",{"class":"store-address"}).stripped_strings)
-        if len(add)==2:
-            street_address = add[0]
-            addr = add[1].split(",")
-            if len(addr)==4:
-                city = addr[0]
-                state = addr[2].strip().split(" ")[0]
-                zipp = addr[2].strip().split(" ")[1]
-            else:
-                city = addr[0]
-                state = addr[1].strip().split(" ")[0]
-                zipp = addr[1].strip().split(" ")[1]
-        else:
-            street_address = ", ".join(add[:2])
-            addr = add[2].split(",")
-            city = addr[0]
-            state = addr[1].strip().split(" ")[0]
-            zipp = addr[1].strip().split(" ")[1]
-        if len(zipp)==4:
-            zipp = "0"+zipp
-        if zipp=="11430":
-            phone = "<MISSING>"
-        phone = location.find("div",{"class":"store-number"}).text.replace("ph:","").strip()
-        if phone=="0":
-            phone = "<MISSING>"
-        try:
-            hours_of_operation = ",".join(list(location.find("div",{"class":"store-hours"}).stripped_strings))
-            if hours_of_operation=="Temporarily closed.":
-                hours_of_operation = "<MISSING>"
-        except:
-            hours_of_operation = "<MISSING>"
-        if hours_of_operation=="Closed.":
-            continue
-        hours_of_operation = hours_of_operation.replace("Temporarily closed.,","")
-        street_address = street_address.replace(", The Shops at Riverside","").replace(", Westfield Topanga","").replace(", The Americana at Brand","").replace(", The Shops at North Bridge","").replace(", Oakbrook Center","").replace(", Broadway Plaza","")
-        store = []
-        store.append("https://www.lelabofragrances.com")
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone if phone.strip() else "<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-        store.append("<MISSING>")
-        store = [x.strip() if type(x) == str else x for x in store]
-        if store[2] in adressess:
-            continue
-        adressess.append(store[2])
-        yield store
-    time.sleep(10)
-    driver.find_element_by_xpath("/html/body/div[3]/div[2]/div[2]/div/div/div/div[1]/a[1]").click()
-    driver.find_element_by_xpath("/html/body/div[3]/div[2]/div[2]/div/div/div/div[1]/a[1]").click()
-    driver.find_element_by_xpath('//*[@id="location-links"]/ul/li[5]/a').click()
-    soup = BeautifulSoup(driver.page_source,"lxml")
-    for location in soup.find_all("li",{"class":"store-country-CA"}):
-        location_name = location.find("div",{"class":"store-name"}).text.strip()
-        add = list(location.find("div",{"class":"store-address"}).stripped_strings)
-        if len(add)==2:
-            street_address = add[0]
-            addr = add[1].split(",")
-            city = addr[0]
-            state = addr[1].strip().split(" ")[0]
-            zipp = " ".join(addr[1].strip().split(" ")[1:])
-        else:
-            if location_name=="VANCOUVER INTERNATIONAL AIRPORT - INTERNATIONAL TERMINAL":
-                street_address = add[1]
-            else:
-                street_address = add[0]
-            addr = add[-1].split(",")
-            city = addr[0]
-            state = addr[1].strip().split(" ")[0]
-            zipp = " ".join(addr[1].strip().split(" ")[1:])
-        phone = location.find("div",{"class":"store-number"}).text.replace("ph: +1","").strip()
-        try:
-            hours_of_operation = ",".join(list(location.find("div",{"class":"store-hours"}).stripped_strings))
-            if hours_of_operation=="Temporarily closed.":
-                hours_of_operation = "<MISSING>"
-        except:
-            hours_of_operation = "<MISSING>"
-        store = []
-        store.append("https://www.lelabofragrances.com")
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append("CA")
-        store.append("<MISSING>")
-        store.append(phone if phone.strip() else "<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-        store.append("<MISSING>")
-        store = [x.strip() if type(x) == str else x for x in store]
-        yield store
+        store_number = poi_html.xpath('.//div[@class="store-name"]/a/@id')[0]
+        phone = poi_html.xpath('.//div[@class="store-number"]/a/text()')
+        phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        if hoo:
+            if "Temporarily closed" in hoo[0]:
+                location_type = "temporarily closed"
+        hours_of_operation = (
+            " ".join(hoo).split("Available")[-1] if hoo else "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        if store_number not in scraped_items:
+            scraped_items.append(store_number)
+            items.append(item)
+
+    return items
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
-scrape()
+
+
+if __name__ == "__main__":
+    scrape()

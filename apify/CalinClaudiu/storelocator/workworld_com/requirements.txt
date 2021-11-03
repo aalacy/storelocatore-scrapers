@@ -1,0 +1,6 @@
+sgscrape
+sglogging
+sgrequests
+sgzip
+bs4
+beautifulsoup4==4.7.1

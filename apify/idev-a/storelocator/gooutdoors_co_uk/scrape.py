@@ -64,7 +64,7 @@ def fetch_data():
         )
         street_address = detail["address"]["streetAddress"]
         country_code = detail["address"]["addressCountry"]
-        phone = detail["telephone"]
+        phone = store.select_one("div.store-details a.tel_link").string
         city = detail["address"]["addressLocality"]
         state = "<MISSING>"
         zip = detail["address"]["postalCode"]

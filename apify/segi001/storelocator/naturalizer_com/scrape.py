@@ -108,7 +108,10 @@ def fetch_data():
             else:
                 state = address_list[1].text.split(" ")[-2]
                 zipc = address_list[1].text.split(" ")[-1]
-            store_num = l.find("input")["value"]
+            try:
+                store_num = l.find("input")["value"]
+            except TypeError:
+                store_num = "<MISSING>"
             phone = address_list[-1].text
             timeArray = []
             if r.find("strong", {"class": "store-hours"}):
@@ -118,6 +121,10 @@ def fetch_data():
                         " {} : {} ".format(hs["data-day"], hs["data-hours"])
                     )
                 hours = ", ".join(timeArray)
+            if "PARAMOUNT & PONONA" in city:
+                city = "Montebello"
+            if "COLISEUM/COLDWATER" in city:
+                city = "Ft. Wayne"
             result.append(
                 [
                     locator_domain,

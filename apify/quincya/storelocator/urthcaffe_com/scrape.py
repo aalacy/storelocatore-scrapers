@@ -1,113 +1,84 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
+import json
 import re
-import time
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
-logger = SgLogSetup().get_logger('urthcaffe_com')
+from sgrequests import SgRequests
 
-
-
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    base_link = "https://www.urthcaffe.com/"
 
-def fetch_data():
-	
-	base_link = "https://www.urthcaffe.com/"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
+    items = []
 
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    # Using phones to match lat/lng
+    geos = re.findall(r'[0-9]{2}\.[0-9]+,"lng":-[0-9]{2,3}\.[0-9]+', str(base))
+    phones = re.findall(r'"phone":"[0-9]+', str(base))
+    names = re.findall(r'"name":"[a-z A-Z]+","openTableId', str(base))
+    if len(geos) - len(names) == 1:
+        geos.pop(0)
+        phones.pop(0)
 
-	items = base.find(class_="pm-map-wrap pm-location-search-list").find_all(class_="row")
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        if "addressLocality" in str(script):
+            items.append(script.contents[0])
 
-	driver = get_driver()
-	time.sleep(2)
-	
-	data = []
-	for item in items:
-		locator_domain = "urthcaffe.com"
-		location_name = item.find("h4").text.strip()
-		logger.info(location_name)
-		location_type = "<MISSING>"
+    for item in items:
+        store = json.loads(item)
 
-		raw_data = str(item.find("section").find('p').a).replace("<p>","").replace("</p>","").replace("</a>","")\
-					.replace("<!-- -->","").replace("</span>","").replace("\xa0"," ").split('<br/>')
-		if len(raw_data) > 2:
-			street_address = (raw_data[0][raw_data[0].rfind(">")+1:] + " " + raw_data[1][raw_data[1].rfind(">") +1:]).replace("  "," ")			
-		else:
-			street_address = raw_data[0][raw_data[0].rfind(">") +1 :].strip()
-		city = raw_data[-1][:raw_data[-1].find(',')].strip()
-		state = raw_data[-1][raw_data[-1].find(',')+1:raw_data[-1].rfind(' ')].strip()
-		zip_code = raw_data[-1][raw_data[-1].rfind(' ')+1:].strip()
-		country_code = "US"
+        locator_domain = "urthcaffe.com"
+        street_address = store["address"]["streetAddress"].replace("\n", " ")
+        city = store["address"]["addressLocality"]
+        state = store["address"]["addressRegion"]
+        zip_code = store["address"]["postalCode"]
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
 
-		store_number = "<MISSING>"
-		try:
-			phone = re.findall("[[(\d)]{5} [\d]{3}-[\d]{4}", str(item.text))[0]
-		except:
-			phone = "<MISSING>"
+        phone = store["telephone"]
+        for i, tel in enumerate(phones):
+            if phone == tel.split('"')[-1]:
+                geo = geos[i]
+                latitude = geo.split(",")[0]
+                longitude = geo.split(":")[-1]
+                location_name = names[i].split(':"')[1].split('",')[0]
 
-		hours = item.find(class_='hours').get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
-		hours_of_operation = re.sub(' +', ' ', hours)
+        hours_of_operation = " ".join(store["openingHours"])
+        link = store["url"]
 
-		if "NOW OPEN" in hours_of_operation:
-			hours_of_operation = hours_of_operation[:hours_of_operation.find("NOW OPEN")].strip()
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		gmaps_link = item.find("section").find('p').a['href']
-		driver.get(gmaps_link)
-		time.sleep(7)
 
-		try:
-			map_link = driver.current_url
-			at_pos = map_link.rfind("@")
-			latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
-			longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
-		except:
-			latitude = "<INACCESSIBLE>"
-			longitude = "<INACCESSIBLE>"
-
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	try:
-		driver.close()
-	except:
-		pass
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

@@ -49,11 +49,13 @@ def fetch_data():
     all_poi = json.loads(response.text)
 
     for poi in all_poi["hits"]:
-        store_url = "<MISSING>"
+        store_url = "https://www.earthboundtrading.com/locations"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["street"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = street_address.strip() if street_address else "<MISSING>"
+        if poi["suite"]:
+            street_address += " " + poi["suite"]
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
@@ -73,10 +75,11 @@ def fetch_data():
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = []
-        for day, hours in poi["hours"].items():
-            opens = hours["open"]
-            closes = hours["close"]
-            hours_of_operation.append(f"{day} {opens} - {closes}")
+        if poi.get("hours"):
+            for day, hours in poi["hours"].items():
+                opens = hours["open"]
+                closes = hours["close"]
+                hours_of_operation.append(f"{day} {opens} - {closes}")
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )

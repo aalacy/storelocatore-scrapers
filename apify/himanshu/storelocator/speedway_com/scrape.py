@@ -1,6 +1,8 @@
 import csv
+
+from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 
 session = SgRequests()
 
@@ -41,7 +43,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
     base_url = "https://www.speedway.com/"
-    soup = bs(
+    soup = BeautifulSoup(
         session.post("https://www.speedway.com/Locations/Search", headers=headers).text,
         "lxml",
     )
@@ -49,7 +51,10 @@ def fetch_data():
     locations = soup.find_all("section", {"class": "c-location-card"})
 
     for data in locations:
-        phone = data.find("li", {"data-location-details": "phone"}).text
+        try:
+            phone = data.find("li", {"data-location-details": "phone"}).text.strip()
+        except:
+            phone = "<MISSING>"
         street_address = data.find("a", {"class": "btn-get-directions"})[
             "data-location-address"
         ].split(",")[0]
@@ -101,4 +106,3 @@ def scrape():
 
 
 scrape()
-

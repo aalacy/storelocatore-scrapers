@@ -2,7 +2,7 @@ import csv
 import json
 
 from concurrent import futures
-from lxml import html
+from lxml import html, etree
 from sgrequests import SgRequests
 
 
@@ -38,9 +38,11 @@ def write_output(data):
 def get_urls():
     session = SgRequests()
     r = session.get("https://www.shopko.com/sitemap.xml")
-    tree = html.fromstring(r.content)
+    parser = etree.XMLParser(strip_cdata=True)
+    tree = etree.fromstring(r.content, parser=parser)
+    root = html.fromstring(etree.tostring(tree))
 
-    return tree.xpath(
+    return root.xpath(
         "//loc[contains(text(), '/eye-care/') and contains(text(), 'store-')]/text()"
     )
 

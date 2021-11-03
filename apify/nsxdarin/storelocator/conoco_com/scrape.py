@@ -39,8 +39,8 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for x in range(10, 65, 5):
-        for y in range(-60, -170, -5):
+    for x in range(10, 65, 2):
+        for y in range(-60, -170, -2):
             logger.info(str(x) + "," + str(y))
             url = (
                 "https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby("

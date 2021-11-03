@@ -1,3 +1,1 @@
-selenium==3.141.0
-requests
-sglogging
+sgrequests==0.1.8

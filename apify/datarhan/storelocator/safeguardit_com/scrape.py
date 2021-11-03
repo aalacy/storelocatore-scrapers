@@ -56,7 +56,7 @@ def fetch_data():
     for url in start_urls:
         response = session.get(url)
         dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//div[@class="storeAddress"]/h4/a/@href')
+        all_locations += dom.xpath('//div[@class="storeAddress"]/h2/a/@href')
 
     for url in list(set(all_locations)):
         store_url = urljoin(start_urls[0], url)

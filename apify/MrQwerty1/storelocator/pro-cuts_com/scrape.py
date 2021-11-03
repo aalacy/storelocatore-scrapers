@@ -54,12 +54,17 @@ def get_ids():
 def get_data(_id):
     locator_domain = "https://www.pro-cuts.com/"
     api_url = f"https://info3.regiscorp.com/salonservices/siteid/3/salon/{_id}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
 
     session = SgRequests()
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     j = r.json()
 
     location_name = j.get("name")
+    if not location_name:
+        return
     street_address = j.get("address") or "<MISSING>"
     city = j.get("city") or "<MISSING>"
     state = j.get("state") or "<MISSING>"

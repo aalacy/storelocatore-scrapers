@@ -1,0 +1,5 @@
+lxml==4.6.2
+beautifulsoup4==4.9.3
+sgrequests==0.1.6
+sgselenium==0.0.15
+sglogging==0.0.4

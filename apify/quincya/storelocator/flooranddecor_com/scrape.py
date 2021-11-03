@@ -1,5 +1,6 @@
 import csv
 import re
+import time
 
 from bs4 import BeautifulSoup
 
@@ -57,89 +58,67 @@ def fetch_data():
             script = str(script)
             break
 
-    all_links = re.findall(
-        r"https://www.flooranddecor.com/store\?StoreID=[0-9]+", script
-    )
+    all_states = re.findall(r"States\.push\(new Array\(\'[A-Z]{2}", script)
 
     data = []
 
-    for link in all_links:
+    for search in all_states:
+        link = (
+            "https://www.flooranddecor.com/store-results?searchTerm=%s&cityLatitude=&cityLongitude=&_=1621403580607"
+            % (search.split("'")[1][:2])
+        )
+
         logger.info(link)
 
         req = session.get(link, headers=headers)
-        item = BeautifulSoup(req.text, "lxml")
+        time.sleep(2)
+        if req.status_code != 403:
+            try:
+                state_data = req.json()
+            except:
+                continue
 
-        if item.find(class_="store-coming-soon-banner"):
-            continue
+            stores = state_data["stores"]
+            for store in stores:
+                locator_domain = "flooranddecor.com"
+                location_name = store["name"]
+                street_address = store["address1"]
+                city = store["city"]
+                state = store["stateCode"]
+                zip_code = store["postalCode"]
+                country_code = "US"
+                store_number = store["ID"]
+                phone = store["phone"]
+                location_type = store["storeStatus"]
 
-        locator_domain = "flooranddecor.com"
-        location_name = item.find("h1").text.strip()
+                raw_hours = store["storeHours"]
+                hours_of_operation = BeautifulSoup(raw_hours, "lxml").getText(" ")
+                if not hours_of_operation:
+                    hours_of_operation = "<MISSING>"
 
-        street_address = item.find(
-            "span", attrs={"itemprop": "streetAddress"}
-        ).text.strip()
-        city = (
-            item.find("span", attrs={"itemprop": "addressLocality"})
-            .text.replace(",", "")
-            .strip()
-        )
-        state = item.find("span", attrs={"itemprop": "addressRegion"}).text.strip()
-        zip_code = item.find("span", attrs={"itemprop": "postalCode"}).text.strip()
-        country_code = "US"
+                latitude = store["latitude"]
+                longitude = store["longitude"]
 
-        store_number = link.split("=")[-1]
-        try:
-            phone = item.find("span", attrs={"itemprop": "telephone"}).text.strip()
-        except:
-            phone = "<MISSING>"
+                link = "https://www.flooranddecor.com/store?StoreID=" + store_number
 
-        location_type = "<MISSING>"
-
-        raw_hours = item.find_all(class_="store-hours store-hours-1")
-        hours = ""
-        hours_of_operation = ""
-
-        try:
-            for hour in raw_hours:
-                hours = (
-                    hours
-                    + " "
-                    + hour.text.replace("\t", "")
-                    .replace("\n", " ")
-                    .replace("PM", "PM ")
-                    .replace("Hours", "")
-                    .replace("ClosedSat ClosedSun", "Closed Sat Closed Sun")
-                    .strip()
+                data.append(
+                    [
+                        locator_domain,
+                        link,
+                        location_name,
+                        street_address,
+                        city,
+                        state,
+                        zip_code,
+                        country_code,
+                        store_number,
+                        phone,
+                        location_type,
+                        latitude,
+                        longitude,
+                        hours_of_operation,
+                    ]
                 )
-            hours_of_operation = (re.sub(" +", " ", hours)).strip()
-        except:
-            pass
-        if not hours_of_operation:
-            hours_of_operation = "<MISSING>"
-
-        latitude = item.find("meta", attrs={"itemprop": "latitude"})["content"].strip()
-        longitude = item.find("meta", attrs={"itemprop": "longitude"})[
-            "content"
-        ].strip()
-
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
 
     return data
 

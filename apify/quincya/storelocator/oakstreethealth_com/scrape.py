@@ -1,105 +1,137 @@
-from sgrequests import SgRequests
+import re
+
 from bs4 import BeautifulSoup
-import csv
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('oakstreethealth_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+logger = SgLogSetup().get_logger("oakstreethealth_com")
 
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    base_link = "https://www.oakstreethealth.com/locations/all"
 
-def fetch_data():
-	
-	base_link = "https://www.oakstreethealth.com/locations/all"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+    locator_domain = "oakstreethealth.com"
 
-	data = []
-	all_links = []
-	locator_domain = "oakstreethealth.com"
+    items = base.ul.find_all("li")
+    for item in items:
+        if "coming soon" in item.text.lower():
+            continue
 
-	items = base.find_all(class_="thumb__content")
-	for item in items:
+        raw_address = list(
+            item.find(class_="flex-auto").find_all("div")[-1].stripped_strings
+        )
+        street_address = raw_address[0].strip()
+        city_line = raw_address[-1].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
 
-		street_address = item.find(class_="thumb__text type-body").text.strip()
-		city = item.a.text.split("|")[1].split(",")[0].strip()
-		state = item.a.text.split("|")[1].split(",")[1].strip()
-		
-		country_code = "US"
-		store_number = "<MISSING>"
+        link = item.a["href"]
+        logger.info(link)
 
-		link = item.a["href"]
-		logger.info(link)
-		
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
-		
-		location_name = base.h1.text.strip()
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-		zip_code = base.find(class_="icon-title__text flex flex-col items-start").text.split("Get Directions")[0].split()[-1].strip()
-		if len(zip_code) == 4:
-			zip_code = "0" + zip_code
+        location_name = base.h1.text.strip()
+        try:
+            if "coming soon" in base.find(class_="relative image-label").text.lower():
+                continue
+        except:
+            pass
 
-		try:
-			raw_types = base.find_all(class_="feature-grid section section--featureGrid")[1].find_all(class_="icon-title__text")
-			location_type = ""
-			for raw_type in raw_types:
-				location_type = location_type + "," + raw_type.text.strip()
-			location_type = location_type[1:].strip()
-		except:
-			location_type = "<MISSING>"
+        try:
+            zip_code = (
+                base.find("a", string="Get Directions")
+                .find_previous("div")
+                .text.split()[-1]
+            )
+        except:
+            zip_code = (
+                base.find("a", string="Get directions")
+                .find_previous("div")
+                .text.split()[-1]
+            )
 
-		phone = base.find_all(class_="icon-title__text")[1].text.strip()
-		try:
-			hours_of_operation = base.find(class_="w-full w-3/4@large pt-2").text.replace("\n\n\n"," ").replace("\n"," ").strip()
-		except:
-			hours_of_operation = "<MISSING>"
+        if len(zip_code) == 4:
+            zip_code = "0" + zip_code
 
-		try:
-			map_url = base.find(rel="noopener noreferrer")["href"]
-			req = session.get(map_url, headers = HEADERS)
-			map_link = req.url
-			at_pos = map_link.rfind("@")
-			latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
-			longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
+        try:
+            raw_types = base.find(id="services").find_all(
+                class_="feature-block w-full flex flex-col space-y-6"
+            )
+            location_type = ""
+            for raw_type in raw_types:
+                location_type = location_type + "," + list(raw_type.stripped_strings)[0]
+            location_type = location_type[1:].strip()
+        except:
+            location_type = "<MISSING>"
 
-			if len(latitude) > 20:
-				req = session.get(map_url, headers = HEADERS)
-				maps = BeautifulSoup(req.text,"lxml")
+        phone = base.find(class_="flex-1 tabular-nums").text.strip()
+        try:
+            hours_of_operation = " ".join(
+                list(base.find_all(class_="flex items-start")[-1].stripped_strings)
+            )
+            if "day" not in hours_of_operation.lower():
+                hours_of_operation = "<MISSING>"
+        except:
+            hours_of_operation = "<MISSING>"
 
-				try:
-					raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-					latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-					longitude = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-				except:
-					latitude = "<MISSING>"
-					longitude = "<MISSING>"
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
-		if street_address == "2240 East 53rd St Suite B-1":
-			latitude = "39.849198"
-			longitude = "-86.12594"
+        try:
+            latitude = re.findall(r'latitude":"[0-9]{2}\.[0-9]+', str(base))[0].split(
+                ":"
+            )[1][1:]
+            longitude = re.findall(r'longitude":"-[0-9]{2,3}\.[0-9]+', str(base))[
+                0
+            ].split(":")[1][1:]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+        if street_address == "2240 East 53rd St":
+            latitude = "39.849198"
+            longitude = "-86.12594"
+        if "8923 Flatlands" in street_address:
+            latitude = "40.6401617"
+            longitude = "-73.908619"
+        if "1249 Nostrand" in street_address:
+            latitude = "40.6567175"
+            longitude = "-73.9519989"
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-	return data
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

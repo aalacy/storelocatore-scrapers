@@ -1,62 +1,68 @@
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import json
-import re
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
-	base_link = "https://www.honeydewdonuts.com/locations/"
+    base_link = "https://honeydewdonuts.com/wp-json/acf/v3/business_locations?_embed&per_page=300"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	headers = {'User-Agent' : user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	session = SgRequests()
-	req = session.get(base_link, headers=headers)
-	base = BeautifulSoup(req.text,"lxml")
+    session = SgRequests()
+    stores = session.get(base_link, headers=headers).json()
 
-	items = base.find(class_="col-md-3").find_all("script")[:-1]
+    for i in stores:
+        store = i["acf"]
+        locator_domain = "honeydewdonuts.com"
+        street_address = store["address_line_1"]
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["postal_code"]
+        country_code = "US"
+        phone = store["primary_phone"].strip()
+        store_number = store["store_id"]
+        location_name = "Honey Dew Donuts #" + store_number
+        location_type = ""
+        latitude = store["latitude"]
+        longitude = store["longitude"]
 
-	data = []
-	for item in items:
-		locator_domain = "honeydewdonuts.com"
+        hours_of_operation = ""
+        hours = store["hours"]
+        for row in hours:
+            hours_of_operation = (
+                hours_of_operation
+                + " "
+                + row["day"]
+                + " "
+                + row["start_time"]
+                + "-"
+                + row["end_time"]
+            ).strip()
 
-		raw_text = item.text.replace('\r\n', '').replace(':','":"').replace(',','",').replace('" "','"').replace('""','"').replace('   ','"').strip()
-		raw_text = (re.sub('"+', '"', raw_text)).strip()
-		script = raw_text[raw_text.find("=")+1:raw_text.rfind("}")+1].replace('"phone":",','"phone":"",')
-		store = json.loads(script)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url="https://honeydewdonuts.com/locations/",
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		location_name = store['name']
-		street_address = store['address']
-		city = store['city']
-		state = store['state']
-		zip_code = store['zipCode']
-		country_code = "US"
-		phone = store['phone']
-		if not phone:
-			phone = "<MISSING>"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
-		hours_of_operation = "<MISSING>"
-		latitude = store['latitude'].strip()
-		longitude = store['longitude'].strip()
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

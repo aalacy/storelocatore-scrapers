@@ -1,104 +1,90 @@
-import csv
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_zipcode_list
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("thrifty_com")
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+MISSING = "<MISSING>"
+
+
+def get(entity, key):
+    return entity.get(key, MISSING) or MISSING
 
 
 def fetch_data():
-    addresses = []
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
     }
     base_url = "https://www.thrifty.com/"
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_search_results=84,
-        max_radius_miles=100,
+
+    search = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
+    search = search + static_zipcode_list(
+        radius=100, country_code=SearchableCountries.CANADA
     )
+
     for zip_code in search:
-        logger.info(f"{zip_code} | remaining: {search.items_remaining()}")
-        page_url = (
-            "https://www.thrifty.com/loc/modules/multilocation/?near_location="
-            + str(zip_code)
-            + "&services__in=&published=1&within_business=true"
-        )
+        page_url = f"https://www.thrifty.com/loc/modules/multilocation/?near_location={zip_code}&services__in=&published=1&within_business=true"
+
         try:
             json_r = session.get(page_url, headers=headers).json()
         except:
             continue
         for data in json_r["objects"]:
-            location_name = data["location_name"]
-            street_address = data["street"]
-            city = data["city"]
-            state = data["state"]
-            zipp = data["postal_code"]
-            country_code = data["country"]
+            store_number = data["id"]
+
+            location_type = "Thrifty"
+            location_name = get(data, "location_name")
+            street_address = get(data, "street")
+            city = get(data, "city")
+            state = get(data, "state")
+            zipp = get(data, "postal_code")
+            country_code = get(data, "country")
             if country_code not in ["CA", "US"]:
                 continue
-            phone = data["phonemap"]["phone"]
-            latitude = data["lat"]
-            longitude = data["lon"]
-            page_url = data["location_url"]
-            store_number = data["id"]
-            hour = data["formatted_hours"]["primary"]["days"]
-            HOO = ""
-            for h in hour:
-                HOO = HOO + " " + h["label"] + " " + h["content"] + " "
-            location_type = "Thrifty"
-            store = []
-            store.append(base_url if base_url else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append(store_number if store_number else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(HOO if HOO else "<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            yield store
+            phone = get(data["phonemap"], "phone")
+            latitude = get(data, "lat")
+            longitude = get(data, "lon")
+            page_url = get(data, "location_url")
+
+            hours = data["formatted_hours"]["primary"]["days"]
+            HOO = [f"{hour['label']} {hour['content']}" for hour in hours]
+            hours_of_operations = ", ".join(HOO) if len(HOO) else MISSING
+
+            yield SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zipp.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=str(latitude),
+                longitude=str(longitude),
+                hours_of_operation=hours_of_operations,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

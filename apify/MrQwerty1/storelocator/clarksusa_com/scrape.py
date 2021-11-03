@@ -49,7 +49,10 @@ def get_data(page_url):
     locator_domain = "https://www.clarksusa.com"
 
     session = SgRequests()
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     if page_url != r.url:
         return
@@ -60,7 +63,10 @@ def get_data(page_url):
     ).strip()
     city = "".join(tree.xpath("//input[@id='city']/@value")) or "<MISSING>"
     state = "".join(tree.xpath("//input[@id='state']/@value")) or "<MISSING>"
-    postal = tree.xpath("//input[@id='postalCode']/@value")[0] or "<MISSING>"
+    try:
+        postal = tree.xpath("//input[@id='postalCode']/@value")[0]
+    except IndexError:
+        postal = "<MISSING>"
     country_code = "".join(tree.xpath("//input[@id='country']/@value")) or "<MISSING>"
     if country_code == "United States":
         country_code = "US"
@@ -85,7 +91,7 @@ def get_data(page_url):
 
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     if hours_of_operation.count("Closed") == 7:
-        return
+        hours_of_operation = "Closed"
 
     row = [
         locator_domain,
@@ -111,7 +117,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()

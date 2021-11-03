@@ -1,127 +1,82 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import time
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-def ul_extractor(ul, link_list):
-    locator_domain = 'https://www.acecashexpress.com/' 
-
-    locs = ul.find_all('p', {'class': 'location'})
-    for loc in locs:
-        link = loc.find('a')['href']
-        link_list.append(locator_domain[:-1] + link)
-    
-def fetch_data():
+    locator_domain = "https://www.acecashexpress.com/"
+    api_url = "https://www.acecashexpress.com/locations/assets/data/stores.json?origLat=37.09024&origLng=-95.712891&origAddress=United%20States&formattedAddress=%D0%A1%D0%BE%D0%B5%D0%B4%D0%B8%D0%BD%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5%20%D0%A8%D1%82%D0%B0%D1%82%D1%8B%20%D0%90%D0%BC%D0%B5%D1%80%D0%B8%D0%BA%D0%B8&boundsNorthEast=%7B%22lat%22%3A71.5388001%2C%22lng%22%3A-66.885417%7D&boundsSouthWest=%7B%22lat%22%3A18.7763%2C%22lng%22%3A170.5957%7D"
     session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-    locator_domain = 'https://www.acecashexpress.com/' 
-    ext = 'locations'
-    r = session.get(locator_domain + ext, headers = HEADERS)
-    soup = BeautifulSoup(r.content, 'html.parser')
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
+        slug = j.get("permalink")
+        page_url = f"https://www.acecashexpress.com{slug}"
+        location_name = "ACE Cash Express"
+        street_address = j.get("address")
+        state = j.get("state_code")
+        postal = j.get("zip_code")
+        country_code = "US"
+        city = j.get("city")
+        store_number = j.get("store_number")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        phone = j.get("phone")
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        tmp = []
+        for d in days:
+            day = d
+            opens = j.get(f"open_{d}")
+            closes = j.get(f"close_{d}")
+            line = f"{day} {opens} - {closes}"
+            if opens == closes:
+                line = f"{day} Closed"
+            tmp.append(line)
+        hours_of_operation = (
+            " ;".join(tmp)
+            .replace("00", ":00")
+            .replace("1:000", "10:00")
+            .replace("2:000", "20:00")
+            or "<MISSING>"
+        )
 
-    locs = soup.find('ul', {'class': 'states'}).find_all('a')
-    state_list = []
-    for loc in locs:
-        state_list.append(locator_domain[:-1] + loc['href'])
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    city_list = []
-    for state in state_list:
-        r = session.get(state, headers = HEADERS)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        cities = soup.find('ul', {'class': 'cities-list'}).find_all('a')
-        for city in cities:
-            city_list.append(locator_domain[:-1] + city['href'])
+        sgw.write_row(row)
 
-    link_list = []
-    for city in city_list:
-        try:
-            r = session.get(city, headers = HEADERS)
-        except:
-            time.sleep(10)
-            r = session.get(city, headers = HEADERS)
 
-        soup = BeautifulSoup(r.content, 'html.parser')
-        
-        page_count = soup.find_all('p', {'class': 'page-count'})
-        ul = soup.find('div',{'class': 'available-stores'}).find('ul', {'class': 'stores'})
-        ul_extractor(ul, link_list)
-        if len(page_count) == 0:
-            continue
-            
-        else:
-            total = int(page_count[0].text[-1])
-            for i in range(2, total + 1):
-                
-                r = session.get(city + '/page/' + str(i) , headers = HEADERS)
-                soup = BeautifulSoup(r.content, 'html.parser')
-                ul = soup.find('div',{'class': 'available-stores'}).find('ul', {'class': 'stores'})
-                ul_extractor(ul, link_list)
-
-    all_store_data = []
-    dup_tracker = set()
-    for link in link_list:
-        try:
-            r = session.get(link, headers = HEADERS)
-        except:
-            time.sleep(10)
-            r = session.get(link, headers = HEADERS)
-        
-        soup = BeautifulSoup(r.content, 'html.parser')
-        
-        street_address = soup.find('span', {'itemprop': 'streetAddress'}).text.strip()
-    
-        location_name =  soup.find('p', {'class': 'store'}).find('span', {'itemprop': 'name'}).text
-        city = soup.find('span', {'itemprop': 'addressLocality'}).text
-        state = soup.find('abbr', {'itemprop': 'addressRegion'}).text
-        zip_code = soup.find('span', {'itemprop': 'postalCode'}).text
-        
-        phone_number = soup.find('a', {'itemprop': 'telephone'}).text.strip()
-        if '()' in phone_number:
-            phone_number = '<MISSING>'
-        
-        coords = soup.find('div', {'class': 'store-information'})
-        lat = coords['data-latitude']
-        if lat == '0':
-            lat = '<MISSING>'
-        longit = coords['data-longitude']
-        if longit == '0':
-            longit = '<MISSING>'
-        store_number = coords['data-store']
-
-        if street_address not in dup_tracker:
-            dup_tracker.add(street_address)
-        else:
-            continue
-
-        hours = ''
-        lis = soup.find('ul', {'class': 'hours'}).find_all('li')
-        for li in lis:
-            hours += li.text + ' '
-        
-        hours = hours.strip()
-        
-        country_code = 'US'
-        location_type = '<MISSING>'
-        page_url = link
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-        
-    return all_store_data
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

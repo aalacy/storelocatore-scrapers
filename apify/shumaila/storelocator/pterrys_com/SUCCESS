@@ -1,3 +1,3 @@
-VALIDATOR_VERSION: 0.0.70
-COMMAND: validate.py data.csv
-PYTHON_VERSION: sys.version_info(major=3, minor=6, micro=6, releaselevel='final', serial=0)
+VALIDATOR_VERSION: 0.0.71
+COMMAND: D:\PycharmProjects\Odetta\pterrys\validate.py data.csv
+PYTHON_VERSION: sys.version_info(major=3, minor=8, micro=3, releaselevel='final', serial=0)

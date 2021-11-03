@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed scraper worked correctly)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StateLevelCountValidator(Confirmed scraper worked correctly)

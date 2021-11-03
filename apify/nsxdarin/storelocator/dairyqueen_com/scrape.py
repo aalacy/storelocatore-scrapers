@@ -1,96 +1,171 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-logger = SgLogSetup().get_logger('dairyqueen_com')
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+    "Content-Type": "application/json",
+}
 
+logger = SgLogSetup().get_logger("dairyqueen_com")
 
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.CANADA],
+    max_search_distance_miles=25,
+    max_search_results=None,
+)
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.dairyqueen.com/us-en/Sitemap/'
     locs = []
-    country = 'US'
+    for lat, lng in search:
+        url = (
+            "https://prod-dairyqueen.dotcmscloud.com/api/vtl/locations?country=us&lat="
+            + str(lat)
+            + "&long="
+            + str(lng)
+        )
+        session = SgRequests()
+        r = session.get(url, headers=headers)
+        logger.info(str(lat) + "-" + str(lng))
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if '"address3":"' in line:
+                items = line.split('"address3":"')
+                for item in items:
+                    if '"url":"' in item:
+                        lurl = (
+                            "https://www.dairyqueen.com/en-ca"
+                            + item.split('"url":"')[1].split('"')[0]
+                        )
+                        if lurl not in locs:
+                            locs.append(lurl)
+    url = "https://www.dairyqueen.com/en-us/sitemap.xml"
+    session = SgRequests()
     r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '<h2>AB</h2>' in line:
-            country = 'CA'
-        if '<li><a href="/us-en/locator/Detail/' in line:
-            title = line.split('title="')[1].split('"')[0].replace('&amp;','&')
-            locs.append(title + '|' + country + '|' + 'https://www.dairyqueen.com' + line.split('href="')[1].split('"')[0])
-    logger.info(('Found %s Locations.' % str(len(locs))))
+    website = "dairyqueen.com"
+    typ = "<MISSING>"
+    country = "US"
+    logger.info("Pulling Stores")
+    for line in r.iter_lines():
+        line = str(line.decode("utf-8"))
+        if (
+            "<loc>https://www.dairyqueen.com/en-us/locations/" in line
+            and "-us/locations/</loc>" not in line
+        ):
+            locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
-        typ = loc.split('|')[0]
-        lurl = loc.split('|')[2]
-        country = loc.split('|')[1]
-        name = 'Dairy Queen'
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        phone = ''
-        hours = ''
-        lat = ''
-        lng = ''
-        store = lurl.rsplit('/',1)[1]
-        website = 'dairyqueen.com'
-        r2 = session.get(lurl, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        lines = r2.iter_lines(decode_unicode=True)
-        Found = False
-        for line2 in lines:
-            if '>Hours:</h4>' in line2:
-                Found = True
-            if Found and '</dl>' in line2:
-                Found = False
-            if Found and '<dt>' in line2:
-                day = line2.split('<dt>')[1].split('<')[0].strip()
-            if Found and '<dd>' in line2:
-                hrs = line2.split('<dd>')[1].split('<')[0].strip()
-                if hours == '':
-                    hours = day + ': ' + hrs
-                else:
-                    hours = hours + '; ' + day + ': ' + hrs
-            if '<a href="https://maps.google.com/maps?q=' in line2:
-                lat = line2.split('<a href="https://maps.google.com/maps?q=')[1].split(',')[0]
-                lng = line2.split('<a href="https://maps.google.com/maps?q=')[1].split(',')[1].split('&')[0]
-            if 'itemprop="address"' in line2:
-                g = next(lines)
-                if '>' in g:
-                    add = g.split('>')[1].split('<')[0]
-                else:
-                    add = next(lines).split('>')[1].split('<')[0]
-            if 'itemprop="addressLocality">' in line2:
-                city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
-            if 'itemprop="addressRegion">' in line2:
-                state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-            if 'itemprop="postalCode">' in line2:
-                zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
-            if 'itemprop="telephone">' in line2:
-                phone = line2.split('itemprop="telephone">')[1].split('<')[0]
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        if typ == '':
-            typ = 'DQ Grill & Chill Restaurant'
-        if add != '' and city != 'Nassau':
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        PFound = False
+        count = 0
+        while PFound is False:
+            count = count + 1
+            loc = loc + "/"
+            loc = loc.replace("https://", "HTTPS")
+            loc = loc.replace("//", "/")
+            loc = loc.replace("HTTPS", "https://")
+            Closed = False
+            logger.info(loc)
+            name = ""
+            add = ""
+            city = ""
+            state = ""
+            country = "US"
+            zc = ""
+            store = loc.rsplit("/", 2)[1]
+            phone = ""
+            lat = ""
+            lng = ""
+            hours = ""
+            session = SgRequests()
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                line2 = str(line2.decode("utf-8"))
+                if "this page doesn't exist" in line2:
+                    Closed = True
+                if '<h1 class="my-1 h2">' in line2:
+                    name = line2.split('<h1 class="my-1 h2">')[1].split("<")[0]
+                if '"address3":"' in line2:
+                    add = line2.split('"address3":"')[1].split('"')[0]
+                    PFound = True
+                    lat = line2.split('"latlong":"')[1].split(",")[0]
+                    lng = line2.split('"latlong":"')[1].split(",")[1].replace('"', "")
+                    city = line2.split('"city":"')[1].split('"')[0]
+                    state = line2.split('"stateProvince":"')[1].split('"')[0]
+                    try:
+                        zc = line2.split('"postalCode":"')[1].split('"')[0]
+                    except:
+                        zc = "<MISSING>"
+                    try:
+                        phone = line2.split('"phone":"')[1].split('"')[0]
+                    except:
+                        phone = "<MISSING>"
+                if '{"miniSiteHours":' in line2:
+                    days = line2.split('{"miniSiteHours":')[1].split('","')[0]
+                    try:
+                        hours = "Sun: " + days.split("1:")[1].split(",")[0]
+                    except:
+                        hours = "Sun: Closed"
+                    try:
+                        hours = hours + "; Mon: " + days.split(",2:")[1].split(",")[0]
+                    except:
+                        hours = "Mon: Closed"
+                    try:
+                        hours = hours + "; Tue: " + days.split(",3:")[1].split(",")[0]
+                    except:
+                        hours = "Tue: Closed"
+                    try:
+                        hours = hours + "; Wed: " + days.split(",4:")[1].split(",")[0]
+                    except:
+                        hours = "Wed: Closed"
+                    try:
+                        hours = hours + "; Thu: " + days.split(",5:")[1].split(",")[0]
+                    except:
+                        hours = "Thu: Closed"
+                    try:
+                        hours = hours + "; Fri: " + days.split(",6:")[1].split(",")[0]
+                    except:
+                        hours = "Fri: Closed"
+                    try:
+                        hours = hours + "; Sat: " + days.split(",7:")[1]
+                    except:
+                        hours = "Sat: Closed"
+            if phone == "":
+                phone = "<MISSING>"
+            if hours == "":
+                hours = "<MISSING>"
+            name = name.replace("&amp;", "&").replace("&amp", "&")
+            add = add.replace("&amp;", "&").replace("&amp", "&")
+            add = add.replace("\\u0026", "&")
+            if Closed is False:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+            if count >= 8:
+                PFound = True
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

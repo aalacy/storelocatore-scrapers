@@ -53,7 +53,7 @@ def fetch_data():
     )
     for url in all_locations:
         store_url = url
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="node-title"]/text()')
@@ -69,18 +69,14 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = loc_dom.xpath('//div[@class="tel"]/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
+        phone = phone[0].strip() if phone and phone[0].strip() != "-" else "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hours_of_operation = [
-            elem.strip()
-            for elem in loc_dom.xpath('//div[@class="group-hours"]//text()')
-            if elem.strip()
-        ]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = loc_dom.xpath('//div[@class="group-hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip() and "Lobby" not in e]
+        hoo = [e for e in hoo if "Drive" not in e]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

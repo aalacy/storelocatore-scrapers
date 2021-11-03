@@ -1,0 +1,8 @@
+--ignore CountryCodeFillRateChecker (Country code not US or CA) 
+--ignore CentroidValidator (Longitude is missing, please check: https://www.londis.co.uk/our-stores/jet-north-ferriby-service-station)
+
+=========================================================================================
+--ignore GeoConsistencyValidator --ignore CountryValidator
+Confirmed scrape correctly, please check: https://www.premier-stores.co.uk/our-stores/halls-convenience-store
+=========================================================================================
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)

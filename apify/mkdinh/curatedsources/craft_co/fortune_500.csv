@@ -1,0 +1,501 @@
+﻿Slug,Craft.co URL,Company,Fortune Rank
+walmart,craft.co/walmart,Walmart,1
+amazon,craft.co/amazon,Amazon.com,2
+exxon-mobil,craft.co/exxon-mobil,Exxon Mobil,3
+apple,craft.co/apple,Apple,4
+cvs-health,craft.co/cvs-health,CVS Health,5
+berkshire-hathaway,craft.co/berkshire-hathaway,Berkshire Hathaway,6
+unitedhealth,craft.co/unitedhealth,UnitedHealth Group,7
+mckesson,craft.co/mckesson,McKesson,8
+at-t,craft.co/at-t,AT&T,9
+amerisourcebergen,craft.co/amerisourcebergen,AmerisourceBergen,10
+alphabet,craft.co/alphabet,Alphabet,11
+ford-motor,craft.co/ford-motor,Ford Motor,12
+cigna,craft.co/cigna,Cigna,13
+costco,craft.co/costco,Costco Wholesale,14
+chevron,craft.co/chevron,Chevron,15
+cardinal-health,craft.co/cardinal-health,Cardinal Health,16
+jpmorgan-chase,craft.co/jpmorgan-chase,JPMorgan Chase,17
+general-motors,craft.co/general-motors,General Motors,18
+walgreens-boots-alliance,craft.co/walgreens-boots-alliance,Walgreens Boots Alliance,19
+verizon,craft.co/verizon,Verizon Communications,20
+microsoft,craft.co/microsoft,Microsoft,21
+marathon-petroleum,craft.co/marathon-petroleum,Marathon Petroleum,22
+kroger,craft.co/kroger,Kroger,23
+fannie-mae,craft.co/fannie-mae,Fannie Mae,24
+bank-of-america,craft.co/bank-of-america,Bank of America,25
+the-home-depot,craft.co/the-home-depot,Home Depot,26
+phillips-66,craft.co/phillips-66,Phillips 66,27
+comcast,craft.co/comcast,Comcast,28
+anthem,craft.co/anthem,Anthem,29
+wells-fargo,craft.co/wells-fargo,Wells Fargo,30
+citi,craft.co/citi,Citigroup,31
+valero-energy,craft.co/valero-energy,Valero Energy,32
+general-electric,craft.co/general-electric,General Electric,33
+dell-technologies,craft.co/dell-technologies,Dell Technologies,34
+johnson-johnson,craft.co/johnson-johnson,Johnson & Johnson,35
+state-farm,craft.co/state-farm,State Farm Insurance,36
+target,craft.co/target,Target,37
+ibm,craft.co/ibm,International Business Machines,38
+raytheon,craft.co/raytheon,Raytheon Technologies,39
+boeing,craft.co/boeing,Boeing,40
+freddie-mac,craft.co/freddie-mac,Freddie Mac,41
+centene,craft.co/centene,Centene,42
+ups,craft.co/ups,UPS,43
+lowes,craft.co/lowes,Lowe's,44
+intel,craft.co/intel,Intel,45
+facebook,craft.co/facebook,Facebook,46
+fedex-corporation,craft.co/fedex-corporation,FedEx,47
+metlife,craft.co/metlife,MetLife,48
+the-walt-disney,craft.co/the-walt-disney,Walt Disney,49
+procter-gamble,craft.co/procter-gamble,Procter & Gamble,50
+pepsico,craft.co/pepsico,PepsiCo,51
+humana,craft.co/humana,Humana,52
+prudential-financial,craft.co/prudential-financial,Prudential Financial,53
+archer-daniels-midland-company,craft.co/archer-daniels-midland-company,Archer Daniels Midland,54
+albertsons,craft.co/albertsons,Albertsons,55
+sysco-corporation,craft.co/sysco-corporation,Sysco,56
+lockheed-martin,craft.co/lockheed-martin,Lockheed Martin,57
+hp,craft.co/hp,HP,58
+energy-transfer-equity,craft.co/energy-transfer-equity,Energy Transfer,59
+goldman-sachs,craft.co/goldman-sachs,Goldman Sachs Group,60
+morgan-stanley,craft.co/morgan-stanley,Morgan Stanley,61
+caterpillar,craft.co/caterpillar,Caterpillar,62
+cisco,craft.co/cisco,Cisco Systems,63
+pfizer,craft.co/pfizer,Pfizer,64
+hca-healthcare,craft.co/hca-healthcare,HCA Healthcare,65
+aig,craft.co/aig,American International Group,66
+american-express,craft.co/american-express,American Express,67
+delta-airlines,craft.co/delta-airlines,Delta Air Lines,68
+merck-&-co,craft.co/merck-&-co,Merck,69
+american-airlines,craft.co/american-airlines,American Airlines Group,70
+charter,craft.co/charter,Charter Communications,71
+allstate,craft.co/allstate,Allstate,72
+new-york-life-insurance-company,craft.co/new-york-life-insurance-company,New York Life Insurance,73
+nationwide,craft.co/nationwide,Nationwide,74
+best-buy,craft.co/best-buy,Best Buy,75
+united-airlines,craft.co/united-airlines,United Airlines Holdings,76
+liberty-mutual-insurance,craft.co/liberty-mutual-insurance,Liberty Mutual Insurance Group,77
+dow,craft.co/dow,Dow,78
+tyson-foods,craft.co/tyson-foods,Tyson Foods,79
+the-tjx,craft.co/the-tjx,TJX,80
+tiaa-cref,craft.co/tiaa-cref,TIAA,81
+oracle,craft.co/oracle,Oracle,82
+general-dynamics,craft.co/general-dynamics,General Dynamics,83
+deere-company,craft.co/deere-company,Deere,84
+nike,craft.co/nike,Nike,85
+progressive-insurance,craft.co/progressive-insurance,Progressive,86
+publix,craft.co/publix,Publix Super Markets,87
+the-coca-cola-company,craft.co/the-coca-cola-company,Coca-Cola,88
+massachusetts-mutual-life-insurance-company,craft.co/massachusetts-mutual-life-insurance-company,Massachusetts Mutual Life Insurance,89
+tech-data,craft.co/tech-data,Tech Data,90
+world-fuel-services,craft.co/world-fuel-services,World Fuel Services,91
+honeywell,craft.co/honeywell,Honeywell International,92
+conocophillips,craft.co/conocophillips,ConocoPhillips,93
+usaa,craft.co/usaa,USAA,94
+exelon,craft.co/exelon,Exelon,95
+northrop-grumman,craft.co/northrop-grumman,Northrop Grumman,96
+capital-one,craft.co/capital-one,Capital One Financial,97
+plains-gp-holdings,craft.co/plains-gp-holdings,Plains GP Holdings,98
+abbvie,craft.co/abbvie,AbbVie,99
+stonex,craft.co/stonex,StoneX,100
+enterprise-products-partners,craft.co/enterprise-products-partners,Enterprise Products Partners,101
+northwestern-mutual,craft.co/northwestern-mutual,Northwestern Mutual,102
+3m,craft.co/3m,3M,103
+abbott,craft.co/abbott,Abbott Laboratories,104
+chs,craft.co/chs,CHS,105
+travelers-insurance,craft.co/travelers-insurance,Travelers,106
+philip-morris-international,craft.co/philip-morris-international,Philip Morris International,107
+hewlett-packard-enterprise,craft.co/hewlett-packard-enterprise,Hewlett Packard Enterprise,108
+arrow-electronics,craft.co/arrow-electronics,Arrow Electronics,109
+viacomcbs,craft.co/viacomcbs,ViacomCBS,110
+dollar-general,craft.co/dollar-general,Dollar General,111
+us-bancorp,craft.co/us-bancorp,U.S. Bancorp,112
+starbucks,craft.co/starbucks,Starbucks,113
+bristol-myers-squibb,craft.co/bristol-myers-squibb,Bristol-Myers Squibb,114
+us-foods,craft.co/us-foods,US Foods Holding,115
+mondelez-international,craft.co/mondelez-international,Mondelez International,116
+paccar,craft.co/paccar,Paccar,117
+thermo-fisher-scientific,craft.co/thermo-fisher-scientific,Thermo Fisher Scientific,118
+macy-s,craft.co/macy-s,Macy's,119
+jabil,craft.co/jabil,Jabil,120
+kraftheinz,craft.co/kraftheinz,Kraft Heinz,121
+duke-energy,craft.co/duke-energy,Duke Energy,122
+tesla,craft.co/tesla,Tesla,123
+pbf-energy,craft.co/pbf-energy,PBF Energy,124
+qualcomm,craft.co/qualcomm,Qualcomm,125
+ngl-energy-partners,craft.co/ngl-energy-partners,NGL Energy Partners,126
+cbre,craft.co/cbre,CBRE Group,127
+baker-hughes,craft.co/baker-hughes,Baker Hughes,128
+synnex-corporation,craft.co/synnex-corporation,Synnex,129
+dollar-tree,craft.co/dollar-tree,Dollar Tree,130
+cummins,craft.co/cummins,Cummins,131
+united-natural-foods,craft.co/united-natural-foods,United Natural Foods,132
+micron-technology,craft.co/micron-technology,Micron Technology,133
+amgen,craft.co/amgen,Amgen,134
+penske-automotive-group,craft.co/penske-automotive-group,Penske Automotive Group,135
+visa,craft.co/visa,Visa,136
+broadcom,craft.co/broadcom,Broadcom,137
+nucor,craft.co/nucor,Nucor,138
+gilead-sciences,craft.co/gilead-sciences,Gilead Sciences,139
+southwest-airlines,craft.co/southwest-airlines,Southwest Airlines,140
+halliburton,craft.co/halliburton,Halliburton,141
+lumen,craft.co/lumen,Lumen Technologies,142
+international-paper,craft.co/international-paper,International Paper,143
+eli-lilly,craft.co/eli-lilly,Eli Lilly,144
+aflac,craft.co/aflac,Aflac,145
+lennar,craft.co/lennar,Lennar,146
+occidental-petroleum-corporation,craft.co/occidental-petroleum-corporation,Occidental Petroleum,147
+union-pacific,craft.co/union-pacific,Union Pacific,148
+rite-aid,craft.co/rite-aid,Rite Aid,149
+the-pnc-financial-services-group,craft.co/the-pnc-financial-services-group,PNC Financial Services Group,150
+dupont,craft.co/dupont,DuPont,151
+southern-company,craft.co/southern-company,Southern,152
+autonation,craft.co/autonation,AutoNation,153
+dxc-technology,craft.co/dxc-technology,DXC Technology,154
+mcdonald-s,craft.co/mcdonald-s,McDonald's,155
+marriot-international,craft.co/marriot-international,Marriott International,156
+manpowergroup,craft.co/manpowergroup,ManpowerGroup,157
+bny-mellon,craft.co/bny-mellon,Bank of New York Mellon,158
+the-hartford,craft.co/the-hartford,Hartford Financial Services Group,159
+danaher,craft.co/danaher,Danaher,160
+whirlpool,craft.co/whirlpool,Whirlpool,161
+aecom,craft.co/aecom,AECOM,162
+netflix,craft.co/netflix,Netflix,163
+kohls,craft.co/kohls,Kohl's,164
+lear-corporation,craft.co/lear-corporation,Lear,165
+altria-group,craft.co/altria-group,Altria Group,166
+performance-food-group,craft.co/performance-food-group,Performance Food Group,167
+avnet,craft.co/avnet,Avnet,168
+synchrony-financial,craft.co/synchrony-financial,Synchrony Financial,169
+genuine-parts-company,craft.co/genuine-parts-company,Genuine Parts,170
+nextera-energy,craft.co/nextera-energy,NextEra Energy,171
+carmax,craft.co/carmax,CarMax,172
+tenet-healthcare,craft.co/tenet-healthcare,Tenet Healthcare,173
+kimberly-clark,craft.co/kimberly-clark,Kimberly-Clark,174
+emerson,craft.co/emerson,Emerson Electric,175
+westrock,craft.co/westrock,WestRock,176
+cdw,craft.co/cdw,CDW,177
+jones-lang-lasalle,craft.co/jones-lang-lasalle,Jones Lang LaSalle,178
+sherwin-williams,craft.co/sherwin-williams,Sherwin-Williams,179
+fluor,craft.co/fluor,Fluor,180
+paypal,craft.co/paypal,PayPal,181
+dr-horton,craft.co/dr-horton,D.R. Horton,182
+hollyfrontier-corporation,craft.co/hollyfrontier-corporation,HollyFrontier,183
+tenneco,craft.co/tenneco,Tenneco,184
+eog-resources,craft.co/eog-resources,EOG Resources,185
+becton-dickinson,craft.co/becton-dickinson,BD,186
+lincoln-financial,craft.co/lincoln-financial,Lincoln National,187
+pge,craft.co/pge,PG&E,188
+salesforce,craft.co/salesforce,Salesforce,189
+mastercard,craft.co/mastercard,Mastercard,190
+general-mills,craft.co/general-mills,General Mills,191
+molina-healthcare,craft.co/molina-healthcare,Molina Healthcare,192
+cognizant,craft.co/cognizant,Cognizant Technology Solutions,193
+marsh-mclennan-comp,craft.co/marsh-mclennan-comp,Marsh & McLennan,194
+xpo-logistics,craft.co/xpo-logistics,XPO Logistics,195
+dominion-energy,craft.co/dominion-energy,Dominion Energy,196
+western-digital,craft.co/western-digital,Western Digital,197
+gap,craft.co/gap,Gap,198
+aramark,craft.co/aramark,Aramark,199
+principal-financial-group,craft.co/principal-financial-group,Principal Financial,200
+ross-stores,craft.co/ross-stores,Ross Stores,201
+colgate-palmolive,craft.co/colgate-palmolive,Colgate-Palmolive,202
+american-electric-power,craft.co/american-electric-power,American Electric Power,203
+nordstrom,craft.co/nordstrom,Nordstrom,204
+jacobs,craft.co/jacobs,Jacobs Engineering Group,205
+waste-management,craft.co/waste-management,Waste Management,206
+ch-robinson,craft.co/ch-robinson,C.H. Robinson Worldwide,207
+ppg-industries,craft.co/ppg-industries,PPG Industries,208
+booking-holdings,craft.co/booking-holdings,Booking Holdings,209
+omnicom,craft.co/omnicom,Omnicom Group,210
+loews,craft.co/loews,Loews,211
+ecolab,craft.co/ecolab,Ecolab,212
+stryker,craft.co/stryker,Stryker,213
+estee-lauder,craft.co/estee-lauder,Est√©e Lauder,214
+the-goodyear-tire-rubber-company,craft.co/the-goodyear-tire-rubber-company,Goodyear Tire & Rubber,215
+truist,craft.co/truist,Truist Financial,216
+applied-materials,craft.co/applied-materials,Applied Materials,217
+blackrock,craft.co/blackrock,BlackRock,218
+stanley-black-decker,craft.co/stanley-black-decker,Stanley Black & Decker,219
+freeport-mcmoran,craft.co/freeport-mcmoran,Freeport-McMoRan,220
+texas-instruments,craft.co/texas-instruments,Texas Instruments,221
+biogen,craft.co/biogen,Biogen,222
+parker-hannifin,craft.co/parker-hannifin,Parker-Hannifin,223
+reinsurance-group-of-america,craft.co/reinsurance-group-of-america,Reinsurance Group of America,224
+howmet-aerospace,craft.co/howmet-aerospace,Howmet Aerospace,225
+adp,craft.co/adp,Automatic Data Processing,226
+uber,craft.co/uber,Uber Technologies,227
+illinois-tool-works,craft.co/illinois-tool-works,Illinois Tool Works,228
+davita,craft.co/davita,DaVita,229
+discover-financial-services,craft.co/discover-financial-services,Discover Financial Services,230
+land-o-lakes,craft.co/land-o-lakes,Land O'Lakes,231
+vf-corporation,craft.co/vf-corporation,VF,232
+corteva,craft.co/corteva,Corteva,233
+las-vegas-sands,craft.co/las-vegas-sands,Las Vegas Sands,234
+textron,craft.co/textron,Textron,235
+kellogg,craft.co/kellogg,Kellogg,236
+guardian-life,craft.co/guardian-life,Guardian Life Ins. Co. of America,237
+qurate-retail-group,craft.co/qurate-retail-group,Qurate Retail,238
+core-mark-holding-company,craft.co/core-mark-holding-company,Core-Mark Holding,239
+community-health-systems,craft.co/community-health-systems,Community Health Systems,240
+kinder-morgan,craft.co/kinder-morgan,Kinder Morgan,241
+bj-s-wholesale-club,craft.co/bj-s-wholesale-club,BJ's Wholesale Club,242
+state-street-corporation,craft.co/state-street-corporation,State Street,243
+ameriprise-financial,craft.co/ameriprise-financial,Ameriprise Financial,244
+global-partners-lp,craft.co/global-partners-lp,Global Partners,245
+united-states-steel,craft.co/united-states-steel,United States Steel,246
+l-brands,craft.co/l-brands,L Brands,247
+mgm-resorts,craft.co/mgm-resorts,MGM Resorts International,248
+l3harris-technologies,craft.co/l3harris-technologies,L3Harris Technologies,249
+dish-network,craft.co/dish-network,DISH Network,250
+lithia-motors,craft.co/lithia-motors,Lithia Motors,251
+dte-energy,craft.co/dte-energy,DTE Energy,252
+american-family-ventures,craft.co/american-family-ventures,American Family Insurance Group,253
+farmers-insurance-group,craft.co/farmers-insurance-group,Farmers Insurance Exchange,254
+con-edison,craft.co/con-edison,Consolidated Edison,255
+lkq,craft.co/lkq,LKQ,256
+sempra-energy,craft.co/sempra-energy,Sempra Energy,257
+edison-international,craft.co/edison-international,Edison International,258
+centerpoint-energy,craft.co/centerpoint-energy,CenterPoint Energy,259
+quanta-services,craft.co/quanta-services,Quanta Services,260
+murphy-usa,craft.co/murphy-usa,Murphy USA,261
+expedia-group,craft.co/expedia-group,Expedia Group,262
+group-1-automotive,craft.co/group-1-automotive,Group 1 Automotive,263
+bed-bath-beyond,craft.co/bed-bath-beyond,Bed Bath & Beyond,264
+unum,craft.co/unum,Unum Group,265
+csx,craft.co/csx,CSX,266
+autozone,craft.co/autozone,AutoZone,267
+pacific-life,craft.co/pacific-life,Pacific Life,268
+vistra-energy,craft.co/vistra-energy,Vistra Energy,269
+charles-schwab,craft.co/charles-schwab,Charles Schwab,270
+crown-holdings,craft.co/crown-holdings,Crown Holdings,271
+ally-financial,craft.co/ally-financial,Ally Financial,272
+laboratory-corporation-of-america-holdings,craft.co/laboratory-corporation-of-america-holdings,Laboratory Corp. of America,273
+live-nation-entertainment,craft.co/live-nation-entertainment,Live Nation Entertainment,274
+xcel-energy,craft.co/xcel-energy,Xcel Energy,275
+corning,craft.co/corning,Corning,276
+ww-grainger,craft.co/ww-grainger,W.W. Grainger,277
+ball,craft.co/ball,Ball,278
+fox,craft.co/fox,Fox,279
+universal-health-services,craft.co/universal-health-services,Universal Health Services,280
+baxter-international,craft.co/baxter-international,Baxter International,281
+norfolk-southern,craft.co/norfolk-southern,Norfolk Southern,282
+navistar,craft.co/navistar,Navistar International,283
+adobe,craft.co/adobe,Adobe,284
+j-c-penney,craft.co/j-c-penney,J.C. Penney,285
+discovery-communications,craft.co/discovery-communications,Discovery,286
+keurig-dr-pepper,craft.co/keurig-dr-pepper,Keurig Dr Pepper,287
+leidos,craft.co/leidos,Leidos Holdings,288
+iqvia,craft.co/iqvia,IQVIA Holdings,289
+reliance-steel-aluminum,craft.co/reliance-steel-aluminum,Reliance Steel & Aluminum,290
+nvidia,craft.co/nvidia,Nvidia,291
+entergy-corporation,craft.co/entergy-corporation,Entergy,292
+firstenergy,craft.co/firstenergy,FirstEnergy,293
+ebay,craft.co/ebay,eBay,294
+boston-scientific,craft.co/boston-scientific,Boston Scientific,295
+office-depot,craft.co/office-depot,ODP,296
+molson-coors,craft.co/molson-coors,Molson Coors Beverage,297
+steel-dynamics,craft.co/steel-dynamics,Steel Dynamics,298
+mutual-of-omaha,craft.co/mutual-of-omaha,Mutual of Omaha Insurance,299
+sonic-automotive,craft.co/sonic-automotive,Sonic Automotive,300
+alcoa,craft.co/alcoa,Alcoa,301
+fis,craft.co/fis,Fidelity National Information Services,302
+henry-schein,craft.co/henry-schein,Henry Schein,303
+republic-services,craft.co/republic-services,Republic Services,304
+liberty-media,craft.co/liberty-media,Liberty Media,305
+kiewit,craft.co/kiewit,Peter Kiewit Sons',306
+interpublic-group,craft.co/interpublic-group,Interpublic Group,307
+pultegroup,craft.co/pultegroup,PulteGroup,308
+the-aes-corporation,craft.co/the-aes-corporation,AES,309
+fiserv,craft.co/fiserv,Fiserv,310
+borgwarner,craft.co/borgwarner,BorgWarner,311
+oneok,craft.co/oneok,Oneok,312
+oreilly-automotive,craft.co/oreilly-automotive,O'Reilly Automotive,313
+assurant,craft.co/assurant,Assurant,314
+newell-brands,craft.co/newell-brands,Newell Brands,315
+public-service-enterprise-group,craft.co/public-service-enterprise-group,Public Service Enterprise Group,316
+news-corp,craft.co/news-corp,News Corp.,317
+calpine,craft.co/calpine,Calpine,318
+auto-owners-insurance,craft.co/auto-owners-insurance,Auto-Owners Insurance,319
+mohawk-industries,craft.co/mohawk-industries,Mohawk Industries,320
+pvh,craft.co/pvh,PVH,321
+campbell-soup-company,craft.co/campbell-soup-company,Campbell Soup,322
+nrg-energy,craft.co/nrg-energy,NRG Energy,323
+fifth-third-bancorp,craft.co/fifth-third-bancorp,Fifth Third Bancorp,324
+hertz-global,craft.co/hertz-global,Hertz Global Holdings,325
+altice-usa,craft.co/altice-usa,Altice USA,326
+newmont-mining-corporation,craft.co/newmont-mining-corporation,Newmont,327
+cheniere-energy,craft.co/cheniere-energy,Cheniere Energy,328
+advance-auto-parts,craft.co/advance-auto-parts,Advance Auto Parts,329
+lam-research,craft.co/lam-research,Lam Research,330
+owens-minor,craft.co/owens-minor,Owens & Minor,331
+equitable-holdings,craft.co/equitable-holdings,Equitable Holdings,332
+conagra-brands,craft.co/conagra-brands,Conagra Brands,333
+markel-corporation,craft.co/markel-corporation,Markel,334
+edward-jones,craft.co/edward-jones,Edward Jones (Jones Financial Companies),335
+hormel-foods,craft.co/hormel-foods,Hormel Foods,336
+hilton-worldwide,craft.co/hilton-worldwide,Hilton Worldwide Holdings,337
+univar-solutions,craft.co/univar-solutions,Univar Solutions,338
+united-rentals,craft.co/united-rentals,United Rentals,339
+pioneer-natural-resources,craft.co/pioneer-natural-resources,Pioneer Natural Resources,340
+delek-us-holdings,craft.co/delek-us-holdings,Delek US Holdings,341
+eastman-chemical,craft.co/eastman-chemical,Eastman Chemical,342
+emcor-group,craft.co/emcor-group,EMCOR Group,343
+avis-budget-group,craft.co/avis-budget-group,Avis Budget Group,344
+jb-hunt-transport,craft.co/jb-hunt-transport,J.B. Hunt Transport Services,345
+xerox,craft.co/xerox,Xerox Holdings,346
+wayfair,craft.co/wayfair,Wayfair,347
+kkr,craft.co/kkr,KKR,348
+agco,craft.co/agco,AGCO,349
+alleghany-corporation,craft.co/alleghany-corporation,Alleghany,350
+icahn-enterprises,craft.co/icahn-enterprises,Icahn Enterprises,351
+voya-financial,craft.co/voya-financial,Voya Financial,352
+ryder-system,craft.co/ryder-system,Ryder System,353
+air-products,craft.co/air-products,Air Products & Chemicals,354
+mosaic,craft.co/mosaic,Mosaic,355
+huntington-ingalls-industries,craft.co/huntington-ingalls-industries,Huntington Ingalls Industries,356
+berry-global,craft.co/berry-global,Berry Global Group,357
+anixter,craft.co/anixter,Anixter International,358
+alaska-air-group,craft.co/alaska-air-group,Alaska Air Group,359
+yum-china,craft.co/yum-china,Yum China Holdings,360
+dicks-sporting-goods,craft.co/dicks-sporting-goods,Dick's Sporting Goods,361
+caesars-entertainment,craft.co/caesars-entertainment,Caesars Holdings,362
+genworth-financial,craft.co/genworth-financial,Genworth Financial,363
+targa-resources,craft.co/targa-resources,Targa Resources,364
+coty,craft.co/coty,Coty,365
+dana,craft.co/dana,Dana,366
+thrivent-financial,craft.co/thrivent-financial,Thrivent Financial for Lutherans,367
+autoliv,craft.co/autoliv,Autoliv,368
+spartannash,craft.co/spartannash,SpartanNash,369
+eversource-energy,craft.co/eversource-energy,Eversource Energy,370
+darden-restaurants,craft.co/darden-restaurants,Darden Restaurants,371
+chesapeake-energy,craft.co/chesapeake-energy,Chesapeake Energy,372
+national-oilwell-varco,craft.co/national-oilwell-varco,NOV,373
+fidelity-national-financial,craft.co/fidelity-national-financial,Fidelity National Financial,374
+erie-insurance-group,craft.co/erie-insurance-group,Erie Insurance Group,375
+oshkosh-corporation,craft.co/oshkosh-corporation,Oshkosh,376
+caseys-general-stores,craft.co/caseys-general-stores,Casey's General Stores,377
+wesco,craft.co/wesco,WESCO International,378
+tractor-supply-company,craft.co/tractor-supply-company,Tractor Supply,379
+commscope,craft.co/commscope,CommScope Holding,380
+huntsman-corporation,craft.co/huntsman-corporation,Huntsman,381
+american-financial-group,craft.co/american-financial-group,American Financial Group,382
+masco-corporation,craft.co/masco-corporation,Masco,383
+sanmina,craft.co/sanmina,Sanmina,384
+amphenol,craft.co/amphenol,Amphenol,385
+williams-comp,craft.co/williams-comp,Williams,386
+wabtec-corporation,craft.co/wabtec-corporation,Westinghouse Air Brake,387
+expeditors-international,craft.co/expeditors-international,Expeditors Intl. of Washington,388
+the-andersons,craft.co/the-andersons,Andersons,389
+westlake-chemical,craft.co/westlake-chemical,Westlake Chemical,390
+constellation-brands,craft.co/constellation-brands,Constellation Brands,391
+frontier-communications,craft.co/frontier-communications,Frontier Communications,392
+jetblue-airways,craft.co/jetblue-airways,JetBlue Airways,393
+citizens-financial-group,craft.co/citizens-financial-group,Citizens Financial Group,394
+raymond-james,craft.co/raymond-james,Raymond James Financial,395
+foot-locker,craft.co/foot-locker,Foot Locker,396
+hershey,craft.co/hershey,Hershey,397
+zimmer-biomet,craft.co/zimmer-biomet,Zimmer Biomet Holdings,398
+cincinnati-financial-corporation,craft.co/cincinnati-financial-corporation,Cincinnati Financial,399
+western-southern-financial-group,craft.co/western-southern-financial-group,Western & Southern Financial Group,400
+wr-berkley,craft.co/wr-berkley,W.R. Berkley,401
+motorola-solutions,craft.co/motorola-solutions,Motorola Solutions,402
+thor-industries,craft.co/thor-industries,Thor Industries,403
+regeneron-pharmaceuticals,craft.co/regeneron-pharmaceuticals,Regeneron Pharmaceuticals,404
+spirit-aerosystems,craft.co/spirit-aerosystems,Spirit AeroSystems Holdings,405
+the-jm-smucker,craft.co/the-jm-smucker,J.M. Smucker,406
+ppl-corporation,craft.co/ppl-corporation,PPL,407
+insight,craft.co/insight,Insight Enterprises,408
+quest-diagnostics,craft.co/quest-diagnostics,Quest Diagnostics,409
+keycorp,craft.co/keycorp,KeyCorp,410
+veritiv,craft.co/veritiv,Veritiv,411
+dcp-midstream,craft.co/dcp-midstream,DCP Midstream,412
+american-tower,craft.co/american-tower,American Tower,413
+graybar,craft.co/graybar,Graybar Electric,414
+wec-energy,craft.co/wec-energy,WEC Energy Group,415
+nvr,craft.co/nvr,NVR,416
+ulta-beauty,craft.co/ulta-beauty,Ulta Beauty,417
+devon-energy,craft.co/devon-energy,Devon Energy,418
+blackstone-group,craft.co/blackstone-group,Blackstone Group,419
+dean-foods,craft.co/dean-foods,Dean Foods,420
+fortive,craft.co/fortive,Fortive,421
+ugi-corporation,craft.co/ugi-corporation,UGI,422
+burlington-stores,craft.co/burlington-stores,Burlington Stores,423
+builders-firstsource,craft.co/builders-firstsource,Builders FirstSource,424
+toll-brothers,craft.co/toll-brothers,Toll Brothers,425
+old-republic,craft.co/old-republic,Old Republic International,426
+asbury-automotive-group,craft.co/asbury-automotive-group,Asbury Automotive Group,427
+gallagher-global,craft.co/gallagher-global,Arthur J. Gallagher,428
+mastec,craft.co/mastec,MasTec,429
+owens-corning,craft.co/owens-corning,Owens Corning,430
+magellan-health,craft.co/magellan-health,Magellan Health,431
+dover,craft.co/dover,Dover,432
+beacon-roofing-supply,craft.co/beacon-roofing-supply,Beacon Roofing Supply,433
+avery-dennison-corporation,craft.co/avery-dennison-corporation,Avery Dennison,434
+hanesbrands,craft.co/hanesbrands,Hanesbrands,435
+packaging-corporation-of-america,craft.co/packaging-corporation-of-america,Packaging Corp. of America,436
+mt-bank-corporation,craft.co/mt-bank-corporation,M&T Bank,437
+ncr-corporation,craft.co/ncr-corporation,NCR,438
+northern-trust,craft.co/northern-trust,Northern Trust,439
+cintas-corporation,craft.co/cintas-corporation,Cintas,440
+polaris,craft.co/polaris,Polaris,441
+cms-energy,craft.co/cms-energy,CMS Energy,442
+seaboard,craft.co/seaboard,Seaboard,443
+intuit,craft.co/intuit,Intuit,444
+regions-financial,craft.co/regions-financial,Regions Financial,445
+fm-global,craft.co/fm-global,FM Global,446
+amd,craft.co/amd,AMD,447
+ovintiv,craft.co/ovintiv,Ovintiv,448
+booz-allen-hamilton,craft.co/booz-allen-hamilton,Booz Allen Hamilton Holding,449
+sp_global,craft.co/sp_global,S&P Global,450
+rockwell-automation,craft.co/rockwell-automation,Rockwell Automation,451
+o-i-glass,craft.co/o-i-glass,O-I Glass,452
+wynn-resorts,craft.co/wynn-resorts,Wynn Resorts,453
+securian-financial,craft.co/securian-financial,Securian Financial Group,454
+alliance-data-systems,craft.co/alliance-data-systems,Alliance Data Systems,455
+weyerhaeuser,craft.co/weyerhaeuser,Weyerhaeuser,456
+brighthouse-financial,craft.co/brighthouse-financial,Brighthouse Financial,457
+intercontinental-exchange,craft.co/intercontinental-exchange,Intercontinental Exchange,458
+american-axle-manufacturing,craft.co/american-axle-manufacturing,American Axle & Manufacturing,459
+hess,craft.co/hess,Hess,460
+abm-industries,craft.co/abm-industries,ABM Industries,461
+activision-blizzard,craft.co/activision-blizzard,Activision Blizzard,462
+gamestop,craft.co/gamestop,GameStop,463
+apache-corporation,craft.co/apache-corporation,Apache,464
+saic,craft.co/saic,Science Applications International,465
+ak-steel,craft.co/ak-steel,AK Steel Holding,466
+dillards,craft.co/dillards,Dillard's,467
+ralph-lauren,craft.co/ralph-lauren,Ralph Lauren,468
+celanese,craft.co/celanese,Celanese,469
+rr-donnelley-sons,craft.co/rr-donnelley-sons,R.R. Donnelley & Sons,470
+zoetis,craft.co/zoetis,Zoetis,471
+ascena-retail-group,craft.co/ascena-retail-group,Ascena Retail Group,472
+clorox,craft.co/clorox,Clorox,473
+ingredion,craft.co/ingredion,Ingredion,474
+first-american,craft.co/first-american,First American Financial,475
+graphic-packaging,craft.co/graphic-packaging,Graphic Packaging Holding,476
+netapp,craft.co/netapp,NetApp,477
+hd-supply,craft.co/hd-supply,HD Supply Holdings,478
+travelcenters-of-america,craft.co/travelcenters-of-america,TravelCenters of America,479
+olin-corporation,craft.co/olin-corporation,Olin,480
+robert-half-international,craft.co/robert-half-international,Robert Half International,481
+enlink-midstream,craft.co/enlink-midstream,EnLink Midstream,482
+avantor,craft.co/avantor,Avantor,483
+tapestry,craft.co/tapestry,Tapestry,484
+td-ameritrade-holding-corporation,craft.co/td-ameritrade-holding-corporation,TD Ameritrade Holding,485
+analog-devices,craft.co/analog-devices,Analog Devices,486
+ameren,craft.co/ameren,Ameren,487
+williams-sonoma,craft.co/williams-sonoma,Williams-Sonoma,488
+realogy-holdings,craft.co/realogy-holdings,Realogy Holdings,489
+commercial-metals,craft.co/commercial-metals,Commercial Metals,490
+rush-enterprises,craft.co/rush-enterprises,Rush Enterprises,491
+franklin-resources,craft.co/franklin-resources,Franklin Resources,492
+fortune-brands-home-security,craft.co/fortune-brands-home-security,Fortune Brands Home & Security,493
+levistrauss,craft.co/levistrauss,Levi Strauss,494
+crown-castle,craft.co/crown-castle,Crown Castle International,495
+simon-property-group,craft.co/simon-property-group,Simon Property Group,496
+cerner,craft.co/cerner,Cerner,497
+post-holdings,craft.co/post-holdings,Post Holdings,498
+huntington-bancshares,craft.co/huntington-bancshares,Huntington Bancshares,499
+kbr,craft.co/kbr,KBR,500

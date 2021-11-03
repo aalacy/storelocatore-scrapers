@@ -48,7 +48,7 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<li><a href='" in line:
-            lurl = "https://platt.com/" + line.split("<li><a href='")[1].split("'")[0]
+            lurl = "https://platt.com" + line.split("<li><a href='")[1].split("'")[0]
             if lurl not in locs:
                 locs.append(lurl)
     for loc in locs:
@@ -67,6 +67,9 @@ def fetch_data():
             if "var markerstore = [" in line2:
                 g = next(lines)
                 g = str(g.decode("utf-8"))
+                if '", "' not in g:
+                    g = next(lines)
+                    g = str(g.decode("utf-8"))
                 lat = g.split('", "')[1]
                 lng = g.split('", "')[2]
                 add = g.split('", "')[3]
@@ -75,6 +78,10 @@ def fetch_data():
                 zc = g.split('", "')[6]
                 phone = g.split('", "')[7]
                 hours = g.split('", "')[8]
+        if "(" in name:
+            name = name.split("(")[0].strip()
+        if "," in hours:
+            hours = hours.split(",")[0].strip()
         yield [
             website,
             loc,

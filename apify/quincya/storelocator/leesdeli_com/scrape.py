@@ -65,7 +65,7 @@ def fetch_data():
         zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = "Open"
         if "Temporar" in item.text:
             location_type = "Temporarily Closed"
         phone = item.find_all("p")[1].text.strip()
@@ -73,7 +73,9 @@ def fetch_data():
         raw_hours = item.find_all("p")[2:]
         for hour in raw_hours:
             hours_of_operation = (
-                hours_of_operation + " " + hour.text.replace("\xa0", " ")
+                hours_of_operation
+                + " "
+                + hour.text.replace("\xa0", " ").replace("\u200b", "")
             ).strip()
         hours_of_operation = hours_of_operation.split("*")[0].strip()
         latitude = "<INACCESSIBLE>"

@@ -2,6 +2,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
+import lxml.html
 
 website = "arcthrift.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -62,6 +63,9 @@ def fetch_data():
 
     search_url = "https://arcthrift.com/ajax/get-store-list?city_or_zip=&storedonations=storedonations&donation=false"
     stores_req = session.get(search_url, headers=headers)
+
+    home_page = "https://arcthrift.com/stores"
+    stores_sel = lxml.html.fromstring(session.get(home_page, headers=headers).text)
     stores = stores_req.json()[0]["stores"]
 
     for store in stores:
@@ -109,8 +113,23 @@ def fetch_data():
         if longitude == "" or longitude is None:
             longitude = "<MISSING>"
 
-        hours_of_operation = store["storeTime"]
+        hours_of_operation = ""
+        hours = stores_sel.xpath('//div[@class="store-hours"]/p')
+        hours_list = []
+        if len(hours) > 0:
+            hours = hours[0]
+            days = hours.xpath("strong")
+            time_list = []
+            time = hours.xpath("text()")
+            for tim in time:
+                if len("".join(tim).strip()) > 0:
+                    time_list.append("".join(tim).strip())
 
+            for index in range(0, len(days)):
+                day = "".join(days[index].xpath("text()")).strip()
+                hours_list.append(day + time_list[index])
+
+        hours_of_operation = "; ".join(hours_list).strip()
         if hours_of_operation == "" or hours_of_operation is None:
             hours_of_operation = "<MISSING>"
 

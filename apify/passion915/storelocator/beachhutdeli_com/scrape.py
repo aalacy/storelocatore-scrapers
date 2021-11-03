@@ -1,154 +1,129 @@
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-import requests as r
-import os
-import re
-import json
-# Site URL
-site_url = 'http://jinya-ramenbar.com'
+from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from lxml import html
 
 # Location URL
-location_url = 'https://beachhutdeli.com/locations/'
-
-# output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__))
-
-# file name of CSV output
-file_name = 'data.csv'
+url_locations = "https://beachhutdeli.com/locations/"
 
 
-# Function pull webpage content
+logger = SgLogSetup().get_logger("beachhutdeli_com")
 
-def pull_content(url):
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36"
+}
 
-    soup = bs(r.get(url).content,'html.parser')
+DOMAIN = "https://www.beachhutdeli.com"
+base_url = "https://beachhutdeli.com/locations/"
+MISSING = "<MISSING>"
 
-    return soup
-
-def pull_content_json(url):
-
-    results = r.get(url)
-
-    return results.json()
+session = SgRequests()
 
 
-def pull_info(content):
- 
-    store_data = []
+def fetch_data():
+    url_locations = "https://beachhutdeli.com/locations/"
+    r = session.get(url_locations, headers=headers)
+    data_r = html.fromstring(r.text, "lxml")
+    data_state_list = data_r.xpath("//select[@id='select-state']/option/@value")
+    for state in data_state_list[1:]:
+        url_state = url_locations + "results/?state=" + state
+        logger.info(f"Pulling the data from: {url_state}")
+        data_json = session.get(url_state, headers=headers).json()
+        for data in data_json:
+            logger.info(f"JSON Data:\n {data} \n")
+            locator_domain = DOMAIN
 
-    state_list = soup.find('select',{'id':'select-state'}).find_all('option')
+            # Page URL
+            page_url = data["href"].strip() if data["href"].strip() else MISSING
 
-    for state_item in state_list:
-        state = state_item['value']
-        if state != '0':
-            href_url = location_url + 'results/?state=' + state
-            content_store = pull_content_json(href_url)
-            for item_content in content_store:
-                locator_domain = href_url
-                location = item_content['location']
-                location_name = item_content['post_name']
-                store_number = item_content['info']['store_number']
-                if item_content['info']['phone'] == '':
-                    phone = "<MISSING>"
+            # Location Name
+            location_name = data["post_title"].strip()
+            logger.info(f"location name: {location_name}")
+
+            # Street Address
+            address = data["location"]
+            sa1 = address["address"].strip()
+            sa2 = address["address_2"].strip()
+            street_address = ""
+            if sa2:
+                if sa1:
+                    street_address = f"{sa1}, {sa2}"
                 else:
-                    phone = item_content['info']['phone']
-                store_type = "<MISSING>"
-                zip = location['zip']
-                city = location['city']
-                state = location['state']
-                street_address = location['address']
-                country_code = 'US'
-                longitude = str(location['longitude']).split(',')[0]
-                latitude = location['latitude']
-                if item_content['info']['hours'] == '':
-                    ul_for_hours = "<MISSING>"
-                else:
-                    ul_for_hours = str(item_content['info']['hours']).replace('<br />','')
-          
-                temp_data = [
+                    street_address = sa1
+            else:
+                street_address = sa1
 
-                locator_domain,
+            street_address = street_address if street_address else MISSING
 
-                location_name,
+            city = address["city"].strip() if address["city"] else MISSING
+            state = address["state"].strip() if address["state"] else MISSING
+            zipcode = address["zip"].strip() if address["zip"] else MISSING
 
-                street_address,
+            # Country Code
+            country_code = "US"
 
-                city,
+            # Store Number
+            store_number = data["info"]["store_number"].strip()
+            store_number = store_number if store_number else MISSING
 
-                state,
+            # Phone
+            phone = data["info"]["phone"].strip()
+            phone = phone if phone else MISSING
 
-                zip,
+            # Location Type
+            location_type = data["post_type"].strip()
+            location_type = location_type if location_type else MISSING
 
-                country_code,
+            # Latitude
+            latitude = address["latitude"].strip()
+            latitude = latitude if latitude else MISSING
 
-                store_number,
+            # Longitude
+            longitude = address["longitude"].strip()
+            longitude = longitude if longitude else MISSING
 
-                phone,
+            # Hourse of Operation
+            hours_of_operation = ""
+            hoo = " ".join(data["info"]["hours"].strip().split())
+            hoo = hoo.replace("<br />", "").strip()
+            hours_of_operation = hoo if hoo else MISSING
+            if sa2:
+                raw_address = f"{sa1}, {sa2}"
+            else:
+                raw_address = sa1
 
-                store_type,
-
-                latitude,
-
-                longitude,
-
-                ul_for_hours
-
-                ]
-                store_data = store_data + [temp_data]
-
-
-    final_columns = [
-
-        'locator_domain',
-
-        'location_name',
-
-        'street_address', 
-
-        'city',
-
-        'state',
-
-        'zip',
-
-        'country_code',
-
-        'store_number',
-
-        'phone',
-
-        'location_type',
-
-        'latitude',
-
-        'longitude',
-
-        'hours_of_operation']
-
-    final_df = pd.DataFrame(store_data,columns=final_columns)
-
-    return final_df
-         
-            
-  
-
-  
-
-                         
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipcode,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
+def scrape():
+    logger.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-# # Pull URL Content
-
-soup = pull_content(location_url)
-
-# # Pull all stores and info
-
-final_df = pull_info(soup)
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-
-
-# # write to csv
-
-final_df.to_csv(output_path + '/' + file_name,index=False)
+if __name__ == "__main__":
+    scrape()

@@ -1,187 +1,148 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
-import string
-import re, time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
+import json
+from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger('bluestonelane_com')
-
-
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--disable-notifications")
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-    #chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
-    #return webdriver.Chrome(chrome_path)
-
 def fetch_data():
-    # Your scraper here
     data = []
-    url = 'https://bluestonelane.com/cafe-and-coffee-shop-locations/?shop-sort=nearest&view-all=1&lat=33.6592896&lng=73.144729'
-    driver = get_driver()
-    #time.sleep(3)
-    driver.set_page_load_timeout(60)
+    url = "https://bluestonelane.com/cafe-and-coffee-shop-locations/?shop-sort=nearest&view-all=1&lat=&lng="
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("a", {"class": "homebox-address"})
+    linklist = []
     p = 0
-    try:
-        driver.get(url)
-       
-    except:
-        pass
-    time.sleep(1)
-    #driver.back()
-    
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-   
-    link_list = soup.findAll('div', {'class': 'img-wrap'})
-    logger.info(len(link_list))
-    
-
-    for links in link_list:
-        link = links.find('a')
-        link = link['href']
+    for div in divlist:
+        link = div["href"]
+        if link in linklist:
+            continue
+        linklist.append(link)
+        r = session.get(link, headers=headers, verify=False)
+        ccode = "US"
+        soup = BeautifulSoup(r.text, "html.parser")
+        title = soup.find("h1").text.strip()
+        street = soup.find("span", {"id": "yext-address"})
         try:
-            driver.get(link)
+            store = street["data-yext-location-id"]
         except:
-            pass
-        
-        time.sleep(5)
-        #logger.info(link)
-        ccode = 'US'
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        title = soup.find('h1').text
-        #title = title[0:title.find('-')]
-        title.lstrip()
-        maindiv = soup.find('aside')
+            store = "<MISSING>"
+            continue
+        url = (
+            "https://knowledgetags.yextpages.net/embed?key=6Af24AhHWVK9u_N4dzlSiNnLaAoxr-dpa-xe7Zf76O9rU3Eb4m0xxX6-7A_CxoZF&account_id=6868880511088594204&location_id="
+            + store
+        )
+
+        r = session.get(url, headers=headers, verify=False)
+        address = r.text.split('"address":{', 1)[1].split("},", 1)[0]
+        address = "{" + address + "}"
+        address = json.loads(address)
+        street = address["streetAddress"]
+        city = address["addressLocality"]
+        state = address["addressRegion"]
+        pcode = address["postalCode"]
+        geo = r.text.split('"geo":', 1)[1].split("},", 1)[0]
+        geo = geo + "}"
+        geo = json.loads(geo)
+        lat = geo["latitude"]
+        longt = geo["longitude"]
         try:
-            street = maindiv.find('span',{'id':'yext-address'})
-            try:
-                store = street['data-yext-location-id']
-            except:
-                store = "<MISSING>"
-            #logger.info(store)
-            try:
-                street = street.text
-            except:
-                street = "<MISSING>"
-            try:
-                city = maindiv.find('span',{'id':'yext-city'}).text
-            except:
-                city = "<MISSING>"
-            try:
-                state = maindiv.find('span',{'id':'yext-state'}).text
-               
-            except:
-                state = "<MISSING>"
-            try:
-                pcode = maindiv.find('span',{'id':'yext-zip'}).text
-                
-                try:
-                    state1,temp = pcode.split(' ')
-                    ccode = "CA"
-                except:
-                    ccode = 'US'
-            except:
-                pcode = "<MISSING>"
-            try:
-                phone = maindiv.find('a',{'data-yext-field':'phone'}).text
-            except:
-                phone = "<MISSING>"
-            try:
-                hours = maindiv.find('div',{'class':'yext-hours'}).text
-                hours = hours.replace('\n',' ')
-                hours = hours.lstrip()
-                hourscheck = maindiv.find('span',{'class':'hours'}).text
-                if len(hourscheck) < 2:
-                    hours = "<MISSING>"
-            except:
-                hours = "<MISSING>"
-            try:
-                mapdiv = soup.find('div',{'class':'sidebar-map-embed'})
-                coords = mapdiv.find('iframe')
-                coords = str(coords['src'])
-                #logger.info(coords)
-                start = coords.find('!2d')+3
-                end = coords.find('!3d',start)
-                longt = coords[start:end]
-                start = end + 3
-                end = coords.find('!',start)
-                
-                lat = coords[start:end]
-                
-                
-            except:
-                lat = "<MISSING>"
-                longt = "<MISSING>"
-
-            if len(street) <2:
-                street = "<MISSING>"
-            if len(city) <2:
-                city = "<MISSING>"
-            if len(state) <2:
-                state = "<MISSING>"
-            if len(pcode) <2:
-                pcode = "<MISSING>"
-            if len(ccode) <2:
-                ccode = "<MISSING>"
-            if len(phone) <2:
-                phone = "<MISSING>"
-            if len(store) <1:
-                store = "<MISSING>"
-            if len(lat) <2:
-                lat = "<MISSING>"
-            if len(longt) <2:
-                longt = "<MISSING>"
-            if len(hours) <2:
-                hours = "<MISSING>"
-
-            if pcode.find('-') == -1:
-
-                data.append([
-                        'https://bluestonelane.com/',
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        ccode,
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours
-                    ])
-                #logger.info(p,data[p])
-                p += 1
-                
+            hourslist = r.text.split('"openingHoursSpecification":', 1)[1].split(
+                "}],", 1
+            )[0]
+            hourslist = hourslist + "}]"
+            hourslist = json.loads(hourslist)
+            hours = ""
+            for hr in hourslist:
+                day = hr["dayOfWeek"]
+                opens = hr["opens"]
+                closes = hr["closes"]
+                cltime = (int)(closes.split(":", 1)[0])
+                if cltime > 12:
+                    cltime = cltime - 12
+                hours = (
+                    hours
+                    + day
+                    + " "
+                    + opens
+                    + " AM - "
+                    + str(cltime)
+                    + ":"
+                    + closes.split(":", 1)[1]
+                    + " PM "
+                )
         except:
+            hours = "<MISSING>"
+        phone = r.text.split('"telephone":"', 1)[1].split('"', 1)[0].replace("+1", "")
+        phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+        ccode = "US"
+        if "-" in pcode:
+            continue
+        if pcode.isdigit():
             pass
-        
+        else:
+            ccode = "CA"
+        data.append(
+            [
+                "https://bluestonelane.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                ccode,
+                store,
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                hours,
+            ]
+        )
+
+        p += 1
     return data
 
 
 def scrape():
+
     data = fetch_data()
     write_output(data)
+
 
 scrape()

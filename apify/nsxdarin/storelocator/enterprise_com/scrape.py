@@ -147,6 +147,8 @@ def fetch_data():
             if hours == "":
                 hours = "<MISSING>"
             name = name.replace("&amp;", "&").replace("&#39;", "'")
+            if store == "":
+                store = "<MISSING>"
             yield [
                 website,
                 loc,

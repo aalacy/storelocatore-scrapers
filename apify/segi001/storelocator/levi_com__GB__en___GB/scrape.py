@@ -1,8 +1,6 @@
 import csv
-from requests_html import HTMLSession
 import sgrequests
 import json
-import bs4
 
 
 def write_output(data):
@@ -43,78 +41,61 @@ def fetch_data():
 
     api = "https://www.levi.com/nextgen-webhooks/?operationName=storeDirectory&locale=GB-en_GB"
 
-    store_domain = "https://www.levi.com/GB/en_GB/store-finder/store-directory"
-
-    sess = HTMLSession()
-
-    r = sess.get(store_domain)
-
-    r.html.render()
-
-    s = bs4.BeautifulSoup(r.html.html, features="lxml")
-
-    countries = s.findAll("option")
-
     result = []
 
-    for code in countries:
-        c = code["value"]
-        if c == "":
-            pass
-        else:
-            data = {
-                "operationName": "storeDirectory",
-                "query": "query storeDirectory($countryIsoCode: String!) {  storeDirectory(countryIsoCode: $countryIsoCode) {    storeFinderData {      addLine1      addLine2      city      country      departments      distance      hrsOfOperation {        daysShort        hours        isOpen      }      latitude      longitude      mapUrl      phone      postcode      state      storeId      storeName      storeType      todaysHrsOfOperation {        daysShort        hours        isOpen      }      uom    }  }}",
-                "variables": {"countryIsoCode": c},
-            }
-            d = json.loads(sgrequests.SgRequests().post(api, json=data).text)["data"][
-                "storeDirectory"
-            ]["storeFinderData"]
-            for e in d:
-                name = e["storeName"].replace('"', "'")
-                street = e["addLine1"]
-                if e["addLine2"]:
-                    street = e["addLine1"] + " " + e["addLine2"]
-                city = e["city"]
-                country = e["country"]
-                phone = e["phone"]
-                zp = e["postcode"]
-                if not zp:
-                    zp = missingString
-                if not phone:
-                    phone = missingString
-                state = missingString
-                if e["state"]:
-                    state = e["state"]
-                typ = e["storeType"]
-                storenum = e["storeId"]
-                lat = e["latitude"]
-                lng = e["longitude"]
-                timeArr = []
-                for el in e["hrsOfOperation"]:
-                    timeArr.append(el["daysShort"] + " : " + el["hours"])
-                hours = ", ".join(timeArr)
-                if hours.count("Closed") > 1:
-                    hours = missingString
-                    typ = "Closed"
-                result.append(
-                    [
-                        locator_domain,
-                        missingString,
-                        name,
-                        street,
-                        city,
-                        state,
-                        zp,
-                        country,
-                        storenum,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
-                )
+    data = {
+        "operationName": "storeDirectory",
+        "query": "query storeDirectory($countryIsoCode: String!) {  storeDirectory(countryIsoCode: $countryIsoCode) {    storeFinderData {      addLine1      addLine2      city      country      departments      distance      hrsOfOperation {        daysShort        hours        isOpen      }      latitude      longitude      mapUrl      phone      postcode      state      storeId      storeName      storeType      todaysHrsOfOperation {        daysShort        hours        isOpen      }      uom    }  }}",
+        "variables": {"countryIsoCode": "GB"},
+    }
+    d = json.loads(sgrequests.SgRequests().post(api, json=data).text)["data"][
+        "storeDirectory"
+    ]["storeFinderData"]
+    for e in d:
+        name = e["storeName"].replace('"', "'")
+        street = e["addLine1"]
+        if e["addLine2"]:
+            street = e["addLine1"] + " " + e["addLine2"]
+        city = e["city"]
+        country = e["country"]
+        phone = e["phone"]
+        zp = e["postcode"]
+        if not zp:
+            zp = missingString
+        if not phone:
+            phone = missingString
+        state = missingString
+        if e["state"]:
+            state = e["state"]
+        typ = e["storeType"]
+        storenum = e["storeId"]
+        lat = e["latitude"]
+        lng = e["longitude"]
+        timeArr = []
+        for el in e["hrsOfOperation"]:
+            timeArr.append(el["daysShort"] + " : " + el["hours"])
+        hours = ", ".join(timeArr)
+        if hours.count("Closed") > 1:
+            hours = missingString
+            typ = "Closed"
+        result.append(
+            [
+                locator_domain,
+                missingString,
+                name,
+                street,
+                city,
+                state,
+                zp,
+                country,
+                storenum,
+                phone,
+                typ,
+                lat,
+                lng,
+                hours,
+            ]
+        )
 
     return result
 

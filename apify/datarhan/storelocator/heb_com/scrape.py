@@ -61,7 +61,6 @@ def get(loc, key):
 
 
 def fetch_data():
-    items = []
     scraped_items = []
 
     DOMAIN = "heb.com"
@@ -70,7 +69,6 @@ def fetch_data():
     )
 
     for postal in search:
-        coords = []
         data = fetch_locations(postal)
 
         for poi in data.get("stores", []):
@@ -98,10 +96,9 @@ def fetch_data():
                 store_number,
             )
 
-            coords.append([latitude, longitude])
+            search.found_location_at(latitude, longitude)
             scraped_items.append(store_number)
-            items.append(
-                [
+            yield [
                     DOMAIN,
                     store_url,
                     location_name,
@@ -117,12 +114,6 @@ def fetch_data():
                     longitude,
                     hours_of_operation,
                 ]
-            )
-
-        search.mark_found(coords)
-
-    return items
-
 
 def scrape():
     data = fetch_data()

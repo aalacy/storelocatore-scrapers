@@ -1,110 +1,113 @@
-import csv
 import json
-from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+API_ENDPOINT_URL = "https://www.snipits.com/wp-json/facetwp/v1/refresh"
+session = SgRequests()
 website = "snipits_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-        log.info(f"No of records being processed: {len(data)}")
+DOMAIN = "https://www.snipits.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    # Your scraper here
-    final_data = []
     if True:
-        url = "https://www.snipits.com/locations/"
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.find("div", {"class": "locationResults"}).findAll(
-            "div", {"class": "loc-result"}
-        )
-        for link in linklist:
-            temp = link.find("h4").find("a")
-            title = temp.text
-            link = temp["href"]
-            r = session.get(link, headers=headers, verify=False)
+        lat = "33.7489954"
+        lng = "-84.3879824"
+        location_latlng_list = [lat, lng, "100000"]
+        payload = {
+            "action": "facetwp_refresh",
+            "data": {
+                "facets": {"location": location_latlng_list},
+                "frozen_facets": {"location": "hard"},
+                "http_params": {
+                    "get": {"fwp_location": f"{lat}%2C{lng}%2C100000"},
+                    "uri": "locations",
+                    "url_vars": [],
+                },
+                "template": "locations",
+                "extras": {"sort": "default"},
+                "soft_refresh": 0,
+                "is_bfcache": 1,
+                "first_load": 0,
+                "paged": 1,
+            },
+        }
+        json_data = session.post(
+            API_ENDPOINT_URL, data=json.dumps(payload), headers=headers, timeout=500
+        ).json()
+        data_template = json_data["template"]
+        soup = BeautifulSoup(data_template, "html.parser")
+        loclist = soup.findAll("div", {"class": "loc-result"})
+        for loc in loclist:
+            temp = loc.find("h4").find("a")
+            location_name = temp.text
+            page_url = temp["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers, verify=False)
             loc = r.text.split('<script type="application/ld+json">')[1].split(
-                " </script>", 1
+                "</script>", 1
             )[0]
             loc = json.loads(loc)
             phone = loc["telephone"]
-            lat = loc["geo"]["latitude"]
-            longt = loc["geo"]["longitude"]
-            street = loc["address"]["streetAddress"]
+            try:
+                latitude = loc["geo"]["latitude"]
+                longitude = loc["geo"]["longitude"]
+            except:
+                latitude = MISSING
+                longitude = MISSING
+            street_address = loc["address"]["streetAddress"]
             city = loc["address"]["addressLocality"]
             state = loc["address"]["addressRegion"]
-            pcode = loc["address"]["postalCode"]
-            ccode = loc["address"]["addressCountry"]
+            zip_postal = loc["address"]["postalCode"]
+            country_code = loc["address"]["addressCountry"]
             location_type = loc["@type"]
-            soup = BeautifulSoup(r.text, "html.parser")
-            hourlist = soup.find("div", {"class": "div-block-26"}).findAll(
-                "div", {"class": "r-nav-label"}
+            hours_of_operation = (
+                str(loc["openingHours"])
+                .replace("'", "")
+                .replace("]", "")
+                .replace("[", "")
             )
-            hours = ""
-            for hour in hourlist:
-                hour = hour.text
-                hours = hours + " " + hour
-            final_data.append(
-                [
-                    "https://www.snipits.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    ccode,
-                    "<MISSING>",
-                    phone,
-                    location_type,
-                    lat,
-                    longt,
-                    hours,
-                ]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-        return final_data
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

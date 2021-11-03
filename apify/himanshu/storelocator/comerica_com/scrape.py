@@ -95,7 +95,7 @@ def get(url):
         sleep()
         session = get_session()
 
-        session.session.cookies.clear()
+        session.get_session().cookies.clear()
         r = session.get(url, headers=headers)
         r.raise_for_status()
         

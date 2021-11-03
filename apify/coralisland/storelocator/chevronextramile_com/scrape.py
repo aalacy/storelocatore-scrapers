@@ -1,132 +1,76 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
-import usaddress
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
 
-base_url = 'https://www.chevronextramile.com'
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.chevronwithtechron.com/"
+    api_url = f"https://www.chevronwithtechron.com/api/app/techron2go/ws_getChevronExtraMileNearMe_v1.aspx?radius=3500&lat={str(lat)}&lng={str(long)}&token=DC-A2FF22B238E6&search5=1"
 
-
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\u2013', '-').strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '') + ' '
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-    output_list = []
-    history = []
-    with open('./cities.json') as data_file:    
-        city_list = json.load(data_file)
-    url = "https://www.chevronextramile.com/en/FindStore/GetStations"
-    session = requests.Session()
-    page_url = 'https://www.chevronextramile.com/find-a-convenience-store'
     headers = {
-       'Accept': '*/*',
-       'Accept-Encoding': 'gzip, deflate, br',
-       'Accept-Language': 'en-US,en;q=0.9',
-       'Connection': 'keep-alive',
-       'Content-Length': '204',
-       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-       'Host': 'www.chevronextramile.com',
-       'Origin': 'https://www.chevronextramile.com',
-       'Referer': 'https://www.chevronextramile.com/find-a-convenience-store',
-       'Sec-Fetch-Mode': 'cors',
-       'Sec-Fetch-Site': 'same-origin',
-       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36',
-       'X-Requested-With': 'XMLHttpRequest'
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
     }
-    for city in city_list:
-        formdata = {
-            'data[lat]': str(city['latitude']),
-            'data[lng]': str(city['longitude']),
-            'data[extramile]': '0',
-            'data[beer]': '0',
-            'data[carwash]': '0',
-            'data[coffee]': '0',
-            'data[diesel]': '0',
-            'data[extra]': '0',
-            'data[icee]': '0',
-            'data[restroom]': '0',
-        }
-        request = session.post(url, data=formdata, headers=headers)
-        store_list = json.loads(request.text)['stations']
-        for store in store_list:
-            uni_id = validate(store['lat']) + '-' + validate(store['lng'])
-            if uni_id  not in history:
-                history.append(uni_id)
-                output = []
-                output.append(base_url) # url
-                output.append(page_url) # page url
-                output.append(get_value(store['name'])) #location name
-                output.append(get_value(store['address'])) #address
-                output.append(get_value(store['city'])) #city
-                output.append(get_value(store['state'])) #state
-                output.append(get_value(store['zip'])) #zipcode
-                output.append('US') #country code
-                output.append(get_value(store['name'].split('#')[-1])) #store_number
-                output.append(get_value(store['phone'])) #phone
-                output.append('Chevron ExtraMile') #location type
-                output.append(get_value(store['lat'])) #latitude
-                output.append(get_value(store['lng'])) #longitude
-                store_hours = []
-                output.append(get_value(store_hours)) #opening hours
-                output_list.append(output)                
-    return output_list
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    session = SgRequests()
 
-scrape()
+    r = session.get(api_url, headers=headers)
+
+    js = r.json()["stations"]
+
+    for j in js:
+        store_number = j.get("id")
+        location_name = j.get("name") or "<MISSING>"
+        street_address = j.get("address") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        page_url = f"https://www.chevronextramile.com/station-finder/{street_address.replace(' ','-').lower()}-{city.replace(' ','-').lower()}-{state.lower()}-{postal}-id{store_number}/"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        hours_of_operation = j.get("hours") or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=10,
+        expected_search_radius_miles=10,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)
