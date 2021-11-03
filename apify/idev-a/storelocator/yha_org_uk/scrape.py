@@ -46,6 +46,8 @@ def fetch_data():
             if "https" not in page_url:
                 page_url = locator_domain + page_url
             logger.info(page_url)
+            del driver.requests
+            driver.delete_all_cookies()
             driver.get(page_url)
             driver.wait_for_request(page_url.split("/")[-1])
             time.sleep(2)
