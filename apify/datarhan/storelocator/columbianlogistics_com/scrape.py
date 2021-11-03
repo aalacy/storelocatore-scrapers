@@ -62,6 +62,8 @@ def fetch_data():
                 geo = poi[1][0][0]
             elif poi_name.split("&")[0] in location_name:
                 geo = poi[1][0][0]
+            if location_name == "Corporate Office & Grandville Distribution Center":
+                geo = ["42.912088", "-85.73624000000001"]
             if geo:
                 latitude = geo[0]
                 longitude = geo[1]
