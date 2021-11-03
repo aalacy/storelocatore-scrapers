@@ -40,7 +40,10 @@ def fetch_data():
                         city = item.split('"city":"')[1].split('"')[0]
                         state = item.split('"state":"')[1].split('"')[0]
                         zc = item.split('"zip":"')[1].split('"')[0]
-                        phone = item.split('"phone":"')[1].split('"')[0]
+                        try:
+                            phone = item.split('"phone":"')[1].split('"')[0]
+                        except:
+                            phone = "<MISSING>"
                         try:
                             typ = item.split('"brand_link":"')[1].split('"')[0]
                         except:
