@@ -7,8 +7,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-DOMAIN = "aldoshoes.co.id"
-LOCATION_URL = "https://www.aldoshoes.co.id/store-locator"
+DOMAIN = "aldo.co.th"
+LOCATION_URL = "https://www.aldo.co.th/en/store-locator"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -52,14 +52,6 @@ def pull_content(url):
     return soup
 
 
-def get_phone(url):
-    soup = pull_content(url)
-    phone = soup.find("a", {"class": "font-bold underline contact-link"})
-    if not phone:
-        return MISSING
-    return phone.text.strip()
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -70,7 +62,7 @@ def fetch_data():
             .get_text(strip=True, separator="@")
             .replace("\n", ",")
             .replace("\t", "")
-            .replace("@Tunjukkan Arah", "")
+            .replace("@Directions", "")
             .strip()
             .split("@")
         )
@@ -80,16 +72,14 @@ def fetch_data():
         location_name = info[0]
         raw_address = " ".join(", ".join(info[1:]).split()).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = get_phone(page_url)
-        country_code = "ID"
+        phone = MISSING
+        country_code = "TH"
         location_type = MISSING
         store_number = row["id"]
-        hours_of_operation = (
-            row.find("table", {"class": "mw-sl__stores__details__hours__table"})
-            .select_one("tr:nth-child(2)")
-            .get_text(strip=True, separator=",")
-            .replace("Setiap Hari", "Everyday")
-            .replace("day,", "day: ")
+        hoo_table = row.find("table", {"class": "mw-sl__stores__details__hours__table"})
+        hoo_table.find("tr").decompose()
+        hours_of_operation = hoo_table.get_text(strip=True, separator=",").replace(
+            "day,", "day: "
         )
         latitude = row["data-lat"]
         longitude = row["data-long"]
