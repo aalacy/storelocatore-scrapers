@@ -107,9 +107,7 @@ def fetch_data():
                         try:
                             res = http.get(lr.url).json()
                         except:
-                            import pdb
-
-                            pdb.set_trace()
+                            continue
                     if res.get("cnt") > 0:
                         locations = res["list"]
                     else:
