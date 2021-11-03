@@ -36,6 +36,8 @@ def fetch_data():
                 page_url = _["url"]
                 logger.info(page_url)
                 hours = []
+                if not page_url and _["town"] == "Pittsburgh":
+                    page_url = "https://stores.sportsmans.com/sportsmans-warehouse/us/pa/pittsburgh/120-quinn-drive"
                 if page_url:
                     sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                     for hh in sp1.select("table.c-location-hours-details tbody tr"):
