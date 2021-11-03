@@ -201,48 +201,12 @@ class ExampleSearchIteration(SearchIteration):
                             except Exception:
                                 pass
                             yield ret_record(record)
-                            rec_count = self.__state.get_misc_value(
-                                current_country, default_factory=lambda: 0
-                            )
-                            self.__state.set_misc_value(current_country, rec_count + 1)
-                        except KeyError as e:
-                            yield SgRecord(
-                                page_url=SgRecord.MISSING,
-                                location_name=SgRecord.MISSING,
-                                street_address=SgRecord.MISSING,
-                                city=SgRecord.MISSING,
-                                state=SgRecord.MISSING,
-                                zip_postal=SgRecord.MISSING,
-                                country_code=SgRecord.MISSING,
-                                store_number=str(record),
-                                phone=SgRecord.MISSING,
-                                location_type=SgRecord.MISSING,
-                                latitude=SgRecord.MISSING,
-                                longitude=SgRecord.MISSING,
-                                locator_domain=SgRecord.MISSING,
-                                hours_of_operation=SgRecord.MISSING,
-                                raw_address=str(e),
-                            )
+
+                        except KeyError:
+                            logzilla.error(f"Key error for record: {record}")
+
             except Exception as e:
-                # logzilla.error(f"{e}")
-                logzilla.info(f"Error on url: {url}")
-                locations = {"paging": {"total": 0}}
-                yield SgRecord(
-                    page_url=url,
-                    location_name="<ERROR>",
-                    street_address="<ERROR>",
-                    city="<ERROR>",
-                    state="<ERROR>",
-                    zip_postal="<ERROR>",
-                    country_code="<ERROR>",
-                    phone="<ERROR>",
-                    location_type="<ERROR>",
-                    latitude=lat,
-                    longitude=lng,
-                    locator_domain="<ERROR>",
-                    hours_of_operation=str(url),
-                    raw_address=str(e),
-                )
+                logzilla.error(f"Error on url: {url}", exc_info=e)
 
 
 if __name__ == "__main__":

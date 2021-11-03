@@ -46,7 +46,7 @@ def fetch_data():
                 page_url = locator_domain + page_url
             logger.info(page_url)
             driver.get(page_url)
-            time.sleep(1)
+            driver.wait_for_request(page_url.split("/")[-1])
             sp1 = bs(driver.page_source, "lxml")
             _addr = (
                 sp1.select_one("div.map-overlay__section a.location")
