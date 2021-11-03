@@ -47,11 +47,13 @@ def get_data(page_url, sgw: SgWriter):
     except IndexError:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-    hours = tree.xpath(
-        "//p[./strong[contains(text(), 'Hours')]]/following-sibling::p/text()"
+    hours_of_operation = (
+        tree.xpath(
+            "//p[./strong[contains(text(), 'Hours')]]/following-sibling::p/text()"
+        )[0]
+        .replace("Carryout:", "")
+        .strip()
     )
-    hours = list(filter(None, [h.strip() for h in hours]))
-    hours_of_operation = ";".join(hours) or SgRecord.MISSING
 
     row = SgRecord(
         page_url=page_url,

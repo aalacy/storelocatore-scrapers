@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -15,13 +16,12 @@ logger = SgLogSetup().get_logger("virginmobile_ca")
 def fetch_data():
     for x in range(-55, -140, -1):
         for y in range(41, 71):
-            session = SgRequests()
-            logger.info(str(x) + "-" + str(y))
+            logger.info(str(y) + "-" + str(x))
             url = (
                 "https://virgin.know-where.com/virginplus/cgi/selection?place=&lang=en&ll="
-                + str(x)
-                + "%2C"
                 + str(y)
+                + "%2C"
+                + str(x)
                 + "&stype=ll&async=results"
             )
             r = session.get(url, headers=headers)

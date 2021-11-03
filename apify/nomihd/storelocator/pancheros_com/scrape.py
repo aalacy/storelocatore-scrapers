@@ -44,6 +44,12 @@ def fetch_data():
 
         for store in store_list:
 
+            try:
+                if store["closed"]:
+                    continue
+            except:
+                pass
+
             store_number = store["meta"]["id"]
             page_url = store["landingPageUrl"]
 

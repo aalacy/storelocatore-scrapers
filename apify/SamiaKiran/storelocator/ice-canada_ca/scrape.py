@@ -31,7 +31,7 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = (
-                soup.find("h1").get_text(separator="|", strip=True).replace("|", "")
+                soup.find("h1").get_text(separator="|", strip=True).split("|")[0]
             )
             address = (
                 soup.find("address").get_text(separator="|", strip=True).split("|")
@@ -41,7 +41,7 @@ def fetch_data():
             city = temp[0]
             state = temp[1]
             temp = address[2].split(",")
-            zip_postal = temp[0]
+            zip_postal = temp[0].replace("BC ", "")
             country_code = temp[1]
             phone = soup.find("a", {"class": "button big-location-phone"}).text
             hours_of_operation = (

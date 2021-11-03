@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "mitsubishi-motors.co.uk"
 
     for store in stores:
-        location_name = store["store"]
+        location_name = store["store"].replace("&#8217;", "'").replace("#038;", "")
         street_address = (store["address"] + " " + store["address2"]).strip()
         city = store["city"]
         state = store["state"]

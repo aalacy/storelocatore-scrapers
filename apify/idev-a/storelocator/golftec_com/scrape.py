@@ -1,130 +1,128 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
-import json
 
 logger = SgLogSetup().get_logger("golftec")
-
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
 locator_domain = "https://www.golftec.com"
+base_url = "https://www.golftec.com/sitemap-main.xml"
 
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-    granularity=Grain_8(),
-)
-
-
-def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_country="us", proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
-    total = 0
-    for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Geo Code %s..." % lat, lng))
-        url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
-        locations = session.get(url, headers=headers, timeout=15).json()
-        total += len(locations)
-        if "centers" in locations:
-            for _ in locations["centers"]:
-                page_url = f"{locator_domain}{_['link']}"
-                res = session.get(page_url, headers=headers, timeout=15)
-                if res.status_code != 200:
-                    continue
-                soup = bs(res.text, "lxml")
-                try:
-                    store = json.loads(
-                        soup.find("script", type="application/ld+json").string.strip()
-                    )
-                except:
-                    continue
-                search.found_location_at(
-                    store["geo"]["latitude"],
-                    store["geo"]["longitude"],
-                )
-                store["lat"] = store["geo"]["latitude"]
-                store["lng"] = store["geo"]["longitude"]
-                store["street"] = store["address"]["streetAddress"]
-                store["city"] = store["address"]["addressLocality"]
-                store["state"] = store["address"]["addressRegion"]
-                store["zip_postal"] = store["address"]["postalCode"]
-                store["country"] = store["address"]["addressCountry"]
-                hours = []
-                for hh in store["openingHoursSpecification"]:
-                    day = hh["dayOfWeek"].split("/")[-1]
-                    time = "closed"
-                    if "opens" in hh and "closes" in hh:
-                        time = f"{hh['opens']}-{hh['closes']}"
-                    hours.append(f"{day}: {time}")
-                store["hours"] = "; ".join(hours) or "<MISSING>"
-                yield store
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-
-            logger.info(
-                f"found: {len(locations)} | total: {total} | progress: {progress}"
-            )
+ca_provinces_codes = {
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
+}
 
 
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["url"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["name"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["lat"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["lng"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip_postal"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["telephone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
-        location_type=sp.MappingField(
-            mapping=["@type"],
-        ),
-        store_number=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
+def _p(val):
+    if (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .split("x")[0]
+        .strip()
+        .isdigit()
+    ):
+        return val.split("x")[0]
+    else:
+        return ""
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
 
-    pipeline.run()
+def _ph(addr):
+    phone = ""
+    if _p(addr[-1]):
+        phone = _p(addr[-1])
+        del addr[-1]
+    return phone
+
+
+def fetch_records(http):
+    links = bs(http.get(base_url, headers=headers).text, "lxml").select("url")
+    for link in links:
+        page_url = link.loc.text
+        if "golf-lessons/" not in page_url:
+            continue
+        url = page_url.split("/")[-1]
+        if url in [
+            "get-started",
+            "pricing",
+            "plans",
+            "gifts",
+            "app",
+            "success-stories",
+            "junior",
+            "putting",
+            "student_stories",
+            "plans-pricing",
+        ]:
+            continue
+        logger.info(page_url)
+        res = http.get(page_url, headers=headers)
+        if res.status_code != 200:
+            continue
+        sp1 = bs(res.text, "lxml")
+        if sp1.select_one("div.center-details__hours h5"):
+            addr = list(sp1.select_one("div.center-details__hours h5").stripped_strings)
+            phone = _ph(addr)
+            street_address = " ".join(addr[:-1])
+            city = addr[-1].split(",")[0].strip()
+            state = addr[-1].split(",")[1].strip().split(" ")[0].strip()
+            zip_postal = " ".join(addr[-1].split(",")[1].strip().split()[1:])
+        elif sp1.select_one("div.center-details__details h5"):
+            addr = sp1.select_one("div.center-details__details h5").text.split(",")
+            zip_postal = " ".join(addr[-1].strip().split()[1:])
+            state = addr[-1].strip().split()[0]
+            city = addr[-2]
+            street_address = ", ".join(addr[:-2])
+        else:
+            if sp1.select_one("a.hero-block"):
+                # city or state locations
+                continue
+        hours = [
+            ": ".join(hh.stripped_strings)
+            for hh in sp1.select("div.center-details__hours div.seg-center-hours ul li")
+        ]
+        country_code = "US"
+        if state and state in ca_provinces_codes:
+            country_code = "CA"
+
+        yield SgRecord(
+            page_url=page_url,
+            location_name=sp1.h1.text.strip(),
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            phone=phone,
+            hours_of_operation="; ".join(hours),
+            locator_domain=locator_domain,
+            raw_address=" ".join(addr),
+        )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        with SgRequests() as http:
+            for rec in fetch_records(http):
+                writer.write_row(rec)

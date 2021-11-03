@@ -25,6 +25,9 @@ def fetch_data():
         location_name = loc_dom.xpath("//h1/text()")[0]
         raw_adr = loc_dom.xpath("//address/text()")
         raw_adr = [e.strip() for e in raw_adr if e.strip()]
+        street_address = raw_adr[0].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         phone = loc_dom.xpath(
             '//i[@class="fa fa-mobile"]/following-sibling::strong/text()'
         )[0]
@@ -35,7 +38,7 @@ def fetch_data():
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=raw_adr[0],
+            street_address=street_address,
             city=raw_adr[-1].split(", ")[0],
             state=raw_adr[-1].split(", ")[-1].split()[0],
             zip_postal=raw_adr[-1].split(", ")[-1].split()[-1],
