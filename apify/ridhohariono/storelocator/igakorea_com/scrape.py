@@ -53,21 +53,37 @@ def pull_content(url):
     return soup
 
 
+def get_available_stores(url, try_num=1):
+    soup = pull_content(url)
+    try:
+        soup.find("table", {"id": "htblList"}).find_all("tr")[1].find(
+            "a", {"class": "news"}
+        ).text
+    except:
+        if try_num <= 3:
+            log.info(f"Store element are not available. Retry ({try_num}) times")
+            try_num += 1
+            return get_available_stores(url, try_num)
+        else:
+            return False
+    return soup
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
-    i = 1
+    num = 1
     while True:
-        page_url = LOCATION_URL.format(page=i)
-        soup = pull_content(page_url)
+        page_url = LOCATION_URL.format(page=num)
+        soup = get_available_stores(page_url)
+        if not soup:
+            break
+        contents = soup.find("table", {"id": "htblList"}).find_all("tr")
         phone = (
             soup.find("div", {"class": "footer-area"})
             .find("p", {"class": "footer-info"})
             .find("a", {"href": re.compile(r"tel:.*")})["href"]
             .replace("tel:", "")
         )
-        contents = soup.find("table", {"id": "htblList"}).find_all("tr")
-        if not contents[1].find("a", {"class": "news"}):
-            break
         for row in contents[1:]:
             location_name = row.find("a", {"class": "news"}).text.strip()
             raw_address = row.select_one("td:nth-child(3)").text.strip()
@@ -96,7 +112,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-        i += 1
+        num += 1
 
 
 def scrape():
