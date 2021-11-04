@@ -41,7 +41,7 @@ def fetch_data():
                 store = item["storeId"]
                 typ = item["storeType"]
                 lnum = item["locationNumber"]
-                purl = "https://order.littlecaesars.com/en-us/stores/" + str(lnum)
+                purl = "https://littlecaesars.com/en-us/store/" + str(lnum)
                 try:
                     hours = item["storeOpenTime"] + "-" + item["storeCloseTime"]
                 except:
