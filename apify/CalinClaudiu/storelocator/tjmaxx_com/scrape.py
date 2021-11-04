@@ -177,7 +177,6 @@ if __name__ == "__main__":
     tocrawl = []
     tocrawl.append(SearchableCountries.USA)
     tocrawl.append(SearchableCountries.CANADA)
-    tocrawl.append(SearchableCountries.AUSTRALIA)
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
