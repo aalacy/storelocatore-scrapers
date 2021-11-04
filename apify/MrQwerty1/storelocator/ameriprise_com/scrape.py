@@ -103,7 +103,7 @@ if __name__ == "__main__":
     ) as writer:
         countries = [SearchableCountries.USA]
         search = DynamicZipSearch(
-            country_codes=countries, expected_search_radius_miles=50
+            country_codes=countries, expected_search_radius_miles=25
         )
         for _zip in search:
             fetch_data(_zip, writer)
