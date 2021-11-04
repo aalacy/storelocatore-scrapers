@@ -15,8 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
 import pikepdf
 from bs4 import BeautifulSoup
-from tenacity import retry
-from tenacity.stop import stop_after_attempt
+from tenacity import retry, stop_after_attempt
 
 local = threading.local()
 
