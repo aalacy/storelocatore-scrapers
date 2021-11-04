@@ -78,7 +78,7 @@ def fetch_data():
             city=addr[2].replace(",", " "),
             state=state,
             zip_postal=addr[-1],
-            country_code="CA",
+            country_code="UK",
             phone=sp1.select_one('span[itemprop="telephone"]').text.strip(),
             locator_domain=locator_domain,
             latitude=coord[0],

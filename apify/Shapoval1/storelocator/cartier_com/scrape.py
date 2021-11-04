@@ -40,8 +40,6 @@ def get_data(url, sgw: SgWriter):
     state = j.get("state") or "<MISSING>"
     postal = j.get("postalCode") or "<MISSING>"
     country_code = j.get("country") or "<MISSING>"
-    if country_code == "FR":
-        return
 
     phone = j.get("phone") or "<MISSING>"
     latitude = j.get("latitude") or "<MISSING>"

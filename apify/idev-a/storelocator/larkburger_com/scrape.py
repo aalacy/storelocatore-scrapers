@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("larkburger")
 
@@ -28,6 +30,9 @@ def fetch_data():
                 .split("/@")[1]
                 .split(",")
             )
+            phone = ""
+            if _.select_one("div.phone"):
+                phone = _.select_one("div.phone").text.strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h3.text.strip().replace("–", "-"),
@@ -36,16 +41,20 @@ def fetch_data():
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
-                phone=_.select_one("div.phone").text.strip(),
+                phone=phone,
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="; ".join(hours)
+                .replace(",", "")
+                .replace("\r", " ")
+                .replace("–", "-")
+                .replace("\n", "; "),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

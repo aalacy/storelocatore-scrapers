@@ -13,6 +13,16 @@ _headers = {
 locator_domain = "https://www.kfc.gr"
 base_url = "https://www.kfc.gr/stores"
 
+hr_obj = {
+    "1": "Sunday",
+    "2": "Monday",
+    "3": "Tuesday",
+    "4": "Wednesday",
+    "5": "Thursday",
+    "6": "Friday",
+    "7": "Saturday",
+}
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -32,14 +42,17 @@ def fetch_data():
                 location_type = "temporarily closed"
             hours = []
             for hh in _.get("takeaway_schedule", []):
-                hours.append(f"{hh['day']}: {hh['from']}-{hh['to']}")
+                hours.append(f"{hr_obj[hh['day']]}: {hh['from']}-{hh['to']}")
+            city = addr.city
+            if not city:
+                _city = _["address"].split(",")[1].strip().split(" ")
+                city = " ".join(_city[:-2])
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
                 location_name=_["title"],
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
+                city=city,
                 zip_postal=addr.postcode,
                 latitude=_["lat"],
                 longitude=_["lng"],
@@ -53,7 +66,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.store_number)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

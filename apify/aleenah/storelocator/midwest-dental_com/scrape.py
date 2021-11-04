@@ -1,97 +1,90 @@
-from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
 import json
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('midwest-dental_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+website = "midwest-dental_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://midwest-dental.com/"
+MISSING = SgRecord.MISSING
 
 
-def fetch_data():   
-    data = []
-    cleanr = re.compile(r'<[^>]+>')    
-    url = 'https://midwest-dental.com/find-by-zip/'
-    p = 0
-    r = session.get(url, headers=headers, verify=False)
-    r = r.text.split(' var locs = ')[1].split('}];')[0]+'}]'
+def fetch_data():
+    url = "https://midwest-dental.com/find-by-zip/"
+    r = session.get(url, headers=headers)
+    r = r.text.split(" var locs = ")[1].split("}];")[0] + "}]"
     loclist = json.loads(r)
-    #logger.info(loclist)
-    #input()
     for loc in loclist:
-        title = loc['name']        
-        lat = loc['lat']
-        longt = loc['lng']
-        street = loc['address']
-        city = loc['city']
-        state = loc['state']
-        pcode = loc['zip']   
-        phone = loc['phone']
-        link = loc['url']
+        location_name = loc["name"]
+        latitude = loc["lat"]
+        longitude = loc["lng"]
+        street_address = loc["address"]
+        city = loc["city"]
+        state = loc["state"]
+        zip_postal = loc["zip"]
+        phone = loc["phone"]
+        page_url = loc["url"]
         try:
-            if link.find('https://midwest-dental.com/locations') == -1:
+            if page_url.find("https://midwest-dental.com/locations") == -1:
                 continue
         except:
             continue
-        r = session.get(link, headers=headers, verify=False)
+        country_code = "US"
+        log.info(page_url)
+        r = session.get(page_url, headers=headers)
+        if r.status_code != 200:
+            continue
+        soup = BeautifulSoup(r.text, "html.parser")
         try:
-            soup = BeautifulSoup(r.text,'html.parser')
-            hours = soup.text.split('Hours',1)[1].lstrip().split('\n',1)[1].split('*',1)[0].replace('\n',' ')
+            hours_of_operation = soup.find("div", {"id": "hours"}).findAll("div")[2:]
+            hours_of_operation = " ".join(
+                x.get_text(separator="|", strip=True).replace("|", " ")
+                for x in hours_of_operation
+            )
         except:
-            hours = '<MISSING>'
-        try:
-            hours = hours.split('(',1)[0]
-        except:
-            pass
-        data.append([
-                'https://midwest-dental.com/',
-                link,                   
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                'US',
-                '<MISSING>',
-                phone,
-                '<MISSING>',
-                lat,
-                longt,
-                hours
-        ])
-        #logger.info(p,data[p])
-        p += 1
-        
-
-
-    
-                
-        
-    return data
+            hours_of_operation = MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
+
+if __name__ == "__main__":
+    scrape()

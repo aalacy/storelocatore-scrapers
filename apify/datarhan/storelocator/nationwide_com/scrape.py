@@ -9,7 +9,6 @@ from sgrequests import SgRequests
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
     domain = "nationwide.com"

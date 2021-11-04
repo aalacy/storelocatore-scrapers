@@ -32,7 +32,7 @@ def fetch_data():
 
         location_name = poi_html.xpath('.//div[@class="storename"]/a/span/text()')[0]
         street_address = poi_html.xpath('.//div[@class="address1"]/text()')[0]
-        adr_2 = poi_html.xpath('.//div[@class="address1"]/text()')
+        adr_2 = poi_html.xpath('.//div[@class="address2"]/text()')
         if adr_2:
             street_address += " " + adr_2[0]
         raw_address = poi_html.xpath('.//div[@class="cityStateZip"]/text()')[0].split(

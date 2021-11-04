@@ -12,7 +12,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    domain = "nothingbundtcakes.com"
+    domain = "novotel.accor.com"
     start_url = "https://novotel.accor.com/gb/world/hotels-novotel-monde.shtml"
 
     all_locations = []
@@ -64,7 +64,6 @@ def fetch_data():
         )
         if poi:
             poi = json.loads(poi[0])
-
             location_name = poi["name"]
             street = loc_dom.xpath('//meta[@property="og:street-address"]/@content')
             street = street[0] if street else "<MISSING>"

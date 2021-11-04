@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -31,7 +33,9 @@ def fetch_data():
                 temp = list(
                     soup1.select_one("div.store-details__content").stripped_strings
                 )[1:]
-                if "Coming Soon" in "".join(temp):
+                if "Coming Soon" in "".join(temp) or "hours will be posted" in "".join(
+                    temp
+                ):
                     continue
                 for hh in temp:
                     if "re-open" in hh.lower():
@@ -76,7 +80,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

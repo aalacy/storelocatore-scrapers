@@ -30,7 +30,7 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.bankofireland.com/branch-locator/"
+    search_url = "https://www.bankofireland.com/branch-locator/125-oconnell-st/"
     search_res = session.get(search_url, headers=headers)
 
     json_str = (
@@ -74,13 +74,26 @@ def fetch_data():
             .strip()
             .replace(".", "")
             .strip()
+            .replace("  ", " ")
+            .strip()
         )
         try:
             zip = " ".join(zip.rsplit(" ")[-2:]).strip()
         except:
             pass
 
+        try:
+            if zip[0].isalpha() is True and zip[1].isdigit() is not True:
+                zip = "<MISSING>"
+        except:
+            pass
+
+        if zip == "W635":
+            zip = "F94 " + zip
+
         country_code = "IE"
+        if "Northern Ireland" in raw_address:
+            country_code = "GB"
 
         location_name = store_list[store_key]["name"].strip()
 

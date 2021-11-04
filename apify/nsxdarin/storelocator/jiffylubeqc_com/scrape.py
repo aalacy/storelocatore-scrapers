@@ -1,7 +1,10 @@
 # -*- coding: cp1252 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("jiffylubeqc_com")
 
@@ -13,33 +16,6 @@ headers = {
 headers2 = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -86,8 +62,8 @@ def fetch_data():
                 g = str(g.decode("utf-8"))
                 h = str(h.decode("utf-8"))
                 add = g.split("<")[0]
-                city = h.split(",")[0]
-                zc = h.split(",")[1].split("<")[0].strip()
+                city = name.split("Jiffy lube")[1].strip()
+                zc = h.split(",")[2].split("<")[0].strip()
             if "new google.maps.LatLng(" in line2:
                 lat = line2.split("new google.maps.LatLng(")[1].split(",")[0]
                 lng = (
@@ -114,7 +90,7 @@ def fetch_data():
         if phone == "":
             phone = "<MISSING>"
         hours = (
-            hours.replace(" à ", "-")
+            hours.replace(" Ã  ", "-")
             .replace("Du ", "")
             .replace("Lundi au Vendredi", "Mon-Fri")
             .replace("Samedi", "Saturday")
@@ -127,27 +103,29 @@ def fetch_data():
             .replace("Jeudi", "Thu")
             .replace("Vendredi", "Fri")
         )
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

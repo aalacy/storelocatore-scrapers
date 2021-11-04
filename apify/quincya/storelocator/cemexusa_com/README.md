@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore StoreNumberColumnValidator --ignore LatLngDuplicationValidator (Confirmed in API)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore LatLngDuplicationValidator (Confirmed in API)
