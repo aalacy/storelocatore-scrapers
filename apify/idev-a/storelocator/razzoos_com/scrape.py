@@ -33,6 +33,23 @@ def _p(val):
     )
 
 
+def _hour(_pp):
+    hours = []
+    temp = []
+    if _pp.name == "strong":
+        _pp = _pp.find_parent()
+
+    for hh in _pp.find_next_siblings("h3"):
+        hr = hh.text.strip()
+        if not hr or "seating" in hr:
+            break
+        temp.append(hh.text.replace("*", "").strip())
+    for x in range(0, len(temp), 2):
+        hours.append(f"{temp[x]} {temp[x+1]}")
+
+    return hours
+
+
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
@@ -57,22 +74,31 @@ def fetch_data():
                 if "(" in aa or ")" in aa:
                     continue
                 _addr.append(aa)
-            addr = parse_address_intl(" ".join(_addr))
-            street_address = _addr[0]
-            if addr.postcode in street_address:
-                street_address = street_address.split(addr.city)[0].strip()
-
+            raw_address = " ".join(_addr)
+            addr = parse_address_intl(raw_address)
+            street_address = " ".join(_addr[:-1])
+            if not street_address:
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
             phone = ""
-            if link.find("a", href=re.compile(r"tel:")):
-                phone = link.find("a", href=re.compile(r"tel:")).text.strip()
-            if not phone and sp1.find("a", href=re.compile(r"tel:")):
-                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
-            if not phone and sp1.find("strong", string=re.compile(r"Phone:")):
-                phone = list(
-                    sp1.find("strong", string=re.compile(r"Phone:"))
-                    .find_parent()
-                    .stripped_strings
-                )[-1]
+            hours = []
+            _hr = sp1.find("", string=re.compile(r"^Phone"))
+            if _hr:
+                phone = (
+                    list(_hr.find_parent("h3").stripped_strings)[-1]
+                    .split(":")[-1]
+                    .replace("(", "")
+                    .replace(")", "")
+                )
+                hours = _hour(_hr.find_parent())
+            else:
+                _hr = sp1.select_one(
+                    "main div.sqs-row div.sqs-row div.sqs-col-4 div.html-block div.sqs-block-content p"
+                )
+                if _hr:
+                    phone = _hr.text.strip()
+                    hours = _hour(_hr)
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.select_one("div.summary-title").text.strip(),
@@ -85,6 +111,8 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=ss["location"]["mapLat"],
                 longitude=ss["location"]["mapLng"],
+                hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 
