@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import dirtyjson as json
 
 _headers = {
     "accept": "*/*",
