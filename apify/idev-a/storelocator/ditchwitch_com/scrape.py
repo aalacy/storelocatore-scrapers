@@ -1,7 +1,9 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("ditchwitch")
@@ -13,20 +15,13 @@ headers = {
 locator_domain = "https://www.ditchwitch.com"
 base_url = "https://www.ditchwitch.com/find-a-dealer"
 
-search = static_zipcode_list(
-    country_code=SearchableCountries.USA,
-    radius=3,
-)
 
-
-def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
+def fetch_records(http, search):
     total = 0
     for zip in search:
-        logger.info(("Pulling zip Code %s..." % zip))
+        logger.info(f"[{search.current_country()}] {zip}")
         url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxAddress={zip}"
-        res = session.get(url, headers=headers, timeout=15)
+        res = http.get(url, headers=headers)
         if res.status_code != 200:
             continue
         locations = res.json()
@@ -45,61 +40,32 @@ def fetch_data():
                 except:
                     hours_of_operation = "<MISSING>"
 
-                loc["hours_of_operation"] = hours_of_operation
-                loc["state"] = loc["state"] or "<MISSING>"
-                loc["street_address"] = loc["address1"] + " " + loc.get("address2", "")
-                yield loc
+                street_address = loc["address1"]
+                if loc["address2"]:
+                    street_address += " " + loc.get("address2", "")
+                yield SgRecord(
+                    page_url=base_url,
+                    store_number=loc["clientkey"],
+                    location_name=loc["name"],
+                    street_address=street_address,
+                    city=loc["city"],
+                    state=loc["state"],
+                    zip_postal=loc["postalcode"],
+                    country_code=loc["country"],
+                    phone=loc["phone"],
+                    hours_of_operation=hours_of_operation,
+                )
 
             logger.info(f"found: {len(locations['dealers'])} | total: {total}")
 
 
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.ConstantField(base_url),
-        location_name=sp.MappingField(
-            mapping=["name"],
-        ),
-        store_number=sp.MappingField(
-            mapping=["clientkey"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street_address"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["postalcode"],
-        ),
-        country_code=sp.ConstantField("US"),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
-        location_type=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
-
-
 if __name__ == "__main__":
-    scrape()
+    with SgRequests() as http:
+        search = DynamicZipSearch(country_codes=SearchableCountries.ALL)
+        with SgWriter(
+            deduper=SgRecordDeduper(
+                RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+            )
+        ) as writer:
+            for rec in fetch_records(http, search):
+                writer.write_row(rec)

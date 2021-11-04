@@ -67,7 +67,7 @@ def fetch_data():
                     hours = "<MISSING>"
                 loc = (
                     "https://www.huntington.com/Community/branch-info?locationId="
-                    + store
+                    + store.replace("bko", "")
                 )
                 yield SgRecord(
                     locator_domain=website,
