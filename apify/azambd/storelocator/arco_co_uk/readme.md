@@ -27,5 +27,5 @@ Please crawl arco.co.uk. We only want their own stores, not stores that carry th
 ## Updated: 
 - Website updated so it needed rewrite 
 - Found 44 stores as of 4th Nov 2021
-- API endpoing https://www.arco.co.uk/store-finder?q=&page=0&productCode=&show=All&fetchAll=true 
+- API endpoint https://www.arco.co.uk/store-finder?q=&page=0&productCode=&show=All&fetchAll=true 
 - Not applicable `"Acro Store" with values "Yes" or "No";` and extra data field 
