@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -25,13 +26,17 @@ def fetch_data():
         street_address = poi["address1"]
         if poi["address2"]:
             street_address += ", " + poi["address2"]
+        city = poi["city"]
+        if not city:
+            addr = parse_address_intl(poi["name"])
+            city = addr.city
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=poi["name"],
             street_address=street_address,
-            city=poi["city"],
+            city=city,
             state=poi["stateCode"],
             zip_postal=poi["postalCode"],
             country_code=poi["countryCode"],
