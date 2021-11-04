@@ -84,19 +84,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
-
-def scrape():
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
-
-
-if __name__ == "__main__":
-    scrape()
