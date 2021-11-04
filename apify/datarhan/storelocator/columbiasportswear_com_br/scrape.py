@@ -44,7 +44,7 @@ def fetch_data():
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation=raw_data[-2],
+            hours_of_operation=raw_data[-2].split("O parque")[0].strip(),
             raw_address=raw_address,
         )
 
