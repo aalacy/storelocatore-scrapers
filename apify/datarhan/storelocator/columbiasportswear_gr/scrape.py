@@ -1,3 +1,4 @@
+from re import L
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -24,7 +25,9 @@ def fetch_data():
         location_type = poi_html.xpath('.//li[@class="type"]/div/text()')[0]
         if location_type == "Columbia Retailer" or location_type == "Columbia Offices":
             continue
-        street_address = poi_html.xpath('.//span[@itemprop="streetAddress"]/text()')[0]
+        street_address = poi_html.xpath('.//span[@itemprop="streetAddress"]/text()')[
+            0
+        ].strip()[:-1]
         state = (
             poi_html.xpath('.//span[@class="area"]/text()')[0].strip().replace(",", "")
         )
