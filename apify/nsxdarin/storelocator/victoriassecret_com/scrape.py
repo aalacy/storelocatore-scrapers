@@ -75,6 +75,8 @@ def fetch_data():
                 phone = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
+            if add == "@":
+                add = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,

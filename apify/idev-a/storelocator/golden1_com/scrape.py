@@ -35,16 +35,40 @@ _headers = {
 locator_domain = "https://www.golden1.com"
 base_link = "https://www.golden1.com/atm-branch-finder"
 base_url = "https://www.golden1.com/api/BranchLocator/GetLocations"
-data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbranches=true&sharedatm=false&swlat=&swlng=&nelat=&nelng=&centerlat={}&centerlng={}&userlat=&userlng="
+data = "golden1branches=true&golden1homecenters=false&golden1atm=true&sharedbranches=false&sharedatm=false&swlat={}&swlng={}&nelat={}&nelng={}&centerlat={}&centerlng={}&userlat=&userlng="
 
 
 def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
     for lat, lng in search:
-        locations = http.post(
-            base_url, headers=_headers, data=data.format(lat, lng)
-        ).json()["locations"]
+        swlat = lat - 0.207706338
+        swlng = lng - 0.26463210582
+        nelat = lat + 0.207706338
+        netlng = lng + 0.26463210582
+        try:
+            locations = http.post(
+                base_url,
+                headers=_headers,
+                data=data.format(swlat, swlng, nelat, netlng, lat, lng),
+            ).json()["locations"]
+        except:
+            locations = []
         logger.info(f"[{lat}, {lng}] {len(locations)} found")
+        search.found_location_at(lat, lng)
         for _ in locations:
+            if not _["address"] and not _["title"]:
+                continue
+            location_type = ""
+            if "branch" in _["imageUrl"]:
+                location_type = "branch"
+            if "atm" in _["imageUrl"]:
+                location_type = "atm"
+            hours = []
+            for hh in _["hours"].split("\\n"):
+                if not hh.strip():
+                    continue
+                if "Hour" in hh:
+                    continue
+                hours.append(hh.strip())
             yield SgRecord(
                 page_url="https://www.golden1.com/atm-branch-finder#",
                 location_name=_["title"],
@@ -55,25 +79,26 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code="US",
+                location_type=location_type,
                 locator_domain=locator_domain,
-                hours_of_operation=_["hours"].replace("\\n", "; "),
+                hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
     with SgChrome() as driver:
         driver.get(base_link)
-        cookies = driver.get_cookies()
-        cookie = ""
-        for cook in cookies:
-            cookie = cookie + cook["name"] + "=" + cook["value"] + "; "
-
-        _headers["cookie"] = cookie.strip()[:-1]
+        cookies = []
+        for cook in driver.get_cookies():
+            cookies.append(f'{cook["name"]}={cook["value"]}')
+        _headers["cookie"] = ";".join(cookies)
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
         )
         with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)
+            deduper=SgRecordDeduper(
+                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
+            )
         ) as writer:
             with SgRequests(proxy_country="us") as http:
                 for rec in fetch_records(http, search):

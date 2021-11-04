@@ -38,16 +38,26 @@ def fetch_data():
         location_name = poi["name"]
         street_address = poi["address"].get("line1")
         if not street_address:
-            street_address = poi["address"].get("line3")
-        if street_address and poi["address"].get("line2"):
+            street_address = poi["address"].get("line2")
+        if poi["address"].get("line1") and poi["address"].get("line2"):
             street_address += " " + poi["address"]["line2"]
+        if street_address and poi["address"].get("line3"):
+            street_address += " " + poi["address"]["line3"]
         if not street_address:
             street_address = poi["mailing"].get("line1")
             if poi["mailing"].get("line2"):
                 street_address += " " + poi["mailing"]["line2"]
         if not street_address:
             street_address = "<MISSING>"
-        city = poi["address"]["city"].split(",")[0].strip()
+        if street_address == ".":
+            poi_data = session.get(
+                f'https://locator.crawco.com/api/branches/{poi["number"]}{poi["addressNum"]}?callback=JSON_CALLBACK'
+            ).json()
+            street_address = poi_data["address"]["line1"]
+            if poi_data["address"].get("line2"):
+                street_address += " " + poi_data["address"]["line2"]
+        city = poi["address"]["city"]
+        city = city.replace(", D.C.", "").replace("DHA, ", "")
         state = poi["address"].get("state")
         state = state if state else "<MISSING>"
         zip_code = poi["address"].get("postal")

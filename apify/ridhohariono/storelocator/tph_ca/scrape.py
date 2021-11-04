@@ -12,6 +12,8 @@ import re
 DOMAIN = "tph.ca"
 BASE_URL = "https://tph.ca/"
 LOCATION_URL = "https://www.tph.ca/printing-near-me"
+API_URL = "https://www.tph.ca/wp-content/uploads/agile-store-locator/locator-data.json?v=1&action=asl_load_stores&load_all=1&layout=1"
+SINGLE_STORE = "https://www.tph.ca/myaccount/API/Branch/BranchesByBranchNo?ID={}"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -74,32 +76,29 @@ def get_json_content(soup):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.find("div", {"id": "branchSideMenu_list"}).find_all(
-        "div", {"class": "branch-list-item__container"}
-    )
-    for row in contents:
-        store_number = re.sub(r"\D+", "", row["onclick"])
-        page_url = BASE_URL + store_number
-        content = pull_content(page_url)
-        info_content = content.find("div", {"id": "branch-infobanner"})
-        raw_address = info_content.find("div", {"id": "branch-address"}).get_text(
-            strip=True, separator=","
-        )
-        location_name = "TPH The Printing House"
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = (
-            info_content.find("div", {"id": "branch-contact"}).find("p").text.strip()
-        )
+    data = session.get(API_URL, headers=HEADERS).json()
+    for row in data:
+        store_number = row["title"]
+        page_url = row["website"]
+        info = session.get(SINGLE_STORE.format(store_number), headers=HEADERS).json()
+        location_name = info["Name"]
+        if "CLOSED" in location_name.upper():
+            continue
+        street_address = row["street"]
+        city = row["city"]
+        state = row["state"]
+        zip_postal = row["postal_code"]
+        phone = row["phone"]
         country_code = "CA"
         location_type = "The Printing House"
-        map_link = content.find("iframe", {"id": "branch-map"})["src"]
-        latitude, longitude = get_latlong(map_link)
+        latitude = row["lat"]
+        longitude = row["lng"]
+        if info["HoursFri"] == info["HoursMToT"]:
+            hoo = "Mon - Fri: " + info["HoursFri"]
+        else:
+            hoo = hoo = "Mon: " + info["HoursMToT"] + ", Fri:" + info["HoursFri"]
         hours_of_operation = (
-            content.find("div", {"id": "branch-hours"})
-            .text.strip()
-            .replace("\n", ",")
-            .replace("*We run full production until midnight.,", "")
+            hoo + ", Sat:" + info["HoursSat"] + ", Sun:" + info["HoursSun"]
         )
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
