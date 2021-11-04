@@ -32,9 +32,10 @@ def fetch_data():
             .split(",")
         )
         hoo = poi_html.xpath(
-            './/following-sibling::div[1]//p[@id="schedulemontevideo"]//text()'
+            './/following-sibling::div[1]//p[contains(@id, "schedule")]//text()'
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = " ".join(hoo.split())
         zip_code = raw_address[-1].split()[-2]
         city = " ".join(raw_address[-1].split()[:-2])
         if not zip_code.isdigit():
