@@ -33,6 +33,7 @@ def fetch_data():
                 .strip()
                 .split(",")
             )
+            
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.select_one("a.title").text.strip(),
