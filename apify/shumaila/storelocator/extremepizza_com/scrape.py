@@ -81,7 +81,9 @@ def fetch_data():
             .replace("Dine in at 50% capacity due to current regulations", "")
             .replace("NEW HOURS", "")
         )
-        hours_of_operation = re.sub(r"(Delivering to.*)|(PINTS ON.*)", "", hoo).strip()
+        hours_of_operation = re.sub(
+            r"(Delivering to.*)|(PINTS ON.*)|(For orders.*)", "", hoo
+        ).strip()
         location_type = MISSING
         if "temporarily closed" in check_content:
             location_type = "TEMP_CLOSED"
