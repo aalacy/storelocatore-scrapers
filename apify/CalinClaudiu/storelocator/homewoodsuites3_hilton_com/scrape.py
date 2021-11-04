@@ -16,6 +16,9 @@ import time
 from sgselenium import SgChrome
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def cleanup_json(x, url):
@@ -123,7 +126,11 @@ def gen_countries(session):
         links = alist.find_all("a")
         for link in links:
             countries.append(
-                {"text": link.text, "link": link["href"], "complete": False}
+                {
+                    "text": link.text,
+                    "link": link["href"].replace("https", "http"),
+                    "complete": False,
+                }
             )
     return countries
 

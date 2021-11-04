@@ -63,11 +63,7 @@ def fetch_data(sgw: SgWriter):
                 list(base.find(class_="station__icons-list").stripped_strings)
             )
             hours_of_operation = " ".join(
-                list(
-                    base.find(itemprop="openingHours")
-                    .find_previous("div")
-                    .stripped_strings
-                )
+                list(base.find_all(class_="station__icon-text")[-1].stripped_strings)
             )
 
             sgw.write_row(

@@ -19,7 +19,7 @@ def get_urls():
 
 
 def get_data(url, sgw: SgWriter):
-    locator_domain = "https://www.anthonys.com"
+    locator_domain = "http://graeters.com/"
     page_url = url
 
     headers = {
@@ -56,6 +56,13 @@ def get_data(url, sgw: SgWriter):
     }
     tree = html.fromstring(r.text)
     ad = "".join(tree.xpath('//address[@class="location-address"]/text()'))
+    if page_url == "https://www.graeters.com/stores/retail-stores/louisville/ferncreek":
+        ad = (
+            "".join(tree.xpath('//p[contains(text(),"located at")]/text()'))
+            .split("located at")[1]
+            .split("and")[0]
+            .strip()
+        )
     a = usaddress.tag(ad, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2')}".replace(
         "None", ""
@@ -63,6 +70,7 @@ def get_data(url, sgw: SgWriter):
     city = a.get("city") or "<MISSING>"
     state = a.get("state") or "<MISSING>"
     postal = a.get("postal") or "<MISSING>"
+
     country_code = "US"
     location_name = "".join(
         tree.xpath('//div[contains(@class, "location-details")]//h1//text()')
@@ -96,7 +104,7 @@ def get_data(url, sgw: SgWriter):
         latitude, longitude = "<MISSING>", "<MISSING>"
     p_closed = "".join(tree.xpath('//strong[text()="PERMANENTLY CLOSED"]/text()'))
     if p_closed:
-        hours_of_operation = "PERMANENTLY CLOSED"
+        return
 
     row = SgRecord(
         locator_domain=locator_domain,

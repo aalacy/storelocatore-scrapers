@@ -32,11 +32,6 @@ def fetch_data():
             )
             soup1 = bs(session.get(page_url).text, "lxml")
             hours = []
-            for _ in soup1.select(".hours .hours--detail"):
-                hours.append(
-                    f"{_.select_one('.day').text}: {_.select_one('.hours').text}"
-                )
-
             address = list(soup1.select_one("div.location-address a").stripped_strings)
             yield SgRecord(
                 page_url=page_url,
