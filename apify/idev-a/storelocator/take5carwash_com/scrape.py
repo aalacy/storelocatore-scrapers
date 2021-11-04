@@ -30,7 +30,10 @@ def fetch_data():
             addr = raw_address.split(",")
             hours = []
             if _["description"]:
-                hours = bs(_["description"], "lxml").stripped_strings
+                for hh in bs(_["description"], "lxml").stripped_strings:
+                    if "wash" in hh.lower() or "our" in hh.lower():
+                        break
+                    hours.append(hh)
             state = addr[-1].strip().split()[0]
             if state.isdigit():
                 state = ""
@@ -45,7 +48,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
-                location_name=_["phone"],
+                location_name=_["name"],
                 street_address=" ".join(addr[:-2]),
                 city=addr[-2],
                 state=state,

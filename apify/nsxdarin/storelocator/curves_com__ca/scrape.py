@@ -1,41 +1,17 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("curves_com__ca")
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "cookie": "__cfduid=d21407db978f6fedfbb877d44bdf3a76c1595344274; _gcl_au=1.1.1927393316.1595344271; _ga=GA1.2.940401805.1595344271; _fbp=fb.1.1595344271687.1837991533; _icl_user_selected_region=ca; _icl_current_language=ca; wp-wpml_current_language=ca; _gid=GA1.2.2064215765.1595601197; _uetsid=b5ddfc3bde6274a8680d6c0406ffe280; _uetvid=c9edbf0d746722fd7ddf3cc4bc1c6708",
+    "cookie": "_omappvp=Pf5A9mseSdMvgpLpn7xhT03WNvE6GBVeTee8xRClU09hVWFyuHm11TuncHAN0lymqxFrsrRPCDBAC0pWRtiXHM8vnLXVxIoo; _gcl_au=1.1.702983292.1635276560; _ga=GA1.2.1556144746.1635276560; _gid=GA1.2.61177968.1635276560; _gat_UA-23879052-1=1; _fbp=fb.1.1635276560465.1159219933; wp-wpml_current_language=en; _agree_to_privacy_policy=true; _omappvs=1635276598770; _uetsid=045bbf30369311ec85c4719591a2b53e; _uetvid=8a2c6f10c31911eb9581e151293c3bab",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -71,22 +47,22 @@ def fetch_data():
     hours = "<MISSING>"
     lat = "45.2983929"
     lng = "-75.8883216"
-    yield [
-        website,
-        purl,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
+    yield SgRecord(
+        locator_domain=website,
+        page_url=purl,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
     for xlat in range(43, 70):
         for ylng in range(-80, -52):
             url = (
@@ -98,7 +74,6 @@ def fetch_data():
             logger.info(url)
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
-                line = str(line.decode("utf-8"))
                 if ">&#x1F4DE;</i>" in line:
                     phone = line.split("tel:")[1].split('"')[0]
                 if '<a href="https://www.wellnessliving.com' in line:
@@ -121,7 +96,6 @@ def fetch_data():
                         lng = ""
                         hours = ""
                         for line2 in r2.iter_lines():
-                            line2 = str(line2.decode("utf-8"))
                             if '<meta name="geo.position" content="' in line2:
                                 lat = line2.split(
                                     '<meta name="geo.position" content="'
@@ -191,27 +165,29 @@ def fetch_data():
                         if phone == "":
                             phone = "<MISSING>"
                         if add != "" and state in canada:
-                            yield [
-                                website,
-                                purl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=purl,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

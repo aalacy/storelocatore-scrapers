@@ -72,10 +72,13 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     street_address, city, state, postal = get_address(raw_address)
 
+    text = "".join(tree.xpath("//iframe/@src|//a[contains(@href, 'google')]/@href"))
     try:
-        text = "".join(tree.xpath("//iframe/@src"))
         latitude = text.split("!3d")[1].split("!")[0]
-        longitude = text.split("!2d")[1].split("!")[0]
+        try:
+            longitude = text.split("!2d")[1].split("!")[0]
+        except:
+            longitude = text.split("!4d")[1].split("http")[0]
     except:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
@@ -86,6 +89,8 @@ def get_data(page_url, sgw: SgWriter):
         )
     )
     hours_of_operation = hours.split("from")[-1].strip()
+    if hours_of_operation.startswith(":"):
+        hours_of_operation = hours_of_operation[2:]
 
     row = SgRecord(
         page_url=page_url,

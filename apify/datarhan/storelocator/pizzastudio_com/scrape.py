@@ -52,6 +52,10 @@ def fetch_data():
             country_code = "US"
         if len(zip_code.split()) == 2:
             country_code = "CA"
+        if "brazil" in store_url:
+            country_code = "BR"
+        if poi["comingsoon"] == 1:
+            hours_of_operation = "Coming Soon"
 
         item = SgRecord(
             locator_domain=domain,
