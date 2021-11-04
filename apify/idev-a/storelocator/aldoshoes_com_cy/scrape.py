@@ -45,7 +45,7 @@ def fetch_data():
                 page_url=base_url,
                 location_name=block[0],
                 street_address=street_address,
-                city=city.replace("Zenon", "").replace("Of The Kings", ""),
+                city=block[0].lower(),
                 zip_postal=zip_postal,
                 country_code="Cyprus",
                 locator_domain=locator_domain,
