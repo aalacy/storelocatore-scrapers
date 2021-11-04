@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import time
-import json
+import dirtyjson as json
 import ssl
 
 try:
@@ -101,7 +101,13 @@ def fetch_data():
                         'div.search button[type="submit"]'
                     ).click()
                     lr = driver.wait_for_request(list_url)
-                    res = json.loads(lr.response.body)
+                    try:
+                        res = json.loads(lr.response.body)
+                    except:
+                        try:
+                            res = http.get(lr.url).json()
+                        except:
+                            continue
                     if res.get("cnt") > 0:
                         locations = res["list"]
                     else:
