@@ -1,4 +1,3 @@
-from re import L
 from lxml import etree
 
 from sgrequests import SgRequests
