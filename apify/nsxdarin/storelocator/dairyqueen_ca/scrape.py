@@ -1175,6 +1175,17 @@ def fetch_data():
                     city = city.replace("\\u0026apos;", "'")
                     add = add.replace("\\u0026apos;", "'")
                     name = name.replace("\\u0026apos;", "'")
+                    if "sk/saskatoon/1418-college-dr/7820" in loc:
+                        name = "1418 College Dr"
+                        add = "1418 College Dr"
+                        city = "Saskatoon"
+                        state = "SK"
+                        zc = "S7N 0W7"
+                        phone = "306-664-3377"
+                        hours = "Mon-Sun: 10:00AM-11:00PM"
+                        lat = "52.128722"
+                        lng = "-106.635113"
+                        store = "7820"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
