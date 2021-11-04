@@ -27,6 +27,15 @@ _headers = {
 
 locator_domain = "https://www.specsavers.co.nz"
 base_url = "https://www.specsavers.co.nz/stores/full-store-list"
+days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+]
 
 
 def fetch_data():
@@ -48,10 +57,11 @@ def fetch_data():
                 raw_address = " ".join(sp1.select_one("div.store p").stripped_strings)
                 json_url = sp1.select_one("div.js-yext-info")["data-yext-url"]
                 _ = session.get(json_url, headers=_headers).json()["response"]
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in sp1.select("table.opening--day-and-time tr")
-                ]
+                hours = []
+                for hh in _["hours"].split(","):
+                    day = int(hh.split(":")[0]) - 1
+                    hr = f"{hh.split(':')[1]}:{hh.split(':')[2]} am - {hh.split(':')[3]}:{hh.split(':')[4]} pm"
+                    hours.append(f"{days[day]}: {hr}")
                 if _.get("displayLat"):
                     latitude = _["displayLat"]
                     longitude = _["displayLng"]
