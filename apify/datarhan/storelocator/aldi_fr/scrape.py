@@ -15,6 +15,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
 import pikepdf
 from bs4 import BeautifulSoup
+from tenacity import retry
+from tenacity.stop import stop_after_attempt
 
 local = threading.local()
 
@@ -75,6 +77,7 @@ def is_french_city(city, session, retry=0):
             return is_french_city(city, SgRequests(), retry + 1)
 
 
+@retry(stop=stop_after_attempt(3))
 def fetch_locations(code, tracker):
     sleep(uniform(0, 5))
     start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
@@ -177,7 +180,12 @@ def fetch_location(page_url, session, tracker):
     response = session.get(page_url)
     soup = BeautifulSoup(response.text, "lxml")
     location_name = soup.find("a", itemprop="url").text
-    address = soup.find("span", itemprop="streetAddress").text
+
+    address = ", ".join(
+        tag
+        for tag in soup.find("span", itemprop="streetAddress").contents
+        if isinstance(tag, str)
+    )
     addr = parse_address(International_Parser(), address)
 
     latitude = soup.find("span", itemprop="latitude").text
@@ -230,7 +238,7 @@ def scrape():
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
             ),
-            duplicate_streak_failure_factor=10000,
+            duplicate_streak_failure_factor=20000,
         )
     ) as writer:
         for item in fetch_data():
