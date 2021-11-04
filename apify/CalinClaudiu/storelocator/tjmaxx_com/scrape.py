@@ -174,7 +174,7 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    tocrawl = SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
+    tocrawl = []
     tocrawl.append(SearchableCountries.USA)
     tocrawl.append(SearchableCountries.CANADA)
     tocrawl.append(SearchableCountries.AUSTRALIA)
