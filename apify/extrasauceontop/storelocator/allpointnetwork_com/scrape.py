@@ -12,6 +12,8 @@ session = SgRequests()
 def get_location(search_codes):
     search_lat = search_codes[0]
     search_lon = search_codes[1]
+    log.info(search_lat)
+    log.info(search_lon)
     url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
 
     x = 0
