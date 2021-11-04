@@ -1,0 +1,22 @@
+--ignore CentroidValidator      (Confirmed Scrape correctly)
+Found 1 concerning rows. Examples:
+    latitude longitude                              REASON  rowNumber
+714  85553.0  33.85642  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE        714
+
+
+--ignore StreetAddressHasNumber     (Confirmed Scrape correctly)
+Found 10 concerning rows. Examples:
+                            street_address              REASON  rowNumber
+25   South Ebenczer Road/Pine Needles Road  ADDR_HAS_NO_NUMBER         25
+27                                   Us-76  ADDR_HAS_NO_NUMBER         27
+34                               <MISSING>  ADDR_HAS_NO_NUMBER         34
+148                             Highway 58  ADDR_HAS_NO_NUMBER        148
+158                              Rt 4 & Rt  ADDR_HAS_NO_NUMBER        158
+
+
+--ignore GeoConsistencyValidator   (Confirmed Scrape correctly)
+Found 3 concerning rows. Examples:
+       zip state                REASON  rowNumber
+140  42113    KY  ZIPCODE_NOT_IN_STATE        140
+144  42106    KY  ZIPCODE_NOT_IN_STATE        144
+463  17328    PA  ZIPCODE_NOT_IN_STATE        463

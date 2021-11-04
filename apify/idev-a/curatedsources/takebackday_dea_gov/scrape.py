@@ -25,14 +25,16 @@ def fetch_data():
                 "county_P": "",
                 "city_P": "",
                 "state_P": state.abbr,
-                "searchRadius": "500",
+                "searchRadius": "5000",
                 "_eventId_submit": "Submit",
             }
             res = session.post(base_url, headers=_headers, data=data)
             if res.status_code != 200:
+                logger.warning(state.abbr)
                 continue
             soup = bs(res.text, "lxml")
             if "An unexpected error" in soup.text:
+                logger.warning(state.abbr)
                 continue
             temp = " ".join(
                 list(soup.select_one("div#tableie h2").stripped_strings)
