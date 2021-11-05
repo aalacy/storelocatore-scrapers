@@ -14,6 +14,7 @@ _headers = {
 
 locator_domain = "https://www.acepuertorico.com"
 base_url = "https://www.acepuertorico.com/localidades/"
+days = ["Lunes a Viernes", "Sábado", "Domingo"]
 
 
 def fetch_data():
@@ -53,11 +54,21 @@ def fetch_data():
                         addr = block[:x]
                         phone = block[x + 1]
                         break
-                for hh in sp1.select_one("div.l-main div.wpb_wrapper p"):
+                for hh in sp1.select("div.l-main div.wpb_wrapper p"):
                     if "HORARIO" in hh.text:
                         temp = list(hh.stripped_strings)[1:]
-                        for x in range(0, len(temp), 2):
-                            hours.append(f"{temp[x]} {temp[x+1]}")
+                        times = day = ""
+                        for x, tt in enumerate(temp):
+                            if tt.replace(":", "") in days:
+                                if times:
+                                    hours.append(f"{day} {times}")
+                                    times = ""
+                                day = tt
+                            else:
+                                times += tt
+
+                            if x == len(temp) - 1:
+                                hours.append(f"{day} {times}")
                         break
 
             yield SgRecord(
