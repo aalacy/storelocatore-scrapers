@@ -6,6 +6,12 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sglogging import sglog
+from sgscrape.pause_resume import CrawlStateSingleton
+
+locator_domain = "fiatcanada.com"
+
+logger = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def get_hours(code):
@@ -13,6 +19,7 @@ def get_hours(code):
     url = f"https://www.fiatcanada.com/en/dealers/{code}"
 
     r = session.get(url, headers=headers)
+    logger.info(f"{url} Response: {r}")
     if r.status_code == 404:
         return
     try:
@@ -32,9 +39,11 @@ def fetch_data(la, ln, sgw: SgWriter):
     codes = []
     hours = dict()
     api = f"https://www.fiatcanada.com/data/dealers/expandable-radius?brand=fiat&longitude={ln}&latitude={la}&radius=200"
-
+    logger.info(f"API: {api}")
     r = session.get(api, headers=headers)
+    logger.info(f"API Response: {r}")
     js = r.json()["dealers"]
+    logger.info(f"{la}, {ln} locations found: {len(js)}")
     for j in js:
         codes.append(j.get("code"))
 
@@ -80,6 +89,7 @@ def fetch_data(la, ln, sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0",
@@ -93,7 +103,7 @@ if __name__ == "__main__":
         "Cache-Control": "max-age=0",
         "TE": "trailers",
     }
-    locator_domain = "https://www.fiatcanada.com/"
+
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
     )
