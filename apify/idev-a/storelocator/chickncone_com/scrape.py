@@ -21,7 +21,9 @@ base_url = "https://chickncone.com/locations/"
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
+    ) as driver:
         driver.get(base_url)
         locations = bs(driver.page_source, "lxml").select("div.item")
         for _ in locations:
