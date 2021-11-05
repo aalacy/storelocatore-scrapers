@@ -67,7 +67,6 @@ def fetch_data():
                 params["searchCriteria[current_page]"] = str(p)
                 data = session.get(start_url, headers=hdr, params=params).json()
                 all_locations += data["items"]
-        print(code, len(all_locations))
         for poi in all_locations:
             store_url = poi.get("store_details_link")
             if store_url:
