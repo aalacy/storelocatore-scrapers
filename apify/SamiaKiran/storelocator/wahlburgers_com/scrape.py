@@ -70,12 +70,15 @@ def fetch_data():
                     phone = (
                         temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
                     )
+                except:
+                    phone = MISSING
+                try:
+
                     hours_of_operation = (
                         temp[2].get_text(separator="|", strip=True).replace("|", " ")
                     ).replace("Opening hours:", "")
                     address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
                 except:
-                    phone = "<MISSING>"
                     hours_of_operation = (
                         temp[1].get_text(separator="|", strip=True).replace("|", " ")
                     ).replace("Opening hours:", "")
@@ -106,6 +109,7 @@ def fetch_data():
                 except:
                     latitude = MISSING
                     longitude = MISSING
+                latitude = latitude.split("!2m")[0]
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
