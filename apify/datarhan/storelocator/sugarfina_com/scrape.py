@@ -1,7 +1,7 @@
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -21,7 +21,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
     }
 
-    all_codes = DynamicGeoSearch(
+    all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
     for code in all_codes:
@@ -56,7 +56,10 @@ def fetch_data():
             "searchCriteria[page_size]": "9",
         }
 
-        data = session.get(start_url, headers=hdr, params=params).json()
+        data = session.get(start_url, headers=hdr, params=params)
+        if data.status_code != 200:
+            continue
+        data = data.json()
         all_locations = data["items"]
         total_pages = data["total_count"] // 9 + 1
         if total_pages > 1:
@@ -64,7 +67,7 @@ def fetch_data():
                 params["searchCriteria[current_page]"] = str(p)
                 data = session.get(start_url, headers=hdr, params=params).json()
                 all_locations += data["items"]
-
+        print(code, len(all_locations))
         for poi in all_locations:
             store_url = poi.get("store_details_link")
             if store_url:
