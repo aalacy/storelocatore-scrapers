@@ -53,6 +53,7 @@ def fetch_data():
             for link in locations:
                 page_url = "https://www.specsavers.co.nz/stores/" + link["href"]
                 logger.info(page_url)
+                session.clear_cookies()
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 raw_address = " ".join(sp1.select_one("div.store p").stripped_strings)
                 json_url = sp1.select_one("div.js-yext-info")["data-yext-url"]
