@@ -41,6 +41,8 @@ def fetch_data():
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"
                 store_response = session.get(store_url, headers=hdr)
+                if store_response.status_code != 200:
+                    continue
                 store_dom = etree.HTML(store_response.text)
                 data = store_dom.xpath(
                     '//script[contains(text(), "storeInformation")]/text()'
