@@ -26,8 +26,8 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.specsavers.es"
-base_url = "https://www.specsavers.es/sitemap.xml"
+locator_domain = "https://en.specsavers.es"
+base_url = "https://en.specsavers.es/stores"
 
 
 def fetch_data():
@@ -41,19 +41,32 @@ def fetch_data():
                 cookies.append(f"{cookie['name']}={cookie['value']}")
             _headers["cookie"] = "; ".join(cookies)
             soup = bs(driver.page_source, "lxml")
-            locations = soup.select("table tr a")
+            locations = soup.select(
+                "div.stores-content-block div.field-name-field-content-body p a"
+            )
             for link in locations:
-                if (
-                    "nuestros-centros" not in link["href"]
-                    or len([ll for ll in link["href"].split("/") if ll.strip()]) != 4
-                ):
-                    continue
                 page_url = link["href"]
+                if not page_url.startswith("http"):
+                    page_url = locator_domain + page_url
                 logger.info(page_url)
                 res = session.get(page_url, headers=_headers).text
                 coord = json.loads(res.split("var position =")[1].split(";")[0].strip())
                 sp1 = bs(res, "lxml")
-                addr = list(sp1.select_one("div.store p").stripped_strings)
+                addr = (
+                    " ".join(list(sp1.select_one("div.store p").stripped_strings))
+                    .replace("\n", "")
+                    .split(",")
+                )
+                street_address = city = state = ""
+                state = addr[-2].strip()
+                idx = -3
+                if state == "Orihuela Costa":
+                    state = ""
+                    idx += 1
+
+                city = addr[idx].strip()
+                street_address = ", ".join(addr[:idx]).strip()
+
                 hours = [
                     ": ".join(hh.stripped_strings)
                     for hh in sp1.select("table.opening--day-and-time tr")
@@ -64,20 +77,17 @@ def fetch_data():
                 yield SgRecord(
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
-                    street_address=" ".join(addr[:-3])
-                    .replace("\n", "")
-                    .replace(",", " ")
-                    .strip(),
-                    city=addr[-3],
-                    state=addr[-2],
-                    zip_postal=addr[-1],
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=addr[-1].split()[-1],
                     country_code="Spain",
                     phone=phone,
                     latitude=coord["lat"],
                     longitude=coord["lng"],
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
-                    raw_address=" ".join(addr).replace("\n", ""),
+                    raw_address=", ".join(addr).strip(),
                 )
 
 
