@@ -24,29 +24,85 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        search_url = 'https://www.locally.com/stores/conversion_data?has_data=true&company_id=1682&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.754377699800074&map_center_lng=-111.8836100000002&map_distance_diag=3000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=' 
+        search_url = "https://www.locally.com/stores/conversion_data?has_data=true&company_id=1682&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.754377699800074&map_center_lng=-111.8836100000002&map_distance_diag=3000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level="
         stores_req = session.get(search_url, headers=headers).json()
-        stores_req = stores_req['markers']
-        for store in stores_req:  
-            storeid = store['id']
-            title = store['name']
-            lat = store['lat']
-            lng = store['lng']
-            street = store['address']
-            city = store['city']
-            state = store['state']
-            pcode = store['zip']
-            phone = store['phone']
-            country = store['country']
-            sun = "Sun:" + ' ' + str(store['sun_time_open']) + '-' + str(store['sun_time_close'])
-            mon = "Mon:" + ' ' + str(store['mon_time_open']) + '-' + str(store['mon_time_close'])
-            tues = "Tues:" + ' ' + str(store['tue_time_open']) + '-' + str(store['tue_time_close'])
-            wed = "Wed:" + ' ' + str(store['wed_time_open']) + '-' + str(store['wed_time_close'])
-            thurs = "Thurs:" + ' ' + str(store['thu_time_open']) + '-' + str(store['thu_time_close'])
-            fri = "Fri:" + ' ' + str(store['fri_time_open']) + '-' + str(store['fri_time_close'])
-            sat = "Sat:" + ' ' + str(store['sat_time_open']) + '-' + str(store['sat_time_close'])
-            hours = mon + ' ' + tues + ' ' + wed + ' ' + thurs + '' + fri + ' ' + sat + ' ' + sun
-            
+        stores_req = stores_req["markers"]
+        for store in stores_req:
+            storeid = store["id"]
+            title = store["name"]
+            lat = store["lat"]
+            lng = store["lng"]
+            street = store["address"]
+            city = store["city"]
+            state = store["state"]
+            pcode = store["zip"]
+            phone = store["phone"]
+            country = store["country"]
+            sun = (
+                "Sun:"
+                + " "
+                + str(store["sun_time_open"])
+                + "-"
+                + str(store["sun_time_close"])
+            )
+            mon = (
+                "Mon:"
+                + " "
+                + str(store["mon_time_open"])
+                + "-"
+                + str(store["mon_time_close"])
+            )
+            tues = (
+                "Tues:"
+                + " "
+                + str(store["tue_time_open"])
+                + "-"
+                + str(store["tue_time_close"])
+            )
+            wed = (
+                "Wed:"
+                + " "
+                + str(store["wed_time_open"])
+                + "-"
+                + str(store["wed_time_close"])
+            )
+            thurs = (
+                "Thurs:"
+                + " "
+                + str(store["thu_time_open"])
+                + "-"
+                + str(store["thu_time_close"])
+            )
+            fri = (
+                "Fri:"
+                + " "
+                + str(store["fri_time_open"])
+                + "-"
+                + str(store["fri_time_close"])
+            )
+            sat = (
+                "Sat:"
+                + " "
+                + str(store["sat_time_open"])
+                + "-"
+                + str(store["sat_time_close"])
+            )
+            hours = (
+                mon
+                + " "
+                + tues
+                + " "
+                + wed
+                + " "
+                + thurs
+                + ""
+                + fri
+                + " "
+                + sat
+                + " "
+                + sun
+            )
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=DOMAIN,
