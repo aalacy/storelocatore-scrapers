@@ -11,7 +11,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 DOMAIN = "anderinger.com"
-pdf_url = "https://www.anderinger.com/wp-content/uploads/2021/03/Deringer-locations-page-3-23-21.pdf"
+pdf_url = "https://www.anderinger.com/wp-content/uploads/2021/10/Deringer-locations-page-10-21.pdf"
 
 
 def write_output(data):
