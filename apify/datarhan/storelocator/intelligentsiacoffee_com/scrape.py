@@ -25,7 +25,7 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
+
         location_name = loc_dom.xpath('//h2[@class="loc-detail__hero-text"]/text()')
         location_name = location_name[-1] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath(
