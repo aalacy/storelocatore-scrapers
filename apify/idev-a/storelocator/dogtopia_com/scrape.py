@@ -16,14 +16,11 @@ def fetch_data():
     with SgRequests() as session:
         store_list = session.get(base_url, headers=_headers).json()
         for store in store_list:
-            if store["opening_soon"]:
-                continue
-
             addr = store["store_info"]["location_address_info"][0]
             hours = []
             if store["store_info"]["location_hours_info"]:
                 _hr = store["store_info"]["location_hours_info"][0]
-                if "Opening Soon" in _hr.get("coming_soon_header_text", ""):
+                if _hr.get("coming_soon_checkbox") == "on":
                     continue
                 for day in days:
                     day = day.lower()
