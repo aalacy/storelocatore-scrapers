@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import lxml.html
 
-website = "eagerbeavercarwash_com"
+website = "eagerbeavercarwash.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "authority": "www.eagerbeavercarwash.com",
@@ -84,7 +84,11 @@ def fetch_data():
             store_number = location_name.split("#")[1].strip().split(")")[0].strip()
 
             phone = raw_list[2].strip().replace(":", "").strip()
-            location_type = "<MISSING>"
+            location_type = "".join(
+                store.xpath(
+                    'div[@class="col-sm-4 col-centered text-center"]//b[1]/text()'
+                )
+            ).strip()
             hours_of_operation = (
                 "; ".join(raw_list[4:])
                 .strip()
