@@ -19,6 +19,7 @@ latitudes = []
 longitudes = []
 hours_of_operations = []
 
+
 def get_data():
     session = SgRequests()
     url = "https://vitalitybowls.com/all-locations/"
@@ -41,7 +42,9 @@ def get_data():
         response = session.get(page_url).text
         soup = bs(response, "html.parser")
         locator_domain = "vitalitybowls.com"
-        location_name = soup.find("h2", attrs={"class": "et_pb_slide_title"}).text.strip()
+        location_name = soup.find(
+            "h2", attrs={"class": "et_pb_slide_title"}
+        ).text.strip()
         if "What Are Our Customers Saying?" in location_name:
             location_name = (
                 soup.find("div", attrs={"class": "et_pb_row et_pb_row_0"})
@@ -92,7 +95,9 @@ def get_data():
                     address_index = address_parts.index(part)
 
                     if len(address_parts) - address_index == 3:
-                        address = address.strip() + " " + address_parts[address_index + 1]
+                        address = (
+                            address.strip() + " " + address_parts[address_index + 1]
+                        )
 
             try:
                 city = address_parts[-1].split(",")[0]
@@ -120,7 +125,9 @@ def get_data():
                 phone_part = soup.text.strip().split("CONTACT")[1].split("Phone:")[1]
             except Exception:
                 try:
-                    phone_part = soup.text.strip().split("STORE INFO")[1].split("Phone:")[1]
+                    phone_part = (
+                        soup.text.strip().split("STORE INFO")[1].split("Phone:")[1]
+                    )
                 except Exception:
                     try:
                         phone_part = (
@@ -168,7 +175,9 @@ def get_data():
             continue
 
         city = (
-            "".join([i for i in city if not i.isdigit()]).replace("=", "").replace("-", "")
+            "".join([i for i in city if not i.isdigit()])
+            .replace("=", "")
+            .replace("-", "")
         )
 
         yield {
