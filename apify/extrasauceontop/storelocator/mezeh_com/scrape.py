@@ -75,9 +75,15 @@ def get_data():
                     address = address + part + " "
                 address = address.strip()
 
-            city = address_section.split(" ")[-3].replace(",", "").replace(".", "").strip()
-            state = address_section.split(" ")[-2].replace(",", "").replace(".", "").strip()
-            zipp = address_section.split(" ")[-1].replace(",", "").replace(".", "").strip()
+            city = (
+                address_section.split(" ")[-3].replace(",", "").replace(".", "").strip()
+            )
+            state = (
+                address_section.split(" ")[-2].replace(",", "").replace(".", "").strip()
+            )
+            zipp = (
+                address_section.split(" ")[-1].replace(",", "").replace(".", "").strip()
+            )
             country_code = "US"
             store_number = "<MISSING>"
 
@@ -85,7 +91,7 @@ def get_data():
                 phone = grid.text.split("phone")[1].split("hours")[0].replace("\n", "")
             except Exception:
                 phone = "<MISSING>"
-            
+
             hours_parts = grid.text.split("hours")[1].split("order")[0].split("\n")
             hours = ""
             for item in hours_parts:
@@ -127,7 +133,10 @@ def get_data():
                     .replace("blvd", "")
                 )
                 state = (
-                    address_section.split(" ")[-2].replace(",", "").replace(".", "").strip()
+                    address_section.split(" ")[-2]
+                    .replace(",", "")
+                    .replace(".", "")
+                    .strip()
                 )
                 zipp = (
                     address_section.split(" ")[-1]
@@ -179,7 +188,9 @@ def get_data():
                     address = grid.find("h5").text.strip().split(location_name)[0]
                     city = location_name
                     state = grid.find("h5").text.strip().split(", ")[-1].split(" ")[0]
-                    zipp = grid.find("h5").text.strip().split(", ")[-1].split(" ")[1][:5]
+                    zipp = (
+                        grid.find("h5").text.strip().split(", ")[-1].split(" ")[1][:5]
+                    )
 
                 if zipp == "nope":
                     zipp = (
@@ -201,7 +212,7 @@ def get_data():
             page_url = "<MISSING>"
 
         phone = phone.strip().replace("\n", "")
-        
+
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
@@ -243,9 +254,7 @@ def scrape():
         zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"]),
         phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"]
-        ),
+        store_number=sp.MappingField(mapping=["store_number"]),
         hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
