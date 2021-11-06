@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_4
+from sgzip.dynamic import SearchableCountries, Grain_2
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import SgLogSetup
 from typing import Iterable, Tuple, Callable
@@ -96,7 +96,7 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_4()
+        search_type="DynamicGeoSearch", granularity=Grain_2()
     )
     with SgWriter(
         deduper=SgRecordDeduper(
