@@ -1,6 +1,5 @@
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-import pandas as pd
 from bs4 import BeautifulSoup as bs
 from webdriver_manager.chrome import ChromeDriverManager
 import re
@@ -58,7 +57,7 @@ def get_data():
             page_url = "<MISSING>"
         zipp = "nope"
         location_name = grid.find("h4").text.strip()
-        print(location_name)
+
         try:
             address_section = grid.find("a").text.strip().split("\n")[1]
             address_parts = address_section.split(".")
