@@ -28,6 +28,10 @@ def fetch_data():
             page_url = loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            if "TEMPORAILY CLOSED" in r.text:
+                location_type = "TEMPORAILY CLOSED"
+            else:
+                location_type = MISSING
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1").text
             temp = soup.findAll("a", {"class": "submaphours__meta--link"})
@@ -63,7 +67,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=MISSING,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),

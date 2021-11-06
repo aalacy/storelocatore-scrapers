@@ -144,8 +144,8 @@ def fetch_locations(code, tracker):
         item = SgRecord(
             locator_domain=domain,
             page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
-            location_name=location_name,
-            street_address=raw_adr[0],
+            location_name=location_name.title(),
+            street_address=raw_adr[0].title(),
             city=addr.city,
             zip_postal=addr.postcode,
             hours_of_operation=hoo,
@@ -200,10 +200,10 @@ def fetch_location(page_url, session, tracker):
     return SgRecord(
         locator_domain="aldi.fr",
         page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
-        location_name=location_name,
+        location_name=location_name.title(),
         latitude=latitude,
         longitude=longitude,
-        street_address=street_address,
+        street_address=street_address.title(),
         city=city,
         zip_postal=postal,
         country_code="FR",
@@ -234,9 +234,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            ),
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
             duplicate_streak_failure_factor=20000,
         )
     ) as writer:
