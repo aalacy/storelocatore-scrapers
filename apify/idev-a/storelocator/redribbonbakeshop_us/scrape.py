@@ -58,24 +58,32 @@ def fetch_data():
         )
         for state in states:
             state_url = base_url + state["href"]
-            cities = bs(session.get(state_url, headers=_headers).text, "lxml").select(
-                "a.Directory-listLink"
-            )
-            for city in cities:
-                page_url = base_url + city["href"]
-                logger.info(page_url)
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                teasers = sp1.select("div.Teaser-card")
-                if teasers:
-                    for teaser in teasers:
-                        url = urljoin(
-                            page_url, teaser.select_one("a.Teaser-cta")["href"]
-                        )
-                        logger.info(url)
-                        sp2 = bs(session.get(url, headers=_headers).text, "lxml")
-                        yield _d(sp2, url)
-                else:
-                    yield _d(sp1, page_url)
+            sp0 = bs(session.get(state_url, headers=_headers).text, "lxml")
+            cities = sp0.select("div.Main-content a.Directory-listLink")
+            logger.info(f"[{state['href']}] {len(cities)} cities")
+            if cities:
+                for city in cities:
+                    page_url = base_url + city["href"]
+                    logger.info(page_url)
+                    sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                    teasers = sp1.select(
+                        "div.Main-content div.DirectoryPage div.Teaser-card"
+                    )
+                    logger.info(
+                        f"[{state['href']}] [{city['href']}] {len(teasers)} teasers"
+                    )
+                    if teasers:
+                        for teaser in teasers:
+                            url = urljoin(
+                                page_url, teaser.select_one("a.Teaser-cta")["href"]
+                            )
+                            logger.info(url)
+                            sp2 = bs(session.get(url, headers=_headers).text, "lxml")
+                            yield _d(sp2, url)
+                    else:
+                        yield _d(sp1, page_url)
+            else:
+                yield _d(sp0, state_url)
 
 
 if __name__ == "__main__":
