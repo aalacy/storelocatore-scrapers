@@ -23,7 +23,7 @@ def fetch_data():
         )
         for _ in locations:
             modal = sp1.select_one(f"locationModal{_['id']}")
-            _hr = sp1.find("h5", string=re.compile(r"^Business Hours"))
+            _hr = modal.find("h5", string=re.compile(r"^Business Hours"))
             hours = []
             if _hr:
                 hours = _hr.find_next_sibling("p").stripped_strings
