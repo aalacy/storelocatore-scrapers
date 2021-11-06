@@ -8,48 +8,56 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.brooklinebank.com/"
-    api_url = "https://www.brooklinebank.com/locations/"
+    locator_domain = "https://supercleanmycar.com"
+    api_url = "https://supercleanmycar.com/locations/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[contains(text(), "Location Details")]')
+    div = tree.xpath('//a[text()="Learn More"]')
     for d in div:
-
-        page_url = "".join(d.xpath(".//@href"))
-        ad = "".join(d.xpath(".//preceding::span[1]/text()"))
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"https://supercleanmycar.com/locations{slug}"
+        if page_url.find("bond") != -1:
+            page_url = "https://supercleanmycar.com/bond/"
         location_name = "".join(d.xpath(".//preceding::h2[1]/text()"))
-        street_address = "".join(d.xpath(".//preceding::span[2]/text()"))
+        street_address = (
+            "".join(d.xpath(".//preceding::p[1]/text()[1]")).replace("\n", "").strip()
+        )
+        ad = "".join(d.xpath(".//preceding::p[1]/text()[2]")).replace("\n", "").strip()
         state = ad.split(",")[1].split()[0].strip()
         postal = ad.split(",")[1].split()[1].strip()
         country_code = "US"
         city = ad.split(",")[0].strip()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        info = tree.xpath("//span/text()")
 
         map_link = "".join(tree.xpath("//iframe/@src"))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-        phone = "<MISSING>"
-        for i in info:
-            if "(" in i and ")" in i:
-                phone = str(i)
-        _tmp = []
-        days = tree.xpath(
-            '//table[./*[text()="Office Hours"]]//tr[position()>1]/th/text()'
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+        phone = (
+            "".join(tree.xpath('//a[contains(@href, "tel")]/text()'))
+            .replace("Phone:", "")
+            .strip()
+            or "<MISSING>"
         )
-        opens = tree.xpath(
-            '//table[./*[text()="Office Hours"]]//tr[position()>1]/td[1]/text()'
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h2[text()="Hours"]/following-sibling::p/text() | //*[contains(text(), "HOURS:")]/text()'
+                )
+            )
+            .replace("HOURS:", "")
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
         )
-        closes = tree.xpath(
-            '//table[./*[text()="Office Hours"]]//tr[position()>1]/td[2]/text()'
-        )
-        for d, o, c in zip(days, opens, closes):
-            _tmp.append(f"{d.strip()}: {o.strip()} - {c.strip()}")
-        hours_of_operation = "; ".join(_tmp)
+        hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -75,10 +83,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)
