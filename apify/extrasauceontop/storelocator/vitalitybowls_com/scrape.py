@@ -1,23 +1,7 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-import pandas as pd
 from sgscrape import simple_scraper_pipeline as sp
-
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
 
 
 def get_data():
