@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -31,8 +32,20 @@ def fetch_data():
                     else:
                         times = "closed"
                     hours.append(f"{day}: {times}")
+            if not hours:
+                sp1 = bs(
+                    session.get(
+                        store["link"].replace("locations/", ""), headers=_headers
+                    ).text,
+                    "lxml",
+                )
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in sp1.select("table.uk-table tr")
+                ]
+
             yield SgRecord(
-                page_url=store["link"],
+                page_url=store["link"].replace("locations/", ""),
                 store_number=addr["location_id"],
                 location_name=store["title"]["raw"],
                 street_address=addr["location_street_address"]
