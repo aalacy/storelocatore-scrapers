@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-import us
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 
 logger = SgLogSetup().get_logger("takebackday")
 
@@ -14,67 +14,64 @@ _headers = {
 }
 
 locator_domain = "https://takebackday.dea.gov/"
-base_url = "https://apps2.deadiversion.usdoj.gov/NTBI/ntbi.do?_flowId=public-lite-flow"
+base_url = "https://apps2.deadiversion.usdoj.gov/pubdispsearch/spring/main"
 
 
-def fetch_data():
+def fetch_data(search):
     with SgRequests() as session:
-        for state in us.states.STATES:
+        for zip in search:
+            rr = session.get(base_url, headers=_headers)
+            execution = rr.url.query.decode().split("execution=")[-1]
             data = {
-                "zipCode_P": "",
-                "county_P": "",
-                "city_P": "",
-                "state_P": state.abbr,
-                "searchRadius": "5000",
-                "_eventId_submit": "Submit",
+                "searchForm": "searchForm",
+                "searchForm:zipCodeInput": zip,
+                "searchForm:cityInput": "",
+                "searchForm:stateInput_focus": "",
+                "searchForm:stateInput_input": "",
+                "searchForm:radiusInput": "50",
+                "searchForm:submitSearchButton": "",
+                "javax.faces.ViewState": execution,
             }
-            res = session.post(base_url, headers=_headers, data=data)
+            res = session.post(
+                base_url + f"?execution={execution}", headers=_headers, data=data
+            )
             if res.status_code != 200:
-                logger.warning(state.abbr)
                 continue
             soup = bs(res.text, "lxml")
             if "An unexpected error" in soup.text:
-                logger.warning(state.abbr)
                 continue
-            temp = " ".join(
-                list(soup.select_one("div#tableie h2").stripped_strings)
-            ).split("\n")[1:]
-            hours = []
-            hours.append(temp[0].split(",")[0])
-            hours.append(temp[1])
             locations = soup.select("table tbody tr")
-            logger.info(f"[{state.abbr}] {len(locations)} found")
+            logger.info(f"[{zip}] {len(locations)} found")
             for _ in locations:
                 td = _.select("td")
                 if len(td) == 1:
                     continue
-                raw_address = (
-                    td[1]
-                    .a["href"]
-                    .split("&daddr=")[1]
-                    .split("&hl")[0]
-                    .replace("+", " ")
-                )
-                addr = raw_address.split(",")
+                addr = [dd.text.strip() for dd in td[1:4]]
+                street_address = addr[0]
+                if addr[1]:
+                    street_address += " " + addr[1]
                 yield SgRecord(
-                    location_name=f"DRUG DISPOSAL SITE AT {list(td[0].stripped_strings)[0]}",
-                    street_address=" ".join(addr[:-2]),
-                    city=addr[-2],
-                    state=addr[-1].strip().split(" ")[0].strip(),
-                    zip_postal=addr[-1].strip().split(" ")[-1].strip(),
+                    location_name=list(td[0].stripped_strings)[-1],
+                    street_address=street_address,
+                    city=addr[-1].split(",")[0].strip(),
+                    state=addr[-1].split(",")[-1].strip().split()[0].strip(),
+                    zip_postal=addr[-1].split(",")[-1].strip().split()[-1].strip(),
                     country_code="US",
                     locator_domain=locator_domain,
-                    hours_of_operation=": ".join(hours)
-                    .replace("Take Back Day:", "")
-                    .replace("\t", ""),
-                    raw_address=raw_address,
+                    raw_address=" ".join(addr),
                 )
 
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS}),
+            duplicate_streak_failure_factor=100,
+        )
     ) as writer:
-        results = fetch_data()
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        )
+        results = fetch_data(search)
         for rec in results:
             writer.write_row(rec)
