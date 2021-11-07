@@ -3,7 +3,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgrequests import SgRequests
@@ -234,7 +233,6 @@ def fetch_data_for_non_api_based_child_brands():
                                 yield rec
 
                         if i > 1:
-                            referer_custom = f"{url_base_findHotels}?page={i-1}"
                             url_base_findHotels_custom = (
                                 f"{url_base_findHotels}?page={i}"
                             )
