@@ -25,7 +25,6 @@ def get_country_by_code(code=""):
 
 
 def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
     with SgRequests() as session:
         credential = session.get(base_url, headers=_headers).json()["credentials"]
         maxZ = search.items_remaining()
