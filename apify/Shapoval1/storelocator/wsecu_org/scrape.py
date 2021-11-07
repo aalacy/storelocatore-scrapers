@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
             location_type = "ATM Location"
         if location_type == "shared":
             location_type = "Shared Branche"
-        a = j.get("address") or "<MISSING>"
+        a = j.get("address")
         street_address = a.get("street") or "<MISSING>"
         state = a.get("state") or "<MISSING>"
         postal = a.get("zip") or "<MISSING>"
