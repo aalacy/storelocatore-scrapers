@@ -1,141 +1,67 @@
-import csv
-from lxml import html
+import httpx
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.triumph-motorcycles.ca/"
-    api_url = (
-        "https://www.triumph-motorcycles.ca/dealers/find-a-dealer?market=6&viewall=true"
-    )
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="dealerListItem"]')
+    api_url = "https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode=en-CA&SiteLanguageCode=en-CA&Skip=0&Take=50&CurrentUrl=www.triumph-motorcycles.ca"
 
-    for d in div:
-        page_url = "".join(d.xpath('.//span[@class="openingTimes"]/a/@href')).replace(
-            "triumph halifax", "triumph%20halifax"
-        )
-        location_name = (
-            "".join(d.xpath('.//span[@class="dealerName"]/text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        location_type = "<MISSING>"
-        street_address = (
-            "".join(d.xpath('.//div[@class="dealerAddress"]/span/text()[1]'))
-            .replace("\n", "")
-            .replace(",", "")
-            .strip()
-        )
-        cs = d.xpath('.//div[@class="dealerAddress"]/span/text()[2]')
-        cs = list(filter(None, [a.strip() for a in cs]))
-        cs = (
-            "".join(cs)
-            .replace("\r\n", "")
-            .replace("Kelowna,", "Kelowna")
-            .replace("Langley,", "Langley")
-            .replace("Vancouver,", "Vancouver")
-            .strip()
-        )
-        phone = (
-            "".join(
-                d.xpath(
-                    './/strong[contains(text(), "Phone")]/following-sibling::text()'
-                )
+    with SgRequests() as http:
+        r = http.get(url=api_url)
+        assert isinstance(r, httpx.Response)
+        assert 200 == r.status_code
+        js = r.json()["DealerCardData"]["DealerCards"]
+        for j in js:
+            slug = j.get("DealerUrl")
+            page_url = f"https://www.triumph-motorcycles.ca{slug}"
+            location_name = j.get("Title")
+            ad = f"{j.get('AddressLine1')} {j.get('AddressLine2')} {j.get('AddressLine3')} {j.get('AddressLine4')}"
+            ad = " ".join(ad.split())
+            a = parse_address(International_Parser(), ad)
+            street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+                "None", ""
+            ).strip()
+            state = a.state or "<MISSING>"
+            country_code = "CA"
+            city = a.city or "<MISSING>"
+            postal = j.get("PostCode") or "<MISSING>"
+            latitude = j.get("Latitude") or "<MISSING>"
+            longitude = j.get("Longitude") or "<MISSING>"
+            phone = j.get("Phone") or "<MISSING>"
+            hours_of_operation = (
+                "".join(j.get("OpeningTimes")).replace("<br/>", " ").strip()
             )
-            .replace("\n", "")
-            .strip()
-        )
-        state = "".join(cs.split(",")[0].split()[-1])
-        postal = (
-            "".join(d.xpath('.//div[@class="dealerAddress"]/span/text()[3]'))
-            .replace("\r\n", "")
-            .replace("B3Z", "B3Z ")
-            .strip()
-            or "<MISSING>"
-        )
-        country_code = "CA"
-        city = " ".join(cs.split(",")[0].split()[:-1])
-        if postal == "<MISSING>":
-            postal = cs.split(",")[1].strip()
-        store_number = "<MISSING>"
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
 
-        latitude = "".join(
-            tree.xpath('//img[@class="dealer-location__map-img"]/@data-map-lat')
-        )
-        longitude = "".join(
-            tree.xpath('//img[@class="dealer-location__map-img"]/@data-map-lon')
-        )
-        hours_of_operation = tree.xpath(
-            '//ul[@class="dealer-location__opening-times"]/li//text()'
-        )
-        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
-        hours_of_operation = " ".join(hours_of_operation)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=f"{ad} {postal}",
+            )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
