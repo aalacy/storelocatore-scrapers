@@ -14,7 +14,7 @@ DOMAIN = "sonicdrivein.com"
 website = "https://www.sonicdrivein.com"
 json_url = "https://maps.locations.sonicdrivein.com/api/getAsyncLocations?template=search&level=search&search="
 MISSING = SgRecord.MISSING
-max_workers = 4
+max_workers = 10
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -92,6 +92,8 @@ def get_hoo(store):
     try:
         hoo = get_JSON_object_variable(store, "hours_sets:primary")
         hoo = get_JSON_object_variable(json.loads(hoo), "days")
+        if hoo == MISSING:
+            return "Monday: Closed; Tuesday: Closed; Wednesday: Closed; Thursday: Closed; Friday: Closed; Saturday: Closed; Sunday: Closed"
         hours_of_operation = []
         for key in hoo.keys():
             try:
@@ -99,15 +101,15 @@ def get_hoo(store):
                     f"{key}: {hoo[key][0]['open']} - {hoo[key][0]['close']}"
                 )
             except:
-                pass
-
-            try:
-                hours_of_operation.append(f"{key}: {hoo[key]}")
-            except:
-                pass
-        return "; ".join(hours_of_operation)
+                try:
+                    hours_of_operation.append(f"{key}: {hoo[key]}")
+                except:
+                    pass
+        hoo = "; ".join(hours_of_operation)
+        hoo = hoo.replace("open24", "Open 24 Hours")
+        return hoo
     except Exception as e:
-        log.info(f"error in hoo: {hoo}, {e}")
+        log.info(f"Err in HOO: {e}")
         return MISSING
 
 
@@ -140,7 +142,7 @@ def fetch_data():
         country_code = get_JSON_object_variable(store, "country")
         phone = get_JSON_object_variable(store, "local_phone")
         hours_of_operation = get_hoo(store)
-        log.info(hours_of_operation)
+
         raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
             MISSING, ""
         )
