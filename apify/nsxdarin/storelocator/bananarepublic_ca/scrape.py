@@ -78,10 +78,18 @@ def fetch_data():
         for line2 in lines:
             if 'class="daypart" data-daypart="' in line2:
                 day = line2.split('data-daypart="')[1].split('"')[0]
-                next(lines)
-                next(lines)
-                next(lines)
-                hrs = day + ": " + next(lines).split(">")[1].split("<")[0]
+            if '<span class="time-open">' in line2:
+                hrs = (
+                    day
+                    + ": "
+                    + line2.split('<span class="time-open">')[1].split("<")[0]
+                )
+            if '<span class="time-close">' in line2:
+                hrs = (
+                    hrs
+                    + "-"
+                    + line2.split('<span class="time-close">')[1].split("<")[0]
+                )
                 if hours == "":
                     hours = hrs
                 else:

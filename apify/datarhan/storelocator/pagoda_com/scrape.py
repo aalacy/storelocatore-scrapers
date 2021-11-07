@@ -17,8 +17,8 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    session = SgRequests(proxy_rotation_failure_threshold=1)
-    response = session.get(start_url)
+    session = SgRequests()
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
     all_states = dom.xpath(
@@ -27,6 +27,8 @@ def fetch_data():
     for state_url in all_states:
         full_state_url = urllib.parse.urljoin(start_url, state_url)
         state_response = session.get(full_state_url, headers=hdr)
+        if state_response.status_code != 200:
+            continue
         state_dom = etree.HTML(state_response.text)
 
         all_stores = state_dom.xpath(
@@ -39,6 +41,8 @@ def fetch_data():
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"
                 store_response = session.get(store_url, headers=hdr)
+                if store_response.status_code != 200:
+                    continue
                 store_dom = etree.HTML(store_response.text)
                 data = store_dom.xpath(
                     '//script[contains(text(), "storeInformation")]/text()'

@@ -1,5 +1,4 @@
-from urllib.parse import urljoin
-from lxml import etree
+from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -16,62 +15,51 @@ def fetch_data():
     }
 
     all_locations = []
-    start_url = "https://locations.carvel.com"
-    response = session.get(start_url, headers=user_agent)
-    dom = etree.HTML(response.text)
-    all_urls = dom.xpath('//a[@class="Directory-listLink"]')
-    for u in all_urls:
-        url = u.xpath("@href")[0]
-        count = u.xpath("@data-count")[0]
-        if count == "(1)":
-            all_locations.append(url)
+    start_url = 'https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=carvel-answers&api_key=7425eae4ff5d283ef2a3542425aade29&v=20190101&version=PRODUCTION&locale=en&input=Restaurants near me&verticalKey=restaurants&limit=20&offset=0&retrieveFacets=true&facetFilters={"c_carvelServices":[]}&sessionTrackingEnabled=true&sortBys=[]&referrerPageUrl=&source=STANDARD&queryId=8392232e-0128-4105-870a-d373c33361bd&jsLibVersion=v1.9.2'
+    data = session.get(start_url, headers=user_agent).json()
+    total = data["response"]["resultsCount"]
+    all_locations = data["response"]["results"]
+    for offset in range(20, total + 20, 20):
+        data = session.get(
+            add_or_replace_parameter(start_url, "offset", str(offset))
+        ).json()
+        all_locations += data["response"]["results"]
+
+    for poi in all_locations:
+        page_url = poi["data"]["websiteUrl"]["displayUrl"]
+        if "https://www" in page_url:
             continue
-        response = session.get(urljoin(start_url, url))
-        dom = etree.HTML(response.text)
-        all_sub = dom.xpath('//a[@class="Directory-listLink"]')
-        for u in all_sub:
-            s_url = u.xpath("@href")[0]
-            count = u.xpath("@data-count")[0]
-            if count == "(1)":
-                all_locations.append(s_url)
-                continue
-            response = session.get(urljoin(start_url, url))
-            dom = etree.HTML(response.text)
-            all_locations += dom.xpath('//a[@class="Link Link--primary"]/@href')
-
-    for url in all_locations:
-        page_url = urljoin(start_url, url)
-        loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath('//a[@class="Hero-geoText"]/text()')[0]
-        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')[0]
-        city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]
-        state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')
-        state = state[0] if state else ""
-        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
-        country_code = loc_dom.xpath("//@data-country")[0]
-        phone = loc_dom.xpath('//div[@itemprop="telephone"]/text()')
-        phone = phone[0] if phone else ""
-        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
-        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
-        hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')[2:]
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = []
+        if poi["data"].get("hours"):
+            for day, hours in poi["data"]["hours"].items():
+                if type(hours) == list:
+                    continue
+                if day == "reopenDate":
+                    continue
+                if hours.get("openIntervals"):
+                    hoo.append(
+                        f'{day} {hours["openIntervals"][0]["start"]} - {hours["openIntervals"][0]["end"]}'
+                    )
+                else:
+                    hoo.append(f"{day} closed")
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number="",
-            phone=phone,
-            location_type="",
-            latitude=latitude,
-            longitude=longitude,
+            location_name=poi["data"]["c_nAPDescription"]["title"].replace(
+                "Welcome to Carvel ", ""
+            ),
+            street_address=poi["data"]["address"]["line1"],
+            city=poi["data"]["address"]["city"],
+            state=poi["data"]["address"]["region"],
+            zip_postal=poi["data"]["address"]["postalCode"],
+            country_code=poi["data"]["address"]["countryCode"],
+            store_number=poi["data"]["id"],
+            phone=poi["data"].get("mainPhone"),
+            location_type=poi["data"]["name"],
+            latitude=poi["data"]["yextDisplayCoordinate"]["latitude"],
+            longitude=poi["data"]["yextDisplayCoordinate"]["longitude"],
             hours_of_operation=hoo,
         )
 
@@ -82,7 +70,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
             )
         )
     ) as writer:

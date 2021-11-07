@@ -41,6 +41,7 @@ def get_data(page_url, sgw: SgWriter):
     postal = line.split(",")[-1].strip()
 
     if "." in state:
+        city = "Washington D.C."
         state = "WA"
 
     try:
