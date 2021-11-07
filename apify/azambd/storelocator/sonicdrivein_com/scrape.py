@@ -116,7 +116,6 @@ def get_hoo(store):
 def fetch_data():
     search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
 
-    count = 0
     totalStores = 0
     page_urls = []
     zip_codes = []
