@@ -41,7 +41,6 @@ def get_data(slug, sgw: SgWriter):
     try:
         d = tree.xpath("//div[@class='store-details-panel']")[0]
     except:
-        print(page_url)
         return
 
     location_name = "".join(d.xpath(".//h2[@itemprop='name']/text()")).strip()
