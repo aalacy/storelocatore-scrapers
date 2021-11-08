@@ -16,8 +16,6 @@ from sglogging import sglog
 domain = "aldi.pl"
 log = sglog.SgLogSetup().get_logger(logger_name=domain)
 
-session = SgRequests(proxy_country="pl")
-
 
 def fetch_data():
 
@@ -28,7 +26,8 @@ def fetch_data():
         country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
     )
     for code in all_codes:
-        sleep(uniform(0, 5))
+        sleep(uniform(5, 9))
+        session = SgRequests(proxy_country="pl", retries_with_fresh_proxy_ip=1)
         log.info(f"API Crawl: {search_url.format(code)}")
         response = session.get(search_url.format(code))
         log.info(f"First Response: {response}")

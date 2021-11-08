@@ -184,8 +184,10 @@ def fetch_data(search):
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-
-        log.debug(
+        if totalZip % 15 == 0:
+            log.info("Refreshing Driver")
+            initiate_driver(urlForDriver, "zipField")
+        log.info(
             f"{totalZip}. zip {zipCode} => {len(data)} stores; total store = {count}"
         )
 

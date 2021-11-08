@@ -25,6 +25,7 @@ HEADERS = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "MMozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
+
 PAGE_LIMIT = 50
 
 
@@ -42,84 +43,100 @@ def build_api_endpoint_urls():
 def fetch_json_data(http, urlnum, url):
     logger.info(f"[{urlnum}] Pulling the data from: {url}")
     r = http.get(url, headers=HEADERS)
-    d = json.loads(r.text)
-    res_results = d["response"]["results"]
-    return res_results
+    if r.status_code == 200:
+        logger.info(f"HTTP Status Code: {r.status_code}")
+        return r
+    raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
 def fetch_records(http: SgRequests):
-    api_endpoint_urls = build_api_endpoint_urls()
-    for urlnum, url in enumerate(api_endpoint_urls[0:]):
-        json_data = fetch_json_data(http, urlnum, url)
-        for _ in json_data:
-            locator_domain = DOMAIN
-            page_url = _["data"]["c_baseURL"]
-            location_name = _["data"]["c_pagesMetaData"]["pageTitle"] or MISSING
-            location_name = location_name.split("|")[0]
-            location_name = location_name.strip() if location_name else MISSING
-            add = _["data"]["address"]
-            street_address = add["line1"] or MISSING
-            city = add["city"] or MISSING
-            state = add["region"] or MISSING
-            zip_postal = add["postalCode"] or MISSING
-            country_code = add["countryCode"] or MISSING
-            phone = ""
-            try:
-                phone = _["data"]["mainPhone"] or MISSING
-            except:
-                phone = SgRecord.MISSING
-            store_number = _["data"]["id"].replace("-Jamba", "")
-            location_type = _["data"]["type"] or MISSING
-            ll = _["data"]["yextDisplayCoordinate"]
-            latitude = ll["latitude"] or MISSING
-            longitude = ll["longitude"] or MISSING
-            hours_of_operation = ""
-            try:
-                l = [
-                    "monday",
-                    "tuesday",
-                    "wednesday",
-                    "thursday",
-                    "friday",
-                    "saturday",
-                    "sunday",
-                ]
-                hoo = ""
-                for day in l:
-                    hours = _["data"]["hours"]
-                    mons = hours[day]["openIntervals"][0]["start"]
-                    mone = hours[day]["openIntervals"][0]["end"]
-                    daytime = f"{day.capitalize()} {mons} - {mone}"
-                    hoo += daytime + "; "
-                hours_of_operation = hoo.strip().rstrip(";")
-            except:
-                hours_of_operation = MISSING
+    try:
+        api_endpoint_urls = build_api_endpoint_urls()
+        for urlnum, url in enumerate(api_endpoint_urls[0:]):
+            r = fetch_json_data(http, urlnum, url)
+            d = json.loads(r.text)
+            json_data = d["response"]["results"]
+            for _ in json_data:
+                locator_domain = DOMAIN
+                page_url = ""
+                if "c_baseURL" in _["data"]:
+                    page_url = _["data"]["c_baseURL"]
+                else:
+                    page_url = MISSING
+                location_name = _["data"]["c_pagesMetaData"]["pageTitle"] or MISSING
+                location_name = location_name.split("|")[0]
+                location_name = location_name.strip() if location_name else MISSING
+                add = _["data"]["address"]
+                street_address = add["line1"] or MISSING
+                city = add["city"] or MISSING
+                state = add["region"] or MISSING
+                zip_postal = add["postalCode"] or MISSING
+                country_code = add["countryCode"] or MISSING
+                phone = ""
+                try:
+                    phone = _["data"]["mainPhone"] or MISSING
+                except:
+                    phone = SgRecord.MISSING
+                store_number = _["data"]["id"].replace("-Jamba", "")
+                location_type = _["data"]["type"] or MISSING
+                ll = _["data"]["yextDisplayCoordinate"]
+                latitude = ll["latitude"] or MISSING
+                longitude = ll["longitude"] or MISSING
+                hours_of_operation = ""
+                try:
+                    l = [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday",
+                        "saturday",
+                        "sunday",
+                    ]
+                    hoo = ""
+                    for day in l:
+                        hours = _["data"]["hours"]
+                        mons = hours[day]["openIntervals"][0]["start"]
+                        mone = hours[day]["openIntervals"][0]["end"]
+                        daytime = f"{day.capitalize()} {mons} - {mone}"
+                        hoo += daytime + "; "
+                    hours_of_operation = hoo.strip().rstrip(";")
+                except:
+                    hours_of_operation = MISSING
 
-            raw_address = MISSING
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                raw_address = MISSING
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+    except Exception as e:
+        raise Exception(f" [ {e} ] Please fix it at >>> [{urlnum}] {url}")
 
 
 def scrape():
     count = 0
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STORE_NUMBER})
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
         )
     ) as writer:
         with SgRequests() as http:

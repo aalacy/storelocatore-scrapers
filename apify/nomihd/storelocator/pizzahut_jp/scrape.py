@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import json
 
 website = "pizzahut.jp"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "pizzahut.jp",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -26,85 +24,118 @@ headers = {
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
+API_HEADERS = {
+    "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
+    "Client": "606dd890-1e5d-4898-853a-0ef434fff627",
+    "Accept": "application/json, text/plain, */*",
+    "Referer": "https://www.pizzahut.jp/",
+    "Lang": "en",
+    "sec-ch-ua-platform": '"Windows"',
+}
+
 
 def fetch_data():
     # Your scraper here
     search_url = "https://www.pizzahut.jp/sitemap.xml"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        search_res = session.get(search_url, headers=headers)
 
-    links = search_res.text.split("<loc>")
+        links = search_res.text.split("<loc>")
 
-    for index in range(1, len(links)):
-        page_url = links[index].split("</loc>")[0].strip()
-        if "pizzahut.jp/huts/" not in page_url:
-            continue
+        for index in range(1, len(links)):
+            page_url = links[index].split("</loc>")[0].strip()
+            if "pizzahut.jp/huts/" not in page_url:
+                continue
 
-        locator_domain = website
+            store_number = page_url.split("/")[-1].strip()
 
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
-        store_info = list(
-            filter(
-                str,
-                [x.strip() for x in store_sel.xpath('//p[@class="t16 p-5"]//text()')],
+            locator_domain = website
+
+            log.info(f"pulling data for store ID: {store_number}")
+            params = (
+                ("code", store_number),
+                ("with", "openingHours,specialDates,hutDays,lunchTimes,publicHoliday"),
             )
-        )
-        if len(store_info) <= 0:
-            continue
-        full_address = store_info[1:-2]
-        raw_address = " ".join(full_address).strip()
+            try:
+                store_req = SgRequests.raise_on_err(
+                    session.get(
+                        f"https://apiapne1.phdvasia.com/v1/product-hut-fe/outlets/detail/{store_number}",
+                        headers=API_HEADERS,
+                        params=params,
+                    )
+                )
 
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+                store_info = json.loads(store_req.text)["data"]["item"]
+                if len(store_info) <= 0:
+                    continue
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+                raw_address = store_info["address"]
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-        country_code = "JP"
+                try:
+                    if street_address.replace("-", "").strip().isdigit():
+                        street_address = raw_address.split(",")[0].strip()
+                        if street_address.replace("-", "").strip().isdigit():
+                            street_address = raw_address.split(",")[:2].strip()
+                except:
+                    pass
 
-        location_name = store_info[0].strip()
+                city = formatted_addr.city
+                state = formatted_addr.state
+                zip = formatted_addr.postcode
 
-        phone = store_info[-1].strip()
+                country_code = "JP"
 
-        store_number = page_url.split("/")[-1].strip()
+                location_name = store_info["name"]
 
-        location_type = "<MISSING>"
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath('//*[@class="detail-list"]//text()')
-                ],
-            )
-        )
-        hours_of_operation = (
-            "; ".join(hours).replace("配達・お持ち帰り; ", "").replace(":;", ":").strip()
-        )
+                phone = store_info["phone"]
 
-        latitude, longitude = "<MISSING>", "<MISSING>"
+                location_type = "<MISSING>"
+                hours = store_info["opening_hours"]
+                hours_list = []
+                for hour in hours:
+                    if hour["order_type"][0] == "D":
+                        if hour["active"] == 1:
+                            day = hour["day"]
+                            time = hour["opening"] + " - " + hour["closing"]
+                            hours_list.append(day + ": " + time)
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+                hours_of_operation = (
+                    "; ".join(hours_list)
+                    .strip()
+                    .replace("配達・お持ち帰り; ", "")
+                    .replace(":;", ":")
+                    .strip()
+                )
+
+                latitude, longitude = store_info["lat"], store_info["long"]
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+            except SgRequestError as e:
+                log.error(e.status_code)
 
 
 def scrape():

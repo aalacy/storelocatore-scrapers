@@ -16,13 +16,13 @@ days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 
 def fetch_data():
     locator_domain = "https://www.softrontax.com/"
-    base_url = "https://www.softrontax.com/_next/static/chunks/pages/location-22a8ddac067343e939d8.js"
-    with SgRequests() as session:
+    base_url = "https://www.softrontax.com/_next/static/chunks/pages/location-aa24ab21981fa6e087fc.js"
+    with SgRequests(verify_ssl=False) as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
-            .text.split("(d(7757),")[1]
-            .split(",a=d(7294)")[0]
-            .strip()[:-1]
+            .text.split("),n=")[1]
+            .split(",o=t(")[0]
+            .strip()
         )
         for _ in locations:
             hours = []
