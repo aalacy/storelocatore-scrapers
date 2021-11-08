@@ -27,6 +27,13 @@ def fetch_data():
         street_address = poi["address"]
         if poi["address2"]:
             street_address += " " + poi["address2"]
+        phone = poi["phone"]
+        if not phone:
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/strong/text()')
+            phone = phone[0] if phone else ""
+        coming_soon = loc_dom.xpath('//h2/strong[contains(text(), "COMING SOON!")]')
+        if coming_soon:
+            continue
         hoo = loc_dom.xpath('//div[@class="location__hours"]/dl//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
@@ -41,7 +48,7 @@ def fetch_data():
             zip_postal=poi["zip"],
             country_code=poi["country"],
             store_number=poi["ID"],
-            phone=poi["phone"],
+            phone=phone,
             location_type=SgRecord.MISSING,
             latitude=poi["lat"],
             longitude=poi["lng"],

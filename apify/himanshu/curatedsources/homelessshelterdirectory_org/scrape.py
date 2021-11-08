@@ -3,11 +3,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, wait, ALL_COMPL
 import threading
 import random
 import time
-import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import lxml.html
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("homelessshelterdirectory_org")
 
@@ -15,7 +18,6 @@ logger = SgLogSetup().get_logger("homelessshelterdirectory_org")
 show_logs = False
 thread_local = threading.local()
 max_workers = 64
-unique_locations = []
 base_url = "https://www.homelessshelterdirectory.org/"
 
 
@@ -60,37 +62,6 @@ def increment_request_count():
         thread_local.request_count = 1
     else:
         thread_local.request_count += 1
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "updated_date",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def get(url, attempt=1):
@@ -168,7 +139,6 @@ def crawl_city_url(url):
 
 
 def crawl_location_url(url):
-    store = []
     r = get(url)
     if not r:
         return None
@@ -224,30 +194,22 @@ def crawl_location_url(url):
 
         hours_of_operation = "; ".join(hours_list).strip()
 
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address.replace("?", "").strip())
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append(store_number)
-        store.append(phone)
-        store.append("Shelter")
-        store.append(lat)
-        store.append(lng)
-        store.append(update_date)
-        store.append(hours_of_operation)
-        store.append(url)
-
-        store_key = location_name + street_address
-        if store_key in unique_locations:
-            return None
-        unique_locations.append(store_key)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-
-    return store
+        return SgRecord(
+            locator_domain=base_url,
+            page_url=url,
+            location_name=location_name,
+            street_address=street_address.replace("?", "").strip(),
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code="US",
+            store_number=store_number,
+            phone=phone,
+            location_type=update_date,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def fetch_data():
@@ -317,8 +279,19 @@ def fetch_data():
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log(f"No of records being processed: {count}")
+    log("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
