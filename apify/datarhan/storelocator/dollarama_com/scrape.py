@@ -1,5 +1,4 @@
 import json
-from time import sleep
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 from sgrequests import SgRequests
