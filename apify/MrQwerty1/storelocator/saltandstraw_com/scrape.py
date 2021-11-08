@@ -35,12 +35,12 @@ def get_data(url, sgw: SgWriter):
     line = list(filter(None, [l.strip() for l in line]))
 
     street_address = ", ".join(line[:-1])
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
+    adr = line[-1]
+    city = adr.split(",")[0].strip()
+    adr = adr.split(",")[1].strip()
+    state = adr.split()[0]
     try:
-        postal = line.split()[1]
+        postal = adr.split()[1]
     except IndexError:
         postal = SgRecord.MISSING
     phone = "".join(
