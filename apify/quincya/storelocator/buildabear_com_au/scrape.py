@@ -49,6 +49,24 @@ def fetch_data(sgw: SgWriter):
             city_line = raw_address[1].split(",")
         if street_address[-1:] == ",":
             street_address = street_address[:-1]
+
+        if (
+            "Shop" in street_address[:10]
+            or "Kiosk" in street_address[:10]
+            or "Store" in street_address[:10]
+        ):
+            street_address = " ".join(street_address.split()[2:])
+        if street_address[:1] in [",", "-"]:
+            street_address = street_address[1:]
+
+        street_address = (
+            street_address.replace("Westfield Miranda,", "")
+            .replace(", Broadbeach", "")
+            .replace("Westfield Knox", "")
+            .replace("Lakeside Joondalup,", "")
+            .replace("Westfield Carousel,", "")
+            .strip()
+        )
         city = city_line[0].strip()
         state = city_line[1].split()[0].strip()
         zip_code = city_line[1].split()[-1].strip()

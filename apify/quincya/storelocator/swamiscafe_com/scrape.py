@@ -24,6 +24,12 @@ def fetch_data(sgw: SgWriter):
     items = base.find(class_="pm-location-search-list").find_all("section")
     locator_domain = "https://www.swamiscafe.com"
 
+    script = base.find(id="popmenu-apollo-state")
+
+    lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', str(script))
+    lngs = re.findall(r'lng":-[0-9]{2,3}\.[0-9]+', str(script))
+    phones = re.findall(r'displayPhone":"\([0-9]{3}\) [0-9]{3}-[0-9]{4}', str(script))
+
     for item in items:
 
         location_name = item.h4.text.strip()
@@ -52,10 +58,15 @@ def fetch_data(sgw: SgWriter):
             )
         except:
             hours_of_operation = ""
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
 
         link = locator_domain + item.find("a", string="View Menu")["href"]
+
+        latitude = ""
+        longitude = ""
+        for i, ph in enumerate(phones):
+            if ph.split(':"')[1] == phone:
+                latitude = lats[i].split(":")[1]
+                longitude = lngs[i].split(":")[1]
 
         sgw.write_row(
             SgRecord(
