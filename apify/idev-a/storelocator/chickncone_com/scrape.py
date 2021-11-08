@@ -6,6 +6,9 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 
 try:
     _create_unverified_https_context = (
@@ -21,8 +24,18 @@ base_url = "https://chickncone.com/locations/"
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
+    ) as driver:
         driver.get(base_url)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (
+                    By.CSS_SELECTOR,
+                    "div.item",
+                )
+            )
+        )
         locations = bs(driver.page_source, "lxml").select("div.item")
         for _ in locations:
             raw_address = (
