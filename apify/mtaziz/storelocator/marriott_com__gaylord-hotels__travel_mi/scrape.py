@@ -114,7 +114,7 @@ def fetch_data_for_non_api_based_child_brands():
             url_base_findHotels = "https://www.marriott.com/search/findHotels.mi"
             logger.info(f"[{idx}] Pulling the data from >> : {url_base_city_state} ")
             driver.get(url_base_city_state)
-            time.sleep(random.randint(5, 13))
+            time.sleep(random.randint(15, 30))
             pgsrc = driver.page_source
             search_list_records_total = re.findall(
                 r"search_list_records_total\":\s\d+,", pgsrc
@@ -237,7 +237,7 @@ def fetch_data_for_non_api_based_child_brands():
                                 f"{url_base_findHotels}?page={i}"
                             )
                             driver.get(url_base_findHotels_custom)
-                            time.sleep(random.randint(5, 13))
+                            time.sleep(random.randint(15, 30))
                             logger.info(
                                 f"URL Base find Hotels Custom: {url_base_findHotels_custom} "
                             )
