@@ -9,7 +9,7 @@ from sgscrape.sgpostal import parse_address_intl
 
 DOMAIN = "flipflopshops.com"
 LOCATION_URL = "https://flipflopshops.com/stores/"
-API_URL = "https://flipflopshops.locally.com/stores/conversion_data?has_data=true&company_id=14484&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.725444204821486&map_center_lng=-73.98660000000041&map_distance_diag=2145.4581177999944&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=8"
+API_URL = "https://flipflopshops.locally.com/stores/conversion_data?has_data=true&company_id=14484&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40.725444204821486&map_center_lng=-73.98660000000041&map_distance_diag=3000.000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=8"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
