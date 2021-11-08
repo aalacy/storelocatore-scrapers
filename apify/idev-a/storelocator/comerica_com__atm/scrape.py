@@ -1,11 +1,12 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 from bs4 import BeautifulSoup as bs
 import json
+import os
 
 logger = SgLogSetup().get_logger("comerica_com")
 
@@ -15,14 +16,33 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=50,
-    granularity=Grain_1_KM(),
+    expected_search_radius_miles=50,
+    use_state=False,
 )
+
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "https://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
 
 
 def api_get(start_url, headers, timeout, attempts, maxRetries):
     error = False
     session = SgRequests()
+    session.proxies = set_proxies()
     try:
         results = session.get(start_url, headers=headers, timeout=timeout)
     except exceptions.RequestException as requestsException:
@@ -56,6 +76,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
     session = SgRequests(proxy_rotation_failure_threshold=20)
+    session.proxies = set_proxies()
     maxZ = search.items_remaining()
     total = 0
     for code in search:
@@ -146,19 +167,15 @@ def fetch_data():
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
 
-            cur_page = 0
-            if soup.select_one("ul.pager li.pager-current span"):
-                cur_page = int(
-                    soup.select_one("ul.pager li.pager-current span")
-                    .text.split("of")[-1]
-                    .strip()
-                )
-
             logger.info(
                 f"{code} | page {page} | found: {found} | total: {total} | progress: {progress}"
             )
-            page += 1
-            if page > cur_page:
+
+            if soup.select_one("ul.pager li.next a"):
+                page = int(
+                    soup.select_one("ul.pager li.next a")["href"].split("page=")[-1]
+                )
+            else:
                 break
 
 

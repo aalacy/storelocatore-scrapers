@@ -28,6 +28,7 @@ def fetch_data():
                 )
             )
     for loc in locs:
+        Closed = False
         logger.info(("Pulling Location %s..." % loc))
         website = "awrestaurants.com"
         typ = "Restaurant"
@@ -51,7 +52,7 @@ def fetch_data():
                 g = next(lines)
                 while "</div>" not in g:
                     g = next(lines)
-                    if "00" in g or "30" in g:
+                    if "00" in g or "30" in g or "am-" in g or "am -" in g:
                         if "-->" not in g:
                             hrs = (
                                 g.strip()
@@ -79,8 +80,12 @@ def fetch_data():
                     phone = line2.split(',"phone":"')[1].split('"')[0]
                 except:
                     phone = "<MISSING>"
+            if "This location is temporarily closed" in line2:
+                Closed = True
         if hours == "":
             hours = "<MISSING>"
+        if Closed:
+            hours = "Temporarily Closed"
         if add != "":
             add = add.replace("\\u0026", "&")
             name = name.replace("\\u0026", "&")

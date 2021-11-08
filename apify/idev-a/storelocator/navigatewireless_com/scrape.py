@@ -40,8 +40,8 @@ def fetch_data():
                 .split("!3d")
             )
             phone = ""
-            if sp1.select_one("p span"):
-                phone = sp1.select_one("p span").text.strip()
+            if link.select_one("p span"):
+                phone = link.select_one("p span").text.strip()
             zip_postal = addr[1].split(",")[1].strip().split(" ")[-1].strip()
             if not zip_postal.replace("-", "").strip().isdigit() and len(addr) == 3:
                 zip_postal = addr[-1]

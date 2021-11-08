@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("victoriassecret_com")
 
@@ -9,33 +12,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -99,24 +75,26 @@ def fetch_data():
                 phone = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if add == "@":
+                add = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=purl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
-    url = "https://api.victoriassecret.com/categories/v9/page?categoryId=3d2035d0-33e8-4eb3-933b-57b3ff481d7a&brand=vs&isPersonalized=true&activeCountry=US&cid=&platform=web&deviceType=&platformType=&perzConsent=true&tntId=87a6ce6e-f60b-4ac1-b2d6-df27b22d64ca.34_0&screenWidth=1920&screenHeight=1080"
+    url = "https://api.victoriassecret.com/categories/v10/page?categoryId=3d2035d0-33e8-4eb3-933b-57b3ff481d7a&brand=vs&isPersonalized=true&activeCountry=US&cid=&platform=web&deviceType=&platformType=&perzConsent=true&tntId=6f150799-a879-4ed5-b130-11d200eab542.34_0&screenWidth=1920&screenHeight=1080"
     r = session.get(url, headers=headers)
     typ = "<MISSING>"
     for line in r.iter_lines():
@@ -146,27 +124,31 @@ def fetch_data():
                     if zc == "":
                         zc = "<MISSING>"
                     if country != "GBR":
-                        yield [
-                            website,
-                            purl,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=purl,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

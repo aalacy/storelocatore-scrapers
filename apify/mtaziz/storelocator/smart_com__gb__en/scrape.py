@@ -169,7 +169,7 @@ def fetch_data():
             url + company_id, headers=headers_with_apikey
         ).json()
         for d in data_per_dealer_json["results"]:
-            locator_domain = "https://www.mercedes-benz.co.uk/"
+            locator_domain = "smart.com/gb/en"
             page_url_slug = d["baseInfo"]["externalId"]
             if page_url_slug:
                 page_url = f"https://www.smart.com/gb/en/dealer/{page_url_slug}"

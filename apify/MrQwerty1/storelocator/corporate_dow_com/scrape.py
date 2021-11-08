@@ -29,23 +29,28 @@ def fetch_data(sgw: SgWriter):
 
         line = ", ".join(_tmp)
         adr = parse_address(International_Parser(), line)
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or SgRecord.MISSING
-        )
+        street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+            "None", ""
+        ).strip()
 
-        city = adr.city or SgRecord.MISSING
-        state = adr.state or SgRecord.MISSING
-        postal = adr.postcode or SgRecord.MISSING
+        city = adr.city
+        if city == "City":
+            lines = line.split(",")
+            for li in lines:
+                if "City" in li:
+                    city = li.strip()
+                    break
+        if city == "Zip":
+            city = line.split("(")[0].split(",")[-1].strip()
+        state = adr.state
+        postal = adr.postcode
         location_name = j.get("locationName")
         if not location_name:
             continue
+
         phone = j.get("telephone") or SgRecord.MISSING
         latitude = j.get("latitude") or SgRecord.MISSING
         longitude = j.get("longitude") or SgRecord.MISSING
-        hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             page_url=page_url,
@@ -61,7 +66,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=SgRecord.MISSING,
             raw_address=line,
         )
 
@@ -73,7 +78,13 @@ if __name__ == "__main__":
     locator_domain = "https://corporate.dow.com/"
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.PHONE})
+            SgRecordID(
+                {
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
         )
     ) as writer:
         fetch_data(writer)

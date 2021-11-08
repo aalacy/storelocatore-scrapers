@@ -1,5 +1,4 @@
-# Validation Issues 
-The follows checks are ignored:
+# Validation checks ignored listed below
 
 - --ignore CentroidValidator 
 - --ignore StreetAddressHasNumber

@@ -44,8 +44,7 @@ def fetch_data():
         lng = "<MISSING>"
         hours = ""
         r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
+        for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
             if '<span class="location-label">' in line2:
                 typ = line2.split('<span class="location-label">')[1].split("<")[0]
@@ -72,18 +71,6 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if "<span class='location-details__info'>" in line2:
-                g = next(lines)
-                h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
-                if (
-                    "<span class='location-details__info'>" in h
-                    and "<span class='location-details__info'>" in g
-                ):
-                    add = g.split("<span class='location-details__info'>")[1].split(
-                        "<"
-                    )[0]
         if phone == "":
             phone = "<MISSING>"
         if hours == "":
@@ -115,8 +102,8 @@ def fetch_data():
             city = "Wilmington"
             state = "DE"
         name = name.replace("\\u0026", "&")
-        add = add.replace("\\u0026", "&")
         name = name.replace("\\u0027", "'")
+        add = add.replace("\\u0026", "&")
         add = add.replace("\\u0027", "'")
         yield SgRecord(
             locator_domain=website,

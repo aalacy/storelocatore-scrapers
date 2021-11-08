@@ -16,7 +16,7 @@ headers = {
 }
 
 DOMAIN = "https://flippinpizza.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -26,20 +26,47 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("item")
         for loc in loclist:
-            location_name = loc.find("location").text
+            location_name = loc.find("location").text.replace("&#44;", "")
             page_url = loc.find("exturl").text
+            latitude = loc.find("latitude").text
+            longitude = loc.find("longitude").text
+            phone = loc.find("telephone").text
             if not page_url:
-                continue
+                temp = BeautifulSoup(loc.find("description").text, "html.parser")
+                page_url = temp.findAll("a")[-1]["href"]
+            log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            hour_url = soup.find("div", {"class": "hours-btn"}).find("a")["href"]
-            log.info("Fetching Hours...")
-            r = session.get(hour_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            hours_of_operation = (
-                soup.find("table").get_text(separator="|", strip=True).replace("|", " ")
-            )
-            log.info(page_url)
+            if "Coming soon" in soup.find("h1").text:
+                continue
+            if not phone:
+                phone = (
+                    soup.find("div", {"class": "location-address"})
+                    .findAll("p")[3]
+                    .text.replace("PHONE:", "")
+                )
+            if not phone:
+                phone = soup.select_one("a[href*=tel]").text
+            try:
+                hour_url = soup.find("div", {"class": "hours-btn"}).find("a")["href"]
+                log.info("Fetching Hours...")
+                r = session.get(hour_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                hours_of_operation = (
+                    soup.find("table")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            except:
+                try:
+                    hour_url = soup.find("div", {"class": "hours-btn"}).text
+                    if "Coming soon" in hour_url:
+                        hours_of_operation = MISSING
+                except:
+                    hours_of_operation = soup.find(
+                        "div", {"class": "location-address"}
+                    ).findAll("em")
+                    hours_of_operation = " ".join(x.text for x in hours_of_operation)
             address = loc.find("address").text
             address = address.replace(",", " ")
             address = usaddress.parse(address)
@@ -67,9 +94,6 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            latitude = loc.find("latitude").text
-            longitude = loc.find("longitude").text
-            phone = loc.find("telephone").text
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -93,7 +117,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:
