@@ -127,7 +127,7 @@ def get_hours_of_operation(store):
     departments = store.get("hours")["departments"]
     for department in departments:
         days = department.get("regHours")
-        if department['name'] == 'pharmacy' and len(days):
+        if department["name"] == "pharmacy" and len(days):
             return ", ".join(
                 f'{day["weekday"]}: {day["startTime"]}-{day["endTime"]}' for day in days
             )
