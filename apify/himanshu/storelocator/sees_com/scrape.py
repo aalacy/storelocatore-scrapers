@@ -1,4 +1,3 @@
-from sglogging import sglog
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -39,7 +38,6 @@ def fetch_data():
             location_details = json.loads(
                 location_sel.xpath('//script[@type="application/ld+json"]/text()')[0]
             )[0]
-            locator_domain = website
             location_name = location_details["name"]
             street_address = location_details["address"]["streetAddress"]
             city = location_details["address"]["addressLocality"]
