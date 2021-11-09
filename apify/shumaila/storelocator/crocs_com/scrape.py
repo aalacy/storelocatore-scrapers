@@ -1,4 +1,5 @@
 from sgscrape.sgrecord import SgRecord
+import json
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -70,7 +71,10 @@ def get_data(coord, sgw: SgWriter):
         phone = loc["phone"]
         city = loc["city"]
         state = loc["state"]
-        street = loc["address1"] + " " + str(js["address2"])
+        pcode = loc["postalcode"]
+        lat = loc["latitude"]
+        longt = loc["longitude"]
+        street = loc["address1"] + " " + str(loc["address2"])
         street = street.replace("None")
         ccode = loc["country"]
         ltype = "Outlet"
@@ -118,6 +122,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
 
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     with SgWriter(
         deduper=SgRecordDeduper(
