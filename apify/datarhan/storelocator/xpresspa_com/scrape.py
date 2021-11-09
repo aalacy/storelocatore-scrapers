@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -11,69 +10,44 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     start_url = "https://www.xpresspa.com/Articles.asp?ID=262"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "xpresspa.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = []
-    all_cities = dom.xpath(
-        '//div[@id="div_articleid_262"]//h4[a[contains(@class, "link")]]'
-    )
-    for city_state in all_cities:
-        city = city_state.xpath(".//a/text()")[0].split("-")[-1].strip().split(",")[0]
-        if city in ["JFK", "LaGuardia"]:
-            city = "New York"
-        state = city_state.xpath(".//a/text()")[0].split("-")[0].strip()
-        if state == "United Arab Emirates":
-            state = "<MISSING>"
-            country_code = "United Arab Emirates"
+    all_locations = dom.xpath('//div[h4[@class="location_state-city"]]')
+    for poi_html in all_locations:
+        state = poi_html.xpath(".//h4/text()")[0].split(" - ")[0]
+        city = poi_html.xpath(".//h4/text()")[0].split(" - ")[-1]
+        street_address = poi_html.xpath('.//p[@class="location_airport"]/text()')[0]
+        street_address += ", " + poi_html.xpath(".//h5/text()")[0].strip()
+        phone = poi_html.xpath(
+            './/dt[contains(text(), "Telephone")]/following-sibling::dd/text()'
+        )[0]
+        hoo = poi_html.xpath(
+            './/dt[contains(text(), "Hours")]/following-sibling::dd/text()'
+        )[0]
 
-        all_locations = city_state.xpath(".//following-sibling::div[1]//ul/li")
-        for poi_html in all_locations:
-            store_url = start_url
-            location_name = poi_html.xpath(".//a/b/text()")[0].strip()
-            street_address = poi_html.xpath("text()")[0].strip()
-            zip_code = "<MISSING>"
-            country_code = "<MISSING>"
-            if city == "Netherlands":
-                city = "Amsterdam"
-                state = "<MISSING>"
-                country_code = "Netherlands"
-            store_number = "<MISSING>"
-            all_txt = poi_html.xpath(".//text()")
-            phone = [e.strip() for e in all_txt if "Tel" in e]
-            phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hoo = [e.strip() for e in all_txt if "Hours" in e]
-            hours_of_operation = (
-                hoo[0].split("Hours:")[-1].split("*")[0].strip() if hoo else "<MISSING>"
-            )
-            if city == "Amsterdam":
-                country_code = "Netherlands"
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name="",
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal="",
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
+        )
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=store_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
-
-            yield item
+        yield item
 
 
 def scrape():
