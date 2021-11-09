@@ -43,11 +43,24 @@ def fetch_data():
                 phone = _.find("a", href=re.compile(r"tel:")).text.strip()
             except:
                 phone = ""
+            city = addr.city
+            if not city:
+                temp = (
+                    _.select("ul li")[0]
+                    .text.replace("Distributor Address:", "")
+                    .strip()
+                )
+                if "locations" not in temp:
+                    raw_address = temp
+                    if raw_address and "Egypt" not in raw_address:
+                        raw_address = raw_address + ", Egypt"
+                    addr = parse_address_intl(raw_address)
+                    city = addr.city
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h3.text.strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Egypt",
