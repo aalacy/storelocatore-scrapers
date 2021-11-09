@@ -97,7 +97,7 @@ def get_latlong(soup):
     if not content:
         return "<MISSING>", "<MISSING>"
     latlong = re.search(r"center\:\s+\[(.*)\]", content.string).group(1).split(",")
-    return latlong[0].strip(), latlong[1].strip()
+    return latlong[1].strip(), latlong[0].strip()
 
 
 def fetch_data():
