@@ -23,7 +23,6 @@ def fetch_data():
         with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
-        print(store_url)
         location_name = loc_dom.xpath("//title/text()")[0].split("|")[0]
         location_name = location_name if location_name else "<MISSING>"
         if not loc_dom.xpath('//p[i[@class="fa fa-map-marker"]]/text()'):
