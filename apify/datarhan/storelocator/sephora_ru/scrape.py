@@ -1,3 +1,4 @@
+import ssl
 from time import sleep
 from random import uniform
 from lxml import etree
@@ -7,14 +8,23 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
     start_url = "https://sephora.ru/company/shops/"
     domain = "sephora.ru"
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
         all_cities = dom.xpath('//div[@class="b-shops-cities__item"]/a/@href')
