@@ -122,8 +122,8 @@ def fetch_data():
                     hours_of_operation="; ".join(hours),
                 )
 
-            if driver:
-                driver.close()
+        if driver:
+            driver.close()
 
 
 if __name__ == "__main__":
