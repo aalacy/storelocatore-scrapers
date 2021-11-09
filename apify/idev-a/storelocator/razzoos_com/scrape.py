@@ -86,7 +86,7 @@ def fetch_data():
             _hr = sp1.find("", string=re.compile(r"^Phone"))
             if _hr:
                 phone = (
-                    list(_hr.find_parent().stripped_strings)[-1]
+                    list(_hr.find_parent("h3").stripped_strings)[-1]
                     .split(":")[-1]
                     .replace("(", "")
                     .replace(")", "")
