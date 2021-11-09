@@ -37,6 +37,8 @@ def fetch_data():
             if _.text == "•":
                 continue
             addr = list(_.stripped_strings)
+            if "Coming early" in addr[0] or "Coming soon" in addr[0]:
+                continue
             try:
                 coord = _.a["href"].split("ll=")[1].split("&")[0].split(",")
             except:

@@ -3,10 +3,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_1_KM
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch
 from sglogging import SgLogSetup
-from typing import Iterable, Tuple, Callable
 
 logger = SgLogSetup().get_logger("massimodutti")
 
@@ -29,28 +28,15 @@ days = [
 ]
 
 
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self._http = http
-
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
-
-        lat = coord[0]
-        lng = coord[1]
-        try:
-            res = self._http.get(base_url.format(lat, lng), headers=_headers)
+def fetch_records(search):
+    for lat, lng in search:
+        with SgRequests(proxy_country="us") as http:
+            res = http.get(base_url.format(lat, lng), headers=_headers)
             if res.status_code == 200:
                 locations = res.json()["closerStores"]
-                logger.info(f"{len(locations)}")
+                logger.info(f"{search.current_country(), len(locations)}")
                 if len(locations):
-                    found_location_at(lat, lng)
+                    search.found_location_at(lat, lng)
                 for store in locations:
                     hours = []
                     for hr in store.get("openingHours", {}).get("schedule", []):
@@ -93,26 +79,13 @@ class ExampleSearchIteration(SearchIteration):
                         locator_domain=locator_domain,
                     )
 
-        except:
-            pass
-
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_1_KM()
-    )
+    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1000
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
     ) as writer:
-        with SgRequests(proxy_country="us") as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
-
-            for rec in par_search.run():
-                writer.write_row(rec)
+        for rec in fetch_records(search):
+            writer.write_row(rec)
