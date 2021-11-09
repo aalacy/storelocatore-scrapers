@@ -49,8 +49,8 @@ def fetch_data():
         _headers["cookie"] = "; ".join(cookies)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.item-list ul a")
-        for link in locations:
-            with SgRequests(proxy_country="us") as session:
+        with SgRequests(proxy_country="us") as session:
+            for link in locations:
                 page_url = "https://www.specsavers.co.nz/stores/" + link["href"]
                 logger.info(page_url)
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
