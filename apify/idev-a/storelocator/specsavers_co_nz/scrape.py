@@ -42,18 +42,17 @@ def fetch_data():
     with SgChrome(
         user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
     ) as driver:
-        with SgRequests(proxy_country="us") as session:
-            driver.get(base_url)
-            cookies = []
-            for cookie in driver.get_cookies():
-                cookies.append(f"{cookie['name']}={cookie['value']}")
-            _headers["cookie"] = "; ".join(cookies)
-            soup = bs(driver.page_source, "lxml")
-            locations = soup.select("div.item-list ul a")
-            for link in locations:
+        driver.get(base_url)
+        cookies = []
+        for cookie in driver.get_cookies():
+            cookies.append(f"{cookie['name']}={cookie['value']}")
+        _headers["cookie"] = "; ".join(cookies)
+        soup = bs(driver.page_source, "lxml")
+        locations = soup.select("div.item-list ul a")
+        for link in locations:
+            with SgRequests(proxy_country="us") as session:
                 page_url = "https://www.specsavers.co.nz/stores/" + link["href"]
                 logger.info(page_url)
-                session.clear_cookies()
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 raw_address = " ".join(sp1.select_one("div.store p").stripped_strings)
                 json_url = sp1.select_one("div.js-yext-info")["data-yext-url"]

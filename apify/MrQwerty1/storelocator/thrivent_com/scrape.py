@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -5,6 +6,19 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+
+
+def get_hoo(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'window.JSContext =')]/text()")
+    )
+    js = json.loads(text.split("window.JSContext =")[1].replace(";", ""))["profile"]
+    source = js.get("office_hours") or "<html></html>"
+    root = html.fromstring(source)
+
+    return ";".join(root.xpath("//text()"))
 
 
 def get_states():
@@ -42,7 +56,7 @@ def get_data(url, sgw: SgWriter):
     except:
         return
 
-    page_url = url.replace(".json", "")
+    page_url = j.get("c_baseURL") or url.replace(".json", "")
     location_name = j.get("name")
     a = j.get("address")
 
@@ -83,7 +97,7 @@ def get_data(url, sgw: SgWriter):
 
         _tmp.append(line)
 
-    hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
+    hours_of_operation = ";".join(_tmp) or get_hoo(page_url)
     if (
         hours_of_operation.count("Closed") == 7
         or location_name.lower().find("closed") != -1
@@ -122,5 +136,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.thrivent.com/"
     session = SgRequests()
+
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
