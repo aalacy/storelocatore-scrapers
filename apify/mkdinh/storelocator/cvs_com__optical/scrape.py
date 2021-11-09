@@ -1,10 +1,8 @@
 import re
+import json
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from sgzip.static import (
-    static_coordinate_list,
-    SearchableCountries,
-)
+
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -60,7 +58,7 @@ def fetch_locations(coord):
         "latitude": coord[0],
         "longitude": coord[1],
         "searchText": "",
-        "filters": "Healthhub_Ind",
+        "filters": "",
         "resultCount": 25,
         "pageNum": 1,
     }
@@ -133,14 +131,127 @@ def get_hours_of_operation(store):
             )
 
 
-def scrape():
-    with ThreadPoolExecutor() as executor, SgRequests():
-        search = static_coordinate_list(radius=25, country_code=SearchableCountries.USA)
-        futures = [executor.submit(fetch_locations, coord) for coord in search]
+def fetch_location(page_url, session):
+    response = session.get(page_url)
+    soup = BeautifulSoup(response.text)
+    locator_domain = "cvs.com"
 
-        for future in as_completed(futures):
-            for poi in future.result():
-                yield poi
+    try:
+        details = soup.find("cvs-store-details")["sd-props"]
+        data = json.loads(details)
+        general = data["cvsMyStoreDetailsProps"]["store"]
+
+        store_number = general["storeId"]
+        phone = general["phoneNumber"]
+        location_type = "Optical"
+        location_name = data["cvsLocationGeneralDetailsProps"]["storeAddress"][
+            "firstLine"
+        ]
+
+        street_address = general["street"]
+        city = general["city"]
+        state = general["state"]
+        zip_postal = general["zip"]
+        country_code = "US"
+        latitude = general["latitude"]
+        longitude = general["longitude"]
+
+        hours = data["cvsLocationHoursProps"]["locationHours"][0]["hours"]
+
+        hours_of_operation = []
+        for hour in hours:
+            day = hour["titleText"]
+            try:
+                start = hour["startTime"]
+                end = hour["endTime"]
+            except:
+                start = "Closed"
+                end = "Closed"
+
+            if day != "Today":
+                time = (
+                    start
+                    if start == "Open 24 Hours" or start == "Closed"
+                    else f"{start}-{end}"
+                )
+                hours_of_operation.append(f"{day}: {time}")
+
+        hours_of_operation = ", ".join(hours_of_operation)
+    except:
+        script = soup.find("script", type="application/ld+json")
+        details = json.loads(script.string)
+
+        store_number = details["@id"]
+        phone = details["telephone"]
+        location_type = "Optical"
+
+        address = details["address"]
+        street_address = address["streetAddress"]
+        city = address["addressLocality"]
+        state = address["addressRegion"]
+        zip_postal = address["postalCode"]
+        country_code = "US"
+
+        geo = details["geo"]
+        latitude = geo["latitude"]
+        longitude = geo["longitude"]
+
+        location_name = f"CVS Optical {city}"
+        hours = details["openingHoursSpecification"]
+
+        days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
+        hours_of_operation = []
+        for day in days:
+            for hour in hours:
+                day_of_week = hour["dayOfWeek"]
+            try:
+                opens = hour["opens"]
+                closes = hour["closes"]
+            except:
+                opens = "Closed"
+                closes = "Closed"
+
+                if day == day_of_week:
+                    time = opens if opens == "Closed" else f"{opens}: {closes}"
+                    hours_of_operation.append(f"{day_of_week}: {time}")
+
+        hours_of_operation = ", ".join(hours_of_operation)
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+
+def scrape():
+    with SgRequests() as session:
+        response = session.get("https://www.cvs.com/optical/optical-center-locations")
+        soup = BeautifulSoup(response.text)
+
+        locations = soup.find_all("div", class_="location-city")
+        for location in locations:
+            url = location.find("a")["href"].strip()
+            yield fetch_location(url, session)
 
 
 if __name__ == "__main__":
