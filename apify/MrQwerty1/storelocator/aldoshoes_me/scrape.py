@@ -156,7 +156,7 @@ def fetch_data():
     for page_url in store_urls:
         count = count + 1
         log.debug(f"{count}. Fetching {page_url} ...")
-        location_type = MISSING
+        location_type = "Store"
         response = request_with_retries(page_url)
         store_number = id_from_url(page_url)
 
