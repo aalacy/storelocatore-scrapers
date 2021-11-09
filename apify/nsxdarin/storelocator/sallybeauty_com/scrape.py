@@ -72,7 +72,6 @@ def fetch_data():
                 if '"storeHours": "' in line:
                     days = (
                         line.split('"storeHours": "')[1]
-                        .split('"')[0]
                         .split('</div>\\n",')[0]
                         .split("<div class='store-hours-day'>")
                     )
@@ -88,7 +87,6 @@ def fetch_data():
                                 hours = hrs
                             else:
                                 hours = hours + "; " + hrs
-
                     cas = [
                         "AB",
                         "BC",
@@ -106,6 +104,7 @@ def fetch_data():
                         country = "CA"
                     if store not in ids and country == "CA":
                         ids.append(store)
+                        cstore = store.replace("store_", "")
                         logger.info(("Pulling Store ID #%s..." % store))
                         if store == "store_10777":
                             zc = "06473"
@@ -127,7 +126,7 @@ def fetch_data():
                             country_code=country,
                             phone=phone,
                             location_type=typ,
-                            store_number=store,
+                            store_number=cstore,
                             latitude=lat,
                             longitude=lng,
                             hours_of_operation=hours,
@@ -146,94 +145,97 @@ def fetch_data():
             + str(y)
         )
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
-            if '"ID": "' in line:
-                hours = ""
-                loc = "<MISSING>"
-                add = ""
-                city = ""
-                state = ""
-                zc = ""
-                country = ""
-                typ = "<MISSING>"
-                lat = ""
-                lng = ""
-                phone = ""
-                website = "sallybeauty.com"
-                store = line.split('"ID": "')[1].split('"')[0]
-            if '"name": "' in line:
-                name = line.split('"name": "')[1].split('"')[0]
-            if '"address1": "' in line:
-                add = line.split('"address1": "')[1].split('"')[0]
-            if '"address2": "' in line:
-                add = add + " " + line.split('"address2": "')[1].split('"')[0]
-                add = add.strip()
-            if '"city": "' in line:
-                city = line.split('"city": "')[1].split('"')[0]
-            if '"postalCode": "' in line:
-                zc = line.split('"postalCode": "')[1].split('"')[0]
-            if '"latitude": ' in line:
-                lat = line.split('"latitude": ')[1].split(",")[0]
-            if '"longitude": ' in line:
-                lng = line.split('"longitude": ')[1].split(",")[0]
-            if '"phone": "' in line:
-                phone = line.split('"phone": "')[1].split('"')[0]
-            if '"stateCode": "' in line:
-                state = line.split('"stateCode": "')[1].split('"')[0]
-            if '"stateCode": "' in line:
-                state = line.split('"stateCode": "')[1].split('"')[0]
-            if '"storeHours": "' in line:
-                days = (
-                    line.split('"storeHours": "')[1]
-                    .split('"')[0]
-                    .split('</div>\\n",')[0]
-                    .split("<div class='store-hours-day'>")
-                )
-                for day in days:
-                    if '<span class=\\"hours-of-day\\">' in day:
-                        hrs = (
-                            day.split("\\n")[0]
-                            + day.split('<span class=\\"hours-of-day\\">')[1].split(
-                                "<"
-                            )[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-                if store not in ids and " " not in zc:
-                    ids.append(store)
-                    logger.info(("Pulling Store ID #%s..." % store))
-                    country = "US"
-                    if zc == "":
-                        zc = "<MISSING>"
-                    if phone == "":
-                        phone = "<MISSING>"
-                    if store == "store_10777":
-                        zc = "06473"
-                    if "." in lat and "." in lng:
-                        loc = (
-                            "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
-                            + lat
-                            + "&long="
-                            + lng
-                        )
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
+        try:
+            for line in r.iter_lines():
+                if '"ID": "' in line:
+                    hours = ""
+                    loc = "<MISSING>"
+                    add = ""
+                    city = ""
+                    state = ""
+                    zc = ""
+                    country = ""
+                    typ = "<MISSING>"
+                    lat = ""
+                    lng = ""
+                    phone = ""
+                    website = "sallybeauty.com"
+                    store = line.split('"ID": "')[1].split('"')[0]
+                if '"name": "' in line:
+                    name = line.split('"name": "')[1].split('"')[0]
+                if '"address1": "' in line:
+                    add = line.split('"address1": "')[1].split('"')[0]
+                if '"address2": "' in line:
+                    add = add + " " + line.split('"address2": "')[1].split('"')[0]
+                    add = add.strip()
+                if '"city": "' in line:
+                    city = line.split('"city": "')[1].split('"')[0]
+                if '"postalCode": "' in line:
+                    zc = line.split('"postalCode": "')[1].split('"')[0]
+                if '"latitude": ' in line:
+                    lat = line.split('"latitude": ')[1].split(",")[0]
+                if '"longitude": ' in line:
+                    lng = line.split('"longitude": ')[1].split(",")[0]
+                if '"phone": "' in line:
+                    phone = line.split('"phone": "')[1].split('"')[0]
+                if '"stateCode": "' in line:
+                    state = line.split('"stateCode": "')[1].split('"')[0]
+                if '"stateCode": "' in line:
+                    state = line.split('"stateCode": "')[1].split('"')[0]
+                if '"storeHours": "' in line:
+                    days = (
+                        line.split('"storeHours": "')[1]
+                        .split('</div>\\n",')[0]
+                        .split("<div class='store-hours-day'>")
                     )
+                    for day in days:
+                        if '<span class=\\"hours-of-day\\">' in day:
+                            hrs = (
+                                day.split("\\n")[0]
+                                + day.split('<span class=\\"hours-of-day\\">')[1].split(
+                                    "<"
+                                )[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                    if store not in ids and " " not in zc:
+                        cstore = store.replace("store_", "")
+                        ids.append(store)
+                        logger.info(("Pulling Store ID #%s..." % store))
+                        country = "US"
+                        if zc == "":
+                            zc = "<MISSING>"
+                        if phone == "":
+                            phone = "<MISSING>"
+                        if store == "store_10777":
+                            zc = "06473"
+                        if "." in lat and "." in lng:
+                            loc = (
+                                "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
+                                + lat
+                                + "&long="
+                                + lng
+                            )
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=cstore,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
+        except:
+            pass
 
 
 def scrape():

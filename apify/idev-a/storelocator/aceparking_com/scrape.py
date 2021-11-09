@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import urllib.parse
+from urllib.parse import urlencode
 import dirtyjson as json
 from sglogging import SgLogSetup
 import csv
@@ -32,10 +32,10 @@ def params(hourly, row):
 def get_city_list():
     city_list = []
     logger.info("... reading city list csv")
-    with open("./zipcode.csv") as f:
+    with open("./uscities.csv") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            val = [row["city"], row["state"]]
+            val = [row["city"], row["state_id"]]
             if val not in city_list:
                 city_list.append(val)
 
@@ -58,7 +58,7 @@ def fetch_data(city_list):
     with SgRequests() as session:
         for row in city_list:
             for hourly in range(1, 3):
-                url = base_url + urllib.parse.urlencode(params(hourly, row))
+                url = base_url + urlencode(params(hourly, row))
                 logger.info(url)
                 res = session.get(url, headers=_headers)
                 locs = res.text.split("new google.maps.Marker(")[2:]

@@ -89,13 +89,19 @@ def fetch_data():
             5: "Friday",
             6: "Saturday",
         }
+        days_list = []
         if store["businessHours"]:
             hours = store["businessHours"]
             hours_list = []
             for hour in hours:
                 day = weekdays_dict[hour["dayOfWeek"]]
                 time = hour["openingTime"] + " - " + hour["closingTime"]
+                days_list.append(day)
                 hours_list.append(day + ":" + time)
+
+        for day in weekdays_dict.values():
+            if day not in days_list:
+                hours_list.append(day + ":Closed")
 
         hours_of_operation = "; ".join(hours_list).strip()
 

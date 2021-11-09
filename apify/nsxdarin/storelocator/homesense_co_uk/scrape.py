@@ -14,7 +14,7 @@ logger = SgLogSetup().get_logger("homesense_co_uk")
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://www.homesense.com/stores/Cork"]
     cities = [
         "London",
         "Birmingham",
@@ -223,6 +223,12 @@ def fetch_data():
         city = city.replace("Tunbridge_Wells", "Tunbridge Wells")
         if "_" in city:
             city = city.split("_")[0]
+        if "stores/Cork" in loc:
+            country = "IE"
+            add = "The Capitol 14-23 Grand Parade"
+            state = "<MISSING>"
+            name = "Cork"
+            zc = "T12 RF85"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
