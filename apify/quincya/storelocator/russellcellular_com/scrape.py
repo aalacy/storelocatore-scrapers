@@ -69,8 +69,6 @@ def fetch_data(sgw: SgWriter):
             store_number = "<MISSING>"
             location_type = "<MISSING>"
             phone = item.a.text.strip()
-            if not phone:
-                phont = "<MISSING>"
             hours_of_operation = "<MISSING>"
 
             sgw.write_row(
