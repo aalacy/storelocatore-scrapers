@@ -70,7 +70,7 @@ def fetch_data():
         )
         location_type = MISSING
         if "coming soon" in addr.lower():
-            continue
+            location_type = "COMING_SOON"
         if "Grand Reopening Soon" in addr:
             location_type = "TEMP_CLOSED"
         location_name = row.find("span", {"class": "style1"}).text.strip()
