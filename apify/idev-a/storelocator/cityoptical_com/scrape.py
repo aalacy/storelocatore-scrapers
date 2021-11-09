@@ -42,6 +42,15 @@ def fetch_data():
             if "Hours" in hours[0]:
                 del hours[0]
 
+            hours_of_operation = (
+                "; ".join(hours)
+                .replace("–", "-")
+                .replace("\xa0", "")
+                .replace("  ", " ")
+            )
+            hours_of_operation = " ".join(
+                [hh for hh in hours_of_operation.split() if hh.strip()]
+            )
             yield SgRecord(
                 page_url=base_url,
                 location_name=h2[0].text.strip(),
@@ -52,10 +61,7 @@ def fetch_data():
                 country_code="US",
                 phone=h2[2].text.strip(),
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours)
-                .replace("–", "-")
-                .replace("\xa0", "")
-                .replace("  ", " "),
+                hours_of_operation=hours_of_operation,
                 raw_address=" ".join(addr),
             )
 
