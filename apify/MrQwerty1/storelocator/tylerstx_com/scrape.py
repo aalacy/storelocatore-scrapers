@@ -74,6 +74,8 @@ def fetch_data(sgw: SgWriter):
 
     for d in divs:
         lines = d.xpath(".//p//text()")
+        if "soon" in lines[-1]:
+            continue
         location_name = lines.pop(0)
         raw_address = lines.pop(0)
         if lines[0][0].isdigit():
