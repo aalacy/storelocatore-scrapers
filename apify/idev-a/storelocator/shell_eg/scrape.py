@@ -26,9 +26,14 @@ def fetch_data():
                 .replace("-", ",")
                 for aa in _.select("ul li")[2:4]
             ]
+            if "contact" in _addr[-1]:
+                del _addr[-1]
             if "Person" in _addr[-1]:
                 del _addr[-1]
+
             raw_address = " ".join(_addr)
+            if raw_address and "Egypt" not in raw_address:
+                raw_address = raw_address + ", Egypt"
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -54,7 +59,9 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.PHONE})
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
