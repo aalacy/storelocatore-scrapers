@@ -1,3 +1,4 @@
+import ssl
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -5,16 +6,24 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://samsclub.com.br"
     api_url = "https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs&state=&city=&nonce=b36d7d742a"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers, verify=False)
+    r = session.get(api_url, headers=headers)
     js = r.json()["data"]
     for j in js:
 
@@ -60,7 +69,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:

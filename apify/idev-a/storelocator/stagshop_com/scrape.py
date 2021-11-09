@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import re
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -37,13 +36,9 @@ def fetch_data():
                 except:
                     coord = ["", ""]
 
-            hours = []
-            temp = list(_.select_one("div.storeHoursRight").stripped_strings)
-            for x in range(0, len(temp), 2):
-                hours.append(f"{temp[x]} {temp[x+1]}")
-            phone = ""
-            if _.find("a", href=re.compile(r"tel:")):
-                phone = _.find("a", href=re.compile(r"tel:")).text
+            hours = [
+                hh.text for hh in _.select("div.storeHoursRight div.booster--revert")
+            ]
             yield SgRecord(
                 page_url=_.select_one("div.storeImageWrap a")["href"],
                 store_number=_["id"],
@@ -53,7 +48,7 @@ def fetch_data():
                 longitude=coord[1],
                 zip_postal=addr[-1],
                 country_code="CA",
-                phone=phone,
+                phone=addr[1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )

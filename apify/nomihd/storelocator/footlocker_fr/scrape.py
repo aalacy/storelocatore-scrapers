@@ -4,7 +4,7 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "footlocker.fr"
@@ -49,11 +49,16 @@ def get_store_data(store_sel, page_url):
     if len(add_2) > 0:
         street_address = street_address + ", " + add_2
 
-    city = "".join(
-        store_sel.xpath(
-            '//section[@class="nap-unit-inner"]//address//span[@class="c-address-city"]/text()'
+    city = (
+        "".join(
+            store_sel.xpath(
+                '//section[@class="nap-unit-inner"]//address//span[@class="c-address-city"]/text()'
+            )
         )
-    ).strip()
+        .strip()
+        .replace("(kids)", "")
+        .strip()
+    )
 
     state = "".join(
         store_sel.xpath(
@@ -76,6 +81,7 @@ def get_store_data(store_sel, page_url):
     store_number = "<MISSING>"
     phone = "".join(store_sel.xpath('//span[@itemprop="telephone"]/text()')).strip()
     location_type = "<MISSING>"
+
     latitude = store_sel.xpath(
         '//span[@class="coordinates"]/meta[@itemprop="latitude"]/@content'
     )
@@ -94,11 +100,19 @@ def get_store_data(store_sel, page_url):
         hours_list = []
         for hour in hours:
             day = "".join(hour.xpath("td[1]/text()")).strip()
-            time = "".join(hour.xpath("td[2]//text()")).strip()
+            time_list = hour.xpath("td[2]/span")
+            final_time_list = []
+            for t in time_list:
+                final_time_list.append("".join(t.xpath(".//text()")).strip())
+
+            if len(final_time_list) <= 0:
+                final_time_list.append("".join(hour.xpath("td[2]//text()")).strip())
+            time = ", ".join(final_time_list)
             hours_list.append(day + ":" + time)
 
     hours_of_operation = "; ".join(hours_list).strip()
-
+    if hours_of_operation.encode("ascii", "ignore").decode("utf-8").count("Ferm") == 7:
+        location_type = "Temporary Closed"
     return SgRecord(
         locator_domain=locator_domain,
         page_url=page_url,
@@ -149,13 +163,82 @@ def fetch_data(session):
                 + "".join(state.xpath("a/@href")).strip().replace("..", "").strip()
             )
             stores_sel = get_selector(state_url, session)
-            stores = stores_sel.xpath('//a[@class="LocationCard-title--link"]/@href')
+            stores = stores_sel.xpath('//article[@class="LocationCard"]')
 
             for store_url in stores:
-                page_url = domain + store_url.replace("..", "").strip()
+                page_url = (
+                    domain
+                    + "".join(
+                        store_url.xpath('.//a[@class="LocationCard-title--link"]/@href')
+                    )
+                    .replace("..", "")
+                    .strip()
+                )
                 store_sel = get_selector(page_url, session)
                 if store_sel:
                     yield get_store_data(store_sel, page_url)
+                else:
+                    street_address = "".join(
+                        store_url.xpath(
+                            './/address//span[@class="c-address-street-1"]/text()'
+                        )
+                    ).strip()
+                    add_2 = "".join(
+                        store_url.xpath(
+                            './/address//span[@class="c-address-street-2"]/text()'
+                        )
+                    ).strip()
+
+                    if len(add_2) > 0:
+                        street_address = street_address + ", " + add_2
+
+                    city = "".join(
+                        store_url.xpath(
+                            './/address//span[@class="c-address-city"]/text()'
+                        )
+                    ).strip()
+
+                    state = "".join(
+                        store_url.xpath(
+                            './/address//abbr[@class="c-address-state"]/text()'
+                        )
+                    ).strip()
+
+                    zip = "".join(
+                        store_url.xpath(
+                            './/address//span[@class="c-address-postal-code"]/text()'
+                        )
+                    ).strip()
+                    country_code = store_url.xpath(
+                        './/address//abbr[contains(@class,"c-address-country-name")]/text()'
+                    )
+                    if len(country_code) > 0:
+                        country_code = country_code[0]
+
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url="<MISSING>",
+                        location_name="".join(
+                            store_url.xpath(
+                                './/a[@class="LocationCard-title--link"]/text()'
+                            )
+                        ).strip(),
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number="<MISSING>",
+                        phone="".join(
+                            store_url.xpath(
+                                './/span[@class="c-phone-number-span c-phone-main-number-span"]/text()'
+                            )
+                        ).strip(),
+                        location_type="<MISSING>",
+                        latitude="<MISSING>",
+                        longitude="<MISSING>",
+                        hours_of_operation="09:30 - 20:00",
+                    )
 
 
 def scrape():
@@ -163,7 +246,15 @@ def scrape():
     count = 0
     session = SgRequests()
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data(session)
         for rec in results:

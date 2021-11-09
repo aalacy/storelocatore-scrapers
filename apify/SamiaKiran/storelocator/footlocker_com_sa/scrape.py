@@ -47,14 +47,20 @@ def fetch_data():
                     .replace("|", "")
                 )
                 log.info(location_name)
+
                 phone = soup.find(
                     "div", {"class": "field--name-field-store-phone"}
                 ).text
                 raw_address = (
-                    soup.find("div", {"class": "views-field-field-store-address"})
+                    soup.find("div", {"class": "field-content"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
+                    .replace(phone, "")
                 )
+                if "+966" in raw_address:
+                    raw_address = raw_address.split("+966")[0]
+                if "/" in phone:
+                    phone = phone.split("/")[0]
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1
@@ -77,7 +83,7 @@ def fetch_data():
                 )
                 coords = soup.find("div", {"class": "geolocation"})
                 latitude = coords["data-lat"]
-                longitude = "-" + coords["data-lng"]
+                longitude = coords["data-lng"]
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=url,
