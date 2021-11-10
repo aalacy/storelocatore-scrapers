@@ -18,14 +18,12 @@ DOMAIN = "https://www.pumpernickels.ca/"
 MISSING = SgRecord.MISSING
 
 headers = {
-  'sec-ch-ua': '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
-  'sec-ch-ua-mobile': '?0',
-  'sec-ch-ua-platform': '"Windows"',
-  'Upgrade-Insecure-Requests': '1',
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36',
+    "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
-
-
 
 
 def fetch_data():
@@ -45,7 +43,7 @@ def fetch_data():
                 for temp, coord in zip(temp_list, coords):
                     temp_coord = coord.find("a")["href"].split("@")[1].split(",")
                     latitude = temp_coord[0]
-                    longitude= temp_coord[1]
+                    longitude = temp_coord[1]
                     temp = temp.strip("|").split("|")
                     if re.match(
                         r"^(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}$",
@@ -95,7 +93,7 @@ def fetch_data():
             else:
                 temp_coord = loc.find("u").find("a")["href"].split("@")[1].split(",")
                 latitude = temp_coord[0]
-                longitude= temp_coord[1]
+                longitude = temp_coord[1]
                 temp = loc.get_text(separator="|", strip=True).split("|")[:-1]
                 temp_phone = temp[-2].replace(" (Catering)", "").replace(" X 1", "")
                 if re.match(
