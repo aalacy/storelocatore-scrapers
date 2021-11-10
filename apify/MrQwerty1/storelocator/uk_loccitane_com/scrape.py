@@ -15,8 +15,14 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["storeList"]["store"]
 
     for j in js:
-        location_type = j.get("Category")
-        if location_type != "Store":
+        _type = j.get("Channel")
+        if _type == "TravelRetail":
+            location_type = "Airport"
+        elif _type == "Spa":
+            location_type = "Spa"
+        elif _type == "Retail":
+            location_type = "Retail"
+        else:
             continue
 
         location_name = j.get("Name")
