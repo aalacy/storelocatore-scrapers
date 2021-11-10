@@ -106,7 +106,6 @@ def get_store_url_per_country(idx, name_url):
 def get_us_ca_gb_store_urls():
     store_urls = []
     country_map_urls = get_country_map_urls()
-    store_urls_all = []
     with ThreadPoolExecutor(max_workers=6, thread_name_prefix="fetcher") as ex:
         futures = [
             ex.submit(get_store_url_per_country, idx1, name_url)
@@ -123,7 +122,6 @@ def get_us_ca_gb_store_urls():
 
 def parse_address(raddress):
     pai = parse_address_intl(raddress)
-    print(pai)
     sa = pai.street_address_1
     street_address = sa if sa else MISSING
     city = pai.city
