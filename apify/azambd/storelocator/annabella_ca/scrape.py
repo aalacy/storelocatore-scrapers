@@ -129,9 +129,9 @@ def get_lat_long_array(body):
 
 
 def get_lat_long_from_gmap(url):
-    print(f"Google page: {url}")
+    log.info(f"Google page: {url}")
     response = session.get(url)
-    print(f"Google page response: {response}")
+    log.info(f"Google page response: {response}")
     if "goo" in url and response.status_code == 200:
         body = html.fromstring(response.text, "lxml")
         data = get_lat_long_array(body)
