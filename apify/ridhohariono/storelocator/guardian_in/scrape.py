@@ -9,7 +9,7 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 import json
 
-DOMAIN = "gnc.in"
+DOMAIN = "guardian.in"
 LOCATION_URL = "https://www.guardian.in/store-locator"
 HEADERS = {
     "Accept": "*/*",
