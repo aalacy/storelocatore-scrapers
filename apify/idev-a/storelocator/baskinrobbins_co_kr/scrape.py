@@ -6,8 +6,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import time
-import json
+import dirtyjson as json
 import ssl
+from selenium.webdriver.common.by import By
 
 try:
     _create_unverified_https_context = (
@@ -42,21 +43,71 @@ list_url = "/store/list_ajax.php"
 detail_url = "http://m.baskinrobbins.co.kr/store/store_info_ajax.php?S={}"
 
 
+def _v(val):
+    return val.replace("&#40;", "(").replace("&#41;", ")")
+
+
+def _d(_):
+    with SgRequests(proxy_country="us") as http:
+        logger.info(_["storeCode"])
+        try:
+            loc = json.loads(
+                http.get(
+                    detail_url.format(_["storeCode"]), headers=_headers
+                ).text.split("\n")[-1]
+            )
+        except:
+            time.sleep(1)
+            loc = json.loads(
+                http.get(
+                    detail_url.format(_["storeCode"]), headers=_headers
+                ).text.split("\n")[-1]
+            )
+        page_url = f"{base_url}?S={_['storeCode']}"
+        hours_of_operation = ""
+        if loc.get("time", ""):
+            hours_of_operation = loc.get("time", "").replace("&#58;", "-")
+        return SgRecord(
+            page_url=page_url,
+            store_number=_["storeCode"],
+            location_name=_v(_["name"]),
+            street_address=_v(_["address3"]),
+            city=_["address2"],
+            state=_["address1"],
+            country_code="Korea",
+            phone=_["tel"],
+            latitude=_["pointY"],
+            longitude=_["pointX"],
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=_v(_["address"]),
+        )
+
+
 def fetch_data():
-    with SgChrome() as driver:
-        with SgRequests() as http:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
+    ) as driver:
+        with SgRequests(proxy_country="us") as http:
+            # get initial page
+            locations = http.get(
+                "http://www.baskinrobbins.co.kr/store/list_ajax.php?ScS=&ScG=&ScWord="
+            ).json()["list"]
+            for _ in locations:
+                yield _d(_)
+
             driver.get(base_url)
-            states = driver.find_elements_by_css_selector("select.location_1 option")
+            states = driver.find_elements(By.CSS_SELECTOR, "select.location_1 option")
             logger.info(f"{len(states)} states")
             for state in states:
                 state_val = state.get_attribute("value")
                 if not state_val:
                     continue
                 del driver.requests
-                state.click()
-                driver.wait_for_request(gun_url)
-                cities = driver.find_elements_by_css_selector(
-                    "select.location_2 option"
+                driver.execute_script("arguments[0].click();", state)
+                driver.wait_for_request(gun_url, timeout=20)
+                cities = driver.find_elements(
+                    By.CSS_SELECTOR, "select.location_2 option"
                 )
                 logger.info(f"[{state_val}] {len(cities)} cities")
                 for gun in cities:
@@ -64,47 +115,31 @@ def fetch_data():
                     if not gun_val:
                         continue
                     del driver.requests
-                    gun.click()
+                    driver.execute_script("arguments[0].click();", gun)
                     time.sleep(1)
-                    driver.find_element_by_css_selector(
-                        'div.search button[type="submit"]'
+                    driver.find_element(
+                        By.CSS_SELECTOR, 'div.search button[type="submit"]'
                     ).click()
-                    lr = driver.wait_for_request(list_url)
-                    res = json.loads(lr.response.body)
+                    lr = driver.wait_for_request(list_url, timeout=20)
+                    try:
+                        res = json.loads(lr.response.body)
+                    except:
+                        try:
+                            res = http.get(lr.url, headers=_headers).json()
+                        except:
+                            continue
                     if res.get("cnt") > 0:
                         locations = res["list"]
                     else:
                         continue
                     logger.info(f"[{gun_val}] {len(locations)} locations")
                     for _ in locations:
-                        res = http.get(
-                            detail_url.format(_["storeCode"]), headers=_headers
-                        )
-                        try:
-                            loc = json.loads(res.text.split("\n")[-1])
-                        except:
-                            import pdb
-
-                            pdb.set_trace()
-                        yield SgRecord(
-                            page_url=base_url,
-                            store_number=_["storeCode"],
-                            location_name=_["name"],
-                            street_address=_["address3"],
-                            city=_["address2"],
-                            state=_["address1"],
-                            country_code="Korea",
-                            phone=_["tel"],
-                            latitude=_["pointY"],
-                            longitude=_["pointX"],
-                            locator_domain=locator_domain,
-                            hours_of_operation=loc["time"],
-                            raw_address=_["address"],
-                        )
+                        yield _d(_)
 
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

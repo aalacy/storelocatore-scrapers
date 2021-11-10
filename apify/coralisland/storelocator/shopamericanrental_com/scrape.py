@@ -46,7 +46,7 @@ def fetch_data():
             temp = temp.findAll("p")
             location_name = soup.find("h2").text
             address = temp[0].get_text(separator="|", strip=True).split("|")
-            street_address = address[0]
+            street_address = address[0].replace("NEW LOCATION:", "")
             address = address[1].split(",")
             city = address[0]
             address = address[1].split()
@@ -57,6 +57,7 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .split("facebook")[0]
+                .replace("OPEN NOW", "")
             )
             yield SgRecord(
                 locator_domain=DOMAIN,

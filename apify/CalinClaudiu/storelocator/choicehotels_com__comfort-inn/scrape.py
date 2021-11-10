@@ -74,12 +74,11 @@ class ExampleSearchIteration(SearchIteration):
         headers[
             "user-agent"
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-
         try:
             locations = SgRequests.raise_on_err(http.get(url, headers=headers)).json()
             errorName = None
         except Exception as e:
-            logzilla.error(f"{e}")
+            logzilla.error(f"{e} , {url}<-F")
             locations = {"hotelCount": 0}
             locations["status"] = "FAIL"
             errorName = str(e)

@@ -37,7 +37,7 @@ def fetch_data(sgw: SgWriter):
             zip_code = store["address"]["postalCode"]
             country_code = store["address"]["countryCode"]
             store_number = store["id"]
-            if "-" in store_number:
+            if "-" in store_number or len(store_number) > 5:
                 store_number = ""
             try:
                 phone = store["mainPhone"]
