@@ -57,11 +57,9 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         for _ in locations:
             if not _["address"] and not _["title"]:
                 continue
-            location_type = ""
-            if "branch" in _["imageUrl"]:
-                location_type = "branch"
-            if "atm" in _["imageUrl"]:
-                location_type = "atm"
+            location_type = _["imageUrl"].split("/")[-1].split(".")[0]
+            if location_type not in ["golden-1-atm", "golden-1-branch"]:
+                continue
             hours = []
             for hh in _["hours"].split("\\n"):
                 if not hh.strip():
