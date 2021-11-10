@@ -14,7 +14,11 @@ def get_hoo(page_url):
     text = "".join(
         tree.xpath("//script[contains(text(), 'window.JSContext =')]/text()")
     )
-    js = json.loads(text.split("window.JSContext =")[1].replace(";", ""))["profile"]
+
+    try:
+        js = json.loads(text.split("window.JSContext =")[1].replace(";", ""))["profile"]
+    except:
+        return ""
     source = js.get("office_hours") or "<html></html>"
     root = html.fromstring(source)
 
@@ -127,7 +131,7 @@ def get_data(url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = generate_links()
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
