@@ -53,8 +53,9 @@ def fetch_data():
                 or "Osaka" in raw_address
                 or "Fukuoka" in raw_address
                 or "Aichi" in raw_address
+                or "Fujisawa" in raw_address
             ):
-                country_code == "JP"
+                country_code = "JP"
             _addr = raw_address
             if country_code:
                 _addr += ", " + country_code
@@ -97,6 +98,7 @@ def fetch_data():
                 ):
                     x = raw_address.find(city)
                     street_address = raw_address[:x].replace(",", " ").strip()
+
             yield SgRecord(
                 location_name=_["shopname"],
                 store_number=_["shopid"],
@@ -107,7 +109,8 @@ def fetch_data():
                 .replace("Ilsandong-Gu", "")
                 .replace("Giheung-Gu", "")
                 .replace("Danwon-Gu", "")
-                .replace("Suji-Gu", ""),
+                .replace("Suji-Gu", "")
+                .replace("  Fujisawa-shi", ""),
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code=country_code,

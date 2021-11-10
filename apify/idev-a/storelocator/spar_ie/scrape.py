@@ -58,6 +58,8 @@ def fetch_data():
                 )
             if zip_postal and zip_postal.isdigit():
                 zip_postal = ""
+            if city and city == zip_postal:
+                city = ""
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["name"].replace("&#8217;", "'"),

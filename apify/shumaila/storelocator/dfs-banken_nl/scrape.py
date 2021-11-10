@@ -35,6 +35,10 @@ def fetch_data():
             .split("!2m", 1)[0]
             .split("!3d", 1)
         )
+        try:
+            lat = lat.split("!", 1)[0]
+        except:
+            pass
         store = (
             div.find("a", {"class": "apptBtn"})["href"]
             .split("location/", 1)[1]
