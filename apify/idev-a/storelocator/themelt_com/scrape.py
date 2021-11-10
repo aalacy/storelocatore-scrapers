@@ -62,6 +62,16 @@ def fetch_data():
                         street_address = cross_street
                     if cross_street.split(" ")[0].strip().isdigit():
                         street_address = cross_street
+                    street_address = (
+                        street_address.split("(")[0]
+                        .split("Between")[0]
+                        .replace("Westfield Oakridge Mall,", "")
+                        .replace("Taste Food Hall:", "")
+                        .replace("at Second St.", "")
+                        .strip()
+                    )
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
                     names.append(_["address"])
                     yield SgRecord(
                         page_url=base_url,
