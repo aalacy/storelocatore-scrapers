@@ -18,7 +18,7 @@ except AttributeError:
     pass
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-    
+
 logger = SgLogSetup().get_logger("amplifonusa")
 
 _headers = {
