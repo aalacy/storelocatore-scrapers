@@ -24,7 +24,9 @@ def get_data(slug, sgw: SgWriter):
     location_name = "".join(
         tree.xpath("//div[@class='store_box_title']/text()")
     ).strip()
-    line = tree.xpath("//div[@class='store_box_address']/text()")
+    line = tree.xpath(
+        "//div[@class='store_box_address']/text()|//div[@class='store_box_address']/span/text()"
+    )
     line = list(filter(None, [l.strip() for l in line]))
     if "2nd\xa0Floor" in line:
         line = line[: line.index("2nd\xa0Floor")]
@@ -38,7 +40,9 @@ def get_data(slug, sgw: SgWriter):
     text = "".join(tree.xpath("//iframe/@src"))
     latitude = text.split("!3d")[1].split("!")[0]
     longitude = text.split("!2d")[1].split("!")[0]
-    hours = tree.xpath("//div[@class='store_box_time']/text()")
+    hours = tree.xpath(
+        "//div[@class='store_box_time']/text()|//div[@class='store_box_time']/following-sibling::text()"
+    )
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = ";".join(hours)
 

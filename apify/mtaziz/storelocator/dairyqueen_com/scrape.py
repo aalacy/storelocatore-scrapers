@@ -9,6 +9,8 @@ from lxml import html
 import json
 from tenacity import retry, stop_after_attempt
 import tenacity
+import random
+import time
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
 MISSING = SgRecord.MISSING
@@ -41,12 +43,15 @@ def get_store_urls():
     return store_urls
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(2))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def get_response(idx, url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
-        logger.info(f"[{idx}] | STATUS: {response.status_code} | {url}")
-        return response
+        time.sleep(random.randint(3, 7))
+        if response.status_code == 200:
+            logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
 def fetch_records_us(idx, url, sgw: SgWriter):

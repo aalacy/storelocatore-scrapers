@@ -14,7 +14,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("name")
         slug = j.get("URL_MAP_FOR_CONTENT")
-        page_url = f"https://hk.sunglasshut.com/hk{slug}"
+        page_url = f"https://hk.sunglasshut.com/hk{slug}".replace("-details", "")
         street_address = j.get("address")
         city = j.get("city")
         postal = j.get("zip")

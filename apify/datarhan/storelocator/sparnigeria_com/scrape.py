@@ -30,6 +30,9 @@ def fetch_data():
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         geo = poi_html.xpath(".//a/@href")[0].split("/@")[-1].split(",")[:2]
+        zip_code = addr.postcode
+        if zip_code == "YABA":
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -38,7 +41,7 @@ def fetch_data():
             street_address=street_address,
             city=addr.city,
             state=addr.state,
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code=addr.country,
             store_number="",
             phone=raw_data[1].replace("Phone : ", ""),
