@@ -21,7 +21,9 @@ else:
 logger = SgLogSetup().get_logger("gaes")
 
 locator_domain = "https://www.amplifon.com/de/"
-base_url = "https://www.amplifon.com/de/filiale-finden"
+de_base_url = "https://www.amplifon.com/de/filiale-finden"
+fr_base_url = "https://www.amplifon.com/fr/nous-trouver"
+it_base_url = "https://www.amplifon.com/it/cerca-centro-amplifon"
 
 
 def get_driver():
@@ -49,39 +51,61 @@ def get_bs(driver=None, url=None):
 
 def fetch_data():
     locations = []
-    with SgChrome(
-        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
-    ) as driver:
-        driver.get(base_url)
-        urls = (
-            bs(driver.page_source, "lxml")
-            .select_one("div.richtext-container ul")
-            .select("a")
-        )
-        for url in urls:
-            del driver.requests
-            logger.info("https://www.amplifon.com" + url["href"])
-            driver.get("https://www.amplifon.com" + url["href"])
-            locations += [
-                loc["href"]
-                for loc in bs(driver.page_source, "lxml").select(
-                    "div.richtext-container.am-accordion-content a"
-                )
-            ]
+    driver = get_driver()
+    # Germany
+    logger.info(" --- Germany ---")
+    sp0 = get_bs(driver=driver, url=de_base_url)
+    urls = sp0.select("div.richtext-container ul")[1].select("a")
+    for url in urls:
+        del driver.requests
+        _url = url["href"]
+        if not _url.startswith("http"):
+            _url = "https://www.amplifon.com" + _url
+        logger.info(_url)
+        sp2 = get_bs(driver=driver, url=_url)
+        locations += [
+            loc["href"]
+            for loc in sp2.select("div.richtext-container.am-accordion-content a")
+        ]
+
+    # France
+    logger.info(" --- France ---")
+    sp0 = get_bs(driver=driver, url=fr_base_url)
+    urls = sp0.select("div.richtext-container table tbody tr a")
+    for url in urls:
+        del driver.requests
+        _url = url["href"]
+        if not _url.startswith("http"):
+            _url = "https://www.amplifon.com" + _url
+        logger.info(_url)
+        sp2 = get_bs(driver=driver, url=_url)
+        locations += [
+            loc.a["href"] for loc in sp2.select("article.m-store-teaser-item")
+        ]
+
+    # Italy
+    logger.info(" --- Italy ---")
+    sp0 = get_bs(driver=driver, url=it_base_url)
+    urls = sp0.select("div.richtext-container")[0].select("a")
+    for url in urls:
+        del driver.requests
+        _url = url["href"]
+        if not _url.startswith("http"):
+            _url = "https://www.amplifon.com" + _url
+        logger.info(_url)
+        sp2 = get_bs(driver=driver, url=_url)
+        locations += [
+            loc.a["href"] for loc in sp2.select("div.richtext-container ul li")
+        ]
 
     driver = get_driver()
     logger.info(f"{len(locations)} locations")
     for page_url in locations:
         logger.info(f"[***] {page_url}")
         sp1 = get_bs(driver=driver, url=page_url)
-        if driver.current_url == base_url:
+        if driver.current_url in [de_base_url, it_base_url, fr_base_url]:
             continue
-        try:
-            _ = json.loads(sp1.find("script", type="application/ld+json").string)
-        except:
-            import pdb
-
-            pdb.set_trace()
+        _ = json.loads(sp1.find("script", type="application/ld+json").string)
         phone = ""
         if sp1.select_one("span.phone-list"):
             phone = sp1.select_one("span.phone-list").text.strip()
@@ -99,7 +123,7 @@ def fetch_data():
             zip_postal=addr["postalCode"],
             latitude=_["geo"]["latitude"],
             longitude=_["geo"]["longitude"],
-            country_code="Germany",
+            country_code=addr["addressCountry"],
             phone=phone,
             locator_domain=locator_domain,
             hours_of_operation="; ".join(hours),
