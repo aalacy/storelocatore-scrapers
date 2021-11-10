@@ -45,7 +45,7 @@ def fetch_data(sgw: SgWriter):
         city = line.replace(postal, "").replace(state, "").replace(",", "").strip()
 
         key = " ".join(street_address.split()[:2])
-        latitude, longitude = coords.get(key)
+        latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
 
         hours_of_operation = "".join(
             d.xpath(".//div[@class='space-y-1']/div[./p]//text()")
