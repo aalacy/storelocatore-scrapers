@@ -5,12 +5,12 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 def get_data():
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+        country_codes=[SearchableCountries.USA], granularity=Grain_4(), max_search_results=50
     )
 
     session = SgRequests()
     headers = {"accept": "application/json"}
-
+    visited = []
     for search_lat, search_lon in search:
         url = (
             "https://local.fedex.com/en/search?q="
@@ -104,7 +104,12 @@ def get_data():
                 or location_name == "FedEx Drop Box"
             ):
                 continue
-
+            
+            location_data = [location_name, latitude, longitude]
+            if location_data in visited:
+                continue
+            else:
+                visited.append(location_data)
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
