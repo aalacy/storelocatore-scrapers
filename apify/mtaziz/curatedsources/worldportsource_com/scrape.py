@@ -230,7 +230,7 @@ def fetch_records(idx2, url_country, sgw: SgWriter):
         )
         sgw.write_row(rec)
     except Exception as e:
-        logger.info("Please fix this {e} at {idx2} | {page_url} ")
+        logger.info(f"Please fix this {e} at {idx2} | {page_url} ")
 
 
 def fetch_data(sgw: SgWriter):
