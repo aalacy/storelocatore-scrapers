@@ -32,9 +32,17 @@ def get_data(api, sgw: SgWriter):
             phone = "<MISSING>"
         street_address = f"{j.get('address_1')} {j.get('address_2') or ''}".strip()
         city = j.get("city")
-        state = j.get("state")
+        city = city.replace("&#039;", "'")
+        state = j.get("state") or SgRecord.MISSING
         postal = j.get("postal_code")
-        country_code = j.get("country_code")
+        if state == "Florida" and "FL" in postal:
+            postal = postal.replace("FL", "").strip()
+        country_code = j.get("country_code") or SgRecord.MISSING
+
+        if country_code == SgRecord.MISSING and state != SgRecord.MISSING:
+            country_code = state
+            state = SgRecord.MISSING
+
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         store_number = j.get("store_number")
@@ -43,6 +51,7 @@ def get_data(api, sgw: SgWriter):
 
         _tmp = []
         hours = j.get("store_timings") or []
+
         for h in hours:
             start_day = h.get("start_day")
             end_day = h.get("end_day")
@@ -58,6 +67,9 @@ def get_data(api, sgw: SgWriter):
                     _tmp.append(f"{start_day}-{end_day}: {from_time} - {to_time}")
                 else:
                     _tmp.append(f"{start_day}-{end_day}: Closed")
+
+            if start_day == "Sun" and end_day == "Sat":
+                break
 
         hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
 

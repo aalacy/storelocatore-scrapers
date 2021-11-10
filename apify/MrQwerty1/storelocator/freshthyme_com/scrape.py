@@ -1,65 +1,33 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.freshthyme.com/"
+def fetch_data(sgw: SgWriter):
     api_url = "https://discover.freshthyme.com/api/v2/stores"
 
-    session = SgRequests()
     r = session.get(api_url)
     js = r.json()["items"]
 
     for j in js:
         a = j.get("address")
-        street_address = (
-            f"{a.get('address1')} {a.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = a.get("city") or "<MISSING>"
-        state = a.get("province") or "<MISSING>"
-        postal = a.get("postal_code") or "<MISSING>"
+        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+        city = a.get("city")
+        state = a.get("province")
+        postal = a.get("postal_code")
         country_code = "US"
-        store_number = j.get("ext_id") or "<MISSING>"
+        store_number = j.get("ext_id")
         page_url = f"https://www.freshthyme.com/stores/{store_number}"
-        location_name = j.get("name") or "<MISSING>"
-        phone = j.get("phone_number") or "<MISSING>"
+        location_name = j.get("name")
+        phone = j.get("phone_number")
         loc = j.get("location")
-        latitude = loc.get("latitude") or "<MISSING>"
-        longitude = loc.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        latitude = loc.get("latitude")
+        longitude = loc.get("longitude")
 
         _tmp = []
-        hours = j.get("store_hours") or []
+        hours = j.get("store_hours") or {}
         for k, v in hours.items():
             start = v.get("start")
             end = v.get("end")
@@ -68,33 +36,30 @@ def fetch_data():
             else:
                 _tmp.append(f"{k.capitalize()}: Closed")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.freshthyme.com/"
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

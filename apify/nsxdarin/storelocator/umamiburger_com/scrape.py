@@ -18,7 +18,6 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'tabName":null,"url":"' in line:
             items = line.split('tabName":null,"url":"')
             for item in items:
@@ -42,77 +41,104 @@ def fetch_data():
                     ):
                         locs.append("https://www.umamiburger.com" + stub)
     for loc in locs:
-        logger.info(("Pulling Location %s..." % loc))
-        r2 = session.get(loc, headers=headers)
-        website = "www.umamiburger.com"
-        typ = "Restaurant"
-        store = "<MISSING>"
-        add = ""
-        zc = ""
-        state = ""
-        city = ""
-        country = "US"
-        name = ""
-        phone = ""
-        hours = ""
-        lat = ""
-        lng = ""
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "><h4>" in line2 and add == "":
-                name = line2.split("><h4>")[1].split("<")[0]
-                add = line2.split("<h4>")[1].split("<span>")[1].split("</span")[0]
-                csz = line2.split("<h4>")[1].split("br/>")[1].split("<")[0]
-                city = csz.split(",")[0]
-                zc = csz.rsplit(" ", 1)[1]
-                state = csz.split(",")[1].strip().split(" ")[0]
-                add = add.replace("<!-- -->", " ").replace("  ", " ").replace("  ", " ")
-            if '"lat":' in line2:
-                lat = line2.rsplit('"lat":', 1)[1].split(",")[0]
-                lng = line2.rsplit('"lng":', 1)[1].split(",")[0]
-            if '<p><a href="tel:' in line2:
-                phone = line2.split('<p><a href="tel:')[1].split('"')[0]
-            if "<strong>Temporarily Closed" in line2:
+        if " " not in loc:
+            logger.info(("Pulling Location %s..." % loc))
+            r2 = session.get(loc, headers=headers)
+            website = "www.umamiburger.com"
+            typ = "Restaurant"
+            store = "<MISSING>"
+            add = ""
+            zc = ""
+            state = ""
+            city = ""
+            country = "US"
+            name = ""
+            phone = ""
+            hours = ""
+            lat = ""
+            lng = ""
+            CS = False
+            TC = False
+            for line2 in r2.iter_lines():
+                if "Temporarily Closed" in line2:
+                    TC = True
+                if "- Coming Soon<" in line2:
+                    CS = True
+                if "><h4>" in line2 and add == "":
+                    name = line2.split("><h4>")[1].split("<")[0]
+                    add = (
+                        line2.split("<h4>")[1]
+                        .split("<span>")[1]
+                        .split("</span")[0]
+                        .replace("<!-- -->", "")
+                        .strip()
+                    )
+                    csz = line2.split("<h4>")[1].split("<br />")[1].split("<")[0]
+                    city = csz.split(",")[0]
+                    try:
+                        zc = csz.rsplit(" ", 1)[1]
+                    except:
+                        zc = "<MISSING>"
+                    try:
+                        state = csz.split(",")[1].strip().split(" ")[0]
+                    except:
+                        state = "<MISSING>"
+                    add = (
+                        add.replace("<!-- -->", " ")
+                        .replace("  ", " ")
+                        .replace("  ", " ")
+                    )
+                if '"lat":' in line2:
+                    lat = line2.rsplit('"lat":', 1)[1].split(",")[0]
+                    lng = line2.rsplit('"lng":', 1)[1].split(",")[0]
+                if '<p><a href="tel:' in line2:
+                    phone = line2.split('<p><a href="tel:')[1].split('"')[0]
+                if "<strong>Temporarily Closed" in line2:
+                    hours = "Temporarily Closed"
+                if "Hours</h4>" in line2:
+                    days = (
+                        line2.split("Hours</h4>")[1]
+                        .split("</div></div></div>")[0]
+                        .split('"hours-day">')
+                    )
+                    for day in days:
+                        if '<span class="hours-time"> <span>' in day:
+                            hrs = (
+                                day.split("<")[0]
+                                + ": "
+                                + day.split('<span class="hours-time"> <span>')[1]
+                                .split("</span></span>")[0]
+                                .replace("<!-- -->", "")
+                                .replace("  ", " ")
+                                .replace("  ", " ")
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+            if phone == "":
+                phone = "<MISSING>"
+            add = add.strip().replace("  ", " ").replace("  ", " ")
+            if TC:
                 hours = "Temporarily Closed"
-            if "Hours</h4>" in line2:
-                days = (
-                    line2.split("Hours</h4>")[1]
-                    .split("</div></div></div>")[0]
-                    .split('"hours-day">')
-                )
-                for day in days:
-                    if '<span class="hours-time"> <span>' in day:
-                        hrs = (
-                            day.split("<")[0]
-                            + ": "
-                            + day.split('<span class="hours-time"> <span>')[1]
-                            .split("</span></span>")[0]
-                            .replace("<!-- -->", "")
-                            .replace("  ", " ")
-                            .replace("  ", " ")
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-        if phone == "":
-            phone = "<MISSING>"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+            if CS is False:
+                if city != "<MISSING>" and "www.umamiburger.com/careers" not in loc:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():

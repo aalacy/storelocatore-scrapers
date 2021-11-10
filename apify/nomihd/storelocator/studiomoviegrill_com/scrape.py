@@ -91,15 +91,13 @@ def fetch_data():
                 location_type = "TEMPORARILY CLOSED"
 
         hours_list = []
-        for index in range(1, len(raw_text)):
+        for index in range(0, len(raw_text)):
             if "SPRING BRK" in raw_text[index]:
                 continue
             else:
                 hours_list.append(raw_text[index])
 
         hours_of_operation = "; ".join(hours_list).strip()
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
 
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)

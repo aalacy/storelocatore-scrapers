@@ -311,8 +311,8 @@ def crawl_city_url(url, page):
 
 @retry(stop=stop_after_attempt(3), reraise=True)
 def load_initial_page(driver):
-    driver.get("https://www.napaonline.com")
-    driver.execute_script('window.open("https://www.napaonline.com")')
+    driver.get("https://www.napaonline.com/")
+    driver.execute_script('window.open("https://www.napaonline.com/")')
     sleep(15)
 
 

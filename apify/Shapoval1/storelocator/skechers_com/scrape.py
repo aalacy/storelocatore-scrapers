@@ -1,111 +1,94 @@
-import csv
-from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.skechers.com/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://hosted.where2getit.com",
+        "Connection": "keep-alive",
+        "Referer": "https://hosted.where2getit.com/skechers/index.html",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
     }
 
-    session = SgRequests()
     data = '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"objectname":"Account::Country"}}}'
 
     r = session.post(
-        "https://hosted.where2getit.com/skechers/rest/getlist?lang=en_US&like=0.1854421036538354",
+        "https://hosted.where2getit.com/skechers/rest/getlist?lang=en_US&like=0.3279255172998665",
         headers=headers,
         data=data,
     )
     js = r.json()["response"]["collection"]
-    states = []
     for j in js:
-        state = j.get("name")
-        states.append(state)
+        slug = j.get("name")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://hosted.where2getit.com",
+            "Connection": "keep-alive",
+            "Referer": "https://hosted.where2getit.com/skechers/index.html",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+        }
 
-    for s in states:
+        data = (
+            '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
+            + slug
+            + '"},"expdate":{"ge":"2021-109"}, "authorized":{"distinctfrom":"1"},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
+        )
 
-        url = f"https://hosted.where2getit.com/skechers/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8C3F989C-6D95-11E1-9DE0-BB3690553863%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Corder%3Erank%3C%2Forder%3E%3Climit%3E1000%3C%2Flimit%3E%3Cwhere%3E%3Ccountry%3E%3Ceq%3E{s}%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
+        r = session.post(
+            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.16207988000569884&lang=en_US",
+            headers=headers,
+            data=data,
+        )
+        try:
+            js = r.json()["response"]["collection"]
+        except:
+            js = []
+        for j in js:
+            page_url = "https://www.skechers.com/store-locator.html"
+            location_name = j.get("name") or "<MISSING>"
 
-        session = SgRequests()
-
-        r = session.get(url, headers=headers)
-        tree = html.fromstring(r.content)
-        div = tree.xpath("//poi")
-        for d in div:
-            ad = "".join(d.xpath(".//address1/text()")) or "<MISSING>"
-
-            street_address = "<MISSING>"
-            if ad != "<MISSING>":
-                a = parse_address(International_Parser(), ad)
-                street_address = (
-                    f"{a.street_address_1} {a.street_address_2}".replace(
-                        "None", ""
-                    ).strip()
-                    or "<MISSING>"
-                )
-            city = "".join(d.xpath(".//city/text()")) or "<MISSING>"
-            postal = "".join(d.xpath(".//postalcode/text()")) or "<MISSING>"
-            state = (
-                "".join(d.xpath(".//state/text()"))
-                or "".join(d.xpath(".//province/text()"))
+            street_address = (
+                f"{j.get('address1')} {j.get('address2')}".replace("None", "")
+                .replace("\n", "")
+                .strip()
                 or "<MISSING>"
             )
-            phone = "".join(d.xpath(".//phone/text()")) or "<MISSING>"
-            if phone == "-":
-                phone = "<MISSING>"
-            country_code = "".join(d.xpath(".//country/text()")) or "<MISSING>"
-            if country_code == "CA":
-                state = "".join(d.xpath(".//province/text()")) or "<MISSING>"
-            store_number = "".join(d.xpath(".//storeid/text()")) or "<MISSING>"
-            if not store_number.isdigit():
-                store_number = "<MISSING>"
-            location_name = "".join(d.xpath(".//name/text()")) or "<MISSING>"
-            latitude = "".join(d.xpath(".//latitude/text()")) or "<MISSING>"
-            longitude = "".join(d.xpath(".//longitude/text()")) or "<MISSING>"
-            location_type = "<MISSING>"
-            page_url = "https://www.skechers.com/store-locator.html"
-            days = ["mon", "tues", "wed", "thurs", "fri", "sat", "sun"]
-            tmp = []
-            for da in days:
-                day = da
-                time = "".join(d.xpath(f".//r{da}/text()")) or "<MISSING>"
-                line = f"{day} {time}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
-            if hours_of_operation.count("<MISSING>") == 7:
+            state = j.get("state") or j.get("province") or "<MISSING>"
+            state = str(state).replace("&#xf1;", "ñ").strip()
+            if state == "110001":
+                state = "<MISSING>"
+            postal = j.get("postalcode") or "<MISSING>"
+            country_code = j.get("country") or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            store_number = j.get("storeid") or "<MISSING>"
+            latitude = j.get("latitude") or "<MISSING>"
+            if latitude == "<MISSING>":
+                continue
+            longitude = j.get("longitude") or "<MISSING>"
+            phone = j.get("phone") or "<MISSING>"
+            hours_of_operation = (
+                f"Mon {j.get('rmon')} Tue {j.get('rtues')} Wed {j.get('rwed')} Thur {j.get('rthurs')} Fri {j.get('rfri')} Sat {j.get('rsat')} Sun {j.get('rsun')}"
+                or "<MISSING>"
+            )
+            if hours_of_operation.count("None") == 7:
                 hours_of_operation = "<MISSING>"
             if (
                 hours_of_operation.count("CLOSED") == 7
@@ -113,31 +96,37 @@ def fetch_data():
             ):
                 hours_of_operation = "Closed"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
