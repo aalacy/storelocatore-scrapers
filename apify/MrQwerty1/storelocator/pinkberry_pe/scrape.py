@@ -73,8 +73,8 @@ def getInformationFromGoogle(url):
 
     data = (
         getJSObject(response.text, "_pageData")
-            .replace("null", '"null"')
-            .replace('\\"', '"')
+        .replace("null", '"null"')
+        .replace('\\"', '"')
     )
     data = json.loads(data)
 
@@ -90,9 +90,9 @@ def getInformationFromGoogle(url):
             location_name = dataJSON[5][0][0]
             location_name = (
                 location_name.replace("\\u0026", "&")
-                    .replace("\\n", " ")
-                    .replace("\n", " ")
-                    .strip()
+                .replace("\\n", " ")
+                .replace("\n", " ")
+                .strip()
             )
 
             locations.append(
@@ -160,8 +160,8 @@ def fetchData():
             sp1 = bs(htmlSource, "html.parser")
             addr = (
                 sp1.select("input.tactile-searchbox-input")[-1]["aria-label"]
-                    .replace("Destination", "")
-                    .strip()
+                .replace("Destination", "")
+                .strip()
             )
             street_address, city, state, zip_postal = getAddress(addr)
             raw_address = f"{addr}"
