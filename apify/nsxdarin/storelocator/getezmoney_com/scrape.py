@@ -139,7 +139,7 @@ def fetch_data():
                         page_url=loc,
                         location_name=name,
                         raw_address=rawadd,
-                        street_address=add,
+                        street_address=address,
                         city=city,
                         state=state,
                         zip_postal=zc,

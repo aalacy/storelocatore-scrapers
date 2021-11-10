@@ -45,15 +45,40 @@ def fetch_data(sgw: SgWriter):
         if phone.find("OR") != -1:
             phone = phone.split("OR")[0].strip()
         hours_of_operation = (
-            " ".join(
-                d.xpath(
-                    './/p[contains(text(), "OPERATING")]/following-sibling::p/text()'
-                )
-            )
+            " ".join(d.xpath('.//button[@class="read-more"]/preceding::p[1]/text()'))
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
+
+        tmp_cls = "".join(
+            d.xpath(
+                './/h6[text()="Temporarily closed."]/text() | .//h6[contains(text(), "Temporarily closed")]/text()'
+            )
+        )
+        if tmp_cls:
+            hours_of_operation = "Temporarily closed"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    d.xpath('.//button[@class="read-more"]/preceding::p[2]/text()')
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+        if hours_of_operation == "(OPERATING HOURS MAY DIFFER)":
+            hours_of_operation = "<MISSING>"
+        if street_address.find("23 Jean Archie Drive") != -1:
+            hours_of_operation = (
+                " ".join(
+                    d.xpath('.//button[@class="read-more"]/preceding::p[2]/text()')
+                )
+                .replace("\n", "")
+                .strip()
+                + " "
+                + hours_of_operation
+            )
         if hours_of_operation.find("Holidays") != -1:
             hours_of_operation = hours_of_operation.split("Holidays")[0].strip()
 

@@ -185,12 +185,13 @@ def scrape():
     search_maker = DynamicSearchMaker(
         search_type="DynamicZipSearch", max_search_distance_miles=50
     )
-    gTimeout = Timeout(timeout=61, connect=61)
+    gTimeout = Timeout(timeout=161, connect=161)
     with SgWriter(
-        timeout_config=gTimeout,
         deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId),
     ) as writer:
-        with SgRequests(dont_retry_status_codes_exceptions=set([504])) as http:
+        with SgRequests(
+            timeout_config=gTimeout, dont_retry_status_codes_exceptions=set([504])
+        ) as http:
             search_iter = DrmSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
