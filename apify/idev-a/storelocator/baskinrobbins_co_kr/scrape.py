@@ -105,7 +105,7 @@ def fetch_data():
                     continue
                 del driver.requests
                 driver.execute_script("arguments[0].click();", state)
-                driver.wait_for_request(gun_url)
+                driver.wait_for_request(gun_url, timeout=20)
                 cities = driver.find_elements(
                     By.CSS_SELECTOR, "select.location_2 option"
                 )
@@ -120,7 +120,7 @@ def fetch_data():
                     driver.find_element(
                         By.CSS_SELECTOR, 'div.search button[type="submit"]'
                     ).click()
-                    lr = driver.wait_for_request(list_url)
+                    lr = driver.wait_for_request(list_url, timeout=20)
                     try:
                         res = json.loads(lr.response.body)
                     except:
