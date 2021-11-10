@@ -42,16 +42,12 @@ def fetch_records(http, search):
                 ": ".join(hh.stripped_strings)
                 for hh in _.select("div.store-hours div.store-content > div")
             ]
-            city = addr.city
-            if "Bracknell" in raw_address:
-                city = "Bracknell"
             yield SgRecord(
                 page_url=_.select_one("a.store-details-link")["href"],
                 store_number=_["data-storeid"],
                 location_name=_.select_one("span.store-header").text.strip(),
                 street_address=street_address,
-                city=city,
-                state=addr.state,
+                city=_addr[-2],
                 zip_postal=_addr[-1],
                 country_code="GB",
                 phone=list(_.select_one("div.contacts-desktop").stripped_strings)[-1],
