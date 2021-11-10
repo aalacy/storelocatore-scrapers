@@ -45,7 +45,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
 
 
 def fetch_data():
-    session = SgRequests(proxy_rotation_failure_threshold=20)
+    session = SgRequests()
     maxZ = search.items_remaining()
     total = 0
     for code in search:
