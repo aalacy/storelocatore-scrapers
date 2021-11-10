@@ -121,7 +121,7 @@ def get_data():
             location_soup = bs(driver.page_source, "html.parser")
             latitude = location_soup.find(
                 "input", attrs={"class": "location-geo", "type": "hidden"}
-            )["value"].split(", ")[0]
+            )["value"].split(",")[0]
             longitude = (
                 location_soup.find(
                     "input", attrs={"class": "location-geo", "type": "hidden"}
@@ -166,7 +166,9 @@ def get_data():
                 hours = "<MISSING>"
 
             hours = hours.strip()
-
+            if zipp in state:
+                state = zipp
+                zipp = "<MISSING>"
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
@@ -178,7 +180,7 @@ def get_data():
                 "street_address": address,
                 "state": state,
                 "zip": zipp,
-                "phone": phone,
+                "phone": phone.replace("203-867-5254", "").strip(),
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
