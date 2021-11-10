@@ -5,7 +5,9 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 def get_data():
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_4(), max_search_results=50
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_4(),
+        max_search_results=50,
     )
 
     session = SgRequests()
@@ -104,7 +106,7 @@ def get_data():
                 or location_name == "FedEx Drop Box"
             ):
                 continue
-            
+
             location_data = [location_name, latitude, longitude]
             if location_data in visited:
                 continue
