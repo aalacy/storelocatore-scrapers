@@ -612,7 +612,7 @@ def fetch_records(http: SgRequests):
         logger.info(f"[{idx}] State: {state}")
 
         # Zip Code
-        zip_postal = "".join(sel.xpath('//span[@itemprop="addressCode"]/text()'))
+        zip_postal = "".join(sel.xpath('//span[@itemprop="postalCode"]/text()'))
         zip_postal = zip_postal if zip_postal else MISSING
         logger.info(f"[{idx}] Zip Postal: {zip_postal}")
 
@@ -621,8 +621,8 @@ def fetch_records(http: SgRequests):
         store_number = MISSING
 
         # Phone
-        xpath_phone = '//*[starts-with(@href, "tel:")]/text()'
-        phone_data = sel.xpath(xpath_phone)[0].strip()
+        xpath_phone = '//*[contains(@itemprop, "telephone")]/text()'
+        phone_data = "".join(sel.xpath(xpath_phone)).strip()
         phone = phone_data if phone_data else MISSING
         logger.info(f"[{idx}] Phone: {phone}")
 

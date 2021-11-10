@@ -29,6 +29,7 @@ def fetch_data():
         response = session.get(url, headers=hdr)
         dom = etree.HTML(response.text)
         all_cities = dom.xpath('//a[@class="Directory-listLink"]')
+        all_locations += dom.xpath('//a[@data-ya-track="visitpage"]/@href')
         for city in all_cities:
             url = urljoin(start_url, city.xpath("@href")[0])
             count = city.xpath("@data-count")[0]

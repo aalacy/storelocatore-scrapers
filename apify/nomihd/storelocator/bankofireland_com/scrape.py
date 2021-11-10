@@ -30,7 +30,7 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.bankofireland.com/branch-locator/"
+    search_url = "https://www.bankofireland.com/branch-locator/125-oconnell-st/"
     search_res = session.get(search_url, headers=headers)
 
     json_str = (

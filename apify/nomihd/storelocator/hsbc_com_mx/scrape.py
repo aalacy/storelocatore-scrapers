@@ -69,7 +69,9 @@ def fetch_data():
 
             store_number = page_url.split("/")[-2].split("-")[0].strip()
 
-            phone = store_info["contactPoint"][0]["telephone"]
+            phone = "<MISSING>"
+            if "contactPoint" in store_info:
+                phone = store_info["contactPoint"][0]["telephone"]
             location_type = "<MISSING>"
 
             hour_list = []
