@@ -109,7 +109,7 @@ def get_us_ca_gb_store_urls():
     with ThreadPoolExecutor(max_workers=6, thread_name_prefix="fetcher") as ex:
         futures = [
             ex.submit(get_store_url_per_country, idx1, name_url)
-            for idx1, name_url in enumerate(country_map_urls[0:2])
+            for idx1, name_url in enumerate(country_map_urls[0:])
         ]
         for fut in futures:
             try:
