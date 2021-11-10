@@ -10,6 +10,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
+from sgscrape.pause_resume import CrawlStateSingleton
 
 from sglogging import sglog
 
@@ -23,7 +24,7 @@ def fetch_data():
 
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=100000"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=10
     )
     for code in all_codes:
         sleep(uniform(5, 9))
@@ -106,6 +107,7 @@ def fetch_data():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     log.info("Started Crawling")
     with SgWriter(
         SgRecordDeduper(
