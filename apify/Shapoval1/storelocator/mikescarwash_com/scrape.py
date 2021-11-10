@@ -5,7 +5,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -27,7 +26,7 @@ def fetch_data(sgw: SgWriter):
                 d.xpath('.//div[@class="locationList-locationName"]/text()')
             )
             ad = (
-                " ".join(d.xpath('.//div[@class="locationList-address"]/text()'))
+                " ".join(d.xpath('.//div[@class="locationList-address"]/text()[2]'))
                 .replace("\n", "")
                 .strip()
             )
@@ -36,14 +35,15 @@ def fetch_data(sgw: SgWriter):
                 .split("-")[-1]
                 .strip()
             )
-            a = parse_address(USA_Best_Parser(), ad)
-            street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-                "None", ""
-            ).strip()
-            state = a.state or "<MISSING>"
-            postal = a.postcode or "<MISSING>"
+            street_address = (
+                " ".join(d.xpath('.//div[@class="locationList-address"]/text()[1]'))
+                .replace("\n", "")
+                .strip()
+            )
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
             country_code = "US"
-            city = a.city or "<MISSING>"
+            city = ad.split(",")[0].strip()
             latitude = (
                 "".join(
                     tree.xpath(
@@ -92,7 +92,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=ad,
+                raw_address=f"{street_address} {ad}",
             )
 
             sgw.write_row(row)

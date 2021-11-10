@@ -120,7 +120,7 @@ def fetch_data():
                             if state in usstates:
                                 country = "US"
                             else:
-                                if int(lat) >= 45:
+                                if int(lat.split(".")[0]) >= 45:
                                     country = "CA"
                                 else:
                                     country = "MX"
