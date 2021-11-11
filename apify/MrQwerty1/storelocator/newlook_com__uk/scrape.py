@@ -42,11 +42,11 @@ def get_data(page_url, sgw: SgWriter):
         .replace("&#39;", "'")
         .strip()
     )
-    city = a.get("addressLocality").replace("&#39;", "'")
+    city = a.get("addressLocality") or ""
     try:
         street_address = line.split(f", {city},")[0].strip()
     except:
-        street_address = a.get("streetAddress")
+        street_address = a.get("streetAddress") or ""
 
     street_address = street_address.replace(", Speke", "").replace(", Skelmersdale", "")
     state = a.get("addressRegion") or []
@@ -87,7 +87,7 @@ def get_data(page_url, sgw: SgWriter):
         page_url=page_url,
         location_name=location_name,
         street_address=street_address,
-        city=city,
+        city=city.replace("&#39;", "'"),
         state=state,
         zip_postal=postal,
         country_code=country_code,
