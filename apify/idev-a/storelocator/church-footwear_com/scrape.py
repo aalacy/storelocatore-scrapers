@@ -21,7 +21,7 @@ def _d(_):
     if _.get("workingSchedule", {}):
         for day in days:
             day = day.lower()
-            times = f"_['workingSchedule'][day]".strip()
+            times = f"{_['workingSchedule'][day]}".strip()
             if times == "--":
                 times = "closed"
             hours.append(f"{day}: {times}")
@@ -47,6 +47,7 @@ def _d(_):
         latitude=_["latitude"],
         longitude=_["longitude"],
         country_code=_["country"],
+        locator_domain=locator_domain,
         hours_of_operation=" ".join(hours),
     )
 
