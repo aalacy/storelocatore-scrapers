@@ -75,6 +75,10 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if name != "":
+            if "burlington-ont" in loc:
+                zc = "L7M 4X7"
+            if "/oakville" in loc:
+                zc = "L6H 2R4"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

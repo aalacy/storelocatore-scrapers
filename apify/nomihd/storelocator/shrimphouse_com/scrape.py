@@ -113,6 +113,10 @@ def fetch_data():
                 .split("; Easter Sunday")[0]
                 .strip()
             )
+            if page_url == "https://shrimphouse.com/new-braunfels-creekside/":
+                hours_of_operation = (
+                    hours_of_operation + "; Friday – Saturday: 11am-9:30pm"
+                )
 
             map_link = "".join(store.xpath('.//iframe[contains(@src,"maps")]/@src'))
             latitude, longitude = get_latlng(map_link)

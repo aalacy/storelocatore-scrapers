@@ -9,7 +9,7 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 
 DOMAIN = "fastpaydayloansfloridainc.com"
-BASE_URL = "https://fastpaydayloansfloridainc.com"
+BASE_URL = "https://fastpaydayloansfloridainc.com/"
 LOCATION_URL = "https://fastpaydayloansfloridainc.com/sitemap"
 API_URL = "https://fastpaydayloansfloridainc.com/closest-stores?loan_type=all&zipcode={}&num=1"
 HEADERS = {
@@ -71,7 +71,7 @@ def fetch_data():
         stores = session.get(API_URL.format(zip_code), headers=HEADERS).json()
         data = stores["locations"][0]
         store_number = data["store_code"]
-        page_url = stores["storeUrls"][store_number]
+        page_url = BASE_URL + stores["storeUrls"][store_number]
         location_name = data["business_name"]
         street_address = data["address_line_1"]
         city = data["locality"]

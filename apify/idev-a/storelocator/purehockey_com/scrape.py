@@ -39,10 +39,11 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = []
-            if len(sp1.select("div#hours dl")) > 1:
+            if len(sp1.select("div#hours dl")) > 0:
                 temp = list(sp1.select("div#hours dl")[-1].stripped_strings)
-                for x in range(0, len(temp), 2):
-                    hours.append(f"{temp[x]} {temp[x+1]}")
+                if len(temp) % 2 == 0:
+                    for x in range(0, len(temp), 2):
+                        hours.append(f"{temp[x]} {temp[x+1]}")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["loc_id"],
@@ -59,6 +60,7 @@ def fetch_data():
                 phone=info.select_one(".phone").text.strip(),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr).replace("Centene Community Ice Center", ""),
             )
 
 

@@ -33,7 +33,7 @@ def fetch_data():
         "https://www.flagstar.com/flagstar-bank-branches-michigan.html",
         "https://www.flagstar.com/flagstar-bank-loan-centers.html",
     ]
-    with SgRequests(dont_retry_status_codes=set([404])) as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
         for search_url in urls_list:
             stores_req = session.get(search_url, headers=headers)
             stores_sel = lxml.html.fromstring(stores_req.text)
@@ -52,7 +52,8 @@ def fetch_data():
                         + ", "
                         + "".join(store.xpath("@data-address2")).strip()
                     )
-
+                if street_address == "-":
+                    street_address = "<MISSING>"
                 city = "".join(store.xpath("@data-city")).strip()
                 state = "".join(store.xpath("@data-state")).strip()
                 zip = "".join(store.xpath("@data-zip")).strip()

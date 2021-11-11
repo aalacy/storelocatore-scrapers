@@ -15,8 +15,18 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-locator_domain = "https://www.patsmarketplace.com/"
+locator_domain = "https://www.patsmarketplace.com"
 base_url = "https://www.patsmarketplace.com/"
+
+
+def _url(phone, locs):
+    url = ""
+    for loc in locs:
+        if phone == loc.select("p")[3].text.strip():
+            url = locator_domain + loc.a["href"]
+            break
+
+    return url
 
 
 def fetch_data():
@@ -26,12 +36,13 @@ def fetch_data():
         locations = soup.select("div#dmFirstContainer  div.dmRespRow.fullBleedChanged")[
             -2:
         ]
+        locs = soup.select("div.mini-header-hide-row div.dmNewParagraph")
         for _ in locations:
             block = _.select("div.dmNewParagraph")
             addr = list(block[1].stripped_strings)
             loc = _.select_one("div.inlineMap")
             yield SgRecord(
-                page_url=base_url,
+                page_url=_url(addr[-1], locs),
                 store_number=loc["id"],
                 location_name=block[0].text.strip(),
                 street_address=addr[0],

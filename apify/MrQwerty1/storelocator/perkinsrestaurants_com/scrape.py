@@ -1,37 +1,10 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
@@ -41,8 +14,7 @@ def get_urls():
     return tree.xpath("//loc[contains(text(), '/locations/')]/text()")
 
 
-def get_data(page_url):
-    locator_domain = "https://www.perkinsrestaurants.com/"
+def get_data(page_url, sgw: SgWriter):
     if page_url.endswith("/locations/"):
         return
 
@@ -51,20 +23,19 @@ def get_data(page_url):
     r = session.get(api)
     j = r.json()
     path = j.get("path")
+    location_name = j.get("name")
     j = j["content"]
 
     page_url = f"{locator_domain}{path}"
-    location_name = j.get("name")
-    street_address = j.get("address") or "<MISSING>"
-    city = j.get("city") or "<MISSING>"
-    state = j.get("state") or "<MISSING>"
-    postal = j.get("zipcode") or "<MISSING>"
-    country_code = j.get("country") or "<MISSING>"
-    store_number = j.get("store_num") or "<MISSING>"
-    phone = j.get("phone") or "<MISSING>"
-    latitude = j.get("latitude") or "<MISSING>"
-    longitude = j.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
+    street_address = j.get("address")
+    city = j.get("city")
+    state = j.get("state")
+    postal = j.get("zipcode")
+    country_code = j.get("country")
+    store_number = j.get("store_num")
+    phone = j.get("phone")
+    latitude = j.get("latitude")
+    longitude = j.get("longitude")
 
     _tmp = []
     days = [
@@ -91,47 +62,38 @@ def get_data(page_url):
             else:
                 _tmp.append(f"{d}: {start} - {end}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
+    locator_domain = "https://www.perkinsrestaurants.com/"
     session = SgRequests()
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

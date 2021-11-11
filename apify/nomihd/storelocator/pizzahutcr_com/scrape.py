@@ -52,7 +52,7 @@ def fetch_data():
                 continue
             street_address = store["Ubicacion_compania"]
             city = "<MISSING>"
-            state = location_name.replace("Pizza Hut", "").strip()
+            state = "<MISSING>"
             zip = "<MISSING>"
 
             country_code = "Costa Rica"

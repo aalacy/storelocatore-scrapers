@@ -51,6 +51,7 @@ def fetch_data():
             sp1 = bs(driver.page_source, "lxml")
             hours = []
             addr_found = False
+            raw_address = None
             _hr = sp1.find(
                 "", string=re.compile(r"daily DINE-IN & CARRYOUT:", re.IGNORECASE)
             )
@@ -97,9 +98,8 @@ def fetch_data():
                 if len(temp) > 1:
                     hours = temp[1].split("|")
                     addr_found = True
-                    addr = parse_address_intl(
-                        _hr.find_parent().find_next_sibling().text.strip()
-                    )
+                    raw_address = _hr.find_parent().find_next_sibling().text.strip()
+                    addr = parse_address_intl(raw_address)
                 else:
                     for hh in _hr.find_parent().find_next_siblings():
                         if hh.name != "h2":
@@ -121,55 +121,65 @@ def fetch_data():
                     _addr = list(
                         sp1.select_one("div.sidebar__inner p").stripped_strings
                     )
-                    addr = parse_address_intl(" ".join(_addr))
-                    phone = _addr[0]
-                    if not is_phone(phone):
+
+                    if not is_phone(_addr[0]):
                         _phone = sp1.select("div.sidebar__inner p")[1]
                         if is_phone(_phone.text.strip()):
                             phone = _phone.text.strip()
                             hours = [
                                 hh.text.strip() for hh in _phone.find_next_siblings("p")
                             ]
+                    else:
+                        phone = _addr[0]
+                        del _addr[0]
+                    raw_address = " ".join(_addr)
+                    addr = parse_address_intl(raw_address)
                 else:
                     _addr = sp1.find(
                         "strong", string=re.compile(r"address", re.IGNORECASE)
                     )
                     if _addr:
-                        addr = parse_address_intl(
-                            list(_addr.find_parent().stripped_strings)[1]
-                        )
+                        raw_address = list(_addr.find_parent().stripped_strings)[1]
+                        addr = parse_address_intl(raw_address)
                     else:
                         _addr = sp1.find_all(
                             "h3", string=re.compile(r"^Roy", re.IGNORECASE)
                         )[-1]
                         if _addr:
-                            addr = parse_address_intl(_addr.text.strip())
+                            raw_address = _addr.text.strip()
+                            addr = parse_address_intl(raw_address)
+
             if not addr.postcode:
                 _addr = sp1.find("a", string=re.compile(r"Reservations", re.IGNORECASE))
                 if _addr:
-                    addr = parse_address_intl(
+                    raw_address = (
                         _addr.find_parent()
                         .find_parent()
                         .find_parent()
                         .find_next_sibling()
                         .text.strip()
                     )
+                    addr = parse_address_intl(raw_address)
 
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
 
+            city = addr.city
+            if not city:
+                city = raw_address.split(",")[-2].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.text.strip().replace("’", "'"),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=raw_address,
             )
 
 
