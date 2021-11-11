@@ -210,6 +210,10 @@ def fetch_records(idx2, url_country, sgw: SgWriter):
         phone = get_phone(seld)
         location_type = get_loctype(seld)
         street_address, city, state, zip_postal, country_code, ra = get_address(seld)
+        if "MISSING" in street_address:
+            street_address = location_name
+        if "MISSING" in country_code:
+            country_code = country
         store_number = page_url.split("/")[-1].split("_")[-1].replace(".php", "")
         rec = SgRecord(
             locator_domain=DOMAIN,
