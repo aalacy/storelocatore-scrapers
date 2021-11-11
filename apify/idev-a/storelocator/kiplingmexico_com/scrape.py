@@ -41,18 +41,29 @@ def fetch_data():
 
             if info.select_one(".prov_state"):
                 state = info.select_one(".prov_state").text.strip()
+            url = f"https://stores.boldapps.net/front-end/get_store_info.php?shop=kipling-mx.myshopify.com&data=detailed&store_id={_['id']}&tm="
+            logger.info(url)
+            ss = bs(session.get(url, headers=_headers).json()["data"], "lxml")
+            phone = hours = ""
+            if ss.select_one(".phone"):
+                phone = ss.select_one(".phone").text.strip()
+
+            if ss.select_one(".hours"):
+                hours = ss.select_one(".hours").text.strip()
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
-                location_name=info.select_one(".name").text.strip(),
+                location_name="Kipling",
                 street_address=street_address,
                 city=info.select_one(".city").text.strip(),
                 state=state,
                 zip_postal=zip_postal,
                 country_code="Mexico",
+                phone=phone,
                 latitude=_["lat"],
                 longitude=_["lng"],
                 locator_domain=locator_domain,
+                hours_of_operation=hours,
             )
 
 
