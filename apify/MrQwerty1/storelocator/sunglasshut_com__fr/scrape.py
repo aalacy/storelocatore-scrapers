@@ -6,15 +6,16 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://www.sunglasshut.com/AjaxSGHFindPhysicalStoreLocations?latitude=47.0818269&longitude=2.4039338&radius=2000"
+    api = "https://www.sunglasshut.com/AjaxSGHFindPhysicalStoreLocations?latitude=48.83&longitude=2.12&radius=2000"
     r = session.get(api, cookies=cookies)
     js = r.json()["locationDetails"]
 
     for j in js:
+        s = j.get("shippingDetails") or {}
         location_name = j.get("displayAddress")
         street_address = j.get("address")
         city = j.get("city")
-        postal = j.get("zip")
+        postal = s.get("zipCode") or j.get("zip")
         country_code = j.get("countryCode")
         phone = j.get("phone")
         latitude = j.get("latitude")
@@ -54,9 +55,11 @@ if __name__ == "__main__":
     session = SgRequests()
     cookies = {
         "WC_ACTIVEPOINTER": "-2%2C13801",
-        "WC_USERACTIVITY_-1002": "-1002%2C13801%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C925451795%2CMuWFf7SnaPuH5lqDFeG%2FIK%2B9Qk92dpMYE9OAR4MIYUTjblgvaxnYFX2TlOZL1gv6%2FzmRfsUIFxUiTTTeCwMOI%2BTBNRLiGpEKVK6C0JfuYh9wZwHqXxDFqr%2FRGQmv3Uu%2FV5OzRuPPJ%2B9IxZxmoj7akcEgYSGbrZ9gUS1EkB6oTJqgcDfrnww0krSeTmwg7%2FgyBet4IRpctZ9sz0vDdmkVWr2Pzzb13nguZxUET2DyNpCKXo5VeY8e%2FaJ1cVqxacxU",
+        "WC_USERACTIVITY_1454163400": "1454163400%2C13801%2Cnull%2Cnull%2C1635419463778%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C925451795%2CSP1YIlJUeWHtUKhDq5aD2k1OkrZLCvHeIf7usnxyPviSFS%2BMEYL3om%2FtusJhvGOjMZL6hg4yKYxGxgGgcCWgdzXtC11S3n53rBLvGV5kh6IJzHTv8oB7qg16A9Q44pRkWpgNyQqH3HU0AjilFr8OWT2RLQzqYJ8T9QxqKf2x%2BWeGlsvWvT3FkVOvaIEr6LgzxdYSeTp1BzpEElwvJQWiyH5xnIM3m%2BuiMaY8SPw240qxiyaA546dC5vN4SFEzjbqwEM%2BgbqJmSXNcRgZvjq7%2Bw%3D%3D",
+        "WC_AUTHENTICATION_1454163400": "1454163400%2CVLgN0C5Nv%2FaK4J8B%2B%2Be3yYmE8gAmItbLgWe9Wl4HPbQ%3D",
     }
     locator_domain = "https://www.sunglasshut.com/"
+
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
