@@ -5,6 +5,8 @@ import json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("equipmentshare")
 
@@ -27,7 +29,7 @@ def fetch_data():
             hours = []
             page_url = ""
             if _["website"]:
-                page_url = "https://" + _["website"]
+                page_url = "https://www." + _["website"]
                 logger.info(page_url)
                 try:
                     ss = json.loads(
@@ -56,7 +58,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

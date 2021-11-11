@@ -11,8 +11,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     domain = "freewayinsurance.com"
     start_url = "https://locations.freewayinsurance.com/?search={}&latitude=&longitude=&radio=200&time=open-any"

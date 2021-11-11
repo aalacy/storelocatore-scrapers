@@ -1,42 +1,16 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.caesars.com/harrahs"
 
@@ -47,7 +21,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     final_links = []
 
     locator_domain = "caesars.com"
@@ -63,25 +36,8 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        location_name = base.h1.text.strip()
-
-        fin_script = ""
-        all_scripts = base.find_all("script")
-        for script in all_scripts:
-            if "latitude" in str(script):
-                fin_script = str(script)
-                break
-
         try:
-            store_data = json.loads(fin_script.split(">")[1].split("<")[0])
-            street_address = store_data["address"]["streetAddress"]
-            city = store_data["address"]["addressLocality"]
-            state = store_data["address"]["addressRegion"]
-            zip_code = store_data["address"]["postalCode"]
-            phone = store_data["telephone"]
-            latitude = store_data["geo"]["latitude"]
-            longitude = store_data["geo"]["longitude"]
-        except:
+            location_name = base.h1.text.replace("Welcome to", "").strip()
             raw_address = list(
                 base.find(class_="footer-hotel-address").stripped_strings
             )
@@ -90,55 +46,46 @@ def fetch_data():
             state = raw_address[1].split(",")[1].split()[0]
             zip_code = raw_address[1].split(",")[1].split()[1]
             phone = raw_address[2].replace("Tel:", "").strip()
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        except:
+            js = str(
+                base.find(
+                    class_="location aem-GridColumn aem-GridColumn--default--12"
+                ).contents[0]
+            ).replace("&quot;", '"')
+            store_data = json.loads(js.split('model="')[1].split('" id')[0])
+            location_name = store_data["header"]
+            street_address = store_data["locationAddressLine1"]
+            city = store_data["locationAddressLine2"].split(",")[0]
+            state = store_data["locationAddressLine2"].split(",")[1].split()[0]
+            zip_code = store_data["locationAddressLine2"].split(",")[1].split()[1]
+            phone = store_data["locationPhoneNumber"]
 
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
-        try:
-            open_text = (
-                base.find(class_="CETContainer")
-                .find(class_="CETRichText padding-horizontal")
-                .h3.text.lower()
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-        except:
-            open_text = (
-                base.find(class_="CETContainer")
-                .find(class_="CETRichText padding-horizontal")
-                .h4.text.lower()
-            )
-        if "from" in open_text:
-            hours_of_operation = open_text.title().split("Open")[1].strip()
-        else:
-            hours_of_operation = "<MISSING>"
-
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
