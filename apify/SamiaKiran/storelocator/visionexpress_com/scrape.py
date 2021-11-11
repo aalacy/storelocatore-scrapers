@@ -46,7 +46,7 @@ def fetch_data():
         r = session.get(page_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         hours_of_operation = (
-            soup.find("dl", {"class": "location-opening-hours"})
+            soup.find("dl", {"class": "location-opening-hours__list"})
             .get_text(separator="|", strip=True)
             .replace("|", " ")
         )
