@@ -49,168 +49,75 @@ def get_data():
         "div", attrs={"class": "column_attr clearfix align_left mobile_align_left"}
     )
     session = SgRequests()
+
     for grid in grids:
+        if "coming soon" in grid.text.strip():
+            continue
+
         locator_domain = "mezeh.com"
-        try:
-            page_url = grid.find("a")["href"]
-        except Exception:
-            page_url = "<MISSING>"
-        zipp = "nope"
+        page_url = "https://mezeh.com/locations/"
+
         location_name = grid.find("h4").text.strip()
 
+        location_data_parts = str(grid).split("\n")
+        address_parts = location_data_parts[1]
+
+        address = address_parts.split(">")[1].split("<")[0].strip()
+        city = address_parts.split("<br/>")[1].split("<")[0].split(", ")[0]
+        state = (
+            address_parts.split("<br/>")[1].split("<")[0].split(", ")[1].split(" ")[0]
+        )
+
         try:
-            address_section = grid.find("a").text.strip().split("\n")[1]
-            address_parts = address_section.split(".")
-            if len(address_parts) > 1:
-                address_parts = address_parts[:-1]
-                address = ""
-                for part in address_parts:
-                    address = address + part + " "
-                address = address.strip()
-            else:
-                address_parts = address_parts[0].split(",")[0].split(" ")[:-1]
-                address = ""
-                for part in address_parts:
-                    address = address + part + " "
-                address = address.strip()
-
-            city = (
-                address_section.split(" ")[-3].replace(",", "").replace(".", "").strip()
-            )
-            state = (
-                address_section.split(" ")[-2].replace(",", "").replace(".", "").strip()
-            )
             zipp = (
-                address_section.split(" ")[-1].replace(",", "").replace(".", "").strip()
+                address_parts.split("<br/>")[1]
+                .split("<")[0]
+                .split(", ")[1]
+                .split(" ")[1]
             )
-            country_code = "US"
-            store_number = "<MISSING>"
-
-            try:
-                phone = grid.text.split("phone")[1].split("hours")[0].replace("\n", "")
-            except Exception:
-                phone = "<MISSING>"
-
-            hours_parts = grid.text.split("hours")[1].split("order")[0].split("\n")
-            hours = ""
-            for item in hours_parts:
-                item = item.replace("\r", "")
-                hours = hours + item + " "
-            location_type = "<MISSING>"
-            hours = hours.strip()
-
-            try:
-                latlon_url = grid.find("a", text=re.compile("get directions"))["href"]
-                r = session.get(latlon_url).url
-                latitude = r.split("@")[1].split(",")[0]
-                longitude = r.split("@")[1].split(",")[1]
-            except Exception:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
         except Exception:
-            if "coming soon" in grid.text.strip():
-                address_section = grid.find("h5").text.strip()
-                address_parts = address_section.split("phone")[0].split(".")
-                if len(address_parts) > 1:
-                    address_parts = address_parts[:-1]
-                    address = ""
-                    for part in address_parts:
-                        address = address + part + " "
-                    address = address.strip()
-                else:
-                    address_parts = address_parts[0].split(",")[0].split(" ")[:-1]
-                    address = ""
-                    for part in address_parts:
-                        address = address + part + " "
-                    address = address.strip()
+            zipp = address_parts.split("<br/>")[1].split("<")[0].split(", ")[-1]
 
-                city = (
-                    address_section.split(" ")[-3]
-                    .replace(",", "")
-                    .replace(".", "")
-                    .strip()
-                    .replace("blvd", "")
-                )
-                state = (
-                    address_section.split(" ")[-2]
-                    .replace(",", "")
-                    .replace(".", "")
-                    .strip()
-                )
-                zipp = (
-                    address_section.split(" ")[-1]
-                    .replace(",", "")
-                    .replace(".", "")
-                    .strip()
-                    .split("\n")[0]
-                )
-                country_code = "US"
-                store_number = "<MISSING>"
+        the_index = 0
+        for item in location_data_parts:
+            the_index = the_index + 1
+            if "phone" in item.lower():
+                phone = location_data_parts[the_index].replace("<br/>", "")
 
-                if "phone" in grid.text.strip():
-                    phone = grid.text.strip().split("phone")[1].split("\n")[1]
-                else:
-                    phone = "<MISSING>"
+        if "hours" in grid.text.strip().lower():
+            the_index = 0
+            start = ""
+            for item in location_data_parts:
+                the_index = the_index + 1
+                if "hours" in item.lower():
+                    start = the_index
 
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-                hours = "Coming Soon"
+                if start != "" and "pm" not in item.lower() and the_index != start:
+                    end = the_index - 1
+                    break
 
-            else:
-                address = grid.find("h5").text.strip().split(".")[0]
-                city = grid.find("h5").text.strip().split(".")[1].split(",")[0]
+            hours = ("").join(
+                part.replace("\r", "").split("<")[0] + ", "
+                for part in location_data_parts[start:end]
+            )
+            hours = hours[:-2]
 
-                try:
-                    state = (
-                        grid.find("h5")
-                        .text.strip()
-                        .split(".")[1]
-                        .split(",")[1]
-                        .split(" ")[1]
-                    )
+        else:
+            hours = "<MISSING>"
 
-                    zipp = (
-                        grid.find("h5")
-                        .text.strip()
-                        .split(".")[1]
-                        .split(",")[1]
-                        .split(" ")[2]
-                        .split("\n")[0]
-                    )
-                    phone = "<MISSING>"
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-                    hours = "Temporarily Closed"
-                    store_number = "<MISSING>"
-                    country_code = "US"
-                except Exception:
-                    address = grid.find("h5").text.strip().split(location_name)[0]
-                    city = location_name
-                    state = grid.find("h5").text.strip().split(", ")[-1].split(" ")[0]
-                    zipp = (
-                        grid.find("h5").text.strip().split(", ")[-1].split(" ")[1][:5]
-                    )
+        try:
+            latlon_url = grid.find("a", text=re.compile("get directions"))["href"]
+            r = session.get(latlon_url).url
+            latitude = r.split("@")[1].split(",")[0]
+            longitude = r.split("@")[1].split(",")[1]
 
-                if zipp == "nope":
-                    zipp = (
-                        grid.find("h5")
-                        .text.strip()
-                        .split(".")[1]
-                        .split(",")[1]
-                        .split(" ")[2]
-                        .split("\n")[0]
-                    )
-                phone = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-                hours = "Temporarily Closed"
-                store_number = "<MISSING>"
-                country_code = "US"
+        except Exception:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
-        if "goo.gl" in page_url:
-            page_url = "<MISSING>"
-
-        phone = phone.strip().replace("\n", "")
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        country_code = "US"
 
         yield {
             "locator_domain": locator_domain,
