@@ -23,7 +23,6 @@ def fetch_data():
             and "Bromley - Planning studio" not in line
         ):
             locs.append(line.split('href="')[1].split('"')[0])
-    PSFound = False
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         website = "ikea.co.uk"
