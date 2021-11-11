@@ -104,6 +104,12 @@ def fetch_records(http: SgRequests):
                 except:
                     hours_of_operation = MISSING
 
+                tempclose_status = ""
+                if "c_storeNotificationBanner" in _["data"]:
+                    tempclose_status = _["data"]["c_storeNotificationBanner"]
+                    if "MISSING" in hours_of_operation:
+                        hours_of_operation = tempclose_status
+
                 raw_address = MISSING
                 yield SgRecord(
                     locator_domain=locator_domain,
