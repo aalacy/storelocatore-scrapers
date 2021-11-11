@@ -22,7 +22,7 @@ def fetch_data():
     if True:
         url = "http://www.meetfresh.com.tw/API/Location"
         country_list = session.get(url, headers=headers).json()["cn"]
-        log.info(f"Fetching the data from API, will take atleast 40 seconds...")
+        log.info("Fetching the data from API, will take atleast 40 seconds...")
         for country in country_list:
             area_wrap = country["area_wrap"]
             for area in range(len(area_wrap)):
