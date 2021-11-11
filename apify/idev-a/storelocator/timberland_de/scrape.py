@@ -108,6 +108,11 @@ class ExampleSearchIteration(SearchIteration):
 
             logger.info(f"[{current_country}] {coord[0], coord[1]} {len(locations)}")
             for _ in locations:
+                location_name = " ".join(
+                    bs(_["name"], "lxml").stripped_strings
+                ).replace("&reg;", "®")
+                if "timberland" not in location_name:
+                    continue
                 street_address = _["address1"]
                 if _["address2"]:
                     street_address += " " + _["address2"]
@@ -123,7 +128,7 @@ class ExampleSearchIteration(SearchIteration):
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url="https://www.timberland.de/utility/handlersuche.html",
-                    location_name=_["name"],
+                    location_name=location_name,
                     street_address=street_address,
                     city=_.get("city"),
                     state=_.get("state"),
