@@ -17,7 +17,7 @@ base_url = "https://www.76.com/bin/stationfinderservlet?s=psx_76"
 search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
 
-def get_country_by_code(self, code=""):
+def get_country_by_code(code=""):
     if us.states.lookup(code):
         return "US"
     else:
@@ -25,7 +25,6 @@ def get_country_by_code(self, code=""):
 
 
 def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
     with SgRequests() as session:
         credential = session.get(base_url, headers=_headers).json()["credentials"]
         maxZ = search.items_remaining()

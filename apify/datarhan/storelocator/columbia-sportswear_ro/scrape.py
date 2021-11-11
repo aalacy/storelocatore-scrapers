@@ -51,12 +51,12 @@ def fetch_data():
         phone = phone[0]
         for e in all_geo:
             if e["name"] == location_name:
-                latitude = e["x"]
-                longitude = e["y"]
+                latitude = e["y"]
+                longitude = e["x"]
         hoo = loc_dom.xpath(
             '//div[@class="shop-data-openings shop-data-table"]/p/text()'
         )
-        hoo = " ".join(hoo)
+        hoo = " ".join(" ".join(hoo).split())
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
