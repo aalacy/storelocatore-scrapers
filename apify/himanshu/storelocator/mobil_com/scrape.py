@@ -19,10 +19,10 @@ def fetch_data():
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for lat, lng in all_coords:
-        url = start_url.format(lat, lat + 20.0, lng, lng - 22.0)
+        url = start_url.format(lat, lat + 0.4, lng, lng + 1.0)
         try:
             all_locations = session.get(url).json()
-        except:
+        except Exception:
             continue
         for poi in all_locations:
             street_address = poi["AddressLine1"]
