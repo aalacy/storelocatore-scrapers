@@ -13,6 +13,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -118,11 +119,15 @@ def fetch_data(driver):
 
         store_number = MISSING
         location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
         phone = MISSING
 
         body = request_with_retries(driver, page_url, "Get Directions")
+
+        latlng = body.xpath('//div[contains(@id, "locator-entry")]/@data-dna')[0]
+        coords = json.loads(latlng)
+
+        latitude = coords[0]["locations"][0]["lat"] or MISSING
+        longitude = coords[0]["locations"][0]["lng"] or MISSING
 
         location_name = stringify_children(
             body, '//div[contains(@class, "branch-info-title")]/span'
@@ -145,7 +150,7 @@ def fetch_data(driver):
             city=city,
             zip_postal=zip_postal,
             state=state,
-            country_code=country_code,
+            country_code="NG",
             phone=phone,
             latitude=latitude,
             longitude=longitude,
