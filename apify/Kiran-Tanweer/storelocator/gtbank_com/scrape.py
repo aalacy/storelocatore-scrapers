@@ -49,7 +49,8 @@ def random_sleep(driver, start=3, limit=5):
 
 def fetch_stores(driver, retry=0):
     body = request_with_retries(driver, f"{website}/branches", "branches-link")
-    return body.xpath('//a[contains(@class, "branches-link")]/@href')
+    urls = body.xpath('//a[contains(@class, "branches-link")]/@href')
+    return urls
     if len(urls) > 0:
         return urls
     if len(urls) == 0 and retry == 4:
@@ -74,7 +75,7 @@ def get_dir_url(list):
     try:
         return list[0].split("destination=")[1].split("&")[0].replace("%20", " ")
     except Exception as e:
-        log.info(f"No Address {e}")
+        log.info(f"get dir Err: {e}")
         return ""
 
 
