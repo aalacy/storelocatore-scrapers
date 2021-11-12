@@ -1,5 +1,3 @@
-import re
-
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
@@ -52,10 +50,7 @@ def fetch_data(sgw: SgWriter):
         zip_code = raw_data[1][raw_data[1].rfind(" ") + 1 :].strip()
         country_code = "US"
         store_number = "<MISSING>"
-        try:
-            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(base))[0]
-        except:
-            phone = "<MISSING>"
+        phone = base.find("h2", string="Phone").find_next().text
         location_type = "<MISSING>"
 
         map_link = base.find("a", attrs={"class": "button"})["href"]
@@ -73,15 +68,7 @@ def fetch_data(sgw: SgWriter):
             longitude = latitude[latitude.rfind(",") + 1 :].strip()
             latitude = latitude[latitude.rfind("=") + 1 : latitude.rfind(",")].strip()
 
-        hours = (
-            str(base.findAll("div", attrs={"class": "section_col_content"})[1])
-            .replace("<p>", "")
-            .replace("</p>", "")
-            .replace("\n", "")
-            .replace("</div>", "")
-            .split("<br/>")
-        )
-        hours_of_operation = hours[-1][hours[-1].rfind(">") + 1 :]
+        hours_of_operation = base.find("h2", string="Hours").find_next().text
 
         sgw.write_row(
             SgRecord(

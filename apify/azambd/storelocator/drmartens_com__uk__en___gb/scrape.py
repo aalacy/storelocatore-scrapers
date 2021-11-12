@@ -3,7 +3,7 @@ from sgpostal.sgpostal import parse_address_intl
 import time
 import json
 from typing import Iterable, Tuple, Callable
-
+from httpx import Timeout
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -185,9 +185,13 @@ def scrape():
     search_maker = DynamicSearchMaker(
         search_type="DynamicZipSearch", max_search_distance_miles=50
     )
-
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        with SgRequests() as http:
+    gTimeout = Timeout(timeout=161, connect=161)
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId),
+    ) as writer:
+        with SgRequests(
+            timeout_config=gTimeout, dont_retry_status_codes_exceptions=set([504])
+        ) as http:
             search_iter = DrmSearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
