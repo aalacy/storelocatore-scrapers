@@ -65,7 +65,7 @@ def fetch_data(search):
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
         search = DynamicGeoSearch(
