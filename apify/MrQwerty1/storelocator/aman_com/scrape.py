@@ -13,7 +13,7 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or ""
     state = adr.state
     postal = adr.postcode
     country = adr.country
@@ -41,6 +41,8 @@ def get_data(slug, sgw: SgWriter):
     if "Opening" in raw_address:
         return
     street_address, city, state, postal, country_code = get_international(raw_address)
+    if not city:
+        city = SgRecord.MISSING
     if city[0].isdigit():
         postal = city
         city = SgRecord.MISSING
