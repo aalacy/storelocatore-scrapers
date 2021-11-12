@@ -32,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         logger.info(location_name)
 
         raw_address = list(item.p.stripped_strings)
-        if len(raw_address) == 1:
+        if raw_address[0] == "Houston, TX":
             continue
         street_address = " ".join(raw_address[:-2]).strip()
         try:
