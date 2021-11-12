@@ -24,7 +24,7 @@ def fetch_data():
     for page_url in all_locations:
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
-        print(page_url)
+
         location_name = loc_dom.xpath('//h1[@class="tienda_title"]/text()')[0]
         raw_address = loc_dom.xpath('//div[@class="tienda_text"]/text()')[0].strip()
         addr = parse_address_intl(raw_address)
