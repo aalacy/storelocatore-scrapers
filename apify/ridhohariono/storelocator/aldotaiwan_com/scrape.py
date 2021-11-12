@@ -69,7 +69,10 @@ def fetch_data():
         info = row.find("ul").get_text(strip=True, separator="@").split("@")
         raw_address = info[1].strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "Taipei" in street_address:
+            city = "Taipei"
         city = city.replace("City", "")
+        street_address = street_address.replace(city, "").strip()
         phone = info[0].strip()
         country_code = "TW"
         location_type = MISSING
