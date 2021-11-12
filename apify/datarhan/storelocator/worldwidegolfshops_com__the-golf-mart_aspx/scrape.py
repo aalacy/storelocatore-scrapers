@@ -2,12 +2,18 @@ import re
 import json
 from lxml import etree
 from urllib.parse import urljoin
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sglogging import SgLogSetup
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -15,6 +21,7 @@ headers = {
 }
 
 start_url = "https://www.worldwidegolfshops.com/the-golf-mart"
+logger = SgLogSetup().get_logger("worldwidegolfshops_com__the-golf-mart_aspx")
 
 
 def get_store_urls():
@@ -47,22 +54,34 @@ def get_store_urls():
 
 def fetch_data():
     all_locations = get_store_urls()
-    with SgFirefox(is_headless=True) as driver:
-        for url in all_locations:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
+        for idx, url in enumerate(all_locations[0:]):
             domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
             page_url = urljoin(start_url, url)
+            logger.info(f"Pulling the data from {page_url}")
+
             if "##" in page_url:
                 continue
             driver.get(page_url)
+            WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, '//div[contains(text(), "STORE HOURS")]')
+                )
+            )
             loc_dom = etree.HTML(driver.page_source)
             poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
             poi = json.loads(poi)
             location_name = "".join(loc_dom.xpath("//title/text()"))
             hoo = []
-            for e in poi["openingHoursSpecification"]:
-                if not e.get("dayOfWeek"):
-                    continue
-                hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
+            try:
+                for e in poi["openingHoursSpecification"]:
+                    if not e.get("dayOfWeek"):
+                        continue
+                    hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
+            except Exception as e:
+                logger.info(f" [ {e} ] Please fix it at >>> [{idx}] | {page_url}")
             hours_of_operation = " ".join(hoo)
             country_code = ""
             country_code = "US"
