@@ -10,13 +10,12 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
+from sgscrape.pause_resume import CrawlStateSingleton
 
 from sglogging import sglog
 
 domain = "aldi.pl"
 log = sglog.SgLogSetup().get_logger(logger_name=domain)
-
-session = SgRequests(proxy_country="pl")
 
 
 def fetch_data():
@@ -25,10 +24,11 @@ def fetch_data():
 
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=100000"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=10
     )
     for code in all_codes:
-        sleep(uniform(0, 5))
+        sleep(uniform(5, 9))
+        session = SgRequests(proxy_country="pl", retries_with_fresh_proxy_ip=1)
         log.info(f"API Crawl: {search_url.format(code)}")
         response = session.get(search_url.format(code))
         log.info(f"First Response: {response}")
@@ -107,6 +107,7 @@ def fetch_data():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     log.info("Started Crawling")
     with SgWriter(
         SgRecordDeduper(
