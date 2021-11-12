@@ -7,7 +7,6 @@ from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 import json
 import ssl
-from lxml import html
 
 try:
     _create_unverified_https_context = (
@@ -83,7 +82,7 @@ def get_hoo(i100, _):
                     closed_list.append(closed)
                     logger.info(f"{i}: Closed")
         else:
-            hours_operation = MISSING
+            hours_of_operation = MISSING
     for cl in closed_list:
         if "Closed" in cl:
             closed_count += 1
@@ -141,6 +140,7 @@ def fetch_records(http: SgRequests):
                 raw_address = MISSING
                 yield SgRecord(
                     page_url=page_url,
+                    locator_domain=locator_domain,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,
