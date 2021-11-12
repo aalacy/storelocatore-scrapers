@@ -11,19 +11,26 @@ session = SgRequests()
 website = "servicemasterrestore_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36',
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
 DOMAIN = "https://www.servicemasterrestore.com/"
 MISSING = SgRecord.MISSING
 
+
 def fetch_data():
     if True:
-        zips = DynamicZipSearch(country_codes=[SearchableCountries.USA],expected_search_radius_miles = 200)
+        zips = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        )
         for zip_code in zips:
             log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
-            url = "https://www.servicemasterrestore.com/locations/?CallAjax=GetLocations"
-            payload = '{\"zipcode\":\"'+zip_code+'\",\"distance\":\"250\",\"tab\":\"ZipSearch\"}'
+            url = (
+                "https://www.servicemasterrestore.com/locations/?CallAjax=GetLocations"
+            )
+            payload = (
+                '{"zipcode":"' + zip_code + '","distance":"250","tab":"ZipSearch"}'
+            )
             loclist = session.post(url, headers=headers, data=payload).json()
             if not loclist:
                 continue
@@ -32,8 +39,8 @@ def fetch_data():
                     location_name = loc["FranchiseLocationName"]
                 except:
                     continue
-                page_url = "https://www.servicemasterrestore.com"+loc["Path"]
-                store_number = loc['FranchiseLocationID']
+                page_url = "https://www.servicemasterrestore.com" + loc["Path"]
+                store_number = loc["FranchiseLocationID"]
                 log.info(location_name)
                 phone = loc["Phone"]
                 latitude = loc["Latitude"]
@@ -68,7 +75,10 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId,duplicate_streak_failure_factor=150)
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=150,
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
