@@ -9,7 +9,7 @@ import time
 import json
 from sglogging import SgLogSetup
 import ssl
-from tenacity import retry, TryAgain
+from tenacity import retry
 
 try:
     _create_unverified_https_context = (
