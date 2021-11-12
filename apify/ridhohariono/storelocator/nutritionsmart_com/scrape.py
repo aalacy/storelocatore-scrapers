@@ -33,7 +33,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -83,7 +82,19 @@ def fetch_data():
         location_name = content.find(
             "h3", {"class": "elementor-heading-title elementor-size-default"}
         ).text.strip()
-        raw_address = info[2].text.replace("\n", ",").strip()
+        if "palm-beach-gardens-information" in page_url:
+            raw_address = ", ".join(
+                store.find(
+                    "div",
+                    {
+                        "class": "elementor-element elementor-element-1d1b97a elementor-widget elementor-widget-heading"
+                    },
+                )
+                .get_text(strip=True, separator="@@")
+                .split("@@")[:-1]
+            )
+        else:
+            raw_address = " ".join(info[2].text.split())
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         phone = info[1].text.strip()
