@@ -22,3 +22,9 @@ Please crawl arco.co.uk. We only want their own stores, not stores that carry th
 
 - found 1 stores here as of 11th July 2021 
 
+## Updated: 
+- Website updated so it needed rewrite 
+- Found 1 store as of 4th Nov 2021
+- API endpoint https://www.arcosafety.ie/store-finder?q=&page=0&productCode=&show=All&fetchAll=true 
+- Not applicable `"Acro Store" with values "Yes" or "No";` and extra data field 
+

@@ -29,6 +29,7 @@ def fetch_data():
         for page in pagelist:
             page = page["value"].replace("~", "")
             page = "https://www.avera.org" + page
+            log.info(page)
             r = session.get(page, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.find("div", {"class": "LocationsList"}).findAll("li")
@@ -38,12 +39,12 @@ def fetch_data():
                 page_url = "https://www.avera.org/locations" + page_url.replace(
                     "..", ""
                 )
-                log.info(page_url)
                 try:
                     store_number = page_url.split("id=")[1]
                 except:
                     store_number = MISSING
-                location_name = temp.text
+                location_name = temp.find(class_="Name").text
+                location_name = location_name.split("-")[0].strip()
                 address = loc.find("p", {"class": "TheAddress"}).text
                 address = address.replace(",", " ")
                 address = usaddress.parse(address)
@@ -91,7 +92,8 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .replace("Hours of Operation", "")
-                    )
+                        .replace("We are open from", "")
+                    ).strip()
                 except:
                     hours_of_operation = MISSING
                 longitude = longitude.replace("},", "")

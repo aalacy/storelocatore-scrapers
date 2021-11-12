@@ -15,6 +15,7 @@ logger = SgLogSetup().get_logger("dominos_com_mx")
 
 
 def fetch_data():
+    coords = []
     url = "https://www.dominos.com.mx/api/stores"
     r = session.get(url, headers=headers)
     website = "dominos.com.mx"
@@ -41,29 +42,30 @@ def fetch_data():
         lat = item["latitude"]
         lng = item["longitude"]
         hours = "<MISSING>"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        latlng = lat + ":" + lng
+        if latlng not in coords:
+            coords.append(latlng)
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in results:
             writer.write_row(rec)
 

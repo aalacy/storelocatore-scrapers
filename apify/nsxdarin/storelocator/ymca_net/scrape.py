@@ -92,6 +92,12 @@ def fetch_data():
                                     hours = hours + " " + hrs
                 if '<span class="address-line1">' in line:
                     add = line.split('<span class="address-line1">')[1].split("<")[0]
+                if '<span class="address-line2">' in line:
+                    add = (
+                        add
+                        + " "
+                        + line.split('<span class="address-line2">')[1].split("<")[0]
+                    )
                 if '<span class="locality">' in line:
                     city = line.split('<span class="locality">')[1].split("<")[0]
                     state = line.split('="administrative-area">')[1].split("<")[0]

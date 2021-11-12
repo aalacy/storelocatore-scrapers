@@ -1,137 +1,97 @@
 import csv
-import sgrequests
 import json
-import itertools
+import codecs
+from w3lib.url import add_or_replace_parameter
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
-    locator_domain = "https://www.drmartens.com/uk/en_gb/"
-    missingString = "<MISSING>"
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    data = []
+    start_url = "https://www.drmartens.com/uk/en_gb/store-finder?q={}&page=0"
+    domain = "drmartens.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+    }
 
-    def endpoint(city, pages, data):
-        api = "https://www.drmartens.com/intl/en/store-finder?q={}&page=".format(city)
-        for p in range(pages):
-            sess = sgrequests.SgRequests()
-            req = json.loads(sess.get("{}{}".format(api, p)).text)
-            for d in req["data"]:
-                data.append(json.dumps(d))
+    url = "https://pkgstore.datahub.io/core/world-cities/world-cities_csv/data/6cc66692f0e82b18216a48443b6b95da/world-cities_csv.csv"
+    response = session.get(url)
+    all_cities = csv.reader(
+        codecs.iterdecode(response.iter_lines(), "utf-8"), delimiter=","
+    )
+    for city in all_cities:
+        if city[0] == "name":
+            continue
+        url = start_url.format(city[0].lower().replace(" ", "%20"))
+        response = session.get(url)
+        try:
+            data = json.loads(response.text)
+        except Exception:
+            continue
+        all_locations = data["data"]
+        total = data["total"]
+        if total > 10:
+            pages = total // 10 + 1
+            for p in range(1, pages):
+                data = session.get(
+                    add_or_replace_parameter(url, "page", str(p)), headers=hdr
+                )
+                if not response.text:
+                    continue
+                data = json.loads(response.text)
+                all_locations += data["data"]
 
-    endpoint("London", 4, data)
-    endpoint("Paris", 2, data)
-    endpoint("Dublin", 1, data)
+        for poi in all_locations:
+            street_address = poi["line1"]
+            if poi["line2"]:
+                street_address += " " + poi["line2"]
+            addr = parse_address_intl(f'{poi["town"]} {poi["postalCode"]}')
+            city_name = addr.city
+            state = addr.state
+            zip_code = addr.postcode
+            hoo = []
+            if poi.get("openings"):
+                for day, hours in poi["openings"].items():
+                    hoo.append(f"{day} {hours}")
+            hoo = " ".join(hoo) if hoo else ""
+            country_code = SgRecord.MISSING
 
-    result = []
+            item = SgRecord(
+                locator_domain=domain,
+                page_url="https://www.drmartens.com/us/en/store-finder",
+                location_name=poi["displayName"],
+                street_address=street_address,
+                city=city_name,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=poi["phone"].split(":")[-1].strip(),
+                location_type=SgRecord.MISSING,
+                latitude=poi["latitude"],
+                longitude=poi["longitude"],
+                hours_of_operation=hoo,
+            )
 
-    def hasHours(stri):
-        return any(char.isdigit() for char in stri)
-
-    def hasState(stri):
-        if len(stri.split(",")) == 2:
-            return {
-                "has": True,
-                "state": stri.split(",")[1].strip(),
-                "city": stri.split(",")[0].strip(),
-            }
-        else:
-            return {"city": stri, "has": False}
-
-    for ss in set(data):
-        s = json.loads(ss)
-        name = s["name"]
-        url = "{}{}".format("https://www.drmartens.com/intl/en/", s["url"])
-        phone = (
-            s["phone"]
-            .replace("Phone: ", "")
-            .replace('"Tel.: ', "")
-            .replace("Tél. : +", "")
-        )
-        city = s["town"]
-        state = missingString
-        if hasState(city)["has"]:
-            state = hasState(city)["state"]
-            city = hasState(city)["city"]
-        zp = s["postalCode"]
-        if not zp:
-            zp = missingString
-        if not phone:
-            phone = missingString
-        lat = s["latitude"]
-        lng = s["longitude"]
-        street = "{} {}".format(s["line1"], s["line2"])
-        timeArray = []
-        hours = missingString
-        typ = missingString
-        if "openings" in s:
-            for hour in s["openings"]:
-                timeArray.append("{} : {}".format(hour, s["openings"][hour]))
-            hours = ", ".join(timeArray)
-        if not hasHours(hours):
-            hours = missingString
-            typ = "Temporary Closed"
-        if city == "":
-            city = missingString
-        if float(lat) == 0:
-            lat = missingString
-        if float(lng) == 0:
-            lng = missingString
-        result.append(
-            [
-                locator_domain,
-                url,
-                name,
-                street,
-                city,
-                state,
-                zp,
-                missingString,
-                missingString,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
-        )
-    result = list(result for result, _ in itertools.groupby(result))
-    return result
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
