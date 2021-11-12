@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 session = SgRequests()
 website = "fresh_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 
 headers = {
     "authority": "www.fresh.com",
@@ -50,7 +50,12 @@ def fetch_data():
                 latitude = coords[0]
                 longitude = coords[1]
                 try:
-                    phone = loc.find("div", {"class": "store_phone"}).text
+                    phone = (
+                        loc.find("div", {"class": "store-card-bottom d-flex"})
+                        .find_next("div", {"class": "store_phone"})
+                        .find_next("span")
+                        .text
+                    )
                 except:
                     phone = MISSING
                 try:

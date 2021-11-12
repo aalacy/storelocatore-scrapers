@@ -15,7 +15,7 @@ def fetch_data():
 
     with SgFirefox() as driver:
         driver.get(start_url)
-        sleep(15)
+        sleep(25)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath("//tr[@mid]")
@@ -29,13 +29,16 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
+        city = addr.city
+        if city == "Park":
+            city = "McClellan Park"
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code="",
