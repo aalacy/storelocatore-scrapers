@@ -3,7 +3,6 @@ import json
 from lxml import etree
 from urllib.parse import urljoin
 from sgselenium.sgselenium import SgFirefox
-from webdriver_manager.firefox import GeckoDriverManager
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -48,9 +47,7 @@ def get_store_urls():
 
 def fetch_data():
     all_locations = get_store_urls()
-    with SgFirefox(
-        executable_path=GeckoDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgFirefox(is_headless=True) as driver:
         for url in all_locations:
             domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
             page_url = urljoin(start_url, url)
