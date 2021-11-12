@@ -51,6 +51,9 @@ def fetch_data():
                 .replace("Opening Times", "")
             )
             country_code = "GB"
+            phone = loc.findAll("p")[-2].text.replace("tel", "")
+            if "Sunday" in phone:
+                phone = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -61,7 +64,7 @@ def fetch_data():
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
-                phone=MISSING,
+                phone=phone,
                 location_type=MISSING,
                 latitude=MISSING,
                 longitude=MISSING,

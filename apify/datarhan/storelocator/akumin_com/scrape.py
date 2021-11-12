@@ -35,6 +35,8 @@ def fetch_data():
             poi = json.loads(poi[0])
             hoo = []
             for e in poi["openingHoursSpecification"]:
+                if not e.get("dayOfWeek"):
+                    continue
                 if e.get("opens"):
                     hoo.append(f'{e["dayOfWeek"]} {e["opens"]} - {e["closes"]}')
                 else:
