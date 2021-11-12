@@ -3,12 +3,9 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from sgzip.utils import country_names_by_code
-from typing import Iterable, Tuple, Callable
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from fuzzywuzzy import process
 
 logger = SgLogSetup().get_logger("ch")
 
@@ -24,33 +21,13 @@ headers = {
 }
 
 
-def determine_country(country):
-    Searchable = country_names_by_code()
-    resultName = process.extract(country, list(Searchable.values()), limit=1)
-    for i in Searchable.items():
-        if i[1] == resultName[-1][0]:
-            if i[0] == "hk":
-                return "cn"
-            else:
-                return i[0]
-
-
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, token):
-        self._token = token
-
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+def fetch_records(search, token):
+    for lat, lng in search:
+        current_country = search.current_country()
         with SgRequests() as http:
             payload = {
                 "request": {
-                    "appkey": self._token,
+                    "appkey": token,
                     "formdata": {
                         "geoip": "false",
                         "dataview": "store_default",
@@ -61,8 +38,8 @@ class ExampleSearchIteration(SearchIteration):
                                 {
                                     "addressline": "seoul",
                                     "country": current_country.upper(),
-                                    "latitude": str(coord[0]),
-                                    "longitude": str(coord[1]),
+                                    "latitude": str(lat),
+                                    "longitude": str(lng),
                                     "state": "",
                                     "province": "",
                                     "city": "",
@@ -104,9 +81,9 @@ class ExampleSearchIteration(SearchIteration):
                 "response"
             ]["collection"]
             if locations:
-                found_location_at(coord[0], coord[1])
+                search.found_location_at(lat, lng)
 
-            logger.info(f"[{current_country}] {coord[0], coord[1]} {len(locations)}")
+            logger.info(f"[{current_country}] {lat, lng} {len(locations)}")
             for _ in locations:
                 location_name = " ".join(
                     bs(_["name"], "lxml").stripped_strings
@@ -144,39 +121,18 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
     with SgRequests(verify_ssl=False) as http:
         token = bs(http.get(locator_url, headers=headers).text, "lxml").select_one(
             "script#brandifyjs"
         )["data-a"]
-        payload = {
-            "request": {"appkey": token, "formdata": {"objectname": "Account::Country"}}
-        }
-        countries = []
-        for cc in http.post(country_url, headers=headers, json=payload).json()[
-            "response"
-        ]["collection"]:
-            country = determine_country(cc["description"])
-            if country == "hk":
-                country = "cn"
-            if country == "uk":
-                country = "gb"
-            if country == "xk":
-                country = "rs"
-            if country in ["ag", "kn", "lc", "vc", ""]:
-                country = "pr"
-            countries.append(country)
         with SgWriter(
             SgRecordDeduper(
                 RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=150
             )
         ) as writer:
-            search_iter = ExampleSearchIteration(token=token)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=countries,
+            search = DynamicGeoSearch(
+                country_codes=SearchableCountries.ALL, granularity=Grain_8()
             )
 
-            for rec in par_search.run():
+            for rec in fetch_records(search, token):
                 writer.write_row(rec)
