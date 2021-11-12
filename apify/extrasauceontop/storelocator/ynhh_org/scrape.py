@@ -47,9 +47,10 @@ def get_driver(url, class_name, driver=None):
 
 
 def get_data():
+    x = 0
     done_q = "No"
     page_number = 0
-    while True:
+    while x == 0:
         start_url = "https://www.ynhh.org/find-a-location.aspx?page=1&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0#sort=relevancy&numberOfResults=25&f:deliverynetwork=[Yale%20New%20Haven%20Hospital]"
         driver = get_driver(start_url, "map-location")
         log.info("got driver")
@@ -169,6 +170,14 @@ def get_data():
             if zipp in state:
                 state = zipp
                 zipp = "<MISSING>"
+
+            if "Fax" in phone:
+                phone = location_soup.find(
+                    "a", attrs={"class": "phone-number"}
+                ).text.strip()
+
+            if location_name == "Rehabilitation/Occupational Health - New Haven":
+                x = 1
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,

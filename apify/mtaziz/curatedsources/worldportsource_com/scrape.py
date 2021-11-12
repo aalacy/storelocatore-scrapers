@@ -135,10 +135,16 @@ def parse_address(raddress):
 
 
 def get_latlng_decimal(tlatlng):
-    deg, minutes, seconds, direction = re.split("[°'\"]", tlatlng)
-    tlatlng_decimal = (
-        float(deg) + float(minutes) / 60 + float(seconds) / (60 * 60)
-    ) * (-1 if direction in ["W", "S"] else 1)
+    tlatlng_decimal = ""
+    try:
+
+        deg, minutes, seconds, direction = re.split("[°'\"]", tlatlng)
+        tlatlng_decimal = (
+            float(deg) + float(minutes) / 60 + float(seconds) / (60 * 60)
+        ) * (-1 if direction in ["W", "S"] else 1)
+    except:
+        tlatlng_decimal = MISSING
+
     return tlatlng_decimal
 
 
@@ -192,36 +198,43 @@ def get_address(seld):
 
 
 def fetch_records(idx2, url_country, sgw: SgWriter):
-    country = url_country["country_name"]
-    logger.info(f"[{idx2}] | [{country}]")
-    page_url = url_country["page_url"]
-    rd = get_response(idx2, page_url)
-    seld = html.fromstring(rd.text, "lxml")
-    lat = get_lat(seld)
-    lng = get_lng(seld)
-    location_name = get_location_name(seld)
-    phone = get_phone(seld)
-    location_type = get_loctype(seld)
-    street_address, city, state, zip_postal, country_code, ra = get_address(seld)
-    store_number = page_url.split("/")[-1].split("_")[-1].replace(".php", "")
-    rec = SgRecord(
-        locator_domain=DOMAIN,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=location_type,
-        latitude=lat,
-        longitude=lng,
-        hours_of_operation=MISSING,
-        raw_address=ra,
-    )
-    sgw.write_row(rec)
+    try:
+        country = url_country["country_name"]
+        logger.info(f"[{idx2}] | [{country}]")
+        page_url = url_country["page_url"]
+        rd = get_response(idx2, page_url)
+        seld = html.fromstring(rd.text, "lxml")
+        lat = get_lat(seld)
+        lng = get_lng(seld)
+        location_name = get_location_name(seld)
+        phone = get_phone(seld)
+        location_type = get_loctype(seld)
+        street_address, city, state, zip_postal, country_code, ra = get_address(seld)
+        if "MISSING" in street_address:
+            street_address = location_name
+        if "MISSING" in country_code:
+            country_code = country
+        store_number = page_url.split("/")[-1].split("_")[-1].replace(".php", "")
+        rec = SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=MISSING,
+            raw_address=ra,
+        )
+        sgw.write_row(rec)
+    except Exception as e:
+        logger.info(f"Please fix this {e} at {idx2} | {page_url} ")
 
 
 def fetch_data(sgw: SgWriter):
