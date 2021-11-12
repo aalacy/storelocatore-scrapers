@@ -23,6 +23,7 @@ def fetch_data():
             and "Bromley - Planning studio" not in line
         ):
             locs.append(line.split('href="')[1].split('"')[0])
+    PSFound = False
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
         website = "ikea.co.uk"
@@ -125,6 +126,12 @@ def fetch_data():
             city = "Glasgow"
             add = "99 Kings Inch Drive"
             zc = "G51 4FB"
+        if "/stores/nottingham" in loc:
+            zc = "NG16 2RP"
+        if "stores/gateshead" in loc:
+            zc = "NE11 9XS"
+        if "stores/milton-keynes" in loc:
+            zc = "MK1 1QB"
         if "planning-studios" not in loc:
             yield SgRecord(
                 locator_domain=website,
