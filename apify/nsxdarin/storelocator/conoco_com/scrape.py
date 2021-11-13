@@ -120,7 +120,7 @@ def fetch_data():
                             if state in usstates:
                                 country = "US"
                             else:
-                                if int(lat) >= 45:
+                                if int(lat.split(".")[0]) >= 45:
                                     country = "CA"
                                 else:
                                     country = "MX"
@@ -145,7 +145,9 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)
