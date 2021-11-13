@@ -47,9 +47,10 @@ def get_driver(url, class_name, driver=None):
 
 
 def get_data():
+    x = 0
     done_q = "No"
     page_number = 0
-    while True:
+    while x == 0:
         start_url = "https://www.ynhh.org/find-a-location.aspx?page=1&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0#sort=relevancy&numberOfResults=25&f:deliverynetwork=[Yale%20New%20Haven%20Hospital]"
         driver = get_driver(start_url, "map-location")
         log.info("got driver")
@@ -121,7 +122,7 @@ def get_data():
             location_soup = bs(driver.page_source, "html.parser")
             latitude = location_soup.find(
                 "input", attrs={"class": "location-geo", "type": "hidden"}
-            )["value"].split(", ")[0]
+            )["value"].split(",")[0]
             longitude = (
                 location_soup.find(
                     "input", attrs={"class": "location-geo", "type": "hidden"}
@@ -166,7 +167,17 @@ def get_data():
                 hours = "<MISSING>"
 
             hours = hours.strip()
+            if zipp in state:
+                state = zipp
+                zipp = "<MISSING>"
 
+            if "Fax" in phone:
+                phone = location_soup.find(
+                    "a", attrs={"class": "phone-number"}
+                ).text.strip()
+
+            if location_name == "Rehabilitation/Occupational Health - New Haven":
+                x = 1
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
@@ -178,7 +189,7 @@ def get_data():
                 "street_address": address,
                 "state": state,
                 "zip": zipp,
-                "phone": phone,
+                "phone": phone.replace("203-867-5254", "").strip(),
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
