@@ -33,7 +33,7 @@ def fetch_data():
                     if aa.strip()
                 ]
                 raw_address = ", ".join(addr)
-                street_address = city = state = zip_postal = ""
+                street_address = city = zip_postal = ""
                 if country.lower() in addr[-1].lower():
                     del addr[-1]
                 c_idx = -2
