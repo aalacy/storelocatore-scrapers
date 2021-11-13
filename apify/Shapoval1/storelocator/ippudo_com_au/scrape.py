@@ -38,6 +38,10 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "AU"
         city = a.city or "<MISSING>"
+        if city == "<MISSING>" and ad.find("Chippendale") != -1:
+            city = "Chippendale"
+        if city == "<MISSING>" and ad.find("Cannington") != -1:
+            city = "Cannington"
         map_link = "".join(d.xpath(".//iframe/@src"))
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()

@@ -23,7 +23,6 @@ def fetch_data():
     country = "GB"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '<a class="Directory-listLink" href="' in line:
             items = line.split('<a class="Directory-listLink" href="')
             for item in items:
@@ -43,7 +42,6 @@ def fetch_data():
         logger.info(city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '="Teaser-titleLink" href="' in line2:
                 items = line2.split('="Teaser-titleLink" href="')
                 for item in items:
@@ -66,7 +64,6 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'class="Hero-locationName" itemprop="name">' in line2:
                 name = line2.split('class="Hero-locationName" itemprop="name">')[
                     1
