@@ -21,6 +21,7 @@ headers = {
 DOMAIN = "https://rexel.pt/"
 MISSING = SgRecord.MISSING
 
+
 def strip_accents(text):
 
     text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
@@ -32,16 +33,18 @@ def fetch_data():
     if True:
         url = "https://www.rexel.pt/lojas/"
         r = session.get(url, headers=headers)
-        loclist =r.text.split('stores: ')[1].split(' ],')[0].split("}")[:-1]
+        loclist = r.text.split("stores: ")[1].split(" ],")[0].split("}")[:-1]
         for loc in loclist:
-            location_name =  strip_accents(loc.split('name: ')[1].split(',')[0].replace("'",''))
+            location_name = strip_accents(
+                loc.split("name: ")[1].split(",")[0].replace("'", "")
+            )
             log.info(location_name)
-            address = loc.split('address: ')[1].split("',")[0].replace("'",'')
+            address = loc.split("address: ")[1].split("',")[0].replace("'", "")
             address = BeautifulSoup(address, "html.parser")
-            address = address.get_text(separator='|', strip=True).split('|')
-            hours_of_operation = strip_accents(address[-1].replace("'",'').replace('00','00-'))
-            
-            raw_address = address[0]+" "+address[1]
+            address = address.get_text(separator="|", strip=True).split("|")
+            hours_of_operation = strip_accents(address[-1].replace("'", ""))
+
+            raw_address = address[0] + " " + address[1]
             pa = parse_address_intl(strip_accents(raw_address))
 
             street_address = pa.street_address_1
@@ -55,9 +58,9 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            
-            latitude = loc.split('latitude: ')[1].split(',')[0]
-            longitude =loc.split('longitude: ')[1].split(',')[0]
+
+            latitude = loc.split("latitude: ")[1].split(",")[0]
+            longitude = loc.split("longitude: ")[1].split(",")[0]
             country_code = "PT"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -74,7 +77,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address
+                raw_address=raw_address,
             )
 
 
