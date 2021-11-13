@@ -122,10 +122,12 @@ def fetch_records(http, search):
             maxZ = search.items_remaining()
         url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
         count = 0
+        locations = {}
         while count < 2:
             try:
                 res = http.get(url, headers=headers)
                 locations = res.json()
+                break
             except Exception:
                 http._client().cookies.clear()
                 http._refresh_ip()
@@ -181,7 +183,7 @@ if __name__ == "__main__":
     )
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=150
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1500
         )
     ) as writer:
         with SgRequests(proxy_country="us") as http:
