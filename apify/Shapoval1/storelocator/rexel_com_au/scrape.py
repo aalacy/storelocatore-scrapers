@@ -34,7 +34,7 @@ def fetch_data(sgw: SgWriter):
             )
         )
 
-        page_url = f"https://www.rexel.de/{slug}"
+        page_url = f"https://www.rexel.com.au/are/{slug}"
 
         phone = j.get("phone")
 
