@@ -73,10 +73,14 @@ def fetch_data():
     )
     for row in data:
         location_name = row["name"]
-        street_address = row["address"]
-        city = row["city"]
+        street_address = row["address"].rstrip(",").strip()
+        if row["city"].isnumeric() and row["postcode"].isnumeric() == False:
+            city = row["postcode"]
+            zip_postal = row["city"]
+        else:
+            city = row["city"]
+            zip_postal = row["postcode"]
         state = MISSING
-        zip_postal = row["postcode"]
         phone = row["phone"]
         country_code = row["country_code"]
         store_number = row["store_id"]
