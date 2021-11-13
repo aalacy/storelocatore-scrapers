@@ -8,14 +8,15 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 
 
-def get_urls():
+def get_params():
     r = session.get(locator_domain, headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//span/@data-glf-ruid")
+    return zip(tree.xpath("//span/@data-glf-ruid"), tree.xpath("//h3/text()"))
 
 
-def get_data(store_number, sgw: SgWriter):
+def get_data(params, sgw: SgWriter):
+    store_number, location_name = params
     data = {
         "#": None,
         "restaurant_uid": store_number,
@@ -34,7 +35,6 @@ def get_data(store_number, sgw: SgWriter):
     )
     j = r.json()["restaurant"]
 
-    location_name = j.get("name")
     a = j.get("restaurantAccount") or {}
     street_address = a.get("street")
     city = a.get("city")
@@ -65,8 +65,9 @@ def get_data(store_number, sgw: SgWriter):
             continue
 
         start = f"{ss//60}:{str(ss%60).zfill(2)}"
-        end = f"{es//60}:{str(ss%60).zfill(2)}"
+        end = f"{es//60}:{str(es%60).zfill(2)}"
         day = days.get(h.get("day_of_week"))
+
         _tmp.append(f"{day}: {start}-{end}")
 
     hours_of_operation = ";".join(_tmp)
@@ -93,10 +94,12 @@ def get_data(store_number, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = get_urls()
+    params = get_params()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        future_to_url = {
+            executor.submit(get_data, param, sgw): param for param in params
+        }
         for future in futures.as_completed(future_to_url):
             future.result()
 
