@@ -1,8 +1,9 @@
 from bs4 import BeautifulSoup
-import csv
-import usaddress
 import re
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -11,65 +12,41 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
 
-    data = []
     pattern = re.compile(r"\s\s+")
-
-    url = "https://traviniaitaliankitchen.com/"
-    r = session.get(url, headers=headers, verify=False)
+    url = "https://traviniaitaliankitchen.com/mobile/travinia-locations.php"
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select_one('li:contains("FIND US")').findAll("a")
+    linklist = soup.findAll("div", {"class": "box-burg"})
 
-    p = 0
     for link in linklist:
-        link = link["href"]
+
+        link = link.find("a")["href"]
         if link == "#":
             continue
         if link.find("https:") == -1:
-            link = "https://www.traviniaitaliankitchen.com/" + link
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        content = soup.findAll("div", {"class": "box3content"})[1].text
-        content = re.sub(pattern, "\n", content).lstrip()
+            link = "https://www.traviniaitaliankitchen.com/mobile/" + link
+        r = session.get(link, headers=headers)
+        try:
+            soup = BeautifulSoup(r.text, "html.parser")
+            content = soup.find("h3").text
+        except:
+            continue
+        content = re.sub(pattern, "\n", content).strip().splitlines()
 
-        title, content = content.split("\n", 1)
-        phone, content = content.split("\n", 1)
-        address, content = content.split("HOURS")
-        hours = content.split("VIEW")[0]
-        address = address.replace("\n", " ")
-        hours = hours.replace("\n", " ")
+        title = content[0]
+        phone = content[-1]
+        city, state = content[-2].split(", ", 1)
+        street = " ".join(content[1 : len(content) - 2])
+        state, pcode = state.split(" ", 1)
 
+        hours = soup.text.split("HOURS", 1)[1].split("FIND", 1)[0]
+        hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
+        try:
+            hours = hours.split("(Brunch", 1)[0]
+        except:
+            pass
         try:
             lat, longt = (
                 r.text.split('"https://www.google.com/maps', 1)[1]
@@ -78,64 +55,44 @@ def fetch_data():
                 .split(",")
             )
         except:
-            lat = longt = "<MISSING>"
-        address = usaddress.parse(address)
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-        street = street.lstrip().replace(",", "")
-        city = city.lstrip().replace(",", "")
-        state = state.lstrip().replace(",", "")
-        pcode = pcode.lstrip().replace(",", "")
-
-        data.append(
-            [
-                "https://www.traviniaitaliankitchen.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+            try:
+                lat, longt = (
+                    r.text.split('"https://www.google.com/maps', 1)[1]
+                    .split("@", 1)[1]
+                    .split(",16z", 1)[0]
+                    .split(",")
+                )
+            except:
+                lat = longt = "<MISSING>"
+        if len(street) < 3:
+            street = title
+            title = city
+        yield SgRecord(
+            locator_domain="https://www.traviniaitaliankitchen.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

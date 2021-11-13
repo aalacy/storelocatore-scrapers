@@ -67,6 +67,9 @@ def fetch_data():
         response = session.get(urljoin(start_url, url))
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//div[@class="stations"]//a/@href')
+        all_locations += dom.xpath(
+            '//a[@class="expanded dropdown gtm" and contains(@href, "/coverage-area/")]/@href'
+        )
         all_urls += dom.xpath(
             '//h2[contains(text(), "Canadian Service Centers")]/following-sibling::ul//a/@href'
         )
@@ -84,7 +87,10 @@ def fetch_data():
             '//h4[contains(text(), "Phone Number")]/following-sibling::div/text()'
         )
         phone = phone[0] if phone else ""
-        geo = re.findall(r"LatLng\((.+?)\);", loc_response.text)[0].split(", ")
+        geo = re.findall(r"LatLng\((.+?)\);", loc_response.text)
+        if not geo:
+            continue
+        geo = geo[0].split(", ")
 
         item = SgRecord(
             locator_domain=domain,

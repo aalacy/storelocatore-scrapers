@@ -351,7 +351,7 @@ def fetch_data():
         dedup_tracker=tracker,
     )
 
-    with ThreadPoolExecutor(max_workers=6) as executor, get_driver() as driver:
+    with ThreadPoolExecutor(max_workers=10) as executor, get_driver() as driver:
         for page in (near_me_config, stores_config):
             count = 0
             state_urls = []

@@ -15,6 +15,8 @@ base_url = (
     "https://uae.kfc.me/Handlers/ItemsInfo.ashx?l=en&isFullData=0&ts=202108111428"
 )
 
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -30,11 +32,16 @@ def fetch_data():
             .strip()[:-1]
         )
         for key, _ in locations.items():
-            if "Test" in _:
+            if "Test" in _["Name"]:
                 continue
             city = cities.get(str(_["CityID"]), {})
             location_name = _["Name"].replace("–", "-")
-            hours = f"{_['workHourStart']}-{_['workHourEnd']}"
+            hours = []
+            for day in days:
+                if f"{day}DeliveryStart" in _:
+                    start = _[f"{day}DeliveryStart"]
+                    end = _[f"{day}DeliveryEnd"]
+                    hours.append(f"{day}: {start} - {end}")
             page_url = f"https://uae.kfc.me/#/store/{_['ID']}"
             _addr = _["Address"]
             if "UAE" not in _addr and "United Arab Emirates" not in _addr:
@@ -57,7 +64,7 @@ def fetch_data():
                 longitude=_["MapLocation"]["Longitude"],
                 country_code="UAE",
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation="; ".join(hours),
                 raw_address=_["Address"].strip(),
             )
 

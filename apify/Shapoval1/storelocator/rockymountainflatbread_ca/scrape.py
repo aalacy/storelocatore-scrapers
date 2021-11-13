@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -19,10 +19,8 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath("//h1/a")
     for d in div:
 
-        page_url = "".join(d.xpath(".//@href"))
-        if page_url.find("surrey") != -1:
-            continue
-
+        slug = "".join(d.xpath(".//@href")).split("/")[-2]
+        page_url = f"https://www.rockymountainflatbread.ca/locations/{slug}/"
         location_name = "".join(d.xpath(".//text()"))
         country_code = "CA"
 
@@ -37,9 +35,27 @@ def fetch_data(sgw: SgWriter):
             )
             or "<MISSING>"
         )
-        if page_url.find("banff") != -1 and ad == "<MISSING>":
-            continue
-        a = parse_address(International_Parser(), ad)
+
+        if ad == "<MISSING>":
+            ad = (
+                "".join(
+                    tree.xpath(
+                        '//*[@style="font-size: 54px;color: #ffffff;text-align: center;font-family:Josefin Sans;font-weight:700;font-style:normal"]/following-sibling::*[1]/text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+        if ad == "<MISSING>":
+            ad = (
+                "".join(
+                    tree.xpath(
+                        '//*[@style="font-size: 52px;color: #ffffff;text-align: center;font-family:Josefin Sans;font-weight:700;font-style:normal"]/following-sibling::*[1]/text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+
+        a = parse_address(USA_Best_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
@@ -47,8 +63,11 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = "<MISSING>"
         map_link = "".join(tree.xpath("//iframe/@src"))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = "<MISSING>"
         if page_url.find("canmore") != -1:
             phone = "".join(tree.xpath('//a[./span[contains(text(), "CALL")]]/@href'))
@@ -58,7 +77,9 @@ def fetch_data(sgw: SgWriter):
             postal = "V5V 3Y7"
         if page_url.find("kitsilano") != -1:
             phone = "".join(
-                tree.xpath('//p[contains(text(), "@")]/preceding-sibling::p[1]/text()')
+                tree.xpath(
+                    '//*[@style="font-size: 54px;color: #ffffff;text-align: center;font-family:Josefin Sans;font-weight:700;font-style:normal"]/following-sibling::*[2]//text()'
+                )
             )
             postal = "V6J 1G5"
         if page_url.find("calgary") != -1:
@@ -70,7 +91,13 @@ def fetch_data(sgw: SgWriter):
             " ".join(tree.xpath('//div[@class="diamond-content"]//text()'))
             .replace("\n", "")
             .strip()
-        )
+        ) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(tree.xpath("//h4/following-sibling::p//text()"))
+                .replace("\n", "")
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

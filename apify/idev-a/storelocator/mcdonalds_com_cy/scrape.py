@@ -24,6 +24,7 @@ def fetch_data():
             raw_address = (
                 " ".join(_.select_one(".restaurant-location__address").stripped_strings)
                 .replace("\n", " ")
+                .replace("\r", "")
                 .replace(",", " ")
                 .replace("Cyprus", "")
                 .strip()
@@ -63,6 +64,7 @@ def fetch_data():
             phone = ""
             if _.select_one("a.phone"):
                 phone = _.select_one("a.phone").text.strip()
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=href.split("key=")[-1],

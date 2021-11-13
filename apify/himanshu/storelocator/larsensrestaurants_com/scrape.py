@@ -1,119 +1,77 @@
-import csv
-import json
-import re
-
-from bs4 import BeautifulSoup
-
+from sglogging import sglog
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "larsensrestaurants_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-
-def write_output(data):
-    with open("data.csv", "w") as output_file:
-        writer = csv.writer(output_file, delimiter=",")
-        # header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # body
-        for row in data or []:
-            writer.writerow(row)
+DOMAIN = "https://www.larsensrestaurants.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-    }
-
-    get_url = "https://www.larsensrestaurants.com/locations-and-menus"
-    base_url = "https://larsensrestaurants.com/"
-    r1 = session.get(base_url, headers=headers)
-    soup1 = BeautifulSoup(r1.text, "lxml")
-    hours_list = []
-    l_name = []
-    for h in soup1.findAll("div", class_="hours"):
-        hours = " ".join(list(h.stripped_strings)).split("Join us")[0]
-        if "Happy Hour Daily*" in hours:
-            hours = hours.split("Happy Hour Daily*")[0]
-        hours_list.append(hours)
-        l_name.append(h.parent.h4.text.strip())
-
-    r = session.get(get_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    main = soup.find("script", {"class": "js-react-on-rails-component"}).contents[0]
-    js = json.loads(main)
-
-    obj = js["preloadQueries"][0]["data"]["restaurant"]["homePage"]["sections"][-1][
-        "locations"
-    ]
-    for index, i in enumerate(obj):
-        l_name.append(i["name"].strip())
-        location_name = i["name"].strip()
-        address = i["streetAddress"]
-        city = i["city"]
-        state = i["state"]
-        zip = i["postalCode"]
-        country_code = i["country"]
-        store_number = i["id"]
-        phone = i["phone"]
-        lat = i["lat"]
-        lng = i["lng"]
-        page_url = (
-            "https://www.larsensrestaurants.com/" + str(i["slug"]) + "-california"
-        )
-
-        h_list = []
-        for i in range(len(hours_list)):
-            if l_name[i] == location_name:
-                h_list.append(hours_list[i])
-
-        hour = " ".join(h_list)
-
-        if "Currently Remodeling" in hour:
-            location_name = location_name + " (Currently Remodeling)"
-        hour = hour.replace("**Currently Remodeling**", "")
-        hour = (re.sub("Due to.+ DoorDash. ", " ", hour)).strip()
-        hour = hour.split("Due to")[0].strip()
-        hour = (re.sub(" +", " ", hour)).strip()
-
-        store = []
-        store.append(base_url if base_url else "<MISSING>")
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
-        store.append(hour)
-        store.append(page_url)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
+    if True:
+        url = "https://www.larsensrestaurants.com/"
+        r = session.get(url, headers=headers)
+        loclist = r.text.split("window.POPMENU_APOLLO_STATE =")[1].split(
+            '"CustomPageSelectedLocation'
+        )[0]
+        loclist = loclist.split('"RestaurantLocation:')[1:]
+        for loc in loclist:
+            store_number = loc.split('"id":')[1].split(",")[0]
+            phone = loc.split('"displayPhone":"')[1].split('"')[0]
+            street_address = loc.split('"streetAddress":"')[1].split('"')[0]
+            city = loc.split('"city":"')[1].split('"')[0]
+            country_code = loc.split('"country":"')[1].split('"')[0]
+            state = loc.split('"state":"')[1].split('"')[0]
+            zip_postal = loc.split('"postalCode":"')[1].split('"')[0]
+            latitude = loc.split('"lat":')[1].split('"')[0]
+            longitude = loc.split('"lng":')[1].split('"')[0]
+            hours_of_operation = loc.split('"schemaHours":["')[1].split("]")[0]
+            page_url = loc.split('"slug":"')[1].split('"')[0]
+            page_url = "https://www.larsensrestaurants.com/" + page_url
+            location_name = city + ", " + state
+            zip_postal = zip_postal.split("-")[0]
+            log.info(page_url)
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

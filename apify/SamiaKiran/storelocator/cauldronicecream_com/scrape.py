@@ -1,3 +1,4 @@
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -34,19 +35,39 @@ def fetch_data():
                 continue
             location_name = loc.find("h3").text
             log.info(location_name)
-            address = temp[0].get_text(separator="|", strip=True).split("|")
-            street_address = address[0]
-            address = address[1].split(",")
-            city = address[0].replace("#60", "").replace("\n", "")
-            state = address[1]
-            zip_postal = MISSING
-            country_code = "US"
             phone = temp[2].text
             hours_of_operation = (
                 temp[1].get_text(separator="|", strip=True).replace("|", " ")
             )
             if "Please call ahead to check" in hours_of_operation:
                 hours_of_operation = MISSING
+            address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

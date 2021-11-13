@@ -27,9 +27,13 @@ def fetch_data():
     for state_url in all_states:
         full_state_url = urllib.parse.urljoin(start_url, state_url)
         state_response = session.get(full_state_url, headers=hdr)
+        if state_response.status_code != 200:
+            continue
         state_dom = etree.HTML(state_response.text)
 
-        all_stores = state_dom.xpath('//div/div[p[contains(text(), "Store List")]]')
+        all_stores = state_dom.xpath(
+            '//div[@class="inner-container storefinder-details view-all-stores"]/div[1]/div[@id]'
+        )
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
             if store_url and "/store/null" not in store_url:
@@ -37,6 +41,8 @@ def fetch_data():
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"
                 store_response = session.get(store_url, headers=hdr)
+                if store_response.status_code != 200:
+                    continue
                 store_dom = etree.HTML(store_response.text)
                 data = store_dom.xpath(
                     '//script[contains(text(), "storeInformation")]/text()'
@@ -49,6 +55,8 @@ def fetch_data():
                 data = demjson.decode(data)
 
                 store_number = data["name"]
+                if not store_number:
+                    store_number = SgRecord.MISSING
                 location_name = store_dom.xpath('//h1[@itemprop="name"]/text()')
                 if not location_name:
                     location_name = store_name_fromlist
@@ -104,6 +112,8 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
                 hours_of_operation = "<MISSING>"
+            if location_name == "<MISSING>":
+                continue
 
             item = SgRecord(
                 locator_domain=domain,
@@ -127,11 +137,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)

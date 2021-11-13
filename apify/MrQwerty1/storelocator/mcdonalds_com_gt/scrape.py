@@ -31,7 +31,7 @@ def fetch_data(sgw: SgWriter):
 
     for d in divs:
         location_name = "".join(d.xpath("./@title"))
-        raw_address = "".join(d.xpath("./@data-direccion"))
+        raw_address = "".join(d.xpath("./@data-direccion")).strip()
         street_address, city, state, postal = get_international(raw_address)
         latitude = "".join(d.xpath("./@data-lat"))
         longitude = "".join(d.xpath("./@data-lng"))
