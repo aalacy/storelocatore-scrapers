@@ -31,7 +31,7 @@ def fetch_data():
         )
         for loc in loclist:
             if loc.text.find("VIEW DETAILS") > -1:
-                page_url = "https://portaviarestaurants.com/beverly-hills" + loc["href"]
+                page_url = "https://portaviarestaurants.com" + loc["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
@@ -39,10 +39,13 @@ def fetch_data():
                     "h2", {"class": "elementor-heading-title elementor-size-default"}
                 )
                 location_name = location_name[0].text + " " + location_name[1].text
+                if "We are open for" in location_name:
+                    location_name = location_name.split("We are open for")[0]
                 temp = soup.findAll("span", {"class": "elementor-icon-list-text"})
                 phone = temp[0].text
-                address = temp[2].text + " " + temp[3].text
+                address = temp[2].text
                 raw_address = address.replace(",", " ")
+
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1

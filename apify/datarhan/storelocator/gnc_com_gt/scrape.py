@@ -31,7 +31,7 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
-        phone = poi_html.xpath('.//span[contains(text(), "Tel.")]/text()')
+        phone = poi_html.xpath('.//*[contains(text(), "Tel.")]/text()')
         phone = phone[0].replace("Tel.", "") if phone else ""
 
         item = SgRecord(

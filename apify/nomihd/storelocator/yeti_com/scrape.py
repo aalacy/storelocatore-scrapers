@@ -65,7 +65,7 @@ def fetch_data():
 
         if "Coming Soon" in store_res.text:
             continue
-        location_name = "".join(store_sel.xpath("//title/text()"))
+        location_name = "".join(store_sel.xpath("//div/h1/text()"))
 
         store_info = list(
             filter(
@@ -135,6 +135,7 @@ def fetch_data():
                 1
             ].strip()
 
+        hours_of_operation = hours_of_operation.split("; Bar Open Effective")[0].strip()
         map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
 
         latitude, longitude = get_latlng(map_link)
