@@ -10,6 +10,10 @@ from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+
 DOMAIN = "sonicdrivein.com"
 website = "https://www.sonicdrivein.com"
 json_url = "https://maps.locations.sonicdrivein.com/api/getAsyncLocations?template=search&level=search&search="
@@ -20,14 +24,25 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
-def fetch_concurrent_single(zip, tried=0):
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
+def request_with_retries(url):
+    log.info(f"API URL: {url}")
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(3, 7))
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+            log.info(f"STATUS Return: {response.status_code}")
+            return response_json
+        raise Exception(f"HTTP Error Code: {response.status_code}")
+
+
+def fetch_concurrent_single(zip):
     try:
         response = request_with_retries(f"{json_url}{zip}")
-        response = json.loads(response.text)
         data = json.loads(
             "["
             + response["maplist"]
@@ -37,10 +52,7 @@ def fetch_concurrent_single(zip, tried=0):
         )
         return zip, data
     except Exception as e:
-        if tried == 4:
-            log.debug(f"Error in {zip} : {e}")
-            return zip, []
-        return fetch_concurrent_single(zip, tried + 1)
+        log.info(f"Error in {zip} : {e}")
 
 
 def fetch_concurrent_list(list, occurrence=max_workers):
@@ -57,14 +69,10 @@ def fetch_concurrent_list(list, occurrence=max_workers):
         for zip, data in executor.map(fetch_concurrent_single, list):
             count = count + 1
             if count % reminder == 0:
-                log.debug(f"Concurrent Operation count = {count}")
-            log.debug(f"{count}. {zip}  stores = {len(data)}")
+                log.info(f"Concurrent Operation count = {count}")
+            log.info(f"{count}. {zip}  stores = {len(data)}")
             output = output + data
     return output
-
-
-def request_with_retries(url):
-    return session.get(url, headers=headers)
 
 
 def get_var_name(value):

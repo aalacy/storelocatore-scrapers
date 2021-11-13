@@ -7,6 +7,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 import time
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("actionkarate")
 
@@ -38,8 +40,9 @@ def _close(driver):
         if close_btn:
             break
         close_retry -= 1
-    if driver.find_element_by_xpath(
-        "//html/body/div[1]/div/div/div/div/div[3]/div/div/div/aside/div[1]/div/button"
+    if driver.find_element(
+        By.XPATH,
+        "//html/body/div[1]/div/div/div/div/div[3]/div/div/div/aside/div[1]/div/button",
     ):
         driver.execute_script("arguments[0].click();", close_btn)
     time.sleep(1)
@@ -88,31 +91,33 @@ def fetch_data():
 
             retry_times = 3
             while retry_times:
-                location_name = driver.find_element_by_xpath("//h1[1]").text
+                location_name = driver.find_element(By.XPATH, "//h1[1]").text
                 retry_times -= 1
 
             logger.info(f"----------- {location_name}")
             addr = [
-                _.text
-                for _ in driver.find_elements_by_xpath(
-                    "//div[@class='contact-detail']/p[2]/span"
+                _.text.strip()
+                for _ in driver.find_elements(
+                    By.XPATH, "//div[@class='contact-detail']/p[2]/span"
                 )
+                if _.text.strip()
             ]
-            phone = driver.find_element_by_xpath(
-                "//div[@class='contact-detail']/p[1]"
+            phone = driver.find_element(
+                By.XPATH, "//div[@class='contact-detail']/p[1]"
             ).text
 
             yield SgRecord(
                 store_number=driver.current_url.split("-")[-1],
                 page_url=driver.current_url,
                 location_name=location_name,
-                street_address=addr[0].replace(",", ""),
-                city=addr[1].split(",")[0].strip(),
-                state=" ".join(addr[1].split(",")[1].strip().split(" ")[:-1]),
-                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                street_address=" ".join(addr[:-1]).replace(",", ""),
+                city=addr[-1].split(",")[0].strip(),
+                state=" ".join(addr[-1].split(",")[1].strip().split(" ")[:-1]),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="us",
                 phone=phone,
                 locator_domain=locator_domain,
+                raw_address=" ".join(addr),
             )
             toggle(driver)
 
@@ -122,7 +127,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
