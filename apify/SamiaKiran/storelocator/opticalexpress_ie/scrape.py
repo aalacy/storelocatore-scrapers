@@ -65,7 +65,8 @@ def fetch_data():
                 soup.find("div", {"class": "contact-information"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
-                .replace("Local enquiries", "").replace('+','')
+                .replace("Local enquiries", "")
+                .replace("+", "")
             )
             hours_of_operation = (
                 soup.find("ul", {"class": "opening-times"})
