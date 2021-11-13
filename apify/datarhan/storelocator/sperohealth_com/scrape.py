@@ -39,7 +39,7 @@ def fetch_data():
         phone = poi["phone"]
         latitude = poi["lat"]
         longitude = poi["lng"]
-
+        location_type = ""
         if "Coming Soon" in location_name:
             location_name = location_name.split("(C")[0].strip()
             location_type = "Coming Soon"
