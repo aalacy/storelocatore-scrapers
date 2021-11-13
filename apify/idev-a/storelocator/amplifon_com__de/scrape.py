@@ -9,6 +9,7 @@ import time
 import json
 from sglogging import SgLogSetup
 import ssl
+from tenacity import retry
 
 try:
     _create_unverified_https_context = (
@@ -47,6 +48,19 @@ def get_bs(driver=None, url=None):
             driver = None
 
     return bs(driver.page_source, "lxml")
+
+
+@retry
+def get_json(driver=None, url=None):
+    sp1 = get_bs(driver=driver, url=url)
+    if driver.current_url in [de_base_url, it_base_url, fr_base_url]:
+        return None, None
+    try:
+        _ = json.loads(sp1.find("script", type="application/ld+json").string)
+    except:
+        driver = get_driver()
+
+    return _, sp1
 
 
 def fetch_data():
@@ -102,10 +116,9 @@ def fetch_data():
     logger.info(f"{len(locations)} locations")
     for page_url in locations:
         logger.info(f"[***] {page_url}")
-        sp1 = get_bs(driver=driver, url=page_url)
-        if driver.current_url in [de_base_url, it_base_url, fr_base_url]:
+        _, sp1 = get_json(driver, page_url)
+        if not _ or not sp1:
             continue
-        _ = json.loads(sp1.find("script", type="application/ld+json").string)
         phone = ""
         if sp1.select_one("span.phone-list"):
             phone = sp1.select_one("span.phone-list").text.strip()

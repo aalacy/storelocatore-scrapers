@@ -35,7 +35,7 @@ def fetch_data():
                 street_address = loc["address"] + " " + loc["address2"]
             except:
                 street_address = loc["address"]
-            city = loc["city"]
+            city = loc["city"].replace(",", "")
             state = loc["state"]
             country_code = loc["country"]
             zip_postal = loc["zip"]
