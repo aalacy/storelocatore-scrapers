@@ -68,6 +68,8 @@ def fetch_data():
                 .strip()
                 .split("; Temporarily Closed")[0]
                 .strip()
+                .split("; Shop with")[0]
+                .strip()
             )
 
             store_number = store_json["id"]

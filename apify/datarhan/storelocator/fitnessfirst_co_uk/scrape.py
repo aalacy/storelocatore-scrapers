@@ -6,7 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -19,23 +18,20 @@ def fetch_data():
         page_url = urljoin(start_url, poi["Url"])
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        addr = parse_address_intl(poi["SingleLineAddress"])
+        raw_address = poi["SingleLineAddress"].split(", ")
         hoo = loc_dom.xpath(
             '//h3[contains(text(), "Opening Hours")]/following-sibling::dl[1]//text()'
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=poi["Name"],
-            street_address=street_address,
-            city=addr.city,
+            street_address=", ".join(raw_address[:-2]),
+            city=raw_address[-2],
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=raw_address[-1],
             country_code="GB",
             store_number=poi["Code"],
             phone=poi["Phone"],

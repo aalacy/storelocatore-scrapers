@@ -1,61 +1,90 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
+from sglogging import sglog
+
+locator_domain = "https://www.kfc.co.il"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.kfc.co.il"
     api_url = "https://www.kfc.co.il/branches/"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./a[text()="טלפון"]]')
-    for d in div:
-
-        page_url = "https://www.kfc.co.il/branches/"
-        location_name = "".join(
-            d.xpath(
-                './/preceding::div[contains(@class, "elementor-column-wrap elementor-element-populated")][1]/following::p[1]//text()'
+    try:
+        r = SgRequests.raise_on_err(session.get(api_url, headers=headers))
+        tree = html.fromstring(r.text)
+        div = (
+            "".join(
+                tree.xpath(
+                    '//script[contains(text(), "var address_list_76c3d36 = ")]/text()'
+                )
             )
+            .split("var address_list_76c3d36 = ")[1]
+            .split(";")[0]
+            .strip()
         )
-        street_address = " ".join(
-            d.xpath(
-                './/preceding::div[./a[text()="כתובת"]][1]/following::div[1]//p//text()'
+        js = json.loads(div)
+        for j in js:
+            ad = "".join(j.get("address"))
+            info = j.get("infoWindow")
+            a = html.fromstring(info)
+            al = a.xpath("//*//text()")
+            page_url = "https://www.kfc.co.il/branches/"
+            location_name = "".join(al[1]).strip()
+            aa = parse_address(International_Parser(), ad)
+            street_address = f"{aa.street_address_1} {aa.street_address_2}".replace(
+                "None", ""
+            ).strip()
+            postal = aa.postcode or "<MISSING>"
+            country_code = "IL"
+            city = ad.split(",")[-2].strip()
+            latitude = j.get("lat")
+            longitude = j.get("lng")
+            hours_of_operation = "".join(al[-1]).strip()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            phone = (
+                "".join(
+                    tree.xpath(
+                        f'//h5[text()="{location_name}"]/following::div[./div/h2[text()="טלפון"]][1]/following-sibling::div[1]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
             )
-        )
-        country_code = "IL"
-        phone = "".join(d.xpath(".//following::div[1]//p/text()"))
-        hours_of_operation = " ".join(
-            d.xpath(
-                './/preceding::div[./a[text()="שעות פתיחה"]][1]/following::div[1]//p//text()'
+            phone = " ".join(phone.split())
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=SgRecord.MISSING,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=ad,
             )
-        )
 
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=SgRecord.MISSING,
-            state=SgRecord.MISSING,
-            zip_postal=SgRecord.MISSING,
-            country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
-            hours_of_operation=hours_of_operation,
-        )
+            sgw.write_row(row)
 
-        sgw.write_row(row)
+    except Exception as e:
+        log.info(f"Err at #L100: {e}")
 
 
 if __name__ == "__main__":
