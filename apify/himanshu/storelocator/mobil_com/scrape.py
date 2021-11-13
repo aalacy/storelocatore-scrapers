@@ -28,7 +28,9 @@ def fetch_data():
             street_address = poi["AddressLine1"]
             if poi["AddressLine2"]:
                 street_address += ", " + poi["AddressLine2"]
-            hoo = etree.HTML(poi["WeeklyOperatingHours"]).xpath("//text()")
+            hoo = ""
+            if poi["WeeklyOperatingHours"]:
+                hoo = etree.HTML(poi["WeeklyOperatingHours"]).xpath("//text()")
             hoo = " ".join(hoo)
 
             item = SgRecord(
