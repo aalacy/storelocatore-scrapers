@@ -42,11 +42,11 @@ def fetch_data():
                 ) = (
                     zip_postal
                 ) = phone = location_name = latitude = longitude = store_number = ""
-                hours = []
+                temp = {}
                 for _ in loc["fields"]:
                     if _["key"] == "addressLineOne":
                         street_address = _["value"]
-                    if _["key"] == "addressLineTwo" and _["value"]:
+                    if _["key"] == "addressLineTwo" and _["value"] != "null":
                         street_address += " " + _["value"]
                     if _["key"] == "locality":
                         city = _["value"]
@@ -65,7 +65,15 @@ def fetch_data():
                     if _["key"] == "storeCode":
                         store_number = _["value"]
                     if _["key"].replace("Hours", "") in days:
-                        hours.append(f"{_['key'].replace('Hours', '')}: {_['value']}")
+                        temp[f"{_['key'].replace('Hours', '')}"] = _["value"]
+
+                if zip_postal == "null":
+                    zip_postal = ""
+
+                hours = []
+                for day in days:
+                    if temp.get(day):
+                        hours.append(f"{day}: {temp[day]}")
 
                 yield SgRecord(
                     page_url="https://www.carrefour.com.ar/sucursales",
