@@ -74,7 +74,7 @@ def fetch_data():
     for row in data:
         location_name = row["name"]
         street_address = row["address"].rstrip(",").strip()
-        if row["city"].isnumeric() and row["postcode"].isnumeric() == False:
+        if row["city"].isnumeric() and row["postcode"].isnumeric() is False:
             city = row["postcode"]
             zip_postal = row["city"]
         else:
