@@ -42,14 +42,12 @@ def fetch_data():
 
         stores = search_sel.xpath('//div[@class="goweb-dealers"]/div')
 
-        is_more_available = False
         for store in stores:
             page_url = search_url
             locator_domain = website
             location_name = store.xpath("h2/text()")
             if len(location_name) <= 0:
                 location_name = store.xpath("h4/text()")
-                is_more_available = True
 
             store_info = store.xpath("div//text()")
             if len(store_info) <= 0:
