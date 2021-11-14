@@ -38,7 +38,7 @@ def get_data(slug, sgw: SgWriter):
 
     location_name = "".join(d.xpath(".//h3/text()")).strip()
     raw_address = " ".join("".join(d.xpath(".//address[not(./a)]/text()")).split())
-    if "Opening" in raw_address:
+    if "Opening" in raw_address or "Coming" in raw_address:
         return
     street_address, city, state, postal, country_code = get_international(raw_address)
     if not city:
