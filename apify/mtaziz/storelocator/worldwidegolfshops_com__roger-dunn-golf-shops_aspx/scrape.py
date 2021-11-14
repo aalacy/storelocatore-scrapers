@@ -93,7 +93,6 @@ def get_driver(url, xpath, driver=None):
     return driver
 
 
-
 def get_phone(sel, page_url):
     # Phone
     phone = ""
