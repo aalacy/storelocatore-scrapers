@@ -58,7 +58,10 @@ def fetch_data():
             lat = ""
             lng = ""
             CS = False
+            TC = False
             for line2 in r2.iter_lines():
+                if "Temporarily Closed" in line2:
+                    TC = True
                 if "- Coming Soon<" in line2:
                     CS = True
                 if "><h4>" in line2 and add == "":
@@ -116,23 +119,26 @@ def fetch_data():
             if phone == "":
                 phone = "<MISSING>"
             add = add.strip().replace("  ", " ").replace("  ", " ")
+            if TC:
+                hours = "Temporarily Closed"
             if CS is False:
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+                if city != "<MISSING>" and "www.umamiburger.com/careers" not in loc:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
