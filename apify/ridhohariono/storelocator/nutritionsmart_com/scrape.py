@@ -85,7 +85,7 @@ def fetch_data():
             "h3", {"class": "elementor-heading-title elementor-size-default"}
         ).text.strip()
         if "palm-beach-gardens-information" in page_url:
-            info = soup.select(
+            info = row.select(
                 "div.make-column-clickable-elementor.elementor-column.elementor-col-25.elementor-top-column.elementor-element  div.elementor-widget-container div.elementor-text-editor.elementor-clearfix"
             )
             raw_address = info[0].get_text(strip=True, separator=",")
@@ -98,7 +98,7 @@ def fetch_data():
             street_address = "464 Sw Port St. Lucie Blvd"
             city = "Port St. Lucie"
         country_code = "US"
-        phone = info[1].text.strip()
+        phone = store.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
         store_number = MISSING
         location_type = MISSING
         latitude = MISSING
