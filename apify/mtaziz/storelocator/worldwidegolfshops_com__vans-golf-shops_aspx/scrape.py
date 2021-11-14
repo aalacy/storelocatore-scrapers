@@ -120,7 +120,6 @@ def get_store_urls():
 
 def get_data_for_mesa(page_url):
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-    xpath_store_hours = '//a[contains(text(), "Golf Shops")]'
     driver1 = get_driver1(start_url)
     sel_mesa = html.fromstring(driver1.page_source, "lxml")
 
