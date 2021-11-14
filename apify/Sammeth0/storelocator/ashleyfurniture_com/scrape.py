@@ -40,7 +40,6 @@ def get_data(coords, sgw: SgWriter):
             state_slug = state.replace(" ", "-").lower()
             if country_code == "US":
                 page_url = f"https://stores.ashleyfurniture.com/store/us/{state_slug}/{city_slug}/{store_number}/"
-                print(page_url)
             if country_code == "CA":
                 page_url = f"https://stores.ashleyfurniture.com/store/ca/{state_slug}/{city_slug}/{store_number}/"
             phone = j.get("ExtraData").get("Phone") or "<MISSING>"
