@@ -9,25 +9,23 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.perekrestok.ru"
     api_url = "https://www.perekrestok.ru/api/customer/1.4.1.0/shop/points"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Auth": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiJ9.eyJpYXQiOjE2MzM0NDAyNDQsImV4cCI6MTYzMzQ2OTA0NCwiZCI6IjEuNC4xLjA6YzBkNTlkYWQtMmMxMS00MzRlLWJjNWUtZjMzZTMwN2ZlOGI2IiwianRpIjoiZGI3NTY4NWEtODUzNC00ZWI0LWI2ZTMtMDc0NTMzMTBjMDBhIiwiaXAiOiIxNzIuMjAuOS4xMTAiLCJ1IjoiODA5MmZiNWMtZjI1OC00ODY1LWE4MDAtMDcwMmFlN2Y1OTQyIn0.ATE6Rd65te4hv0ZZMBXsag6JOxu3gXsN1fpOJdJrPoyXKWhuqvpBHdZKkwra0FW8fd_O15XIQ9cqsJ1VilBxIRgnAV03lIyFKWbMWMvOaaMhvBuYQ3oPWGflN8pdGRHPn9y5i982alrUKI0pO2D9ZM31SnsHEdeE36H5nRL2RVH1HKDk",
+        "Auth": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiJ9.eyJpYXQiOjE2MzY4NDcxMjAsImV4cCI6MTYzNjg3NTkyMCwiZCI6IjEuNC4xLjA6YzBkNTlkYWQtMmMxMS00MzRlLWJjNWUtZjMzZTMwN2ZlOGI2IiwianRpIjoiZGI3NTY4NWEtODUzNC00ZWI0LWI2ZTMtMDc0NTMzMTBjMDBhIiwiaXAiOiIxNzIuMjAuOS4xMTAiLCJ1IjoiODA5MmZiNWMtZjI1OC00ODY1LWE4MDAtMDcwMmFlN2Y1OTQyIn0.AX2doXx6Fsk_umAa_kE7w5nzfxVomz-zkntcozPlVPcnZ2o2QPx0Su9TtBp0G-0_GbbAbxvUCfajvowCU0x0UMZ0AGyDpGshQS7yNLXKhPIfjRnUgEAwwIP281ZmSlrmsrw4MqjZZA9Kdp0lBNtn00lDE_5CZ-pngexH1yQDWPk4Jhj2",
         "Connection": "keep-alive",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
-        "If-None-Match": '"e2da21f1312ad12943a5bb8e18dfa82b"',
-        "Cache-Control": "max-age=0",
+        "TE": "trailers",
     }
     r = session.get(api_url, headers=headers)
     js = r.json()["content"]["items"]
     for j in js:
         ids = j.get("id")
 
-        session = SgRequests()
         r = session.get(
             f"https://www.perekrestok.ru/api/customer/1.4.1.0/shop/{ids}",
             headers=headers,

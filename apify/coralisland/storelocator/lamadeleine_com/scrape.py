@@ -50,7 +50,13 @@ def fetch_data(sgw: SgWriter):
         output.append(
             validate(store["acf"]["locationHero"]["storeName"])
         )  # location name
-        output.append(validate(store["acf"]["locationHero"]["addressLine1"]))  # address
+        output.append(
+            validate(
+                store["acf"]["locationHero"]["addressLine1"]
+                + " "
+                + store["acf"]["locationHero"]["addressLine2"]
+            )
+        )  # address
         output.append(validate(store["acf"]["locationHero"]["city"]))  # city
         output.append(validate(store["acf"]["locationHero"]["state"]))  # state
         output.append(validate(store["acf"]["locationHero"]["zip"]))  # zipcode

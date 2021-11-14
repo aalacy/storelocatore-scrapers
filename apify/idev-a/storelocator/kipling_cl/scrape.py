@@ -32,17 +32,11 @@ def fetch_data():
             for hh in soup.select("div.container div.container-two div.horario h3")
         ]
         for x in range(len(names)):
-            addr = addresses[x]
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            raw_address = "Av " + addresses[x].split("Av")[-1].replace(".", "")
             yield SgRecord(
                 page_url=base_url,
-                location_name=names[x],
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                location_name="Kipling",
+                street_address=raw_address,
                 country_code="Chile",
                 locator_domain=locator_domain,
                 raw_address=addresses[x],

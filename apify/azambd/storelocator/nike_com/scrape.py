@@ -16,11 +16,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 import ssl
-import os
-
-os.environ[
-    "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -32,7 +27,7 @@ MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def driver_sleep(driver, time=10):
+def driver_sleep(driver, time=2):
     try:
         WebDriverWait(driver, time).until(
             EC.presence_of_element_located((By.ID, MISSING))
@@ -41,7 +36,7 @@ def driver_sleep(driver, time=10):
         pass
 
 
-def random_sleep(driver, start=1, limit=10):
+def random_sleep(driver, start=1, limit=2):
     driver_sleep(driver, random.randint(start, start + limit))
 
 
@@ -210,16 +205,75 @@ def fetch_data(driver):
     log.info(f"Total stores = {len(stores)}")
 
     count = 0
+    error_urls = []
     for page_url in stores:
         count = count + 1
         log.debug(f"{count}. scrapping store {page_url} ...")
         body = request_with_retries(driver, page_url)
+        if body is None:
+            error_urls.append(page_url)
+            continue
 
         store_number = MISSING
         location_type = MISSING
 
         location_name = body.xpath('//h1[contains(@class, "headline-1")]/text()')
+        if len(location_name) == 0:
+            log.debug("Error not found name")
+            error_urls.append(page_url)
+            continue
+        location_name = location_name[0].strip()
+        main_section = get_main_section(body, location_name)
 
+        raw_address, country_code = get_raw_country(main_section)
+        if country_code == MISSING or main_section == MISSING:
+            log.debug("Error not found country")
+            error_urls.append(page_url)
+            continue
+        phone = get_phone(main_section)
+        latitude, longitude = get_lat_lng(main_section)
+        hours_of_operation = get_hoo(main_section)
+        street_address, city, state, zip_postal = get_address(raw_address)
+        location_name = update_location_name(location_name)
+
+        yield SgRecord(
+            locator_domain=website,
+            store_number=store_number,
+            page_url=page_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+    log.info(f"Total error urls = {len(error_urls)}")
+
+    count = 0
+    for page_url in error_urls:
+        count = count + 1
+        log.debug(f"{count}. scrapping error store {page_url} ...")
+
+        body = request_with_retries(driver, page_url)
+        if body is None:
+            yield SgRecord(locator_domain=website, page_url=page_url)
+            continue
+
+        store_number = MISSING
+        location_type = MISSING
+
+        location_name = body.xpath('//h1[contains(@class, "headline-1")]/text()')
+        if len(location_name) == 0:
+            log.debug("Error not found name")
+            yield SgRecord(locator_domain=website, page_url=page_url)
+            continue
         location_name = location_name[0].strip()
         main_section = get_main_section(body, location_name)
 
@@ -248,6 +302,7 @@ def fetch_data(driver):
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
+
     return []
 
 

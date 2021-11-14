@@ -18,10 +18,8 @@ def fetch_data():
     all_locations = json.loads(response.text)
     for poi in all_locations:
         store_url = "https://pizzastudio.com/locations/" + poi["locationurl"]
-        location_name = poi["locationname"]
+        location_name = poi["locationname"].replace("&acirc;", "â")
         street_address = poi.get("address1")
-        if not street_address:
-            continue
         city = poi["city"]
         state = poi["stateabbrev"]
         if "," in city:
@@ -54,6 +52,10 @@ def fetch_data():
             country_code = "US"
         if len(zip_code.split()) == 2:
             country_code = "CA"
+        if "brazil" in store_url:
+            country_code = "BR"
+        if poi["comingsoon"] == 1:
+            hours_of_operation = "Coming Soon"
 
         item = SgRecord(
             locator_domain=domain,
