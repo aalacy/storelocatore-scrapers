@@ -38,12 +38,19 @@ def fetch_data():
             )
         if phone:
             raw_address = raw_address.replace(phone, "").strip()
+        if "royal caribbean" in raw_address:
+            continue
+        if len(raw_address.split()) < 4:
+            continue
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if street_address and addr.street_address_2:
             street_address += ", " + addr.street_address_2
         else:
             street_address = addr.street_address_2
+        country_code = addr.country
+        if not country_code:
+            country_code = poi_html.xpath(".//preceding-sibling::div[h2][1]/@id")[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -53,14 +60,16 @@ def fetch_data():
             city=addr.city,
             state=addr.state,
             zip_postal=addr.postcode,
-            country_code=addr.country,
+            country_code=country_code,
             store_number="",
             phone=phone,
             location_type="",
             latitude="",
             longitude="",
             hours_of_operation="",
-            raw_address=raw_address,
+            raw_address=raw_address.replace("\n", "")
+            .replace("\t", "")
+            .replace("\r", ""),
         )
 
         yield item
