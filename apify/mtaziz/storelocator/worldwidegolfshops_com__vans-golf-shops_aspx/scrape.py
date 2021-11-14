@@ -46,7 +46,10 @@ def get_store_urls():
         data = json.loads(data)
         all_poi_raw = []
         for k, v in data.items():
-            if "find-a-store-vansContainer/flex-layout.col#find-a-store-vans-col/flex-layout.row" in k:
+            if (
+                "find-a-store-vansContainer/flex-layout.col#find-a-store-vans-col/flex-layout.row"
+                in k
+            ):
                 all_poi_raw.append(v)
 
         all_locations = []
