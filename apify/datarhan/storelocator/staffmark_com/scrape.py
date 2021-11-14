@@ -18,7 +18,7 @@ def fetch_data():
         "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }
-    response = session.get(start_url, headers=headers, proxies=proxies)
+    response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
     viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')[0]
     view_gen = dom.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')[0]
@@ -49,9 +49,7 @@ def fetch_data():
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
         }
 
-        response = session.post(
-            start_url, data=formdata, headers=headers, proxies=proxies
-        )
+        response = session.post(start_url, data=formdata, headers=headers)
         if not response.text:
             continue
         dom = etree.HTML(response.text)
