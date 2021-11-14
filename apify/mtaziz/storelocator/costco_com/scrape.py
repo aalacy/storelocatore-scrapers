@@ -10,7 +10,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tenacity
-from random import randint
 import time
 import random
 
