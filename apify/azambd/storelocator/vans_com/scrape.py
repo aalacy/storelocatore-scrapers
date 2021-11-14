@@ -97,8 +97,7 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
                     state = MISSING
                 country_code = get_XML_object_variable(store, "country")
                 log.info(f"Country Code: {country_code}")
-                if "US" not in str(country_code) and "CA" not in str(country_code):
-                    continue
+
                 phone = get_XML_object_variable(store, "phone")
                 latitude = get_XML_object_variable(store, "latitude")
                 longitude = get_XML_object_variable(store, "longitude")
@@ -156,7 +155,9 @@ def scrape():
     )
 
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         with SgRequests() as http:
             for rec in fetch_data(http, search):
