@@ -18,16 +18,11 @@ def fetch_data():
         "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     }
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
-    import requests
-
-    session = requests.Session()
     response = session.get(start_url, headers=headers, proxies=proxies)
     dom = etree.HTML(response.text)
     viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')[0]
     view_gen = dom.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')[0]
     validation = dom.xpath('//input[@id="__EVENTVALIDATION"]/@value')[0]
-    # asfeed = dom.xpath('//input[@name="as_fid"]/@value')
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
