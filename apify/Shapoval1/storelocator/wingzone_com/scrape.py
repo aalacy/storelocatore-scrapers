@@ -19,7 +19,14 @@ def fetch_data(sgw: SgWriter):
         ad = j.xpath('.//span[@class="address"]/text()')
         ad = list(filter(None, [a.strip() for a in ad]))
 
-        street_address = ", ".join(ad[:-1])
+        street_address = (
+            ", ".join(ad[:-1])
+            .replace("Reitz Student Union", "")
+            .replace("Page Manor Shopping Center", "")
+            .replace("Sheppard Mini Mall Food Court", "")
+            .replace("Hub Student Center", "")
+            .strip()
+        )
         line = ad[-1]
         city = line.split(",")[0]
         line = line.split(",")[1].strip()
@@ -39,8 +46,8 @@ def fetch_data(sgw: SgWriter):
         tmp = []
         for s in js:
             day = s.get("Interval")
-            start = s.get("OpenTime")
-            close = s.get("CloseTime")
+            start = "".join(s.get("OpenTime"))[:-3]
+            close = "".join(s.get("CloseTime"))[:-3]
             if s.get("Closed") == "1":
                 line = f"{day} : Closed"
             else:
