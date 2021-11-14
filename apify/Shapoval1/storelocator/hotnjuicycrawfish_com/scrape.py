@@ -49,6 +49,9 @@ def fetch_data(sgw: SgWriter):
         if "Ste C-D" in city:
             city = city.replace("Ste C-D", "").strip()
             street_address = street_address + " " + "Ste C-D"
+        if "St" in city:
+            city = city.replace("St", "").strip()
+            street_address = street_address + " " + "St"
         text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
         try:
             if text.find("ll=") != -1:

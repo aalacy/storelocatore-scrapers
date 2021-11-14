@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from sglogging import SgLogSetup
 import json
 
@@ -17,32 +16,31 @@ locator_domain = "https://www.schoolofrock.com"
 base_url = "https://locations.schoolofrock.com/"
 
 
-def record_initial_requests(http, state):
+def fetch_records(http):
     locs = json.loads(
         http.get(base_url, headers=_headers)
         .text.split("var closestLocations =")[1]
         .split("</script>")[0]
         .strip()[:-1]
     )
-    for loc in locs:
-        url = loc["url"]
-        state.push_request(SerializableRequest(url=url, context={"loc": loc}))
-
-    return True
-
-
-def fetch_records(http, state):
-    for next_r in state.request_stack_iter():
-        logger.info(next_r.url)
-
-        sp1 = bs(http.get(next_r.url, headers=_headers).text, "lxml")
+    for _ in locs:
+        page_url = _["url"]
+        logger.info(page_url)
+        sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+        bar = sp1.select_one("div.promo-bar")
+        if (
+            bar
+            and "coming soon" in bar.text.lower()
+            and "black friday" not in bar.text.lower()
+            and "summer camp" not in bar.text.lower()
+        ):
+            continue
         hours = [
             hh.text.replace("\n", "").replace("   ", "").strip()
             for hh in sp1.select("ul.open-hours li")
         ]
-        _ = next_r.context.get("loc")
         yield SgRecord(
-            page_url=next_r.url,
+            page_url=page_url,
             store_number=_["id"],
             location_name=_["name"],
             street_address=_["address"],
@@ -59,11 +57,7 @@ def fetch_records(http, state):
 
 
 if __name__ == "__main__":
-    state = CrawlStateSingleton.get_instance()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         with SgRequests() as http:
-            state.get_misc_value(
-                "init", default_factory=lambda: record_initial_requests(http, state)
-            )
-            for rec in fetch_records(http, state):
+            for rec in fetch_records(http):
                 writer.write_row(rec)
