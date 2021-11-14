@@ -1,66 +1,55 @@
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
     session = SgRequests()
-    start_url = "https://www.congebec.com/index.php/en/locations/"
-    domain = "congebec.com"
+
+    start_url = "https://www.bigfrog.com/locations/"
+    domain = "bigfrog.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="organic-column one-half" and h4]')
+    all_locations = dom.xpath('//div[@class="location-single"]')
     for poi_html in all_locations:
-        store_url = start_url
         location_name = poi_html.xpath(".//h4/text()")[0]
-        raw_address = (
-            poi_html.xpath(".//p/text()")[0]
-            .replace("Adress: ", "")
-            .replace("\xa0", " ")
-            .replace("Address: ", "")
-        )
+        raw_address = poi_html.xpath(".//p/text()")[0].split()
+        raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        city = addr.city
-        state = addr.state
-        zip_code = addr.postcode
-        country_code = addr.country
-        raw_data = poi_html.xpath('.//p[contains(text(), "Adress")]/text()')
-        if not raw_data:
-            raw_data = poi_html.xpath('.//p[contains(text(), "Address")]/text()')
-        phone = poi_html.xpath('.//strong[contains(text(), "Phone")]/following::text()')
-        phone = phone[0].replace(":", "").strip() if phone else ""
-        hoo = poi_html.xpath(
-            './/strong[contains(text(), "Opening hours")]/following::text()'
-        )
-        hoo = hoo[0].strip()[1:] if hoo else ""
+            street_address += ", " + addr.street_address_2
+        page_url = poi_html.xpath(".//a/@href")[-1]
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0].strip()
+        hoo = poi_html.xpath('.//p[contains(text(), "Monday")]/text()')
+        hoo = " ".join([e.strip() for e in hoo])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code=addr.country,
             store_number="",
             phone=phone,
             location_type="",
             latitude="",
             longitude="",
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item
