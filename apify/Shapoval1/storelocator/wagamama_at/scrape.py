@@ -51,8 +51,8 @@ def fetch_data(sgw: SgWriter):
         slug = tree.xpath('//div[./a[contains(@href, "tel")]]/following::div[1]/a[1]')
         tmp = []
         tmp.append(page_url)
-        for s in slug:
-            url = "".join(s.xpath(".//@href"))
+        for b in slug:
+            url = "".join(b.xpath(".//@href"))
             page_url = f"{spage_url}{url}"
             tmp.append(page_url)
         for t in tmp:
