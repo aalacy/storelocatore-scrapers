@@ -1,52 +1,19 @@
-import csv
-import urllib.parse
+import json
+from urllib.parse import urljoin
 from lxml import etree
-from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
-
-logger = SgLogSetup().get_logger("auntieannes_com")
-
-
-def write_output(data):
-    logger.info(f"writing {len(data)} rows to data.csv")
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
     # Your scraper here
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.5)
 
-    items = []
-    scraped_items = []
-
-    DOMAIN = "auntieannes.com"
+    domain = "auntieannes.com"
     user_agent = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept-encoding": "gzip, deflate, br",
@@ -56,102 +23,95 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
     }
 
-    start_url = "https://auntieannes.com/"
+    start_url = "https://locations.auntieannes.com/"
     response = session.get(start_url, headers=user_agent)
     dom = etree.HTML(response.text)
-    all_cities = dom.xpath('//select[@id="citySelect"]/option/@value')
-    for city_url in all_cities:
-        logger.info(f"scraping city: {city_url}")
-        full_city_url = urllib.parse.urljoin(start_url, city_url)
-        city_code = ""
-        while city_code != 200:
-            city_response = session.get(full_city_url, headers=user_agent)
-            city_code = city_response.status_code
-        city_dom = etree.HTML(city_response.text)
 
-        all_poi_data = city_dom.xpath('//div[@class="city-list"]/ul/li')
-        for poi_data in all_poi_data:
-            store_url = poi_data.xpath('.//a[@class="generic-link"]/@href')[0]
-            store_url = urllib.parse.urljoin(start_url, store_url)
-            location_name = poi_data.xpath('.//a[@class="generic-link"]/text()')[0]
-            location_name = str(location_name) if location_name else "<MISSING>"
-            street_address = poi_data.xpath(
-                './/div[@class="city-details"]/span[1]/text()'
-            )
-            street_address = str(street_address[0]) if street_address else "<MISSING>"
-            city = poi_data.xpath('.//div[@class="city-details"]/span[2]/text()')
-            city = city[0].split(",")[0] if city else "<MISSING>"
-            state = poi_data.xpath('.//div[@class="city-details"]/span[2]/text()')
-            state = state[0].split(",")[-1].strip().split()[0] if state else "<MISSING>"
-            zip_code = poi_data.xpath('.//div[@class="city-details"]/span[2]/text()')
-            zip_code = (
-                zip_code[0].split(",")[-1].strip().split()[-1]
-                if zip_code
-                else "<MISSING>"
-            )
-            country_code = "<MISSING>"
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = store_url.split("/")[-1]
-            phone = poi_data.xpath('//a[@aria-label="Telephone Number"]/span/text()')
-            phone = str(phone[0]) if phone else "<MISSING>"
+    all_locations = []
+    all_states = dom.xpath('//a[@class="Directory-listLink"]')
+    for state in all_states:
+        url = state.xpath(".//@href")[0]
+        total = int(state.xpath(".//@data-count")[0][1:-1])
+        if total == 1:
+            all_locations.append(url)
+            continue
+        full_url = urljoin(start_url, url)
+        response = session.get(full_url, headers=user_agent)
+        dom = etree.HTML(response.text)
 
-            try:
-                store_response = session.get(store_url, headers=user_agent)
-            except Exception as e:
-                logger.info(f"!!! Warning, {store_url} passed with eception: {e}")
+        all_cities = dom.xpath('//a[@class="Directory-listLink"]')
+        for city in all_cities:
+            url = city.xpath(".//@href")[0]
+            total = int(city.xpath(".//@data-count")[0][1:-1])
+            if total == 1:
+                all_locations.append(url)
                 continue
-            store_dom = etree.HTML(store_response.text)
-            location_type = "<MISSING>"
-            if "food truck" in location_name.lower():
-                location_type = "Food Truck"
-            location_type = location_type if location_type else "<MISSING>"
-            latitude = store_dom.xpath("//a/@data-lat")
-            latitude = float(latitude[0]) if latitude else "<MISSING>"
-            longitude = store_dom.xpath("//a/@data-long")
-            longitude = float(longitude[0]) if longitude else "<MISSING>"
-            days_list = store_dom.xpath('//div[@class="hours-wrapper"]//dt/text()')
-            hours_list = store_dom.xpath('//div[@class="hours-wrapper"]//dd/text()')
-            hours_of_operation = list(
-                map(lambda d, h: d + " " + h, days_list, hours_list)
-            )
-            hours_of_operation = ", ".join(hours_of_operation)
-            hours_of_operation = (
-                hours_of_operation if hours_of_operation.strip() else "<MISSING>"
-            )
+            full_url = urljoin(start_url, url)
+            response = session.get(full_url, headers=user_agent)
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//a[@class="Link Link--primary"]/@href')
 
-            if state == city == zip_code == "<MISSING>":
-                phone = street_address
-                street_address = "<MISSING>"
+    for url in list(set(all_locations)):
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        location_name = loc_dom.xpath('//a[@class="Hero-geoText"]/text()')[0]
+        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')[0]
+        city = loc_dom.xpath('//span[@class="c-address-city"]/text()')[0]
+        state = loc_dom.xpath('//abbr[@class="c-address-state"]/text()')[0]
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+        country_code = loc_dom.xpath("//address/@data-country")[0]
+        phone = loc_dom.xpath('//div[@id="phone-main"]/text()')
+        phone = phone[0] if phone else SgRecord.MISSING
+        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
+        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
+        hours = []
+        hoo = loc_dom.xpath('//script[@class="js-hours-config"]/text()')
+        if hoo:
+            hoo = json.loads(hoo[0])
+            for e in hoo["hours"]:
+                day = e["day"]
+                if e["isClosed"]:
+                    hours.append(f"{day} closed")
+                else:
+                    opens = str(e["intervals"][0]["start"])
+                    opens = opens[:-2] + ":" + opens[-2:]
+                    closes = str(e["intervals"][0]["end"])
+                    closes = closes[:-2] + ":" + closes[-2:]
+                    hours.append(f"{day} {opens} - {closes}")
+        hours = " ".join(hours) if hours else SgRecord.MISSING
 
-            check = f"{store_number} {location_name}"
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    logger.info(f"fetched {len(data)} rows")
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("carquest_com")
 
@@ -8,33 +11,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -121,10 +97,8 @@ def fetch_data():
         hours = ""
         country = "US"
         phone = ""
-        store = ""
+        store = loc.rsplit("/", 1)[1]
         for line in r.iter_lines(decode_unicode=True):
-            if '"store_id":"' in line:
-                store = line.split('"store_id":"')[1].split('"')[0]
             if '"page_name":"' in line:
                 name = line.split('"page_name":"')[1].split('"')[0]
                 city = line.split(',"store_city":"')[1].split('"')[0]
@@ -252,27 +226,32 @@ def fetch_data():
             .replace("1:000AM", "10:00AM")
             .replace("2:000PM", "20:00PM")
         )
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        name = name.replace("\\u0026amp;", "&")
+        if "885-us-highway-27-s" in loc:
+            store = "4356"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

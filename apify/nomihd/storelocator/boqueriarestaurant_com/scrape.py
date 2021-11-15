@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "boqueriarestaurant.com"
@@ -37,9 +39,8 @@ def fetch_data():
     json_res = json.loads(api_res.text)
 
     stores_list = search_sel.xpath(
-        '//div[@class="vc_tta-panels" and .//strong[contains(./text(),"HOURS")]]/div[.//text()="HOURS"]'
+        '//div[@class="vc_tta-panels" and .//p[contains(./text(),"Hours")]]/div[.//text()="Hours"]'
     )
-
     for store in stores_list:
         name = "".join(store.xpath(".//h3/text()")).strip()
 
@@ -77,17 +78,15 @@ def fetch_data():
         hours = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[strong]/span/text()")],
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        ".//div[./p[contains(text(),'Hours')]]/p[2]//text()"
+                    )
+                ],
             )
         )
-        if not hours:
-            hours = list(
-                filter(
-                    str,
-                    [x.strip() for x in store.xpath(".//p[strong]/text()")],
-                )
-            )
-        hours_of_operation = "; ".join(hours)
+        hours_of_operation = "; ".join(hours).strip()
 
         latitude = store_json["location"]["latitude"]
         longitude = store_json["location"]["longitude"]
@@ -115,7 +114,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

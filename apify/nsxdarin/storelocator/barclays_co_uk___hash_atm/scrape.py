@@ -1,13 +1,16 @@
-import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("barclays_co_uk___hash_atm")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.BRITAIN],
-    max_radius_miles=None,
+    max_search_distance_miles=None,
     max_search_results=30,
 )
 
@@ -15,33 +18,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -64,6 +40,9 @@ def fetch_data():
                 items = line.split('{"distance":')
                 for item in items:
                     if ',"myDistance":' in item:
+                        HasATM = False
+                        if "Internal ATM" in item or "External ATM" in item:
+                            HasATM = True
                         store = item.split('"outletId":"')[1].split('"')[0]
                         typ = item.split('"type":"')[1].split('"')[0]
                         lat = item.split('"latitude":')[1].split(",")[0]
@@ -143,7 +122,7 @@ def fetch_data():
                         )
                         hours = hours.replace("00:00-00:00", "Closed")
                         if store not in ids:
-                            loc = "<MISSING>"
+                            loc = "https://www.barclays.co.uk/branch-finder"
                             country = "GB"
                             ids.append(store)
                             add = (
@@ -156,27 +135,35 @@ def fetch_data():
                             add = add.replace(",", "").strip()
                             add = add.replace("&#x2f;", "/")
                             name = name.replace("&#x2f;", "/")
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            if typ == "ATM":
+                                phone = "<MISSING>"
+                            if typ == "BRANCH" and HasATM is True:
+                                typ = "BRANCH and ATM"
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

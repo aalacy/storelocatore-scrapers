@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("simonpearce")
 
@@ -22,9 +24,11 @@ def fetch_data():
         )
         logger.info(f"{len(links)} found")
         for link in links:
-            if not link.p or not link.h3:
+            if not link.p or not link.strong:
                 continue
-            page_url = link.h3.a["href"]
+            page_url = link.strong.a["href"]
+            if page_url == "https://www.simonpearce.com/store-locator":
+                continue
             if not page_url.startswith("https"):
                 page_url = locator_domain + page_url
             logger.info(page_url)
@@ -37,9 +41,26 @@ def fetch_data():
                 if "now open" in _hh.text.lower():
                     _hh = _hr.find_parent().select("p")[1]
                 hours = list(_hh.stripped_strings)
+            try:
+                coord = (
+                    sp1.find("a", string=re.compile(r"^VIEW MAP"))["href"]
+                    .split("ll=")[1]
+                    .split("&")[0]
+                    .split(",")
+                )
+            except:
+                try:
+                    coord = (
+                        sp1.find("a", string=re.compile(r"VIEW MAP"))["href"]
+                        .split("/@")[1]
+                        .split("/data")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
-                location_name=link.h3.text.strip(),
+                location_name=link.strong.text.strip(),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=" ".join(addr[1].split(",")[1].strip().split(" ")[:-1]),
@@ -47,12 +68,14 @@ def fetch_data():
                 country_code="US",
                 phone=addr[-1],
                 locator_domain=locator_domain,
+                latitude=coord[0],
+                longitude=coord[1],
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

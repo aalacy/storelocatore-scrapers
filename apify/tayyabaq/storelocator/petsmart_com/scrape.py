@@ -1,164 +1,116 @@
-import csv
-import os
-from bs4 import BeautifulSoup
-import re, time
-import datetime
-
-from random import randint
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('petsmart_com')
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def get_types(types) -> str:
+    tmp = []
+    for t in types:
+        s_type = t.get("displayName")
+        tmp.append(s_type)
+    location_type = ", ".join(tmp) or "<MISSING>"
+    return location_type
 
 
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+def get_hours(hours) -> str:
+    tmps = []
+    for h in hours:
+        day = h.get("day")
+        time = h.get("time")
+        line = f"{day} {time}"
+        tmps.append(line)
+    hours_of_operation = "; ".join(tmps) or "<MISSING>"
+    return hours_of_operation
 
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+    locator_domain = "https://www.petsmart.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://www.petsmart.com/store-locator/",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "sentry-trace": "9d2f42b439f54872a05624b60cee7d0c-8b7748d654e6c17b-0",
+        "Origin": "https://www.petsmart.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
 
-driver = get_driver()
-time.sleep(2)
+    data = {
+        "dwfrm_storelocator_postalCode": "10001",
+        "searchradius": "20000",
+        "dwfrm_storelocator_distanceUnit": "mi",
+        "dwfrm_storelocator_countryCode": "US",
+        "dwfrm_storelocator_findbyzip": "Search",
+        "omittConceptStores": "false",
+        "uiData": '{"selectors":{"resultsSelectors":{"template":".store-information-template","target":"div#store-information","store":"li[data-results-storeId=\\"{{storeId}}\\"]","allStores":"data-results-storeid","mySavedStore":".my-saved-store"},"noResultsSelectors":{"template":".no-store-information-template","target":"div#no-store-information"},"resultsContent":"#stores-content","saveStoreButton":"button.btn-save-store","numberOfStores":"span.stores-count","formSelectors":{"searchTerm":"input[name=\'dwfrm_storelocator_postalCode\']","serviceFilterBoxes":"input.servicesfilter","serviceFiltersChecked":"input.servicesfilter:checkbox:checked","searchRadius":"select#searchradius","searchButton":"#storesearchbutton","searchForm":"form#storesearch"},"filter":{"label":"label.filter","spinningLabel":"label.filter.filter-spinner","servicesFilterContainer":".services-filter-container","selectAllButton":"a.select-all-services-button","servicesFilterCheckboxInput":"input[type=checkbox].servicesfilter"},"myStoreMasthead":"#masthead-my-store","dogLoader":".storelocator-init-dogloader","stickyWrapper":".sticky-wrapper","toggleServicesLink":"a.toggle-services","serviceToggle":".toggle-services span.toggle-stores-switch","map":{"storeLocatorMap":".store-locator-map","toggleMapLink":".toggle-map"}},"urls":{"getNearestStores":"/on/demandware.store/Sites-PetSmart-Site/default/StoreLocator-GetNearestStores"},"assetConfig":{"renderServices":true,"renderServicesButtons":true,"renderSaveStoreButton":true,"renderStoreHoursAsDailyLine":true}}',
+        "context": "storelocator",
+        "searchTriggerType": "interactive",
+    }
+    session = SgRequests()
+    r = session.post(
+        "https://www.petsmart.com/on/demandware.store/Sites-PetSmart-Site/default/StoreLocator-GetNearestStores",
+        headers=headers,
+        data=data,
+    )
 
-def fetch_data():
-    data = []
-    store_links =[]
-    clear_links =[]
-    #CA stores
-    url = 'https://www.petsmart.com/stores/us/'
-    u='https://www.petsmart.com/'
+    js = r.json()["storeData"]["stores"]
+    for j in js:
+        slug = j.get("storeUrl")
+        page_url = f"https://www.petsmart.com{slug}"
+        a = j.get("address")
+        location_name = a.get("name")
+        types = j.get("services")
+        location_type = get_types(types)
+        street_address = f"{a.get('address1')} {a.get('address1')}".strip()
+        state = a.get("stateCode") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
+        country_code = "US"
+        city = a.get("city") or "<MISSING>"
+        store_number = a.get("ID")
+        latitude = j.get("latLon").get("lat") or "<MISSING>"
+        longitude = j.get("latLon").get("lon") or "<MISSING>"
+        phone = a.get("phone") or "<MISSING>"
+        hours = j.get("hours") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
 
-    driver.get(url)
-    time.sleep(randint(2,4))
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=street_address + " " + city + " " + state + " " + postal,
+        )
 
-    element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-        (By.CSS_SELECTOR, ".all-states-list.container")))
-    time.sleep(randint(3,5))
+        sgw.write_row(row)
 
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    store = soup.find('div',class_='all-states-list container')
-    stores = store.find_all("a")
-    for i in stores:
-        newurl=i['href']
-        logger.info(newurl)
 
-        driver.get(newurl)
-        time.sleep(randint(2,4))
-
-        element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, ".store-details-link")))
-        time.sleep(randint(1,2))
-
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        store=soup.find_all('a', class_='store-details-link')
-        for j in store:
-
-            ul=u+j['href']
-            logger.info(ul)
-
-            driver.get(ul)
-            time.sleep(randint(2,4))
-
-            try:
-                element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, ".store-page-details")))
-                time.sleep(randint(1,2))
-            except:
-                continue
-
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            div = soup.find('div',class_='store-page-details')
-            try:
-              loc = div.find('h1').text
-              if "closed" in loc.lower():
-                continue
-            except:
-               continue
-            ph=div.find('p',class_='store-page-details-phone').text.strip()
-            addr=div.find('p',class_='store-page-details-address').text.strip().split("\n")
-            #logger.info(addr)
-            if len(addr) ==2:
-                street=addr[0]
-                addr=addr[1].strip().split(',')
-            elif len(addr)>2:
-                add=addr[-1]
-                del addr[-1]
-                street=" ".join(addr)
-                addr=add.strip().split(',')
-            
-            cty=addr[0]
-            addr=addr[1].strip().split(' ')
-            sts=addr[0]
-            zcode=addr[1]
-
-            got_hours = False
-            try:
-                hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md ui-accordion ui-widget ui-helper-reset').text
-                got_hours = True
-            except:
-                try:
-                    hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md').text
-                    got_hours = True
-                except:
-                    pass
-
-            if got_hours: 
-                hours=hours.strip().replace('\n\n','').replace('\n','')
-                for day in ['MON','TUE','THU','WED','FRI','SAT','SUN']:
-                    if day not in hours:
-                        hours=hours.replace('TODAY',day)
-            else:
-                hours = '<MISSING>'
-
-            lat,long=re.findall(r'center=([\d\.]+),([\-\d\.]+)',soup.find('div',class_='store-page-map mapViewstoredetail').find('img').get('src'))[0]
-
-            data.append([
-                    'https://www.petsmart.com/',
-                     ul.replace(u'\u2019',''),
-                    loc.replace(u'\u2019','').strip(),
-                    street.replace(u'\u2019',''),
-                    cty.replace(u'\u2019',''),
-                    sts.replace(u'\u2019',''),
-                    zcode.replace(u'\u2019',''),
-                    'US'.replace(u'\u2019',''),
-                    j['id'].replace(u'\u2019',''),
-                    ph.replace(u'\u2019',''),
-                    '<MISSING>',
-                    lat,
-                    long,
-                    hours.replace(u'\u2019','')
-                    ])
-    
-    try:
-        driver.close()
-    except:
-        pass
-
-    return data
-    
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LATITUDE})
+        )
+    ) as writer:
+        fetch_data(writer)

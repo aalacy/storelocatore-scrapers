@@ -1,38 +1,18 @@
-import csv
 import usaddress
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_urls():
+    r = session.get("https://burythehatchet.com/axe-throwing-locations/")
+    tree = html.fromstring(r.text)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return tree.xpath("//h2/following-sibling::a[contains(@href, 'axe')]/@href")
 
 
 def get_address(line):
@@ -75,81 +55,52 @@ def get_address(line):
     return street_address, city, state, postal
 
 
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://burythehatchet.com/axe-throwing-locations/")
-    tree = html.fromstring(r.text)
+def get_data(slug, sgw: SgWriter):
+    page_url = f"{locator_domain}{slug}"
 
-    return tree.xpath("//h2/following-sibling::a[contains(@href, 'axe')]/@href")
-
-
-def get_data(url):
-    locator_domain = "https://burythehatchet.com/"
-    page_url = f"{locator_domain}{url}"
-
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//title/text()")).split("|")[0].strip()
-    line = "".join(
+    raw_address = "".join(
         tree.xpath("//h2[@class='phone-text font-primary uppercase']//text()")
     ).strip()
-    if "*" in line:
-        line = line.split("*")[0].strip()
+    if "*" in raw_address:
+        raw_address = raw_address.split("*")[0].strip()
 
-    street_address, city, state, postal = get_address(line)
+    street_address, city, state, postal = get_address(raw_address)
     country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath("//h1[@class='phone-text font-primary white']/text()")
-        ).strip()
-        or "<MISSING>"
+    phone = "".join(
+        tree.xpath("//h1[@class='phone-text font-primary white']/text()")
+    ).strip()
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        phone=phone,
+        locator_domain=locator_domain,
+        raw_address=raw_address,
     )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://burythehatchet.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
