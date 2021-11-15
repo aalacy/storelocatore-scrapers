@@ -3,7 +3,7 @@ import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -29,6 +29,8 @@ def fetch_data():
             link = link.text
 
             if (".amp.") in link:
+                continue
+            if len(link.split("/")) > 4:
                 continue
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -56,7 +58,7 @@ def fetch_data():
                 except:
                     continue
             try:
-                phone = soup.find("span", {"class": "Core-phoneText"}).text
+                phone = soup.findAll("span", {"class": "Core-phoneText"})[-1].text
             except:
                 phone = "<MISSING>"
             try:
@@ -95,7 +97,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
 
         results = fetch_data()
