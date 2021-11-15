@@ -12,7 +12,7 @@ def get_international(line, postal):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or SgRecord.MISSING
     state = adr.state
     postal = adr.postcode
 
@@ -76,7 +76,8 @@ def fetch_data(sgw: SgWriter):
             postal = " ".join(line.split()[-2:])
         raw_address = line.replace("\r\n", " ").replace("\n", " ")
         street_address, city, state, postal = get_international(raw_address, postal)
-        country_code = "GB"
+        if city == SgRecord.MISSING and "Kitchen" in location_name:
+            city = location_name.replace("Kitchen Showrooms ", "")
 
         store_number = j.get("PageId")
         phone = j.get("PhoneNumber")
@@ -101,7 +102,7 @@ def fetch_data(sgw: SgWriter):
             city=city,
             state=state,
             zip_postal=postal,
-            country_code=country_code,
+            country_code="GB",
             store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,

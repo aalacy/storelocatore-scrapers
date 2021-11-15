@@ -1,6 +1,8 @@
 import time
 import json
 import re
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -25,6 +27,8 @@ website = "https://www.lmcu.org"
 MISSING = SgRecord.MISSING
 
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+urlForDriver = "https://www.lmcu.org/locations/atm-listing/"
 
 
 def initiate_driver(url, class_name, driver=None):
@@ -86,9 +90,11 @@ def get_js_object(response, varName, noVal=MISSING):
     return JSObject[0]
 
 
-def fetch_single_zip(driver, zip):
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
+def fetch_single_zip(zip):
     log.info(zip)
     try:
+        driver = initiate_driver(urlForDriver, "zipField")
         driver.get(f"{website}/locations/atm-listing/")
 
         inputZip = driver.find_element_by_xpath("//input[contains(@class, 'zipField')]")
@@ -98,8 +104,7 @@ def fetch_single_zip(driver, zip):
         driver.execute_script("arguments[0].click();", applyButton)
     except:
         log.info("CloudFlare Triggered or Page load failed, Retrying...")
-        driver.quit()
-        urlForDriver = "https://www.lmcu.org/locations/atm-listing/"
+
         driver = initiate_driver(urlForDriver, "zipField")
         driver.get(f"{website}/locations/atm-listing/")
 
@@ -124,13 +129,11 @@ def fetch_single_zip(driver, zip):
 
 def fetch_data(search):
     ids = [MISSING]
-    urlForDriver = "https://www.lmcu.org/locations/atm-listing/"
-    driver = initiate_driver(urlForDriver, "zipField")
     totalZip = 0
     count = 0
     for zipCode in search:
         totalZip = totalZip + 1
-        data = fetch_single_zip(driver, zipCode)
+        data = fetch_single_zip(zipCode)
 
         for store in data:
             store_number = get_json_object_variable(store, "Id")
@@ -184,15 +187,13 @@ def fetch_data(search):
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-
         if totalZip % 15 == 0:
-            driver = initiate_driver(urlForDriver, "zipField", driver=driver)
-        log.debug(
+            log.info("Refreshing Driver")
+            initiate_driver(urlForDriver, "zipField")
+        log.info(
             f"{totalZip}. zip {zipCode} => {len(data)} stores; total store = {count}"
         )
 
-    if driver is not None:
-        driver.close()
     log.info(f"Total stores = {count}")
 
 

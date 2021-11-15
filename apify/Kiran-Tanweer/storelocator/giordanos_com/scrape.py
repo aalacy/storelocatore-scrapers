@@ -22,12 +22,12 @@ MISSING = "<MISSING>"
 def fetch_data():
     if True:
         url = "https://giordanos.com/all-locations/"
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.find("div", {"class": "locationsection"}).findAll("a")
         for link in linklist:
             page = "https://giordanos.com" + link["href"]
-            p = session.get(page, headers=headers, verify=False)
+            p = session.get(page, headers=headers)
             soup = BeautifulSoup(p.text, "html.parser")
             address = soup.find("div", {"class": "address"}).text
             address = address.replace(",", "").strip()

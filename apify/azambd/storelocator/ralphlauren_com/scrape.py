@@ -181,6 +181,7 @@ def fetch_data(driver):
         street_address = get_JSON_object_variable(store, "street_address")
         city = get_JSON_object_variable(store, "city")
         zip_postal = get_JSON_object_variable(store, "postalCode")
+        street_address = street_address.replace(f",{zip_postal}", "")
         state = get_JSON_object_variable(store, "stateCode")
         country_code = get_JSON_object_variable(store, "countryCode")
         phone = get_JSON_object_variable(store, "phone")

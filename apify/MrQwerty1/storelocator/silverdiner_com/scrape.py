@@ -25,6 +25,8 @@ def fetch_data(sgw: SgWriter):
         full_adr = ", ".join(line)
 
         street_address = line.pop(0)
+        if "Coming" in street_address:
+            continue
         line = line.pop(0)
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
