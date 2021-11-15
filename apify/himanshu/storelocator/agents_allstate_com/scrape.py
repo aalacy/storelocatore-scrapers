@@ -12,56 +12,68 @@ headers = {
 }
 
 
-
 def fetch_data():
-    
+
     pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r'<[^>]+>')
-    url = 'https://agents.allstate.com/sitemap.xml'
-    r = session.get(url, headers=headers)    
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://agents.allstate.com/sitemap.xml"
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     mainlist = soup.findAll("loc")
     for mlink in mainlist:
-        mlink = mlink.text        
+        mlink = mlink.text
         r = session.get(mlink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.findAll("loc")
         for link in linklist:
             link = link.text
-            
-            if('.amp.') in link:
+
+            if (".amp.") in link:
                 continue
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             try:
-                street = soup.find('span',{'class':'c-address-street-1'}).text
+                street = soup.find("span", {"class": "c-address-street-1"}).text
                 try:
-                    street = street +' '+ soup.find('span',{'class':'c-address-street-2'}).text
+                    street = (
+                        street
+                        + " "
+                        + soup.find("span", {"class": "c-address-street-2"}).text
+                    )
                 except:
                     pass
-                city = soup.find('span',{'class':'c-address-city'}).text
-                state = soup.find('abbr',{'class':'c-address-state'}).text
-                pcode = soup.find('span',{'class':'c-address-postal-code'}).text                
-                lat = soup.find('meta',{'itemprop':'latitude'})['content']
-                longt = soup.find('meta',{'itemprop':'longitude'})['content']
+                city = soup.find("span", {"class": "c-address-city"}).text
+                state = soup.find("abbr", {"class": "c-address-state"}).text
+                pcode = soup.find("span", {"class": "c-address-postal-code"}).text
+                lat = soup.find("meta", {"itemprop": "latitude"})["content"]
+                longt = soup.find("meta", {"itemprop": "longitude"})["content"]
             except:
-                street = pcode = lat = longt ='<MISSING>'
+                street = pcode = lat = longt = "<MISSING>"
                 try:
-                    city, state = soup.find('span',{'class':'Hero-geo'}).text.split(', ')
+                    city, state = soup.find("span", {"class": "Hero-geo"}).text.split(
+                        ", "
+                    )
                 except:
                     continue
             try:
-                phone = soup.find('span',{'class':'Core-phoneText'}).text
+                phone = soup.find("span", {"class": "Core-phoneText"}).text
             except:
-                phone = '<MISSING>'
+                phone = "<MISSING>"
             try:
-                hours = soup.find('table',{'class':'c-hours-details'})
-                hours = re.sub(cleanr,'\n',str(hours))
-                hours = re.sub(pattern,' ',str(hours)).replace('Day of the Week Hours','').replace('Available by appointment','').replace('PM','PM ').replace('Closed',' Closed ').strip()
+                hours = soup.find("table", {"class": "c-hours-details"})
+                hours = re.sub(cleanr, "\n", str(hours))
+                hours = (
+                    re.sub(pattern, " ", str(hours))
+                    .replace("Day of the Week Hours", "")
+                    .replace("Available by appointment", "")
+                    .replace("PM", "PM ")
+                    .replace("Closed", " Closed ")
+                    .strip()
+                )
             except:
-                hours = '<MISSING>'
-            title = soup.find('span',{'class':'MiniHero-name'}).text
-            title = title.encode('ascii', 'ignore').decode('ascii')
+                hours = "<MISSING>"
+            title = soup.find("span", {"class": "MiniHero-name"}).text
+            title = title.encode("ascii", "ignore").decode("ascii")
             yield SgRecord(
                 locator_domain="https://agents.allstate.com/",
                 page_url=link,
@@ -78,17 +90,17 @@ def fetch_data():
                 longitude=str(longt),
                 hours_of_operation=hours,
             )
-        
+
 
 def scrape():
-   
-    with SgWriter( deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
-        
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
 
 
 scrape()
-
-
