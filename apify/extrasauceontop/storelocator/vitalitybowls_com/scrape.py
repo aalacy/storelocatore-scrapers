@@ -44,6 +44,12 @@ def get_data():
             if item != ""
         ]
 
+        print("")
+        print("")
+        print(location_name)
+        print(page_url)
+        print(address_parts)
+
         if len(address_parts) == 1:
             address = ""
             street_parts = address_parts[0].split(",")[0].split(" ")[:-1]
