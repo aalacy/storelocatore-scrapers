@@ -1,5 +1,4 @@
 import re
-from lxml import html
 import time
 import json
 from sgpostal.sgpostal import parse_address_intl
