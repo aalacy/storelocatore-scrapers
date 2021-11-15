@@ -1,39 +1,13 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.humptys.com/locations/")
     tree = html.fromstring(r.text)
 
@@ -42,60 +16,53 @@ def get_urls():
     )
 
 
-def fetch_data():
-    out = []
-    session = SgRequests()
-    locator_domain = "https://www.humptys.com/"
-    location_name = "Humpty's Restaurant"
-    postal = "<MISSING>"
-    country_code = "CA"
-    store_number = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+def get_data(page_url, sgw: SgWriter):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    state = "".join(
+        tree.xpath("//li[contains(@class,'current_page_item')]/a/text()")
+    ).strip()
+    cities = tree.xpath("//h3[./strong]|//h3")
 
+    for c in cities:
+        city = "".join(c.xpath("./strong/text()|./text()")).strip()
+        tr = c.xpath("./following-sibling::table[1]//tr[./td]")
+        for t in tr:
+            street_address = "".join(t.xpath("./td[1]/text()")).strip()
+            phone = "".join(t.xpath("./td[2]/text()")).strip()
+            hours_of_operation = " ".join("".join(t.xpath("./td[3]/text()")).split())
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name="Humpty's Restaurant",
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=SgRecord.MISSING,
+                country_code="CA",
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    for page_url in urls:
-        r = session.get(page_url)
-        tree = html.fromstring(r.text)
-        state = "".join(
-            tree.xpath("//li[contains(@class,'current_page_item')]/a/text()")
-        ).strip()
-        cities = tree.xpath("//h3[./strong]|//h3")
 
-        for c in cities:
-            city = "".join(c.xpath("./strong/text()|./text()")).strip()
-            tr = c.xpath("./following-sibling::table[1]//tr[./td]")
-            for t in tr:
-                street_address = "".join(t.xpath("./td[1]/text()")).strip()
-                phone = "".join(t.xpath("./td[2]/text()")).strip()
-
-                row = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    postal,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    with futures.ThreadPoolExecutor(max_workers=4) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.humptys.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

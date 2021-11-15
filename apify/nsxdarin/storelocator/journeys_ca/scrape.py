@@ -40,9 +40,7 @@ def fetch_data():
         for line2 in r2.iter_lines(decode_unicode=True):
             if 'class="store-name">' in line2:
                 sname = line2.split('">')[1].split("#")[0].strip()
-                surl = (
-                    "https://www.journeys.ca" + line2.split('href="')[1].split('"')[0]
-                )
+                surl = line2.split('href="')[1].split('"')[0]
                 if surl not in locs:
                     locs.append(surl + "|" + sname)
     for loc in locs:
@@ -88,6 +86,7 @@ def fetch_data():
                 lat = "<MISSING>"
                 lng = "<MISSING>"
         add = add.strip()
+        name = "JOURNEYS #" + store
         yield SgRecord(
             locator_domain=website,
             page_url=purl,

@@ -1,131 +1,129 @@
-import re
-import csv
-import json
-from lxml import etree
-from urllib.parse import urljoin
-
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
+import json
+from sglogging import SgLogSetup
+
+MISSING = SgRecord.MISSING
+STORE_LOCATOR_URL = "https://www.worldwidegolfshops.com/storelocator"
+headers = {
+    "content-type": "application/json",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
+}
+logger = SgLogSetup().get_logger("worldwidegolfshops_com__roger-dunn-golf-shops_aspx")
+API_ENDPOINT_URL = "https://www.worldwidegolfshops.com/_v/private/graphql/v1?workspace=master&maxAge=long&appsEtag=remove&domain=store&locale=en-US&__bindingId=0c4c536d-4f48-4f19-853a-aaf8f2d60702"
+PAYLOAD = {
+    "operationName": "getStores",
+    "variables": {},
+    "extensions": {
+        "persistedQuery": {
+            "version": 1,
+            "sha256Hash": "d61a03e96dd580828aa9c7e18b97ae262fd1a6115add9d4496798455fcf3bdd4",
+            "sender": "vtex.yext-store-locator@0.x",
+            "provider": "vtex.yext-store-locator@0.x",
+        },
+        "variables": "eyJmaWx0ZXIiOiJ7XCJjbG9zZWRcIjp7XCIkZXFcIjpmYWxzZX19IiwibG9jYXRpb24iOm51bGwsImxpbWl0IjoxNX0=",
+    },
+}
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_headers():
+    with SgFirefox(is_headless=True) as driver:
+        driver.get(STORE_LOCATOR_URL)
+        cookies_ = driver.get_cookies()
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    cookies_custom = []
+    for cookie in cookies_:
+        cookie_formatted = f"{cookie['name']}={cookie['value']}"
+        cookies_custom.append(cookie_formatted)
+
+    headers["cookie"] = "; ".join(cookies_custom)
+    return headers
+
+
+def get_hoo(hoo_raw):
+    hoo = []
+    for e in hoo_raw:
+        dw = e["dayOfWeek"]
+        if dw == 0:
+            daytime = f'Sun: {e["openingTime"]} - {e["closingTime"]}'
+            hoo.append(daytime)
+        if dw == 1:
+            daytime = f'Mon: {e["openingTime"]} - {e["closingTime"]}'
+            hoo.append(daytime)
+        if dw == 2:
+            daytime = f'Tue: {e["openingTime"]} - {e["closingTime"]}'
+            hoo.append(daytime)
+        if dw == 3:
+            daytime = f'Wed: {e["openingTime"]} - {e["closingTime"]}'
+            hoo.append(daytime)
+        if dw == 4:
+            daytime = f'Thu: {e["openingTime"]} - {e["closingTime"]}'
+            hoo.append(daytime)
+        if dw == 5:
+            daytime = f'Fri: {e["openingTime"]} - {e["closingTime"]}'
+            hoo.append(daytime)
+        if dw == 6:
+            daytime = f'Sat: {e["openingTime"]} - {e["closingTime"]}'
+            hoo.append(daytime)
+    return hoo
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
-    start_url = "https://www.worldwidegolfshops.com/roger-dunn-golf-shops"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//a[h3[@class="store-name"]]/@href')
-    for store_url in all_locations:
-        store_url = urljoin(start_url, store_url)
-
-        if "worldwidegolfshops" in store_url:
-            with SgFirefox() as driver:
-                driver.get(store_url)
-                loc_dom = etree.HTML(driver.page_source)
-            poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
-            poi = json.loads(poi)
-
-            location_name = loc_dom.xpath("//h1/text()")[0]
-            street_address = poi["address"]["streetAddress"]
-            city = poi["address"]["addressLocality"]
-            state = poi["address"]["addressRegion"]
-            zip_code = poi["address"]["postalCode"]
-            country_code = "<MISSING>"
-            store_number = poi["@id"]
-            phone = poi["telephone"]
-            location_type = poi["@type"][0]
-            latitude = poi["geo"]["latitude"]
-            longitude = poi["geo"]["longitude"]
-            hoo = loc_dom.xpath(
-                '//div[contains(text(), "STORE HOURS")]/following-sibling::div//text()'
+    with SgRequests() as http:
+        try:
+            r = http.post(
+                API_ENDPOINT_URL, data=json.dumps(PAYLOAD), headers=get_headers()
             )
-        else:
-            loc_response = session.get(store_url)
-            loc_dom = etree.HTML(loc_response.text)
-            poi = loc_dom.xpath("//@data-block-json")[0]
-            poi = json.loads(poi)
-
-            location_name = loc_dom.xpath("//h1/text()")[0]
-            street_address = poi["location"]["addressLine1"]
-            city = poi["location"]["addressLine2"].split(", ")[0]
-            state = poi["location"]["addressLine2"].split(", ")[1].split()[0]
-            zip_code = poi["location"]["addressLine2"].split(", ")[-1].split()[-1]
-            country_code = poi["location"]["addressCountry"]
-            store_number = "<MISSING>"
-            phone = loc_dom.xpath(
-                '//p[strong[contains(text(), "Phone")]]/following-sibling::p/text()'
-            )[0]
-            location_type = "<MISSING>"
-            latitude = poi["location"]["mapLat"]
-            longitude = poi["location"]["mapLng"]
-            hoo = loc_dom.xpath(
-                '//p[strong[contains(text(), "HOURS")]]/following-sibling::p/text()'
-            )[:-1]
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+            json_data = json.loads(r.text)
+            logger.info(f"HTTP Status: {r.status_code}")
+            data_items = json_data["data"]["getStores"]["items"]
+            for poi in data_items:
+                hours = get_hoo(poi["businessHours"])
+                hours_of_operation = "; ".join(hours)
+                store_number = poi["id"]
+                state = poi["address"]["state"]
+                zip_postal = poi["address"]["postalCode"]
+                page_url = f"https://www.worldwidegolfshops.com/store/edwin-watts-golf-{state.lower()}-{zip_postal}/{store_number}"
+                item = SgRecord(
+                    locator_domain="worldwidegolfshops.com",
+                    page_url=page_url,
+                    location_name=poi["name"] or MISSING,
+                    street_address=poi["address"]["street"] or MISSING,
+                    city=poi["address"]["city"] or MISSING,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=poi["address"]["country"],
+                    store_number=store_number,
+                    phone=poi["mainPhone"],
+                    location_type=SgRecord.MISSING,
+                    latitude=poi["address"]["location"]["latitude"] or MISSING,
+                    longitude=poi["address"]["location"]["longitude"] or MISSING,
+                    hours_of_operation=hours_of_operation,
+                )
+                logger.info(f"item: {item.as_dict()}")
+                yield item
+        except Exception as e:
+            logger.info(f"Please fix this >>> {e}")
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
