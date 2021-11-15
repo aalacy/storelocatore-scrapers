@@ -1,15 +1,15 @@
 import re
-
 from sgrequests import SgRequests
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import sglog
 
-domain = "https://joeskwikmart.com/"
-log = sglog.SgLogSetup().get_logger(logger_name=domain)
+DOMAIN = "joeskwikmart.com"
+BASE_URL = "https://joeskwikmart.com/"
+API_URL = "https://joeskwikmart.com/locations?radius=-1&filter_catid=0&limit=0&filter_order=distance&searchzip=Pennsylvania"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 headers = {
@@ -19,8 +19,6 @@ headers = {
 
 def fetch_data(sgw: SgWriter):
     cleanr = re.compile(r"<[^>]+>")
-    url = "https://joeskwikmart.com/locations?radius=-1&filter_catid=0&limit=0&filter_order=distance&searchzip=Pennsylvania"
-
     mydata = {
         "searchzip": "You",
         "task": "search",
@@ -37,12 +35,12 @@ def fetch_data(sgw: SgWriter):
         "longitude": "-95.712891",
     }
 
-    loclist = session.post(url, data=mydata, headers=headers).json()["features"]
+    loclist = session.post(API_URL, data=mydata, headers=headers).json()["features"]
     for loc in loclist:
         longt = loc["geometry"]["coordinates"][0]
         lat = loc["geometry"]["coordinates"][1]
         title = loc["properties"]["name"]
-        link = "https://joeskwikmart.com/" + loc["properties"]["url"]
+        link = BASE_URL + loc["properties"]["url"]
         content = loc["properties"]["fulladdress"]
         check_phone = re.search(r"tel:(\d+)", content)
         if not check_phone:
@@ -59,7 +57,7 @@ def fetch_data(sgw: SgWriter):
         log.info("Append {} => {}".format(title, street))
         sgw.write_row(
             SgRecord(
-                locator_domain=domain,
+                locator_domain=DOMAIN,
                 page_url=link,
                 location_name=title,
                 street_address=street,
