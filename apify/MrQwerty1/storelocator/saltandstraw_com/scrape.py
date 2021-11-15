@@ -33,6 +33,8 @@ def get_data(url, sgw: SgWriter):
             continue
         line.append(l.strip())
     line = list(filter(None, [l.strip() for l in line]))
+    if not line[0][0].isdigit():
+        line.pop(0)
 
     street_address = ", ".join(line[:-1])
     adr = line[-1]
@@ -48,12 +50,10 @@ def get_data(url, sgw: SgWriter):
             "//a[contains(@href, 'tel:') or contains(@href, '(')]//text()|//p[.//span[contains(@aria-label, 'Phone')]]//text()"
         )
     ).strip()
-    latitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-latitude")) or "<MISSING>"
-    )
-    longitude = (
-        "".join(tree.xpath("//div[@data-longitude]/@data-longitude")) or "<MISSING>"
-    )
+    latitude = "".join(tree.xpath("//div[@data-latitude]/@data-latitude"))
+
+    longitude = "".join(tree.xpath("//div[@data-longitude]/@data-longitude"))
+
     hours = tree.xpath(
         "//div[./div/div[contains(@class, 'clock')]]/following-sibling::div//text()|//div[./div/i[contains(@class, 'clock')]]/following-sibling::div//text()"
     )

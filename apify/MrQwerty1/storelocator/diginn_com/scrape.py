@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
         lat = j.get("latitude")
         lng = j.get("longitude")
         adr = j.get("street_address")
-        key = adr.split()[0]
+        key = " ".join(adr.split()[:2])
         coords[key] = (lat, lng)
 
     divs = tree.xpath("//div[contains(@class, 'flex flex-col justify-between ')]")
@@ -44,8 +44,8 @@ def fetch_data(sgw: SgWriter):
         state = line.split()[-2]
         city = line.replace(postal, "").replace(state, "").replace(",", "").strip()
 
-        key = street_address.split()[0]
-        latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSINGfix)
+        key = " ".join(street_address.split()[:2])
+        latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
 
         hours_of_operation = "".join(
             d.xpath(".//div[@class='space-y-1']/div[./p]//text()")
