@@ -17,9 +17,9 @@ def fetch_data():
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://prostheticsolutions.com/contact/"
-    r = session.get(url, headers=headers)    
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.findAll('div',{'class':"wp-block-column"})
+    loclist = soup.findAll("div", {"class": "wp-block-column"})
     flag = 0
     for loc in loclist:
         loc = re.sub(cleanr, "\n", str(loc)).strip()
@@ -29,15 +29,13 @@ def fetch_data():
         city, state = loc[2].split(", ", 1)
         state, pcode = state.split(" ", 1)
         phone = loc[4]
-       
+
         if flag == 0:
-            lat = r.text.split('"latitude":"',1)[1].split('"',1)[0]
-            longt = r.text.split('"longitude":"',1)[1].split('"',1)[0]
+            lat = r.text.split('"latitude":"', 1)[1].split('"', 1)[0]
+            longt = r.text.split('"longitude":"', 1)[1].split('"', 1)[0]
             flag = 1
         else:
-            lat = longt = '<MISSING>'
-    
-
+            lat = longt = "<MISSING>"
         yield SgRecord(
             locator_domain="https://prostheticsolutions.com/",
             page_url=url,
