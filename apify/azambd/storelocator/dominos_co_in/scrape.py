@@ -1,5 +1,4 @@
 import re
-import json
 from lxml import html
 import time
 from concurrent.futures import ThreadPoolExecutor
