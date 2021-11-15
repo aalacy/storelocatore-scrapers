@@ -253,8 +253,6 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
             lng = gitem["longitude"]
             longitude = lng if lng else MISSING
             logger.info(f"[{idx1}] long: {longitude}")
-
-            warehouse_hoo = ""
             hours_of_operation = ""
             hoo = []
             if "openings" in gitem:
