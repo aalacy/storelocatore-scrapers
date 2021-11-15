@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
-from typing import Iterable
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("whittard")
 
@@ -18,7 +18,7 @@ locator_domain = "https://www.whittard.co.uk"
 base_url = "https://www.whittard.co.uk/on/demandware.store/Sites-WhittardUK-Site/en_GB/Stores-FindStores?dwfrm_storelocator_search=search&format=ajax&lat={}&lng=-{}"
 
 
-def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
+def fetch_records(http, search):
     maxZ = search.items_remaining()
     for lat, lng in search:
         if search.items_remaining() > maxZ:
@@ -30,25 +30,40 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         logger.info(f"{lat}, {lng} {progress} [{len(locations)}]")
         for _ in locations:
-            addr = list(_.select_one("div.store-details").stripped_strings)
-            hours = [
-                ": ".join(hh.stripped_strings)
-                for hh in _.select("div.store-hours div.store-content > div")
-            ]
+            _addr = list(_.select_one("div.store-details").stripped_strings)
+            raw_address = ", ".join(_addr)
+            addr = parse_address_intl(raw_address + ", United Kingdom")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            if street_address.isdigit() or len(street_address.split()) == 2:
+                street_address = _addr[0]
+            hours = []
+            for hh in _.select("div.store-hours div.store-content > div"):
+                cell = hh.select("div.cell")
+                if not cell:
+                    hours = [hh.text.strip()]
+                else:
+                    times = "closed"
+                    if len(cell) > 1:
+                        times = cell[1].text.strip()
+                        if not times:
+                            times = "closed"
+                    hours.append(f"{cell[0].text.strip()}: {times}")
             yield SgRecord(
                 page_url=_.select_one("a.store-details-link")["href"],
                 store_number=_["data-storeid"],
                 location_name=_.select_one("span.store-header").text.strip(),
-                street_address=addr[0].replace(",", " ").strip(),
-                city=addr[1],
-                zip_postal=addr[-1],
+                street_address=street_address,
+                city=_addr[-2],
+                zip_postal=_addr[-1],
                 country_code="GB",
                 phone=list(_.select_one("div.contacts-desktop").stripped_strings)[-1],
                 latitude=_.select_one("span.store-header")["data-lat"],
                 longitude=_.select_one("span.store-header")["data-lng"],
                 hours_of_operation="; ".join(hours),
                 locator_domain=locator_domain,
-                raw_address=" ".join(addr),
+                raw_address=raw_address,
             )
 
 

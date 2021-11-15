@@ -1,10 +1,12 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
-import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
+from bs4 import BeautifulSoup as bs
+import re
+import json
 
 try:
     _create_unverified_https_context = (
@@ -18,7 +20,8 @@ else:
 
 def _p(val):
     if (
-        val.replace("(", "")
+        val
+        and val.replace("(", "")
         .replace(")", "")
         .replace("+", "")
         .replace("-", "")
@@ -36,10 +39,11 @@ def _p(val):
 def fetch_data():
     locator_domain = "https://www.themelt.com/"
     base_url = "https://www.themelt.com/locations"
-    json_url = "/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw"
+    json_url = "/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw/find.ajax"
     with SgChrome() as driver:
         driver.get(base_url)
         driver.wait_for_request(json_url, 20)
+        names = []
         for rr in driver.iter_requests():
             if json_url in rr.url:
                 locations = json.loads(rr.response.body)
@@ -58,6 +62,17 @@ def fetch_data():
                         street_address = cross_street
                     if cross_street.split(" ")[0].strip().isdigit():
                         street_address = cross_street
+                    street_address = (
+                        street_address.split("(")[0]
+                        .split("Between")[0]
+                        .replace("Westfield Oakridge Mall,", "")
+                        .replace("Taste Food Hall:", "")
+                        .replace("at Second St.", "")
+                        .strip()
+                    )
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
+                    names.append(_["address"])
                     yield SgRecord(
                         page_url=base_url,
                         location_name=_["address"],
@@ -65,10 +80,61 @@ def fetch_data():
                         city=_["city"],
                         state=_["state"],
                         country_code="US",
-                        phone=_p(_["phone_number"]),
+                        phone=_p(_.get("phone_number")),
                         locator_domain=locator_domain,
                         hours_of_operation="; ".join(hours),
                     )
+
+        items = bs(driver.page_source, "lxml").select(
+            'div[role="grid"] div[role="row"]'
+        )
+        for x, _ in enumerate(items):
+            state = ""
+            states = [
+                div.text.strip()
+                for div in _.find_parent().find_parent().find_previous_siblings("div")
+                if div.p and div.text.strip()
+            ]
+            if x >= 3:
+                state = states[0]
+            if x < 3:
+                state = states[1]
+
+            location_name = _.h5.text.strip()
+            if location_name in names:
+                continue
+            _hr = _.find("span", string=re.compile(r"^Hours"))
+            if _hr:
+                days = []
+                times = []
+                for hh in _hr.find_parent("div").find_next_siblings("div"):
+                    _hh = hh.text.strip()
+                    if _hh[0].isdigit():
+                        times.append(_hh)
+                    else:
+                        days.append(_hh)
+
+                hours = []
+                for x in range(len(days)):
+                    hours.append(f"{days[x]} {times[x]}")
+
+            _pp = _.find("span", string=re.compile(r"^Phone"))
+            phone = ""
+            if _pp:
+                phone = _pp.find_parent("div").find_next_sibling("div").text.strip()
+            yield SgRecord(
+                page_url=base_url,
+                location_name=location_name,
+                street_address=location_name
+                + " "
+                + _.h5.find_parent("div").find_next_sibling("div").text.strip(),
+                city=_.p.text.strip(),
+                state=state,
+                country_code="US",
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
