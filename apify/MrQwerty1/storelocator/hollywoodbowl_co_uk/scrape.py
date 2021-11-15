@@ -18,12 +18,9 @@ def fetch_data():
 
     tree = html.fromstring(r.text)
 
-    all_divs = tree.xpath("//div[@class='centre-data__item']")
+    all_divs = tree.xpath("//div[@class='centre-list__item centre-list__item--hwb']")
     for div in all_divs:
-        domain = "hollywoodbowl.co.uk"
-        page_url = "https://www.hollywoodbowl.co.uk" + "".join(
-            div.xpath("./@data-link")
-        )
+        page_url = "".join(div.xpath(".//a[contains(text(), 'Visit')]/@href"))
 
         r = session.get(page_url, cookies=cookies)
         try:
@@ -94,5 +91,6 @@ def scrape():
 
 if __name__ == "__main__":
     session = SgRequests()
+    domain = "hollywoodbowl.co.uk"
     cookies = {"book-exp": "b"}
     scrape()
