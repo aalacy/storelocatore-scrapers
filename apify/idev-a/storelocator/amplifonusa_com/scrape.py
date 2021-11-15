@@ -62,7 +62,7 @@ def fetch_data(search):
     for lat, lng in search:
         del driver.requests
         get_url(driver, base_url.format(lat, lng))
-        driver.wait_for_request(json_url)
+        driver.wait_for_request(json_url, timeout=20)
         locations = bs(driver.page_source, "lxml").select("li.sl-result-list__item")
         logger.info(f"[{lat, lng}] {len(locations)}")
         if locations:
@@ -70,28 +70,23 @@ def fetch_data(search):
         for _ in locations:
             if not _.text.strip():
                 continue
-            try:
-                phone = ""
-                if _.select_one("a.phone-number"):
-                    phone = _.select_one("a.phone-number").text.strip()
-                yield SgRecord(
-                    page_url="https://www.amplifonusa.com/our-program/clinic-locator",
-                    location_name=_["data-shop-name"],
-                    street_address=_["data-shop-address"],
-                    city=_["data-shop-city"],
-                    state=_["data-shop-state"],
-                    zip_postal=_["data-shop-postal-code"],
-                    latitude=_["data-shop-latitude"],
-                    longitude=_["data-shop-longitude"],
-                    country_code="US",
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    raw_address=_.select_one("p.dark-grey-text").text.strip(),
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            phone = ""
+            if _.select_one("a.phone-number"):
+                phone = _.select_one("a.phone-number").text.strip()
+            yield SgRecord(
+                page_url="https://www.amplifonusa.com/our-program/clinic-locator",
+                location_name=_["data-shop-name"],
+                street_address=_["data-shop-address"],
+                city=_["data-shop-city"],
+                state=_["data-shop-state"],
+                zip_postal=_["data-shop-postal-code"],
+                latitude=_["data-shop-latitude"],
+                longitude=_["data-shop-longitude"],
+                country_code="US",
+                phone=phone,
+                locator_domain=locator_domain,
+                raw_address=_.select_one("p.dark-grey-text").text.strip(),
+            )
 
 
 if __name__ == "__main__":
