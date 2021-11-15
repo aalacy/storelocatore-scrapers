@@ -75,7 +75,7 @@ def fetch_data():
         )
         raw_address = " ".join(info[1:-1])
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = info[-1].strip()
+        phone = info[-1].replace("Phone:", "").strip()
         country_code = "US"
         store_number = MISSING
         hours_of_operation = (

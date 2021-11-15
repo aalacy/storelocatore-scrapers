@@ -6,14 +6,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import ssl
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
 
 
 session = SgRequests()
@@ -52,6 +44,8 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", "")
                 .replace("YorkPA", "York PA")
+                .replace("Road", "Road ")
+                .replace("Ave", "Ave ")
             )
             address = address.replace(",", " ")
             address = usaddress.parse(address)
@@ -86,6 +80,12 @@ def fetch_data():
                 .replace("Hours:", "")
                 .replace("/", " ")
             )
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!3m", 1)[0]
+                .split("!3d")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -98,8 +98,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
 

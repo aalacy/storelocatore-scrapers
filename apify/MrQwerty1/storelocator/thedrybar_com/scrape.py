@@ -49,14 +49,17 @@ def fetch_data(sgw: SgWriter):
         _tmp = []
         hours = s.get("operatingHours") or []
         for h in hours:
-            if h[0][0].isdigit():
+            try:
+                if h[0][0].isdigit():
+                    continue
+            except:
                 continue
             _tmp.append(": ".join(h))
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
         status = s.get("operatingStatus") or ""
         if "coming" in status.lower():
-            hours_of_operation = "Coming Soon"
+            continue
 
         row = SgRecord(
             page_url=page_url,

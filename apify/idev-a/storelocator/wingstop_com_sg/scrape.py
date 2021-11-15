@@ -10,14 +10,25 @@ _headers = {
 
 locator_domain = "https://www.wingstop.com.sg"
 base_url = "https://api.wingstop.com.sg/restaurants/?nomnom=calendars"
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
+            temp = {}
+            hours = []
+            for hr in _["calendars"]:
+                if hr["label"] == "Delivery":
+                    for hh in hr["ranges"]:
+                        temp[
+                            hh["weekday"]
+                        ] = f"{hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
+            for day in days:
+                hours.append(f"{day}: {temp[day]}")
             yield SgRecord(
-                page_url=base_url,
+                page_url=_["nomnom"]["redirect"],
                 store_number=_["id"],
                 location_name=_["name"],
                 street_address=_["streetaddress"],
@@ -29,6 +40,7 @@ def fetch_data():
                 country_code="SG",
                 phone=_["telephone"],
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
             )
 
 

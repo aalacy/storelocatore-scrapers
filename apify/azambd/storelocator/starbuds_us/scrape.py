@@ -66,6 +66,42 @@ def fetch_store_links():
     return storeLinks
 
 
+def fetch_script_location(body):
+    address = MISSING
+    latitude = MISSING
+    longitude = MISSING
+    for P in body.xpath("//p[@class='font_7']"):
+        spans = P.xpath(".//span/text()")
+        if len(spans) > 0 and len(spans[0]) > 0 and "," in spans[0]:
+            address = spans[0].strip().replace("COLORADO", "CO")
+            break
+
+    As = body.xpath(
+        "//a[contains(@href, 'https://www.google.com/maps/place/') or contains(@href, 'maps.google.com')]/@href"
+    )
+    if len(As) == 0:
+        for script in body.xpath('.//script[@type="application/ld+json" ]/text()'):
+            if "latitude" in script:
+                script = script.replace("\n", " ")
+                data1 = json.loads(script)
+                geo = data1["geo"]
+                latitude = geo["latitude"]
+                longitude = geo["longitude"]
+
+    else:
+        for part in As[0].split("/"):
+            if "@" in part:
+                part = part.replace("@", "").split(",")
+                latitude = part[0]
+                longitude = part[1]
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "address": address,
+    }
+
+
 def fetch_store_details(link):
     featuredData = get_feature_data(link)
     body = featuredData["body"]
@@ -104,6 +140,7 @@ def fetch_store_details(link):
     if phone == MISSING:
         location_type = "coming soon"
     location = {}
+
     foundLocation = False
     compProps = data["props"]["render"]["compProps"]
     for key in compProps.keys():
@@ -113,23 +150,7 @@ def fetch_store_details(link):
     store_number = data["props"]["seo"]["pageId"]
 
     if foundLocation is False:
-
-        for script in body.xpath('.//script[@type="application/ld+json" ]/text()'):
-            if "latitude" in script:
-                script = script.replace("\n", " ")
-                data1 = json.loads(script)
-                geo = data1["geo"]
-                address = data1["address"]
-                address = f"{address['streetAddress']} {address['addressLocality']}, {address['addressRegion']} {address['postalCode']}, USA".replace(
-                    "Colorado", "CO"
-                )
-
-                location = {
-                    "latitude": geo["latitude"],
-                    "longitude": geo["longitude"],
-                    "address": address,
-                }
-
+        location = fetch_script_location(body)
     return {
         "location_name": location_name,
         "phone": phone,
@@ -229,6 +250,7 @@ def fetch_data():
             longitude=longitude,
             hours_of_operation=operations,
             location_type=location_type,
+            raw_address=raw_address,
         )
 
 
