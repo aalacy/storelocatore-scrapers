@@ -8,14 +8,20 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 
-website = "sees.com"
+
+session = SgRequests()
+website = "sees_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "www.sees.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
-    }
     with SgRequests() as session:
         r = session.get(
             "https://maps.sees.com/api/getAsyncLocations?template=search&level=search&radius=500000&search=11756",
@@ -32,7 +38,6 @@ def fetch_data():
             location_details = json.loads(
                 location_sel.xpath('//script[@type="application/ld+json"]/text()')[0]
             )[0]
-            locator_domain = website
             location_name = location_details["name"]
             street_address = location_details["address"]["streetAddress"]
             city = location_details["address"]["addressLocality"]
@@ -51,13 +56,25 @@ def fetch_data():
                 if location_details["address"]["telephone"]
                 else "<MISSING>"
             )
-            location_type = "<MISSING>"
             latitude = location_details["geo"]["latitude"]
             longitude = location_details["geo"]["longitude"]
             hours_of_operation = location_details["openingHours"]
 
+            req = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(req.text, "lxml")
+            isseasonal = soup.find("div", {"class": "seasonal"})
+            try:
+                isseasonal = isseasonal.text
+                loc_type = isseasonal
+            except AttributeError:
+                if isseasonal is None:
+                    loc_type = "Store"
+            loc_type = loc_type.strip()
+            if loc_type == "":
+                loc_type = "Store"
+
             yield SgRecord(
-                locator_domain=locator_domain,
+                locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
@@ -67,7 +84,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone,
-                location_type=location_type,
+                location_type=loc_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
