@@ -19,7 +19,7 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    locator_domain = "lionsupermarket_com"
+    locator_domain = "https://www.lionsupermarket.com"
 
     items = base.find_all(class_="_1Q9if")
 
