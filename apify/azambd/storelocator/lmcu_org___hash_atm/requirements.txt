@@ -4,4 +4,5 @@ sgselenium==0.1.4
 selenium==3.141.0
 webdriver_manager==3.4.2
 sgscrape==0.2.6
-sgzip==0.10.6
+sgzip==0.10.9
+tenacity==7.0.0
