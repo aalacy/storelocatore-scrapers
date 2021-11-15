@@ -41,7 +41,6 @@ def fetch_data():
                 '//h2[contains(text(), "Hours")]/following-sibling::table//text()'
             )
             hoo = " ".join(hoo)
-            print(page_url)
             driver.switch_to.frame(
                 driver.find_element(
                     by="xpath",
