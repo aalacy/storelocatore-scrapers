@@ -44,7 +44,11 @@ def fetch_data():
             address = loc.find("div", {"class": "show-in-map"})
             store_number = address["data-store-id"]
             location_name = address["data-store-name"]
-            if "US" in store_number or "UK" in store_number or "FRESH-510" in store_number:
+            if (
+                "US" in store_number
+                or "UK" in store_number
+                or "FRESH-510" in store_number
+            ):
                 log.info(location_name)
                 coords = address["data-store-coord"].split(",")
                 latitude = coords[0]
