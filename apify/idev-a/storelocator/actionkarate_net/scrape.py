@@ -120,7 +120,10 @@ def fetch_data():
                 store_number=driver.current_url.split("-")[-1],
                 page_url=driver.current_url,
                 location_name=location_name,
-                street_address=" ".join(addr[:-1]).replace(",", ""),
+                street_address=" ".join(addr[:-1])
+                .replace(",", "")
+                .split("-")[0]
+                .strip(),
                 city=addr[-1].split(",")[0].strip(),
                 state=" ".join(addr[-1].split(",")[1].strip().split(" ")[:-1]),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
