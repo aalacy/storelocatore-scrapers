@@ -52,7 +52,8 @@ def fetch_data(sgw: SgWriter):
         tmp = []
         tmp.append(page_url)
         for b in slug:
-            url = "".join(b.xpath(".//@href"))
+            c = b
+            url = "".join(c.xpath(".//@href"))
             page_url = f"{spage_url}{url}"
             tmp.append(page_url)
         for t in tmp:
