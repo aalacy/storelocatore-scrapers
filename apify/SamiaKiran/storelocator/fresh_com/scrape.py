@@ -44,17 +44,31 @@ def fetch_data():
             address = loc.find("div", {"class": "show-in-map"})
             store_number = address["data-store-id"]
             location_name = address["data-store-name"]
-            if "US" in store_number:
+            if (
+                "US" in store_number
+                or "UK" in store_number
+                or "FRESH-510" in store_number
+            ):
                 log.info(location_name)
                 coords = address["data-store-coord"].split(",")
                 latitude = coords[0]
                 longitude = coords[1]
                 try:
-                    phone = loc.find("div", {"class": "store_phone"}).text
+                    phone = (
+                        loc.find("div", {"class": "store-card-bottom d-flex"})
+                        .find_next("div", {"class": "store_phone"})
+                        .find_next("span")
+                        .text
+                    )
                 except:
                     phone = MISSING
                 try:
-                    hours_of_operation = loc.find("div", {"class": "store_hours"}).text
+                    hours_of_operation = (
+                        loc.find("div", {"class": "store-card-bottom d-flex"})
+                        .find_next("div", {"class": "store_hours"})
+                        .find_next("span")
+                        .text
+                    )
                 except:
                     hours_of_operation = MISSING
                 raw_address = address.text
@@ -71,7 +85,10 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
-                country_code = "US"
+                if "US" not in store_number:
+                    country_code = "UK"
+                else:
+                    country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url="https://www.fresh.com/us/stores",

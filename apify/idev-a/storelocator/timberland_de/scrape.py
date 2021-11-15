@@ -24,7 +24,7 @@ headers = {
 def fetch_records(search, token):
     for lat, lng in search:
         current_country = search.current_country()
-        with SgRequests() as http:
+        with SgRequests(proxy_country="us") as http:
             payload = {
                 "request": {
                     "appkey": token,
@@ -77,47 +77,53 @@ def fetch_records(search, token):
                 }
             }
 
-            locations = http.post(json_url, headers=headers, json=payload).json()[
-                "response"
-            ]["collection"]
-            if locations:
+            try:
+                locations = http.post(json_url, headers=headers, json=payload).json()[
+                    "response"
+                ]
+            except:
+                continue
+            if "collection" in locations:
                 search.found_location_at(lat, lng)
 
-            logger.info(f"[{current_country}] {lat, lng} {len(locations)}")
-            for _ in locations:
-                location_name = " ".join(
-                    bs(_["name"], "lxml").stripped_strings
-                ).replace("&reg;", "®")
-                if "timberland" not in location_name:
-                    continue
-                street_address = _["address1"]
-                if _["address2"]:
-                    street_address += " " + _["address2"]
-                if _["address3"]:
-                    street_address += " " + _["address3"]
-                location_type = "Timberland Outlet"
-                if _["retail_store"]:
-                    location_type = "Timberland Store"
+                locations = locations["collection"]
+                logger.info(f"[{current_country}] {lat, lng} {len(locations)}")
+                for _ in locations:
+                    location_name = " ".join(
+                        bs(_["name"], "lxml").stripped_strings
+                    ).replace("&reg;", "®")
+                    if "timberland" not in location_name:
+                        continue
+                    street_address = _["address1"]
+                    if _["address2"]:
+                        street_address += " " + _["address2"]
+                    if _["address3"]:
+                        street_address += " " + _["address3"]
+                    location_type = "Timberland Outlet"
+                    if _["retail_store"]:
+                        location_type = "Timberland Store"
 
-                hours = _["hours_de"]
-                if hours and "Bitte rufen Sie im Ladengesch" in hours:
-                    hours = ""
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url="https://www.timberland.de/utility/handlersuche.html",
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=_.get("city"),
-                    state=_.get("state"),
-                    zip_postal=_.get("postalcode"),
-                    country_code=_.get("country"),
-                    store_number=_.get("uid"),
-                    phone=_["phone"],
-                    latitude=_["latitude"],
-                    longitude=_["longitude"],
-                    location_type=location_type,
-                    hours_of_operation=hours,
-                )
+                    hours = _["hours_de"]
+                    if hours and "Bitte rufen Sie im Ladengesch" in hours:
+                        hours = ""
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url="https://www.timberland.de/utility/handlersuche.html",
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=_.get("city"),
+                        state=_.get("state"),
+                        zip_postal=_.get("postalcode"),
+                        country_code=_.get("country"),
+                        store_number=_.get("uid"),
+                        phone=_["phone"],
+                        latitude=_["latitude"],
+                        longitude=_["longitude"],
+                        location_type=location_type,
+                        hours_of_operation=hours,
+                    )
+            else:
+                pass
 
 
 if __name__ == "__main__":
