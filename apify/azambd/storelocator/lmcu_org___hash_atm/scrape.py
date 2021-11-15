@@ -1,6 +1,8 @@
 import time
 import json
 import re
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -88,6 +90,7 @@ def get_js_object(response, varName, noVal=MISSING):
     return JSObject[0]
 
 
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def fetch_single_zip(zip):
     log.info(zip)
     try:
