@@ -1,5 +1,6 @@
 # --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -26,6 +27,7 @@ def fetch_data():
         page_url = urljoin(start_url, url)
         with SgFirefox() as driver:
             driver.get(page_url)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
 
             location_name = loc_dom.xpath("//h1/text()")[0]
@@ -39,9 +41,11 @@ def fetch_data():
                 '//h2[contains(text(), "Hours")]/following-sibling::table//text()'
             )
             hoo = " ".join(hoo)
+            print(page_url)
             driver.switch_to.frame(
-                driver.find_element_by_xpath(
-                    '//div[@id="map-canvas"]/following-sibling::iframe'
+                driver.find_element(
+                    by="xpath",
+                    value='//div[@id="map-canvas"]/following-sibling::iframe',
                 )
             )
             loc_dom = etree.HTML(driver.page_source)
