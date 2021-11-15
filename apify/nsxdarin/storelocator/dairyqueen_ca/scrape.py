@@ -1114,80 +1114,96 @@ def fetch_data():
             lng = ""
             hours = ""
             session = SgRequests()
-            r2 = session.get(loc, headers=headers)
-            for line2 in r2.iter_lines():
-                if "this page doesn't exist" in line2:
-                    Closed = True
-                if '<h1 class="my-1 h2">' in line2:
-                    name = line2.split('<h1 class="my-1 h2">')[1].split("<")[0]
-                if '"address3":"' in line2:
-                    add = line2.split('"address3":"')[1].split('"')[0]
-                    PFound = True
-                    lat = line2.split('"latlong":"')[1].split(",")[0]
-                    lng = line2.split('"latlong":"')[1].split(",")[1].replace('"', "")
-                    city = line2.split('"city":"')[1].split('"')[0]
-                    state = line2.split('"stateProvince":"')[1].split('"')[0]
-                    try:
-                        zc = line2.split('"postalCode":"')[1].split('"')[0]
-                    except:
-                        zc = "<MISSING>"
-                    try:
-                        phone = line2.split('"phone":"')[1].split('"')[0]
-                    except:
-                        phone = "<MISSING>"
-                if '"miniSite":{"miniSiteHours":"' in line2:
-                    days = (
-                        line2.split('"miniSite":{"miniSiteHours":"')[1]
-                        .split('","')[0]
-                        .split(",")
+            try:
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    if "this page doesn't exist" in line2:
+                        Closed = True
+                    if '<h1 class="my-1 h2">' in line2:
+                        name = line2.split('<h1 class="my-1 h2">')[1].split("<")[0]
+                    if '"address3":"' in line2:
+                        add = line2.split('"address3":"')[1].split('"')[0]
+                        PFound = True
+                        lat = line2.split('"latlong":"')[1].split(",")[0]
+                        lng = (
+                            line2.split('"latlong":"')[1].split(",")[1].replace('"', "")
+                        )
+                        city = line2.split('"city":"')[1].split('"')[0]
+                        state = line2.split('"stateProvince":"')[1].split('"')[0]
+                        try:
+                            zc = line2.split('"postalCode":"')[1].split('"')[0]
+                        except:
+                            zc = "<MISSING>"
+                        try:
+                            phone = line2.split('"phone":"')[1].split('"')[0]
+                        except:
+                            phone = "<MISSING>"
+                    if '"miniSite":{"miniSiteHours":"' in line2:
+                        days = (
+                            line2.split('"miniSite":{"miniSiteHours":"')[1]
+                            .split('","')[0]
+                            .split(",")
+                        )
+                        for day in days:
+                            dnum = day.split(":")[0]
+                            if dnum == "1":
+                                hrs = "Sunday: " + day.split(":", 1)[1]
+                            if dnum == "2":
+                                hrs = "Monday: " + day.split(":", 1)[1]
+                            if dnum == "3":
+                                hrs = "Tuesday: " + day.split(":", 1)[1]
+                            if dnum == "4":
+                                hrs = "Wednesday: " + day.split(":", 1)[1]
+                            if dnum == "5":
+                                hrs = "Thursday: " + day.split(":", 1)[1]
+                            if dnum == "6":
+                                hrs = "Friday: " + day.split(":", 1)[1]
+                            if dnum == "7":
+                                hrs = "Saturday: " + day.split(":", 1)[1]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                if phone == "":
+                    phone = "<MISSING>"
+                if hours == "":
+                    hours = "<MISSING>"
+                name = name.replace("&amp;", "&").replace("&amp", "&")
+                add = add.replace("&amp;", "&").replace("&amp", "&")
+                add = add.replace("\\u0026", "&")
+                if Closed is False:
+                    city = city.replace("\\u0026apos;", "'")
+                    add = add.replace("\\u0026apos;", "'")
+                    name = name.replace("\\u0026apos;", "'")
+                    if "sk/saskatoon/1418-college-dr/7820" in loc:
+                        name = "1418 College Dr"
+                        add = "1418 College Dr"
+                        city = "Saskatoon"
+                        state = "SK"
+                        zc = "S7N 0W7"
+                        phone = "306-664-3377"
+                        hours = "Mon-Sun: 10:00AM-11:00PM"
+                        lat = "52.128722"
+                        lng = "-106.635113"
+                        store = "7820"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
                     )
-                    for day in days:
-                        dnum = day.split(":")[0]
-                        if dnum == "1":
-                            hrs = "Sunday: " + day.split(":", 1)[1]
-                        if dnum == "2":
-                            hrs = "Monday: " + day.split(":", 1)[1]
-                        if dnum == "3":
-                            hrs = "Tuesday: " + day.split(":", 1)[1]
-                        if dnum == "4":
-                            hrs = "Wednesday: " + day.split(":", 1)[1]
-                        if dnum == "5":
-                            hrs = "Thursday: " + day.split(":", 1)[1]
-                        if dnum == "6":
-                            hrs = "Friday: " + day.split(":", 1)[1]
-                        if dnum == "7":
-                            hrs = "Saturday: " + day.split(":", 1)[1]
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-            if phone == "":
-                phone = "<MISSING>"
-            if hours == "":
-                hours = "<MISSING>"
-            name = name.replace("&amp;", "&").replace("&amp", "&")
-            add = add.replace("&amp;", "&").replace("&amp", "&")
-            add = add.replace("\\u0026", "&")
-            if Closed is False:
-                city = city.replace("\\u0026apos;", "'")
-                add = add.replace("\\u0026apos;", "'")
-                name = name.replace("\\u0026apos;", "'")
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+            except:
+                pass
             if count >= 5:
                 PFound = True
 
