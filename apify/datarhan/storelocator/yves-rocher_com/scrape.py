@@ -41,7 +41,6 @@ def fetch_data():
         all_locations = dom.xpath('//span[@id="placename"]/a/@href')
         for url in all_locations:
             page_url = urljoin(start_url, url)
-            print(page_url)
             loc_response = session.get(page_url)
             if loc_response.status_code != 200:
                 continue
