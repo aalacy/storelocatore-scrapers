@@ -45,7 +45,7 @@ def fetch_data():
         driver.get(base_url)
         with SgRequests() as session:
             session.get(locator_domain, headers=_headers())
-            locations = bs(driver.page_source, "html.parser").select(
+            locations = bs(driver.page_source, "lxml").select(
                 "div.accordions .location-sm"
             )
             for location in locations:
