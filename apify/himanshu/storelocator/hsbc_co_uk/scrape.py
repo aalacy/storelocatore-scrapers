@@ -1,36 +1,12 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("hsbc_co_uk")
 session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -81,7 +57,7 @@ def fetch_data():
         except:
             country_code = "<MISSING>"
 
-        store_number = "<MISSING>"
+        store_number = data["Identification"]
         phone = "<MISSING>"
         location_type = "ATM"
         try:
@@ -101,25 +77,23 @@ def fetch_data():
         hours_of_operation = "24 HOURS"
         page_url = "<MISSING>"
 
-        store = []
-        store.append("https://www.hsbc.co.uk")
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append(location_type if location_type else "<MISSING>")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
-        store.append(page_url if page_url.strip() else "<MISSING>")
-
-        yield store
-
-    r1 = session.get("https://api.hsbc.com/open-banking/v2.2/branches").json()
+        yield SgRecord(
+            locator_domain="https://hsbc.co.uk/",
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+    r1 = session.get("https://api.hsbc.com/open-banking/v2.1/branches").json()
     attr1 = r1["data"][0]["Brand"][0]["Branch"]
 
     for data1 in attr1:
@@ -159,7 +133,7 @@ def fetch_data():
             country_code = "<MISSING>"
 
         try:
-            store_number = "<MISSING>"
+            store_number = data1["Identification"]
         except:
             store_number = "<MISSING>"
 
@@ -188,45 +162,55 @@ def fetch_data():
             longitude = "<MISSING>"
 
         try:
-            hours_of_operation = ""
+            hours_list = []
             availability = data1["Availability"]["StandardAvailability"]["Day"]
             for week in availability:
                 for time in week["OpeningHours"]:
-                    hours_of_operation = (
-                        hours_of_operation
-                        + " "
-                        + week["Name"]
-                        + " OpeningTime "
-                        + time["OpeningTime"]
-                        + " ClosingTime "
-                        + time["ClosingTime"]
+                    hours_list.append(
+                        week["Name"]
+                        + ": "
+                        + time["OpeningTime"].replace(".000Z", "").strip()
+                        + " - "
+                        + time["ClosingTime"].replace(".000Z", "").strip()
                     )
+
+            hours_of_operation = "; ".join(hours_list).strip()
         except:
             hours_of_operation = "<MISSING>"
         page_url = "<MISSING>"
 
-        store = []
-        store.append("https://www.hsbc.co.uk")
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append(location_type if location_type else "<MISSING>")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
-        store.append(page_url if page_url else "<MISSING>")
-
-        yield store
+        yield SgRecord(
+            locator_domain="https://hsbc.co.uk/",
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

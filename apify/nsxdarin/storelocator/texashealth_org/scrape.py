@@ -1,9 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("texashealth_org")
-
 
 session = SgRequests()
 headers = {
@@ -11,39 +13,12 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
     locinfo = []
     alllocs = []
     allurls = []
-    url = "https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&g=32.735687%7C-97.10806559999997&o=DistanceMi%2CAscending&p=2000&e=0&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
+    url = "https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&g=30.26%7C-97.71&o=DistanceMi%2CAscending&p=500&e=0&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
     r = session.get(url, headers=headers)
     website = "texashealth.org"
     for line in r.iter_lines():
@@ -198,27 +173,29 @@ def fetch_data():
                     .replace("&quot;", '"')
                     .replace("&#39;", "'")
                 )
-                yield [
-                    website,
-                    loc.split("|")[0],
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc.split("|")[0],
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

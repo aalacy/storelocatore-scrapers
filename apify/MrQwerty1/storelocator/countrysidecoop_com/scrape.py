@@ -1,111 +1,86 @@
-import csv
 import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.countrysidecoop.com/"
-    api_url = (
-        "https://www.countrysidecoop.com/atlasapi/RPLocationsApi/GetLocations?services="
+def get_cats():
+    cats = dict()
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'var asl_categories =')]/text()")
     )
+    text = text.split("var asl_categories =")[1].split("}};")[0] + "}}"
+    js = json.loads(text).values()
+    for j in js:
+        _id = j.get("id")
+        name = j.get("name")
+        cats[_id] = name
 
-    session = SgRequests()
-    r = session.get(api_url)
-    js = json.loads(r.json())
+    return cats
+
+
+def fetch_data(sgw: SgWriter):
+    cats = get_cats()
+    api = "https://www.alcivia.com/wp-content/uploads/agile-store-locator/locator-data.json"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(api, headers=headers)
+    js = r.json()
 
     for j in js:
-        street_address = j.get("StreetAddress") or "<MISSING>"
-        city = j.get("City") or "<MISSING>"
-        state = j.get("State") or "<MISSING>"
-        postal = j.get("ZipCode") or "<MISSING>"
+        location_name = j.get("title")
+        street_address = j.get("street")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postal_code")
         country_code = "US"
-        store_number = j.get("LocationsID") or "<MISSING>"
-        page_url = f'https://www.countrysidecoop.com{j.get("LocationURL")}'
-        location_name = j.get("Name")
-        phone = j.get("Phone") or "<MISSING>"
-        latitude = j.get("Latitude") or "<MISSING>"
-        longitude = j.get("Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        store_number = j.get("id")
+
+        if "Grain:" in phone:
+            phone = phone.split("Grain:")[-1].strip()
 
         _tmp = []
-        source = j.get("Hours") or "<html></html>"
-        tree = html.fromstring(source)
-        text = tree.xpath("//text()")
-        text = list(filter(None, [t.strip() for t in text]))
+        types = j.get("categories") or ""
+        for t in types.split(","):
+            t = t.strip()
+            cat = cats.get(t)
+            if cat:
+                _tmp.append(cat)
+        location_type = ", ".join(_tmp)
 
-        for t in text:
-            if (
-                t.lower().find("hours") != -1
-                and t.lower().find("deli") == -1
-                and t.find("24") == -1
-            ):
-                continue
-            if t.lower().find("deli") != -1 and t.lower().find("store") == -1:
-                break
-            if t.find(":") != -1 or t.find("24") != -1:
-                _tmp.append(t)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-        if hours_of_operation.count("Monday") >= 2:
-            hours_of_operation = "Monday" + hours_of_operation.split("Monday")[1]
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.alcivia.com/"
+    page_url = "https://www.alcivia.com/connect/locations/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

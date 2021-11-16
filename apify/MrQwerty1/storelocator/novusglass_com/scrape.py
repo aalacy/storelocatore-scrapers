@@ -1,158 +1,100 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    urls = []
-    session = SgRequests()
-    start = [
-        "https://novusglass.com/us/en/all-locations/?us=yes",
-        "https://novusglass.com/us/en/all-locations/?canada=yes",
-    ]
-
-    for s in start:
-        r = session.get(s)
-        tree = html.fromstring(r.text)
-        urls += tree.xpath(
-            "//div[contains(@class,'letter letter')]/following-sibling::a/@href"
-        )
-
-    return urls
-
-
-def get_data(page_url):
-    locator_domain = "https://novusglass.com/"
-    session = SgRequests()
-    r = session.get(page_url)
+def get_phone(page_url):
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    location_name = " ".join(" ".join(tree.xpath("//h1//text()")).split())
-    line = tree.xpath("//div[@class='address']/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-    if line:
-        street_address = " ".join(" ".join(line[:-1]).split())
-        line = line[-1].strip()
-        try:
-            city = line.split(",")[0].strip() or "<MISSING>"
-            line = line.split(",")[1].strip()
-            if line.lower().find("pei ") != -1:
-                state = line[:3].strip()
-                postal = line[3:].strip()
-            else:
-                state = line[:2].strip() or "<MISSING>"
-                postal = line[2:].strip() or "<MISSING>"
-        except:
-            city = "<MISSING>"
-            state = line.split()[0].strip()
-            postal = line.replace(state, "").strip() or "<MISSING>"
+    return "".join(tree.xpath("//a[@class='brand-phone']/text()")).strip()
 
-        if len(postal) == 5:
-            country_code = "US"
-        else:
-            country_code = "CA"
 
-        if state == "Sorel":
-            city = state
-            state = "<MISSING>"
+def fetch_data(coords, country_code, sgw):
+    lat, lng = coords
+    if country_code == "us":
+        _filter = "283"
     else:
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        postal = "<MISSING>"
-        country_code = "<MISSING>"
-    store_number = "<MISSING>"
-    phone = "".join(
-        tree.xpath("//div[@class='phone']//span[not(@class)]/text()")
-    ).strip()
+        _filter = "281"
 
-    script = "".join(
-        tree.xpath("//script[contains(text(), 'new google.maps.LatLng')]/text()")
-    )
-    try:
-        latitude = script.split("LatLng(")[1].split(",")[0]
-        longitude = script.split("LatLng(")[1].split(",")[1].split(")")[0]
-    except:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    location_type = "<MISSING>"
+    url = f"https://www.novusglass.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lng}&filter={_filter}&autoload=1"
+    r = session.get(url, headers=headers)
 
-    _tmp = []
-    tr = tree.xpath("//div[@class='business-hours']//tr")
-    for t in tr:
-        _tmp.append(" ".join(t.xpath("./td/text()")))
+    for j in r.json():
+        slug = j.get("store") or ""
+        slug = (
+            slug.replace("&#8211;", "–")
+            .replace(" ", "-")
+            .replace("&#8217;", "'")
+            .lower()
+        )
+        page_url = f"https://www.novusglass.com/en-{country_code}/shop/{slug}/"
+        street_address = f'{j.get("address")} {j.get("address2") or ""}'.strip()
+        if "NULL" in street_address or "MOBILE" in street_address:
+            street_address = SgRecord.MISSING
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip") or ""
+        if "NULL" in postal:
+            postal = SgRecord.MISSING
+        country_code = j.get("country")
+        store_number = j.get("id")
+        try:
+            phone = get_phone(page_url)
+        except:
+            phone = SgRecord.MISSING
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        location_name = f"NOVUS GLASS OF {city}"
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        _tmp = []
+        source = j.get("hours") or "<html></html>"
+        tree = html.fromstring(source)
+        tr = tree.xpath("//tr")
+        for t in tr:
+            day = "".join(t.xpath("./td[1]//text()")).strip()
+            inter = "".join(t.xpath("./td[2]//text()")).strip()
+            _tmp.append(f"{day}: {inter}")
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        hours_of_operation = ";".join(_tmp)
 
-    return row
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.novusglass.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0",
+    }
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        countries = [SearchableCountries.USA, SearchableCountries.CANADA]
+        search = DynamicGeoSearch(
+            country_codes=countries, expected_search_radius_miles=200
+        )
+        for coord in search:
+            fetch_data(coord, search.current_country(), writer)

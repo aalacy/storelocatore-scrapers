@@ -1,142 +1,93 @@
-import csv
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = h.get("weekDay")
+        time = h.get("description")
+        line = f"{day} {time}"
+        tmp.append(line)
+    hours_of_operation = ";".join(tmp) or "<MISISNG>"
+    return hours_of_operation
 
 
-def get_data(coord):
-    rows = []
-    lat, lng = coord
+def fetch_data(sgw: SgWriter):
     locator_domain = "https://www.citybbq.com/"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Referer": "https://www.citybbq.com/",
-        "ui-cache-ttl": "300",
-        "ui-transformer": "restaurants",
-        "clientid": "citybbq",
-        "Content-Type": "application/json",
-        "nomnom-platform": "web",
-        "Origin": "https://www.citybbq.com",
-        "Connection": "keep-alive",
-        "TE": "Trailers",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
-    }
-
+    api_url = "https://citybbq.olo.com/api/vendors/regions?excludeCities=true"
     session = SgRequests()
-
-    r = session.get(
-        f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={lng}&radius=20000&limit=6&nomnom=calendars&nomnom_calendars_from=20210715&nomnom_calendars_to=20210723&nomnom_exclude_extref=999",
-        headers=headers,
-    )
-    js = r.json()["restaurants"]
-
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, */*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "__RequestVerificationToken": "",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Olo-Request": "1",
+        "X-Olo-Viewport": "Desktop",
+        "X-Olo-App-Platform": "web",
+        "Connection": "keep-alive",
+        "Referer": "https://citybbq.olo.com/locations",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()
     for j in js:
-
-        page_url = j.get("url")
-
-        location_name = j.get("storename")
-        street_address = j.get("streetaddress")
-        city = j.get("city")
-        state = j.get("state")
-        postal = j.get("zip")
-        country_code = j.get("country")
-        store_number = "<MISSING>"
-        phone = j.get("telephone")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        location_type = "<MISSING>"
-        try:
-            hours = j.get("calendars").get("calendar")[0].get("ranges") or "<MISSING>"
-        except:
-            hours = "<MISSING>"
-        tmp = []
-        if hours != "<MISSING>":
-            for h in hours:
-                day = h.get("weekday")
-                start = "".join(h.get("start")).split()[1].strip()
-                end = "".join(h.get("end")).split()[1].strip()
-                line = f"{day} {start} - {end}"
-                tmp.append(line)
-            hours_of_operation = ";".join(tmp) or "<MISISNG>"
-        else:
+        code = j.get("code")
+        session = SgRequests()
+        r = session.get(
+            f"https://citybbq.olo.com/api/vendors/search/{code}", headers=headers
+        )
+        js = r.json()["vendor-search-results"]
+        for j in js:
+            page_url = f"https://citybbq.olo.com/menu/{j.get('slug')}"
+            location_name = j.get("name")
+            street_address = f"{j.get('address').get('streetAddress')} {j.get('address').get('streetAddress2')}".strip()
+            state = j.get("state")
+            postal = j.get("address").get("postalCode")
+            country_code = "US"
+            city = j.get("city")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            phone = j.get("phoneNumber")
             hours_of_operation = "<MISSING>"
+            try:
+                hours = (
+                    j.get("weeklySchedule").get("calendars")[0].get("schedule")
+                    or "<MISSING>"
+                )
+            except:
+                hours = "<MISSING>"
+            if hours != "<MISSING>":
+                hours_of_operation = str(get_hours(hours))
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[3]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

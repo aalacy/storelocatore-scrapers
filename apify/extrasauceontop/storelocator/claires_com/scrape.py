@@ -1,6 +1,7 @@
 from sgrequests import SgRequests
-import pandas as pd
 import json
+import html
+from sgscrape import simple_scraper_pipeline as sp
 
 
 def extract_json(html_string):
@@ -28,116 +29,110 @@ def extract_json(html_string):
     return json_objects
 
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+def get_data():
 
-session = SgRequests()
-url = "https://maps.stores.claires.com/api/getAsyncLocations?template=search&level=search&search=98101&limit=10000&radius=1000000000"
+    session = SgRequests()
+    url = "https://maps.stores.claires.com/api/getAsyncLocations?template=search&level=search&search=98101&limit=10000&radius=1000000000"
 
-response = session.get(url).json()
+    response = session.get(url).json()
 
-map_json = extract_json(response["maplist"])
+    map_json = extract_json(response["maplist"])
 
-for location in map_json:
-    locator_domain = "claires.com"
-    page_url = location["url"]
-    location_name = location["location_name"]
-    address = location["address_1"] + " " + location["address_2"]
-    address = address.strip()
-    city = location["city"]
-    state = location["region"]
-    zipp = location["post_code"]
+    for location in map_json:
+        locator_domain = "claires.com"
+        page_url = html.unescape(location["url"])
+        location_name = html.unescape(location["location_name"])
+        address = location["address_1"] + " " + location["address_2"]
+        address = html.unescape(address.strip())
+        city = html.unescape(location["city"])
+        state = html.unescape(location["region"])
+        zipp = html.unescape(location["post_code"])
 
-    country_code = location["country"]
+        country_code = html.unescape(location["country"])
 
-    store_number = location["lid"]
-    phone = location["local_phone"]
-    location_type = location["location_type"]
-    latitude = location["lat"]
-    longitude = location["lng"]
+        store_number = html.unescape(location["lid"])
+        phone = html.unescape(location["local_phone"])
+        location_type = html.unescape(location["location_type"])
+        latitude = html.unescape(location["lat"])
+        longitude = html.unescape(location["lng"])
 
-    if location["location_closure_message"] == "":
-        try:
-            hours_section = extract_json(location["hours_sets:primary"])[0]["days"]
-            days = hours_section.keys()
+        if location["location_closure_message"] == "":
+            try:
+                hours_section = extract_json(location["hours_sets:primary"])[0]["days"]
+                days = hours_section.keys()
 
-            hours = ""
-            for day in days:
-                try:
-                    start_time = hours_section[day][0]["open"]
-                    end_time = hours_section[day][0]["close"]
+                hours = ""
+                for day in days:
+                    try:
+                        start_time = hours_section[day][0]["open"]
+                        end_time = hours_section[day][0]["close"]
 
-                    hours = hours + day + " " + start_time + "-" + end_time + ", "
+                        hours = hours + day + " " + start_time + "-" + end_time + ", "
 
-                except Exception:
-                    hours = hours + day + " " + hours_section[day] + ", "
+                    except Exception:
+                        hours = hours + day + " " + hours_section[day] + ", "
 
-            hours = hours[:-2]
-        except Exception:
-            hours = "closed"
-    else:
-        hours = location["location_closure_message"]
+                hours = html.unescape(hours[:-2])
+            except Exception:
+                hours = "closed"
+        else:
+            hours = html.unescape(location["location_closure_message"])
 
-    locator_domains.append(locator_domain)
-    page_urls.append(page_url)
-    location_names.append(location_name)
-    street_addresses.append(address)
-    citys.append(city)
-    states.append(state)
-    zips.append(zipp)
-    country_codes.append(country_code)
-    phones.append(phone)
-    location_types.append(location_type)
-    latitudes.append(latitude)
-    longitudes.append(longitude)
-    store_numbers.append(store_number)
-    hours_of_operations.append(hours)
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "country_code": country_codes,
-        "location_type": location_types,
-        "hours_of_operation": hours_of_operations,
-    }
-)
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=False)
+scrape()
