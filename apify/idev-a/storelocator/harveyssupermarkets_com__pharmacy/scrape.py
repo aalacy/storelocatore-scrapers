@@ -1,4 +1,3 @@
-import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -43,10 +42,6 @@ def fetch_records():
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        deduper=SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=500
-        )
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in fetch_records():
             writer.write_row(rec)
