@@ -19,6 +19,9 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//span[@class="font-purple title-case"]/a')
     for d in div:
         slug = "".join(d.xpath(".//@href"))
+        cms = "".join(
+            d.xpath('.//following-sibling::span[@class="coming-soon"]/text()')
+        )
         page_url = f"https://www.menchies.com{slug}"
         country_code = "".join(
             d.xpath(
@@ -98,6 +101,8 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

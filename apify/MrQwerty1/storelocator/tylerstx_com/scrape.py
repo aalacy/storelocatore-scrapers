@@ -74,18 +74,22 @@ def fetch_data(sgw: SgWriter):
 
     for d in divs:
         lines = d.xpath(".//p//text()")
+        if "soon" in lines[-1]:
+            continue
+        if "@" in lines[-1]:
+            lines.pop()
+
         location_name = lines.pop(0)
         raw_address = lines.pop(0)
         if lines[0][0].isdigit():
             phone = lines.pop(0)
         else:
             raw_address += f", {lines.pop(0)}"
-            phone = lines.pop()
+            phone = lines.pop(0)
 
         street_address, city, state, postal = get_address(raw_address)
         country_code = "US"
 
-        lines.pop()  # remove email
         hours_of_operation = " ".join(lines)
         text = "".join(d.xpath(".//a[contains(@href, 'google')]/@href"))
         latitude, longitude = get_coords_from_google_url(text)

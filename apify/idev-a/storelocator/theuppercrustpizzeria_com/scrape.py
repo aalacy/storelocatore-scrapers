@@ -31,14 +31,14 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.strong.text.strip(),
-                street_address=addr[0],
+                street_address=addr[0].replace("We are on", "").strip(),
                 city=addr[1].strip(),
                 state=addr[2].strip().split(" ")[0].strip(),
                 zip_postal=addr[2].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
-                raw_address=block[0],
+                raw_address=block[0].replace("We are on", "").strip(),
             )
 
 
