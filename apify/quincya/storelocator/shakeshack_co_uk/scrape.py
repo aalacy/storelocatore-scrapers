@@ -1,109 +1,111 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
 import re
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('shakeshack_co_uk')
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://www.shakeshack.co.uk/locations"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-	
-	base_link = "https://www.shakeshack.co.uk/locations"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    data = []
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+    items = base.find_all(class_="l-column l-column-md-4")
+    locator_domain = "shakeshack.co.uk"
 
-	data = []
+    for item in items:
 
-	items = base.find_all(class_="c-location")
-	locator_domain = "shakeshack.co.uk"
+        location_name = item.a.text.strip()
+        link = item.a["href"]
 
-	for item in items:
+        city = ""
+        raw_address = item.p.text.split("\n")
+        try:
+            zip_code = raw_address[3].replace(",", "")
+        except:
+            zip_code = raw_address[2].replace(",", "")
+        if len(zip_code) > 10:
+            zip_code = raw_address[2].replace(",", "").strip()
+        if zip_code.count(" ") > 1:
+            city = zip_code[: zip_code.find(" ")].strip()
+            zip_code = zip_code[zip_code.find(" ") + 1 :].strip()
 
-		location_name = item.a.text.strip()
-		# logger.info(location_name)
-		link = item.a["href"]
+        address_text = item.p.text
+        if city:
+            street_address = address_text[: address_text.find(city)].strip()
+        else:
+            for i, row in enumerate(raw_address):
+                if zip_code in row:
+                    city = raw_address[i - 1].strip()
+                    street_address = " ".join(raw_address[: i - 1])
 
-		city = ""
-		raw_address = item.p.text.split("\n")
-		try:
-			zip_code = raw_address[3].replace(",","")
-		except:
-			zip_code = raw_address[2].replace(",","")
-		if len(zip_code) > 10:
-			zip_code = raw_address[2].replace(",","").strip()
-		if zip_code.count(" ") > 1:
-			city =  zip_code[:zip_code.find(" ")].strip()
-			zip_code = zip_code[zip_code.find(" ")+1:].strip()
+        if "," in city:
+            street_address = street_address + " " + city[: city.find(",")].strip()
+            city = city[city.find(",") + 1 :].strip()
 
-		address_text = item.p.text
-		if city:
-			street_address = address_text[:address_text.find(city)].strip()
-		else:
-			for i, row in enumerate(raw_address):
-				if zip_code in row:
-					city = raw_address[i-1].strip()
-					street_address = " ".join(raw_address[:i-1])
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+        street_address = street_address.replace("\n", " ").replace("–", "-").strip()
+        state = "<MISSING>"
+        country_code = "GB"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
 
-		if "," in city:
-			street_address = street_address + " " + city[:city.find(",")].strip()
-			city = city[city.find(",")+1:].strip()
+        try:
+            phone = re.findall(
+                r"[\d]{5} [\d]{3} [\d]{3}", str(item).replace("0192 3886", "01923 886")
+            )[0]
+        except:
+            phone = "<MISSING>"
+        try:
+            latitude = item.find(class_="marker")["data-lat"]
+            longitude = item.find(class_="marker")["data-lng"]
+        except:
+            latitude = ""
+            longitude = ""
 
-		if street_address[-1:] == ",":
-			street_address = street_address[:-1]
-		street_address = street_address.replace("\n"," ").replace("–","-").encode("ascii", "replace").decode().replace("?","-").strip()
-		state = "<MISSING>"
-		country_code = "GB"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
+        hours_of_operation = (
+            item.find(string="Hours")
+            .find_previous("p")
+            .text.replace("Hours", "")
+            .replace("–", "-")
+            .replace("\n", " ")
+            .split("(")[0]
+            .strip()
+        )
 
-		try:
-			phone =  re.findall("[\d]{5} [\d]{3} [\d]{3}", str(item).replace("0192 3886","01923 886"))[0]
-		except:
-			phone = "<MISSING>"
-		latitude = item.find(class_="marker")["data-lat"]
-		longitude = item.find(class_="marker")["data-lng"]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
-		try:
-			hours_of_operation = base.find(class_="c-split-vertical__right -type-text").find_all("p")[1].text.replace("Hours","").replace("–","-").replace("\n"," ").strip()
-			if "pm" not in hours_of_operation.lower():
-				try:
-					hours_of_operation = base.find(class_="c-split-vertical__right -type-text").find_all("p")[-4].text.replace("Hours","").replace("–","-").replace("\n"," ").strip()
-					if "pm" not in hours_of_operation.lower():
-						hours_of_operation = "<MISSING>"
-				except:
-					hours_of_operation = "<MISSING>"
-			if "(" in hours_of_operation:
-				hours_of_operation = hours_of_operation[:hours_of_operation.find("(")].strip()
-		except:
-			hours_of_operation = "<MISSING>"
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
