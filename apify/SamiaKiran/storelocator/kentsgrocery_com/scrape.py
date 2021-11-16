@@ -13,7 +13,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
 
-headers ={
+headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
@@ -26,8 +26,8 @@ def fetch_data():
     if True:
         url = "https://afsshareportal.com/lookUpFeatures.php?callback=jsonpcallbackInfoAll&action=storeInfo&website_url=kentsgrocery.com"
         r = session.get(url, headers=headers)
-        loclist = r.text.split('jsonpcallbackInfoAll(')[1].split('}])')[0]
-        loclist = json.loads(loclist+"}]")
+        loclist = r.text.split("jsonpcallbackInfoAll(")[1].split("}])")[0]
+        loclist = json.loads(loclist + "}]")
         url = "https://kentsgrocery.com/all"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -40,21 +40,29 @@ def fetch_data():
             street_address = loc["store_address"]
             city = loc["store_city"]
             for page in page_list:
-                if city in page['href']:
-                    page_url = DOMAIN +page['href']
+                if city in page["href"]:
+                    page_url = DOMAIN + page["href"]
                     break
             state = loc["store_state"]
             zip_postal = loc["store_zip"]
             country_code = "US"
             latitude = loc["store_lat"]
             longitude = loc["store_lng"]
-            hours_of_operation = "Mon-Sat "+loc['store_hMonOpen']+"-"+loc['store_hMonClose']+" Sun "+loc['store_hSunOpen']+"-"+loc['store_hSunClose']
-        
+            hours_of_operation = (
+                "Mon-Sat "
+                + loc["store_hMonOpen"]
+                + "-"
+                + loc["store_hMonClose"]
+                + " Sun "
+                + loc["store_hSunOpen"]
+                + "-"
+                + loc["store_hSunClose"]
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url
+                page_url=page_url,
                 location_name=location_name,
-                street_address=street_address.strip(),
+                street_address=street_address,
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
