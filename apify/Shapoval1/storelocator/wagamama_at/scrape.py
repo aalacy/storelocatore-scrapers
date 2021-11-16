@@ -48,13 +48,15 @@ def fetch_data(sgw: SgWriter):
 
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        slug = tree.xpath('//div[./a[contains(@href, "tel")]]/following::div[1]/a[1]')
+        slug = tree.xpath(
+            '//div[./a[contains(@href, "tel")]]/following::div[1]/a[1]/@href'
+        )
         tmp = []
         tmp.append(page_url)
         for b in slug:
-            k = b
-            url = "".join(k.xpath(".//@href"))
-            page_url = f"{spage_url}{url}"
+
+            page_url = f"{spage_url}{b}"
+
             tmp.append(page_url)
         for t in tmp:
 
