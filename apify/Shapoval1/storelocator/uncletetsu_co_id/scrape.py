@@ -11,7 +11,6 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://uncletetsu.co.id/"
     page_url = "http://uncletetsu.co.id/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -149,6 +148,45 @@ def fetch_data(sgw: SgWriter):
                 .strip()
             )
             city = "Bekasi"
+        if ad.find("Central Park Mall") != -1:
+            street_address = (
+                "".join(
+                    d.xpath(
+                        './/div[text()="Operating Hour:"]/preceding-sibling::div[text()="Address:"]/following-sibling::text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .replace("Central Park Mall -", "")
+                .strip()
+                + " "
+                + "".join(
+                    d.xpath(
+                        './/div[text()="Operating Hour:"]/preceding-sibling::div[text()="Address:"]/following-sibling::text()[4]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+        if ad.find("Pluit Village") != -1:
+            street_address = (
+                "".join(
+                    d.xpath(
+                        './/div[text()="Operating Hour:"]/preceding-sibling::div[text()="Address:"]/following-sibling::text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .replace("Pluit Village -", "")
+                .strip()
+                + " "
+                + "".join(
+                    d.xpath(
+                        './/div[text()="Operating Hour:"]/preceding-sibling::div[text()="Address:"]/following-sibling::text()[4]'
+                    )
+                )
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
         hours_of_operation = (
             " ".join(
                 d.xpath('.//div[text()="Operating Hour:"]/following-sibling::text()')
