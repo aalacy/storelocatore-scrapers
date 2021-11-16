@@ -7,6 +7,13 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
+def get_phone(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//a[@class='brand-phone']/text()")).strip()
+
+
 def fetch_data(coords, country_code, sgw):
     lat, lng = coords
     if country_code == "us":
@@ -25,7 +32,7 @@ def fetch_data(coords, country_code, sgw):
             .replace("&#8217;", "'")
             .lower()
         )
-        page_url = f"https://www.novusglass.com/en-us/shop/{slug}/"
+        page_url = f"https://www.novusglass.com/en-{country_code}/shop/{slug}/"
         street_address = f'{j.get("address")} {j.get("address2") or ""}'.strip()
         if "NULL" in street_address or "MOBILE" in street_address:
             street_address = SgRecord.MISSING
@@ -34,9 +41,11 @@ def fetch_data(coords, country_code, sgw):
         postal = j.get("zip") or ""
         if "NULL" in postal:
             postal = SgRecord.MISSING
-        country_code = j.get("country")
         store_number = j.get("id")
-        phone = j.get("phone")
+        try:
+            phone = get_phone(page_url)
+        except:
+            phone = SgRecord.MISSING
         latitude = j.get("lat")
         longitude = j.get("lng")
         location_name = f"NOVUS GLASS OF {city}"
