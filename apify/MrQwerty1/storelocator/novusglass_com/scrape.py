@@ -41,7 +41,6 @@ def fetch_data(coords, country_code, sgw):
         postal = j.get("zip") or ""
         if "NULL" in postal:
             postal = SgRecord.MISSING
-        country_code = j.get("country")
         store_number = j.get("id")
         try:
             phone = get_phone(page_url)
