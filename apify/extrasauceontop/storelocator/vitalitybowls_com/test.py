@@ -53,7 +53,11 @@ def get_data():
             if "STORE INFO" in section:
                 begin = "yes"
 
-        print(address_parts.text.strip())
+        address_pieces = []
+        for part in str(address_parts).split("<br/>"):
+            text = bs(part, "html.parser").text.strip()
+            address_pieces.append(text)
+        print(address_pieces)
         print("")
         print("")
 
