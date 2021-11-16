@@ -9,6 +9,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+from unidecode import unidecode
+
 
 def fetch_data(sgw: SgWriter):
 
@@ -43,15 +45,25 @@ def fetch_data(sgw: SgWriter):
         longitude = geo["lng"]
         location_type = ""
         phone = store["phone"]
+        if not phone:
+            phone = store["google_phone"].replace("'", "").strip()
+
         try:
             raw_hours = json.loads(store["opening_hours"])
             hours_of_operation = " ".join(raw_hours["weekday_text"])
         except:
             hours_of_operation = ""
+
+        dec_name = unidecode(location_name)
+        link = "https://www.amorino.com/storelocator?store=" + dec_name.replace(
+            "(", ""
+        ).replace(")", "").strip().replace(" ", "%20").replace(
+            "METZINGEN", "METZINGEN%20"
+        )
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url="https://www.amorino.com/en-us/storelocator",
+                page_url=link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
