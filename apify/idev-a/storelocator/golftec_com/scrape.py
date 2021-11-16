@@ -192,11 +192,11 @@ if __name__ == "__main__":
         )
     ) as writer:
         with SgRequests(proxy_country="us") as http:
-            # for rec in fetch_cn(http, china_url):
-            #     writer.write_row(rec)
+            for rec in fetch_cn(http, china_url):
+                writer.write_row(rec)
 
-            # for rec in fetch_jp(http, jp_url):
-            #     writer.write_row(rec)
+            for rec in fetch_jp(http, jp_url):
+                writer.write_row(rec)
 
             for rec in fetch_records(search):
                 writer.write_row(rec)
