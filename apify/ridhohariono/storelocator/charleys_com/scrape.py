@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 DOMAIN = "charleys.com"
 API_URL = "https://www.charleys.com/wp-admin/admin-ajax.php"
@@ -54,9 +55,9 @@ def pull_content(url):
 
 def get_hoo(url):
     soup = pull_content(url)
-    hoo_content = soup.find("div", id="dine-in-0")
+    hoo_content = soup.find("div", id=re.compile(r"dine-in-\d"))
     if not hoo_content:
-        hoo_content = soup.find("div", id="curbside-0")
+        hoo_content = soup.find("div", id=re.compile(r"curbside-\d"))
     hours = (
         hoo_content.find("table")
         .get_text(strip=True, separator=",")
@@ -76,7 +77,7 @@ def fetch_data():
     data = session.post(API_URL, headers=HEADERS, data=payloads).json()["data"]
     for row in data:
         page_url = row["permalink"]
-        location_name = row["title"]
+        location_name = row["title"].replace("&#039;", "'")
         street_address = row["street_address"].replace(
             "(Mailing address:  Ft. Benning Exchange - Harmony Church Charley's, P.O. Box 52328, zip 31995)",
             "",
@@ -91,15 +92,16 @@ def fetch_data():
         phone = row["phone"]
         country_code = "US"
         if zip_postal is not MISSING:
-            if zip_postal.isnumeric() is False or state == "Ontario":
-                country_code = "CA"
-            if len(zip_postal) < 5:
-                country_code = MISSING
+            if len(zip_postal.split("-")) == 1:
+                if zip_postal.isnumeric() is False or state == "Ontario":
+                    country_code = "CA"
+                if len(zip_postal) < 5:
+                    country_code = MISSING
         store_number = row["store_num"]
         hours_of_operation = get_hoo(page_url)
         latitude = row["lat"]
         longitude = "-97.2478" if row["lng"] == "-972478" else row["lng"]
-        location_type = row["location_groups"]
+        location_type = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

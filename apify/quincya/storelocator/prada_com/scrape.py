@@ -86,8 +86,8 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<MISSING>"
 
         try:
-            if "Temporarily" in base.find(class_="singleStore__temporaryClosed").text:
-                hours_of_operation = base.find(
+            if "Temporarily" in item.find(class_="singleStore__temporaryClosed").text:
+                hours_of_operation = item.find(
                     class_="singleStore__temporaryClosed"
                 ).text
         except:
