@@ -16,20 +16,19 @@ import tenacity
 
 website = "https://www.dominos.co.in"
 MISSING = SgRecord.MISSING
-max_workers = 10
+max_workers = 4
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def request_with_retries(url, retry=1):
     try:
-        session = SgRequests()
+        session = SgRequests(proxy_country="in")
         return (session.get(url, headers=headers)).text, url
     except Exception:
         if retry > 4:
