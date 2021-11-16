@@ -50,7 +50,6 @@ def fetch_data():
             city = street_city[0]
         else:
             city = MISSING
-        print(phone)
         state = MISSING
         zip_postal = MISSING
         country_code = "JO"
