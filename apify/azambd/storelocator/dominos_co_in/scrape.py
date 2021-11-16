@@ -13,7 +13,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from tenacity import retry, stop_after_attempt
 import tenacity
-import random
 
 
 website = "https://www.dominos.co.in"
@@ -30,8 +29,8 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def request_with_retries(url, retry=1):
     try:
-        session = SgRequests()
-        return (session.get(url, headers=headers)).text, url
+        with SgRequests() as http:
+            return (http.get(url, headers=headers)).text, url
     except Exception:
         if retry > 4:
             log.error(f"Error loading {url}")
