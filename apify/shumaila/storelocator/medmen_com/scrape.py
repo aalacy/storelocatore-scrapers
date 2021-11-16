@@ -11,8 +11,7 @@ headers = {
 
 
 def fetch_data():
-    data = []
-    p = 0
+
     headers = {
         "Sec-Fetch-Mode": "cors",
         "Origin": "https://www.medmen.com",
