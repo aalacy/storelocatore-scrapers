@@ -15,12 +15,9 @@ def fetch_data():
     url = "https://wafflehouse.locally.com/stores/conversion_data?has_data=true&company_id=117995&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=32.77073337068231&map_center_lng=-96.79963000000077&map_distance_diag=2500&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level="
     r = session.get(url, headers=headers)
     for item in json.loads(r.content)["markers"]:
-        opinfo = "<MISSING>"
         name = item["name"]
         store = item["id"]
         add = item["address"]
-        if "u'isClosed': True" in str(item):
-            opinfo = "TEMPORARILY CLOSED"
         city = item["city"]
         state = item["state"]
         zc = item["zip"]
