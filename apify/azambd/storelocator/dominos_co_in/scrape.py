@@ -11,6 +11,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+
 website = "https://www.dominos.co.in"
 MISSING = SgRecord.MISSING
 max_workers = 10
@@ -23,8 +26,10 @@ session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def request_with_retries(url, retry=1):
     try:
+        session = SgRequests()
         return (session.get(url, headers=headers)).text, url
     except Exception:
         if retry > 4:
