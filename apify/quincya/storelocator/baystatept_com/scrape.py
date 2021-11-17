@@ -1,4 +1,5 @@
 import re
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -14,6 +15,8 @@ from sgrequests import SgRequests
 from sgselenium.sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("baystatept.com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
