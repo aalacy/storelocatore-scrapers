@@ -143,21 +143,17 @@ def fetch_data_us_ca(idx, loc, sgw: SgWriter):
     raw_address = MISSING
     logger.info(f"[{idx}] raw_add: {raw_address}")
 
-    # Identifying those warehouse having Pharmacy services
-    has_pharmacy_department = data["hasPharmacyDepartment"]
-    if has_pharmacy_department is True:
-        location_type = "Pharmacy"
-        pharmacy_hours = data["pharmacyHours"]
-        if pharmacy_hours:
-            hours_of_operation = "; ".join(pharmacy_hours)
-        else:
-            hours_of_operation = MISSING
+    # Identifying those warehouse having Optical services
 
+    has_optical_department = data["hasOpticalDepartment"]
+    if has_optical_department is True:
+        location_type = "Optical"
+        hours_of_operation = MISSING
         if "coreServices" in data:
             core_services = data["coreServices"]
             for cs in core_services:
                 cs_name = cs["name"]
-                if "Pharmacy" in cs_name:
+                if "Optical Department" in cs_name:
                     phone = cs["phone"]
                     phone = phone if phone else MISSING
 
@@ -303,15 +299,14 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
                     else:
                         state = MISSING
 
-            # If pharmacy available then get the data for HOO, Phone, and Location Type
+            # If optical available then get the data for HOO, Phone, and Location Type
             if "availableServices" in gitem:
                 available_services = gitem["availableServices"]
                 for as_ in available_services:
                     as_code = as_["code"]
-                    if "PHARMACY" in as_code:
+                    if "OPTICAL" in as_code:
                         # Location Type
-
-                        location_type = "Pharmacy"
+                        location_type = "Optical"
 
                         # Phone
                         as_phone = as_["phone"]
@@ -327,19 +322,15 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
                         as_opening_hours = as_["openingHours"]
                         if as_opening_hours:
                             sel_hoo = html.fromstring(as_opening_hours, "lxml")
-                            pharmacy_global_hoo = sel_hoo.xpath("//ul/li/text()")
-                            if pharmacy_global_hoo:
-                                hours_of_operation = "; ".join(pharmacy_global_hoo)
+                            optical_global_hoo = sel_hoo.xpath("//ul/li/text()")
+                            if optical_global_hoo:
+                                hours_of_operation = "; ".join(optical_global_hoo)
                             else:
                                 hours_of_operation = MISSING
                             if "JP" in country_code:
-                                pharmacy_global_hoo_jp = sel_hoo.xpath(
-                                    "//ul/li//text()"
-                                )
-                                if pharmacy_global_hoo_jp:
-                                    hours_of_operation = " ".join(
-                                        pharmacy_global_hoo_jp
-                                    )
+                                optical_global_hoo_jp = sel_hoo.xpath("//ul/li//text()")
+                                if optical_global_hoo_jp:
+                                    hours_of_operation = " ".join(optical_global_hoo_jp)
                                 else:
                                     hours_of_operation = MISSING
 
