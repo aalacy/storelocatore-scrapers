@@ -61,7 +61,7 @@ def fetch_data():
 
         all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
-        next_page = dom.xpath('//a[@title="następna strona"]/@href')
+        next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
         while next_page:
             response = session.get(urljoin(start_url, next_page[0]))
             log.info(f"Third Response: {response}")
