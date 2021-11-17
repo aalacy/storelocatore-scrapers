@@ -71,7 +71,7 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
     for zipCode in search:
         log.debug(f"Searching {zipCode} ...")
         count = count + 1
-        stores = []
+        stores = []  # noqa
         page = 0
         zipCode = str(zipCode).replace(" ", "%20")
         while True:
@@ -126,7 +126,7 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
                 for day, hours in hoo.items():
                     hours_of_operation.append(f"{day} {hours}")
 
-            hours_of_operation = " ".join(hours_of_operation)
+            hours_of_operation = " ".join(hours_of_operation)  # noqa
             if len(hours_of_operation) == 0:
                 hours_of_operation = MISSING
 
