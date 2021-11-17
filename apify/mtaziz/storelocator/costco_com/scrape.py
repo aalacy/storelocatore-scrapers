@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import tenacity
 import time
 import random
-
+import re
 
 logger = SgLogSetup().get_logger("costco_com")
 MISSING = SgRecord.MISSING
@@ -272,6 +272,14 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
 
             raw_address = MISSING
             logger.info(f"[{idx1}] raw_add: {raw_address}")
+            if "AU" in country_code:
+                if "MISSING" not in city:
+                    au_state = re.findall(r"\S[A-Z].*", city)
+                    if au_state:
+                        state = "".join(au_state)
+                        city = city.replace(state, "").strip()
+                    else:
+                        state = MISSING
             item = SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
