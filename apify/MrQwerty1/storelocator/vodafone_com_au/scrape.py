@@ -6,24 +6,30 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://prd.location.enterprise.com/enterprise-sls/search/location/enterprise/web/spatial/33.6166689358116/-90.88632923713895?rows=15000&cor=US&radius=50000"
+    api = "https://maps.vodafone.com.au/VHAMap/datafeeds/StoreLocator"
+    page_url = "https://www.vodafone.com.au/stores"
     r = session.get(api, headers=headers)
-    js = r.json()["locationsResult"]
+    js = r.json()["stores"]
 
     for j in js:
-        location_name = j.get("locationNameTranslation")
-        location_type = j.get("locationType")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        phone = j.get("phoneNumber")
-        store_number = j.get("groupBranchNumber")
-        line = j.get("addressLines") or []
-        street_address = ", ".join(line)
+        location_name = j.get("tradingName")
+        location_type = j.get("type")
+        latitude = j.get("lat")
+        longitude = j.get("lon")
+        phone = j.get("phone")
+        store_number = j.get("id")
+        street_address = j.get("street")
         city = j.get("city")
         state = j.get("state")
-        postal = j.get("postalCode")
-        country = j.get("countryCode")
-        page_url = f"https://www.enterprise.com/en/car-rental/locations/{country}/{state}/-{store_number}.html".lower()
+        postal = j.get("postcode")
+
+        _tmp = []
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        for d in days:
+            inter = j.get(f"tradingHours{d}")
+            if inter:
+                _tmp.append(f"{d}: {inter}")
+        hours_of_operation = ";".join(_tmp)
 
         row = SgRecord(
             page_url=page_url,
@@ -32,12 +38,13 @@ def fetch_data(sgw: SgWriter):
             city=city,
             state=state,
             zip_postal=postal,
-            country_code=country,
+            country_code="AU",
             phone=phone,
             store_number=store_number,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
             location_type=location_type,
         )
 
@@ -45,12 +52,12 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.enterprise.com"
+    locator_domain = "https://www.vodafone.com.au/"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "application/json, text/javascript, */*; q=0.01",
     }
 
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)
