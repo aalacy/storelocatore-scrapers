@@ -16,56 +16,58 @@ headers = {
 }
 
 
-def fetch_records(http, search):
+def fetch_records(search):
     maxZ = search.items_remaining()
     for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        http.clear_cookies()
-        lng1 = lng - 82.55859375
-        lat1 = lat + 88.2338319063
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-        res = http.get(base_url.format(lng1, lat1, lng, lat), headers=headers)
-        if res.status_code != 200:
-            logger.info(f"[{lat}, {lng}] [{progress}] ================ ")
-            continue
-        locations = bs(
-            json.loads(
-                res.text.split("jQuery20305313334830145355_1631295791192(")[1].strip()[
-                    :-1
-                ]
-            )["Container"],
-            "lxml",
-        ).select("li.resultItem")
-        logger.info(f"[{lat}, {lng}] [{progress}] [{len(locations)}]")
-        for _ in locations:
-            info = json.loads(_["data-json"].replace("&quot;", '"'))
-            raw_address = _.address.text.strip()
-            hours = []
-            for hh in info["openingHours"]:
-                hours.append(f"{hh['day']['text']}: {hh['from']} - {hh['until']}")
-            phone = ""
-            if _.select_one("div.resultItem-Phone"):
-                phone = _.select_one("div.resultItem-Phone").text.strip()
-            city_zip = _.select_one('div[itemprop="addressLocality"]').text.strip()
-            yield SgRecord(
-                page_url="https://storelocator.aldi.com.au/Presentation/AldiSued/en-au/Start",
-                location_name=_.select_one(
-                    "strong.resultItem-CompanyName"
-                ).text.strip(),
-                street_address=_.select_one(
-                    'div[itemprop="streetAddress"]'
-                ).text.strip(),
-                city=" ".join(city_zip.split()[:-1]),
-                zip_postal=city_zip.split()[-1],
-                latitude=info["locY"],
-                longitude=info["locX"],
-                country_code=info["countryCode"].split("-")[-1],
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-                raw_address=raw_address,
+        with SgRequests() as http:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            lng1 = lng - 82.55859375
+            lat1 = lat + 88.2338319063
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
+            res = http.get(base_url.format(lng1, lat1, lng, lat), headers=headers)
+            if res.status_code != 200:
+                logger.info(f"[{lat}, {lng}] [{progress}] ================ ")
+                continue
+            locations = bs(
+                json.loads(
+                    res.text.split("jQuery20305313334830145355_1631295791192(")[
+                        1
+                    ].strip()[:-1]
+                )["Container"],
+                "lxml",
+            ).select("li.resultItem")
+            logger.info(f"[{lat}, {lng}] [{progress}] [{len(locations)}]")
+            for _ in locations:
+                info = json.loads(_["data-json"].replace("&quot;", '"'))
+                raw_address = _.address.text.strip()
+                hours = []
+                for hh in info["openingHours"]:
+                    hours.append(f"{hh['day']['text']}: {hh['from']} - {hh['until']}")
+                phone = ""
+                if _.select_one("div.resultItem-Phone"):
+                    phone = _.select_one("div.resultItem-Phone").text.strip()
+                city_zip = _.select_one('div[itemprop="addressLocality"]').text.strip()
+                yield SgRecord(
+                    page_url="https://storelocator.aldi.com.au/Presentation/AldiSued/en-au/Start",
+                    location_name=_.select_one(
+                        "strong.resultItem-CompanyName"
+                    ).text.strip(),
+                    street_address=_.select_one(
+                        'div[itemprop="streetAddress"]'
+                    ).text.strip(),
+                    city=" ".join(city_zip.split()[:-1]),
+                    zip_postal=city_zip.split()[-1],
+                    latitude=info["locY"],
+                    longitude=info["locX"],
+                    country_code=info["countryCode"].split("-")[-1],
+                    phone=phone,
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                    raw_address=raw_address,
+                )
 
 
 if __name__ == "__main__":
@@ -77,6 +79,5 @@ if __name__ == "__main__":
             RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=20
         )
     ) as writer:
-        with SgRequests() as http:
-            for rec in fetch_records(http, search):
-                writer.write_row(rec)
+        for rec in fetch_records(search):
+            writer.write_row(rec)
