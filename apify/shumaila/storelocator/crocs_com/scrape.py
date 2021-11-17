@@ -12,33 +12,27 @@ headers = {
 }
 
 
-
 def fetch_data():
-    
-    mylist = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL
-    )
-   
-    
-   
-    for lat, lng in mylist :
-        
-        
+
+    mylist = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
+
+    for lat, lng in mylist:
+
         headers = {
-        "Connection": "keep-alive",
-        "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-        "sec-ch-ua-mobile": "?0",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
-        "sec-ch-ua-platform": '"Linux"',
-        "Origin": "https://stores.crocs.com",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Dest": "empty",
-        "Referer": "https://stores.crocs.com/index_new_int.html",
-        "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "keep-alive",
+            "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "sec-ch-ua-mobile": "?0",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+            "sec-ch-ua-platform": '"Linux"',
+            "Origin": "https://stores.crocs.com",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Dest": "empty",
+            "Referer": "https://stores.crocs.com/index_new_int.html",
+            "Accept-Language": "en-US,en;q=0.9",
         }
 
         data = {
@@ -49,7 +43,9 @@ def fetch_data():
                     "dataview": "store_default",
                     "order": "tblstoretype DESC,_distance",
                     "limit": 100000,
-                    "geolocs": {"geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]},
+                    "geolocs": {
+                        "geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]
+                    },
                     "searchradius": "100",
                     "radiusuom": "mile",
                     "where": {
@@ -83,11 +79,11 @@ def fetch_data():
             lat = loc["latitude"]
             longt = loc["longitude"]
             street = loc["address1"] + " " + str(loc["address2"])
-            street = street.replace("None",'')
+            street = street.replace("None", "")
             ccode = loc["country"]
             ltype = "Outlet"
             hours = "<MISSING>"
-           
+
             if loc["crocsoutlet"] == 0:
                 ltype = "Dealer"
 
@@ -96,7 +92,12 @@ def fetch_data():
                 hours = ""
                 try:
                     link = (
-                        "https://locations.crocs.com/" + state + "-" + city + "-" + str(store)
+                        "https://locations.crocs.com/"
+                        + state
+                        + "-"
+                        + city
+                        + "-"
+                        + str(store)
                     )
                 except:
                     link = "<MISSING>"
@@ -109,8 +110,8 @@ def fetch_data():
                 locator_domain="https://www.crocs.com/",
                 page_url=link,
                 location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
+                street_address=street,
+                city=city,
                 state=state,
                 zip_postal=pcode,
                 country_code=ccode,
@@ -121,11 +122,11 @@ def fetch_data():
                 longitude=str(longt),
                 hours_of_operation=hours,
             )
-            
+
 
 def scrape():
-    
-     with SgWriter(
+
+    with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
@@ -136,5 +137,3 @@ def scrape():
 
 
 scrape()
-
-
