@@ -1,108 +1,121 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
-import re
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgrequests import SgRequests
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def fetch_data():
-	
-	base_link = "https://stores.christmastreeshops.com/"
 
-	url = "https://stores.christmastreeshops.com/index.html"
+def fetch_data(sgw: SgWriter):
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://stores.christmastreeshops.com/"
 
-	session = SgRequests()
-	req = session.get(url, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+    url = "https://stores.christmastreeshops.com/index.html"
 
-	final_links = []
-	main_links = []
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    HEADERS = {"User-Agent": user_agent}
 
-	main_items = base.find_all(class_="Directory-listLink")
-	for main_item in main_items:
-		main_link = base_link + main_item['href']
-		if "/" in main_item['href']:
-			final_links.append(main_link)
-		else:
-			main_links.append(main_link)
-	
-	for next_link in main_links:
-		req = session.get(next_link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+    session = SgRequests()
+    req = session.get(url, headers=HEADERS)
+    base = BeautifulSoup(req.text, "lxml")
 
-		next_items = base.find_all(class_="Directory-listItem")
-		for next_item in next_items:
-			link = base_link + next_item.find(class_="Directory-listLink")['href']
-			final_links.append(link)
+    final_links = []
+    main_links = []
 
-	data = []
-	for final_link in final_links:
-		final_req = session.get(final_link, headers = HEADERS)
-		item = BeautifulSoup(final_req.text,"lxml")
+    main_items = base.find_all(class_="Directory-listLink")
+    for main_item in main_items:
+        main_link = base_link + main_item["href"]
+        if "/" in main_item["href"]:
+            final_links.append(main_link)
+        else:
+            main_links.append(main_link)
 
-		locator_domain = "christmastreeshops.com"
+    for next_link in main_links:
+        req = session.get(next_link, headers=HEADERS)
+        base = BeautifulSoup(req.text, "lxml")
 
-		location_name = item.find(class_="LocationName").text.split(",")[0].strip()
+        next_items = base.find_all(class_="Directory-listItem")
+        for next_item in next_items:
+            link = base_link + next_item.find(class_="Directory-listLink")["href"]
+            final_links.append(link)
 
-		street_address = item.find(class_="c-address-street-1").text.replace("\u200b","").strip()
-		try:
-			street_address = street_address + " " + item.find(class_="Core-address").find(class_="c-address-street-2").text.replace("\u200b","").strip()
-			street_address = street_address.strip()
-		except:
-			pass
-		street_address = street_address.replace("  "," ").strip()
-		
-		city = item.find(class_="c-address-city").text.strip()
-		state = item.find(class_="c-address-state").text.strip()
-		zip_code = item.find(class_="c-address-postal-code").text.strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
+    for final_link in final_links:
+        final_req = session.get(final_link, headers=HEADERS)
+        item = BeautifulSoup(final_req.text, "lxml")
 
-		try:
-			phone = item.find(id="phone-main").text.strip()
-		except:
-			phone = "<MISSING>"
+        locator_domain = "christmastreeshops.com"
 
-		latitude = item.find('meta', attrs={'itemprop': 'latitude'})['content']
-		longitude = item.find('meta', attrs={'itemprop': 'longitude'})['content']
+        location_name = item.find(class_="LocationName").text.split(",")[0].strip()
 
-		hours_of_operation = ""
-		raw_hours = item.find(class_="c-hours-details")
-		raw_hours = raw_hours.find_all("td")
+        street_address = (
+            item.find(class_="c-address-street-1").text.replace("\u200b", "").strip()
+        )
+        try:
+            street_address = (
+                street_address
+                + " "
+                + item.find(class_="Core-address")
+                .find(class_="c-address-street-2")
+                .text.replace("\u200b", "")
+                .strip()
+            )
+            street_address = street_address.strip()
+        except:
+            pass
+        street_address = street_address.replace("  ", " ").strip()
 
-		hours = ""
-		hours_of_operation = ""
+        city = item.find(class_="c-address-city").text.strip()
+        state = item.find(class_="c-address-state").text.strip()
+        zip_code = item.find(class_="c-address-postal-code").text.strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
 
-		try:
-			for hour in raw_hours:
-				hours = hours + " " + hour.text.strip()
-			hours_of_operation = (re.sub(' +', ' ', hours)).strip()
-		except:
-			pass
-		if not hours_of_operation:
-			hours_of_operation = "<MISSING>"
+        try:
+            phone = item.find(id="phone-main").text.strip()
+        except:
+            phone = "<MISSING>"
 
-		location_data = [locator_domain, final_link, location_name, street_address, city, state, zip_code,
-						country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+        latitude = item.find("meta", attrs={"itemprop": "latitude"})["content"]
+        longitude = item.find("meta", attrs={"itemprop": "longitude"})["content"]
 
-		data.append(location_data)
+        hours_of_operation = ""
+        raw_hours = item.find(class_="c-hours-details")
+        raw_hours = raw_hours.find_all("td")
 
-	return data
+        hours = ""
+        hours_of_operation = ""
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+        try:
+            for hour in raw_hours:
+                hours = hours + " " + hour.text.strip()
+            hours_of_operation = (re.sub(" +", " ", hours)).strip()
+        except:
+            pass
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
-scrape()
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
