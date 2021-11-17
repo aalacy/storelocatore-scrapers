@@ -18,11 +18,15 @@ def fetch_data(sgw: SgWriter):
             .replace("&#8217;", "'")
         )
         street = f'{j.get("address")} {j.get("address2") or ""}'.strip()
+        if street.endswith(","):
+            street = street[:-1]
         source = j.get("hours") or "<html></html>"
         tree = html.fromstring(source)
         hours = tree.xpath("//text()")
         hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours)
+        hours_of_operation = (
+            " ".join(hours).strip().replace("PM ", "PM;").replace("Closed ", "Closed;")
+        )
 
         row = SgRecord(
             page_url=j.get("url"),
