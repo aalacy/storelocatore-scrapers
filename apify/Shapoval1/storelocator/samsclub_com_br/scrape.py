@@ -1,19 +1,9 @@
-import ssl
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data(sgw: SgWriter):
@@ -28,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         page_url = "https://sejasocio.samsclub.com.br/"
-        location_name = "".join(j.get("name")) or "<MISSING>"
+        location_name = "".join(j.get("name")).replace("&#8217;", "`") or "<MISSING>"
         ad = j.get("address")
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(

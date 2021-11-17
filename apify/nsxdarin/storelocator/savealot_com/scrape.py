@@ -44,7 +44,7 @@ def fetch_data():
                 website = "savealot.com"
                 phone = item["primary_phone"]
                 state = item["state"]
-                store = item["reseller_location_id"]
+                store = "<MISSING>"
                 zc = item["postal_code"]
                 city = item["city"]
                 purl = (
@@ -99,9 +99,7 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in results:
             writer.write_row(rec)
 
