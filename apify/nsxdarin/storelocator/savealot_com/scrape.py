@@ -38,7 +38,7 @@ def fetch_data():
                 + "/"
                 + hilng
             )
-            r = session.get(url, headers=headers, verify=False)
+            r = session.get(url, headers=headers)
             array = json.loads(r.content)
             for item in array:
                 website = "savealot.com"
