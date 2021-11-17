@@ -13,12 +13,12 @@ _headers = {
 }
 
 locator_domain = "https://www.shell.ae/"
-json_url = "https://shelllubricantslocator.geoapp.me/api/v1/global_lubes/locations/nearest_to?lat={}&lng={}&format=json"
+json_url = "https://shellgsllocator.geoapp.me/api/v1/locations/nearest_to?lat={}&lng={}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=500&driving_distances=false&format=json"
 
 
 def fetch_data(search):
-    with SgRequests() as session:
-        for lat, lng in search:
+    for lat, lng in search:
+        with SgRequests() as session:
             locations = session.get(json_url.format(lat, lng), headers=_headers).json()
             logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
             if locations:
@@ -54,11 +54,11 @@ def fetch_data(search):
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=200
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=2000
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
+            country_codes=SearchableCountries.ALL, expected_search_radius_miles=100
         )
         results = fetch_data(search)
         for rec in results:

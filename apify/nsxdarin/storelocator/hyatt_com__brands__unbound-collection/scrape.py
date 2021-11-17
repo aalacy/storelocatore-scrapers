@@ -15,7 +15,7 @@ logger = SgLogSetup().get_logger("hyatt_com__brands__unbound-collection")
 
 def fetch_data():
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
-    r = session.get(url, headers=headers, timeout=60, stream=True)
+    r = session.get(url, headers=headers)
     website = "hyatt.com/brands/unbound-collection"
     hours = "<MISSING>"
     logger.info("Pulling Stores")
