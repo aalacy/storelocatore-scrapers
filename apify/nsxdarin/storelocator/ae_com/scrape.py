@@ -23,7 +23,6 @@ def fetch_data():
             count = lurl.count("/")
             if count >= 6:
                 locs.append(lurl)
-    print(len(locs))
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         website = "ae.com"
