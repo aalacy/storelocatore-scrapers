@@ -2,6 +2,8 @@ import re
 import demjson
 import urllib.parse
 from lxml import etree
+from time import sleep
+from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -17,16 +19,19 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    session = SgRequests(proxy_rotation_failure_threshold=1)
-    response = session.get(start_url)
+    session = SgRequests()
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
     all_states = dom.xpath(
         '//h1[contains(text(), "View All Stores")]/following-sibling::div[1]//a/@href'
     )
     for state_url in all_states:
+        sleep(uniform(0, 10))
         full_state_url = urllib.parse.urljoin(start_url, state_url)
         state_response = session.get(full_state_url, headers=hdr)
+        if state_response.status_code != 200:
+            continue
         state_dom = etree.HTML(state_response.text)
 
         all_stores = state_dom.xpath(
@@ -35,10 +40,13 @@ def fetch_data():
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
             if store_url and "/store/null" not in store_url:
+                sleep(uniform(0, 10))
                 store_url = urllib.parse.urljoin(start_url, store_url[0])
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"
                 store_response = session.get(store_url, headers=hdr)
+                if store_response.status_code != 200:
+                    continue
                 store_dom = etree.HTML(store_response.text)
                 data = store_dom.xpath(
                     '//script[contains(text(), "storeInformation")]/text()'

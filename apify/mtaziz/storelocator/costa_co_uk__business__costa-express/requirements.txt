@@ -2,5 +2,11 @@
 sgzip==0.10.3
 tenacity==7.0.0
 sglogging==0.0.4
+<<<<<<< HEAD
 sgrequests==0.2.9
 sgscrape==0.2.2
+=======
+sgzip==0.10.0
+sgvalidator==0.0.71
+sgrequests==0.2.0
+>>>>>>> origin/master

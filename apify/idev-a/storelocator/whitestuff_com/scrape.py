@@ -13,26 +13,51 @@ base_url = "https://www.whitestuff.com/INTERSHOP/rest/WFS/WhiteStuff-UK-Site/-;l
 days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
 
+def _p(val):
+    if (
+        val
+        and val.split("Ex")[0]
+        .replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
+
+
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["elements"]
         for _ in locations:
-            hours = []
+            hours = ""
             for day, times in _["customAttributes"].items():
-                if day.strip().lower() in days:
-                    hours.append(f"{day}: {times}")
+                _day = day.strip().lower()
+                if _day in days and _day not in hours:
+                    hours += f"{_day}: {times};"
+            if hours:
+                hours = hours[:-1]
+            street_address = _["address"]
+            if _.get("address2"):
+                street_address += " " + _["address2"]
             yield SgRecord(
                 page_url="https://www.whitestuff.com/action/ViewStoreFinder-Start",
                 location_name=_["name"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["city"],
                 zip_postal=_["postalCode"],
                 latitude=_["customAttributes"]["latitude"],
                 longitude=_["customAttributes"]["longitude"],
                 country_code=_["country"],
-                phone=_["phoneBusiness"],
+                phone=_p(_.get("phoneBusiness")),
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation=hours,
             )
 
 

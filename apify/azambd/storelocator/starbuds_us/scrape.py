@@ -66,6 +66,42 @@ def fetch_store_links():
     return storeLinks
 
 
+def fetch_script_location(body):
+    address = MISSING
+    latitude = MISSING
+    longitude = MISSING
+    for P in body.xpath("//p[@class='font_7']"):
+        spans = P.xpath(".//span/text()")
+        if len(spans) > 0 and len(spans[0]) > 0 and "," in spans[0]:
+            address = spans[0].strip().replace("COLORADO", "CO")
+            break
+
+    As = body.xpath(
+        "//a[contains(@href, 'https://www.google.com/maps/place/') or contains(@href, 'maps.google.com')]/@href"
+    )
+    if len(As) == 0:
+        for script in body.xpath('.//script[@type="application/ld+json" ]/text()'):
+            if "latitude" in script:
+                script = script.replace("\n", " ")
+                data1 = json.loads(script)
+                geo = data1["geo"]
+                latitude = geo["latitude"]
+                longitude = geo["longitude"]
+
+    else:
+        for part in As[0].split("/"):
+            if "@" in part:
+                part = part.replace("@", "").split(",")
+                latitude = part[0]
+                longitude = part[1]
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "address": address,
+    }
+
+
 def fetch_store_details(link):
     featuredData = get_feature_data(link)
     body = featuredData["body"]
@@ -104,6 +140,7 @@ def fetch_store_details(link):
     if phone == MISSING:
         location_type = "coming soon"
     location = {}
+
     foundLocation = False
     compProps = data["props"]["render"]["compProps"]
     for key in compProps.keys():
@@ -113,23 +150,7 @@ def fetch_store_details(link):
     store_number = data["props"]["seo"]["pageId"]
 
     if foundLocation is False:
-
-        for script in body.xpath('.//script[@type="application/ld+json" ]/text()'):
-            if "latitude" in script:
-                script = script.replace("\n", " ")
-                data1 = json.loads(script)
-                geo = data1["geo"]
-                address = data1["address"]
-                address = f"{address['streetAddress']} {address['addressLocality']}, {address['addressRegion']} {address['postalCode']}, USA".replace(
-                    "Colorado", "CO"
-                )
-
-                location = {
-                    "latitude": geo["latitude"],
-                    "longitude": geo["longitude"],
-                    "address": address,
-                }
-
+        location = fetch_script_location(body)
     return {
         "location_name": location_name,
         "phone": phone,
@@ -166,6 +187,26 @@ def get_address(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
+def get_var_name(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
+
+
+def get_JSON_object_variable(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    return value
+
+
 def fetch_data():
     page_urls = fetch_store_links()
     log.debug(f"Total store count={len(page_urls)}")
@@ -176,23 +217,23 @@ def fetch_data():
         details = fetch_store_details(page_url)
 
         country_code = "US"
-        location_name = details["location_name"]
-        phone = details["phone"]
-        operations = details["operations"]
-        store_number = details["store_number"]
-        location_type = details["location_type"]
-        location = details["location"]
+        location_name = get_JSON_object_variable(details, "location_name")
+        phone = get_JSON_object_variable(details, "phone")
+        operations = get_JSON_object_variable(details, "operations")
+        store_number = get_JSON_object_variable(details, "store_number")
+        location_type = get_JSON_object_variable(details, "location_type")
 
-        raw_address = location["address"]
-        latitude = str(location["latitude"])
-        longitude = str(location["longitude"])
+        location = get_JSON_object_variable(details, "location")
+        if location == MISSING:
+            location = {}
+
+        raw_address = get_JSON_object_variable(location, "address")
+        latitude = str(get_JSON_object_variable(location, "latitude"))
+        longitude = str(get_JSON_object_variable(location, "longitude"))
 
         street_address, city, state, zip_postal = get_address(raw_address)
         if state == MISSING and ", CO ":  # special case for only 1 row
             state = "CO"
-
-        if "USA" not in raw_address:
-            continue
 
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -217,7 +258,9 @@ def scrape():
     log.info(f"Start Crawling {website} ...")
     start = time.time()
     result = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
     end = time.time()

@@ -1,10 +1,10 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -22,7 +22,7 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         url = "https://hendersonglass.com/locations/"
-        r = session.get(url, headers=headers)
+        r = session.get(url, headers=headers, timeout=180)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "locationsCol"})
         for loc in loclist:
@@ -46,33 +46,23 @@ def fetch_data():
             else:
                 address = loc[1]
                 phone = loc[2].replace("Phone:", "")
-                address = usaddress.parse(address)
-                i = 0
-                street_address = ""
-                city = ""
-                state = ""
-                zip_postal = ""
-                country_code = "US"
-                while i < len(address):
-                    temp = address[i]
-                    if (
-                        temp[1].find("Address") != -1
-                        or temp[1].find("Street") != -1
-                        or temp[1].find("Recipient") != -1
-                        or temp[1].find("Occupancy") != -1
-                        or temp[1].find("BuildingName") != -1
-                        or temp[1].find("USPSBoxType") != -1
-                        or temp[1].find("USPSBoxID") != -1
-                    ):
-                        street_address = street_address + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        zip_postal = zip_postal + " " + temp[0]
-                    i += 1
-            hours_of_operation = MISSING
+                raw_address = address.replace(",", " ")
+                # Parse the address
+                pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
+                hours_of_operation = MISSING
+            country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -88,6 +78,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

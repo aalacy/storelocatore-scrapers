@@ -47,11 +47,16 @@ def fetch_data():
             longitude = str(loc["longitude"])
             try:
                 hours_of_operation = (
-                    soup.find("div", {"class": "office-hours-condensed"})
+                    soup.find("div", {"class": "hours-wrapper office-hours"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                     .replace("Office Hours", "")
+                    + " "
+                    + soup.find("div", {"class": "office-hours-note"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
                 )
+
             except:
                 hours_of_operation = MISSING
             yield SgRecord(
