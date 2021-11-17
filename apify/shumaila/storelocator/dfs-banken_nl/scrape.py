@@ -79,6 +79,7 @@ def fetch_data():
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours.replace(" â€¦", "").strip(),
+            raw_address=raw_address1,
         )
 
 
