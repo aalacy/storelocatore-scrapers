@@ -74,7 +74,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if 'None' in hours :
+            if "None" in hours:
                 hours = "<MISSING>"
             title = soup.find("span", {"class": "MiniHero-name"}).text
             title = title.encode("ascii", "ignore").decode("ascii")
@@ -98,8 +98,10 @@ def fetch_data():
 
 def scrape():
 
-    with SgWriter( deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
-     
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
