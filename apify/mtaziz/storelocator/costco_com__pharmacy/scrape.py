@@ -146,7 +146,7 @@ def fetch_data_us_ca(idx, loc, sgw: SgWriter):
     # Identifying those warehouse having Pharmacy services
     has_pharmacy_department = data["hasPharmacyDepartment"]
     if has_pharmacy_department is True:
-        location_type = pharmacy
+        location_type = "Pharmacy"
         pharmacy_hours = data["pharmacyHours"]
         if pharmacy_hours:
             hours_of_operation = "; ".join(pharmacy_hours)
