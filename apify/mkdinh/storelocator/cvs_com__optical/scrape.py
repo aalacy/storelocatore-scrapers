@@ -107,16 +107,16 @@ def fetch_location(page_url, session):
         for day in days:
             for hour in hours:
                 day_of_week = hour["dayOfWeek"]
-            try:
-                opens = hour["opens"]
-                closes = hour["closes"]
-            except:
-                opens = "Closed"
-                closes = "Closed"
+                try:
+                    opens = hour["opens"]
+                    closes = hour["closes"]
+                except:
+                    opens = "Closed"
+                    closes = "Closed"
 
                 if day == day_of_week:
-                    time = opens if opens == "Closed" else f"{opens}: {closes}"
-                    hours_of_operation.append(f"{day_of_week}: {time}")
+                        time = opens if opens == "Closed" else f"{opens}: {closes}"
+                        hours_of_operation.append(f"{day_of_week}: {time}")
 
         hours_of_operation = ", ".join(hours_of_operation)
 
