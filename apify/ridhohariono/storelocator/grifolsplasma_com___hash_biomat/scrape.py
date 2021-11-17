@@ -92,8 +92,7 @@ def fetch_data():
         elif "Temporarily closed" in check_status:
             location_type = "TEMPORARILY_CLOSED"
         else:
-            location_type = MISSING
-        location_type = "BIOMAT"
+            location_type = "BIOMAT"
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
