@@ -65,9 +65,7 @@ def get_hours(id, includes):
 def fetch_data():
     log.info("Fetching store_locator data")
     store_details = session.get(API_STORES, headers=HEADERS).json()
-    locations = []
     for row in store_details["items"]:
-        locator_domain = DOMAIN
         page_url = "{}/italian-restaurant/{}/{}".format(
             BASE_URL, row["fields"]["city"], row["fields"]["slug"]
         )
