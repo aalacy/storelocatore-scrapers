@@ -63,7 +63,7 @@ def fetch_data():
         )
 
         state = "<MISSING>"
-
+        hours = hours.encode("ascii", "ignore").decode("ascii")
         yield SgRecord(
             locator_domain=base_url,
             page_url="https://www.dfs-banken.nl/content/winkel",
