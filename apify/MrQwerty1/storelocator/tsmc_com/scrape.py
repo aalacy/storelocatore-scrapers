@@ -45,7 +45,7 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         text = "".join(d.xpath(".//div[@class='contact-others']/a/@href"))
-        longitude, latitude = get_coords(text)
+        latitude, longitude = get_coords(text)
 
         row = SgRecord(
             page_url=page_url,

@@ -87,7 +87,7 @@ async function fetchData({ page, request }) {
   const phone = formatPhone(parser.getTextByItemProp('telephone'));
   const hours_of_operation = extractHoursOfOperation(parser.$);
 
-  // there are online stores or one that does not exsits
+  // there are online stores or one that does not exist
   if (location_name.match(/store\s\d|online/i)) {
     return null;
   }

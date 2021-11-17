@@ -45,7 +45,7 @@ def fetch_data():
         driver.get(base_url)
         with SgRequests() as session:
             session.get(locator_domain, headers=_headers())
-            locations = bs(driver.page_source, "html.parser").select(
+            locations = bs(driver.page_source, "lxml").select(
                 "div.accordions .location-sm"
             )
             for location in locations:
@@ -63,6 +63,7 @@ def fetch_data():
                     )
                 except:
                     coord = ["<INACCESIBLE>", "<INACCESIBLE>"]
+
                 labels = [_.text for _ in soup1.select("dl.hours dt")]
                 values = [_.text.strip() for _ in soup1.select("dl.hours dd")]
                 hours = []
@@ -92,7 +93,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

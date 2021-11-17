@@ -38,20 +38,24 @@ def fetch_records(http, search):
                 street_address += " " + addr.street_address_2
             if street_address.isdigit() or len(street_address.split()) == 2:
                 street_address = _addr[0]
-            hours = [
-                ": ".join(hh.stripped_strings)
-                for hh in _.select("div.store-hours div.store-content > div")
-            ]
-            city = addr.city
-            if "Bracknell" in raw_address:
-                city = "Bracknell"
+            hours = []
+            for hh in _.select("div.store-hours div.store-content > div"):
+                cell = hh.select("div.cell")
+                if not cell:
+                    hours = [hh.text.strip()]
+                else:
+                    times = "closed"
+                    if len(cell) > 1:
+                        times = cell[1].text.strip()
+                        if not times:
+                            times = "closed"
+                    hours.append(f"{cell[0].text.strip()}: {times}")
             yield SgRecord(
                 page_url=_.select_one("a.store-details-link")["href"],
                 store_number=_["data-storeid"],
                 location_name=_.select_one("span.store-header").text.strip(),
                 street_address=street_address,
-                city=city,
-                state=addr.state,
+                city=_addr[-2],
                 zip_postal=_addr[-1],
                 country_code="GB",
                 phone=list(_.select_one("div.contacts-desktop").stripped_strings)[-1],

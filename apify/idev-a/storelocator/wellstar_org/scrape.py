@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 header1 = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -46,8 +47,9 @@ def fetch_data():
         ]
         for _ in locations:
             page_url = locator_domain + _["PageURL"]
-            addr = _["Address"].split(",")
-            street_address = addr[0]
+            raw_address = _["Address"]
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
             if _["Address2"]:
                 street_address += " " + _["Address2"]
             hours = []
@@ -61,9 +63,9 @@ def fetch_data():
                 location_name=_["Name"],
                 store_number=_["LocationID"],
                 street_address=street_address,
-                city=addr[-3].strip(),
-                state=addr[-2].strip(),
-                zip_postal=addr[-1].strip(),
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 latitude=_["Latitude"],
                 longitude=_["Longitude"],
                 country_code="US",
