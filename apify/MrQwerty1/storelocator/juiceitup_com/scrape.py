@@ -46,7 +46,7 @@ def fetch_data(sgw: SgWriter):
         for future in futures.as_completed(future_to_url):
             hours.append(future.result())
 
-    hours = {k: v for elem in hours for (k, v) in elem.items()}
+    hour = {k: v for elem in hours for (k, v) in elem.items()}
 
     for j in js:
         page_url = "https://www.juiceitup.com" + j.get("Path")
@@ -59,7 +59,7 @@ def fetch_data(sgw: SgWriter):
         phone = j.get("Phone")
         latitude = j.get("Latitude")
         longitude = j.get("Longitude")
-        hours_of_operation = hours.get(_id)
+        hours_of_operation = hour.get(_id)
 
         row = SgRecord(
             page_url=page_url,
