@@ -24,6 +24,8 @@ def fetch_data():
     loclist = soup.findAll("div", {"class": "location_detail"})
     for loc in loclist:
         title = loc.find("div", {"class": "location_detail_title"}).text.strip()
+        if "mobile " in title.lower():
+            continue
         try:
             phone = (
                 loc.find("div", {"class": "phone-wrapper"})
