@@ -12,7 +12,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
     start_url = "https://gnc.com.mx/tiendas-gnc/"
-    domain = "gnc.com.hn"
+    domain = "gnc.com.mx"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
@@ -45,15 +45,18 @@ def fetch_data():
         for poi in all_locations:
             latitude = poi["latitude"] if poi["latitude"] != "0" else ""
             longitude = poi["longitude"] if poi["longitude"] != "0" else ""
+            zip_code = poi["zip"]
+            if zip_code and zip_code == "sn":
+                zip_code = ""
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url="https://gnc.com.mx/tiendas-gnc/",
                 location_name=poi["title"],
                 street_address=poi["street"],
-                city=poi["city"],
-                state=poi["region_id"],
-                zip_postal=poi["zip"],
+                city=poi["city"].split(", ")[0],
+                state=poi["city"].split(", ")[-1],
+                zip_postal=zip_code,
                 country_code=poi["country_id"],
                 store_number=poi["location_id"],
                 phone=poi["phone"],
