@@ -21,7 +21,7 @@ def fetch_data():
     )
     for lat, lng in all_coords:
         url = start_url.format(
-            lat, lat + 0.5, lng, lng + 1.5, all_coords.current_country().upper()
+            lat, lat + 0.3, lng, lng + 1.2, all_coords.current_country().upper()
         )
         try:
             all_locations = session.get(url).json()

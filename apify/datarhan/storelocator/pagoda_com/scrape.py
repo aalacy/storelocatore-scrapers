@@ -2,6 +2,8 @@ import re
 import demjson
 import urllib.parse
 from lxml import etree
+from time import sleep
+from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -25,6 +27,7 @@ def fetch_data():
         '//h1[contains(text(), "View All Stores")]/following-sibling::div[1]//a/@href'
     )
     for state_url in all_states:
+        sleep(uniform(0, 10))
         full_state_url = urllib.parse.urljoin(start_url, state_url)
         state_response = session.get(full_state_url, headers=hdr)
         if state_response.status_code != 200:
@@ -37,6 +40,7 @@ def fetch_data():
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
             if store_url and "/store/null" not in store_url:
+                sleep(uniform(0, 10))
                 store_url = urllib.parse.urljoin(start_url, store_url[0])
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"
