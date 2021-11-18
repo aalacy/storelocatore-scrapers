@@ -1,12 +1,12 @@
 import re
 import ssl
-import json
+import demjson
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgselenium import SgFirefox
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -51,14 +51,13 @@ def fetch_data():
         addr = parse_address_intl(" ".join(address_raw))
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address = addr.street_address_2 + " " + addr.street_address_1
+            street_address = addr.street_address_1 + " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
         city = addr.city
-        city = city if city else "<MISSING>"
-        if city == "<MISSING>":
-            if len(" ".join(address_raw).split(", ")) == 3:
-                city = " ".join(address_raw).split(", ")[1]
-        street_address = street_address.split(city)[0].strip()
+        city = city if city else ""
+        if not city:
+            if len(address_raw) > 2:
+                city = address_raw[-2]
         state = addr.state
         state = state if state else "<MISSING>"
         zip_code = addr.postcode
@@ -66,14 +65,21 @@ def fetch_data():
         if zip_code == "<MISSING>":
             if len(" ".join(address_raw).split(", ")) == 3:
                 zip_code = " ".join(address_raw).split(", ")[-1]
-        country_code = "<MISSING>"
-        location_type = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = "<MISSING>"
-        geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')[0]
-        geo = re.findall(r"center: \[(.+?)\],", geo_data)[0].split(",")
-        latitude = geo[1]
-        longitude = geo[0]
+
+        geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')
+        latitude = ""
+        longitude = ""
+        if geo_data:
+            geo = re.findall(r"center: \[(.+?)\],", geo_data[0])
+            if geo:
+                geo = geo[0].split(",")
+                latitude = geo[1]
+                longitude = geo[0]
+            else:
+                geo = re.findall(r"center: (.+?}),", geo_data[0])[0]
+                geo = demjson.decode(geo)
+                latitude = geo["lat"]
+                longitude = geo["lng"]
         hours_of_operation = loc_dom.xpath(
             '//h2[contains(text(), "Opening Hours")]/following-sibling::div/span/text()'
         )
@@ -95,6 +101,10 @@ def fetch_data():
                 if elem.strip() and "am" in elem
             ]
         if not hours_of_operation:
+            hours_of_operation = loc_dom.xpath(
+                '//h2[contains(text(), "OPENING HOURS")]/following-sibling::div[1]//p/text()'
+            )
+        if not hours_of_operation:
             hours_of_operation = []
             id_data = loc_dom.xpath('//script[contains(text(), "var id")]/text()')
             if not id_data:
@@ -103,7 +113,7 @@ def fetch_data():
             hoo_response = session.get(
                 f"https://backend.cheerfy.com/shop-service/timetable/?scope_locations={store_id}"
             )
-            hoo = json.loads(hoo_response.text)
+            hoo = demjson.decode(hoo_response.text)
             for elem in hoo["timetable"]:
                 day = elem["day"]
                 opens = elem["intervals"][0]["open_at"]
@@ -117,6 +127,11 @@ def fetch_data():
             if hours_of_operation and hours_of_operation.strip()
             else "<MISSING>"
         )
+        if hours_of_operation == "Opening Hours will be published soon.":
+            continue
+        if "Unit 5/6" in address_raw[0]:
+            street_address = "Unit 5/6, Windsor Royal Station Shopping Centre"
+            zip_code = "SL4 1PJ"
 
         item = SgRecord(
             locator_domain=domain,
@@ -126,13 +141,14 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
+            country_code="",
+            store_number="",
+            phone="",
+            location_type="",
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=" ".join(address_raw),
         )
 
         yield item

@@ -15,9 +15,8 @@ headers = {
 
 
 def fetch_data():
-    ids = []
-    for x in range(20, 70):
-        for y in range(-130, -65):
+    for x in range(20, 50):
+        for y in range(-125, -65):
             logger.info("%s - %s..." % (str(x), str(y)))
             midlat = str(x)
             midlng = str(y)
@@ -39,24 +38,23 @@ def fetch_data():
                 + "/"
                 + hilng
             )
-            r = session.get(url, headers=headers, verify=False)
+            r = session.get(url, headers=headers)
             array = json.loads(r.content)
             for item in array:
                 website = "savealot.com"
                 phone = item["primary_phone"]
                 state = item["state"]
-                store = item["reseller_location_id"]
+                store = "<MISSING>"
                 zc = item["postal_code"]
                 city = item["city"]
                 purl = (
                     "https://savealot.com/grocery-stores/"
-                    + city.replace(" ", "-")
+                    + city.replace(" ", "-").replace(".", "")
                     + "-"
                     + zc
                     + "-"
                     + store
                 )
-                purl = purl.lower().replace(".", "")
                 name = "Save A Lot"
                 add = item["street"]
                 country = "US"
@@ -64,8 +62,7 @@ def fetch_data():
                 lat = item["lat"]
                 lng = item["lng"]
                 hours = ""
-                if store not in ids:
-                    ids.append(store)
+                try:
                     r2 = session.get(purl, headers=headers)
                     for line2 in r2.iter_lines():
                         line2 = str(line2.decode("utf-8"))
@@ -81,31 +78,31 @@ def fetch_data():
                                 hours = hrs
                             else:
                                 hours = hours + "; " + hrs
-                    if hours == "":
-                        hours = "<MISSING>"
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=purl,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+                except:
+                    pass
+                if hours == "":
+                    hours = "<MISSING>"
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in results:
             writer.write_row(rec)
 
