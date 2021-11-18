@@ -93,7 +93,6 @@ def fetch_stores():
             contents = item.xpath('.//div[@class="content"]/text()')
             if len(contents) == 0:
                 continue
-            store = contents
             stores.append(contents)
         return stores
     return []
