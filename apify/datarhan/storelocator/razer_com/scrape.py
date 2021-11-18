@@ -25,7 +25,6 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
-        print(store_url)
 
         raw_data = loc_dom.xpath(
             '//h2[contains(text(), "LOCATION")]/following-sibling::div/text()'
