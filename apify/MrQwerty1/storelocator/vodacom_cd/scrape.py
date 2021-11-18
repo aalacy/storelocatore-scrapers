@@ -9,7 +9,9 @@ from sgselenium.sgselenium import SgChrome
 
 def get_states():
     with SgChrome() as fox:
-        fox.get('https://www.vodacom.cd/particulier/assisstance/nos-vodashops/nos-vodashops')
+        fox.get(
+            "https://www.vodacom.cd/particulier/assisstance/nos-vodashops/nos-vodashops"
+        )
         source = fox.page_source
     tree = html.fromstring(source)
 
@@ -21,26 +23,30 @@ def get_additional():
     states = get_states()
     for state in states:
         with SgChrome() as fox:
-            fox.get(f'{locator_domain}{state}')
+            fox.get(f"{locator_domain}{state}")
             source = fox.page_source
 
         tree = html.fromstring(source)
         tables = tree.xpath("//markdown[@_ngcontent-c7]/table")
         for table in tables:
-            key = ''.join(table.xpath(".//th/text()")).strip()
+            key = "".join(table.xpath(".//th/text()")).strip()
             try:
-                phone = table.xpath(".//td[contains(text(), 'phone')]/following-sibling::td/text()")[0].strip()
+                phone = table.xpath(
+                    ".//td[contains(text(), 'phone')]/following-sibling::td/text()"
+                )[0].strip()
             except:
                 phone = SgRecord.MISSING
 
             _tmp = []
-            hours = table.xpath(".//tr[./td[contains(text(), 'Heures')]]/td[2]/text()|.//tr[./td[contains(text(), 'Heures')]]/following-sibling::tr/td[2]/text()")
+            hours = table.xpath(
+                ".//tr[./td[contains(text(), 'Heures')]]/td[2]/text()|.//tr[./td[contains(text(), 'Heures')]]/following-sibling::tr/td[2]/text()"
+            )
             for h in hours:
-                if h[0].isdigit() or 'phone' in h:
+                if h[0].isdigit() or "phone" in h:
                     continue
                 _tmp.append(h)
-            hoo = ';'.join(_tmp)
-            data[key] = {'phone': phone, 'hoo': hoo}
+            hoo = ";".join(_tmp)
+            data[key] = {"phone": phone, "hoo": hoo}
 
     return data
 
@@ -66,11 +72,11 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat")
         longitude = j.get("lon")
         try:
-            phone = additional[location_name]['phone']
+            phone = additional[location_name]["phone"]
         except:
             phone = SgRecord.MISSING
         try:
-            hours_of_operation = additional[location_name]['hoo']
+            hours_of_operation = additional[location_name]["hoo"]
         except:
             hours_of_operation = SgRecord.MISSING
 
