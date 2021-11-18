@@ -25,6 +25,11 @@ def fetch_data():
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
 
+        location_name = (
+            loc_dom.xpath('//div[@class="breadcrumb"]/text()')[-1]
+            .replace("/", "")
+            .strip()
+        )
         poi = loc_dom.xpath('//script[@class="yext-schema-json"]/text()')
         raw_adr = loc_dom.xpath('//div[strong[contains(text(), "Address:")]]/text()')
         raw_adr = [e.strip() for e in raw_adr if e.strip()]
@@ -35,12 +40,13 @@ def fetch_data():
             poi = json.loads(poi[0])
             hoo = []
             for e in poi["openingHoursSpecification"]:
+                if not e.get("dayOfWeek"):
+                    continue
                 if e.get("opens"):
                     hoo.append(f'{e["dayOfWeek"]} {e["opens"]} - {e["closes"]}')
                 else:
                     hoo.append(f'{e["dayOfWeek"]} closed')
             hoo = " ".join(hoo)
-            location_name = poi["name"]
             city = poi["address"]["addressLocality"]
             state = poi["address"]["addressRegion"]
             zip_code = poi["address"]["postalCode"]
@@ -50,7 +56,6 @@ def fetch_data():
             latitude = poi["geo"]["latitude"]
             longitude = poi["geo"]["longitude"]
         else:
-            location_name = loc_dom.xpath('//h1[@class="center maintitle"]/text()')[0]
             city = raw_adr[1].split(", ")[0]
             state = raw_adr[1].split(", ")[-1].split()[0]
             zip_code = raw_adr[1].split(", ")[-1].split()[-1]
