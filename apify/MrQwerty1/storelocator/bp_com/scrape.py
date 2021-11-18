@@ -61,7 +61,7 @@ if __name__ == "__main__":
     locator_domain = "https://www.bp.com/"
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.ALL],
+        country_codes=SearchableCountries.ALL,
         expected_search_radius_miles=50,
     )
     with SgWriter(
