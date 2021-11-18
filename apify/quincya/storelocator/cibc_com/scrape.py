@@ -30,7 +30,7 @@ def fetch_data(sgw: SgWriter):
 
     provs = base.find(class_="tetris-states-list").find_all("a")
 
-    for prov in provs[-2:]:
+    for prov in provs:
         state_link = "https://locations.cibc.com/" + prov["href"].lower()
         logger.info(state_link)
         req = session.get(state_link, headers=headers)
@@ -40,15 +40,17 @@ def fetch_data(sgw: SgWriter):
         for city_link in city_links:
             if "letter=" in str(city_link):
                 continue
-            logger.info(city_link["href"])
             for num in range(1, 100):
                 base_link = (
                     "https://locations.cibc.com"
                     + city_link["href"]
                     + "?t=&page=%s&filters=filter-_-Branch" % (num)
                 )
-                req = session.get(base_link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
+                try:
+                    req = session.get(base_link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                except:
+                    continue
                 try:
                     items = base.find_all(class_="tetris-results-item")
                     all_scripts = base.find_all("script")

@@ -23,21 +23,31 @@ headers = {
 locator_domain_url = "carpetone.com"
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(2))
+def get_response(idx, url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        time.sleep(randint(1, 4))
+        if response.status_code == 200:
+            logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
+
+
 def get_store_urls_per_api_call(skip):
     urls = []
-    with SgRequests() as http:
-        api_url = f"https://www.carpetone.com/carpetone/api/Flooring/GetStores?map=true&zipcode=&latitude=45.7135097&longitude=-73.9859414&skip={skip}"
-        data = http.get(api_url, headers=headers).json()
-        logger.info(f"Pulling for [{skip}]")
-        page_url = ""
-        if data["Results"]:
-            for _ in data["Results"]:
-                if "PageUrl" in _:
-                    page_url = _["PageUrl"]
-                    if "https://" not in page_url:
-                        page_url = "https://www.carpetone.com" + page_url
-                    urls.append(page_url)
+    api_url = f"https://www.carpetone.com/carpetone/api/Flooring/GetStores?map=true&zipcode=&latitude=45.7135097&longitude=-73.9859414&skip={skip}"
+    response = get_response(skip, api_url)
+    data = json.loads(response.text)
+    logger.info(f"Pulling for [{skip}]")
+    page_url = ""
+    if data["Results"]:
+        for _ in data["Results"]:
+            if "PageUrl" in _:
+                page_url = _["PageUrl"]
+                if "https://" not in page_url:
+                    page_url = "https://www.carpetone.com" + page_url
+                urls.append(page_url)
     return urls
 
 
@@ -55,22 +65,22 @@ def get_store_urls_us_ca():
                     if url not in s:
                         store_urls.append(url)
                     s.add(url)
-            except Exception:
-                logger.info(f"Exception: {Exception}")
+            except Exception as e:
+                logger.info(f"Exception: {e}")
     return store_urls
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
 def fetch_records(idx, url_store, sgw: SgWriter):
-    with SgRequests() as http:
+    try:
+
         logger.info(f"[{idx}] Pulling data from: {url_store}")
-        r = http.get(url_store)
-        time.sleep(randint(2, 5))
+        r = get_response(idx, url_store)
+        time.sleep(randint(2, 3))
         data_raw = html.fromstring(r.text, "lxml")
         data_xpath = '//script[contains(@type, "application/ld+json") and contains(text(), "openingHours")]/text()'
         data_type_json = data_raw.xpath(data_xpath)
-        data_type_json = "".join(data_type_json)
-        try:
+        if data_type_json:
+            data_type_json = "".join(data_type_json)
             data = json.loads(data_type_json)
             locator_domain = locator_domain_url
             page_url = data["url"] or MISSING
@@ -91,12 +101,15 @@ def fetch_records(idx, url_store, sgw: SgWriter):
             phone_data = data["telephone"]
             phone = phone_data if phone_data else MISSING
             location_type = data["@type"] or MISSING
-            hasmap = data["hasMap"]
-            lat = hasmap.split("/")[-1].split(",")[0]
-            latitude = lat if lat else MISSING
-
-            lng = hasmap.split("/")[-1].split(",")[1]
-            longitude = lng if lng else MISSING
+            try:
+                hasmap = data["hasMap"]
+                lat = hasmap.split("/")[-1].split(",")[0]
+                latitude = lat if lat else MISSING
+                lng = hasmap.split("/")[-1].split(",")[1]
+                longitude = lng if lng else MISSING
+            except:
+                latitude = MISSING
+                longitude = MISSING
             hoo = data["openingHours"]
             hours_of_operation = hoo if hoo else MISSING
             raw_address = MISSING
@@ -117,10 +130,30 @@ def fetch_records(idx, url_store, sgw: SgWriter):
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-
             sgw.write_row(rec)
-        except json.JSONDecodeError:
-            logger.info(f"{url_store} is having issues, please fix it!")
+        else:
+            country_code = "CA" if "carpetone.ca" in url_store else "US"
+            rec = SgRecord(
+                locator_domain=locator_domain_url,
+                page_url=url_store,
+                location_name=MISSING,
+                street_address=MISSING,
+                city=MISSING,
+                state=MISSING,
+                zip_postal=MISSING,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=MISSING,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=MISSING,
+                raw_address=MISSING,
+            )
+            sgw.write_row(rec)
+
+    except Exception as e:
+        logger.info(f"{url_store} is having issues, please fix it {e}!")
 
 
 def fetch_data(sgw: SgWriter):

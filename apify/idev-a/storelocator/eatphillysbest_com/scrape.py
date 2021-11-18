@@ -6,6 +6,9 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("eatphillysbest")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -40,6 +43,11 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             ll = _d(_["Title"].replace("Philly's Best", "").strip(), locs)
             page_url = locator_domain + ll.a["href"]
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            hours = list(sp1.select_one("div#location_address").stripped_strings)[-2]
+            if not hours.startswith("Mon"):
+                hours = ""
             store_number = page_url.split("/")[-2]
             phone = list(ll.stripped_strings)[-1]
             yield SgRecord(
@@ -55,6 +63,7 @@ def fetch_data():
                 longitude=_["LatLng"][1],
                 phone=phone,
                 locator_domain=locator_domain,
+                hours_of_operation=hours,
                 raw_address=_["Address"],
             )
 

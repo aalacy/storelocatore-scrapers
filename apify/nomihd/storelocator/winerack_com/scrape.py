@@ -144,9 +144,8 @@ def fetch_data(driver, http, search):
         log.info(f"Driver failed to find element: {e}")
         pass
     random_sleep(driver, 5)
-    driver.find_element_by_xpath(
-        "//div[@class='stores__radius']/select/option[@value='50000']"
-    ).click()
+    driver.find_element(By.CSS_SELECTOR, ".current-selection").click()
+    driver.find_element(By.CSS_SELECTOR, ".jsRadius:nth-child(3) > span").click()
 
     random_sleep(driver, 5)
     inputZip = driver.find_element_by_xpath("//input[contains(@id, 'storesearch')]")
