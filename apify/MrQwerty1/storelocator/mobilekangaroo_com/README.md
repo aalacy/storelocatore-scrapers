@@ -16,6 +16,7 @@ I researched a lot to get data from API `/msearch`. There `lat`, `lng` and `orig
 ### MISSING FIELDS:
 
 - location_type
-### "<INACCESSIBLE>" :
+
+### INACCESSIBLE FIELDS:
 - latitude
 - longitude
