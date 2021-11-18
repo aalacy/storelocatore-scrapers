@@ -20,6 +20,7 @@ _headers = {
 locator_domain = "https://www.jaguar.com"
 base_url = "https://www.jaguar.com/retailer-locator/index.html"
 cn_url = "https://dealer.jaguar.com.cn/index.php?s=/JDealer/api/getDealerList&is_extend=11&is_lack=1"
+us_url = "https://www.jaguarusa.com/retailer-locator/index.html?filter=All"
 
 
 def parse_cn():
@@ -112,7 +113,7 @@ def _d(country, c_code, session, url, zip=None):
                     .replace("Mexico", "")
                     .strip()
                 )
-        elif c_code in ["PA", "CL"]:
+        elif c_code in ["PA", "CL", "US"]:
             zip_postal = c_addr[-1]
             state = c_addr[-2]
             city = c_addr[-3]
@@ -179,6 +180,19 @@ def _d(country, c_code, session, url, zip=None):
         )
 
 
+def parse_us():
+    with SgRequests() as session:
+        sp0 = bs(session.get(us_url, headers=_headers).text, "lxml")
+        regions = sp0.select("select.regionSelect option")
+        for region in regions:
+            s_code = region["value"]
+            if s_code == "0":
+                continue
+            state_url = f"https://www.jaguarusa.com/retailer-locator/index.html?region={s_code}&filter=All"
+            for rec_intl in _d("United States", "US", session, state_url):
+                yield rec_intl
+
+
 def fetch_uk():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=100
@@ -193,7 +207,7 @@ def fetch_uk():
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        countries = soup.select("select.DropdownSelectA11y option")
+        countries = soup.select("select.DropdownSelectA11y")[0].select("option")
         for country in countries:
             c_code = country["value"]
             if c_code == "0":
@@ -205,6 +219,11 @@ def fetch_data():
                 continue
 
             if c_code == "GB":
+                continue
+
+            if c_code == "US":
+                for rec_us in parse_us():
+                    yield rec_us
                 continue
 
             url = f"https://www.jaguar.com/retailer-locator/index.html?country={c_code}&filter=All"
