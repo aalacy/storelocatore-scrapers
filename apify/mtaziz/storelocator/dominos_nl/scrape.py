@@ -325,7 +325,6 @@ def fetch_records_eu_global(idx, curl, sgw: SgWriter):
     logger.info(f"Pulling from: {curl}")
     r3 = get_response(idx, curl)
     time.sleep(3)
-    website = "dominos.com"
     typ = MISSING
     country = ""
     loc = MISSING
@@ -378,7 +377,6 @@ def fetch_records_eu_global(idx, curl, sgw: SgWriter):
                 oc = get_open_close_times(oh)
                 hoo.append(oc)
             hours = "; ".join(hoo)
-            loc = MISSING
             country = item["CountryCode"] or MISSING
             raw_address = ""
             if "FullAddress" in item["Address"]:
@@ -393,8 +391,8 @@ def fetch_records_eu_global(idx, curl, sgw: SgWriter):
                 raw_address = MISSING
 
             rec = SgRecord(
-                locator_domain=website,
-                page_url=loc,
+                locator_domain=DOMAIN,
+                page_url=curl,
                 location_name=name,
                 street_address=add1,
                 city=city,
