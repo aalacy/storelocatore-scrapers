@@ -87,7 +87,6 @@ def fetch_data():
 
                 temp_address = store.xpath("div[1]/div[@class='marker']/text()")
                 add_list = []
-                rec_count = 0
                 for temp in temp_address:
                     if len("".join(temp).strip()) > 0:
                         add_list.append("".join(temp).strip())
