@@ -73,8 +73,10 @@ def fetch_data():
         if not hours_of_operation:
             hours_of_operation = raw_data[1:]
         hoo = hours_of_operation[0].strip().split(" Hours: ")[-1]
-        if "Friday" in hours_of_operation[1]:
+        if "Friday" in hours_of_operation[1] or "Sunday" in hours_of_operation[1]:
             hoo += " " + hours_of_operation[1].strip()
+        if "Sunday" in hours_of_operation[2]:
+            hoo += " " + " ".join([e.strip() for e in hours_of_operation[1:3]])
         if "taipei" in store_url:
             hoo = " ".join([e for e in raw_data if " – 2" in e])
 
