@@ -27,7 +27,7 @@ def fetch_data():
             addr = parse_address_intl(raw_address)
             yield SgRecord(
                 page_url=base_url,
-                location_name=td[0].text.strip(),
+                location_name="Kipling",
                 street_address=raw_address.split(",")[0],
                 city=addr.city,
                 state=addr.state,
