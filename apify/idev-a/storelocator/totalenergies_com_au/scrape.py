@@ -31,13 +31,17 @@ hr_obj = {
 
 @retry(wait=wait_fixed(1), stop=stop_after_attempt(7))
 def _d(store_number):
-    with SgRequests(proxy_country="us") as http:
+    with SgRequests() as http:
         store_url = f"https://datastore-webapp-p.azurewebsites.net/REVERSE/api/Info/Poi?Lang=fr_FR&AdditionalData=Items&AdditionalDataFields=Items_Code,Items_Price,Items_Availability,Items_UpdateDate&Code={store_number}"
-        return http.get(store_url, headers=_headers).json()["Pois"][0]
+        res = http.get(store_url, headers=_headers).json()
+        if res["ErrorCode"] == "0001":
+            return {}
+
+        return res["Pois"][0]
 
 
 def fetch_data():
-    with SgRequests(proxy_country="us") as http:
+    with SgRequests() as http:
         for a in range(1000):
             for b in range(1000):
                 for c in range(1000):
@@ -67,21 +71,20 @@ def fetch_data():
                         if phone and ("contact" in phone.lower() or phone == "-"):
                             phone = ""
 
-                        detail = _d(store["store_id"])
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
-                            location_name=detail["Name"],
+                            location_name=_["name"],
                             street_address=" ".join(addr["lines"]),
-                            city=detail["City"],
-                            state=detail.get("State"),
-                            zip_postal=detail.get("ZipCode"),
-                            country_code=detail["CountryCode"],
+                            city=addr["city"],
+                            state=addr.get("State"),
+                            zip_postal=addr.get("zipcode"),
+                            country_code=addr["country_code"],
                             phone=phone,
-                            latitude=detail["Latitude"],
-                            longitude=detail["Longitude"],
+                            latitude=loc["geometry"]["coordinates"][0],
+                            longitude=loc["geometry"]["coordinates"][1],
                             hours_of_operation="; ".join(hours),
-                            location_type=detail["BrandCode"],
+                            location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,
                         )
 
