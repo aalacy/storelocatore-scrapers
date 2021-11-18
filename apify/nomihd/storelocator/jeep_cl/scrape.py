@@ -63,6 +63,7 @@ def fetch_data():
         "https://www.jeep.com.py/concesionarios/",
         "https://www.jeep.pe/concesionarios/",
         "https://www.jeep.com.uy/concesionarios/",
+        "https://www.jeep.bo/concesionarios/",
     ]
     with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
         for search_url in urls_list:
@@ -85,7 +86,7 @@ def fetch_data():
                 locator_domain = website
                 location_name = "".join(store.xpath("h2/text()")).strip()
 
-                temp_address = store.xpath("div[1]/div[@class='marker']/text()")
+                temp_address = store.xpath("div[1]/div[@class='marker']//text()")
                 add_list = []
                 for temp in temp_address:
                     if len("".join(temp).strip()) > 0:
@@ -123,7 +124,7 @@ def fetch_data():
                     store.xpath('div[1]/div[@class="clock"]/text()')
                 ).strip()
                 map_link = "".join(
-                    store.xpath('.//a[contains(text(),"Google Maps")]/@href')
+                    store.xpath('div[1]/div[@class="marker"]/a/@href')
                 ).strip()
                 latitude, longitude = get_latlng(map_link)
                 yield SgRecord(
