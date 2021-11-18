@@ -327,7 +327,6 @@ def fetch_records_eu_global(idx, curl, sgw: SgWriter):
     time.sleep(3)
     typ = MISSING
     country = ""
-    loc = MISSING
     store = MISSING
     hours = MISSING
     lat = MISSING
