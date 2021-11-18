@@ -72,15 +72,54 @@ def fetch_data():
             row.find("div").find("div").get_text(strip=True, separator="@@").split("@@")
         )
         location_name = info[0]
-        raw_address = " ".join(info[1:])
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        raw_address = " ".join(info[1:]).replace("\n", ",").strip().rstrip(",")
+        street_address, city, state, _ = getAddress(raw_address)
         try:
             phone = row.find("div", {"class": "mt-3"}).find("a").text.strip()
+            row.find("div", {"class": "mt-3"}).find(
+                "p", {"class": "text--dark"}
+            ).decompose()
         except:
             phone = MISSING
+        zip_postal = MISSING
+        if "pasig" in raw_address.lower():
+            city = "Pasig"
+        elif "muntinlupa" in raw_address.lower():
+            city = "Muntinlupa"
+        elif "baguio" in raw_address.lower():
+            city = "Baguio"
+        elif "quezon" in raw_address.lower():
+            city = "Quezon City"
+        elif "parañaque" in raw_address.lower():
+            city = "Parañaque City"
+        elif "makati " in raw_address.lower():
+            city = "MAKATI"
+        elif "mandurriao Iloilo City" in raw_address.lower():
+            city = "Mandurriao Iloilo City"
+        elif "calamba" in raw_address.lower():
+            city = "Calamba"
+        elif "jaro iloilo" in raw_address.lower():
+            city = "Jaro Iloilo"
+        elif "sta. rosa" in raw_address.lower():
+            city = "Sta. Rosa"
+        elif "san juan" in raw_address.lower():
+            city = "SAN JUAN"
+
+        if "north" in raw_address.lower():
+            state = "North"
+        elif "south" in raw_address.lower():
+            state = "SOUTH"
+        elif "manila" in raw_address.lower():
+            state = "Manila"
+        if "north luzon" in raw_address.lower():
+            state = "North Luzon"
         country_code = "PH"
         store_number = MISSING
-        hours_of_operation = row.find("div", {"class": "mt-3"}).find("p").text.strip()
+        hours_of_operation = (
+            row.find("div", {"class": "mt-3"})
+            .get_text(strip=True, separator=",")
+            .replace("Store Hours: ", "")
+        )
         try:
             map_link = row.find("a", {"class": "store-locator__list__item__icon"})[
                 "href"

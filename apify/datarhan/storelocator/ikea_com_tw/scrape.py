@@ -1,8 +1,9 @@
 import ssl
 from lxml import etree
 from urllib.parse import urljoin
+from time import sleep
 
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -43,24 +44,26 @@ def fetch_data():
         raw_data = loc_dom.xpath('//div[contains(text(), "業時間")]/text()')
         if not raw_data:
             raw_data = loc_dom.xpath('//div[h4[contains(text(), "基本資訊")]]/text()')
-        raw_adr = loc_dom.xpath('//p[contains(text(), "地址：")]/text()')
+        raw_adr = loc_dom.xpath('//*[contains(text(), "地址：")]/text()')
         if raw_adr:
             raw_adr = raw_adr[0].split(":")[-1].strip()
         if not raw_adr and raw_data:
             raw_adr = [e for e in raw_data if "地址" in e][0].split(":")[-1].strip()
             raw_adr = raw_adr.split("：")[-1]
         if not raw_adr:
-            with SgChrome() as driver:
+            with SgFirefox() as driver:
                 driver.get(page_url)
+                sleep(10)
                 driver.switch_to.frame(
                     driver.find_element_by_xpath(
-                        "//iframe[@src='https://puop.ikea-event.tw/pc']"
+                        "//iframe[contains(@src, 'https://puop.ikea-event.tw')]"
                     )
                 )
-                loc_dom = etree.HTML(driver.page_source)
-                raw_data = loc_dom.xpath('//div[span[@class="info-title"]]/text()')
-                raw_adr = [e for e in raw_data if "地址" in e][0].split(":")[-1].strip()
-
+                new_dom = etree.HTML(driver.page_source)
+                raw_adr = new_dom.xpath('//div[span[@class="info-title"]]/text()')[
+                    1
+                ].strip()
+        raw_adr = raw_adr.split(":")[-1]
         addr = parse_address_intl(raw_adr)
         location_name = loc_dom.xpath(
             '//div[@class="mb-4 text-wrap bannerTemplate"]/h4/strong/text()'
@@ -83,16 +86,18 @@ def fetch_data():
                         .split("：")[-1]
                         .split("轉")[0]
                     )
+        if "/xin-chu" in page_url:
+            phone = "(03) 551-6223"
         if not phone:
-            phone = (
-                [
-                    e
-                    for e in loc_dom.xpath('//p[contains(text(), "地址：")]/text()')
-                    if "撥：" in e
-                ][0]
-                .split("撥：")[-1]
-                .split()[0]
-            )
+            phone = [
+                e
+                for e in loc_dom.xpath('//p[contains(text(), "地址：")]/text()')
+                if "撥：" in e
+            ]
+            if phone:
+                phone = phone[0].split("撥：")[-1].split()[0]
+            else:
+                phone = loc_dom.xpath('//span[contains(text(), "02-41")]/text()')[0][1:]
         hoo = loc_dom.xpath('//h5[contains(text(), "-賣場")]/following::text()')
         hoo = hoo[0].strip() if hoo else ""
         if not hoo:

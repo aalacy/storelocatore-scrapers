@@ -67,6 +67,8 @@ def get_data(page_url, sgw: SgWriter):
         page_url = f"https://suncrestcare.com{page_url}"
 
     r = session.get(page_url, headers=headers)
+    if r.status_code == 404:
+        return
     tree = html.fromstring(r.text)
 
     location_name = tree.xpath("//h1/text()")[0].strip()

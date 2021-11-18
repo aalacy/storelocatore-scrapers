@@ -35,10 +35,16 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//div[@class="wpsl-location-info"]/following-sibling::p/text()'
         )
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@class="wpsl-location-additionalinfo"]/p/text()')
         hoo = (
             " ".join(
                 [
-                    e.replace("\r", "").replace("\t", "").replace("\n", "").strip()
+                    e.replace("\r\n", " ")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
                     for e in hoo
                     if e.strip() and "Note: " not in e
                 ]
