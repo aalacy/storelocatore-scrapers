@@ -9,7 +9,7 @@ import time
 import json
 from sglogging import SgLogSetup
 import ssl
-from tenacity import retry
+from tenacity import retry, stop_after_attempt
 
 try:
     _create_unverified_https_context = (
@@ -45,12 +45,13 @@ def get_bs(driver=None, url=None):
         except:
             time.sleep(1)
             logger.info(f"retry {url}")
+            driver.close()
             driver = None
 
     return bs(driver.page_source, "lxml")
 
 
-@retry
+@retry(stop=stop_after_attempt(3))
 def get_json(driver=None, url=None):
     sp1 = get_bs(driver=driver, url=url)
     if driver.current_url in [de_base_url, it_base_url, fr_base_url]:
