@@ -1,3 +1,5 @@
+import re
+
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
@@ -48,9 +50,11 @@ def fetch_data(sgw: SgWriter):
             location_name = raw_data[0].strip()
             if raw_data[-1][-1:].isdigit():
                 raw_address = " ".join(raw_data[1:-1])
+                city_line = raw_data[-2]
             else:
                 raw_address = " ".join(raw_data[1:])
-            addr = parse_address_intl(raw_address)
+                city_line = raw_data[-1]
+            addr = parse_address_intl(raw_address.replace("PQ H7N 0A8", "QC H7N 0A8"))
             street_address = addr.street_address_1
             city = addr.city
             state = addr.state
@@ -92,6 +96,11 @@ def fetch_data(sgw: SgWriter):
             except:
                 pass
 
+            try:
+                state = state.replace("Qc Qc", "QC")
+            except:
+                pass
+
             if location_name == "@":
                 location_name = ""
 
@@ -122,10 +131,22 @@ def fetch_data(sgw: SgWriter):
                     ].strip()
 
             try:
+                if len(state) < 4:
+                    state = state.upper()
                 if len(state) == 1:
                     state = ""
+                if state == "Melbourne":
+                    city = "Melbourne"
+                    state = "VIC"
             except:
                 pass
+
+            if not state and country_code == "AU":
+                try:
+                    state = re.findall(r"[A-Z]{2,3}", city_line)[0]
+                except:
+                    pass
+                street_address = street_address.replace("Nt 800", "")
 
             try:
                 if len(city) == 1:
