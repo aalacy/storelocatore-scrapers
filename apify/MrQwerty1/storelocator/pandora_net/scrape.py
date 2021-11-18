@@ -53,7 +53,9 @@ def fetch_data(sgw: SgWriter):
     js = json.loads(line)
 
     for j in js:
-        page_url = j.get("indy_url").replace("//", "https://")
+        page_url = j.get("indy_url") or ""
+        if page_url.startswith("/"):
+            page_url = page_url.replace("//", "https://")
         location_name = j.get("location_name")
         street_address = f"{j.get('address_1')} {j.get('address_2')}".strip()
         city = j.get("city")
