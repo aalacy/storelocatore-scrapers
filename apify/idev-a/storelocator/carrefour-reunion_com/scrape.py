@@ -31,7 +31,7 @@ def fetch_data():
                 zip_postal=_["postcode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
-                country_code="US",
+                country_code="La Reunion",
                 phone=_["main_phone"],
                 location_type=_["brand"],
                 locator_domain=locator_domain,
