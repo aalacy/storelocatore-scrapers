@@ -74,16 +74,21 @@ def fetch_data():
                     loc_link = "https://www.hobbylobby.com" + loc["linkUrl"]
                     req = session.get(loc_link, headers=headers)
                     bs = BeautifulSoup(req.text, "html.parser")
-                    hours = bs.find(
-                        "table", {"class": "store-openings weekday_openings"}
-                    ).text
-                    hours = hours.replace("\n", " ")
-                    hours = re.sub(pattern, " ", hours).strip()
+                    try:
+                        hours = bs.find(
+                            "table", {"class": "store-openings weekday_openings"}
+                        ).text
+                        hours = hours.replace("\n", " ")
+                        hours = re.sub(pattern, " ", hours).strip()
+                    except AttributeError:
+                        hours = MISSING
+
+                    title = "Hobby Lobby"
 
                     yield SgRecord(
                         locator_domain=DOMAIN,
                         page_url=loc_link,
-                        location_name="Hobby Lobby",
+                        location_name=title,
                         street_address=street.strip(),
                         city=city.strip(),
                         state=state.strip(),
@@ -102,9 +107,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()
