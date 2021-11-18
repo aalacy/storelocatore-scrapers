@@ -24,7 +24,7 @@ def fetch_data():
 
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=100000"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
     )
     for code in all_codes:
         sleep(uniform(5, 9))
@@ -61,7 +61,7 @@ def fetch_data():
 
         all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
-        next_page = dom.xpath('//a[@title="następna strona"]/@href')
+        next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
         while next_page:
             response = session.get(urljoin(start_url, next_page[0]))
             log.info(f"Third Response: {response}")
@@ -72,7 +72,7 @@ def fetch_data():
             all_locations += dom.xpath(
                 '//td[@class="AlternatingItemTemplateColumnLocation"]'
             )
-            next_page = dom.xpath('//a[@title="następna strona"]/@href')
+            next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
 
         for poi_html in all_locations:
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
