@@ -110,8 +110,8 @@ def fetch_data(sgw: SgWriter):
             continue
         coords = DynamicGeoSearch(
             country_codes=[f"{country}"],
-            max_search_distance_miles=10,
-            expected_search_radius_miles=10,
+            max_search_distance_miles=5,
+            expected_search_radius_miles=5,
             max_search_results=None,
             granularity=Grain_1_KM(),
         )
