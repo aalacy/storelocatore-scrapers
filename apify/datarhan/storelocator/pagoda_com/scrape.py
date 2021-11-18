@@ -49,7 +49,6 @@ def fetch_data():
         )
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
-            print(store_url)
             if store_url and "/store/null" not in store_url:
                 sleep(uniform(0, 10))
                 store_url = urllib.parse.urljoin(start_url, store_url[0])
