@@ -10,13 +10,13 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("hyatt_com")
+logger = SgLogSetup().get_logger("thompsonhotels_com")
 
 
 def fetch_data():
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
     r = session.get(url, headers=headers)
-    website = "hyatt.com"
+    website = "thompsonhotels.com"
     hours = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
