@@ -148,7 +148,7 @@ class ExampleSearchIteration(SearchIteration):
                             + str(rec["LocationId"]["SatelliteNumber"])
                         )
                     except Exception:
-                        store_number = None
+                        store_number = ""
 
                     try:
                         longitude = rec["Geo"]["Longitude"]
