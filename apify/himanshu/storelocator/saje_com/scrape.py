@@ -8,7 +8,13 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
 session = SgRequests()
 website = "saje_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
