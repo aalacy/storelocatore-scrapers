@@ -182,7 +182,6 @@ class ExampleSearchIteration(SearchIteration):
                     found_location_at(latitude, longitude)
                 i = 0
                 for html in locations["ResultHtml"]:
-                    print("Helloooo")
                     soup = b4(html, "lxml")
                     i += 1
                     if len(html) < 50:
