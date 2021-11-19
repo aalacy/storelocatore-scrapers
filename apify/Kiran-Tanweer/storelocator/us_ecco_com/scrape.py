@@ -5,6 +5,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import os
+
+
+os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
+os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 session = SgRequests()
 website = "us_ecco_com"
@@ -32,7 +37,7 @@ headers = {
 }
 
 
-DOMAIN = "ttps://us.ecco.com/"
+DOMAIN = "https://us.ecco.com/"
 MISSING = SgRecord.MISSING
 
 
@@ -76,26 +81,28 @@ def fetch_data():
                     hour = hr.split('"data":"')[1].split('"')[0]
                     h1 = day + " " + hour
                     hoo = h1 + " " + hoo
+                street = street.strip()
 
                 data_dedup = street + "-" + city + "-" + state + "-" + pcode
                 if data_dedup not in dedup:
                     dedup.append(data_dedup)
-                    yield SgRecord(
-                        locator_domain=DOMAIN,
-                        page_url=url,
-                        location_name=title,
-                        street_address=street,
-                        city=city,
-                        state=state,
-                        zip_postal=pcode,
-                        country_code=country,
-                        store_number=storeid,
-                        phone=phone,
-                        location_type="ECCO Store",
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hoo.strip(),
-                    )
+                    if street != "4000 ARROWHEAD BLVD STE 874":
+                        yield SgRecord(
+                            locator_domain=DOMAIN,
+                            page_url=url,
+                            location_name=title,
+                            street_address=street,
+                            city=city,
+                            state=state,
+                            zip_postal=pcode,
+                            country_code=country,
+                            store_number=storeid,
+                            phone=phone,
+                            location_type="ECCO Store",
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hoo.strip(),
+                        )
 
 
 def scrape():
