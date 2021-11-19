@@ -37,7 +37,6 @@ def fetch_data():
         lat = ""
         lng = ""
         logger.info(loc)
-        daycount = 0
         r = session.get(loc, headers=headers)
         for line in r.iter_lines():
             if '"pageName":"' in line:
