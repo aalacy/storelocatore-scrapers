@@ -52,5 +52,6 @@ def fetch_data(sgw: SgWriter):
             )
         )
 
+
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)
