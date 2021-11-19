@@ -22,7 +22,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://www.jeep.com.do/concesionario/"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
         search_res = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(search_res.text)
         stores = stores_sel.xpath(
