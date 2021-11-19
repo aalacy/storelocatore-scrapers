@@ -9,8 +9,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
 log = sglog.SgLogSetup().get_logger(logger_name="dekalash.com")
 
 
@@ -21,71 +19,48 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    found_poi = []
+    api_link = "https://api.storepoint.co/v1/15e2b4dd23ff14/locations?lat=39.011902&long=-98.4842465&radius=5000"
 
-    max_results = 100
-    max_distance = 1000
+    store_data = session.get(api_link, headers=headers).json()["results"]["locations"]
 
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
-    )
+    locator_domain = "dekalash.com"
 
-    for lat, lng in search:
-        log.info(
-            "Searching: %s, %s | Items remaining: %s"
-            % (lat, lng, search.items_remaining())
-        )
-        api_link = (
-            "https://api.storepoint.co/v1/15e2b4dd23ff14/locations?lat=%s&long=%s&radius=%s"
-            % (lat, lng, max_distance)
-        )
+    for store in store_data:
+        store_number = store["id"]
+        link = store["website"]
+        location_name = store["name"]
+        raw_address = store["streetaddress"].split(",")[:-1]
+        street_address = " ".join(raw_address[:-2]).strip().replace("  ", " ")
+        city = raw_address[-2].strip()
+        state = raw_address[-1].split()[0].strip()
+        zip_code = raw_address[-1].split()[1].strip()
+        country_code = store["streetaddress"].split(",")[-1].strip()
+        location_type = "<MISSING>"
 
-        store_data = session.get(api_link, headers=headers).json()["results"][
-            "locations"
-        ]
-        if not store_data:
-            continue
+        if "4346 Belden Village" in street_address:
+            zip_code = "44718"
 
-        locator_domain = "dekalash.com"
+        phone = store["phone"]
+        if not phone:
+            phone = "<MISSING>"
 
-        for store in store_data:
-            store_number = store["id"]
-            if store_number in found_poi:
-                continue
-            found_poi.append(store_number)
+        latitude = store["loc_lat"]
+        longitude = store["loc_long"]
 
-            link = store["website"]
-            location_name = store["name"]
-            raw_address = store["streetaddress"].split(",")[:-1]
-            street_address = " ".join(raw_address[:-2]).strip().replace("  ", " ")
-            city = raw_address[-2].strip()
-            state = raw_address[-1].split()[0].strip()
-            zip_code = raw_address[-1].split()[1].strip()
-            country_code = store["streetaddress"].split(",")[-1].strip()
-            location_type = "<MISSING>"
+        log.info(link)
+        req = session.get(link, headers=headers)
 
-            if "4346 Belden Village" in street_address:
-                zip_code = "44718"
-
-            phone = store["phone"]
-            if not phone:
-                phone = "<MISSING>"
-
-            latitude = store["loc_lat"]
-            longitude = store["loc_long"]
-            search.found_location_at(latitude, longitude)
-
-            log.info(link)
-            req = session.get(link, headers=headers)
-
-            if req.status_code == 404:
-                continue
-
+        if req.status_code == 404:
+            link = "https://dekalash.com/find-a-studio/"
+            hours_of_operation = ""
+        else:
+            link = req.url
             base = BeautifulSoup(req.text, "lxml")
 
-            if "coming soon" in base.find(class_="elementor-row").text.lower():
+            try:
+                if "coming soon" in base.find(class_="elementor-row").text.lower():
+                    continue
+            except:
                 continue
 
             if "temporarily closed" in base.find(class_="elementor-row").text.lower():
@@ -95,25 +70,25 @@ def fetch_data(sgw: SgWriter):
                     list(base.find(class_="IiXf4c").stripped_strings)
                 )
 
-            sgw.write_row(
-                SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=link,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_code,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
+        )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)

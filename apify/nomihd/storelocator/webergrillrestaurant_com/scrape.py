@@ -82,6 +82,9 @@ def fetch_data():
                 ),
             )
         )
+        if len(raw_address) <= 0:
+            continue
+
         street_address = raw_address[0].strip()
         city_state_zip = (
             raw_address[1]
@@ -97,7 +100,10 @@ def fetch_data():
         country_code = "US"
 
         store_number = "<MISSING>"
-        phone = raw_address[2].strip().replace("Tel:", "").strip()
+        phone = "<MISSING>"
+        for index in range(0, len(raw_address)):
+            if "Tel:" in raw_address[index]:
+                phone = raw_address[index + 1]
 
         location_type = "<MISSING>"
 

@@ -1,93 +1,49 @@
-import csv
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("machinemart")
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+base_url = "https://www.machinemart.co.uk/customactions/storefindersurface/GetStores/"
+locator_domain = "https://www.machinemart.co.uk"
 
 
 def fetch_data():
-    base_url = "https://www.machinemart.co.uk"
-    res = session.get(
-        "https://www.machinemart.co.uk/customactions/storefindersurface/GetStores/"
-    )
-    store_list = json.loads(res.text)["Stores"]
-    data = []
+    with SgRequests() as session:
+        store_list = session.get(base_url).json()["Stores"]
+        for store in store_list:
+            page_url = "https://www.machinemart.co.uk/stores/" + store["id"] + "/"
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url).text, "lxml")
+            hours = sp1.select_one("div.times p").contents[2:]
+            pp = sp1.select("div.times p")
+            if len(pp) > 1:
+                if pp[-1].select("u"):
+                    del pp[-1]
+                hours = list(pp[-1].stripped_strings)
 
-    for store in store_list:
-        page_url = "https://www.machinemart.co.uk/stores/" + store["id"]
-        location_name = store["name"]
-        store_number = "<MISSING>"
-        city = store["addressLine2"] or "<MISSING>"
-        state = "<MISSING>"
-        street_address = store["addressLine1"]
-        zip = store["addressLine4"]
-        country_code = "<MISSING>"
-        phone = store["telephoneNumber"].replace("\n", "")
-        location_type = "<MISSING>"
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-        res1 = session.get(page_url)
-        hours = bs(res1.text, "lxml").select_one("div.times p").contents[2:]
-        hours = [x.string for x in hours if x.string is not None]
-        hours_of_operation = " ".join(hours) or "<MISSING>"
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            yield SgRecord(
+                page_url=page_url,
+                location_name=store["name"],
+                street_address=store["addressLine1"],
+                city=store["addressLine2"],
+                zip_postal=store["addressLine4"],
+                country_code="UK",
+                phone=store["telephoneNumber"].replace("\n", ""),
+                locator_domain=locator_domain,
+                latitude=store["latitude"],
+                longitude=store["longitude"],
+                hours_of_operation=" ".join(hours),
+                raw_address=" ".join(sp1.select_one("div.address").stripped_strings),
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

@@ -1,4 +1,3 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
@@ -7,41 +6,16 @@ from lxml import etree
 
 from sgrequests import SgRequests
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgscrape.sgpostal import parse_address_intl
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
     domain = "https://www.prezzorestaurants.co.uk"
@@ -50,13 +24,24 @@ def fetch_data():
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    req = session.get(domain, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    all_links = []
 
-    all_locations = base.find(id="visit-restaurant").find_all("option")[1:]
+    for i in range(1, 15):
+        base_link = (
+            "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=51.502132&lng=-0.1887645&dist=2000&s=&p=%s&f="
+            % (i)
+        )
+        req = session.get(base_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        locs = base.find(id="restaurant-search-results").find_all(
+            class_="button secondary-button w-100 px-i"
+        )
+        for loc in locs:
+            link = domain + loc["href"]
+            if link not in all_links:
+                all_links.append(link)
 
-    for url in all_locations:
-        store_url = domain + url["value"].split("?")[0]
+    for store_url in all_links:
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -113,30 +98,25 @@ def fetch_data():
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        yield item
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-if __name__ == "__main__":
-    scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -18,7 +18,7 @@ _headers = {
 
 base_url = "https://www.hiqonline.co.uk/hiq-centres"
 locator_domain = "https://www.hiqonline.co.uk"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 max_workers = 8
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -56,6 +56,7 @@ def request_with_retries(url):
 
 
 def _dd(page_url, _, loc, city):
+    logger.info(page_url)
     state = ""
     if _.select_one('span[itemprop="addressRegion"]'):
         state = _.select_one('span[itemprop="addressRegion"]').text.strip()
@@ -90,6 +91,7 @@ def _dd(page_url, _, loc, city):
 
 
 def _d(page_url, _, city):
+    logger.info(page_url)
     raw_address = ", ".join(
         _.select_one(".address").text.strip().split(",")[1:]
     ).strip()
@@ -101,7 +103,7 @@ def _d(page_url, _, city):
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
     zip_postal = addr.postcode
-    if len(zip_postal.split(" ")) == 1:
+    if zip_postal and len(zip_postal.split(" ")) == 1:
         for aa in raw_address.split(","):
             if zip_postal.lower() in aa.lower():
                 zip_postal = aa.strip()
@@ -132,7 +134,6 @@ def fetch_data():
     links = soup.select("div.cities-list ul a")
     logger.info(f"{len(links)} found")
     for city_url, city, sp1 in fetchConcurrentList(links):
-        logger.info(city_url)
         locations = sp1.select("div.result-container")
         locs = sp1.select("ul#locations li")
         for x, _ in enumerate(locations):

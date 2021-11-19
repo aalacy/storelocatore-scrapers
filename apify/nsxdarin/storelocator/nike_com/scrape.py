@@ -294,6 +294,14 @@ def fetch_data():
                         name = "NikeLab"
                     else:
                         name = "Nike"
+                    if "factory" in name.lower():
+                        name = "Nike Factory Store"
+                    if "nike store" in name.lower():
+                        name = "Nike"
+                    if "nike by" in name.lower():
+                        name = "Nike"
+                    if "nike zlote" in name.lower():
+                        name = "Nike"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

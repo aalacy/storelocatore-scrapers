@@ -31,10 +31,11 @@ def fetch_data():
                 addr += " " + _["ADDR_2"]
             addr = addr.strip()
             hours = []
-            for hh in json.loads(_["KING_ORDER_STATE_OF_WEEK_DAY"]):
-                hours.append(
-                    f"{hr_obj[hh['dayOfWeek']]}: {hh['kingOrderOpenTime']}-{hh['kingOrderCloseTime']}"
-                )
+            if _["KING_ORDER_STATE_OF_WEEK_DAY"]:
+                for hh in json.loads(_["KING_ORDER_STATE_OF_WEEK_DAY"]):
+                    hours.append(
+                        f"{hr_obj[hh['dayOfWeek']]}: {hh['kingOrderOpenTime']}-{hh['kingOrderCloseTime']}"
+                    )
             yield SgRecord(
                 page_url="https://burgerking.co.kr/#/store",
                 store_number=_["STOR_CD"],
