@@ -47,7 +47,7 @@ def fetch_data(sgw: SgWriter):
 
         logger.info(link)
         driver.get(link)
-        element = WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 30).until(
             ec.presence_of_element_located((By.ID, "wpsl-stores"))
         )
         base = BeautifulSoup(driver.page_source, "lxml")
