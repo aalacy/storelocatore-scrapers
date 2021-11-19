@@ -16,7 +16,7 @@ logger = SgLogSetup().get_logger("gqtmovies_com")
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.gqtmovies.com/our-locations"
+    base_link = "https://www.gqtmovies.com/theaters"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
