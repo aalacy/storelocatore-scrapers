@@ -24,12 +24,14 @@ def fetch_data():
         url = "https://flipsgrill.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "et_pb_row et_pb_row_1"}).findAll("div", {"class": "et_pb_css_mix_blend_mode_passthrough"})
+        loclist = soup.find("div", {"class": "et_pb_row et_pb_row_1"}).findAll(
+            "div", {"class": "et_pb_css_mix_blend_mode_passthrough"}
+        )
         for loc in loclist:
             location_name = loc.find("h5").text
             log.info(location_name)
             temp_var = loc.findAll("p")
-            address= temp_var[0].get_text(separator='|', strip=True).replace('|'," ")
+            address = temp_var[0].get_text(separator="|", strip=True).replace("|", " ")
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -58,10 +60,17 @@ def fetch_data():
                 i += 1
             country_code = "US"
             phone = loc.select_one("a[href*=tel]").text
-            hours_of_operation = temp_var[1].get_text(separator='|', strip=True).split('|')[0]
-            longitude,latitude = loc.select_one("iframe[src*=maps]")['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d')
+            hours_of_operation = (
+                temp_var[1].get_text(separator="|", strip=True).split("|")[0]
+            )
+            longitude, latitude = (
+                loc.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
             if "!3m" in latitude:
-                latitude =latitude.split("!3m")[0]
+                latitude = latitude.split("!3m")[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
