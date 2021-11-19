@@ -84,13 +84,13 @@ class ExampleSearchIteration(SearchIteration):
             nCA = "93%2C91%2C90"
             nUS = "8%2C10%2C28%2C29%2C50"
             nAU = "20"
-            if current_country == 'ca':
+            if current_country == "ca":
                 numbers = nCA
-            elif current_country == 'us':
+            elif current_country == "us":
                 numbers = nUS
-            elif current_country == 'au':
+            elif current_country == "au":
                 numbers = nAU
-                
+
             url = str(
                 f"https://marketingsl.tjx.com/storelocator/GetSearchResults?geolat={lat}&geolong={lng}&chain={numbers}&maxstores=9999&radius=1000"
             )
