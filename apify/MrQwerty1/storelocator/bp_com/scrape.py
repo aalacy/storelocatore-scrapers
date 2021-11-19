@@ -10,8 +10,12 @@ def fetch_data(coords, sgw: SgWriter):
     lat, lng = coords
     api = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
     r = session.get(api, headers=headers)
+    try:
+        js = r.json()
+    except:
+        return
 
-    for j in r.json():
+    for j in js:
         location_name = j.get("name")
         street_address = j.get("address")
         city = j.get("city")
@@ -61,7 +65,7 @@ if __name__ == "__main__":
     locator_domain = "https://www.bp.com/"
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.ALL],
+        country_codes=SearchableCountries.ALL,
         expected_search_radius_miles=50,
     )
     with SgWriter(
