@@ -83,19 +83,19 @@ class ExampleSearchIteration(SearchIteration):
             lat, lng = coord
 
             url = str(
-                f"https://locator-svc.subway.com/v3/GetLocations.ashx?callback=jQuery111103111319300901092_1617727334311&q=%7B%22InputText%22%3A%22%22%2C%22GeoCode%22%3A%7B%22name%22%3A%22%22%2C%22Latitude%22%3A{lat}%2C%22Longitude%22%3A{lng}%2C%22CountryCode%22%3A%22%22%7D%2C%22DetectedLocation%22%3A%7B%22Latitude%22%3A0%2C%22Longitude%22%3A0%2C%22Accuracy%22%3A0%7D%2C%22Paging%22%3A%7B%22StartIndex%22%3A0%2C%22PageSize%22%3A100%7D%2C%22ConsumerParameters%22%3A%7B%22metric%22%3Atrue%2C%22culture%22%3A%22en-AG%22%2C%22country%22%3A%22%22%2C%22size%22%3A%22D%22%2C%22template%22%3A%22%22%2C%22rtl%22%3Afalse%2C%22clientId%22%3A%2217%22%2C%22key%22%3A%22SUBWAY_PROD%22%7D%2C%22Filters%22%3A%5B%5D%2C%22LocationType%22%3A2%2C%22behavior%22%3A%22%22%2C%22FavoriteStores%22%3Anull%2C%22RecentStores%22%3Anull%2C%22Stats%22%3A%7B%22abc%22%3A%5B%7B%22N%22%3A%22geo%22%2C%22R%22%3A%22B%22%7D%5D%2C%22src%22%3A%22autocomplete%22%2C%22act%22%3A%22enter%22%2C%22c%22%3A%22subwayLocator%22%7D%7D&_=1617727334313".format(lat=lat,lng=lng)
+                f"https://locator-svc.subway.com/v3/GetLocations.ashx?callback=jQuery111103111319300901092_1617727334311&q=%7B%22InputText%22%3A%22%22%2C%22GeoCode%22%3A%7B%22name%22%3A%22%22%2C%22Latitude%22%3A{lat}%2C%22Longitude%22%3A{lng}%2C%22CountryCode%22%3A%22%22%7D%2C%22DetectedLocation%22%3A%7B%22Latitude%22%3A0%2C%22Longitude%22%3A0%2C%22Accuracy%22%3A0%7D%2C%22Paging%22%3A%7B%22StartIndex%22%3A0%2C%22PageSize%22%3A100%7D%2C%22ConsumerParameters%22%3A%7B%22metric%22%3Atrue%2C%22culture%22%3A%22en-AG%22%2C%22country%22%3A%22%22%2C%22size%22%3A%22D%22%2C%22template%22%3A%22%22%2C%22rtl%22%3Afalse%2C%22clientId%22%3A%2217%22%2C%22key%22%3A%22SUBWAY_PROD%22%7D%2C%22Filters%22%3A%5B%5D%2C%22LocationType%22%3A2%2C%22behavior%22%3A%22%22%2C%22FavoriteStores%22%3Anull%2C%22RecentStores%22%3Anull%2C%22Stats%22%3A%7B%22abc%22%3A%5B%7B%22N%22%3A%22geo%22%2C%22R%22%3A%22B%22%7D%5D%2C%22src%22%3A%22autocomplete%22%2C%22act%22%3A%22enter%22%2C%22c%22%3A%22subwayLocator%22%7D%7D&_=1617727334313".format(
+                    lat=lat, lng=lng
                 )
+            )
             headers = {}
             headers[
                 "user-agent"
             ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             locations = None
             try:
-                locations = SgRequests.raise_on_err(
-                    http.get(url, headers=headers)
-                ).text
-                locations = locations.split("(",1)[1]
-                locations = locations.rsplit(")",1)[0]
+                locations = SgRequests.raise_on_err(http.get(url, headers=headers)).text
+                locations = locations.split("(", 1)[1]
+                locations = locations.rsplit(")", 1)[0]
                 locations = json.loads(locations)
             except Exception as e:
                 logzilla.error(f"{e}")
@@ -111,7 +111,13 @@ class ExampleSearchIteration(SearchIteration):
                         page_url = None
 
                     try:
-                        street_address = rec["Address"]["Address1"]+", "+rec["Address"]["Address2"]+", "+rec["Address"]["Address3"]
+                        street_address = (
+                            rec["Address"]["Address1"]
+                            + ", "
+                            + rec["Address"]["Address2"]
+                            + ", "
+                            + rec["Address"]["Address3"]
+                        )
                     except Exception:
                         street_address = None
 
@@ -136,7 +142,11 @@ class ExampleSearchIteration(SearchIteration):
                         zip_postal = None
 
                     try:
-                        store_number = str(rec["LocationId"]["StoreNumber"]) + "-" + str(rec["LocationId"]["SatelliteNumber"])
+                        store_number = (
+                            str(rec["LocationId"]["StoreNumber"])
+                            + "-"
+                            + str(rec["LocationId"]["SatelliteNumber"])
+                        )
                     except Exception:
                         store_number = None
 
@@ -150,50 +160,47 @@ class ExampleSearchIteration(SearchIteration):
                     except Exception:
                         latitude = None
 
-
                     current = {
-                            "page_url":page_url if page_url else MISSING,
-                            "location_name":MISSING,
-                            "street_address":street_address if street_address else MISSING,
-                            "city":city if city else MISSING,
-                            "state":state if state else MISSING,
-                            "zip_postal":zip_postal if zip_postal else MISSING,
-                            "country_code":country_code
-                            if country_code
-                            else MISSING,
-                            "store_number":store_number
-                            if store_number
-                            else MISSING,
-                            "phone":MISSING,
-                            "location_type":MISSING,
-                            "latitude":latitude if latitude else MISSING,
-                            "longitude":longitude if longitude else MISSING,
-                            "locator_domain":"subway.com",
-                            "hours_of_operation":MISSING,
-                            "raw_address":MISSING,
-                        }
-                    foundstuff[current["store_number"]]=current
+                        "page_url": page_url if page_url else MISSING,
+                        "location_name": MISSING,
+                        "street_address": street_address if street_address else MISSING,
+                        "city": city if city else MISSING,
+                        "state": state if state else MISSING,
+                        "zip_postal": zip_postal if zip_postal else MISSING,
+                        "country_code": country_code if country_code else MISSING,
+                        "store_number": store_number if store_number else MISSING,
+                        "phone": MISSING,
+                        "location_type": MISSING,
+                        "latitude": latitude if latitude else MISSING,
+                        "longitude": longitude if longitude else MISSING,
+                        "locator_domain": "subway.com",
+                        "hours_of_operation": MISSING,
+                        "raw_address": MISSING,
+                    }
+                    foundstuff[current["store_number"]] = current
                     firstfound.add(current["store_number"])
-                    found_location_at(latitude,longitude)
+                    found_location_at(latitude, longitude)
                 i = 0
                 for html in locations["ResultHtml"]:
                     print("Helloooo")
-                    soup = b4(html,"lxml")
-                    i+= 1
-                    if len(html)<50:
+                    soup = b4(html, "lxml")
+                    i += 1
+                    if len(html) < 50:
                         continue
                     hours = " ".join(
-            list(
-                soup.find(
-                    "div", {"class": lambda x: x and "hoursTable" in x}
-                ).stripped_strings
-            )
-        )
+                        list(
+                            soup.find(
+                                "div", {"class": lambda x: x and "hoursTable" in x}
+                            ).stripped_strings
+                        )
+                    )
 
-                    storeno = soup.find("div",{"class":"location"})["data-id"]
-                    phone = soup.find("div",{"class": "locatorPhone"}).text
-                    foundstuff[storeno]["phone"]=phone if phone else MISSING
-                    foundstuff[storeno]["hours_of_operation"]=hours if hours else MISSING
+                    storeno = soup.find("div", {"class": "location"})["data-id"]
+                    phone = soup.find("div", {"class": "locatorPhone"}).text
+                    foundstuff[storeno]["phone"] = phone if phone else MISSING
+                    foundstuff[storeno]["hours_of_operation"] = (
+                        hours if hours else MISSING
+                    )
                     secondfound.add(storeno)
                     yield SgRecord(
                         page_url=foundstuff[storeno]["page_url"],
@@ -214,7 +221,7 @@ class ExampleSearchIteration(SearchIteration):
                     )
             this = []
             this = list(firstfound.symmetric_difference(secondfound))
-            if len(this)>0 :
+            if len(this) > 0:
                 for storenum in this:
                     yield SgRecord(
                         page_url=foundstuff[storenum]["page_url"],
@@ -233,7 +240,6 @@ class ExampleSearchIteration(SearchIteration):
                         hours_of_operation=foundstuff[storenum]["hours_of_operation"],
                         raw_address=foundstuff[storenum]["raw_address"],
                     )
-                    
 
 
 if __name__ == "__main__":
