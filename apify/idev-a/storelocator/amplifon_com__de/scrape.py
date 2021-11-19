@@ -5,10 +5,10 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
-import time
 import json
 from sglogging import SgLogSetup
 import ssl
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 try:
     _create_unverified_https_context = (
@@ -34,19 +34,31 @@ def get_driver():
     ).driver()
 
 
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(7))
 def get_bs(driver=None, url=None):
-    while True:
-        if not driver:
-            driver = get_driver()
-        try:
-            driver.get(url)
-            break
-        except:
-            time.sleep(1)
-            logger.info(f"retry {url}")
-            driver = None
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+    except:
+        driver = get_driver()
+        raise Exception
 
     return bs(driver.page_source, "lxml")
+
+
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(7))
+def get_json(driver=None, url=None):
+    sp1 = get_bs(driver=driver, url=url)
+    if driver.current_url in [de_base_url, it_base_url, fr_base_url]:
+        return None, None
+    try:
+        _ = json.loads(sp1.find("script", type="application/ld+json").string)
+    except:
+        driver = get_driver()
+        raise Exception
+
+    return _, sp1
 
 
 def fetch_data():
@@ -102,10 +114,9 @@ def fetch_data():
     logger.info(f"{len(locations)} locations")
     for page_url in locations:
         logger.info(f"[***] {page_url}")
-        sp1 = get_bs(driver=driver, url=page_url)
-        if driver.current_url in [de_base_url, it_base_url, fr_base_url]:
+        _, sp1 = get_json(driver, page_url)
+        if not _ or not sp1:
             continue
-        _ = json.loads(sp1.find("script", type="application/ld+json").string)
         phone = ""
         if sp1.select_one("span.phone-list"):
             phone = sp1.select_one("span.phone-list").text.strip()
@@ -134,7 +145,11 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
