@@ -1,0 +1,15 @@
+--ignore CountryCodeFillRateChecker (Not us/ca)
+
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)
+Found 11 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+       latitude    longitude                                     street_address  num_addrs
+24  23.03992425  72.53098028  {G-27 Alphaone Nr.Vastrapur Lake, Alphaone Mbm...          3
+31  28.54253698  77.15636171  {Dlf Promenade Mall Nelson Mandela Rd Store No...          3
+32  28.56701167  77.32103617  {Shop No F-169\/170 Plot No M-03 Sector-18 Noi...          3
+1   12.93469075  77.61127853  {23 Ground Floor Forum Mall Hosur Road Koraman...          2
+2   12.97051351  77.61037059     {Garuda Mall Bengaluru., Shop 12 Magarth Road}          2
+6   12.99590623  77.69638607  {-21A Phoenix Market City Mall Whitefield Main...          2
+12  18.56220368  73.91673437  {Phoenix Market City Mall Nr.Maruti Showroom N...          2
+13   18.9940705  72.82443855  {1St Floor Store 5 Senapati Bapat Marg, Sky Zo...          2
+15  19.08707254  72.88894482  {Phoenix Market City Mall L.B.S Road Kamani Ku...          2
+17  19.14135459   72.8310566  {2 Link Rd Malad W, Infinity 2 Link Road Malad...          2
