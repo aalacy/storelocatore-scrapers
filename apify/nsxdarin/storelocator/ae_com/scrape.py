@@ -21,7 +21,7 @@ def fetch_data():
         if 'hreflang="en" href="' in line:
             lurl = line.split('hreflang="en" href="')[1].split('"')[0]
             count = lurl.count("/")
-            if count >= 6 and "antofagasta" in lurl:
+            if count >= 6:
                 locs.append(lurl)
     for loc in locs:
         try:
