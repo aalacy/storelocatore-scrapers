@@ -35,6 +35,9 @@ def _d(_):
         street_address = street_address.replace(state, "").strip()
         if street_address.endswith(","):
             street_address = street_address[:-1]
+    hours_of_operation = " ".join(hours)
+    if hours_of_operation.endswith(";"):
+        hours_of_operation = hours_of_operation[:-1]
     return SgRecord(
         page_url="https://www.church-footwear.com/us/en/store-locator.html",
         store_number=_["uniqueID"],
@@ -48,7 +51,7 @@ def _d(_):
         longitude=_["longitude"],
         country_code=_["country"],
         locator_domain=locator_domain,
-        hours_of_operation=" ".join(hours),
+        hours_of_operation=hours_of_operation,
     )
 
 
