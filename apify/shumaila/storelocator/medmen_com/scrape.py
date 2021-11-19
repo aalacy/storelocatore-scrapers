@@ -42,6 +42,8 @@ def fetch_data():
                 street, city, state = store["address"].split(", ")
                 state, pcode = state.lstrip().split(" ", 1)
             phone = store["phoneNumber"]
+            if "Check" in phone:
+                phone = "<MISSING>"
             lat = store["location"]["lat"]
             longt = store["location"]["lon"]
             hours = store["storeHours"]

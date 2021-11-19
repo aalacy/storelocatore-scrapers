@@ -39,8 +39,8 @@ def fetch_data():
             phone = loc["store_phone"]
             street_address = loc["store_address"]
             city = loc["store_city"]
-            for page in page_list:
-                if city in page["href"]:
+            for page in page_list[1:]:
+                if city.split()[0].lower() in page["href"]:
                     page_url = DOMAIN + page["href"]
                     break
             state = loc["store_state"]
