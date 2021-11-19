@@ -44,6 +44,7 @@ def fetch_data():
         if 'hreflang="en-CA" href="https://restaurants.fiveguys.ca/' in line and Found:
             locs.append(line.split('href="')[1].split('"')[0].replace("&#39;", "'"))
     for loc in locs:
+        CS = False
         logger.info(loc)
         name = ""
         add = ""
@@ -62,6 +63,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if "is opening soon" in line2:
+                CS = True
             if 'ntityType":"restaurant","id":"' in line2:
                 store = line2.split('ntityType":"restaurant","id":"')[1].split('"')[0]
             if name == "" and '<span class="LocationName-geo">' in line2:
@@ -100,25 +103,27 @@ def fetch_data():
             phone = "<MISSING>"
         if "{: Closed; MONDAY: Closed" in hours:
             hours = "Sun-Sat: Closed"
+        hours = hours.replace("</div></div></div></div><div class=;", "").strip()
         name = name.replace("&#39;", "'")
         add = add.replace("&#39;", "'")
         city = city.replace("&#39;", "'")
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if CS is False:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

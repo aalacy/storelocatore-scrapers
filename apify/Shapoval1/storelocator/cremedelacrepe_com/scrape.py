@@ -1,51 +1,15 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("http://www.cremedelacrepe.com/")
-    tree = html.fromstring(r.text)
-    return tree.xpath('//a[@class="vcex-image-grid-entry-img"]/@href')
-
-
-def get_data(url):
-    locator_domain = "http://www.cremedelacrepe.com"
-    page_url = f"{locator_domain}{url}"
-    if page_url.find("catering") != -1:
-        return
+    api_url = "https://www.cremedelacrepe.com/"
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -75,77 +39,70 @@ def get_data(url):
         "StateName": "state",
         "ZipCode": "postal",
     }
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
+    div = tree.xpath('//a[text()="Locations"]/following-sibling::ul/li/a')
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"https://www.cremedelacrepe.com{slug}"
 
-    location_name = "".join(tree.xpath("//h1/span/text()"))
-    ad = tree.xpath('//div[@class="wpb_wrapper"]/div//p/text()')
-    line = " ".join(ad[:2]).replace("\n", "").strip()
-    if location_name.find("Rolling") != -1:
-        line = " ".join(ad[:3]).replace("\n", "").strip()
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-    country_code = "US"
-    store_number = "<MISSING>"
+        location_name = "".join(
+            tree.xpath('//div[@id="wrapper"]/div[3]/div/section[1]//h2//text()')
+        )
+        ad = " ".join(
+            tree.xpath('//div[@id="wrapper"]/div[3]/div/section[1]//p[1]//text()')
+        )
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
+        country_code = "USA"
+        city = a.get("city") or "<MISSING>"
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//div[@id="wrapper"]/div[3]/div/section[1]//p[contains(text(), "Phone:")]//text() | //div[@id="wrapper"]/div[3]/div/section[1]//p[contains(text(), "PHONE:")]//text()'
+                )
+            )
+            .replace("Phone:", "")
+            .replace("PHONE:", "")
+            .strip()
+        )
 
-    phone = "".join(ad[2]).replace("\n", "").split()[1].strip()
-    if street_address.find("550") != -1:
-        phone = "".join(ad[3]).replace("\n", "").split()[1].strip()
-    latitude = (
-        "".join(tree.xpath('//script[contains(text(), "var map")]/text()'))
-        .split('center_lat":"')[1]
-        .split('"')[0]
-    )
-    longitude = (
-        "".join(tree.xpath('//script[contains(text(), "var map")]/text()'))
-        .split('center_lng":"')[1]
-        .split('"')[0]
-    )
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=ad,
+        )
 
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.cremedelacrepe.com"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
