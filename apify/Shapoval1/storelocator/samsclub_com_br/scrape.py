@@ -4,21 +4,12 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
-import ssl
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://samsclub.com.br"
     api_url = "https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs&state=&city=&nonce=b36d7d742a"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -27,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         page_url = "https://sejasocio.samsclub.com.br/"
-        location_name = "".join(j.get("name")) or "<MISSING>"
+        location_name = "".join(j.get("name")).replace("&#8217;", "`") or "<MISSING>"
         ad = j.get("address")
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
@@ -68,7 +59,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:

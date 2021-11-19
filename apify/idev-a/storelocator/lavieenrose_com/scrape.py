@@ -58,6 +58,12 @@ def fetch_data():
                 http.post(rr.url, headers=headers, data=rr.body).text, "lxml"
             ).select("div.js-store-tile")
             for _ in locations:
+                location_type = "outlets"
+                if (
+                    "boutique"
+                    in _.select_one("div.tmx-store-tile-index img")["data-src"].lower()
+                ):
+                    location_type = "boutique"
                 page_url = _.select_one("div.direction-container div a")["href"]
                 logger.info(page_url)
                 sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
@@ -87,6 +93,7 @@ def fetch_data():
                     phone=_p(_.select_one("a.store-link").text.strip()),
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
+                    location_type=location_type,
                     raw_address=" ".join(_addr),
                 )
 

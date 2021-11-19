@@ -1,4 +1,4 @@
-import tabula as tb  # noqa
+import re
 from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
 import pikepdf
 from bs4 import BeautifulSoup
+from tenacity import retry, stop_after_attempt
 
 local = threading.local()
 
@@ -46,28 +47,36 @@ def check_is_in_france(addr, tracker, session):
     return False
 
 
-def is_french_city(city, session):
-    params = {
-        "q": city,
-        "appid": "F2DD9E3AA45F7512D9C6CA9A150CBA7F76556B81",
-        "structuredaddress": True,
-    }
-    data = session.get(
-        "https://www.bing.com/api/v6/Places/AutoSuggest", params=params
-    ).json()
-    is_french = False
-    for item in data["value"]:
-        if item["_type"] == "PostalAddress" and item["countryIso"] == "FR":
-            is_french = True
-            break
+def is_french_city(city, session, retry=0):
+    try:
+        if "France" in city:
+            return True
 
-        elif item["_type"] == "Place" and item["address"]["countryIso"] == "FR":
-            is_french = True
-            break
+        params = {
+            "q": city,
+            "appid": "F2DD9E3AA45F7512D9C6CA9A150CBA7F76556B81",
+            "structuredaddress": True,
+        }
+        data = session.get(
+            "https://www.bing.com/api/v6/Places/AutoSuggest", params=params
+        ).json()
+        is_french = False
+        for item in data["value"]:
+            if item["_type"] == "PostalAddress" and item["countryIso"] == "FR":
+                is_french = True
+                break
 
-    return is_french
+            elif item["_type"] == "Place" and item["address"]["countryIso"] == "FR":
+                is_french = True
+                break
+
+        return is_french
+    except:
+        if retry < 3:
+            return is_french_city(city, SgRequests(), retry + 1)
 
 
+@retry(stop=stop_after_attempt(3))
 def fetch_locations(code, tracker):
     sleep(uniform(0, 5))
     start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
@@ -77,7 +86,7 @@ def fetch_locations(code, tracker):
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=fr-FR&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=F&Zip={}&Town=&Street=&Radius=100000"
     response = session.get(search_url.format(code))
 
-    while "Le nombre maximum des demandes de votre IP" in response.text:
+    while hasattr(response, "base_exception"):
         session = get_session(True)
         response = session.get(search_url.format(code))
     session_id = response.url.params.get("SessionGuid")
@@ -135,8 +144,8 @@ def fetch_locations(code, tracker):
         item = SgRecord(
             locator_domain=domain,
             page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
-            location_name=location_name,
-            street_address=raw_adr[0],
+            location_name=clean(location_name.title()),
+            street_address=clean(raw_adr[0].title()),
             city=addr.city,
             zip_postal=addr.postcode,
             hours_of_operation=hoo,
@@ -145,6 +154,10 @@ def fetch_locations(code, tracker):
         items.append(item)
 
     return items
+
+
+def clean(string):
+    return re.sub(r"\s\s+", " ", string)
 
 
 def fetch_urls(session):
@@ -170,7 +183,12 @@ def fetch_location(page_url, session, tracker):
     response = session.get(page_url)
     soup = BeautifulSoup(response.text, "lxml")
     location_name = soup.find("a", itemprop="url").text
-    address = soup.find("span", itemprop="streetAddress").text
+
+    address = ", ".join(
+        tag
+        for tag in soup.find("span", itemprop="streetAddress").contents
+        if isinstance(tag, str)
+    )
     addr = parse_address(International_Parser(), address)
 
     latitude = soup.find("span", itemprop="latitude").text
@@ -186,10 +204,10 @@ def fetch_location(page_url, session, tracker):
     return SgRecord(
         locator_domain="aldi.fr",
         page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
-        location_name=location_name,
+        location_name=clean(location_name.title()),
         latitude=latitude,
         longitude=longitude,
-        street_address=street_address,
+        street_address=clean(street_address.title()),
         city=city,
         zip_postal=postal,
         country_code="FR",
@@ -199,7 +217,7 @@ def fetch_location(page_url, session, tracker):
 def fetch_data():
     with ThreadPoolExecutor() as executor, SgRequests() as session:
         tracker = {}
-        all_codes = static_zipcode_list(10, country_code=SearchableCountries.FRANCE)
+        all_codes = static_zipcode_list(5, country_code=SearchableCountries.FRANCE)
 
         futures = [
             executor.submit(fetch_locations, code, tracker) for code in all_codes
@@ -220,10 +238,8 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            ),
-            duplicate_streak_failure_factor=10000,
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=20000,
         )
     ) as writer:
         for item in fetch_data():
