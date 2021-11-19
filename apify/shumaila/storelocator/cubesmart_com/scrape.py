@@ -72,15 +72,17 @@ def fetch_data():
             + city
             + "-self-storage/"
         )
-
-        r = session.get(link, headers=headers1).text
+        try:
+            r = session.get(link, headers=headers1).text
+        except:
+            continue
         try:
             pcode = r.split(',"postalCode":"', 1)[1].split('"', 1)[0]
         except:
 
             headers1["Cookie"] = cookielist[2]
-            r = session.get(link, headers=headers1).text
             try:
+                r = session.get(link, headers=headers1).text
                 pcode = r.split(',"postalCode":"', 1)[1].split('"', 1)[0]
             except:
                 continue

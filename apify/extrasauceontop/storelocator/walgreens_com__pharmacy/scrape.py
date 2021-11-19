@@ -43,7 +43,10 @@ def get_data():
             search_code
         )
 
-        response = session.get(url).text
+        try:
+            response = session.get(url).text
+        except Exception:
+            raise Exception(url)
 
         json_objects = extract_json(response)
 

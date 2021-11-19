@@ -75,7 +75,8 @@ def fetch_data():
         info = json.loads(content.find("div", {"id": "map-container"})["data-map"])
         location_name = row.find("span", {"class": "title-text"}).text.strip()
         raw_address = info["address"]
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address, city, state, _ = getAddress(raw_address)
+        zip_postal = info["post_code"]
         phone = MISSING
         hours_of_operation = (
             content.find("div", {"class": "google-map__opening-times"})
