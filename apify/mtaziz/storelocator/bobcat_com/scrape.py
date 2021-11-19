@@ -192,7 +192,7 @@ def fetch_data(sgw: SgWriter):
         search_ca = DynamicGeoSearch(
             country_codes=[SearchableCountries.CANADA],
             granularity=Grain_8(),
-            expected_search_radius_miles=10,
+            expected_search_radius_miles=100,
             use_state=False,
         )
         task_ca = [executor.submit(fetch_records, latlng, sgw) for latlng in search_ca]
