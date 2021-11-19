@@ -59,7 +59,7 @@ def para(url):
         k["hours"] = "; ".join(
             list(
                 soup.find(
-                    "div", {"class": lambda x: x and "salon-hours" in x}
+                    "ol", {"class": lambda x: x and "opening-times" in x}
                 ).stripped_strings
             )
         )
