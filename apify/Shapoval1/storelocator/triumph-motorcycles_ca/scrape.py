@@ -1,4 +1,5 @@
 import httpx
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -23,7 +24,7 @@ def fetch_data(sgw: SgWriter):
         div = tree.xpath('//select[@id="dealer-country-select"]/option')
         for d in div:
             slug = "".join(d.xpath(".//@value"))
-            country_code = "".join(d.xpath(".//text()"))
+            country_codes = "".join(d.xpath(".//text()"))
             with SgRequests() as http:
                 r = http.get(
                     url=f"https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode={slug}&SiteLanguageCode=en-CA&Skip=0&Take=50&CurrentUrl=www.triumph-motorcycles.ca"
@@ -76,31 +77,116 @@ def fetch_data(sgw: SgWriter):
                         "".join(j.get("OpeningTimes")).replace("<br/>", " ").strip()
                     ) or "<MISSING>"
                     hours_of_operation = " ".join(hours_of_operation.split())
+                    with SgRequests() as http:
+                        r = http.get(url=page_url, headers=headers)
+                        assert isinstance(r, httpx.Response)
+                        assert 200 == r.status_code
+                        tree = html.fromstring(r.text)
+                        country_cod = (
+                            " ".join(
+                                tree.xpath(
+                                    '//p[@class="dealer-location__address-text"]/span/text()'
+                                )
+                            )
+                            .replace("\n", "")
+                            .strip()
+                        )
+                        a = parse_address(International_Parser(), country_cod)
+                        country_code = a.country or country_codes
+                        if country_code == "Austria":
+                            country_code = "Germany"
+                        if postal == "LT-11342":
+                            country_code = "LT"
+                        if postal == "0":
+                            postal = "<MISSING>"
+                        if country_code == "Russia":
+                            continue
 
-                    row = SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=postal,
-                        country_code=country_code,
-                        store_number=SgRecord.MISSING,
-                        phone=phone,
-                        location_type=SgRecord.MISSING,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                        raw_address=f"{ad} {postal}".replace("<MISSING>", "").strip(),
-                    )
+                        row = SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=postal,
+                            country_code=country_code,
+                            store_number=SgRecord.MISSING,
+                            phone=phone,
+                            location_type=SgRecord.MISSING,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                            raw_address=f"{ad} {postal}".replace(
+                                "<MISSING>", ""
+                            ).strip(),
+                        )
 
-                    sgw.write_row(row)
+                        sgw.write_row(row)
+
+    api_url = "https://triumph.granmoto.ru/dealers"
+    with SgRequests() as http:
+
+        r = http.get(url=api_url)
+        assert isinstance(r, httpx.Response)
+        assert 200 == r.status_code
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//div[contains(@class, "list-group-item ")]')
+        for d in div:
+            location_name = "".join(
+                d.xpath('.//h5[@class="js__shop_name mb-1"]/text()')
+            )
+            page_url = "https://triumph.granmoto.ru/dealers"
+            city = (
+                "".join(d.xpath("./p[1]/text()[1]"))
+                .replace("\n", "")
+                .replace(",", "")
+                .strip()
+            )
+            street_address = (
+                "".join(d.xpath("./p[1]/text()[2]")).replace("\n", "").strip()
+            )
+            phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
+            if phone.count("+") == 2:
+                phone = "+" + " " + phone.split("+")[1].strip()
+            hours_of_operation = (
+                " ".join(
+                    d.xpath('.//*[text()="Часы работы"]/following-sibling::p/text()')
+                )
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+            js_block = "".join(d.xpath("./@data-map"))
+            country_code = "RU"
+            js = json.loads(js_block)
+            latitude = js.get("lat")
+            longitude = js.get("long")
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=SgRecord.MISSING,
+                zip_postal=SgRecord.MISSING,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)
