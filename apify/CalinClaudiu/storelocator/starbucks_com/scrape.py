@@ -228,7 +228,7 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_4(), max_search_results=50
+        search_type="DynamicGeoSearch", granularity=Grain_4()
     )
 
     with SgWriter(
