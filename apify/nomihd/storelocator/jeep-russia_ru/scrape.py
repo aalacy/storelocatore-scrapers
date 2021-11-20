@@ -53,7 +53,7 @@ def fetch_data():
                 street_address = street_address.replace("Ste", "Suite")
             city = store["dealer_region_name_en"]
             state = "<MISSING>"
-            zip = formatted_addr.postcode
+            zip = store["dealer_pindex"]
 
             country_code = "RU"
 
