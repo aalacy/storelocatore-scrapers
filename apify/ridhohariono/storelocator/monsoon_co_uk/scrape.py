@@ -2,19 +2,15 @@ import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
-from sgzip.dynamic import (
-    DynamicZipSearch,
-    SearchableCountries,
-)
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
+import json
 
 DOMAIN = "monsoon.co.uk"
 BASE_URL = "https://www.monsoon.co.uk"
-LOCATION_URL = "https://stores.monsoon.co.uk/"
-API_URL = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2500&location={}&limit=50&api_key={}&v=20181201&resolvePlaceholders=true&languages=en_GB&entityTypes=location&savedFilterIds=545514960"
+LOCATION_URL = "https://www.monsoon.co.uk/stores/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -51,74 +47,58 @@ def parse_hours(hour_content):
     return ", ".join(hoo)
 
 
-def get_api_key():
-    log.info("Get Api Key...")
-    r = session.get(LOCATION_URL, headers=HEADERS)
-    api_key = re.search(r'var liveAPIKey = "(.*)"\.trim\(\)\;', r.text)
-    return api_key.group(1)
-
-
-def fetch_store_data(zip_search, api_key):
-    log.info("Fetching store Locatior by ZIP: " + zip_search)
-    info = session.get(API_URL.format(zip_search, api_key), headers=HEADERS).json()
-    return info
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
-    api_key = get_api_key()
-    search = DynamicZipSearch(
-        country_codes=SearchableCountries.SovereigntyGroups["UK"],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=10,
+    soup = pull_content(LOCATION_URL)
+    stores = soup.find("div", {"data-component": "global/Tabs"}).find_all(
+        "div", {"data-component": "stores/storeDetails"}
     )
-    zip_codes = []
-    for zip in search:
-        zip_codes.append(zip)
-    log.info(f"Searching for ({len(zip_codes)})...")
-    for zip_search in zip_codes:
-        store_list = fetch_store_data(zip_search, api_key)["response"]["entities"]
-        log.info(f"Append ({len(store_list)}) locations with zip code: {zip_search}")
-        for row in store_list:
-            page_url = row["landingPageUrl"]
-            location_name = handle_missing(row["c_aboutSectionHeading"])
-            if "line2" in row["address"] and len(row["address"]["line2"]) > 0:
-                street_address = "{}, {}".format(
-                    row["address"]["line1"], row["address"]["line2"]
-                )
-            else:
-                street_address = handle_missing(row["address"]["line1"])
-            city = handle_missing(row["address"]["city"])
-            state = MISSING
-            zip_postal = handle_missing(row["address"]["postalCode"])
-            country_code = handle_missing(row["address"]["countryCode"])
-            phone = handle_missing(row["mainPhone"])
-            hours_of_operation = parse_hours(row["hours"])
-            store_number = row["meta"]["id"]
-            sub_hoo = re.sub(r"[a-z]*:\s+", "", hours_of_operation, flags=re.IGNORECASE)
-            if all(value == "CLOSED" for value in sub_hoo.split(",")):
-                location_type = "TEMP_CLOSED"
-            else:
-                location_type = "OPEN"
-            latitude = handle_missing(row["yextDisplayCoordinate"]["latitude"])
-            longitude = handle_missing(row["yextDisplayCoordinate"]["longitude"])
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=f"{street_address}, {city}, {zip_postal}",
-            )
+    for row in stores:
+        content = row.find("div", {"class": "b-store-card"})
+        info = json.loads(row["data-component-store"])
+        location_name = info["name"]
+        if info["address2"] and len(info["address2"]) > 0:
+            street_address = "{}, {}".format(info["address1"], info["address2"])
+        else:
+            street_address = info["address1"]
+        city = info["city"]
+        state = MISSING
+        zip_postal = info["postalCode"]
+        country_code = "GB"
+        phone = MISSING if "phone" not in info else info["phone"]
+        hours_of_operation = (
+            content.find("div", {"class": "b-store-card__hours"})
+            .get_text(strip=True, separator=",")
+            .replace("Opening hours:,", "")
+            .replace(",Holiday hours:", "")
+            .replace(":,", ": ")
+        )
+        sub_hoo = re.sub(r"[a-z]*:\s+", "", hours_of_operation, flags=re.IGNORECASE)
+        if all(value == "CLOSED" for value in sub_hoo.split(",")):
+            location_type = "TEMP_CLOSED"
+        else:
+            location_type = "OPEN"
+        store_number = info["ID"]
+        latitude = info["latitude"]
+        longitude = info["longitude"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {zip_postal}".strip(),
+        )
 
 
 def scrape():
@@ -128,7 +108,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STORE_NUMBER,
                 }
             )
         )

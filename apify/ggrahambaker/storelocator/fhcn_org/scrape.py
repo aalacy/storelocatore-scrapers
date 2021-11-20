@@ -1,124 +1,140 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
+import re
+import usaddress
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('fhcn_org')
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def addy_ext(addy):
-    addy = addy.split(',')
-    if len(addy) == 1:
-        addy = addy[0].split(' ')
-        city = addy[0]
-        state = addy[1]
-        zip_code = addy[2]
-    else:
-        city = addy[0]
-        state_zip = addy[1].strip().split(' ')
-        state = state_zip[0]
-        zip_code = state_zip[1]
-    return city, state, zip_code
 
 def fetch_data():
-    session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-    locator_domain = 'https://www.fhcn.org/' 
-    ext = 'locations/'
-    r = session.get(locator_domain + ext, headers = HEADERS)
-
-    soup = BeautifulSoup(r.content, 'html.parser')
-    p = 0
-    locs = soup.find_all('div', {'class': 'location_detail'})
-    logger.info(len(locs))
-    all_store_data = []
-
-    for loc in locs:
-        location_type = loc.find('div', {'class': 'location-services'}).text.strip()
-        location_name = loc.find('div', {'class': 'location_detail_title'}).text.strip()
-       
-        '''if 'Non-' in location_type:
-            continue '''
-            
-        if 'Mobile' in location_name:
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://www.fhcn.org/locations"
+    r = session.get(url, headers=headers)
+    r.encoding = "utf-8-sig"
+    soup = BeautifulSoup(r.text, "html.parser")
+    loclist = soup.findAll("div", {"class": "location_detail"})
+    for loc in loclist:
+        title = loc.find("div", {"class": "location_detail_title"}).text.strip()
+        if "mobile " in title.lower():
             continue
-        
-        addy_raw = loc.find('div', {'class': 'address-wrapper'}).prettify().split('\n')
-        addy = [a.strip() for a in addy_raw if '<' not in a]
-
-        if '3505 E. Shields Ave. Fresno, CA 93726' in addy[1]:
-            addy[1] = '3505 E. Shields Ave, Fresno, CA 93726'
-        if '1008 N. Cherry St. Tulare, CA 93274' in addy[1]:
-            addy[1] = '1008 N. Cherry St, Tulare, CA 93274'
-        if len(addy) == 3:
-            if '7060 N. Recreation Ave' in addy[1]:
-                street_address = '7060 N. Recreation Ave #101'
-                city, state, zip_code = '<MISSING>', '<MISSING>', '<MISSING>'
-                
-            else:  
-                addy = addy[1].split(',')
-                street_address = addy[0]
-                try:
-                    city = addy[1]
-                    state_zip = addy[2].strip().split(' ')
-                    state = state_zip[0]
-                    zip_code = state_zip[1]
-                except:
-                    city = '<MISSING>'
-                    state= '<MISSING>'
-                    zip_code = '<MISSING>'
-        else:
-            street_address = addy[1]
-            city, state, zip_code = addy_ext(addy[2])
-        if city == '<MISSING>' and state == '<MISSING>' and street_address.find('7060 N. Recreation Ave #101') > -1:
-            city = 'Fresno'
-            state = 'CA'
-            zip_code = '93701'
-           
-        
-        hours_raw = loc.find('div', {'class': 'hours-wrapper'}).find('div').prettify().split('\n')
-        hours_arr = [h for h in hours_raw if '<' not in h]
-        hours = ''
-        for h in hours_arr:
-            if 'Hours' in h:
-                continue
-            hours += h.strip().replace('&amp;', '&') + ' '
-        
-        hours = hours.strip()
         try:
-            phone_number = loc.find('div', {'class': 'phone-wrapper'}).find('span').text
-
+            phone = (
+                loc.find("div", {"class": "phone-wrapper"})
+                .text.replace("Phone", "")
+                .strip()
+            )
         except:
-            phone = '<MISSING>'
-        country_code = 'US'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        page_url = 'https://www.fhcn.org/locations/'
-        store_number = '<MISSING>'
-        if phone_number.find('KID') > -1:
-            phone_number = phone_number.replace(' (KIDS)','')
-        store_data = [locator_domain, location_name.replace("\xa0",' '), street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-        #logger.info(p,store_data)
-        p += 1
-        all_store_data.append(store_data)
+            phone = "<MISSING>"
+        address = loc.find("div", {"class": "address-wrapper"})
+        address = re.sub(cleanr, "\n", str(address))
+        address = (
+            re.sub(pattern, "\n", str(address))
+            .replace("Address", "")
+            .replace("\n", " ")
+            .strip()
+        )
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+        street = street.lstrip().replace(",", "")
+        city = city.lstrip().replace(",", "")
+        state = state.lstrip().replace(",", "")
+        pcode = pcode.lstrip().replace(",", "")
 
-    return all_store_data
+        ltype = loc.find("div", {"class": "location-services"}).text.strip()
+        hours = (
+            loc.find("div", {"class": "hours-wrapper"})
+            .text.replace("Hours", "")
+            .strip()
+        )
+        title = (
+            str(title.encode(encoding="ascii", errors="replace"))
+            .replace("?", " ")
+            .replace("b'", "")
+            .strip()
+            .replace("'", "")
+        )
+        try:
+            hours = hours.split("Medical", 1)[1].strip().split("Dental", 1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split("Chiropractic", 1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split("Walk", 1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split("Pharmacy", 1)[0]
+        except:
+            pass
+        if "call" in hours:
+            hours = "<MISSING>"
+        yield SgRecord(
+            locator_domain="https://www.fhcn.org/",
+            page_url=SgRecord.MISSING,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours.replace("pm", "pm ")
+            .replace("PM", "PM ")
+            .replace("day", "day ")
+            .replace("Services", "")
+            .replace("\n", "")
+            .strip(),
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
