@@ -57,6 +57,8 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if hours_of_operation == ".":
+                hours_of_operation = MISSING
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
