@@ -24,7 +24,7 @@ headers = {
 def fetch_records(search, token):
     for lat, lng in search:
         current_country = search.current_country()
-        with SgRequests(proxy_country="us") as http:
+        with SgRequests(proxy_country="de") as http:
             payload = {
                 "request": {
                     "appkey": token,
