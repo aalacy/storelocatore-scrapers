@@ -92,7 +92,17 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hours_of_operation.split())
         if hours_of_operation.find("Aperto Aperto") != -1:
             hours_of_operation = hours_of_operation.split("Aperto Aperto")[0].strip()
-
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//p[./strong[text()="Öffnungszeiten "]]/following-sibling::p//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

@@ -49,7 +49,10 @@ def fetch_data():
                     if '"redCapUrl":' in item:
                         website = "hyundaiusa.com"
                         typ = "<MISSING>"
-                        loc = "<MISSING>"
+                        try:
+                            loc = item.split('"')[0]
+                        except:
+                            loc = "<MISSING>"
                         store = item.split('"dealerCd":"')[1].split('"')[0]
                         name = item.split('"dealerNm":"')[1].split('"')[0]
                         add = (
@@ -66,12 +69,22 @@ def fetch_data():
                             phone = item.split('"phone":"')[1].split('"')[0]
                         except:
                             phone = "<MISSING>"
-                        lat = item.split('"latitude":')[1].split("e")[0]
-                        lng = item.split('"longitude":')[1].split("e")[0]
-                        lat = float(lat) * 10
-                        lng = float(lng) * 10
-                        lat = str(lat)
-                        lng = str(lng)
+                        try:
+                            lat = item.split('"latitude":')[1].split("e")[0]
+                            lng = item.split('"longitude":')[1].split("e")[0]
+                            lat = float(lat) * 100
+                            lng = float(lng) * 100
+                            if lat >= 100:
+                                lat = float(lat) / 10
+                            if lng >= -50:
+                                lng = float(lng) * 10
+                            if lng <= -181:
+                                lng = float(lng) / 10
+                            lat = str(lat)
+                            lng = str(lng)
+                        except:
+                            lat = "<MISSING>"
+                            lng = "<MISSING>"
                         hours = ""
                         if '"operations":[]' in item:
                             hours = "<MISSING>"

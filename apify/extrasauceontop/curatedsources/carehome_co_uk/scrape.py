@@ -203,7 +203,7 @@ def get_data():
                             except Exception:
                                 pass
 
-                    if location_url in location_urls:
+                    if location_url in location_urls or "#reviews" in location_url:
                         pass
                     else:
                         crawl_state.push_request(SerializableRequest(url=location_url))

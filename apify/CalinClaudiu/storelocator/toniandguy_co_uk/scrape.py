@@ -14,7 +14,12 @@ def para(url):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
+    try:
+        soup = b4(
+            SgRequests.raise_on_err(session.get(url, headers=headers)).text, "lxml"
+        )
+    except Exception:
+        return False
 
     k = {}
     k["url"] = url
@@ -59,7 +64,7 @@ def para(url):
         k["hours"] = "; ".join(
             list(
                 soup.find(
-                    "div", {"class": lambda x: x and "salon-hours" in x}
+                    "ol", {"class": lambda x: x and "opening-times" in x}
                 ).stripped_strings
             )
         )
@@ -91,7 +96,8 @@ def fetch_data():
         print_stats_interval=10,
     )
     for i in lize:
-        yield i
+        if i:
+            yield i
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 

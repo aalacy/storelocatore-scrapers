@@ -14,20 +14,27 @@ headers = {
 
 def fetch_data():
 
-    url = "https://www.tobycarvery.co.uk/restaurants?search=#"
+    url = "https://www.tobycarvery.co.uk/sitemap.xml"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=restaurants]")
-
+    divlist = soup.findAll("loc")
     for div in divlist:
-        link = div["href"]
+        link = div.text
 
-        if "https:" not in link:
-            link = "https://www.tobycarvery.co.uk" + link
+        try:
+            if len(link.split("/restaurants/", 1)[1].split("/")) == 2:
+                pass
+            else:
+                continue
+        except:
+            continue
         r = session.get(link, headers=headers)
-        loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
-            "</script", 1
-        )[0]
+        try:
+            loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
+                "</script", 1
+            )[0]
+        except:
+            continue
         loc = loc.replace("\n", "").strip()
         loc = json.loads(loc)
         title = loc["name"]
@@ -40,8 +47,8 @@ def fetch_data():
             state = "<MISSING>"
         pcode = loc["address"]["postalCode"]
         ccode = loc["address"]["addressCountry"]
-        longt = loc["geo"]["latitude"]
-        lat = loc["geo"]["longitude"]
+        lat = loc["geo"]["latitude"]
+        longt = loc["geo"]["longitude"]
         hourslist = json.loads(str(loc["openingHoursSpecification"]).replace("'", '"'))
         hours = ""
         for hr in hourslist:

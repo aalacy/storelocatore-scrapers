@@ -1,88 +1,108 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-import re
-from lxml import etree
-from urllib.parse import urljoin
-
+import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_usa
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+session = SgRequests()
+website = "watergrill_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://www.watergrill.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    start_url = "https://www.watergrill.com/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//div[@id="LOCATIONS"]//a/@href')
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        location_name = loc_dom.xpath('//h1[@class="hero-heading"]/text()')[0]
-        raw_address = loc_dom.xpath('//a[contains(@href, "/maps/")]/p/text()')
-        if not raw_address:
-            continue
-        addr = parse_address_usa(raw_address[0])
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        city = addr.city
-        if not city:
-            city = location_name
-        if city == "Losa Angeles":
-            city = "Los Angeles"
-        phone = loc_dom.xpath(
-            '//a[contains(@href, "/maps/")]/following-sibling::p/text()'
-        )[0]
-        hoo = loc_dom.xpath(
-            '//h3[contains(text(), "Hours of Operation")]/following-sibling::div//text()'
-        )
-        if not hoo:
-            hoo = loc_dom.xpath(
-                '//h3[contains(text(), "Open daily")]/following-sibling::div//text()'
+    if True:
+        url = "https://www.watergrill.com/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("div", {"class": "columned-tile-flexbox"}).findAll("a")
+        for loc in loclist[:-1]:
+            page_url = "https://www.watergrill.com" + loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("h1").text
+            temp = soup.find("div", {"class": "info-container w-container"}).findAll(
+                "p", {"class": "wg-body-copy"}
             )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo)
-
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=store_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=addr.state,
-            zip_postal=addr.postcode,
-            country_code=addr.country,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
-            hours_of_operation=hours_of_operation,
-        )
-
-        yield item
+            address = temp[0].text
+            phone = temp[1].text
+            hours_of_operation = (
+                soup.find("div", {"class": "centered-block"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Hours of Operation", "")
+                .replace("Open daily", "")
+            )
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            country_code = "US"
+            if not city:
+                city = location_name.lower()
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
+    log.info("Started")
+    count = 0
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

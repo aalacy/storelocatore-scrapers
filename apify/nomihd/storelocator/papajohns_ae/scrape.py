@@ -29,7 +29,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://www.papajohns.ae/pj/find-restaurants"
-    with SgRequests(dont_retry_status_codes=set([404])) as session:
+    with SgRequests(dont_retry_status_codes=set([404]), verify_ssl=False) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 

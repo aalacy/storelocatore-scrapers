@@ -69,11 +69,15 @@ def no_json(soup):
 def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
-        response = session.get(url, headers=headers)
-        soup = b4(response.text, "lxml")
-        logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
-        if len(response.text) < 400:
-            logzilla.info(f"Content\n{response.text}\n\n")
+        try:
+            response = session.get(url, headers=headers)
+            soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
+        except Exception as e:
+            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
+
         try:
             data = json.loads(
                 str(
@@ -89,7 +93,10 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
                 strict=False,
             )
         except Exception:
-            data = no_json(response.text)
+            try:
+                data = no_json(response.text)
+            except Exception:
+                data = {}
         data["index"] = index
         data["requrl"] = url
         data["STATUS"] = True
@@ -250,13 +257,26 @@ def clean_record(k):
 
 def start():
     state = CrawlStateSingleton.get_instance()
-    urls = [
-        "https://www.radissonhotelsamericas.com",
-        "https://www.radissonhotels.com",
-    ]
+    urlA = "https://www.radissonhotelsamericas.com"
+    urlB = "https://www.radissonhotels.com"
     url2 = "/zimba-api/destinations/hotels?brand="
-    brands = state.get_misc_value(
-        "brands",
+    brandsA = state.get_misc_value(
+        "brandsA",
+        default_factory=lambda: [
+            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
+            {"code": "rdb", "name": "Radisson Blu", "done": False},
+            {"code": "rdr", "name": "Radisson RED", "done": False},
+            {"code": "art", "name": "art'otel", "done": False},
+            {"code": "rad", "name": "Radisson", "done": False},
+            {"code": "ri", "name": "Radisson Individuals", "done": False},
+            {"code": "prz", "name": "prizeotel", "done": False},
+            {"code": "pph", "name": "Park Plaza", "done": False},
+            {"code": "cis", "name": "Country Inn & Suites", "done": False},
+            {"code": "rco", "name": "Radisson Collection", "done": False},
+        ],
+    )
+    brandsB = state.get_misc_value(
+        "brandsB",
         default_factory=lambda: [
             {"code": "pii", "name": "Park Inn by Radisson", "done": False},
             {"code": "rdb", "name": "Radisson Blu", "done": False},
@@ -272,34 +292,65 @@ def start():
     )
     badrecords = []
     with SgRequests() as session:
-        for url in urls:
-            for brand in brands:
-                if not brand["done"]:
-                    start_time = time.monotonic()
-                    logzilla.info(f"Selected brand: {brand}")
-                    data = get_brand(
-                        brand["code"],
-                        brand["name"],
-                        url,
-                        url2,
-                        session,
-                    )
-                    for i in data:
-                        k = clean_record(i)
-                        if k["sub"]["STATUS"]:
-                            yield k
-                        else:
-                            badrecords.append(k)
-                            yield k
-                    logzilla.info(
-                        f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-                    )
-                    brand["done"] = True
-                    state.set_misc_value("brands", brands)
+        for url in [urlA, urlB]:
+            if url == urlA:
+                for brand in brandsA:
+                    if not brand["done"]:
+                        start_time = time.monotonic()
+                        logzilla.info(f"Selected brand: {brand}")
+                        data = get_brand(
+                            brand["code"],
+                            brand["name"],
+                            url,
+                            url2,
+                            session,
+                        )
+                        for i in data:
+                            k = clean_record(i)
+                            if k["sub"]["STATUS"]:
+                                yield k
+                            else:
+                                badrecords.append(k)
+                                yield k
+                        logzilla.info(
+                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                        )
+                        brand["done"] = True
+                        state.set_misc_value("brandsA", brandsA)
+            if url == urlB:
+                for brand in brandsB:
+                    if not brand["done"]:
+                        start_time = time.monotonic()
+                        logzilla.info(f"Selected brand: {brand}")
+                        data = get_brand(
+                            brand["code"],
+                            brand["name"],
+                            url,
+                            url2,
+                            session,
+                        )
+                        for i in data:
+                            k = clean_record(i)
+                            if k["sub"]["STATUS"]:
+                                yield k
+                            else:
+                                badrecords.append(k)
+                                yield k
+                        logzilla.info(
+                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                        )
+                        brand["done"] = True
+                        state.set_misc_value("brandsB", brandsB)
 
     logzilla.info(f"Badrecords :\n\n{badrecords}")
     global EXPECTED_TOTAL
     logzilla.info(f"Finished grabbing data!!\n expected total {EXPECTED_TOTAL}")  # noqa
+
+
+def fix_phone(x):
+    if len(x) < 3:
+        return "<MISSING>"
+    return x
 
 
 def scrape():
@@ -337,9 +388,12 @@ def scrape():
         state=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressRegion"],
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         zipcode=sp.MappingField(
-            mapping=["sub", "mainEntity", "address", "postalCode"], is_required=False
+            mapping=["sub", "mainEntity", "address", "postalCode"],
+            is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         country_code=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressCountry"],
@@ -348,6 +402,7 @@ def scrape():
         phone=sp.MappingField(
             mapping=["sub", "mainEntity", "telephone", 0],
             is_required=False,
+            value_transform=fix_phone,
         ),
         store_number=sp.MappingField(
             mapping=["main", "code"],

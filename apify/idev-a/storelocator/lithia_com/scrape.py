@@ -47,7 +47,16 @@ def record_initial_requests(http, state):
             latitude = _.select_one("span.latitude").text.strip()
         if _.select_one("span.longitude"):
             longitude = _.select_one("span.longitude").text.strip()
+        id = ""
+        for cls in _["class"]:
+            if cls.startswith("info-window-"):
+                id = cls.split("-")[-1].strip()
+                break
+        country_code = "US"
+        if zip_postal and not zip_postal.replace("-", "").isdigit():
+            country_code = "CA"
         store = dict(
+            id=id,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -55,6 +64,7 @@ def record_initial_requests(http, state):
             zip_postal=zip_postal,
             latitude=latitude,
             longitude=longitude,
+            country_code=country_code,
             raw_address=raw_address,
         )
         total += 1
@@ -79,6 +89,7 @@ def _ddc_hr(sp1):
 def _d(store, phone, hours, page_url):
     return SgRecord(
         page_url=page_url,
+        store_number=store["id"],
         location_name=store["location_name"],
         street_address=store["street_address"],
         city=store["city"],
@@ -86,7 +97,7 @@ def _d(store, phone, hours, page_url):
         zip_postal=store["zip_postal"],
         latitude=store["latitude"],
         longitude=store["longitude"],
-        country_code="US",
+        country_code=store["country_code"],
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation="; ".join(hours).replace("\u200b", ""),
@@ -102,22 +113,30 @@ def fetch_records(http, state):
         if next_r.url == "#":
             yield _d(store, phone, hours, base_url)
             continue
-        page_url = "http://" + urlparse(next_r.url).netloc
+        page_url = "https://" + urlparse(next_r.url).netloc
         logger.info(page_url)
         try:
             sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
         except:
             try:
-                page_url = "https://" + urlparse(next_r.url).netloc
+                page_url = "https://www." + urlparse(next_r.url).netloc
                 sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
             except:
                 if "www" in next_r.url:
                     logger.info("wwwww ========")
+                    yield _d(store, phone, hours, base_url)
                     continue
-                page_url = "https://www." + urlparse(next_r.url).netloc
-                sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
 
-        if sp1.select("div#hours1-app-root ul li"):
+        if sp1.select("table.mabel-bhi-businesshours"):
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in sp1.select("table.mabel-bhi-businesshours")[0].select("tr")
+            ]
+            _addr = sp1.select_one("span.fusion-contact-info-phone-number").text.strip()
+            phone = _addr.split("|")[0].split("!")[-1].strip()
+            store["zip_postal"] = _addr.split("|")[-1].split()[-1]
+            store["raw_address"] = _addr.split("|")[-1]
+        elif sp1.select("div#hours1-app-root ul li"):
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("div#hours1-app-root ul li")
@@ -148,7 +167,13 @@ def fetch_records(http, state):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
-                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                sp2 = bs(
+                    http.get(
+                        contact_url,
+                        headers=_headers,
+                    ).text,
+                    "lxml",
+                )
                 if sp2.select_one("li.phone-main a"):
                     phone = list(sp2.select_one("li.phone-main a").stripped_strings)[0]
                     hours = [
@@ -274,7 +299,16 @@ def fetch_records(http, state):
 if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.PHONE, SgRecord.Headers.PAGE_URL}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
     ) as writer:
         with SgRequests() as http:
             state.get_misc_value(
