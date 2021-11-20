@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-DOMAIN = "d1training.com"
+DOMAIN = "d1sportstraining.com"
 BASE_URL = "https://www.d1training.com"
 API_URL = "https://www.d1training.com/locations/?CallAjax=GetLocations"
 HEADERS = {
