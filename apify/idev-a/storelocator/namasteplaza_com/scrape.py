@@ -22,7 +22,10 @@ def fetch_data():
         for option in options:
             page_url = option["value"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            res = session.get(page_url, headers=_headers)
+            if res.status_code != 200:
+                continue
+            sp1 = bs(res.text, "lxml")
             addr = parse_address_intl(
                 sp1.select_one("div.footer-cms div.footer-contacts")
                 .find_next_sibling()
@@ -35,9 +38,7 @@ def fetch_data():
             try:
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=sp1.select_one(
-                        "div.footer-cms div.footer-contacts"
-                    ).text.strip(),
+                    location_name=option.text.strip(),
                     street_address=street_address,
                     city=addr.city,
                     state=addr.state,
