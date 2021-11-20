@@ -12,7 +12,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://cinnabonrussia.com/locations/"
     domain = "cinnabonrussia.com"
@@ -38,12 +38,20 @@ def fetch_data():
                 phone = phone[0] if phone else ""
 
         location_name = poi_html.xpath('.//a[@class="store"]/span/span/text()')[0]
-        raw_addr = poi_html.xpath('.//a[@class="directions-link store"]/span/text()')[0]
-        addr = parse_address_intl(raw_addr)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        city = addr.city.replace("Г.", "").replace("г.", "") if addr.city else ""
+        raw_addr = poi_html.xpath('.//a[@class="directions-link store"]/span/text()')
+        if raw_addr:
+            addr = parse_address_intl(raw_addr[0])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city.replace("Г.", "").replace("г.", "") if addr.city else ""
+            state = addr.state
+            zip_code = addr.postcode
+        else:
+            street_address = ""
+            city = ""
+            state = ""
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -51,8 +59,8 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=addr.state,
-            zip_postal=addr.postcode,
+            state=state,
+            zip_postal=zip_code,
             country_code="RU",
             store_number=poi_html.xpath(".//a/@data-store")[0],
             phone=phone,
