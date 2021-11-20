@@ -88,9 +88,9 @@ def fetch_data():
                 .replace("&nbsp;", "")
                 .strip()
             )
-        location_name = row["name"]
+        location_name = row["name"].replace("&#039;", "'")
         street_address = (row["address"] + " " + row["address2"]).strip()
-        city = row["city"]
+        city = row["city"].replace("&#039;", "'")
         state = row["state"]
         zip_postal = row["zip"]
         country_code = "US"
