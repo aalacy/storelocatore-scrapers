@@ -40,14 +40,14 @@ def fetch_data():
                     times = f"{hh['open']['hours']}:{hh['open']['mins']} - {hh['close']['hours']}:{hh['close']['mins']}"
                     hours.append(f"{day}: {times}")
 
-            city = addr[1].strip()
+            street_address = addr[0]
             if len(addr) == 2:
-                city = ""
+                street_address = ""
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["title"],
-                street_address=addr[0],
-                city=city,
+                street_address=street_address,
+                city=addr[-2].strip(),
                 country_code="French Polynesia",
                 phone=_["phone_number"],
                 latitude=_["location"]["lat"],
