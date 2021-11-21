@@ -56,10 +56,22 @@ def fetch_data():
                 if location_details["address"]["telephone"]
                 else "<MISSING>"
             )
-            location_type = "<MISSING>"
             latitude = location_details["geo"]["latitude"]
             longitude = location_details["geo"]["longitude"]
             hours_of_operation = location_details["openingHours"]
+
+            req = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(req.text, "lxml")
+            isseasonal = soup.find("div", {"class": "seasonal"})
+            try:
+                isseasonal = isseasonal.text
+                loc_type = isseasonal
+            except AttributeError:
+                if isseasonal is None:
+                    loc_type = "Store"
+            loc_type = loc_type.strip()
+            if loc_type == "":
+                loc_type = "Store"
 
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -72,7 +84,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone,
-                location_type=location_type,
+                location_type=loc_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,

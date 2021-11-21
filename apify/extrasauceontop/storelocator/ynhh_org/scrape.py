@@ -169,6 +169,12 @@ def get_data():
             if zipp in state:
                 state = zipp
                 zipp = "<MISSING>"
+
+            if "Fax" in phone:
+                phone = location_soup.find(
+                    "a", attrs={"class": "phone-number"}
+                ).text.strip()
+
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,

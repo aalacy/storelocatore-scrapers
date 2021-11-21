@@ -37,7 +37,7 @@ def fetch_data():
                 city=city,
                 state=addr.state,
                 country_code="Vietnam",
-                phone=_.select("td")[1].text.split("/")[0].strip(),
+                phone=_.select("td")[3].text.split("/")[0].strip(),
                 locator_domain=locator_domain,
                 raw_address=raw_address,
             )
