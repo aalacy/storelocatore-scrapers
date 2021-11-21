@@ -146,7 +146,9 @@ def fetch_records(search):
                     soup = bs(res.text, "lxml")
                     street_address = _["street1"]
                     if _["street2"]:
-                        street_address += " " + _["street1"]
+                        street_address += " " + _["street2"]
+                    if street_address and "coming soon" in street_address.lower():
+                        continue
                     hours = [
                         ": ".join(hh.stripped_strings)
                         for hh in soup.select(
