@@ -10,6 +10,7 @@ from fuzzywuzzy import process
 import httpx
 from typing import Iterable, Tuple, Callable
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgpostal.sgpostal import parse_address_intl
 
 timeout = httpx.Timeout(5.0)
 logger = SgLogSetup().get_logger("t2tea")
@@ -64,12 +65,24 @@ class ExampleSearchIteration(SearchIteration):
                 hours = []
                 if _.get("storeHours"):
                     hours = bs(_["storeHours"], "lxml").stripped_strings
+
+                city = _["city"]
+                if not city:
+                    sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                    raw_address = (
+                        sp1.select_one("address a.store-map").text.strip()
+                        + ", "
+                        + _["countryCode"]
+                    )
+                    addr = parse_address_intl(raw_address)
+                    if addr.city:
+                        city = addr.city
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
                     store_number=_["ID"],
                     street_address=street_address,
-                    city=_["city"],
+                    city=city,
                     state=_.get("stateCode"),
                     zip_postal=_.get("postalCode"),
                     country_code=_["countryCode"],
