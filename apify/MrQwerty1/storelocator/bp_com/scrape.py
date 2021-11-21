@@ -20,7 +20,9 @@ def fetch_data(coords, sgw: SgWriter):
         street_address = j.get("address")
         city = j.get("city")
         state = j.get("state")
-        postal = j.get("postcode")
+        postal = j.get("postcode") or ""
+        if "-" in postal:
+            postal = SgRecord.MISSING
         country = j.get("country_code")
         phone = j.get("telephone")
         latitude = j.get("lat")
