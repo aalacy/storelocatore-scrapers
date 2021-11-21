@@ -4,7 +4,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
