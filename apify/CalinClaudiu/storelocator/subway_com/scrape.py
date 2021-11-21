@@ -246,10 +246,14 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_8(),
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=50,
+        max_search_results=50,
     )
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumAndPageUrlId,
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         with SgRequests() as http1:
             search_iter = ExampleSearchIteration()
