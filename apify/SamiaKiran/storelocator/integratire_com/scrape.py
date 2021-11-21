@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
+
+# from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -39,8 +40,11 @@ def fetch_data():
                 temp.find("p")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
-                .replace("DIRECTIONS", "")
+                .replace("\t", "")
+                .replace("\n", " ")
+                .replace("Directions", "")
             )
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
