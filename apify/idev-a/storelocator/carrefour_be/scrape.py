@@ -3,6 +3,11 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
+import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("carrefour")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -32,8 +37,17 @@ def fetch_data():
             for hh in _["businessHours"]:
                 day = hr_obj.get(str(hh["startDay"]))
                 hours.append(f"{day}: {hh['openTimeFormat']} - {hh['closeTimeFormat']}")
+            phone = _["contact"]["phone"]
+            page_url = _["contact"]["url"]
+            if not phone:
+                logger.info(page_url)
+                phone = json.loads(
+                    bs(session.get(page_url, headers=_headers).text, "lxml")
+                    .find("script", type="application/ld+json")
+                    .string
+                )["telephone"]
             yield SgRecord(
-                page_url=_["contact"]["url"],
+                page_url=page_url,
                 store_number=_["externalId"],
                 location_name=_["name"],
                 street_address=addr["street"],
@@ -42,7 +56,7 @@ def fetch_data():
                 latitude=addr["latitude"],
                 longitude=addr["longitude"],
                 country_code=addr["country"],
-                phone=_["contact"]["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
                 location_type=_["brand"],
                 hours_of_operation="; ".join(hours),

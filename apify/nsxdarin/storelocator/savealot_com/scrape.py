@@ -38,7 +38,7 @@ def fetch_data():
                 + "/"
                 + hilng
             )
-            r = session.get(url, headers=headers, verify=False)
+            r = session.get(url, headers=headers)
             array = json.loads(r.content)
             for item in array:
                 website = "savealot.com"
@@ -62,21 +62,24 @@ def fetch_data():
                 lat = item["lat"]
                 lng = item["lng"]
                 hours = ""
-                r2 = session.get(purl, headers=headers)
-                for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
-                    if 'class="day">' in line2:
-                        day = line2.split('class="day">')[1].split("<")[0]
-                    if '<span class="hours">' in line2:
-                        hrs = (
-                            day
-                            + ": "
-                            + line2.split('<span class="hours">')[1].split("<")[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+                try:
+                    r2 = session.get(purl, headers=headers)
+                    for line2 in r2.iter_lines():
+                        line2 = str(line2.decode("utf-8"))
+                        if 'class="day">' in line2:
+                            day = line2.split('class="day">')[1].split("<")[0]
+                        if '<span class="hours">' in line2:
+                            hrs = (
+                                day
+                                + ": "
+                                + line2.split('<span class="hours">')[1].split("<")[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                except:
+                    pass
                 if hours == "":
                     hours = "<MISSING>"
                 yield SgRecord(

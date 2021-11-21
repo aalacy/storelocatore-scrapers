@@ -11,7 +11,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.volvocars.com/il"
+locator_domain = " https://volvocars.co.uk/"
 base_url = "https://www.volvocars.com/data/retailer?countryCode={}&languageCode=EN&northToSouthSearch=False&serviceType=Service&isOxp=True&sc_site=uk"
 
 country_codes = [
@@ -50,7 +50,6 @@ country_codes = [
     "CH",
     "TR",
     "UA",
-    "UK",
     "TW",
     "TH",
 ]
