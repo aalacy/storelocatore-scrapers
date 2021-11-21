@@ -1,4 +1,3 @@
-from threading import active_count
 from lxml import etree
 
 from sgrequests import SgRequests
