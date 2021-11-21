@@ -23,6 +23,7 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//a/h6/text()")).replace("\n", "").strip()
         latitude = "".join(d.xpath(".//@data-lat"))
         longitude = "".join(d.xpath(".//@data-long"))
+        cms = "".join(d.xpath('.//span[contains(text(), "Coming Soon")]/text()'))
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         ad = (
@@ -53,6 +54,8 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        if cms:
+            location_name = location_name + " - " + "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

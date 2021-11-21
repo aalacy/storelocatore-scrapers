@@ -1,7 +1,7 @@
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -10,7 +10,7 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     scraped_urls = []
-    session = SgRequests()
+    session = SgRequests(proxy_country="us")
     start_url = "https://www.sugarfina.com/rest/V1/storelocator/search/"
     domain = "sugarfina.com"
     hdr = {
@@ -21,8 +21,8 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
     }
 
-    all_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
     for code in all_codes:
         params = {
@@ -44,7 +44,7 @@ def fetch_data():
             "searchCriteria[filter_groups][0][filters][5][value]": code,
             "searchCriteria[filter_groups][0][filters][5][condition_type]": "eq",
             "searchCriteria[filter_groups][0][filters][6][field]": "distance",
-            "searchCriteria[filter_groups][0][filters][6][value]": "100",
+            "searchCriteria[filter_groups][0][filters][6][value]": "50",
             "searchCriteria[filter_groups][0][filters][6][condition_type]": "eq",
             "searchCriteria[filter_groups][0][filters][7][field]": "onlyLocation",
             "searchCriteria[filter_groups][0][filters][7][value]": "0",
@@ -56,7 +56,17 @@ def fetch_data():
             "searchCriteria[page_size]": "9",
         }
 
-        data = session.get(start_url, headers=hdr, params=params).json()
+        data = session.get(start_url, headers=hdr, params=params)
+        status = data.status_code
+        counter = 0
+        while status != 200:
+            session = SgRequests(proxy_country="us")
+            data = session.get(start_url, headers=hdr, params=params)
+            status = data.status_code
+            counter += 1
+            if counter == 10:
+                continue
+        data = data.json()
         all_locations = data["items"]
         total_pages = data["total_count"] // 9 + 1
         if total_pages > 1:
@@ -64,7 +74,6 @@ def fetch_data():
                 params["searchCriteria[current_page]"] = str(p)
                 data = session.get(start_url, headers=hdr, params=params).json()
                 all_locations += data["items"]
-
         for poi in all_locations:
             store_url = poi.get("store_details_link")
             if store_url:

@@ -1,4 +1,4 @@
-import httpx
+from sgrequests import SgRequests
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -7,17 +7,21 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_coords(page_url):
-    r = httpx.get(page_url, headers=headers, follow_redirects=True)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
 
-    lat = text.split("@")[1].split(",")[0]
-    lng = text.split("@")[1].split(",")[1]
+    try:
+        lat = text.split("@")[1].split(",")[0]
+        lng = text.split("@")[1].split(",")[1]
+    except:
+        lat, lng = SgRecord.MISSING, SgRecord.MISSING
+
     return lat, lng
 
 
 def get_data(page_url, sgw):
-    r = httpx.get(page_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//div[@class='wysiwyg__p']/text()")).strip()
@@ -73,7 +77,7 @@ def get_data(page_url, sgw):
 
 def fetch_data(sgw: SgWriter):
     api = "https://www.thereformation.com/pages/stores"
-    r = httpx.get(api, headers=headers)
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     blocks = tree.xpath("//a[@class='image-new-content-block__content-link']/@href")
 
@@ -136,6 +140,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.thereformation.com/"
+    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
