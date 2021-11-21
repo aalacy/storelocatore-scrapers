@@ -1,3 +1,4 @@
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -30,7 +31,7 @@ def fetch_data():
         for loc in loclist:
             loc = loc.strip().split(",  [")[0].split("[")[1].split(", '")
             temp = loc[0].split("',")
-            location_name = temp[0].replace("'", "")
+            location_name = html.unescape(temp[0].replace("'", ""))
             latitude, longitude = temp[1].split(",")
             page_url = loc[-2].strip().replace("'", "").strip()
             log.info(page_url)
