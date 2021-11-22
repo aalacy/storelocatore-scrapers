@@ -33,7 +33,9 @@ def fetch_data():
 
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
-        hoo = loc_dom.xpath('//p[contains(text(), "Regular Store Hours:")]/text()')[1:]
+        hoo = loc_dom.xpath(
+            '//i[@class="fas fa-clock"]/following-sibling::p[1]//text()'
+        )
         hoo = " ".join([e.strip() for e in hoo])
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[-1].strip()
 
