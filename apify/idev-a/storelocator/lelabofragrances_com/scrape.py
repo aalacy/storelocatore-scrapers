@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
+import dirtyjson as json
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -22,16 +23,50 @@ def _country(soup, code):
             return country.text.strip()
 
 
+def fetch_us(res):
+    locations = res.split("storeObjects.push(")[1:]
+    for loc in locations:
+        _ = json.loads(loc.split(");")[0].replace("js_site_var['static_path']", '""'))
+        street_address = _["address1"]
+        if _["address2"]:
+            street_address += " " + _["address2"]
+        hours = []
+        if _["hours"]:
+            for hh in bs(_["hours"], "lxml").stripped_strings:
+                if "Available" in hh or "Order" in hh or "WhatsApp" in hh:
+                    continue
+                hours.append(hh)
+        yield SgRecord(
+            page_url=base_url,
+            location_name=_["name"],
+            street_address=street_address,
+            city=_["city"],
+            state=_["state"],
+            zip_postal=_["zip"],
+            country_code="US",
+            phone=_["phone"],
+            latitude=_["latitude"],
+            longitude=_["longitude"],
+            locator_domain=locator_domain,
+            hours_of_operation="; ".join(hours).replace("\n", "; "),
+            raw_address=_["full_address"],
+        )
+
+
 def fetch_data():
     with SgRequests() as session:
+        res = session.get(
+            "https://www.lelabofragrances.ca/front/app/store/search?bypass=true&execution=e1s1&bypass=true&region=CA&locale=EN",
+            headers=headers,
+        ).text
         soup = bs(
-            session.get(
-                "https://www.lelabofragrances.ca/front/app/store/search?bypass=true&execution=e1s1&bypass=true&region=CA&locale=EN",
-                headers=headers,
-            ).text,
+            res,
             "lxml",
         )
         locations = soup.select("ul.list-location-directory > li")
+        for rec_us in fetch_us(res):
+            yield rec_us
+
         for _ in locations:
             country_code = _["class"][0].split("-")[-1]
             country = _country(soup, country_code)
@@ -55,9 +90,7 @@ def fetch_data():
                 city = addr[-3].strip()
                 street_address = " ".join(addr[:-3])
             elif country_code == "US":
-                zip_postal = addr[-2].strip().split()[-1].strip()
-                state = addr[-2].strip().split()[0].strip()
-                city = addr[-3]
+                continue
             else:
                 addr = parse_address_intl(raw_address)
                 street_address = addr.street_address_1
