@@ -44,7 +44,7 @@ def fetch_data():
             if "Drive-Up" in title:
                 hours = ""
                 for hr in hourlist:
-                    # print(hr)
+
                     try:
                         hours = (
                             hours
@@ -58,7 +58,7 @@ def fetch_data():
             else:
                 hours = ""
                 for hr in hourlist:
-                    # print(hr)
+
                     try:
                         hours = (
                             hours
