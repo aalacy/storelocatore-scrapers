@@ -26,8 +26,8 @@ def fetch_data():
         try:
             soup = BeautifulSoup(r.text, "html.parser")
         except:
-            session = SgRequests()
-            r = session.get(link, headers=headersss)
+            session1 = SgRequests()
+            r = session1.get(link, headers=headersss)
             soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text
         try:
