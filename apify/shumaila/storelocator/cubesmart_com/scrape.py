@@ -23,7 +23,12 @@ def fetch_data():
 
         link = loc.text
         r = session.get(link, headers=headersss)
-        soup = BeautifulSoup(r.text, "html.parser")
+        try:
+            soup = BeautifulSoup(r.text, "html.parser")
+        except:
+            session = SgRequests()
+            r = session.get(link, headers=headersss)
+            soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text
         try:
             address = soup.find("div", {"class": "csFacilityAddress"}).find("div").text
