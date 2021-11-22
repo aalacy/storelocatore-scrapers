@@ -1,0 +1,6 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+--ignore CentroidValidator (Duplicate latlong with different location_name)
+Found 1 concerning rows. Examples:
+   latitude longitude                       REASON  rowNumber
+77       90    -122.5  EITHER_LAT_OR_LNG_IMPRECISE         77
