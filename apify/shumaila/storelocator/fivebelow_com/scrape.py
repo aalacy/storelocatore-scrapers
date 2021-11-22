@@ -48,7 +48,6 @@ def fetch_data():
         for loc in loclist:
             loc = loc["profile"]
 
-            address = loc["address"]
             city = loc["address"]["city"]
             state = loc["address"]["region"]
             ccode = loc["address"]["countryCode"]
