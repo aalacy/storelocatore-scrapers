@@ -1,5 +1,5 @@
 from sgpostal.sgpostal import parse_address_intl
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -50,7 +50,7 @@ def get_response(url):
 def fetch_records(latlng, sgw: SgWriter):
     poilat, poilon = latlng
     api_base_url = "https://bobcat.know-where.com/bobcat/cgi/selection?"
-    options = "option=T&option=R&option=E&option=M&option=G&option=W&option=X&option=U&option=P&option=V&option=D"
+    options = "option="
     api_endpoint_url = f"{api_base_url}{options}&ll={poilat}%2C{poilon}&lang=en&stype=ll&async=results&key"
     logger.info(f"Pulling the data from {api_endpoint_url}")
 
@@ -182,8 +182,8 @@ def fetch_data(sgw: SgWriter):
 
         search_us = DynamicGeoSearch(
             country_codes=[SearchableCountries.USA],
-            granularity=Grain_1_KM(),
-            expected_search_radius_miles=5,
+            granularity=Grain_8(),
+            expected_search_radius_miles=50,
             use_state=False,
         )
         task_us = [executor.submit(fetch_records, latlng, sgw) for latlng in search_us]
@@ -212,6 +212,7 @@ def scrape():
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.PHONE,
                 }
             )
         )

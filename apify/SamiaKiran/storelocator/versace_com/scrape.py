@@ -133,14 +133,12 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             .replace("|", " ")
         )
         try:
-            hourlist = (
+            hours_of_operation = (
                 soup.find("table", {"class": "c-hours-details"})
-                .find("tbody")
-                .findAll("tr")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Day of the Week Hours", "")
             )
-            hours_of_operation = ""
-            for hour in hourlist:
-                hours_of_operation = hours_of_operation + " " + hour["content"]
         except:
             hours_of_operation = MISSING
         yield SgRecord(
