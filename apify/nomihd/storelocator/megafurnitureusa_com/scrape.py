@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "megafurnitureusa.com"
@@ -47,7 +49,10 @@ def fetch_data():
 
     for store in stores_list:
 
-        if store["properties"]["isPermanentlyClosed"]:
+        if (
+            store["properties"]["isPermanentlyClosed"]
+            or store["properties"]["metaStatus"] == "COMING_SOON"
+        ):
             continue
 
         page_url = search_url + store["properties"]["slug"].strip()
@@ -58,13 +63,14 @@ def fetch_data():
         street_address = store["properties"]["addressLine1"].strip()
 
         if (
-            "addressLine2" in store
-            and store["addressLine2"] is not None
-            and len(store["addressLine2"]) > 0
+            "addressLine2" in store["properties"]
+            and store["properties"]["addressLine2"] is not None
+            and len(store["properties"]["addressLine2"]) > 0
         ):
-            street_address = street_address + ", " + store["addressLine2"]
+            street_address = street_address + ", " + store["properties"]["addressLine2"]
 
         city = store["properties"]["city"].strip()
+        location_name = location_name + " - " + city
         state = store["properties"]["province"].strip()
         zip = store["properties"]["postalCode"].strip()
         country_code = store["properties"]["country"].strip()
@@ -112,7 +118,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

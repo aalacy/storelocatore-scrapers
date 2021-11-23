@@ -6,6 +6,17 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from datetime import datetime
 from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("carrefour")
 
@@ -43,7 +54,7 @@ def fetch_data():
                 yield SgRecord(
                     page_url=base_url,
                     store_number=_["store_code"],
-                    location_name="Convenience Store",
+                    location_name="Carrefour " + _["name"],
                     street_address=_["address"],
                     city=" ".join(c_z[1:]),
                     zip_postal=c_z[0],
@@ -51,6 +62,7 @@ def fetch_data():
                     longitude=_["latlng"]["longitude"],
                     country_code=country,
                     phone=_["store_phone"],
+                    location_type="Convenience Store",
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
                 )

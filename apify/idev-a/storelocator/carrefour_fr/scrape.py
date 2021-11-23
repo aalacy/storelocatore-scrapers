@@ -50,11 +50,15 @@ def fetch_data():
 
                 page_url = locator_domain + _["storePageUrl"]
                 phone = ""
+                location_name = _["name"].replace("&#039;", "'")
                 if page_url != base_url:
                     logger.info(page_url)
                     res = session.get(page_url, headers=_headers)
                     if res.status_code == 200:
                         sp1 = bs(res.text, "lxml")
+                        location_name = sp1.select_one(
+                            "h1.store-page__banner__heading"
+                        ).text.strip()
                         location_type = json.loads(
                             sp1.find(
                                 "script", string=re.compile(r"tc_vars = Object.assign")
@@ -69,7 +73,7 @@ def fetch_data():
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],
-                    location_name=_["name"].replace("&#039;", "'"),
+                    location_name=location_name,
                     street_address=street_address.replace("&#039;", "'"),
                     city=addr["city"].replace("&#039;", "'"),
                     state=addr["region"],

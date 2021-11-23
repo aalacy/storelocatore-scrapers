@@ -45,6 +45,9 @@ def fetch_data():
         for poi in all_locations:
             latitude = poi["latitude"] if poi["latitude"] != "0" else ""
             longitude = poi["longitude"] if poi["longitude"] != "0" else ""
+            zip_code = poi["zip"]
+            if zip_code and zip_code == "sn":
+                zip_code = ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -53,7 +56,7 @@ def fetch_data():
                 street_address=poi["street"],
                 city=poi["city"].split(", ")[0],
                 state=poi["city"].split(", ")[-1],
-                zip_postal=poi["zip"],
+                zip_postal=zip_code,
                 country_code=poi["country_id"],
                 store_number=poi["location_id"],
                 phone=poi["phone"],
