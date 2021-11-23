@@ -30,9 +30,14 @@ def fetch_data():
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
         page_url = poi_html.xpath(".//a/@href")[-1]
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0].strip()
-        hoo = poi_html.xpath('.//p[contains(text(), "Monday")]/text()')
+
+        loc_response = session.get(page_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath(
+            '//i[@class="fas fa-clock"]/following-sibling::p[1]//text()'
+        )
         hoo = " ".join([e.strip() for e in hoo])
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[-1].strip()
 
         item = SgRecord(
             locator_domain=domain,
