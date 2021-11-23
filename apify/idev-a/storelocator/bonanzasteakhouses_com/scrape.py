@@ -29,8 +29,6 @@ def fetch_data():
             hours = []
             for day, hh in _.get("hours", {}).items():
                 hours.append(f"{day}: {hh}")
-            _phone = _["phone"].split("/")
-            phone = f"({_phone[0]}) {_phone[1]}"
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
@@ -42,9 +40,10 @@ def fetch_data():
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code=_["country"],
-                phone=phone,
+                phone=_["phone"],
                 location_type=_["location_type_name"],
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=_["address"],
             )
 
