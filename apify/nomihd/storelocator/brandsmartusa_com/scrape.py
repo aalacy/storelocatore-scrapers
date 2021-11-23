@@ -221,8 +221,15 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
-        if len(location_name) <= 0:
-            continue
+        if page_url == "https://www.brandsmartusa.com/store/fl/davie/4815-s-state-rd-7":
+            location_name = "Outlet Center"
+            street_address = "4815 S State Road 7"
+            city = "Davie"
+            state = "FL"
+            zip = "33314"
+            country_code = "US"
+            phone = "(954) 327-6600"
+
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
