@@ -74,7 +74,7 @@ def fetch_data():
         try:
             soup = pull_content(page_url)
         except:
-            time.sleep(2)
+            time.sleep(3)
             soup = pull_content(page_url)
         store_content = soup.find_all(
             "div",
