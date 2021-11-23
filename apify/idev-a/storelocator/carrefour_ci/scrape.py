@@ -25,13 +25,7 @@ def fetch_data():
             page_url = _.a["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            location_name = ""
-            if sp1.select_one("div.single-info-content h2"):
-                location_name = sp1.select_one(
-                    "div.single-info-content h2"
-                ).text.strip()
-            if not location_name:
-                location_name = sp1.select_one('li[data-tab-id="place"]').text.strip()
+            location_name = sp1.select_one("h1.page-title").text.strip()
             _hr = sp1.find("strong", string=re.compile(r"^Horaires d’ouverture"))
             hours = ""
             if _hr:
