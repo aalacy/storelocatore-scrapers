@@ -6,6 +6,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "brandsmartusa.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -74,7 +76,7 @@ def fetch_data():
                     location_name = (
                         "".join(
                             store_sel.xpath(
-                                '//div[@id="info"]/div[1]/center/h2/strong[1]/text()'
+                                '//div[@id="info"]//center/h2/strong[1]/text()'
                             )
                         )
                         .strip()
@@ -85,21 +87,36 @@ def fetch_data():
                         location_name = (
                             "".join(
                                 store_sel.xpath(
-                                    '//div[@id="info"]/div[1]/h2/strong[1]/text()'
+                                    '//div[@id="info"]//h2/strong[1]/text()'
                                 )
                             )
                             .strip()
                             .replace("Info", "")
                             .strip()
                         )
+
+                        if len(location_name) <= 0:
+                            location_name = (
+                                "".join(
+                                    store_sel.xpath(
+                                        '//div[@class="row"]/div[1]/h2/strong[1]/text()'
+                                    )
+                                )
+                                .strip()
+                                .replace("Info", "")
+                                .strip()
+                            )
             if len(street_address) <= 0:
                 street_address = "".join(
-                    store_sel.xpath(
-                        '//span[@itemprop="address"]/span[@itemprop="streetAddress"]/text()'
-                    )
+                    store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
                 ).strip()
                 if len(street_address) <= 0:
-                    address = store_sel.xpath('//div[@id="info"]/div[1]/span[1]/text()')
+                    address = store_sel.xpath('//div[@id="info"]/span[1]/text()')
+                    if len(address) <= 0:
+                        address = store_sel.xpath(
+                            '//div[@class="row"]/div[1]/span[1]/text()'
+                        )
+
                     if len(address) > 0:
                         add_list = []
                         for add in address:
@@ -118,19 +135,13 @@ def fetch_data():
                         phone = add_list[-1].strip().replace("Call or Text", "").strip()
                 else:
                     city = "".join(
-                        store_sel.xpath(
-                            '//span[@itemprop="address"]/span[@itemprop="addressLocality"]/text()'
-                        )
+                        store_sel.xpath('//span[@itemprop="addressLocality"]/text()')
                     ).strip()
                     state = "".join(
-                        store_sel.xpath(
-                            '//span[@itemprop="address"]/span[@itemprop="addressRegion"]/text()'
-                        )
+                        store_sel.xpath('//span[@itemprop="addressRegion"]/text()')
                     ).strip()
                     zip = "".join(
-                        store_sel.xpath(
-                            '//span[@itemprop="address"]/span[@itemprop="postalCode"]/text()'
-                        )
+                        store_sel.xpath('//span[@itemprop="postalCode"]/text()')
                     ).strip()
 
             if len(phone) <= 0:
@@ -144,12 +155,12 @@ def fetch_data():
                     hours_list = []
                     for hour in hours:
                         day = (
-                            "".join(hour.xpath("td[1]/span/text()"))
+                            "".join(hour.xpath("td[1]//text()"))
                             .strip()
                             .replace("-", ":")
                             .strip()
                         )
-                        time = "".join(hour.xpath("td[2]/span/text()")).strip()
+                        time = "".join(hour.xpath("td[2]//text()")).strip()
                         if len(day) > 0:
                             if (
                                 "Monday" in day
@@ -172,11 +183,9 @@ def fetch_data():
                     )
                 else:
                     if "Store Hours" in store_sel.xpath(
-                        '//div[@id="info"]/div[@class="col-sm-4"]/center/h2/strong/text()'
+                        '//div[@id="info"]//center/h2/strong/text()'
                     ):
-                        hours = store_sel.xpath(
-                            '//div[@id="info"]/div[@class="col-sm-4"]/div'
-                        )
+                        hours = store_sel.xpath('//div[@id="info"]//div')
                         hours_list = []
                         for hour in hours:
                             day = (
@@ -212,10 +221,12 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
+        if len(location_name) <= 0:
+            continue
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
-            location_name=location_name,
+            location_name=location_name.replace("Store HoursManagers", "").strip(),
             street_address=street_address,
             city=city,
             state=state,
@@ -233,7 +244,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
