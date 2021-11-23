@@ -147,12 +147,19 @@ def fetch_records(search):
                     street_address = _["street1"]
                     if _["street2"]:
                         street_address += " " + _["street2"]
+                    if street_address and "coming soon" in street_address.lower():
+                        continue
                     hours = [
                         ": ".join(hh.stripped_strings)
                         for hh in soup.select(
                             "div.center-details__hours div.seg-center-hours ul li"
                         )
                     ]
+                    if not hours:
+                        hours = [
+                            ": ".join(hh.stripped_strings)
+                            for hh in soup.select("div.center-details__hours ul li")
+                        ]
                     yield SgRecord(
                         page_url=page_url,
                         store_number=_["cid"],

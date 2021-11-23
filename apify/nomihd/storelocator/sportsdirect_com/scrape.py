@@ -51,6 +51,13 @@ def fetch_data():
                 location_name = store_json["formattedStoreNameLong"]
                 street_address = store_json["address"]
                 city = store_json["town"]
+                if city:
+                    if "," in city:
+                        city = city.split(",")[-1].strip()
+
+                if city == "Festival Place Shopping Centre":
+                    city = "<MISSING>"
+
                 state = store_json["county"]
                 zip = store_json["postCode"]
                 country_code = store_json["countryCode"]

@@ -1,10 +1,14 @@
+import ssl
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
+from sgselenium import SgChrome
+
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_urls():
@@ -17,8 +21,10 @@ def get_urls():
 
 
 def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    with SgChrome() as fox:
+        fox.get(page_url)
+        source = fox.page_source
+    tree = html.fromstring(source)
 
     location_name = "".join(
         tree.xpath("//h1[@class='page-header-title inherit']/text()")
@@ -54,17 +60,21 @@ def get_data(page_url, sgw: SgWriter):
         ).strip()
 
     _tmp = []
-    days = tree.xpath(
-        "//div[@class='locations-single-address']//span[@class='company-info-hours-day']/text()"
+    days = set(
+        tree.xpath(
+            "//div[@class='locations-single-address']//span[@class='company-info-hours-day']/text()"
+        )
     )
-    times = tree.xpath(
-        "//div[@class='locations-single-address']//li[@class='company-info-hours-openclose']/text()"
+    times = set(
+        tree.xpath(
+            "//div[@class='locations-single-address']//li[@class='company-info-hours-openclose']/text()"
+        )
     )
 
     for d, t in zip(days, times):
         _tmp.append(f"{d.strip()}: {t.strip()}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
     row = SgRecord(
         page_url=page_url,
@@ -85,10 +95,8 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    for url in urls:
+        get_data(url, sgw)
 
 
 if __name__ == "__main__":
