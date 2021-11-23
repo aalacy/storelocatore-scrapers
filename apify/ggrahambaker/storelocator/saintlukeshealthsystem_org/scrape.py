@@ -1,6 +1,4 @@
 from sgselenium import SgChrome
-from bs4 import BeautifulSoup
-import time
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
