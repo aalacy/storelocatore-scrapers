@@ -155,6 +155,11 @@ def fetch_records(search):
                             "div.center-details__hours div.seg-center-hours ul li"
                         )
                     ]
+                    if not hours:
+                        hours = [
+                            ": ".join(hh.stripped_strings)
+                            for hh in soup.select("div.center-details__hours ul li")
+                        ]
                     yield SgRecord(
                         page_url=page_url,
                         store_number=_["cid"],
