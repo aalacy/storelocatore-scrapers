@@ -20,7 +20,6 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//p[./strong[contains(text(), "Åbningstider:")]]')
     for d in div:
         types = "".join(d.xpath(".//preceding::img[1]/@src"))
-        print(type)
         location_type = "<MISSING>"
         if "pisiffik.png" in types or "Pisiffik_logo" in types:
             location_type = "Pisiffik"
