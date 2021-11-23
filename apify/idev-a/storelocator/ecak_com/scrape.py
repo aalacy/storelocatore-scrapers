@@ -37,6 +37,9 @@ def fetch_data():
             _hr = sp1.find("", string=re.compile(r"Hours of Operation:"))
             hours = []
             if _hr:
+                span = _hr.find_parent("h2").find_next_siblings("span")
+                if span and "location is closing" in span.text:
+                    continue
                 hours = [
                     ": ".join(hh.stripped_strings)
                     for hh in _hr.find_parent("h2")
