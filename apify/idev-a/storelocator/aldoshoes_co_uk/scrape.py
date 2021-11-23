@@ -40,9 +40,12 @@ def fetch_data():
             state = ""
             if info.select_one(".prov_state"):
                 state = info.select_one(".prov_state").text.strip()
+            hours = []
+            if info.select_one(".hours"):
+                hours = list(info.select_one(".hours").stripped_strings)[1:]
             yield SgRecord(
                 page_url=base_url,
-                location_name=info.select_one(".name").text.strip(),
+                location_name=info.select_one(".name").text.split("-")[0].strip(),
                 street_address=info.select_one(".address").text.strip(),
                 city=info.select_one(".city").text.strip(),
                 state=state,
@@ -52,6 +55,7 @@ def fetch_data():
                 latitude=_["lat"],
                 longitude=_["lng"],
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
             )
 

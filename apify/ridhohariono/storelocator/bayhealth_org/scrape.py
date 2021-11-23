@@ -101,6 +101,7 @@ def fetch_data():
                 hoo_content.get_text(strip=True, separator=",")
                 .replace("Hours:", "")
                 .strip()
+                .lstrip(",")
             )
         latitude, longitude = get_latlong(row["Fields"])
         log.info("Append {} => {}".format(location_name, street_address))

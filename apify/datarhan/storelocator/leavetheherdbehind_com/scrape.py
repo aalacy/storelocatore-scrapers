@@ -40,8 +40,9 @@ def fetch_data():
         closed = loc_dom.xpath(
             '//span[contains(text(), "We are now temporarily closed")]'
         )
+        location_type = ""
         if closed:
-            continue
+            location_type = "temporarily closed"
 
         location_name = loc_dom.xpath(
             '//h1[@class="hero__title title-lg location-title-label"]/span/text()'
@@ -144,7 +145,7 @@ def fetch_data():
             country_code="",
             store_number="",
             phone="",
-            location_type="",
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
