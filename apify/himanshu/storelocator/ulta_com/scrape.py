@@ -1,109 +1,131 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-import ast
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('ulta_com')
+from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
-def fetch_data():
-    return_main_object = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-    }
+def fetch_data(sgw: SgWriter):
 
-    base_url = "https://www.ulta.com"
-    r = session.get('https://api.sweetiq.com/store-locator/public/locations/582b2f2f588e96c131eefa9f?categories=&geo%5B0%5D=-95.7129&geo%5B1%5D=37.0902&tag=&perPage=1000000000000&page=1&search=&searchFields%5B0%5D=name&clientIds%5B0%5D=57b75cf805fbd94379859661&box%5B0%5D=-180&box%5B1%5D=-71.03870026971174&box%5B2%5D=180&box%5B3%5D=71.03870026970304', headers=headers)
-    data = r.json()['records']
-    soup = BeautifulSoup(r.text, "lxml")
-    for store_data in data:
-        store = []
-        # logger.info(store_data)
-        # exit()
-        location_name = store_data['mallName']
-        street_address = store_data['address']
-        city = store_data['city']
-        state = store_data['province']
-        store_zip = store_data['postalCode'].strip()
-        if len(store_zip) == 4:
-            store_zip = "0" + store_zip
-        phone = store_data['phone']
-        store_number = store_data["branch"]
-        page_url = store_data["website"]
-        if(location_name == '' or location_name is None):
-            location_name = "<MISSING>"
-        if (street_address == '' or state is None):
-            street_address = "<MISSING>"
-        if (city == '' or state is None):
-            city = "<MISSING>"
-        if (state == '' or state is None):
-            state = "<MISSING>"
-        if (store_zip == '' or store_zip is None):
-            store_zip = "<MISSING>"
-        if (phone == '' or phone is None):
-            phone = "<MISSING>"
-        if (store_number == '' or store_number is None):
-            store_number = "<MISSING>"
-        if "Sun" in store_data['hoursOfOperation']:
-            for Sun in store_data['hoursOfOperation']['Sun']:
-                sun_time = 'Sun: ' + Sun[0] + ' - ' + Sun[1]
-        else:
-            sun_time=""
-        for Sat in store_data['hoursOfOperation']['Sat']:
-            sat_time = 'Sat: ' + Sat[0] + ' - ' + Sat[1]
-        for Fri in store_data['hoursOfOperation']['Fri']:
-            fri_time = 'Fri: ' + Fri[0] + ' - ' + Fri[1]
-        for Thu in store_data['hoursOfOperation']['Thu']:
-            thu_time = 'Thu: ' + Thu[0] + ' - ' + Thu[1]
-        for Wed in store_data['hoursOfOperation']['Wed']:
-            wed_time = 'Wed: ' + Wed[0] + ' - ' + Wed[1]
-        for Tue in store_data['hoursOfOperation']['Tue']:
-            tue_time = 'Tue: ' + Tue[0] + ' - ' + Tue[1]
-        for Mon in store_data['hoursOfOperation']['Mon']:
-            mon_time = 'Mon: ' + Sat[0] + ' - ' + Mon[1]
-        hour = mon_time + ', ' + tue_time + ', ' + wed_time + ', ' + \
-            thu_time + ', ' + fri_time + ', ' + sat_time + ', ' + sun_time
-        if (hour == '' or hour is None):
-            hour = "<MISSING>"
-        return_object = []
-        return_object.append(base_url)
-        return_object.append(location_name)
-        return_object.append(street_address)
-        return_object.append(city)
-        return_object.append(state)
-        return_object.append(store_zip)
-        return_object.append("US")
-        return_object.append(store_number)
-        return_object.append(phone)
-        return_object.append("<MISSING>")
-        return_object.append(store_data["geo"][1])
-        return_object.append(store_data["geo"][0])
-        return_object.append(hour)
-        return_object.append(page_url)
-        yield return_object
-        # logger.info("--" + str(str(return_object)))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~")
+    base_link = "https://www.ulta.com/stores"
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    locator_domain = "https://www.ulta.com"
+
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        if "metaCustomSlug" in str(script):
+            data = script.contents[0]
+            break
+
+    raw_ids = re.findall(r'id":[0-9]+', data)
+
+    # Split ids into chunks of 100
+    L = range(len(raw_ids))
+    id_range = [L[x : x + 100] for x in range(0, len(L), 100)]
+
+    for i in id_range:
+        ids = []
+        for x in i:
+            ids.append(raw_ids[x].replace('id":', ""))
+        fin_ids = "%2C".join(ids)
+        base_link = (
+            "https://sls-api-service.sweetiq-sls-production-east.sweetiq.com/aXyQneW52YL8dmJYjXdkvR4t8Sv6Qe/locations-details?locale=en_US&ids="
+            + fin_ids
+            + "&clientId=5e3da261df2763dd5ce605ab&cname=ulta-sweetiq-sls-production.sweetiq.com"
+        )
+
+        stores = session.get(base_link, headers=headers).json()["features"]
+        for store in stores:
+            store_data = store["properties"]
+            if store_data["isPermanentlyClosed"]:
+                continue
+            location_name = store_data["mallName"]
+            try:
+                street_address = (
+                    store_data["addressLine1"] + " " + store_data["addressLine2"]
+                ).strip()
+            except:
+                street_address = store_data["addressLine1"].strip()
+            city = store_data["city"]
+            state = store_data["province"]
+            store_zip = store_data["postalCode"].strip()
+            if len(store_zip) == 4:
+                store_zip = "0" + store_zip
+            country_code = store_data["country"]
+            phone = store_data["phoneNumber"]
+            store_number = store_data["branch"]
+            page_url = store_data["website"]
+            latitude = store["geometry"]["coordinates"][1]
+            longitude = store["geometry"]["coordinates"][0]
+            location_type = ", ".join(store_data["services"])
+            if "Sun" in store_data["hoursOfOperation"]:
+                for Sun in store_data["hoursOfOperation"]["Sun"]:
+                    sun_time = "Sun: " + Sun[0] + " - " + Sun[1]
+            else:
+                sun_time = ""
+            for Sat in store_data["hoursOfOperation"]["Sat"]:
+                sat_time = "Sat: " + Sat[0] + " - " + Sat[1]
+            for Fri in store_data["hoursOfOperation"]["Fri"]:
+                fri_time = "Fri: " + Fri[0] + " - " + Fri[1]
+            for Thu in store_data["hoursOfOperation"]["Thu"]:
+                thu_time = "Thu: " + Thu[0] + " - " + Thu[1]
+            for Wed in store_data["hoursOfOperation"]["Wed"]:
+                wed_time = "Wed: " + Wed[0] + " - " + Wed[1]
+            for Tue in store_data["hoursOfOperation"]["Tue"]:
+                tue_time = "Tue: " + Tue[0] + " - " + Tue[1]
+            for Mon in store_data["hoursOfOperation"]["Mon"]:
+                mon_time = "Mon: " + Sat[0] + " - " + Mon[1]
+            hour = (
+                mon_time
+                + ", "
+                + tue_time
+                + ", "
+                + wed_time
+                + ", "
+                + thu_time
+                + ", "
+                + fri_time
+                + ", "
+                + sat_time
+                + ", "
+                + sun_time
+            )
+            if hour == "" or hour is None:
+                hour = "<MISSING>"
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=store_zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hour,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

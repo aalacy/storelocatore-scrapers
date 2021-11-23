@@ -61,8 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://www.shakeaway.com/index.php/all-stores/item/bournemouth"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
@@ -91,11 +89,13 @@ def fetch_data():
         phone = ""
         for index in range(0, len(sections)):
             if "Address" in "".join(sections[index].xpath(".//text()")).strip():
-                raw_address = " ".join(sections[index + 1].xpath("span/text()")).strip()
+                raw_address = ", ".join(
+                    sections[index + 1].xpath("span/text()")
+                ).strip()
                 if len(raw_address) <= 0:
-                    raw_address = " ".join(sections[index + 1].xpath("text()")).strip()
+                    raw_address = ", ".join(sections[index + 1].xpath("text()")).strip()
                     if len(raw_address) <= 0:
-                        raw_address = " ".join(
+                        raw_address = ", ".join(
                             sections[index + 1].xpath("span/span/text()")
                         ).strip()
             if "Phone Number" in "".join(sections[index].xpath(".//text()")).strip():
@@ -103,14 +103,19 @@ def fetch_data():
                 if phone == "TBC":
                     phone = ""
 
-        formatted_addr = parser.parse_address_intl(raw_address)
+        formatted_addr = parser.parse_address_intl(raw_address.replace(",,", ","))
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
+        if street_address == "26":
+            street_address = ", ".join(raw_address.split(",")[:-2])
+
         city = formatted_addr.city
         state = formatted_addr.state
         zip = formatted_addr.postcode
+        if zip is None:
+            zip = raw_address.split(",")[-1].strip()
         country_code = formatted_addr.country
 
         if country_code == "" or country_code is None:
@@ -190,10 +195,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-        # break
-
-    return loc_list
+        yield curr_list
 
 
 def scrape():

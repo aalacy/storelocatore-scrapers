@@ -27,14 +27,14 @@ def fetch_data():
 
     for city in cities_list:
 
-        page_url = "<MISSING>"
+        page_url = "https://www.paradisebakery.com/locations"
         locator_domain = website
         log.info(city)
         page_res = session.get(city, headers=headers)
         page_sel = lxml.html.fromstring(page_res.text)
 
         stores_list = page_sel.xpath(
-            '//div[contains(@id,"Container")]//div[@class="_1Z_nJ" and ./h1[contains(@style,"font-size:23px")]/span[text()]]'
+            '//div[contains(@id,"Container")]//div[@data-testid="richTextElement" and ./h1[contains(@style,"font-size:23px")]/span[text()]]'
         )
 
         for store in stores_list:
@@ -106,6 +106,8 @@ def fetch_data():
                 .replace("  ", " ")
                 .strip()
                 .replace("Hours :", "")
+                .strip()
+                .replace("Hours:", "")
                 .strip()
             )
             if "Please visit" in hours_of_operation and "closed" in hours_of_operation:

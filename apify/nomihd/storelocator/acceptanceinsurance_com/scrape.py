@@ -4,6 +4,9 @@ from sglogging import sglog
 import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "acceptanceinsurance.com"
 domain = "https://locations.acceptanceinsurance.com/"
@@ -33,10 +36,9 @@ def fetch_data():
         .split(",")
     )
     states = [x.strip(' "') for x in states]
-
-    for state in states:
-        log.info(state)
-        state_res = session.get(state, headers=headers)
+    for stat in states:
+        log.info(stat)
+        state_res = session.get(stat, headers=headers)
         stores = (
             state_res.text.split('"significantLink":')[1]
             .split("]")[0]
@@ -49,56 +51,128 @@ def fetch_data():
             log.info(store)
             store_res = session.get(store, headers=headers)
             if store_res.ok is False:
-                continue
-            json_str = (
-                store_res.text.split('<script type="application/ld+json">')[1]
-                .split("</script>")[0]
-                .strip()
-            )
-            json_obj = json.loads(json_str)
+                temp_url = store.replace(
+                    "https://locations.acceptanceinsurance.com", ""
+                ).strip()
+                page_url = stat + temp_url.split("/")[2].strip()
+                log.info(page_url)
+                store_req = session.get(page_url, headers=headers)
+                store_sel = lxml.html.fromstring(store_req.text)
+                page_url = page_url
+                curr_store = store_sel.xpath(
+                    f'//div[@id="location-list"]//div[@class="location-detail row"][.//strong[@class="name"]/a[contains(@href,"{temp_url}")]]'
+                )
+                if len(curr_store) > 0:
+                    curr_store = curr_store[0]
+                    location_name = "".join(
+                        curr_store.xpath('.//strong[@class="name"]//text()')
+                    ).strip()
+                    street_address = "".join(
+                        curr_store.xpath('.//div[@class="street"]/text()')
+                    ).strip()
+                    city_state = "".join(
+                        curr_store.xpath('.//div[@class="locality"]/text()')
+                    ).strip()
+                    city = city_state.split(",")[0].strip()
 
-            locator_domain = website
-            page_url = store
+                    state = city_state.split(",")[-1].strip()
 
-            location_name = (
-                json_obj["name"] + " - " + json_obj["address"]["streetAddress"]
-            )
-            street_address = json_obj["address"]["streetAddress"]
-            city = json_obj["address"]["addressLocality"]
-            state = json_obj["address"]["addressRegion"]
-            zip = json_obj["address"]["postalCode"]
-            country_code = json_obj["address"]["addressCountry"]
-            store_number = json_obj["branchCode"]
-            phone = json_obj["telephone"]
-            location_type = "<MISSING>"
-            hour_list = json_obj["openingHours"]
-            hours_of_operation = "; ".join(hour_list)
+                    zip = "".join(
+                        curr_store.xpath('.//div[@class="locality"]/span/text()')
+                    ).strip()
+                    country_code = "US"
+                    store_number = "".join(
+                        store_sel.xpath(
+                            f'//div[@id="location-list"][.//strong[@class="name"]/a[contains(@href,"{temp_url}")]]/@data-currentlocation'
+                        )
+                    ).strip()
 
-            latitude = json_obj["geo"]["latitude"]
-            longitude = json_obj["geo"]["longitude"]
+                    phone = "".join(
+                        curr_store.xpath('.//div[@class="telephone"]//text()')
+                    ).strip()
+                    location_type = "<MISSING>"
+                    hours_of_operation = "<MISSING>"
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                    map_link = "".join(
+                        curr_store.xpath('.//a[contains(@href,"maps/dir")]/@href')
+                    ).strip()
+                    latitude = ""
+                    longitude = ""
+                    if len(map_link) > 0:
+                        latitude = map_link.split("/")[-1].strip().split(",")[0].strip()
+                        longitude = (
+                            map_link.split("/")[-1].strip().split(",")[-1].strip()
+                        )
+
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+
+            else:
+                json_str = (
+                    store_res.text.split('<script type="application/ld+json">')[1]
+                    .split("</script>")[0]
+                    .strip()
+                )
+                json_obj = json.loads(json_str)
+
+                locator_domain = website
+                page_url = store
+
+                location_name = (
+                    json_obj["name"] + " - " + json_obj["address"]["streetAddress"]
+                )
+                street_address = json_obj["address"]["streetAddress"]
+                city = json_obj["address"]["addressLocality"]
+                state = json_obj["address"]["addressRegion"]
+                zip = json_obj["address"]["postalCode"]
+                country_code = json_obj["address"]["addressCountry"]
+                store_number = json_obj["branchCode"]
+                phone = json_obj["telephone"]
+                location_type = "<MISSING>"
+                hour_list = json_obj["openingHours"]
+                hours_of_operation = "; ".join(hour_list)
+
+                latitude = json_obj["geo"]["latitude"]
+                longitude = json_obj["geo"]["longitude"]
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,2 +1,6 @@
-sgselenium
-sglogging
+sgrequests==0.1.12
+sgscrape==0.0.23
+sgvalidator==0.0.71
+sglogging==0.0.4
+sgselenium==0.1.4
+beautifulsoup4==4.9.3

@@ -19,56 +19,73 @@ def fetch_data():
     soup = BeautifulSoup(son.text, "lxml")
     soup = soup.find_all("script", {"type": "text/javascript", "language": False})
     for i in soup:
-        if "jqLocator(document).ready(function()" in i.text:
+        if "jqLocator(document).ready(function()" in str(i):
             son = json.loads(
                 str(
-                    i.text.split("location_data", 1)[1]
+                    str(i)
+                    .split("location_data", 1)[1]
                     .split("=", 1)[1]
                     .split("searchcenter", 1)[0]
                     .rsplit(";", 1)[0]
                 )
             )
+            found = []
             for i in son:
+                if "closed" in i["name"].lower():
+                    continue
                 try:
-                    i["spe"] = (
-                        "https://stores.sleephappens.com/"
-                        + i["countrycode"]
-                        + "/"
-                        + i["state"]
-                        + "/"
-                        + i["city"]
-                        + "/"
-                        + i["slug"]
-                        + "/"
-                        + i["id"]
-                        + "/11139"
-                    )
-                    i["trey"] = i["countrycode"]
+                    i["country"] = i["country"]
                 except:
-                    i["spe"] = (
-                        "https://stores.sleephappens.com/"
-                        + i["country"]
-                        + "/"
-                        + i["state"]
-                        + "/"
-                        + i["city"]
-                        + "/"
-                        + i["slug"]
-                        + "/"
-                        + i["id"]
-                        + "/11139"
+                    i["country"] = "US"
+                try:
+                    i["link"] = i["websiteurl"]
+                    if i["link"] in found:
+                        continue
+                    found.append(i["link"])
+                except:
+                    i["link"] = "<MISSING>"
+                try:
+                    i["phone"] = i["phone"]
+                except:
+                    if i["link"] != "<MISSING>":
+                        req = session.get(i["websiteurl"], headers=headers)
+                        base = BeautifulSoup(req.text, "lxml")
+                        i["phone"] = base.find(class_="phone-text").text
+                    else:
+                        i["phone"] = "<MISSING>"
+                try:
+                    i["hours"] = i["hours"]
+                except:
+                    i["hours"] = (
+                        "Sun "
+                        + i["hourssunday"]
+                        + " Mon "
+                        + i["hoursmonday"]
+                        + " Tue "
+                        + i["hourstuesday"]
+                        + " Wed "
+                        + i["hourswednesday"]
+                        + " Thu "
+                        + i["hoursthursday"]
+                        + " Fri "
+                        + i["hoursfriday"]
+                        + " Sat "
+                        + i["hourssaturday"]
                     )
-                    i["trey"] = i["country"]
                 yield i
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
 def pretty_hours(x):
-    x = x.replace("{", "")
-    x = x.split("}")
-    x.pop(-1)
-    x.pop(-1)
-    x = "; ".join(x)
+    if "{" in x:
+        x = x.replace("{", "")
+        x = x.split("}")
+        try:
+            x.pop(-1)
+            x.pop(-1)
+            x = "; ".join(x)
+        except:
+            x = "Closed"
     return x
 
 
@@ -76,7 +93,7 @@ def scrape():
     url = "https://stores.sleephappens.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["spe"]),
+        page_url=MappingField(mapping=["websiteurl"]),
         location_name=MappingField(mapping=["name"]),
         latitude=MappingField(mapping=["lat"]),
         longitude=MappingField(mapping=["lng"]),
@@ -84,7 +101,7 @@ def scrape():
         city=MappingField(mapping=["city"]),
         state=MappingField(mapping=["state"]),
         zipcode=MappingField(mapping=["postalcode"]),
-        country_code=MappingField(mapping=["trey"]),
+        country_code=MappingField(mapping=["country"]),
         phone=MappingField(mapping=["phone"]),
         store_number=MappingField(mapping=["id"]),
         hours_of_operation=MappingField(

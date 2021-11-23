@@ -84,8 +84,7 @@ def fetch_data():
                     poi["id"]
                 )
             )
-            d_response = session.get(details_url)
-            d_data = json.loads(d_response.text)
+            d_data = session.get(details_url).json()
             d_data = json.loads(
                 [
                     elem
@@ -93,12 +92,13 @@ def fetch_data():
                     if elem["name"] == "Departments"
                 ][0]["value"]
             )
-            weekdays = d_data["Pharmacy"]["Weekdays"]
-            saturday = d_data["Pharmacy"]["Saturday"]
-            sunday = d_data["Pharmacy"]["Sunday"]
-            hours_of_operation = (
-                f"Weekdays {weekdays}, Saturday {saturday}, Sunday {sunday}"
-            )
+            if d_data["Pharmacy"].get("Weekdays"):
+                weekdays = d_data["Pharmacy"]["Weekdays"]
+                saturday = d_data["Pharmacy"]["Saturday"]
+                sunday = d_data["Pharmacy"]["Sunday"]
+                hours_of_operation = (
+                    f"Weekdays {weekdays}, Saturday {saturday}, Sunday {sunday}"
+                )
         hours_of_operation = (
             hours_of_operation.replace(";", " ") if hours_of_operation else "<MISSING>"
         )

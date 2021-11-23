@@ -1,69 +1,125 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+import csv
+from time import sleep
+from lxml import etree
+from urllib.parse import urljoin
 
+from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    base_url = "https://www.54thstreetgrill.com"
-    return_main_object = []
-    r = session.get(base_url + "/54th-all-locations.html")
-    soup = BeautifulSoup(r.text,"lxml")
-    for parts in soup.find_all("li",{"class": "accordion-navigation"}):
-        for semi_parts in parts.find_all("div",{"class": re.compile("columns small-12 medium-4")}):
-            return_object = []
-            store_request = session.get(base_url + semi_parts.find("h4").find("a")['href'])
-            store_soup = BeautifulSoup(store_request.text,"lxml")
-            locationDetails = store_soup.find("div",{"id": "locationDetails"})
-            temp_list = list(locationDetails.find_all("p"))
-            if len(temp_list) >= 2:
-                hours_of_operation = temp_list[-2].text + " " + temp_list[-1].text
-            for semi_semi_parts in semi_parts.find_all("h4",{"class": "local-name"}):
-                temp_storename = list(semi_semi_parts.stripped_strings)
-                location_name = temp_storename[-1].strip("()").split(",")[0]
-            for semi_semi_parts in semi_parts.find_all("p",{"class": "local-address"}):
-                temp_storeaddresss = list(semi_semi_parts.stripped_strings)
-                street_address = temp_storeaddresss[0]
-                st=temp_storeaddresss[1].split(",")[1].split(" ")
-                if len(st)==3:
-                    city = temp_storeaddresss[1].split(",")[0]
-                    state = temp_storeaddresss[1].split(",")[1].split(" ")[1]
-                    store_zip = temp_storeaddresss[1].split(",")[1].split(" ")[2]
-                else:
-                    city = temp_storeaddresss[1].split(",")[0].split(" ")[0]
-                    state = temp_storeaddresss[1].split(",")[0].split(" ")[1]
-                    store_zip = st[-1]
-                phone = temp_storeaddresss[2]
-            return_object.append("https://www.54thstreetgrill.com")
-            return_object.append(location_name)
-            return_object.append(street_address)
-            return_object.append(city)
-            return_object.append(state)
-            return_object.append(store_zip)
-            return_object.append("US")
-            return_object.append("<MISSING>")
-            return_object.append(phone)
-            return_object.append("54TH STREET")
-            return_object.append("<INACCESSIBLE>")
-            return_object.append("<INACCESSIBLE>")
-            return_object.append(hours_of_operation)
-            return_main_object.append(return_object)
-    return return_main_object
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://www.54thstreetgrill.com/54th-all-locations.html"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//h4[@class="local-name"]/a/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        with SgFirefox() as driver:
+            driver.get(store_url)
+            sleep(30)
+            loc_dom = etree.HTML(driver.page_source)
+            raw_address = loc_dom.xpath('//div[@id="locationContact"]/text()')
+            raw_address = [e.strip() for e in raw_address if e.strip()]
+
+            location_name = loc_dom.xpath("//h1/text()")[0]
+            street_address = raw_address[0]
+            city = " ".join(raw_address[1].split(", ")[0].split()[:-1])
+            state = raw_address[1].split(", ")[0].split()[-1]
+            state = state if state else "<MISSING>"
+            zip_code = raw_address[1].split(", ")[-1]
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = "<MISSING>"
+            store_number = "<MISSING>"
+            phone = raw_address[-1]
+            location_type = "<MISSING>"
+            hoo = loc_dom.xpath('//p[strong[contains(text(), "SERVING FOOD")]]/text()')
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//h3[contains(text(), "Hours of Operation")]/following-sibling::p[1]/text()'
+                )
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = (
+                " ".join(hoo).replace("*", "").replace(" Same hours as above", "")
+                if hoo
+                else "<MISSING>"
+            )
+
+            driver.switch_to.frame(driver.find_element_by_id("mapIndividual"))
+            loc_dom = etree.HTML(driver.page_source)
+            geo = (
+                loc_dom.xpath('//a[contains(@href, "maps")]/@href')[-1]
+                .split("@")[-1]
+                .split(",")[:2]
+            )
+            latitude = geo[0]
+            longitude = geo[1]
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

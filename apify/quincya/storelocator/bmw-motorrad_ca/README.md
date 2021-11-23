@@ -1,1 +1,1 @@
-Hours <INACCESSIBLE> when available only in search page and not available in API nor page source
+Hours when available only in search page and not available in API nor page source

@@ -47,7 +47,7 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), '.dmxGoogleMaps')]/text()"))
-    text = text.split('"markers":')[1].split(",  null")[0] + "]"
+    text = text.split('"markers":')[1].replace(": ,", ': "",').split(",  null")[0] + "]"
     js = json.loads(text)
     for j in js:
         lat = j.get("latitude") or "<MISSING>"

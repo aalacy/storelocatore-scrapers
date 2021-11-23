@@ -35,22 +35,19 @@ def write_output(data):
 
 
 def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Referer": "https://www.lincoln.com/dealerships/",
-        "x-dtpc": "5$166255767_949h2vRTJTKPSCMONMCTUNVCWWPPPMGGWKCFFO-0e36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
+
     base_url = "https://www.lincoln.com"
     addresses = []
-    zipcodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_results=100,
-        max_radius_miles=100,
-    )
+    zipcodes = DynamicZipSearch(country_codes=[SearchableCountries.USA])
     for zip_code in zipcodes:
-        logger.info(f"fetching records for zipcode:{zip_code}")
+        str_zip = str(zip_code)
+        if len(str_zip) == 4:
+            str_zip = "0" + str_zip
+            logger.info(f"appended zero:{zip_code} => {str_zip}")
+        if len(str_zip) == 3:
+            str_zip = "00" + str_zip
+            logger.info(f"appended zeros:{zip_code} => {str_zip}")
+        logger.info(f"fetching records for zipcode:{str_zip}")
         street_address = ""
         city = ""
         state = ""
@@ -61,11 +58,11 @@ def fetch_data():
         hours_of_operation = ""
         get_u = (
             "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius=500&minDealers=1&maxDealers=100&postalCode="
-            + str(zip_code)
+            + str_zip
             + "&api_key=0d571406-82e4-2b65-cc885011-048eb263"
         )
         try:
-            k = session.get(get_u, headers=headers).json()
+            k = session.get(get_u, timeout=5).json()
         except:
             continue
         if "Response" in k and "Dealer" in k["Response"]:
@@ -102,27 +99,10 @@ def fetch_data():
                                     + h1
                                 )
 
-                    if "Day" in i["ServiceHours"]:
-                        for j in i["ServiceHours"]["Day"]:
-                            if "closed" in j and j == "true":
-                                h1 = j["name"] + " " + "closed"
-                            elif "open" in j:
-                                time1 = (
-                                    time1
-                                    + " "
-                                    + j["name"]
-                                    + " "
-                                    + j["open"]
-                                    + " "
-                                    + j["close"]
-                                    + " "
-                                    + h1
-                                )
-                    hours_of_operation = (
-                        " SalesHours " + time + " ServiceHours " + time1
-                    )
+                    hours_of_operation = time.strip()
                     latitude = i["Latitude"]
                     longitude = i["Longitude"]
+                    zipcodes.found_location_at(latitude, longitude)
                     store = []
                     store.append(base_url)
                     store.append(i["Name"])
@@ -137,11 +117,7 @@ def fetch_data():
                     store.append(latitude)
                     store.append(longitude)
                     store.append(
-                        hours_of_operation.replace(
-                            " SalesHours  ServiceHours ", "<MISSING>"
-                        )
-                        if hours_of_operation
-                        else "<MISSING>"
+                        hours_of_operation if hours_of_operation else "<MISSING>"
                     )
                     store.append(
                         "https://www.lincoln.com/dealerships/dealer-details/"

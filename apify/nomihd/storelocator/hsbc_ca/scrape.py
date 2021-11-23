@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "hsbc.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -31,13 +33,13 @@ def fetch_data():
 
     for url in urls_list:
         stores = []
-        if "/data/branches" in url:
+        if "data-type-branches" in url:
             stores_req = session.get(
                 "https://www.hsbc.ca" + url.replace(".cdata", ".udata"),
                 headers=headers,
             )
             stores = json.loads(stores_req.text)["branches"]
-        elif "/data/atms" in url:
+        elif "data-type-atms" in url:
             stores_req = session.get(
                 "https://www.hsbc.ca" + url.replace(".cdata", ".udata"),
                 headers=headers,
@@ -50,7 +52,15 @@ def fetch_data():
             location_name = store["name"]
             street_address = ""
             if "street" in store["address"]:
-                street_address = store["address"]["street"]
+                street_address = (
+                    store["address"]["street"]
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "-")
+                    .strip()
+                    .replace("---", "-")
+                    .strip()
+                )
             city = store["address"]["townOrCity"]
             state = store["address"]["stateRegionCounty"]
             zip = store["address"]["postcode"]
@@ -96,7 +106,19 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

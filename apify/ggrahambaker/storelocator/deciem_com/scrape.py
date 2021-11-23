@@ -50,7 +50,12 @@ def fetch_data():
     }
     all_locations = []
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=100
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.BRITAIN,
+            SearchableCountries.CANADA,
+        ],
+        max_radius_miles=100,
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng), headers=hdr)
@@ -67,12 +72,14 @@ def fetch_data():
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
-        state = poi["stateCode"]
+        state = poi.get("stateCode")
         state = state if state else "<MISSING>"
         zip_code = poi["postalCode"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["countryCode"]
         country_code = country_code if country_code else "<MISSING>"
+        if country_code not in ["CA", "GB", "US"]:
+            continue
         store_number = "<MISSING>"
         phone = "<MISSING>"
         location_type = poi["owner"]

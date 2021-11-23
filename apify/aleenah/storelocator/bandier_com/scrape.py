@@ -68,7 +68,7 @@ def fetch_data():
         data = data.split("\n")
         tim = data[-1]
         loc = data[0]
-
+        logger.info(loc)
         if "*Currently closed in light of COVID-19.*" in data[0]:
             tim += " *Currently closed in light of COVID-19.*"
             del data[0]
@@ -85,14 +85,29 @@ def fetch_data():
                 .replace("</p>", "")
                 .split("<br/>")
             )
+        if addr != ["None"]:
 
-        street = addr[0].strip()
-        phone = re.findall(r"([\d\-]+)", addr[-1])[-1]
-        addr = addr[1].strip().split(",")
-        city = addr[0]
-        addr = addr[1].strip().split(" ")
-        zip = addr[1]
-        state = addr[0]
+            street = addr[0].strip()
+            phone = re.findall(r"([\d\-]+)", addr[-1])[-1]
+            addr = addr[1].strip().split(",")
+            city = addr[0]
+            addr = addr[1].strip().split(" ")
+            zip = addr[1]
+            state = addr[0]
+        else:
+            ps = div.find_all("p")
+            addr = str(ps[0])
+            addr = addr.replace("<p>", "").replace("</p>", "").strip().split("<br/>")
+            street = addr[0]
+            addr = addr[1].strip().split(",")
+            city = addr[0]
+            addr = addr[1].strip().split(" ")
+            zip = addr[1]
+            state = addr[0]
+            phone = ps[1].text.replace("T:", "").strip()
+            tim = (
+                ps[2].text.strip().replace("Store Hours:", "").replace("\n", "").strip()
+            )
 
         logger.info(addr)
         all.append(
@@ -109,7 +124,7 @@ def fetch_data():
                 "<MISSING>",  # type
                 "<MISSING>",  # lat
                 "<MISSING>",  # long
-                tim,  # timing
+                tim.replace("PMS", "PM, S"),  # timing
                 "https://www.bandier.com/locations",
             ]
         )

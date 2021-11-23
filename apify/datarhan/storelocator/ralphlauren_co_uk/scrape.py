@@ -3,8 +3,8 @@ import json
 from lxml import etree
 from urllib.parse import urljoin
 
-from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
+import cfscrape
 
 
 def write_output(data):
@@ -39,23 +39,20 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests()
-
     items = []
 
     DOMAIN = "ralphlauren.co.uk"
     start_url = "https://www.ralphlauren.co.uk/en/Stores-ShowCities?countryCode=GB"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
-    }
 
-    response = session.get(start_url, headers=headers)
+    scraper = cfscrape.create_scraper()
+    response = scraper.get(start_url)
     dom = etree.HTML(response.text)
     all_locations = []
     all_urls = dom.xpath('//div[@class="store-directory-column"]/a')
     for url_html in all_urls:
         url = url_html.xpath("@href")[0]
-        response = session.get(urljoin(start_url, url))
+        scraper = cfscrape.create_scraper()
+        response = scraper.get(urljoin(start_url, url))
         dom = etree.HTML(response.text)
         poi_urls = dom.xpath('//span[@class="store-listing-name"]/a/@href')
         if poi_urls:
@@ -65,13 +62,14 @@ def fetch_data():
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
+        scraper = cfscrape.create_scraper()
+        loc_response = scraper.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath("//@data-storejson")[0]
         poi = json.loads(poi)[0]
 
         location_name = loc_dom.xpath('//div[@class="store-locator-details"]/h1/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//p[@class="store-address"]/text()')
         raw_address = " ".join(
             [elem.strip().replace("\n", " ") for elem in raw_address if elem.strip()]

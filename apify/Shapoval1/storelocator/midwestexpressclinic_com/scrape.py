@@ -82,13 +82,17 @@ def fetch_data():
     js = json.loads(div)
     for j in js:
         m = j.get("location")
-        ad = "".join(j.get("address")).replace("\n", "").replace("<br>", "").strip()
+        ad = "".join(j.get("address")).replace("\n", " ").replace("<br>", " ").strip()
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         page_url = f"https://midwestexpressclinic.com/locations/{m.get('extra_fields').get('Slug')}"
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
         city = a.get("city")
+        if ad.find("7343") != -1:
+            street_address = " ".join(ad.split(",")[0].split()[:3]).strip()
+            city = " ".join(ad.split(",")[0].split()[3:]).strip()
+
         state = a.get("state")
         postal = a.get("postal")
         store_number = "<MISSING>"
@@ -104,37 +108,13 @@ def fetch_data():
         }
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-
-        hours_of_operation = (
-            "".join(
-                tree.xpath(
-                    '//p[contains(text(), "pm")]//text() | //span[contains(text(), "pm")]/text()'
-                )
-            )
-            or "Coming Soon"
+        hours_of_operation = tree.xpath(
+            '//div[@class="et_pb_column et_pb_column_1_2 et_pb_column_2  et_pb_css_mix_blend_mode_passthrough"]/div[4]//text()'
         )
-        if hours_of_operation.find("from") != -1:
-            hours_of_operation = (
-                hours_of_operation.split("from")[1]
-                .split(".")[0]
-                .replace("intil", "-")
-                .strip()
-            )
+        hours_of_operation = list(filter(None, [a.strip() for a in hours_of_operation]))
         hours_of_operation = (
-            hours_of_operation.replace("daily. (", "")
-            .replace("until", "-")
-            .replace("daily", "")
-            .replace("to", "-")
-            .strip()
+            "".join(hours_of_operation).replace("\ue60d", "").strip() or "<MISSING>"
         )
-        if hours_of_operation.find("Our Merrillville, Indiana") != -1:
-            hours_of_operation = (
-                hours_of_operation.split("between")[1]
-                .split(".")[0]
-                .replace("and", "-")
-                .strip()
-            )
-        hours_of_operation = hours_of_operation.replace("–", "-")
 
         row = [
             locator_domain,

@@ -1,7 +1,7 @@
 import csv
 
 from bs4 import BeautifulSoup
-
+from lxml import html
 from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
@@ -16,7 +16,6 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -35,7 +34,6 @@ def write_output(data):
                 "hours_of_operation",
             ]
         )
-        # Body
         for row in data:
             writer.writerow(row)
 
@@ -84,6 +82,7 @@ def fetch_data():
     }
     r = session.get("https://www.thesandwichspot.com/locations")
     soup = BeautifulSoup(r.text, "html.parser")
+
     data_list = soup.findAll("div", {"role": "gridcell"})
     for loc in data_list:
         title = loc.find("h4").text
@@ -98,6 +97,8 @@ def fetch_data():
             logger.info(page_url)
             hoolink = session.get(page_url)
             hoo_data = BeautifulSoup(hoolink.text, "html.parser")
+            r = session.get(page_url)
+            tree = html.fromstring(r.text)
             hoo_details = hoo_data.findAll("div", {"data-testid": "richTextElement"})
             div_count = 0
             for det in hoo_details:
@@ -115,7 +116,7 @@ def fetch_data():
             hours_of_operation = (
                 hours_of_operation.replace("Please call for Hours due to C19", "")
                 .replace("&", "and")
-                .replace(" ", " ")
+                .replace(" ", " ")
                 .replace("\u200b", "")
                 .replace("(Covid 19 Hours in Place)", "")
             )
@@ -182,7 +183,16 @@ def fetch_data():
             lat = "<MISSING>"
             lng = "<MISSING>"
         else:
-            street = list(hoo_data.find(class_="_3Mgpu").p.stripped_strings)[0]
+            street = "<MISSING>"
+            if street == "<MISSING>":
+                street = "".join(
+                    tree.xpath(
+                        '//div[./p//span[contains(text(), "HOURS:")]]/p[1]//text()'
+                    )
+                )
+                if street.find("\n") != -1:
+                    street = street.split("\n")[0].strip()
+            street = street.replace("Good Food", "").replace("�", "").strip()
             city = lat_lng[title]["city"]
             state = lat_lng[title]["state"]
             zipcode = lat_lng[title]["zip"]

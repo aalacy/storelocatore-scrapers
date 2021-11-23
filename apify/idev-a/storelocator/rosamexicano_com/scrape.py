@@ -25,12 +25,15 @@ def fetch_data():
         for _ in locations["subOrganization"]:
             logger.info(_["url"])
             sp1 = bs(session.get(_["url"], headers=_headers).text, "lxml")
-            _hr = sp1.find("strong", string=re.compile(r"Hours: Seven days a week"))
-            hours = ""
+            _hr = sp1.find("u", string=re.compile(r"Hours of Operation"))
+            hours = []
+            temp = []
             if _hr:
-                hours = "Seven days a week " + _hr.find_next_sibling().text
-                if "am" in _hr.text:
-                    hours = _hr.text.replace("Hours:", "")
+                temp = list(_hr.find_parent().find_parent().stripped_strings)[1:]
+                for hh in temp:
+                    if "Indoor dining" in hh:
+                        break
+                    hours.append(hh)
             coord = (
                 sp1.select_one("div.gmaps")["data-gmaps-static-url-mobile"]
                 .split("&center=")[1]
@@ -50,7 +53,7 @@ def fetch_data():
                 country_code="US",
                 phone=_["telephone"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation="; ".join(hours),
             )
 
 

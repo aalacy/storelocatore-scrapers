@@ -1,126 +1,76 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    for i in range(1, 10000):
+        api_url = f"https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=UKSBDAZIVAISUXSR&pageSize=100&page={i}"
+        r = session.get(api_url)
+        js = r.json()
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        for j in js:
+            j = j["store_info"]
+            street_address = (
+                f"{j.get('address')} {j.get('address_extended') or ''}".strip()
+            )
+            city = j.get("locality")
+            location_name = f"{j.get('name')} {city}"
+            state = j.get("region")
+            postal = j.get("postcode")
+            country_code = j.get("country")
+            adr = street_address.replace(" ", "-").replace(",", "*").lower()
+            page_url = f"https://locations.orangeleafyogurt.com/ll/{country_code}/{state}/{city}/{adr}"
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            location_type = j.get("Type")
+            hours = j.get("store_hours") or ""
 
-        for row in data:
-            writer.writerow(row)
+            _tmp = []
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            hours = hours.split(";")[:-1]
+            i = 0
+            for d in days:
+                try:
+                    time = hours[i].split(",")
+                except IndexError:
+                    i += 1
+                    _tmp.append(f"{d}: Closed")
+                    continue
+                start = f"{time[1][:2]}:{time[1][2:]}"
+                close = f"{time[2][:2]}:{time[2][2:]}"
+                _tmp.append(f"{d}: {start} - {close}")
+                i += 1
 
+            hours_of_operation = ";".join(_tmp)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                location_type=location_type,
+                hours_of_operation=hours_of_operation,
+            )
 
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.orangeleafyogurt.com/locations")
-    tree = html.fromstring(r.text)
+            sgw.write_row(row)
 
-    return tree.xpath("//div[@class='col-md-4 location']/h5/a/@href")
-
-
-def get_data(page_url):
-    locator_domain = "https://www.orangeleafyogurt.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath("//div[@class='col-lg-5 info']/h2/text()")
-    ).strip()
-    line = tree.xpath("//div[@class='address']/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-    phone = line[-1]
-    line = line[:-1]
-    part = line[-1]
-    line = line[:-1]
-    street_address = ", ".join(line)
-    city = part.split(",")[0].strip()
-    part = part.split(",")[-1].strip()
-    state = part.split()[0].strip()
-    postal = part.split()[-1].strip()
-    country_code = "US"
-    store_number = "<MISSING>"
-    try:
-        latlon = "".join(tree.xpath("//a[text()='Directions']/@href"))
-        latitude, longitude = latlon.split("@")[-1].split(",")
-    except:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-    location_type = "<MISSING>"
-
-    _tmp = []
-    divs = tree.xpath("//div[@class='hours']/div")
-    for d in divs:
-        day = "".join(d.xpath("./div[1]/text()")).strip()
-        time = "".join(d.xpath("./div[2]//text()")).strip()
-        _tmp.append(f"{day}: {time}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if location_name.lower().find("closed") != -1:
-        hours_of_operation = "Temporarily Closed"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 100:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.orangeleafyogurt.com"
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

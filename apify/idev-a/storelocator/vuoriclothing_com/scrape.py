@@ -8,6 +8,20 @@ _headers = {
 }
 
 
+def _p(val):
+    return (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
+
+
 def fetch_data():
     locator_domain = "https://vuoriclothing.com/"
     base_url = "https://vuoriclothing.com/apps/store-locator/"
@@ -19,17 +33,24 @@ def fetch_data():
         for _ in locations:
             addr = list(_.select_one("p.store-loc-vuori-store-addy").stripped_strings)
             block = list(_.select_one("p.store-loc-vuori-store-hours").stripped_strings)
+            phone = ""
+            if _p(block[-1]):
+                phone = block[-1]
+                del block[-1]
+            street_address = " ".join(addr[:-1]).strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.select_one("p.store-loc-vuori-store-name").text,
-                street_address=" ".join(addr[:-1]),
+                street_address=street_address,
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 locator_domain=locator_domain,
-                phone=block[-1],
-                hours_of_operation="; ".join(block[:-1]).replace("–", "-"),
+                phone=phone,
+                hours_of_operation="; ".join(block).replace("–", "-"),
             )
 
 

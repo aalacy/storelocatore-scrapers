@@ -40,7 +40,7 @@ def fetch_data():
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     block = tree.xpath(
-        "//div[contains(@class, 'sc-pZopv bjKdkd')] [position()>1 and position()<last()]"
+        "//div[contains(@class, 'sc-hhIiOg')] [position()>1 and position()<last()]"
     )
     for b in block:
         location_name = (
@@ -64,6 +64,10 @@ def fetch_data():
         ad = b.xpath(".//span[contains(text(), 'Phone')]//text()")
         phone = "".join(ad[0]).split("Phone:")[1].strip()
         street_address = "".join(ad[1]).split("Add:")[1].strip()
+        if street_address.find("8750 ") != -1:
+            location_name = (
+                "".join(b.xpath(".//h3/span/text()[1]")).replace("\n", "").strip()
+            )
         ad = "".join(ad[2:]).replace("\n", "")
         if ad.find(")") != -1:
             ad = ad.split(")")[1]

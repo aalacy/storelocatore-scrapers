@@ -27,7 +27,7 @@ def fetch_data():
         page_url = "https://marylous.com/find-a-marylous/"
 
         locator_domain = website
-        location_name = store["store"].strip()
+        location_name = store["store"].strip().replace("&#8211;", "-").strip()
         street_address = store["address"].strip()
         city = store["city"].strip()
         state = store["state"].strip()

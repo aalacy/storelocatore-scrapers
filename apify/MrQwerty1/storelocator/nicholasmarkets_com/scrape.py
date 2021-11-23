@@ -95,19 +95,23 @@ def fetch_data():
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='market-store mb-4']")
+    divs = tree.xpath("//div[./h6[contains(text(), 'NICHOLAS MARKETS')]]")
 
     for d in divs:
         location_name = "".join(d.xpath(".//h6/text()")).strip()
         line = "".join(
-            d.xpath(".//li[./strong[contains(text(), 'Location')]]/p/text()")
+            d.xpath(
+                ".//p[./strong[contains(text(), 'LOCATION')]]/following-sibling::p[1]/text()"
+            )
         ).strip()
         street_address, city, state, postal = get_address(line)
         country_code = "US"
         store_number = "<MISSING>"
         phone = (
             "".join(
-                d.xpath(".//li[./strong[contains(text(), 'Phone')]]/p/text()")
+                d.xpath(
+                    ".//p[./strong[contains(text(), 'PHONE')]]/following-sibling::p[1]/text()"
+                )
             ).strip()
             or "<MISSING>"
         )
@@ -115,7 +119,9 @@ def fetch_data():
         latitude, longitude = get_coords_from_embed(text)
         location_type = "<MISSING>"
 
-        hours = d.xpath(".//li[last()]/p/text()")
+        hours = d.xpath(
+            ".//p[./strong[contains(text(), 'STORE HOURS')]]/following-sibling::p[1]/text()"
+        )
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours) or "<MISSING>"
 

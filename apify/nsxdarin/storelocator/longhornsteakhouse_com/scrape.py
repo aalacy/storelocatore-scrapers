@@ -1,9 +1,20 @@
-import csv
+import re
 import time
 import random
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
+from tenacity import retry, stop_after_attempt
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+alllocs = []
 
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
@@ -20,63 +31,46 @@ def sleep():
     time.sleep(random.randint(4, 7))
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def fetch(loc, driver):
+    return driver.execute_async_script(
+        f"""
+        var done = arguments[0]
+        fetch("{loc}")
+            .then(res => res.text())
+            .then(done)
+    """
+    )
 
 
-def fetch_data():
-    locs = []
-    url = "https://www.longhornsteakhouse.com/locations-sitemap.xml"
-    session = SgRequests()
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://www.longhornsteakhouse.com/locations/" in line:
-            lurl = line.split("<loc>")[1].split("<")[0]
-            locs.append(lurl)
-    for loc in locs:
-        logger.info("Pulling Location %s..." % loc)
-        website = "longhornsteakhouse.com"
-        typ = "Restaurant"
-        hours = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        country = ""
-        name = ""
-        store = loc.rsplit("/", 1)[1]
-        with SgChrome(executable_path="/bin/chromedriver") as driver:
+@retry(stop=stop_after_attempt(3))
+def fetch_location(loc, driver):
+    PhoneFound = False
+    count = 1
+    while PhoneFound is False and count <= 10:
+        count = count + 1
+        try:
+            logger.info("Pulling Location %s..." % loc)
+            website = "longhornsteakhouse.com"
+            typ = "Restaurant"
+            hours = ""
+            add = ""
+            city = ""
+            state = ""
+            zc = ""
+            phone = ""
+            lat = ""
+            lng = ""
+            hours = ""
+            country = ""
+            name = ""
+            store = loc.rsplit("/", 1)[1]
+
+            text = fetch(loc, driver)
             sleep()
-            driver.get(loc)
-            text = driver.page_source
+
+            if re.search("access denied", text, re.IGNORECASE):
+                raise Exception()
+
             text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
             if 'id="restLatLong" value="' in text:
                 lat = text.split('id="restLatLong" value="')[1].split(",")[0]
@@ -123,38 +117,59 @@ def fetch_data():
                 )
             if ',"telephone":"' in text:
                 phone = text.split(',"telephone":"')[1].split('"')[0]
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if "Cincinnati - Eastgate" in name:
-            phone = "(513) 947-8882"
-        if "Orchard Park" in name:
-            phone = "(716) 825-1378"
-        if "Gainesville" in name:
-            phone = "(352) 372-5715"
-        if "Find A R" not in name:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if hours == "":
+                hours = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            if phone != "<MISSING>":
+                PhoneFound = True
+                if loc not in alllocs:
+                    alllocs.append(loc)
+                    if "Find A R" not in name:
+                        return SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
+        except:
+            PhoneFound = False
+
+
+def fetch_data():
+    locs = []
+    url = "https://www.longhornsteakhouse.com/locations-sitemap.xml"
+    session = SgRequests()
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if "<loc>https://www.longhornsteakhouse.com/locations/" in line:
+            lurl = line.split("<loc>")[1].split("<")[0]
+            locs.append(lurl)
+
+    with ThreadPoolExecutor(max_workers=1) as executor, SgChrome() as driver:
+        driver.get("https://www.longhornsteakhouse.com/locations/")
+        futures = [executor.submit(fetch_location, loc, driver) for loc in locs]
+        for future in as_completed(futures):
+            poi = future.result()
+            if poi:
+                yield poi
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

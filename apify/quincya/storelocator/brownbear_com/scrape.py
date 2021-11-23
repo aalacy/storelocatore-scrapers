@@ -1,74 +1,112 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import csv
-import re
+
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
+
 
 def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-	
-	base_link = "https://www.brownbear.com/locations"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://www.brownbear.com/api/v1/locations?radius=5"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	data = []
+    data = []
+    locator_domain = "brownbear.com"
 
-	items = base.find_all(class_="street")
-	locator_domain = "brownbear.com"
+    session = SgRequests()
+    stores = session.get(base_link, headers=headers).json()["data"]
 
-	for item in items:
-		link = "https://www.brownbear.com" + item.a['href']
+    for store in stores:
+        location_name = store["title"].strip()
+        if "Enterprises" in location_name:
+            continue
+        link = store["url"]
+        street_address = store["address_line_1"].strip()
+        city_line = store["address_line_2"].split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
+        country_code = "US"
+        store_number = store["id"]
+        phone = store["phone"]
+        latitude = store["lat"]
+        longitude = store["lng"]
+        location_type = "Open"
+        if store["temporarily_closed"]:
+            location_type = "Temporarily Closed"
 
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-		location_name = base.h1.text.strip()
+        try:
+            hours_of_operation = (
+                " ".join(
+                    list(base.find(class_="location-hours__list").stripped_strings)
+                )
+                .replace("Temporarily Closed", "")
+                .strip()
+            )
+        except:
+            hours_of_operation = "<MISSING>"
 
-		street_address = location_name[location_name.find("-")+1:location_name.rfind("(")].strip()
+        # Store data
+        data.append(
+            [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
 
-		city = location_name.split("-")[0].strip()
-		state = base.find('meta', attrs={'name': 'description'})['content'].split(",")[-1].split()[0].strip()
-		zip_code = base.find('meta', attrs={'name': 'description'})['content'].split(",")[-1].split()[1].strip()
-		if street_address == "8296 Avondale Way NE":
-			state = "Washington"
-			zip_code = "98052"
-		country_code = "US"
-		store_number = link.split("-")[-1]
-		location_type = location_name.split("(")[-1].split(")")[0].strip()
-		phone = base.find(class_="panel-body").find_all('p')[-1].text.split("Phone Number")[-1]
-		hours_of_operation = base.find_all(class_="panel-body")[1].find(class_="col-md-6").text.replace("\n"," ").split("Hours")[-1].strip()
+    return data
 
-		map_link = base.iframe['src'].replace("\n","")
-		req = session.get(map_link, headers = HEADERS)
-		map_str = str(BeautifulSoup(req.text,"lxml"))
-		geo = re.findall(r'\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]', map_str)[0].replace("[","").replace("]","").split(",")
-		latitude = geo[0]
-		longitude = geo[1]
-		if street_address == "2421 148th Ave NE":
-			latitude = "47.6318474"
-			longitude = "-122.1458327"
-
-		location_name = location_name.split("(")[0].strip()
-		
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()

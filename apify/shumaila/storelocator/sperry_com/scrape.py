@@ -1,207 +1,111 @@
-from bs4 import BeautifulSoup
-import csv
-import usaddress
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    "x-requested-with": "XMLHttpRequest",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def settime(timenow, flag):
+    endt = "00"
+    if timenow == "0":
+        return " Closed"
+    if len(timenow) == 3:
+        st = (int)(timenow[0:1])
+        endt = timenow[1:3]
+    elif len(timenow) == 4:
+        st = (int)(timenow[0:2])
+        endt = timenow[2:4]
+    if st > 12:
+        st = st - 12
+    zone = " AM - "
+    if flag == 2:
+        zone = " PM "
+    return str(st) + ":" + endt + zone
 
 
 def fetch_data():
-    p = 0
-    data = []
+
     titlelist = []
-    zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
-    for zip_code in zips:
-        url = (
-            "https://www.sperry.com/en/stores?distanceMax=300&distanceUnit=mi&country=US&zip="
-            + zip_code
-            + "&formType=findbyzipandcountry&start=0&sz=100"
-        )
-        obj = {"format": "ajax"}
-        r = session.post(url, data=obj, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        try:
-            divlist = soup.find("table").findAll("tr")
-        except:
-            continue
-        for div in divlist:
-            title = div.find("span").text.split(".")[1].replace("\n", "")
-            try:
-                hours = div.find("div", {"class": "store-hours"}).text
-            except:
-                hours = div.find("td", {"class": "store-hours"}).text
-            store = div.find("a", {"class": "editbutton"})["id"]
-            if "Check store inventory" not in hours or store in titlelist:
+    weeklist = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+    urllist = [
+        "https://sperry.locally.com/stores/conversion_data?has_data=true&company_id=1566&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=39.75307668395031&map_center_lng=-105.27049999999929&map_distance_diag=2901.674064426807&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=boulder&zoom_level=4&forced_coords=1",
+        "https://sperry.locally.com/stores/conversion_data?has_data=true&company_id=1566&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=21.255013345566596&map_center_lng=-157.7963900000007&map_distance_diag=1027.55394920827&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=+HI+96753&zoom_level=6&forced_coords=1",
+    ]
+    for url in urllist:
+        loclist = session.get(url, headers=headers)
+        loclist = loclist.json()["markers"]
+
+        for loc in loclist:
+
+            store = loc["id"]
+            title = loc["name"]
+            city = loc["city"]
+            state = loc["state"]
+            street = loc["address"]
+            lat = loc["lat"]
+            longt = loc["lng"]
+            phone = loc["phone"]
+            ccode = loc["country"]
+            pcode = loc["zip"]
+            if store in titlelist:
                 continue
             titlelist.append(store)
-            hours = (
-                hours.replace("Check store inventory", "")
-                .replace("\n", " ")
-                .replace("pm", "pm ")
-                .strip()
-            )
-            address = (
-                div.find("a", {"class": "getdirection"})["href"]
-                .split("q=", 1)[1]
-                .replace(",", "")
-            )
-            phone = div.find("td", {"class": "store-phone"}).text
-            lat = (
-                div.find("a", {"class": "editbutton"})["data-location"]
-                .split("'latitude':'", 1)[1]
-                .split("'", 1)[0]
-            )
-            longt = (
-                div.find("a", {"class": "editbutton"})["data-location"]
-                .split("'longitude':'", 1)[1]
-                .split("'", 1)[0]
-            )
-            link = (
-                "https://www.sperry.com"
-                + div.find("a", {"class": "editbutton"})["href"]
-            )
-            address = usaddress.parse(address)
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
-            street = street.lstrip().replace(",", "")
-            city = city.lstrip().replace(",", "")
-            state = state.lstrip().replace(",", "")
-            pcode = pcode.lstrip().replace(",", "")
+            if "Sperry" in title:
+                ltype = "Store"
+            else:
+                ltype = "Dealer"
+            link = "https://sperry.locally.com/store/" + str(store)
+            hours = ""
             try:
-                temp, city = city.split("OUTLETS ", 1)
-                street = street + " " + temp + " OUTLETS"
+                for day in weeklist:
+
+                    start = settime(str(loc[day + "_time_open"]), 1)
+                    if "Closed" in start:
+                        end = " "
+                    else:
+                        end = settime(str(loc[day + "_time_close"]), 2)
+                    hours = hours + day + " " + start + end
             except:
-                pass
-            try:
-                temp, city = city.split("OUTLET ", 1)
-                street = street + " " + temp + " OUTLETS"
-            except:
-                pass
-            try:
-                temp, city = city.split("GALLERIA ", 1)
-                street = street + " " + temp + " GALLERIA"
-            except:
-                pass
-            try:
-                temp, city = city.split("CENTER ", 1)
-                street = street + " " + temp + " CENTER"
-            except:
-                pass
-            try:
-                temp, city = city.split("PLACE ", 1)
-                street = street + " " + temp + " PLACE"
-            except:
-                pass
-            try:
-                temp, city = city.split("BEACH ", 1)
-                street = street + " " + temp + " BEACH"
-            except:
-                pass
-            try:
-                temp, city = city.split("NORTH ", 1)
-                street = street + " " + temp + " NORTH"
-            except:
-                pass
-            try:
-                temp, city = city.split("ISLAND ", 1)
-                street = street + " " + temp + " ISLAND"
-            except:
-                pass
-            try:
-                temp = city.split(" ")
-                if temp[0] == temp[1] or temp[0] == "null":
-                    city = temp[1]
-            except:
-                pass
+                hours = "<MISSING>"
             if len(phone) < 3:
                 phone = "<MISSING>"
-            if len(hours) < 3:
-                hours = "<MISSING>"
-            data.append(
-                [
-                    "https://www.sperry.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            if "mon  Closed" in hours and "tue  Closed" in hours:
+                hours = "Mon-Sun Closed"
+            yield SgRecord(
+                locator_domain="https://www.sperry.com/",
+                page_url=link,
+                location_name=title.encode("ascii", "ignore").decode("ascii").strip(),
+                street_address=street.encode("ascii", "ignore").decode("ascii").strip(),
+                city=city.encode("ascii", "ignore").decode("ascii").strip(),
+                state=state.encode("ascii", "ignore").decode("ascii").strip(),
+                zip_postal=pcode,
+                country_code=ccode.encode("ascii", "ignore").decode("ascii").strip(),
+                store_number=str(store),
+                phone=phone.encode("ascii", "ignore").decode("ascii").strip(),
+                location_type=ltype.encode("ascii", "ignore").decode("ascii").strip(),
+                latitude=lat.encode("ascii", "ignore").decode("ascii").strip(),
+                longitude=longt.encode("ascii", "ignore").decode("ascii").strip(),
+                hours_of_operation=hours.encode("ascii", "ignore")
+                .decode("ascii")
+                .strip(),
             )
-
-            p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

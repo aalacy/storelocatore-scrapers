@@ -1,7 +1,4 @@
 import csv
-import re
-
-from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
@@ -38,77 +35,67 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.deserres.ca/en/find-a-store"
+    base_link = "https://www.deserres.ca/apps/deserres/stores?lang=en_ca"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
-
     data = []
-
-    sections = base.find_all(class_="accordion_item")
     locator_domain = "deserres.ca"
 
-    for section in sections:
-        state = section.find(class_="accordion_item-title").text.strip()
-        items = section.find_all("li")
+    session = SgRequests()
+    stores = session.get(base_link, headers=headers).json()["stores"]
 
-        for item in items:
-            link = item.a["href"]
-            location_name = item.a.text.split(">")[0].strip()
+    for store in stores:
+        location_name = store["name"].strip()
+        link = "https://www.deserres.ca/pages/" + store["page_handle"]
 
-            raw_address = list(item.stripped_strings)[1:]
-            street_address = raw_address[0]
-            city = " ".join(raw_address[-1].split()[2:]).strip()
-            zip_code = " ".join(raw_address[-1].split()[:2]).strip()
-            country_code = "CA"
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
+        raw_address = store["address"]
+        try:
+            street_address = (
+                raw_address["address1"] + " " + raw_address["address2"]
+            ).strip()
+        except:
+            street_address = raw_address["address1"]
+        city = raw_address["city"]
+        state = raw_address["province"]
+        zip_code = raw_address["postal_code"]
+        country_code = "CA"
+        store_number = store["store_id"]
+        phone = raw_address["phone"]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        location_type = "<MISSING>"
 
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-
+        hours = ""
+        raw_hours = store["opening_hours"]
+        for raw_hour in raw_hours:
             try:
-                phone = re.findall(
-                    r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(base.address.text)
-                )[0]
+                clean_hours = raw_hour["open"] + "-" + raw_hour["close"]
             except:
-                phone = "<MISSING>"
+                clean_hours = "Closed"
+            hours = (hours + " " + raw_hour["day"] + " " + clean_hours).strip()
+        hours = hours.replace("  ", " ")
 
-            try:
-                hours_of_operation = " ".join(
-                    list(base.find(class_="hours").dl.stripped_strings)
-                )
-            except:
-                if "temporarily closed" in base.text:
-                    hours_of_operation = "Temporarily Closed"
-                else:
-                    hours_of_operation = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
+        # Store data
+        data.append(
+            [
+                locator_domain,
+                link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours,
+            ]
+        )
     return data
 
 

@@ -77,7 +77,7 @@ def get_address(line):
 def fetch_data():
     out = []
     locator_domain = "https://frozenyo.com/"
-    page_url = "https://frozenyo.com/"
+    page_url = "https://www.frozenyodc.com/location"
 
     session = SgRequests()
     headers = {
@@ -85,35 +85,24 @@ def fetch_data():
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath(
-        "//div[@id='loc']//div[contains(@class, 'et_pb_column et_pb_column_1_4') and .//h2]"
-    )
+    names = tree.xpath("//span[contains(text(), ' Location')]/text()")
+    adresses = "".join(tree.xpath("//span[contains(text(), '//')]/text()")).split("//")
 
-    for d in divs:
-        location_name = "".join(d.xpath(".//h2//text()")).strip()
-        line = d.xpath(".//h2/following-sibling::p[1]//text()")
-        line = list(filter(None, [l.strip() for l in line]))
-
-        phone = line.pop()
-        if "/" in phone:
-            phone = phone.split("/")[0].strip()
-        line = ", ".join(line)
-        street_address, city, state, postal = get_address(line)
+    for name, line in zip(names, adresses):
+        location_name = name.strip()
+        phone = "".join(tree.xpath("//span[contains(text(), '(')]/text()")).strip()
+        street_address, city, state, postal = get_address(line.strip())
         country_code = "US"
         store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
-
-        _tmp = []
-        text = d.xpath(".//h2/following-sibling::p[position() > 1]//text()")
-        text = list(filter(None, [t.strip() for t in text]))
-        for t in text:
-            if "Hours" in t or "Street" in t or "Uber" in t or "Order" in t:
-                continue
-            _tmp.append(t)
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = (
+            "".join(
+                tree.xpath("//span[contains(text(), 'We are open')]/text()")
+            ).replace("We are open ", "")
+            or "<MISSING>"
+        )
 
         row = [
             locator_domain,

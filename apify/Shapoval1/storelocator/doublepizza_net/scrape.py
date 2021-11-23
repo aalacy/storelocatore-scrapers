@@ -44,8 +44,10 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     ll = (
-        "".join(tree.xpath('//script[contains(text(), "var locations")]/text()'))
+        "["
+        + "".join(tree.xpath('//script[contains(text(), "var locations")]/text()'))
         .split("var locations = ")[1]
+        .split("'003' ],")[1]
         .split(";")[0]
     )
     li = eval(ll)

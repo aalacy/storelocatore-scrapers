@@ -1,13 +1,12 @@
+import re
 import csv
-from datetime import datetime
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
+import pycountry
 
-logger = SgLogSetup().get_logger("maxmara_com")
+from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -16,6 +15,7 @@ def write_output(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -28,7 +28,6 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
-                "page_url",
             ]
         )
         # Body
@@ -36,106 +35,75 @@ def write_output(data):
             writer.writerow(row)
 
 
-MISSING = "<MISSING>"
-
-
-def get(location, key):
-    return location.get(key, MISSING) or MISSING
-
-
-def get_state(components):
-    state = components[1]
-    for d in components[2]:
-        if d.isdigit():
-            state = MISSING
-            break
-
-    return state
-
-
-def get_country_code(properties):
-    country = get(properties, "country")
-    if country == "United States":
-        return "US"
-    if country == "Canada":
-        return "CA"
-
-    return country
-
-
-def get_hours(properties):
-    days = properties.get("openingHours")
-    if not days:
-        return MISSING
-
-    hours = [f"{day}: {val[0]}" for day, val in days.items()]
-    return ",".join(hours).strip()
-
-
 def fetch_data():
-    session = SgRequests()
-    HEADERS = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://us.maxmara.com/store-locator?listJson=true&withoutRadius=false&country={}"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "referer": "https://us.maxmara.com/store-locator",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36",
+        "x-newrelic-id": "UAYAWFVXGwICXVhaAwUE",
+        "x-requested-with": "XMLHttpRequest",
     }
+    for e in pycountry.countries:
+        data = session.get(start_url.format(e.alpha_2), headers=hdr).json()
+        all_locations = data["features"]
+        for poi in all_locations:
+            store_url = f"https://us.maxmara.com/store/{poi['properties']['name']}"
+            location_name = poi["properties"]["displayName"]
+            street_address = (
+                poi["properties"]["formattedAddress"].split(",")[0].split("Outlet")[-1]
+            )
+            if street_address == ".. ..":
+                street_address = "<MISSING>"
+            city = poi["properties"]["city"]
+            state = poi["properties"]["prov"].split("-")[-1]
+            state = state if state else "<MISSING>"
+            zip_code = poi["properties"]["zip"]
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = poi["properties"]["country"]
+            country_code = country_code if country_code else "<MISSING>"
+            store_number = poi["properties"]["name"]
+            phone = poi["properties"]["phone1"]
+            phone = phone if phone else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = poi["properties"]["lat"]
+            longitude = poi["properties"]["lng"]
+            hoo = []
+            for day, hours in poi["properties"]["openingHours"].items():
+                hoo.append(f"{day} {hours[0]}")
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-    countries = ["US", "CA"]
-    for country in countries:
-        logger.info(f"fetch: {country} locations")
-        params = {"listJson": True, "withoutRadius": False, "country": country}
-
-        data = session.get(
-            "https://ca.maxmara.com/store-locator",
-            params=params,
-            headers=HEADERS,
-            timeout=1,
-        ).json()
-
-        locations = data.get("features")
-        logger.info(f"found: {len(locations)} locations")
-
-        for location in locations:
-
-            properties = location.get("properties", {})
-
-            locator_domain = "https://maxmara.com/"
-            location_name = get(properties, "displayName")
-            store_number = get(properties, "name")
-
-            address = get(properties, "formattedAddress")
-            components = address.split(",")
-
-            street_address = components[0]
-            city = get(properties, "city")
-            state = get_state(components)
-            postal = get(properties, "zip")
-            country_code = get_country_code(properties)
-            lat = get(properties, "lat")
-            lng = get(properties, "lng")
-
-            phone_number = get(properties, "phone1")
-            hours = get_hours(properties)
-            page_url = f"https://world.maxmara.com/store/{get(properties, 'name')}"
-
-            location_type = MISSING
-
-            store_data = [
-                locator_domain,
+            item = [
+                domain,
+                store_url,
                 location_name,
                 street_address,
                 city,
                 state,
-                postal,
+                zip_code,
                 country_code,
                 store_number,
-                phone_number,
+                phone,
                 location_type,
-                lat,
-                lng,
-                hours,
-                page_url,
+                latitude,
+                longitude,
+                hours_of_operation,
             ]
 
-            yield store_data
+            items.append(item)
+
+    return items
 
 
 def scrape():
@@ -143,4 +111,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

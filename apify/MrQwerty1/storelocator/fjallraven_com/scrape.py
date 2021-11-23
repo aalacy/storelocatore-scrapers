@@ -104,6 +104,12 @@ def fetch_data():
             latitude = j.get("latitude") or "<MISSING>"
             longitude = j.get("longitude") or "<MISSING>"
             location_type = "<MISSING>"
+            if j.get("qualified_retailers"):
+                location_type = "Qualified Retailer"
+            elif j.get("partner_stores"):
+                location_type = "Partner Store"
+            elif j.get("store_id"):
+                location_type = "Fjällräven Outlet"
 
             days = [
                 "monday",

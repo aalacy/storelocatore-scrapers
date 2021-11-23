@@ -18,8 +18,7 @@ def fetch_data():
             page_url = urljoin(
                 "https://www.fridleytheatres.com", link.select_one("a")["href"]
             )
-            r1 = session.get(page_url)
-            soup1 = bs(r1.text, "lxml")
+            soup1 = bs(session.get(page_url).text, "lxml")
             location_name = soup1.select_one("h1#theater-name").text
             _addr = " ".join([_ for _ in link.stripped_strings][1:-1])
             addr = parse_address_usa(_addr)

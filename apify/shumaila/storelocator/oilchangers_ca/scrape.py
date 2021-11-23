@@ -1,9 +1,12 @@
 import csv
+import re
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "cookie": "_ga='GA1.1.2000499983.1621085311; gcoc-location-finder-query={'lat':'51.8031249','lng':'-95.1958536'}; _ga_Z8VPGXEVP9=GS1.1.1621105581.4.1.1621105596.0",
 }
 
 
@@ -38,56 +41,40 @@ def write_output(data):
 
 
 def fetch_data():
-
     data = []
-    url = "https://oilchangers.ca/wp-admin/admin-ajax.php?action=locations_request&tire-rotations=false&tire-change=false"
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.gcoc.ca/locations/"
     p = 0
-    loclist = session.get(url, headers=headers, verify=False).json()
-    week = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-    ]
-    for loc in loclist:
-        title = loc["title"]
-        store = loc["post_id"]
-        lat = loc["location_latitude"][0]
-        longt = loc["location_longitude"][0]
-        street = loc["street_address"][0]
-        city = loc["location_city"][0]
-        state = loc["location_province"][0]
-        pcode = loc["location_postal_code"][0]
-        link = "https://oilchangers.ca" + loc["permalink"]
-        ccode = "CA"
-        phone = loc["phone_number"][0]
-        hours = ""
-        for day in week:
-            try:
-                openstr = "hours_of_operation_" + day.lower() + "_opening_hour"
-                opens = loc[openstr][0].split(":")[0]
-                closestr = "hours_of_operation_" + day.lower() + "_closing_hour"
-                closes = (int)(loc[closestr][0].split(":")[0])
-                if closes > 12:
-                    closes = closes - 12
-                hours = (
-                    hours
-                    + day
-                    + " "
-                    + opens
-                    + ":"
-                    + loc[openstr][0].split(":")[1]
-                    + " AM - "
-                    + str(closes)
-                    + ":"
-                    + loc[closestr][0].split(":")[1]
-                    + " PM "
-                )
-            except:
-                hours = hours + day + " Closed "
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.select("a[href*=locations]")[2:]
+    checklist = []
+    for link in linklist:
+        title = link.text
+        link = link["href"]
+        if link == "/locations/":
+            continue
+        if link in checklist:
+            continue
+        checklist.append(link)
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        content = soup.text.split("Store Locations")[2].split("Services", 1)[0]
+        content = re.sub(pattern, "\n", content).strip().splitlines()
+        hours = content[-1].replace("pm", "pm ").replace("day", "day ")
+        title = content[0]
+        street = content[1]
+        city = content[2]
+        state = content[3].replace(",", "")
+        pcode = content[4]
+        phone = content[6]
+        lat, longt = (
+            soup.select_one('a:contains("Direction")')["href"]
+            .split("destination=", 1)[1]
+            .split(",")
+        )
+        if "be closed" in hours:
+            hours = "<MISSING>"
         if title.find("Coming Soon") == -1:
             data.append(
                 [
@@ -98,8 +85,8 @@ def fetch_data():
                     city,
                     state,
                     pcode,
-                    ccode,
-                    store,
+                    "CA",
+                    "<MISSING>",
                     phone,
                     "<MISSING>",
                     lat,

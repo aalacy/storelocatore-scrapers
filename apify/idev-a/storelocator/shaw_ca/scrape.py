@@ -18,12 +18,11 @@ def fetch_data():
         for table in tables:
             for _ in table.select("tr"):
                 city = _.select("td")[0].p.text.strip()
-                addr = [
-                    " ".join(aa.stripped_strings)
-                    for aa in _.select("td")[1].select("p")
-                ]
+                addr = list(_.select("td")[1].stripped_strings)
                 if "Located across" in addr[-1]:
                     del addr[-1]
+                if "Trans-Canada Hwy" in addr[-2]:
+                    del addr[-2]
                 hours = list(_.select("td")[2].stripped_strings)
                 if "This location has temporarily relocated" in hours[0]:
                     del hours[0]
@@ -32,14 +31,29 @@ def fetch_data():
                 for x, hh in enumerate(hours):
                     if "Shaw Tower" in hh or "This location offers" in hh:
                         hours[x:] = []
+                if hours and hours[0] == "Map and Hours":
+                    hours = []
+                coord = ["", ""]
+                try:
+                    coord = (
+                        _.select("td")[2]
+                        .a["href"]
+                        .split("/@")[1]
+                        .split("/data")[0]
+                        .split(",")
+                    )
+                except:
+                    pass
                 yield SgRecord(
                     page_url=base_url,
-                    location_name=addr[0],
-                    street_address=" ".join(addr[1:-1]),
+                    location_name=city,
+                    street_address=addr[-2],
                     city=city,
                     zip_postal=addr[-1],
                     country_code="CA",
                     locator_domain=locator_domain,
+                    latitude=coord[0],
+                    longitude=coord[1],
                     hours_of_operation="; ".join(hours),
                 )
 
