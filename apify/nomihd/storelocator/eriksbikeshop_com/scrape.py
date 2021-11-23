@@ -46,7 +46,7 @@ def fetch_data():
         "extensions": {
             "persistedQuery": {
                 "version": 1,
-                "sha256Hash": "200466567f80973aacb4e7a7b6df609c2ea071cea84680c2cef0dc6265e220fc",
+                "sha256Hash": "1856bf7ae9bb5827c6ea52e98bbbc6b7ea4c1d475622b778101f4390dbc99768",
                 "sender": "vtex.store-locator@0.x",
                 "provider": "vtex.store-locator@0.x",
             },

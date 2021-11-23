@@ -6,21 +6,19 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
-import json
+import re
 
-DOMAIN = "bayhealth.org"
-BASE_URL = "https://www.bayhealth.org"
-API_URL = "https://www.bayhealth.org/api/search"
+DOMAIN = "theuniformoutlet.com"
+BASE_URL = "https://www.theuniformoutlet.com"
+LOCATION_URL = "https://theuniformoutlet.com/find-a-store/"
 HEADERS = {
-    "Accept": "*/*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
+MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
-MISSING = "<MISSING>"
 
 
 def getAddress(raw_address):
@@ -50,60 +48,54 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    req = session.get(url, headers=HEADERS)
-    if req.status_code == 404:
-        return False
-    soup = bs(req.content, "lxml")
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
 
-def get_latlong(data):
-    for row in data:
-        if row["Key"] == "latlong":
-            latlong = row["Value"].split(",")
-            return latlong[0], latlong[1]
-    return MISSING, MISSING
+def get_hoo(url):
+    soup = pull_content(url)
+    hoo_content = soup.find("div", {"class": "content-left"})
+    try:
+        hoo_content.find("div", {"class": "post-thumb"}).decompose()
+        hoo_content.find("p", {"style": "text-align: center;"}).decompose()
+        hoo_content.find("h3").decompose()
+    except:
+        pass
+    for content in hoo_content.find_all("p"):
+        if re.match(r"Store Hours", content.text.strip(), re.IGNORECASE):
+            content.decompose()
+            break
+        content.decompose()
+    hours_of_operation = (
+        re.sub(
+            r",Holiday Hours.*",
+            "",
+            ",".join([hoo.text.strip() for hoo in hoo_content.find_all("p")]).strip(),
+            re.IGNORECASE,
+        )
+        .strip()
+        .rstrip(",")
+    )
+    return hours_of_operation
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    payload = {
-        "Query": "_templatename:Location AND is_crawlable_b:true",
-        "Page": 1,
-        "NumberOfResults": 200,
-        "Sort": "locationname_s asc",
-    }
-    data = json.loads(session.post(API_URL, headers=HEADERS, data=payload).json())
-    for row in data["Results"]:
-        page_url = BASE_URL + row["Path"].replace(" ", "%20")
-        content = pull_content(page_url)
-        location_name = "Bayhealth " + row["Name"]
-        raw_address = (
-            content.find("p", {"class": "address-text"})
-            .get_text(strip=True, separator=",")
-            .replace(",Get Directions", "")
-        )
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select("div.location-result")
+    for row in contents:
+        page_url = row.find("h2", {"class": "title"}).find("a")["href"]
+        location_name = row.find("h2", {"class": "title"}).text.strip()
+        raw_address = row.find("address", {"class": "address"}).text.strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        try:
-            phone = content.find(
-                "div", {"class": "location-details-phone"}
-            ).text.strip()
-        except:
-            phone = MISSING
+        phone = row.find("address", {"class": "phone"}).text.strip()
         country_code = "US"
-        location_type = MISSING
+        hours_of_operation = get_hoo(page_url)
+        country_code = "US"
         store_number = MISSING
-        hoo_content = content.find("section", id="hours-of-operation")
-        if not hoo_content:
-            hours_of_operation = MISSING
-        else:
-            hours_of_operation = (
-                hoo_content.get_text(strip=True, separator=",")
-                .replace("Hours:", "")
-                .strip()
-                .lstrip(",")
-            )
-        latitude, longitude = get_latlong(row["Fields"])
+        location_type = MISSING
+        latitude = row["data-lat"]
+        longitude = row["data-lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
