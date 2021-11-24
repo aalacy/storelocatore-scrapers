@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -33,6 +34,10 @@ def fetch_data():
                 street_address = _["AddressLine1"]
                 if _["AddressLine2"]:
                     street_address += " " + _["AddressLine2"]
+
+                hours = []
+                if _["WeeklyOperatingHours"]:
+                    hours = bs(_["WeeklyOperatingHours"], "lxml").stripped_strings
                 yield SgRecord(
                     store_number=_["LocationID"],
                     location_name=_["LocationName"],
@@ -45,7 +50,7 @@ def fetch_data():
                     country_code=country,
                     phone=_["Telephone"],
                     locator_domain=locator_domain,
-                    hours_of_operation=_["WeeklyOperatingHours"],
+                    hours_of_operation="; ".join(hours),
                 )
 
 
