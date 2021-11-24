@@ -46,7 +46,7 @@ def fetch_data():
         state = addr.state
         zip_code = addr.postcode
         country_code = re.findall(
-            "storeaddresscountryname = '(.+?)';", loc_response.text
+            r"storeaddresscountryname = '(.+?)';", loc_response.text
         )
         country_code = country_code[0] if country_code else ""
         if not country_code and (zip_code and len(zip_code) == 5):
@@ -55,7 +55,7 @@ def fetch_data():
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = re.findall("storelatitude = '(.+?)';", loc_response.text)
+        latitude = re.findall(r"storelatitude = '(.+?)';", loc_response.text)
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = re.findall("storelongitude = '(.+?)';", loc_response.text)
         longitude = longitude[0] if longitude else "<MISSING>"
@@ -127,6 +127,8 @@ def fetch_data():
         location_name = raw_data[0]
         if not country_code and "Tommy Bahama" in location_name:
             country_code = "UNITED ARAB EMIRATES"
+        latitude = ""
+        longitude = ""
 
         item = SgRecord(
             locator_domain=domain,
