@@ -36,13 +36,30 @@ def fetch_us(res):
                 if "Available" in hh or "Order" in hh or "WhatsApp" in hh:
                     continue
                 hours.append(hh)
+        city = _["city"]
+        zip_postal = _["zip"]
+        if city == "DC":
+            city = ""
+
+        if city.isdigit() and not zip_postal:
+            zip_postal = city
+            city = ""
+
+        if not city and "-" in _["name"]:
+            city = (
+                _["name"]
+                .split("-")[0]
+                .replace("LE LABO", "")
+                .replace("Airport", "")
+                .strip()
+            )
         yield SgRecord(
             page_url=base_url,
             location_name=_["name"],
             street_address=street_address,
-            city=_["city"],
+            city=city,
             state=_["state"],
-            zip_postal=_["zip"],
+            zip_postal=zip_postal,
             country_code="US",
             phone=_["phone"],
             latitude=_["latitude"],
@@ -85,7 +102,7 @@ def fetch_data():
 
             addr = raw_address.split(",")
             street_address = city = state = zip_postal = ""
-            if country_code == "UK":
+            if country_code == "UK" or country_code == "GB":
                 zip_postal = addr[-2].strip()
                 city = addr[-3].strip()
                 street_address = " ".join(addr[:-3])
@@ -100,11 +117,37 @@ def fetch_data():
                 state = addr.state
                 zip_postal = addr.postcode
 
-            if country_code == "JP":
-                street_address = _addr[0]
+            if city in ["Ee", "Korea"]:
+                city = ""
 
             if country_code == "HK":
                 city = ""
+
+            location_name = (
+                _.select_one("div.store-name").text.replace("–", "-").strip()
+            )
+            if not city and "-" in location_name:
+                city = (
+                    location_name.split("-")[0]
+                    .replace("LE LABO", "")
+                    .replace("Airport", "")
+                    .strip()
+                )
+
+            if country_code == "JP":
+                street_address = _addr[0]
+
+            if street_address in ["2 I Ga", "138 City"] or (
+                street_address and street_address.replace("-", "").isdigit()
+            ):
+                street_address = ""
+                addr = raw_address.split(",")
+                idx = 0
+                while True:
+                    street_address += " " + addr[idx]
+                    if not street_address.strip().isdigit():
+                        break
+                    idx += 1
 
             hours = []
             if _.select_one("div.store-hours"):
@@ -115,9 +158,10 @@ def fetch_data():
             phone = ""
             if _.select_one("div.store-number"):
                 phone = _.select_one("div.store-number").text.split(":")[-1].strip()
+
             yield SgRecord(
                 page_url=base_url,
-                location_name=_.select_one("div.store-name").text.strip(),
+                location_name=location_name,
                 street_address=street_address,
                 city=city,
                 state=state,
