@@ -24,6 +24,7 @@ country_codes = [
     "ZA",
     "AU",
     "IN",
+    "GB",
     "JP",
     "MY",
     "AT",
