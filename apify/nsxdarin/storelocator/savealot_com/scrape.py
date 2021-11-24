@@ -44,7 +44,7 @@ def fetch_data():
                 website = "savealot.com"
                 phone = item["primary_phone"]
                 state = item["state"]
-                store = "<MISSING>"
+                store = item["store"]
                 zc = item["postal_code"]
                 city = item["city"]
                 purl = (
@@ -55,6 +55,7 @@ def fetch_data():
                     + "-"
                     + store
                 )
+                purl = purl.lower()
                 name = "Save A Lot"
                 add = item["street"]
                 country = "US"
@@ -65,7 +66,6 @@ def fetch_data():
                 try:
                     r2 = session.get(purl, headers=headers)
                     for line2 in r2.iter_lines():
-                        line2 = str(line2.decode("utf-8"))
                         if 'class="day">' in line2:
                             day = line2.split('class="day">')[1].split("<")[0]
                         if '<span class="hours">' in line2:

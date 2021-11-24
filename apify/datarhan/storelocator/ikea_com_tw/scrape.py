@@ -122,6 +122,13 @@ def fetch_data():
             phone = loc_dom.xpath('//div[h4[contains(text(), "General")]]/text()')
             phone = [e.strip() for e in phone if "service direct line:" in e]
             phone = phone[0].split("direct line:")[-1].strip() if phone else ""
+        phone = (
+            phone.split("press")[0]
+            .split("option")[0]
+            .split("#")[0]
+            .replace(",", "")
+            .strip()
+        )
         city = addr.city
         if city and city.endswith("."):
             city = city[:-1]
