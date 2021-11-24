@@ -81,9 +81,11 @@ def fetch_data():
                 geo = demjson.decode(geo)
                 latitude = geo["lat"]
                 longitude = geo["lng"]
-        hours_of_operation = loc_dom.xpath(
-            '//h2[contains(text(), "Opening Hours")]/following-sibling::div/span/text()'
-        )
+        hours_of_operation = loc_dom.xpath('//p[@class="day"]//text()')
+        if not hours_of_operation:
+            hours_of_operation = loc_dom.xpath(
+                '//h2[contains(text(), "Opening Hours")]/following-sibling::div/span/text()'
+            )
         if not hours_of_operation:
             hours_of_operation = loc_dom.xpath(
                 '//h2[contains(text(), "opening hours")]/following-sibling::div/span/text()'
@@ -133,6 +135,8 @@ def fetch_data():
         if "Unit 5/6" in address_raw[0]:
             street_address = "Unit 5/6, Windsor Royal Station Shopping Centre"
             zip_code = "SL4 1PJ"
+        if hours_of_operation == "We are now temporarily closed":
+            hours_of_operation = "temporarily closed"
 
         item = SgRecord(
             locator_domain=domain,
