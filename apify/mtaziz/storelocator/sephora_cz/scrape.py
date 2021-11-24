@@ -37,6 +37,7 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.pl/perfumerie",
 ]
 
+
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("sephora_cz")
 headers = {
@@ -69,107 +70,156 @@ def get_store_urls():
 
 
 def fetch_records(idx, store_url, sgw: SgWriter):
-    logger.info(f"[{idx}] Pulling the data from: {store_url}")
-    rcz = get_response(store_url)
-    sel_cz = html.fromstring(rcz.text, "lxml")
-    dcz = sel_cz.xpath(
-        '//script[contains(@type, "application/ld+json") and contains(text(), "telephone")]/text()'
-    )
-    dcz1 = "".join(dcz)
-    data_json = json.loads(dcz1)
-    domain = urlparse(store_url).netloc
-    locator_domain = domain.replace("www.", "")
-    page_url = store_url
-    logger.info(f"[{idx}] page_url: {page_url}")
+    try:
+        phone = None
+        street_address = None
+        city = None
+        state = None
+        zip_postal = None
+        hours_of_operation = None
 
-    location_name = data_json["name"]
-    location_name = location_name if location_name else MISSING
-    logger.info(f"[{idx}] location_name: {location_name}")
-
-    add = data_json["address"]
-    street_address = add["streetAddress"]
-    logger.info(f"[{idx}] Street Address: {street_address}")
-
-    city = add["addressLocality"]
-    city = city if city else MISSING
-    logger.info(f"[{idx}] City: {city}")
-
-    state = ""
-    state = state if state else MISSING
-    logger.info(f"[{idx}] State: {state}")
-
-    zip_postal = add["postalCode"]
-    zip_postal = zip_postal if zip_postal else MISSING
-    logger.info(f"[{idx}] Zip Code: {zip_postal}")
-
-    country_code = locator_domain.split(".")[-1].upper()
-    logger.info(f"[{idx}] country_code: {country_code}")
-
-    store_number = page_url.split("storeID=")[-1]
-    logger.info(f"[{idx}] store_number: {store_number}")
-
-    phone = data_json["telephone"]
-    phone = phone if phone else MISSING
-    logger.info(f"[{idx}] Phone: {phone}")
-
-    # Location Type
-    location_type = data_json["@type"]
-    location_type = location_type if location_type else MISSING
-    logger.info(f"[{idx}] location_type: {location_type}")
-
-    # Latlng
-    latlng = "".join(
-        sel_cz.xpath(
-            '//div[contains(@data-default-coordinates, "longitude")]/@data-coord'
+        logger.info(f"[{idx}] Pulling the data from: {store_url}")
+        rcz = get_response(store_url)
+        sel_cz = html.fromstring(rcz.text, "lxml")
+        dcz = sel_cz.xpath(
+            '//script[contains(@type, "application/ld+json") and contains(text(), "streetAddress") or contains(text(), "paymentAccepted")]/text()'
         )
-    )
-    latlng1 = json.loads(latlng)
+        dcz1 = "".join(dcz)
+        dcz2 = " ".join(dcz1.split())
+        data_json = json.loads(dcz2)
+        domain = urlparse(store_url).netloc
+        locator_domain = domain.replace("www.", "")
+        page_url = store_url
 
-    # Latitude
-    latitude = latlng1["lat"]
-    latitude = latitude if latitude else MISSING
-    logger.info(f"[{idx}] lat: {latitude}")
+        location_name = data_json["name"]
+        location_name = location_name if location_name else MISSING
+        if "address" in data_json:
+            add = data_json["address"]
+            street_address = " ".join(add["streetAddress"].split())
+            street_address = street_address if street_address else MISSING
 
-    # Longitude
-    longitude = latlng1["lng"]
-    longitude = longitude if longitude else MISSING
-    logger.info(f"[{idx}] lng: {longitude}")
+            city = add["addressLocality"]
+            city = city if city else MISSING
+            state = state if state else MISSING
 
-    hours_of_operation = ""
-    hoo = data_json["openingHours"]
-    if isinstance(hoo, list):
-        hours_of_operation = ", ".join(hoo)
-    else:
-        hours_of_operation = hoo
+            zip_postal = add["postalCode"]
+            zip_postal = zip_postal if zip_postal else MISSING
+            if zip_postal == "-":
+                zip_postal = MISSING
+            if zip_postal == "0":
+                zip_postal = MISSING
+            if zip_postal == "00":
+                zip_postal = MISSING
+            if zip_postal == "000":
+                zip_postal = MISSING
+            if zip_postal == "0000":
+                zip_postal = MISSING
+            if zip_postal == "00000":
+                zip_postal = MISSING
+            if zip_postal == "000000":
+                zip_postal = MISSING
+        else:
+            street_address = MISSING
+            city = MISSING
+            state = MISSING
+            zip_postal = MISSING
 
-    logger.info(f"[{idx}] hours_of_operation: {hours_of_operation}")
+        logger.info(f"[{idx}] Zip Code: {zip_postal}")
 
-    # Raw Address
-    raw_address = ""
-    raw_address = raw_address if raw_address else MISSING
-    idx += 1
-    item = SgRecord(
-        locator_domain=locator_domain,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=location_type,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hours_of_operation,
-        raw_address=raw_address,
-    )
-    sgw.write_row(item)
+        country_code = locator_domain.split(".")[-1].upper()
+        store_number = page_url.split("storeID=")[-1]
+
+        if "telephone" in data_json:
+            phone = data_json["telephone"]
+            phone = phone if phone else MISSING
+        else:
+            phone = MISSING
+        if phone == "0":
+            phone = MISSING
+        if phone == "00":
+            phone = MISSING
+        if phone == "000":
+            phone = MISSING
+        if phone == "0000":
+            phone = MISSING
+        if phone == "00000":
+            phone = MISSING
+        if phone == "000000":
+            phone = MISSING
+
+        logger.info(f"[{idx}] Phone: {phone}")
+
+        # Location Type
+        location_type = data_json["@type"]
+        location_type = location_type if location_type else MISSING
+
+        # Latlng
+        latlng = "".join(
+            sel_cz.xpath(
+                '//div[contains(@data-default-coordinates, "longitude")]/@data-coord'
+            )
+        )
+        latitude = None
+        longitude = None
+        try:
+            latlng1 = json.loads(latlng)
+            # Latitude
+            latitude = latlng1["lat"]
+            latitude = latitude if latitude else MISSING
+            logger.info(f"[{idx}] lat: {latitude}")
+
+            # Longitude
+            longitude = latlng1["lng"]
+            longitude = longitude if longitude else MISSING
+            logger.info(f"[{idx}] lng: {longitude}")
+        except:
+            latitude = MISSING
+            longitude = MISSING
+
+        hoo = data_json["openingHours"]
+        if isinstance(hoo, list):
+            hours_of_operation = ", ".join(hoo)
+        else:
+            hours_of_operation = hoo
+        logger.info(f"HOO: {hours_of_operation}")
+
+        if str(hours_of_operation) == "Mo-Su ":
+            hours_of_operation = MISSING
+
+        if str(hours_of_operation) == "Mo-Su":
+            hours_of_operation = MISSING
+
+        # Raw Address
+        raw_address = ""
+        raw_address = raw_address if raw_address else MISSING
+        idx += 1
+        item = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+        sgw.write_row(item)
+    except Exception as e:
+        raise Exception(
+            f" [{idx}] Please fix this >> {e} >> Error Encountered at {store_url}"
+        )
 
 
 def fetch_data(sgw: SgWriter):
     page_urls = get_store_urls()
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [
