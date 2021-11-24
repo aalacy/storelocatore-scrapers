@@ -28,8 +28,8 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     js = r.json()["stores"]
     for j in js:
-
-        page_url = "https://www.yankeecandle.com/stores"
+        slug = j.get("ctaUrl")
+        page_url = f"https://www.yankeecandle.com{slug}"
         location_name = j.get("label")
         street_address = j.get("address")
         state = j.get("state").get("abbr")
