@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -188,8 +188,7 @@ def fetch_data(sgw: SgWriter):
     logger.info("Started")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        expected_search_radius_miles=5,
-        granularity=Grain_8(),
+        granularity=Grain_1_KM(),
         use_state=False,
     )
 
