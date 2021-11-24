@@ -8,7 +8,6 @@ from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 import tenacity
 import ssl
-import random
 
 try:
     _create_unverified_https_context = (
