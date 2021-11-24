@@ -9,7 +9,6 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 
 DOMAIN = "toddsnyder.com"
-BASE_URL = "https://www.toddsnyder.com"
 LOCATION_URL = "https://www.toddsnyder.com/pages/storelocation"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -75,8 +74,9 @@ def fetch_data():
         location_name = row.find("a", {"class": "collection_title"}).text.strip()
         info = (
             row.find("div", {"class": "description"})
-            .get_text(strip=True, separator="@")
-            .split("@")
+            .get_text(strip=True, separator="@@")
+            .replace("Now Open@@", "")
+            .split("@@")
         )
         raw_address = info[0]
         street_address, city, state, zip_postal = getAddress(raw_address)
