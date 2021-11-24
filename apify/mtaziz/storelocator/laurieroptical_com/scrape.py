@@ -10,7 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgscrape.sgpostal import parse_address_intl
-import ssl
 import time
 import ssl
 from lxml import html
@@ -128,7 +127,6 @@ def get_latlng_for_thurston(http: SgRequests):
             response_dict = get_json_data_from_features_master_page(http, url_province)
             data = response_dict["data"]
             for j in data["props"]["render"]["compProps"].values():
-                locator_domain = DOMAIN
                 skin = j.get("skin") or ""
                 if "WRichTextNewSkin" in skin:
                     source = j.get("html") or "<html></html>"
@@ -146,6 +144,7 @@ def get_latlng_for_thurston(http: SgRequests):
                                 continue
                             if "+" in t1:
                                 phone = t1
+                                logger.info(f"Phone: {phone}")
 
                     if "Tuesday" in source:
                         treeh = html.fromstring(source)
@@ -193,15 +192,11 @@ def get_latlng_for_thurston(http: SgRequests):
                 country_code = "CA"
                 logger.info(f"[{idx}] Country Code: {country_code}")
 
-                store_number = MISSING
-                location_type = MISSING
-
                 latitude = locations["latitude"]
                 logger.info(f"[{idx}] Latitude: {latitude}")
 
                 longitude = locations["longitude"]
                 logger.info(f"[{idx}] Longitude: {longitude}")
-                raw_address = add_raw or MISSING
                 if "Laurier Optical Thurston" in location_name:
                     return latitude, longitude
 
@@ -296,9 +291,6 @@ def fetch_records_on(http: SgRequests):
         logger.info(f"State: {state}")
         country_code = "CA"
         logger.info(f"Country Code: {country_code}")
-
-        store_number = MISSING
-        location_type = MISSING
 
         latitude = lat
         logger.info(f"Latitude: {latitude}")
