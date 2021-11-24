@@ -2,7 +2,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -67,9 +67,10 @@ def fetch_data():
             phone = poi.get("phone")
             latitude = poi["locLati"]
             longitude = poi["locLongi"]
-            hours_of_operation = poi.get("centerOpenTime")
-            if hours_of_operation:
-                hours_of_operation = hours_of_operation.replace(",", " ").strip()
+            hoo = loc_dom.xpath(
+                '//ul[descendant::span[contains(text(), "Monday")]]//text()'
+            )
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -85,7 +86,7 @@ def fetch_data():
                 location_type="",
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation=hoo,
             )
 
             yield item

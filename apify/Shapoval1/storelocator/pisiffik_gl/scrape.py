@@ -19,6 +19,10 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     div = tree.xpath('//p[./strong[contains(text(), "Åbningstider:")]]')
     for d in div:
+        types = "".join(d.xpath(".//preceding::img[1]/@src"))
+        location_type = "<MISSING>"
+        if "pisiffik.png" in types or "Pisiffik_logo" in types:
+            location_type = "Pisiffik"
         info = d.xpath(".//preceding::p[1]//text()")
         info = list(filter(None, [a.strip() for a in info]))
         tmp_ad = []
@@ -91,7 +95,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,

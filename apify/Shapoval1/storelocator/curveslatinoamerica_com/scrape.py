@@ -39,7 +39,7 @@ def fetch_data(sgw: SgWriter):
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
             country_code = slug.split(".")[0].capitalize().strip()
-            city = a.city or "<MISSING>"
+            city = location_name
             phone = (
                 "".join(d.xpath('.//small[@class="text-muted"]/text()[2]'))
                 .replace("\n", "")
