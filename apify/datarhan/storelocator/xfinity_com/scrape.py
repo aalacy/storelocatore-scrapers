@@ -1,52 +1,28 @@
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sglogging import sglog
 
+session = SgRequests()
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+domain = "xfinity.com"
+website = "https://www.xfinity.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests()
-
-    items = []
-
-    DOMAIN = "xfinity.com"
+    log.info("Started")
     start_url = "https://www.xfinity.com/local/index.html"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
-    }
 
-    response = session.get(start_url, headers=headers)
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_locations = []
     all_directories = dom.xpath('//a[@data-ya-track="directory_links"]/@href')
@@ -74,13 +50,21 @@ def fetch_data():
 
     for loc_url in list(set(all_locations)):
         store_url = "https://www.xfinity.com/local/" + loc_url.replace("../", "")
-        store_response = session.get(store_url, headers=headers)
+        log.info(f"Scraping : {store_url}")
+        store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)
 
         location_name = store_dom.xpath('//meta[@itemprop="name"]/@content')
         location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = store_dom.xpath('//span[@class="c-address-street-1"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
+        try:
+            street_address = store_dom.xpath(
+                '//span[@class="c-address-street-1"]/text()'
+            )
+            street_address = street_address[0]
+        except Exception:
+            log.info(f"Street address err: {street_address}")
+            raise Exception("Please check street address issue")
+
         city = store_dom.xpath('//span[@itemprop="addressLocality"]/text()')
         city = city[0] if city else "<MISSING>"
         state = store_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')
@@ -102,31 +86,36 @@ def fetch_data():
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

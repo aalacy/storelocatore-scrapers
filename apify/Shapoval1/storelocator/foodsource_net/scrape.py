@@ -33,7 +33,6 @@ def write_output(data):
 
 
 def fetch_data():
-
     out = []
     locator_domain = "http://foodsource.net/"
     page_url = "http://foodsource.net/index.php/locations"
@@ -45,6 +44,8 @@ def fetch_data():
     block = tree.xpath('//div[@class="tr"]/preceding-sibling::div')
     for b in block:
         line = b.xpath('./p/span[@class="location-address"]/text()')
+        if not line:
+            continue
         street_address = "".join(line[0]).strip()
         city = "".join(line[1]).split(",")[0].strip()
         a = "".join(line[1]).split(",")[1].strip()

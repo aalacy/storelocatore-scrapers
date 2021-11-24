@@ -1,47 +1,83 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+
 session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        for row in data:
-            writer.writerow(row)
+website = "katieskorner_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
+
+DOMAIN = "https://katieskorner.com/"
+MISSING = "<MISSING>"
+
+
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "http://katieskorner.com"
-    r = session.get("http://katieskorner.com/StoreLocations.html",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for location in soup.find_all("blockquote"):
-        m_data = list(location.stripped_strings)
-        if len(m_data)==4:
-            m_data[0:3] = [' '.join(m_data[0:3])]
-        for store_data in m_data:
-            location_details = store_data.replace("\n"," ").replace("\r","").replace('-',"–").replace('              '," ").replace("–","-").replace("-","-").replace("-","-").replace("•","").replace("Niles - Cortland","Niles-Cortland").strip()
-            store = []
-            store.append("http://katieskorner.com")
-            store.append("Katies Korner - "+ location_details.split(",")[0])
-            store.append(location_details.split(" - ")[1].strip())
-            store.append(location_details.split(",")[0])
-            store.append(location_details.split(" - ")[0].split(",")[1].strip())
-            store.append("<MISSING>")
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(location_details.split(" - ")[2] if len(location_details.split(" - ")) == 3 else "<MISSING>")
-            store.append("katies korner")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+    if True:
+        url = "http://katieskorner.com/StoreLocations.html"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("blockquote").findAll("td")
+        for loc in loclist[3:]:
+            loc = loc.get_text(separator="|", strip=True).split("|")
+            if len(loc) == 1:
+                continue
+            location_name = (
+                loc[0].replace("\n", " ").replace("                    ", " ")
+            )
+            log.info(location_name)
+            street_address = loc[1]
+            try:
+                address = loc[2].split(",")
+                city = address[0]
+                state = address[1]
+            except:
+                address = loc[-1].split(",")
+                city = address[0]
+                state = address[1]
+            zip_postal = MISSING
+            country_code = "US"
+            if len(loc) > 3:
+                phone = loc[-1]
+            else:
+                phone = MISSING
+            if "Beaver Falls" in location_name:
+                phone = loc[-2]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=MISSING,
+            )
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

@@ -60,8 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     search_url = "https://maps.genghisgrill.com/api/getAsyncLocations?template=domain&level=domain&radius=100000&search=89521"
     stores_req = session.get(search_url, headers=headers)
     maplist = json.loads(stores_req.text)["maplist"]
@@ -124,10 +122,12 @@ def fetch_data():
         hours = json.loads(store["hours_sets:primary"].replace('"', '"').strip())[
             "days"
         ]
-
         hours_list = []
         for day in hours.keys():
-            time = hours[day][0]["open"] + "-" + hours[day][0]["close"]
+            if isinstance(hours[day], list):
+                time = hours[day][0]["open"] + "-" + hours[day][0]["close"]
+            else:
+                time = hours[day]
             hours_list.append(day + ":" + time)
 
         hours_of_operation = "; ".join(hours_list).strip()
@@ -153,9 +153,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-
-    return loc_list
+        yield curr_list
 
 
 def scrape():

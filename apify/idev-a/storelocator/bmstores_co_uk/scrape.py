@@ -62,8 +62,8 @@ def fetch_data():
             phone = "<MISSING>" if "Get" in phone else phone
             country_code = "GB"
             location_type = store["type"]
-            latitude = store["geometry"]["coordinates"][0]
-            longitude = store["geometry"]["coordinates"][1]
+            latitude = store["geometry"]["coordinates"][1]
+            longitude = store["geometry"]["coordinates"][0]
             hours_of_operation = ""
             for x in hours:
                 if x.string is None:

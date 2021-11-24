@@ -73,23 +73,24 @@ def fetch_data():
                 j.get("yextDisplayCoordinate", {}).get("longitude") or "<MISSING>"
             )
             location_type = "<MISSING>"
-            hours = j.get("hours")
-            hours_of_operation = "<MISSING>"
-            if hours:
-                _tmp = []
-                for k, v in hours.items():
-                    if k == "holidayHours":
-                        continue
 
-                    day = k
-                    interval = v.get("openIntervals")[0]
-                    start = interval.get("start")
-                    end = interval.get("end")
-                    line = f"{day.capitalize()}: {start} - {end}"
-                    _tmp.append(line)
+            hours = j.get("hours") or {}
+            _tmp = []
+            for k, v in hours.items():
+                if k == "holidayHours" or type(v) == str:
+                    continue
 
-                hours_of_operation = ";".join(_tmp) or "<MISSING>"
+                day = k
+                interval = v.get("openIntervals")[0]
+                start = interval.get("start")
+                end = interval.get("end")
+                line = f"{day.capitalize()}: {start} - {end}"
+                _tmp.append(line)
 
+            hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+            if "coming soon" in location_name.lower():
+                hours_of_operation = "Coming Soon"
             if hours_of_operation.count("Closed") == 7:
                 continue
 

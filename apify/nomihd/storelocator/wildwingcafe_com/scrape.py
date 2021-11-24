@@ -74,17 +74,19 @@ def fetch_data():
 
         locator_domain = website
         location_name = "".join(
-            store_sel.xpath(
-                "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][1]/h2//text()"
+            list(
+                set(
+                    store_sel.xpath(
+                        "//section[2]//node()[./h2//span[contains(@style,'bold')]]//text()"
+                    )
+                )
             )
         ).strip()
         if location_name == "":
             location_name = "<MISSING>"
 
         address = "".join(
-            store_sel.xpath(
-                "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][2]/h2//text()"
-            )
+            store_sel.xpath("//section//node()[./h2/a[contains(@href,'maps')]]//text()")
         ).strip()
         street_address = (
             ", ".join(address.split(",")[:-2])
@@ -121,7 +123,7 @@ def fetch_data():
         phone = (
             "".join(
                 store_sel.xpath(
-                    "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][4]/h2//text()"
+                    "//section//node()[./h2/span[not(.//span[contains(@style,'bold')])]]//text()"
                 )
             )
             .strip()
@@ -129,25 +131,11 @@ def fetch_data():
             .strip()
         )
 
-        if "(" not in phone:
-            phone = (
-                "".join(
-                    store_sel.xpath(
-                        "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/h2//text()"
-                    )
-                )
-                .strip()
-                .replace("Phone:", "")
-                .strip()
-            )
-
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         map_link = "".join(
-            store_sel.xpath(
-                "//section[2]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][2]/h2/a/@href"
-            )
+            store_sel.xpath("//section//a[contains(@href,'maps')]/@href")
         ).strip()
         if len(map_link) > 0:
             if "/@" in map_link:
@@ -159,19 +147,32 @@ def fetch_data():
         if longitude == "" or longitude is None:
             longitude = "<MISSING>"
 
-        if "Open Hours" in store_sel.xpath("//section[4]//text()"):
-            hours_of_operation = "; ".join(
-                store_sel.xpath(
-                    "//section[4]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/p//text()"
-                )
-            ).strip()
+        hours = list(
+            filter(
+                str,
+                [
+                    x.strip()
+                    for x in store_sel.xpath(
+                        "//section//node()[./div/h2/span[contains(.//text(),'Open Hours')]]/div[last()]//text()"
+                    )
+                ],
+            )
+        )
+        hours_list = []
+        for hour in hours:
+            if (
+                "Sunday" in hour
+                or "Monday" in hour
+                or "Tuesday" in hour
+                or "Wednesday" in hour
+                or "Thursday" in hour
+                or "Friday" in hour
+                or "Saturday" in hour
+                or "Everyday" in hour
+            ):
+                hours_list.append(hour)
 
-        elif "Open Hours" in store_sel.xpath("//section[3]//text()"):
-            hours_of_operation = "; ".join(
-                store_sel.xpath(
-                    "//section[3]/div[2]/div/div[2]/div/div[@class='_1Z_nJ'][3]/p//text()"
-                )
-            ).strip()
+        hours_of_operation = "; ".join(hours_list)
         if hours_of_operation == "" or "Opening" in hours_of_operation:
             hours_of_operation = "<MISSING>"
 

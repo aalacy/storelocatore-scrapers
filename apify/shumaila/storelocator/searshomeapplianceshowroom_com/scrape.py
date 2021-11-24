@@ -1,8 +1,8 @@
-import csv
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
@@ -13,74 +13,97 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    linklist = []
-    week = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-    times = {
-        "32400": "9",
-        "64800": "6",
-        "43200": "12",
-        "61200": "5",
-        "68400": "7",
-        "39600": "11",
-        "57600": "4",
-        "30600": "8.30",
-        "36000": "10",
-        "75600": "9",
-        "34200": "9:30",
-        "46800": "12",
-        "45000": "9:30",
-        "63000": "5:30",
-        "28800": "8",
-        "54000": "3",
-        "0": "12",
-        "50400": "2",
-        "66600": "6:30",
-        "72000": "8",
-        "70200": "7:30",
-        "27000": "7:30",
-        "73800": "8:30",
-        "41400": "11:30",
-        "59400": "4:30",
-    }
-    zips = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
-    if True:
-        for zip_code in zips:
+
+    states = [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+    ]
+
+    for statenow in states:
+        url = (
+            "https://api.searshometownstores.com/lps-mygofer/api/v1/mygofer/store/getStoreDetailsByState?state="
+            + statenow
+        )
+
+        loclist = session.get(url, headers=headers).json()["payload"]["stores"]
+
+        for loc in loclist:
+            title = loc["storeName"]
+            pcode = loc["zipCode"]
+            city = loc["city"]
+            state = loc["stateCode"]
+            street = loc["streetAddress"]
+            phone = loc["phoneNumber"]
+            hours = (
+                "Mon "
+                + loc["monHrs"]
+                + " Tue "
+                + loc["tueHrs"]
+                + " Wed "
+                + loc["wedHrs"]
+                + " Thu "
+                + loc["thrHrs"]
+                + " Fri "
+                + loc["friHrs"]
+                + " Sat "
+                + loc["satHrs"]
+                + " Sun "
+                + loc["sunHrs"]
+            )
             search_url = "https://api.searshometownstores.com/lps-mygofer/api/v1/mygofer/store/nearby"
             myobj = {
                 "city": "",
-                "zipCode": str(zip_code),
+                "zipCode": str(pcode),
                 "searchType": "",
                 "state": "",
                 "session": {
@@ -94,76 +117,60 @@ def fetch_data():
                 },
                 "security": {"authToken": "", "ts": "", "src": ""},
             }
-            try:
-                loclist = session.post(search_url, json=myobj, headers=headers).json()[
-                    "payload"
-                ]["nearByStores"]
-                if len(loclist) > 0:
-                    pass
-            except:
-                continue
-            for loc in loclist:
-                title = loc["storeName"]
-                street = loc["address"]
-                city = loc["city"]
-                state = loc["stateCode"]
-                pcode = loc["zipCode"]
-                phone = loc["phone"]
-                phone = "(" + phone[0:3] + ") " + phone[3:6] + "-" + phone[6:10]
-                store = str(loc["unitNumber"])
-                link = (
-                    "https://www.searshomeapplianceshowroom.com/home/"
-                    + state.lower()
-                    + "/"
-                    + city.lower()
-                    + "/"
-                    + store.replace("000", "")
-                )
-                if link in linklist:
-                    continue
-                linklist.append(link)
-                hourlist = loc["storeDetails"]["strHrs"]
-                hours = ""
-                for day in week:
-                    hours = (
-                        hours
-                        + day
-                        + " "
-                        + times[hourlist[day]["opn"]]
-                        + " AM - "
-                        + times[hourlist[day]["cls"]]
-                        + " PM "
+            store = lat = longt = link = "<MISSING>"
+
+            locnow = session.post(search_url, json=myobj, headers=headers).json()[
+                "payload"
+            ]["nearByStores"]
+
+            for div in locnow:
+                if (
+                    city.upper() + " - AUTH HOMETOWN" == div["storeName"]
+                    or phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(" ", "")
+                    .replace(".", "")
+                    == div["phone"]
+                ):
+                    store = str(div["unitNumber"])
+                    link = (
+                        "https://www.searshomeapplianceshowroom.com/home/"
+                        + state.lower()
+                        + "/"
+                        + city.lower()
+                        + "/"
+                        + store.replace("000", "")
                     )
-                longt = loc["storeDetails"]["longitude"]
-                lat = loc["storeDetails"]["latitude"]
-                if len(phone) < 5:
-                    phone = "<MISSING>"
-                data.append(
-                    [
-                        "https://www.searshomeapplianceshowroom.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours,
-                    ]
-                )
-        return data
+                    longt = div["storeDetails"]["longitude"]
+                    lat = div["storeDetails"]["latitude"]
+                    break
+            yield SgRecord(
+                locator_domain="https://www.searshomeapplianceshowroom.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode,
+                country_code="US",
+                store_number=store,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=lat,
+                longitude=longt,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

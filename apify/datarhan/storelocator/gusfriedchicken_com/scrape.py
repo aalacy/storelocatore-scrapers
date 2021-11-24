@@ -83,6 +83,8 @@ def fetch_data():
         if temp_closed:
             location_type = "temporarily closed"
         geo = loc_dom.xpath('//a[@title="Google Maps link"]/@href')
+        if not geo:
+            geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if geo and "/@" in geo[0]:
@@ -96,8 +98,9 @@ def fetch_data():
                 .split("!2m")[0]
                 .split("!3d")
             )
-            latitude = geo[1]
-            longitude = geo[0]
+            if "yelp.com" not in geo[0]:
+                latitude = geo[1]
+                longitude = geo[0]
         latitude = latitude.split("!")[0]
         hoo = loc_dom.xpath('//div[p[contains(text(), "Store Hours:")]]/p/text()')
         if not hoo:

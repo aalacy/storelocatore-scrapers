@@ -72,17 +72,20 @@ def fetch_data():
         country_code = poi["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["telephone"]
+        phone = poi.get("telephone")
         phone = phone if phone else "<MISSING>"
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
         hoo = []
-        for elem in poi["openingHoursSpecification"]:
-            day = elem["dayOfWeek"].split("/")[-1]
-            opens = elem["opens"]
-            closes = elem["closes"]
-            hoo.append(f"{day} {opens} - {closes}")
+        if poi.get("openingHoursSpecification"):
+            for elem in poi["openingHoursSpecification"]:
+                day = elem["dayOfWeek"].split("/")[-1]
+                opens = elem["opens"]
+                closes = elem["closes"]
+                hoo.append(f"{day} {opens} - {closes}")
+        else:
+            continue
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 

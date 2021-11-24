@@ -1,111 +1,88 @@
-import re
-import csv
+import ssl
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
-    items = []
-
-    start_url = "https://sals-pizza.com/locations"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    start_url = "https://www.sals-pizza.com/"
+    domain = "sals-pizza.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@data-block-type="2"]')[2:]
-    for poi_html in all_locations:
-        store_url = poi_html.xpath(".//following-sibling::div[1]//a/@href")
-        store_url = (
-            store_url[0]
-            if store_url and ".pdf" not in store_url[0].lower()
-            else start_url
-        )
-        location_name = poi_html.xpath(".//h2/strong/text()")
-        if not location_name:
-            location_name = poi_html.xpath(
-                './/div[@class="sqs-block-content"]/h2/text()'
-            )
-        if not location_name:
+    all_locations = dom.xpath(
+        '//div[div[div[div[p[contains(text(), "LOCATIONS")]]]]]/following-sibling::ul/li/a/@href'
+    )
+    for store_url in all_locations:
+        if "coming-soon" in store_url:
             continue
-        location_name = location_name[0]
-        street_address = poi_html.xpath(".//p/text()")
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = location_name.split(", ")[0]
-        state = location_name.split(", ")[-1]
-        zip_code = "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath(".//p/strong/text()")
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        if poi_html.xpath('.//h3/strong[contains(text(), "currently closed")]'):
-            location_type = "currently closed"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        raw_address = loc_dom.xpath(
+            "//div[h1]/following-sibling::div[1]/h2/span//text()"
+        )
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]//text()')
+        phone = phone[0] if phone else SgRecord.MISSING
+        hoo = loc_dom.xpath(
+            '//div[h1[span[span[contains(text(), "Hours")]]]]/following-sibling::div[@data-testid="richTextElement"][1]//text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo).split("*")[0].strip()
+        if "Store hours" in hoo:
+            hoo = SgRecord.MISSING
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        if len(zip_code.strip()) == 2:
+            zip_code = ""
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=loc_dom.xpath("//div/h1/span/span/text()")[0],
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[-1].split()[0],
+            zip_postal=zip_code,
+            country_code=SgRecord.MISSING,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hoo,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

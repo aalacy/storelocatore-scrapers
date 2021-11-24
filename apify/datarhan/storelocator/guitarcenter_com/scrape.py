@@ -1,4 +1,5 @@
 import csv
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -41,90 +42,50 @@ def fetch_data():
     items = []
 
     DOMAIN = "guitarcenter.com"
-    start_url = "https://stores.guitarcenter.com/index.html"
+    start_url = "https://stores.guitarcenter.com/browse/"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_locations_urls = []
-    directories_urls = dom.xpath('//a[@class="Directory-listLink"]/@href')
+    directories_urls = dom.xpath('//div[@class="map-list-item is-single"]/a/@href')
+
     for url in directories_urls:
-        if not url.endswith(".html"):
-            all_locations_urls.append(url)
-        else:
-            full_subdir_url = "https://stores.guitarcenter.com/" + url
-            sub_dir_response = session.get(full_subdir_url)
-            dir_dom = etree.HTML(sub_dir_response.text)
-            all_locations_urls += dir_dom.xpath(
-                '//a[@data-ya-track="visit_page"]/@href'
-            )
-            sub_directories_urls = dir_dom.xpath(
-                '//a[@class="Directory-listLink"]/@href'
-            )
-            sub_directories_urls += dir_dom.xpath(
-                '//a[@class="Teaser-titleLink"]/@href'
-            )
-            for url in sub_directories_urls:
-                if not url.endswith(".html"):
-                    all_locations_urls.append(url)
-                else:
-                    full_sub2dir_url = "https://stores.guitarcenter.com/" + url
-                    sub2dir_response = session.get(full_sub2dir_url)
-                    sub2dir_dom = etree.HTML(sub2dir_response.text)
-                    all_locations_urls += sub2dir_dom.xpath(
-                        '//a[@data-ya-track="visit_page"]/@href'
-                    )
-                    sub2directories_urls = sub2dir_dom.xpath(
-                        '//a[@class="Directory-listLink"]/@href'
-                    )
-                    sub2directories_urls += sub2dir_dom.xpath(
-                        '//a[@class="Teaser-titleLink"]/@href'
-                    )
-                    for url in sub2directories_urls:
-                        if not url.endswith(".html"):
-                            all_locations_urls.append(url)
+        response = session.get(url)
+        dom = etree.HTML(response.text)
+        urls = dom.xpath('//div[@class="map-list-item is-single"]/a/@href')
+        for url in urls:
+            response = session.get(url)
+            dom = etree.HTML(response.text)
+            all_locations_urls += dom.xpath('//a[@class="more-details ga-link"]/@href')
 
-    for url in all_locations_urls:
-        full_location_url = "https://stores.guitarcenter.com/" + url.replace("../", "")
-        location_response = session.get(full_location_url)
-        location_dom = etree.HTML(location_response.text)
+    for store_url in all_locations_urls:
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
+        poi = json.loads(poi)
 
-        store_url = full_location_url
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = location_dom.xpath('//h1[@id="location-name"]//text()')
-        location_name = " ".join(location_name) if location_name else "<MISSING>"
-        street_address = location_dom.xpath(
-            '//meta[@itemprop="streetAddress"]/@content'
-        )
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = location_dom.xpath(
-            '//address[@id="address"]//span[@class="c-address-city"]//text()'
-        )
-        city = city[0] if city else "<MISSING>"
-        state = location_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = location_dom.xpath('//span[@itemprop="postalCode"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = location_dom.xpath('//address[@id="address"]/@data-country')
-        country_code = country_code[0] if country_code else "<MISSING>"
+        location_name = loc_dom.xpath(
+            '//div[@class="row headerContainer indy-main-wrapper"]/div/text()'
+        )[0]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi[0]["address"]["streetAddress"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi[0]["address"]["addressLocality"]
+        city = city if city else "<MISSING>"
+        state = poi[0]["address"]["addressRegion"]
+        state = state if state else "<MISSING>"
+        zip_code = poi[0]["address"]["postalCode"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = location_dom.xpath('//div[@itemprop="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = location_dom.xpath("//main/@itemtype")
-        location_type = (
-            location_type[0].split("/")[-1] if location_type else "<MISSING>"
-        )
-        latitude = location_dom.xpath('//meta[@itemprop="latitude"]/@content')
-        latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = location_dom.xpath('//meta[@itemprop="longitude"]/@content')
-        longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = location_dom.xpath(
-            '//table[@class="c-hours-details"]//text()'
-        )
-        hours_of_operation = (
-            " ".join(hours_of_operation[1:]).replace("Hours", "").replace("hours", "")
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        phone = poi[0]["address"]["telephone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = poi[0]["@type"]
+        latitude = poi[0]["geo"]["latitude"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi[0]["geo"]["longitude"]
+        longitude = longitude if longitude else "<MISSING>"
+        hours_of_operation = poi[0]["openingHours"]
 
         item = [
             DOMAIN,

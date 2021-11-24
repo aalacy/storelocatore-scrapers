@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import sglog
 import html
-from sgscrape import sgpostal as parser
 from bs4 import BeautifulSoup
 
 website = "countrystyle_com"
@@ -21,25 +20,40 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("store").findAll("item")
+        x = 0
         for loc in loclist:
             location_name = loc.find("location").text
-            store_number = loc.find("sortord").text
-            raw_address = loc.find("address").text.replace(",", "")
-            raw_address = html.unescape(raw_address)
+            store_number = loc.find("storeid").text
+
+            raw_address = loc.find("address").text
+
             raw_address = raw_address.replace(
                 " NEW lunch program, different offerings, custom LTO panel", ""
             )
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            street_address = (
-                street_address + ", " + formatted_addr.street_address_2
-                if formatted_addr.street_address_2
-                else street_address
-            )
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-            city = formatted_addr.city
-            zip_postal = loc.find("telephone").text
+            if "," in raw_address:
+                x = x + 1
+                street_address = raw_address.split(",")[0].split("  ")[0]
+                city_parts = raw_address.split(",")[1].split(" ")[:-1]
+                city = ""
+                for part in city_parts:
+                    city = city + part + " "
+                city = city.strip()
+
+            else:
+                city = raw_address.split(" ")[-2]
+                street_address_parts = raw_address.split(" ")[:-2]
+                street_address = ""
+                for part in street_address_parts:
+                    street_address = street_address + part + " "
+                street_address = street_address.split("  ")[0]
+                try:
+                    city = street_address.split("  ")[1] + city
+                except Exception:
+                    pass
+
+            street_address = html.unescape(street_address)
+
+            zip_postal = loc.find("telephone").text.split(" (")[0]
             if not zip_postal:
                 zip_postal = "<MISSING>"
             state = loc.find("country").text
@@ -81,5 +95,4 @@ def scrape():
     log.info("Finished")
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

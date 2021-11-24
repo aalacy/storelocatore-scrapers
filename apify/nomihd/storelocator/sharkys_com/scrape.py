@@ -133,8 +133,12 @@ def fetch_data():
             data["page_url"] = search_url
             data["location_name"] = store["name"]
             address = store["address"]
-            if "address2" in store and store["address2"] is not None:
-                address = (address + ", " + store["address2"]).strip(" ,")
+            if (
+                "address2" in store
+                and store["address2"] is not None
+                and store["address2"].strip()
+            ):
+                address = store["address2"]
 
             data["street_address"] = address
             data["city"] = store["city"]

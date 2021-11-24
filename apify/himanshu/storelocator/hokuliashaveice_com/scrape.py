@@ -2,266 +2,266 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
-# import sgzip
-# import time
-import html5lib
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('hokuliashaveice_com')
-
-
-
-
+logger = SgLogSetup().get_logger("hokuliashaveice_com")
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
+def write_output(data):
+    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
+
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
     return_main_object = []
-    addresses = []
-
-
 
     headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36",
         "accept": "application/json, text/javascript, */*; q=0.01",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
 
-    # it will used in store data.
     locator_domain = "https://hokuliashaveice.com"
     location_name = ""
-    street_address = "<MISSING>"
     city = "<MISSING>"
     state = "<MISSING>"
     zipp = "<MISSING>"
     country_code = "US"
     store_number = "<MISSING>"
-    phone = "<MISSING>"
     location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+    page_url = "https://hokuliashaveice.com/locations/"
 
-
-
-    r= session.get('https://hokuliashaveice.com/locations/',headers = headers)
-    soup = BeautifulSoup(r.text,'html5lib')
-    script= soup.find('div',{'id':'locations'}).find_next('script')
-    s = script.text.split(' var features = ')[-1].split('];')[0] + ']'.replace('\n','')
-    sc= s.split(' position:')
+    r = session.get("https://hokuliashaveice.com/locations/", headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    script = soup.find("div", {"id": "locations"}).find_next("script")
+    s = script.text.split(" var features = ")[-1].split("];")[0] + "]".replace("\n", "")
+    sc = s.split(" position:")
     sc.pop(0)
-    # logger.info(sc)
+
     for i in sc:
-        info = i.replace('\n','').replace('  ','')
-        latitude= info.split('(')[1].split(')')[0].split(',')[0]
-        longitude = info.split('(')[1].split(')')[0].split(',')[-1]
-        address = info.split('message:')[-1].split('<br>')[0].replace('"','').split('<br />')
-        # address = [el.replace('',' ') for el in address]
+        info = i.replace("\n", "").replace("  ", "")
+        latitude = info.split("(")[1].split(")")[0].split(",")[0]
+        longitude = info.split("(")[1].split(")")[0].split(",")[-1]
+        address = (
+            info.split("message:")[-1].split("<br>")[0].replace('"', "").split("<br />")
+        )
+
         add_list = []
         for element in address:
-            if element != '':
+            if element != "":
                 add_list.append(element)
 
-        # logger.info(add_list)
-        # logger.info(address)
-        # logger.info(len(address))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
-        if len(add_list) ==2:
-            # logger.info(address)
-            # logger.info(len(address))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
-            add= " ".join(add_list).split(',')
+        if len(add_list) == 2:
+
+            add = " ".join(add_list).split(",")
 
             if len(add) == 2:
                 street_address = add[0]
-                if len(add[-1].split()) ==1:
+                if len(add[-1].split()) == 1:
                     city = add[0].split()[-1]
                     state = add[-1]
                     zipp = "<MISSING>"
                     location_name = city
                 else:
-                    # logger.info(add[-1].split())
                     city = add[-1].split()[0]
                     state = add[-1].split()[1]
                     zipp = add[-1].split()[-1]
                     location_name = city
-                # logger.info(street_address,city,state,zipp)
-            else :
-                # logger.info(add)
-                # logger.info(len(add))
-                # logger.info('~~~~~~~~~~~~~~`')
-                street_address =add[0].strip()
+
+            else:
+                street_address = add[0].strip()
                 city = add[-2].strip()
                 state = add[-1].split()[0]
                 zipp = add[-1].split()[-1]
-                # logger.info(zipp,state)
-        elif len(add_list) ==3:
-            # logger.info(add_list)
-            # logger.info(len(add_list))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
-            if " 1143 Prince Ave" not in add_list[0] and " 3341 Lexington Road" not in add_list[0]:
+
+        elif len(add_list) == 3:
+            if (
+                " 1143 Prince Ave" not in add_list[0]
+                and " 3341 Lexington Road" not in add_list[0]
+            ):
                 location_name = add_list[0].strip()
                 street_address = add_list[1]
-                city = add_list[2].split(',')[0]
+                city = add_list[2].split(",")[0]
 
-                sz= add_list[2].split(',')[-1]
-                # logger.info(sz.split())
-                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(sz))
-                if us_zip_list != []:
+                sz = add_list[2].split(",")[-1]
+
+                us_zip_list = re.findall(
+                    re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(sz)
+                )
+                if us_zip_list:
                     zipp = us_zip_list[0]
-                    # logger.info(zipp)
+
                 else:
-                    m = re.findall(r'\d', sz)
+                    m = re.findall(r"\d", sz)
                     zip = "".join(m)
-                    # logger.info(zip.split())
-                    if zip.split() != []:
-                        zipp= zip
-                        # logger.info(zipp)
-                    else :
+
+                    if zip.split():
+                        zipp = zip
+
+                    else:
                         zipp = "<MISSING>"
 
-                if len(sz.split()) ==2:
+                if len(sz.split()) == 2:
                     state = sz.split()[0].strip()
-                    # logger.info(state)
+
                 else:
-                    # a = re.findall(r'^\w+$',sz)
-                    if zip.split() != []:
+
+                    if zip.split():
                         state = sz.split(zip)[0].strip()
-                        # logger.info(state)
+
                     else:
                         state = sz.strip()
-                # logger.info(state,zipp)
-                # logger.info(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
-                # logger.info(state)
             else:
-                # logger.info(add_list)
-                # logger.info(len(add_list))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
                 street_address = add_list[0].strip()
-                city="Athens"
+                city = "Athens"
                 state = "GA"
-                zipp_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), " ".join(add_list))
-                if zipp_list == []:
-                    zipp  = "<MISSING>"
+                zipp_list = re.findall(
+                    re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), " ".join(add_list)
+                )
+                if not zipp_list:
+                    zipp = "<MISSING>"
                 else:
                     zipp = zipp_list[0]
                 location_name = city
-                # logger.info(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
+
         elif len(add_list) == 4:
-            # logger.info(add_list)
-            # # # # logger.info(len(address))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~')
+
             location_name = add_list[0].strip()
-            street_address = " ".join(add_list[1:-1]).replace(', KS 66061','')
-            # logger.info(street_address)
-            csz = add_list[-1].split(',')
-            if len(csz) >1:
+            street_address = " ".join(add_list[1:-1]).replace(", KS 66061", "")
+
+            csz = add_list[-1].split(",")
+            if len(csz) > 1:
                 city = csz[0].strip()
-                if len(csz[1].split()) ==1:
+                if len(csz[1].split()) == 1:
                     state = csz[1].split()[0]
                     zipp = "<MISSING>"
                 else:
                     state = csz[1].split()[0]
                     zipp = csz[1].split()[-1]
-            # logger.info(city,state,zipp)
-        elif len(add_list) ==5:
+
+        elif len(add_list) == 5:
             if add_list[0] == " 3341 Lexington Road":
                 continue
             else:
                 location_name = add_list[0].strip()
                 street_address = add_list[2].strip()
-                city = add_list[3].split(',')[0].strip()
-                state = add_list[3].split(',')[1].split()[0].strip()
-                zipp = add_list[3].split(',')[1].split()[-1].strip()
+                city = add_list[3].split(",")[0].strip()
+                try:
+                    state = add_list[3].split(",")[1].split()[0].strip()
+                except:
+                    state = add_list[1].split(",")[1].split()[0].strip()
+                try:
+                    zipp = add_list[3].split(",")[1].split()[-1].strip()
+                except:
+                    zipp = add_list[1].split(",")[1].split()[-1].strip()
         else:
             continue
-        # logger.info(zipp)
-        # logger.info(street_address +" | "+city+" | "+state+" | "+zipp +" | "+location_name)
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),info.split('message:')[-1])
-        if phone_list !=[]:
+        phone_list = re.findall(
+            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
+            info.split("message:")[-1],
+        )
+        if phone_list:
             phone = phone_list[0].strip()
         else:
             phone = "<MISSING>"
-        hours = " ".join(info.split('message:')[-1].split('<br />')[-2:]).split('<br>')
+        hours = " ".join(info.split("message:")[-1].split("<br />")[-2:]).split("<br>")
 
-        if "Check for " in  " ".join(hours) or "Call for" in  " ".join(hours):
+        if "Check for " in " ".join(hours) or "Call for" in " ".join(hours):
             hours_of_operation = "<MISSING>"
         else:
-            # logger.info(hours)
-            # logger.info(len(hours))
-            # logger.info('~~~~~~~~~~~~')
 
-
-            if len(hours) ==2:
+            if len(hours) == 2:
                 hours_of_operation = hours[0].strip()
-                # logger.info(hours_of_operation)
             else:
-                # logger.info(hours)
-                # logger.info(len(hours))
-                # logger.info('~~~~~~~~~~~~')
                 hours_list = hours[1].strip()
-                # logger.info(hours_list.split())
-                if hours_list.split() != []:
+                if hours_list.split():
 
-                    if len(hours_list.split()) >1:
-                        p =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),str(hours_list))
-                        if p ==[]  :
+                    if len(hours_list.split()) > 1:
+                        p = re.findall(
+                            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
+                            str(hours_list),
+                        )
+                        if not p:
                             hours_of_operation = hours_list
-                            # logger.info(hours_of_operation)
                         else:
                             p1 = "".join(p)
-                            # logger.info(hours_list.split(p1))
                             h = hours_list.split(p1)[-1].split()
-                            if h == []:
+                            if not h:
                                 hours_of_operation = "<MISSING>"
                             else:
                                 hours_of_operation = hours_list.split(p1)[-1].strip()
-                                # logger.info(hours_of_operation)
 
                     else:
                         hours_of_operation = "<MISSING>"
                 else:
                     hours_of_operation = "<MISSING>"
-        # logger.info(hours_of_operation)
 
-        if location_name == "Temecula - Promenade Mall" or location_name == "Victoria Gardens" or location_name == "Delaware":
+        if (
+            location_name == "Temecula - Promenade Mall"
+            or location_name == "Victoria Gardens"
+            or location_name == "Delaware"
+        ):
             continue
         else:
             location_name = location_name.split("(")[0]
-            street_address = street_address.replace(" (by Burt Bros.)","").replace(" (Fresh Market Parking Lot)","").replace("(Down East Lot)","").replace("(Near Honeybaked Ham) ","").replace("(Dominos Parking Lot) ","").replace("(Inside Walmart) ","").replace("  (Fresh Market)","").replace(" (Ft. Union Blvd)","")
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                    store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
-            # if street_address in addresses:
-        #     continue
-        # addresses.append(street_address)
-
-        # logger.info("data = " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            street_address = (
+                street_address.replace(" (by Burt Bros.)", "")
+                .replace(" (Fresh Market Parking Lot)", "")
+                .replace("(Down East Lot)", "")
+                .replace("(Near Honeybaked Ham) ", "")
+                .replace("(Dominos Parking Lot) ", "")
+                .replace("(Inside Walmart) ", "")
+                .replace("  (Fresh Market)", "")
+                .replace(" (Ft. Union Blvd)", "")
+            )
+            store = [
+                locator_domain,
+                location_name,
+                street_address,
+                city,
+                state,
+                zipp,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+                page_url,
+            ]
+            store = [
+                "<MISSING>" if x == "" or x is None or x == "." else x for x in store
+            ]
 
         return_main_object.append(store)
 
-
-
     return return_main_object
-
-
 
 
 def scrape():

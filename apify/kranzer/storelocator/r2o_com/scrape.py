@@ -1,45 +1,116 @@
 import re
-from pprint import pprint
-from string import capwords
-
-import base
-import requests, json
+import csv
+import json
+from lxml import etree
 from urllib.parse import urljoin
 
-from w3lib.html import remove_tags
-from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('r2o_com')
+from sgrequests import SgRequests
 
 
-crawled = []
-class Scrape(base.Spider):
+def write_output(data):
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-    def crawl(self):
-        base_url = "https://www.r2o.com"
-        url = "https://www.r2o.com/application/ajax/stores_list.php"
-        sel = requests.get(url, headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"})
-        for result in sel.json():
-            i = base.Item(result)
-            i.add_value('locator_domain', base_url)
-            i.add_value('page_url', result.get("StorePageURL", ""), lambda x: urljoin(base_url, x) if x else None)
-            i.add_value('location_name', result.get('StoreName', '').strip())
-            i.add_value('street_address', [result.get('Address', ''), result.get('Address2', '')], lambda x: ', '.join([s.strip() for s in x if s]))
-            i.add_value('city', result.get('City', '').strip())
-            i.add_value('state', result.get('State', '').strip())
-            i.add_value('zip', result.get('Zip', '').strip())
-            i.add_value('phone', result.get('Phone', '').strip())
-            i.add_value('country_code', base.get_country_by_code(i.as_dict().get('state')))
-            i.add_value('latitude', result.get('Lat', ''))
-            i.add_value('longitude', result.get('Long', ''))
-            i.add_value('store_number', result.get('Store_ID',''))
-            sel_ = base.selector(i.as_dict()['page_url'])
-            i.add_value('hours_of_operation', sel_['tree'].xpath('(//div[@class="storehours"])[1]/p/text()'), lambda x: '; '.join(x))
-            logger.info(i)
-            yield i
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
-if __name__ == '__main__':
-    s = Scrape()
-    s.run()
+def fetch_data():
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://www.r2o.com/api/stores"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+
+    response = session.get("https://www.r2o.com/store-finder")
+    token = response.cookies["XSRF-TOKEN"]
+    session_id = response.cookies["rent_2_own_session"]
+
+    hdr = {
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+        "Cookie": f"XSRF-TOKEN={token}; rent_2_own_session={session_id}",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    response = session.get(start_url, headers=hdr)
+    all_locations = json.loads(response.text)
+
+    for poi in all_locations:
+        store_url = urljoin("https://www.r2o.com/", poi["StorePageURL"])
+        loc_response = session.get("https://www.r2o.com/heath-ohio")
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = poi["StoreName"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["Address"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["City"]
+        city = city if city else "<MISSING>"
+        state = poi["State"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["Zip"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = poi["Store_ID"]
+        phone = poi["Phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["Lat"]
+        longitude = poi["Long"]
+        hoo = loc_dom.xpath('//div[@class="store-hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
+
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+
+if __name__ == "__main__":
+    scrape()

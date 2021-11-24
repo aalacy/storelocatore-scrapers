@@ -72,7 +72,7 @@ def fetch_data():
     for j in js:
         source = j.get("output")
         tree = html.fromstring(source)
-        line = tree.xpath("./text()")
+        line = tree.xpath(".//div[@class='int_locations_left_info']/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
 
         phone = "<MISSING>"

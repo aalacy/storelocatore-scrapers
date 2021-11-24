@@ -7,7 +7,7 @@ import us
 
 website = "springcreekbarbeque.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(retry_behavior=None, proxy_rotation_failure_threshold=0)
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
@@ -60,7 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://www.springcreekbarbeque.com/locations"
     stores_req = session.get(search_url, headers=headers)
@@ -73,6 +72,8 @@ def fetch_data():
             locator_domain = website
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
+            if store_req.ok is False:
+                continue
             store_sel = lxml.html.fromstring(store_req.text)
             location_name = (
                 "".join(store_sel.xpath('//meta[@itemprop="name"]/@content'))
@@ -126,7 +127,6 @@ def fetch_data():
             phone = "".join(
                 store_sel.xpath('//a[contains(@href,"tel:")]/text()')
             ).strip()
-
             location_type = "<MISSING>"
             hours = store_sel.xpath(
                 "//main/section[2]/div/div/div/div/div[3]/div[1]/div/div/p"
@@ -179,9 +179,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-
-    return loc_list
+            yield curr_list
 
 
 def scrape():

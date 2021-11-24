@@ -81,21 +81,18 @@ def fetch_data():
                     phone = line2.split('href="tel:')[1].split('"')[0]
                 except:
                     phone = "<MISSING>"
-                csz = (
-                    line2.split('__hotel-name">')[1]
-                    .split("<br>")[1]
+            if 'Address"><span>' in line2:
+                fulladd = (
+                    line2.split('Address"><span>')[1]
                     .split("<")[0]
-                    .strip()
+                    .replace(",USA", "")
+                    .replace(", USA", "")
                 )
                 if "arlo-midtown" not in loc:
-                    city = csz.split(",")[0]
-                    state = csz.split(",")[1].strip().split(" ")[0]
-                    zc = csz.rsplit(" ", 1)[1]
-                    add = (
-                        line2.split('"address__hotel-name">')[1]
-                        .split('rel="noopener noreferrer">')[1]
-                        .split("<")[0]
-                    )
+                    add = fulladd.split(",")[0]
+                    city = fulladd.split(",")[1].strip()
+                    state = fulladd.split(",")[2].strip().split(" ")[0]
+                    zc = fulladd.rsplit(" ", 1)[1]
                 else:
                     city = "New York"
                     state = "NY"
@@ -105,8 +102,14 @@ def fetch_data():
                 lat = line2.split('data-center-lat="')[1].split('"')[0]
                 lng = line2.split('lng="')[1].split('"')[0]
         if add != "":
-            if "midtown" in loc:
-                name = name + " - Coming Soon"
+            if "arlo-nomad" in loc:
+                phone = "212.806.7000"
+            if "arlo-soho" in loc:
+                phone = "212.342.7000"
+            if "nautilus-miami-beach" in loc:
+                phone = "305.503.5700"
+            if "arlo-midtown" in loc:
+                phone = "212.343.7000"
             yield [
                 website,
                 loc,

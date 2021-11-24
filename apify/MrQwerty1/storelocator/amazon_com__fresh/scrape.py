@@ -57,15 +57,15 @@ def fetch_data():
     rows = chunks(text, 4)
 
     for r in rows:
+        if len(r) < 4:
+            continue
+        if "coming soon" in r[0].lower():
+            r.append(r.pop(0))
+
         location_name = r[0]
-        if r[-1].find("Store") != -1:
-            hours_of_operation = r[-1].replace("Store hours ", "")
-            street_address = r[1]
-            r = r[2]
-        else:
-            hours_of_operation = "Coming Soon"
-            street_address = r[2]
-            r = r[3]
+        hours_of_operation = r[-1].replace("Store hours ", "").replace(":", "")
+        street_address = r[1]
+        r = r[2]
 
         city = r.split(",")[0].strip()
         r = r.split(",")[1].strip()

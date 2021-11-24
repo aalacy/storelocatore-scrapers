@@ -54,32 +54,38 @@ def fetch_data():
     locator_domain = "manchuwok.com"
     for item in items:
         location_name = BeautifulSoup(item.location.text, "lxml").get_text(" ").strip()
-        if "closed" in location_name.lower():
-            continue
+        # if "closed" in location_name.lower():
+        #     continue
 
         raw_address = item.address.text.strip().split("  ")
 
         street_address = BeautifulSoup(raw_address[0], "lxml").get_text(" ").strip()
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
         if street_address in found_poi:
             continue
         found_poi.append(street_address)
 
-        city = raw_address[1].replace(",", "").strip()
-        state = raw_address[2].split()[0].strip()
-        if len(state) > 3:
-            continue
         zip_code = raw_address[2].strip()[3:].strip()
-        if len(zip_code) > 7:
-            continue
-        if not zip_code:
-            zip_code = "<MISSING>"
-        if len(zip_code) < 5:
-            continue
 
         if " " in zip_code:
             country_code = "CA"
         else:
             country_code = "US"
+
+        city = raw_address[1].replace(",", "").strip()
+        state = raw_address[2].split()[0].replace("&#44;", "").strip()
+        if state in ["Okinawa", "Kanagawa"]:
+            country_code = "Japan"
+            zip_code = "<MISSING>"
+        elif state == "Kaiserslautern":
+            country_code = "Germany"
+            zip_code = zip_code.split()[1]
+        elif state == "Kyongkido":
+            country_code = "South Korea"
+            zip_code = "<MISSING>"
+        elif not zip_code:
+            zip_code = "<MISSING>"
 
         store_number = item.storeid.text.strip()
         location_type = "<MISSING>"

@@ -2,6 +2,16 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgselenium import SgChrome
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
@@ -22,6 +32,8 @@ def fetch_data():
                 page_url=base_url,
                 location_name=_.h2.text,
                 street_address=info[0],
+                city=_.h2.text,
+                state="CA",
                 country_code="US",
                 phone=info[1],
                 hours_of_operation="; ".join(hours),

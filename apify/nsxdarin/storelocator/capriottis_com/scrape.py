@@ -1,142 +1,92 @@
-# -*- coding: cp1252 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
+from sgselenium import SgChrome
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
 
 logger = SgLogSetup().get_logger("capriottis_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def get_headers(url, api_v1_ordering, headerIdent):
+    with SgChrome() as driver:
+        driver.get(url)
+        time.sleep(10)
+        for r in driver.requests:
+            if api_v1_ordering in r.path and r.headers[headerIdent]:
+                return r.headers
 
 
 def fetch_data():
-    locs = []
-    url = "https://order.capriottis.com/sitemap.xml"
-    r = session.get(url, headers=headers)
-    website = "capriottis.com"
-    typ = "<MISSING>"
-    country = "US"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://order.capriottis.com/menu/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        HFound = False
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if 'var vendorName = "' in line2:
-                name = line2.split('var vendorName = "')[1].split('"')[0]
-            if 'var vendorStreetAddress = "' in line2:
-                add = line2.split('var vendorStreetAddress = "')[1].split('"')[0]
-            if 'var vendorCity = "' in line2:
-                city = line2.split('var vendorCity = "')[1].split('"')[0]
-            if 'var vendorState = "' in line2:
-                state = line2.split('var vendorState = "')[1].split('"')[0]
-            if "var vendorLatitude = " in line2:
-                lat = line2.split("var vendorLatitude = ")[1].split(";")[0]
-            if "var vendorLongitude = " in line2:
-                lng = line2.split("var vendorLongitude = ")[1].split(";")[0]
-            if "zipCode: '" in line2:
-                zc = line2.split("zipCode: '")[1].split("'")[0]
-            if 'span class="tel">' in line2:
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                phone = g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
-            if "'Store ID': '" in line2:
-                store = line2.split("'Store ID': '")[1].split("'")[0]
-            if "Business Hours</span>" in line2:
-                HFound = True
-            if HFound and "</dl>" in line2:
-                HFound = False
-            if HFound and "day:" in line2:
-                day = (
-                    line2.split("<dt>")[1]
-                    .split("</dt>")[0]
-                    .replace("<strong>", "")
-                    .replace("</strong>", "")
-                )
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                while "<dd>" not in g:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                hrs = (
-                    day
-                    + " "
-                    + g.split("<dd>")[1]
-                    .split("</dd>")[0]
-                    .replace("<strong>", "")
-                    .replace("</strong>", "")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        name = name.replace("&#39;", "'").replace("’", "'").replace("&amp;", "&")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+    url_location = "https://order.capriottis.com/"
+    api_url_ordering = "/v1/ordering/store-locations"
+    headers = get_headers(url_location, api_url_ordering, "Authorization")
+    headers = dict(headers)
+    for x in range(1, 6):
+        url = (
+            "https://api.koala.io/v1/ordering/store-locations/?sort[state_id]=asc&sort[label]=asc&include[]=operating_hours&include[]=attributes&include[]=delivery_hours&page="
+            + str(x)
+            + "&per_page=50"
+        )
+        r = session.get(url, headers=headers)
+        website = "capriottis.com"
+        typ = "<MISSING>"
+        country = "US"
+        logger.info("Pulling Stores")
+        for line in r.iter_lines():
+            if '"location_id":"' in line:
+                items = line.split('"location_id":"')
+                for item in items:
+                    if '"latitude":' in item:
+                        store = item.split('"')[0]
+                        lat = item.split('"latitude":')[1].split(",")[0]
+                        lng = item.split('"longitude":')[1].split(",")[0]
+                        zc = item.split('"zip":"')[1].split('"')[0]
+                        name = item.split('"label":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"state":"')[1].split('"')[0]
+                        phone = item.split('"phone_number":"')[1].split('"')[0]
+                        add = item.split('"street_address":"')[1].split('"')[0]
+                        lurl = (
+                            "https://capriottis.olo.com/menu/"
+                            + item.split('"slug":"')[1].split('"')[0]
+                        )
+                        hours = "<INACCESSIBLE>"
+                        name = name.replace("\\u2019", "'")
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=lurl,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    count = 0
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"Data Grabbing Finished and added {count} rows")
 
 
 scrape()

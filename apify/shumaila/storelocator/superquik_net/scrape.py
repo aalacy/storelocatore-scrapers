@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
+import re
 
 
 from sgrequests import SgRequests
@@ -42,6 +43,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
+    pattern = re.compile(r"\s\s+")
     url = "http://www.superquik.net/locations(1).html"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -53,41 +55,33 @@ def fetch_data():
 
     p = 0
     for div in divlist:
+
         statelink = "http://www.superquik.net/" + div["href"]
         r = session.get(statelink, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        citylist = soup.findAll("p", {"class": "style9"})
-        if len(citylist) == 0:
-            citylist = soup.find("span", {"class": "style9"})
-        for city in citylist:
-            try:
-                link = "http://www.superquik.net/" + city.find("a")["href"]
-            except:
-                try:
-                    link = "http://www.superquik.net/" + city["href"]
-                except:
-                    break
-            content = city.text.strip().splitlines()
-            title = content[0] + " " + content[1].lstrip()
-            title = title.strip()
-            store = content[1].split("#", 1)[1]
-            try:
-                street = content[2].lstrip()
-                city, state = content[3].lstrip().split(", ", 1)
-                state, pcode = state.lstrip().split(" ", 1)
-                phone = content[4].lstrip()
-            except:
-                content = (
-                    soup.findAll("span", {"class": "style9"})[1]
-                    .text.strip()
-                    .splitlines()
-                )
-                street = content[0].lstrip()
-                city, state = content[1].lstrip().split(", ", 1)
-                state, pcode = state.lstrip().split(" ", 1)
-                phone = content[2].lstrip()
-            hours = "OPEN 24 HOURS"
+        citylist = soup.find("div", {"class": "content"}).findAll("a")
+        content = soup.find("div", {"class": "content"}).text
+        content = re.sub(pattern, "\n", content).strip()
 
+        for i in range(0, len(citylist)):
+            city = citylist[i]
+            link = "http://www.superquik.net/" + city["href"]
+            try:
+                title, store = city.text.replace("\n", " ").strip().split("#")
+            except:
+                continue
+            if i == len(citylist) - 1:
+                address = content.split("#" + store, 1)[1]
+            else:
+                address = content.split("#" + store, 1)[1].split(
+                    citylist[i + 1].text.split("#", 1)[0].replace("\n", " ").strip(), 1
+                )[0]
+            address = re.sub(pattern, "\n", address).strip().splitlines()
+            street = address[0]
+            city, state = address[1].split(", ", 1)
+            state, pcode = state.strip().split(" ", 1)
+            phone = address[2].strip()
+            hours = "OPEN 24 HOURS"
             data.append(
                 [
                     "http://www.superquik.net/",

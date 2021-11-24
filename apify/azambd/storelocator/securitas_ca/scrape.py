@@ -18,16 +18,17 @@ def request_with_retries(url):
 
 
 def fetchAllContactLinks():
+    linkList = []
     body = request_with_retries(website)
-    headerLis = body.xpath('//li[@class="header__link--wrapper"]')
+    contactNodes = body.xpath('//*[@id="nav-list"]/li[6]/div/section/ul')
 
-    for headerLi in headerLis:
-        isContactUs = headerLi.xpath('.//a[@href="/contact-us/"]')
-        if len(isContactUs) != 1:
-            continue
-        return headerLi.xpath('.//a[@class="card__link"]/@href')
+    for contactNode in contactNodes:
+        ullis = contactNode.xpath('.//a[@class="card__link "]')
+        for li in ullis:
+            conLink = li.xpath("@href")[0]
+            linkList.append(conLink)
 
-    return []
+    return linkList
 
 
 def fetchData():

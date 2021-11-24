@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("rentawreck_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -112,22 +88,32 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
-        yield [
-            website,
-            purl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "heap-car-rental-haltom-city-TX.htm" in purl:
+            name = "Rent-A-Wreck of Haltom City"
+            state = "TX"
+            city = "Haltom City"
+            add = "5521 Denton Highway"
+            zc = "76148"
+            phone = "(817) 507-3707"
+            hours = "Mon-Fri: 8:00AM - 5:00PM; Sat-Sun: Closed"
+        if "cheap-car-rental-rockville-MD.htm" in purl:
+            name = "Rent-A-Wreck of Rockville"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=purl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
     name = "Rent-A-Wreck Of Gillette (GCC)"
     purl = "https://www.pricelesscarrental.com/car-rental-gillette-wy.htm"
     add = "513 E. 2nd St"
@@ -139,27 +125,29 @@ def fetch_data():
     hours = "Mon-Fri: 9:00AM-6:00PM; Sat: 9:00AM-5:00PM; Sun: Closed"
     lat = "44.2932434082"
     lng = "-105.4979171753"
-    yield [
-        website,
-        purl,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
+    yield SgRecord(
+        locator_domain=website,
+        page_url=purl,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

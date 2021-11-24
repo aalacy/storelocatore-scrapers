@@ -34,8 +34,8 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    locator_domain = "https://samandlouiespizza.com"
-    api_url = "https://samandlouiespizza.com/locations/"
+    locator_domain = "https://samandlouies.com"
+    api_url = "https://samandlouies.com/locations/"
     session = SgRequests()
 
     r = session.get(api_url)
@@ -44,7 +44,6 @@ def fetch_data():
     for b in block:
         slug = "".join(b.xpath('.//a[contains(text(), "View")]/@href'))
         page_url = f"{locator_domain}{slug}"
-
         session = SgRequests()
         r = session.get(page_url)
         tree = html.fromstring(r.text)

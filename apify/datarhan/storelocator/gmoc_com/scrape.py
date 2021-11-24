@@ -41,7 +41,7 @@ def fetch_data():
     items = []
 
     DOMAIN = "gmoc.com"
-    start_url = "https://www.gmoc.com/wp-json/gmoc/v1/locations?MinLong=-118.428789125&MaxLong=-117.549882875&MinLat=33.612150836176625&MaxLat=33.77440057819261"
+    start_url = "https://www.gmoc.com/wp-json/gmoc/v1/locations?MinLong=-132.05183599999998&MaxLong=-103.926836&MinLat=29.751074389243797&MaxLat=37.462695900927"
 
     response = session.get(start_url)
     data = json.loads(response.text)
@@ -58,7 +58,10 @@ def fetch_data():
         store_number = poi["ID"]
         phone = poi.get("phone_number")
         phone = phone if phone else "<MISSING>"
-        location_type = poi["brand"]["slug"]
+        location_type = ""
+        if poi.get("brand"):
+            location_type = poi["brand"]["slug"]
+        location_type = location_type if location_type else "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
         hoo = []

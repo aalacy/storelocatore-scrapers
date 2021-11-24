@@ -2,6 +2,7 @@ import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
+import ssl
 
 DOMAIN = "mattress1.com"
 BASE_URL = "https://www.mattress1.com/"
@@ -11,6 +12,16 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 session = SgRequests()
 
@@ -66,7 +77,7 @@ def get_hours(table):
 
 
 def fetch_data():
-    store_info = session.get(LOCATION_URL, headers=HEADERS).json()
+    store_info = session.get(LOCATION_URL, headers=HEADERS, timeout=15).json()
     locations = []
     for row in store_info:
         page_url = row["permalink"]

@@ -45,9 +45,19 @@ def fetch_data():
     DOMAIN = "oceanfirst.com"
     start_url = "https://oceanfirst.com/locations/"
 
+    all_locations = []
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//p[@class="actions"]/a[1]/@href')
+    all_states = dom.xpath('//ul[@class="state-list"]/li/a/@href')
+    all_states = [e.strip() for e in all_states if e.strip()]
+    for url in all_states:
+        response = session.get(urljoin(start_url, url))
+        dom = etree.HTML(response.text)
+        locations = dom.xpath(
+            '//div[@class="branch-list-item"]/p[@class="actions"]/a/@href'
+        )
+        locations = [e for e in locations if "/maps/" not in e]
+        all_locations += locations
 
     for url in all_locations:
         store_url = urljoin(start_url, url)

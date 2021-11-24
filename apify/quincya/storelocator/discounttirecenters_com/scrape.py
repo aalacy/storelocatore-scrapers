@@ -1,46 +1,16 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("discounttirecenters_com")
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.discounttirecenters.com/location-detail"
 
@@ -51,8 +21,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
     main_links = []
     main_items = base.find(id="dm_content").find_all("a")
     for main_item in main_items:
@@ -60,7 +28,6 @@ def fetch_data():
         main_links.append(main_link)
 
     for link in main_links:
-        logger.info(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -71,26 +38,62 @@ def fetch_data():
 
         location_name = " ".join(list(base.h1.stripped_strings))
         base.find("h4", attrs={"data-uialign": "center"})
+
+        city = location_name.split(" in")[1].split(",")[0].strip()
+        state = location_name.split(" in")[1].split(",")[1].strip()
+
         raw_data = list(
             base.find_all("h4", attrs={"data-uialign": "center"})[-1].stripped_strings
         )
 
-        city = location_name.split(" in")[1].split(",")[0].strip()
-        state = location_name.split(" in")[1].split(",")[1].strip()
-        street_address = raw_data[0].split(city + ",")[0].strip()
+        hours_of_operation = ""
+        if len(raw_data) > 1:
+            street_address = raw_data[0].split(city + ",")[0].strip()
 
-        if state in raw_data[0]:
-            zip_code = raw_data[0].split(state)[-1].strip()
-        elif state in raw_data[1]:
-            zip_code = raw_data[1].split(state)[-1].strip()
+            if state in raw_data[0]:
+                zip_code = raw_data[0].split(state)[-1].strip()
+            elif state in raw_data[1]:
+                zip_code = raw_data[1].split(state)[-1].strip()
+            else:
+                zip_code = "<MISSING>"
+
+            phone = raw_data[-2]
+
+            try:
+                hours_of_operation = " ".join(
+                    list(base.find(id="main").stripped_strings)
+                )
+            except:
+                pass
         else:
-            zip_code = "<MISSING>"
+            new_raw_data = base.find(class_="m-font-size-11 font-size-14").text.strip()
+            street_address = new_raw_data.split(city + ",")[0].replace(",", "").strip()
+
+            if state in new_raw_data:
+                zip_code = new_raw_data.split(state)[-1].strip()
+            elif state in new_raw_data:
+                zip_code = new_raw_data.split(state)[-1].strip()
+            else:
+                zip_code = "<MISSING>"
+
+            phone = base.find(class_="m-font-size-14 font-size-18").text.strip()
+            hours_of_operation = base.find_all(class_="dmNewParagraph")[3].get_text(" ")
+            if "day" not in hours_of_operation:
+                try:
+                    hours_of_operation = " ".join(
+                        list(base.find(id="main").stripped_strings)
+                    )
+                except:
+                    pass
+
+        if not hours_of_operation:
+            hours_of_operation = " ".join(
+                list(base.find(class_="open-hours-data").stripped_strings)
+            )
 
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
-
-        phone = raw_data[-2]
 
         geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(base))[0].split(
             ","
@@ -98,36 +101,25 @@ def fetch_data():
         latitude = geo[0]
         longitude = geo[1]
 
-        try:
-            hours_of_operation = " ".join(list(base.find(id="main").stripped_strings))
-        except:
-            hours_of_operation = "<MISSING>"
-
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -115,14 +115,16 @@ def fetch_data():
                     "https://www.searshometownstores.com/home/"
                     + state.lower()
                     + "/"
-                    + city.lower()
+                    + city.lower().replace(" ", "-")
                     + "/"
                     + store.replace("000", "")
                 )
                 if link in linklist:
                     continue
                 linklist.append(link)
+
                 hourlist = loc["storeDetails"]["strHrs"]
+
                 hours = ""
                 for day in week:
                     hours = (

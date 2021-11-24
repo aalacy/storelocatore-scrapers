@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("eatatbento")
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
@@ -44,46 +47,47 @@ def fetch_data():
         locator_domain = "https://www.eatatbento.com/"
         base_url = "https://www.eatatbento.com/locations/"
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("ul.products li.product div.overflow a")
+        links = soup.select("ul.products li.product div.overflow")
+        logger.info(f"{len(links)} found")
         for link in links:
-            soup1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
-            block = soup1.find("div", string=re.compile(r"ORDER ONLINE", re.IGNORECASE))
-            if not block:
-                block = soup1.find(
-                    "p", string=re.compile(r"ORDER ONLINE", re.IGNORECASE)
-                )
-            _detail = block.next_sibling
-            detail = None
-            hh = None
-            if not _detail.p:
-                detail = list(_detail.stripped_strings)
-                hh = list(_detail.next_sibling.stripped_strings)
-            else:
-                detail = list(_detail.select("p")[0].stripped_strings)
-                hh = list(_detail.select("p")[1].stripped_strings)
-
-            del hh[0]
-            if "*Soft" in hh[0]:
-                del hh[0]
-            if len(hh) % 2 != 0:
-                del hh[0]
+            if not link.a:
+                continue
+            soup1 = bs(session.get(link.a["href"], headers=_headers).text, "lxml")
+            logger.info(link.a["href"])
+            _hr = soup1.find("a", string=re.compile(r"HOURS", re.IGNORECASE))
             hours = []
-            for x in range(0, len(hh), 2):
-                hours.append(f"{hh[x]}: {hh[x+1]}")
+            if _hr:
+                temp = list(_hr.find_parent().find_parent().stripped_strings)[1:]
+                if "Soft" in temp[0]:
+                    del temp[0]
+                for x in range(0, len(temp), 2):
+                    hours.append(f"{temp[x]} {temp[x+1]}")
 
-            phone = detail[-1]
-            if not _phone(phone):
-                phone = ""
-            ss = detail[1].strip().split(",")
+            phone = ""
+            if soup1.find("a", href=re.compile(r"tel:")):
+                phone = soup1.find("a", href=re.compile(r"tel:")).text
+            addr = list(link.select_one("span.price").stripped_strings)
+            try:
+                coord = (
+                    soup1.select_one("div.inner iframe")["src"]
+                    .split("!2d")[1]
+                    .split("!2m")[0]
+                    .split("!3d")
+                )
+                latitude = coord[1].split("!3m")
+            except:
+                coord = ["", ""]
             yield SgRecord(
-                page_url=link["href"],
+                page_url=link.a["href"],
                 location_name=soup1.h1.text,
-                street_address=detail[0],
-                city=ss[0],
-                state=ss[1].strip().split(" ")[0],
-                zip_postal=ss[1].strip().split(" ")[-1],
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,
+                latitude=latitude[0],
+                longitude=coord[0],
                 locator_domain=locator_domain,
                 hours_of_operation=_valid("; ".join(hours)),
             )

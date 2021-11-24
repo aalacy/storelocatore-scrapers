@@ -5,6 +5,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 import json
 from sglogging import SgLogSetup
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("isuzucv")
 locator_domain = "https://www.isuzucv.com/"
@@ -21,7 +32,7 @@ def pull_data(url, ext, zipcode, auth, max_attempts):
                 auth = driver.page_source.split(
                     'method="post"><input type="hidden" name="', 1
                 )[1].split('"', 1)[0]
-                logger.info("auth grabbed with success: {auth}")
+                logger.info(f"auth grabbed with success: {auth}")
                 data = driver.get(str(url + ext).format(auth=auth, zipcode=zipcode))
                 WebDriverWait(driver, 5).until(
                     EC.presence_of_element_located(

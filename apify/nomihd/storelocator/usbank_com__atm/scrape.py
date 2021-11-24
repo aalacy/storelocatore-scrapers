@@ -4,8 +4,10 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "usbank.com"
+website = "usbank.com/atm"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -22,6 +24,7 @@ def fetch_data():
     states_sel = lxml.html.fromstring(states_req.text)
     states = states_sel.xpath('//li/a[@class="stateListItemLink"]/@href')
     url_list = []
+    locator_domain = website
     for state_url in states:
         cities_req = session.get(base_url + state_url, headers=headers)
         cities_sel = lxml.html.fromstring(cities_req.text)
@@ -57,100 +60,104 @@ def fetch_data():
 
                     log.info(page_url)
                     store_req = session.get(page_url)
-                    store_sel = lxml.html.fromstring(store_req.text)
+                    if len(store_req.text) > 0:
+                        store_sel = lxml.html.fromstring(store_req.text)
 
-                    locator_domain = website
-
-                    location_name = title
-                    street_address = "".join(
-                        store_sel.xpath(
-                            '//div[@class="branchAddress"]/div[@class="h5heading branchStr"]/text()'
-                        )
-                    ).strip()
-                    city_state_zip = (
-                        "".join(
+                        location_name = title
+                        street_address = "".join(
                             store_sel.xpath(
-                                '//div[@class="branchAddress"]/div[@class="h5heading branchLoc"]/text()'
+                                '//div[@class="branchAddress"]/div[@class="h5heading branchStr"]/text()'
                             )
-                        )
-                        .strip()
-                        .replace("\n", "")
-                        .strip()
-                    )
-
-                    city = city_state_zip.strip().split(",")[0].strip()
-                    state = (
-                        city_state_zip.strip()
-                        .split(",")[-1]
-                        .strip()
-                        .split(" ")[0]
-                        .strip()
-                    )
-                    zip = (
-                        city_state_zip.strip()
-                        .split(",")[-1]
-                        .strip()
-                        .split(" ")[-1]
-                        .strip()
-                    )
-                    country_code = "US"
-
-                    phone = "".join(
-                        store_sel.xpath('//div[@class="branchAddress"]//a//text()')
-                    ).strip()
-
-                    store_number = "<MISSING>"
-                    location_type = "Branch and ATM"
-
-                    hours = store_sel.xpath(
-                        '//table[@class="lobbyTimes"]//tr[position()>1]'
-                    )
-                    hours_list = []
-                    for hour in hours:
-                        day = "".join(hour.xpath("th//text()")).strip()
-                        time = "".join(hour.xpath("td//text()")).strip()
-                        hours_list.append(day + ":" + time)
-
-                    hours_of_operation = "; ".join(hours_list).strip()
-
-                    latitude = ""
-                    try:
-                        latitude = (
-                            store_req.text.split("var locationLatitude = ")[1]
+                        ).strip()
+                        city_state_zip = (
+                            "".join(
+                                store_sel.xpath(
+                                    '//div[@class="branchAddress"]/div[@class="h5heading branchLoc"]/text()'
+                                )
+                            )
                             .strip()
-                            .split(";")[0]
+                            .replace("\n", "")
                             .strip()
                         )
-                    except:
-                        pass
 
-                    longitude = ""
-                    try:
-                        longitude = (
-                            store_req.text.split("var locationLongitude = ")[1]
+                        city = city_state_zip.strip().split(",")[0].strip()
+                        state = (
+                            city_state_zip.strip()
+                            .split(",")[-1]
                             .strip()
-                            .split(";")[0]
+                            .split(" ")[0]
                             .strip()
                         )
-                    except:
-                        pass
+                        zip = (
+                            city_state_zip.strip()
+                            .split(",")[-1]
+                            .strip()
+                            .split(" ")[-1]
+                            .strip()
+                        )
+                        country_code = "US"
 
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
+                        phone = "".join(
+                            store_sel.xpath('//div[@class="branchAddress"]//a//text()')
+                        ).strip()
+
+                        store_number = "<MISSING>"
+                        location_type = ""
+                        if "Branch and ATM" in location_name:
+                            location_type = "Branch and ATM"
+                        else:
+                            if "Branch" in location_name:
+                                location_type = "Branch"
+
+                        hours = store_sel.xpath(
+                            '//table[@class="lobbyTimes"]//tr[position()>1]'
+                        )
+                        hours_list = []
+                        for hour in hours:
+                            day = "".join(hour.xpath("th//text()")).strip()
+                            time = "".join(hour.xpath("td//text()")).strip()
+                            hours_list.append(day + ":" + time)
+
+                        hours_of_operation = "; ".join(hours_list).strip()
+
+                        latitude = ""
+                        try:
+                            latitude = (
+                                store_req.text.split("var locationLatitude = ")[1]
+                                .strip()
+                                .split(";")[0]
+                                .strip()
+                            )
+                        except:
+                            pass
+
+                        longitude = ""
+                        try:
+                            longitude = (
+                                store_req.text.split("var locationLongitude = ")[1]
+                                .strip()
+                                .split(";")[0]
+                                .strip()
+                            )
+                        except:
+                            pass
+
+                        yield SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                        )
 
                 else:
                     if "ATM" in title:
@@ -203,7 +210,13 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,83 +1,94 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
 import json
+import re
 
-from sgselenium import SgSelenium
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
-logger = SgLogSetup().get_logger('curzoncinemas_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-gb:{}@proxy.apify.com:8000/"
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://www.curzon.com/venues/"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-	
-	base_link = "https://www.curzoncinemas.com/cinemas-list"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        if '"postcode"' in str(script):
+            script = str(script)
+    raw_data = script.split('"cinemas":')[1].split('}],"curzonHome')[0] + "}]"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    stores = json.loads(raw_data)
+    locator_domain = "curzon.com"
 
-	driver = SgSelenium().chrome()
-	time.sleep(2)
+    for store in stores:
 
-	data = []
+        link = "https://www.curzon.com" + store["findMoreLink"]
+        location_name = store["name"]
+        street_address = store["address"]
+        city = store["city"]
+        state = "<MISSING>"
+        zip_code = store["postcode"].strip()
+        country_code = "GB"
+        store_number = store["id"]
+        location_type = "<MISSING>"
+        phone = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
-	items = base.find_all(class_="cCinemasItemContent")
-	locator_domain = "curzoncinemas.com"
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-	for item in items:
+        map_link = base.find(class_="getting-here-info__link")["href"]
+        try:
+            try:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{1,3}\.[0-9]+", map_link)[
+                    0
+                ].split(",")
+            except:
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", map_link)[
+                    0
+                ].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
-		link = "https://www.curzoncinemas.com" + item.a['href']
-		logger.info(link)
-		driver.get(link)
-		time.sleep(randint(10,12))
-		base = BeautifulSoup(driver.page_source,"lxml")
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
-		store = json.loads(script)
 
-		location_name = store['name']
-		street_address = store['address']['streetAddress']
-		city = store['address']['addressLocality']
-		state = "<MISSING>"
-		zip_code = store['address']['postalCode']
-		country_code = store['address']['addressCountry']
-
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
-		phone = store['telephone']
-		hours_of_operation = "<MISSING>"
-
-		latitude = store['geo']['latitude']
-		longitude = store['geo']['longitude']
-
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	driver.close()
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

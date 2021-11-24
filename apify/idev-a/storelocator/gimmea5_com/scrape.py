@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 logger = SgLogSetup().get_logger("gimmea5")
 
@@ -23,10 +24,21 @@ def fetch_data():
         logger.info(f"{len(locations)} found")
         for _ in locations:
             block = list(_.stripped_strings)
-            addr = parse_address_intl(" ".join(block[1:-1]))
+            _addr = block[1:-1]
+            if "phone" in _addr[-1].lower():
+                del _addr[-1]
+            addr = parse_address_intl(" ".join(_addr))
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            phone = (
+                _.find("a", href=re.compile(r"tel:"))
+                .text.split(":")[-1]
+                .replace("Phone", "")
+                .strip()
+            )
+            if not phone:
+                phone = _.find("span", {"role": "link"}).text
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],
@@ -35,7 +47,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="US",
-                phone=block[-1].split(":")[-1].replace("Phone", "").strip(),
+                phone=phone,
                 locator_domain=locator_domain,
             )
 

@@ -56,6 +56,8 @@ def fetch_data():
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//header[@class="entry-header"]/p/span/text()')[:2]
         raw_address = [e.strip() for e in raw_address if e.strip()]
+        if not raw_address:
+            continue
         street_address = raw_address[0]
         city = raw_address[-1].split(", ")[0]
         city = city if city else "<MISSING>"
@@ -76,7 +78,9 @@ def fetch_data():
         longitude = geo[1]
         hoo = loc_dom.xpath("//header/p[2]//text()")
         hoo = [e.strip() for e in hoo]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).replace("TEMPORARY HOURS ", "") if hoo else "<MISSING>"
+        )
 
         item = [
             domain,

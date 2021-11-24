@@ -1,132 +1,155 @@
-from sgscrape.sgrecord import SgRecord
+import math
+from concurrent.futures import ThreadPoolExecutor
+import time
+from sgrequests.sgrequests import SgRequests
+from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from bs4 import BeautifulSoup as bs
+import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("spencersonline")
+DOMAIN = "spencersonline.com"
+website = "https://stores.spencersonline.com"
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
 }
 
 
-def fetch_data():
-    locator_domain = "https://www.spencersonline.com/"
-    base_url = "https://www.spencersonline.com/custserv/locate_store.cmd"
-    with SgRequests() as session:
-        res = session.post(base_url, headers=_headers).text
-        total = int(res.split("allStores[")[-1].split("]")[0]) + 1
-        logger.info(f"Total {total}")
-        for i in range(1, total):
-            logger.info(f"[{i}]")
-            store_number = (
-                res.split("store.STORE_NUMBER = '")[i]
-                .split("store.ADDRESS_LINE_1")[0]
-                .replace("';", "")
-                .strip()
-                .lstrip()
+log = sglog.SgLogSetup().get_logger("spencersonline")
+
+
+ca_provinces_codes = {
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
+}
+
+
+max_workers = 8
+
+
+def fetchConcurrentSingle(data):
+    return data["url"]
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            count = count + 1
+            if count % reminder == 0:
+                log.debug(f"Concurrent Operation count = {count}")
+            output.append(result)
+    return output
+
+
+def request_with_retries(url, http):
+    return http.get(url, headers=headers)
+
+
+def fetchStates(http):
+    urls = []
+    for state in bs(request_with_retries(website, http).text, "lxml").select(
+        "ul.browse a"
+    ):
+        urls.append({"url": state["href"]})
+    return urls
+
+
+def fetchCities(obj, http):
+    urls = []
+    for url in fetchConcurrentList(obj):
+        response = request_with_retries(url, http)
+        for data in bs(response.text, "lxml").select("div.map-list-item a"):
+            urls.append({"url": data["href"]})
+
+    return urls
+
+
+def fetchUrls(obj, http):
+    urls = []
+    for url in fetchConcurrentList(obj):
+        response = request_with_retries(url, http)
+        for data in bs(response.text, "lxml").select(
+            "div.map-list-item div.map-list-item-header a"
+        ):
+            urls.append({"url": data["href"]})
+
+    return urls
+
+
+def fetchData():
+    with SgRequests(proxy_country="us") as http:
+        states = fetchStates(http)
+        log.info(f"Total states = {len(states)}")
+
+        city_urls = fetchCities(states, http)
+        page_urls = fetchUrls(city_urls, http)
+
+        log.info(f"{len(page_urls)} found")
+        for page_url in fetchConcurrentList(page_urls):
+            log.info(page_url)
+            res = request_with_retries(page_url, http)
+            sp1 = bs(res.text, "lxml")
+            ss = json.loads(
+                bs(res.text, "lxml").find("script", type="application/ld+json").string
             )
-            street_address = (
-                res.split("store.ADDRESS_LINE_2 = '")[i]
-                .split("store.CITY = '")[0]
-                .replace("';", "")
-                .replace("&#45;", "-")
-                .strip()
-            ) or "<MISSING>"
-            if street_address == "X":
-                continue
-            latitude = (
-                res.split("store.LATITUDE = '")[i]
-                .split("store.LONGITUDE = '")[0]
-                .replace("';", "")
-                .strip()
-            )
-            longitude = (
-                res.split("store.LONGITUDE = '")[i]
-                .split("store.STORE_STATUS = '")[0]
-                .replace("';", "")
-                .strip()
-            )
-            zip_postal = (
-                res.split("store.ZIP_CODE = '")[i]
-                .split("store.PHONE = '")[0]
-                .replace("';", "")
-                .strip()
-            )
-            phone = (
-                res.split("store.PHONE = '")[i]
-                .split("store.LATITUDE = '")[0]
-                .replace("';", "")
-                .strip()
-            )
-            country_code = (
-                res.split("store.COUNTRY_CODE ='")[i]
-                .split("store.ZIP_CODE = '")[0]
-                .replace("';", "")
-                .strip()
-            )
-            state = (
-                res.split("store.STATE ='")[i]
-                .split("store.COUNTRY_CODE =")[0]
-                .replace("';", "")
-                .strip()
-            )
-            city = (
-                res.split("store.CITY = '")[i]
-                .split("store.STATE ='")[0]
-                .replace("';", "")
-                .strip()
-            )
-            location_name = (
-                res.split("store.STORE_NAME = '")[i]
-                .split("store.STORE_NUMBER = '")[0]
-                .replace("';", "")
-                .strip()
-            )
-            hours_of_operation = (
-                res.split("store.STORE_STATUS = '")[i].split("';")[0].strip()
-            )
-            STORE_ID = (
-                res.split("store.STORE_ID = '")[i]
-                .split("store.STORE_NAME = '")[0]
-                .replace("';", "")
-                .strip()
-            )
-            page_url = (
-                "https://www.spencersonline.com/store/"
-                + str(location_name.strip().lstrip().replace(" ", "-"))
-                + "/"
-                + str(STORE_ID.strip().lstrip())
-                + ".uts"
-            )
-            if "Coming Soon" in hours_of_operation:
-                continue
-            if hours_of_operation.find("Closed") != -1:
-                hours_of_operation = "Closed"
-            else:
-                hours_of_operation = "<MISSING>"
-            if latitude == "0" or longitude == "0":
-                longitude = "<MISSING>"
-                latitude = "<MISSING>"
-            yield SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                store_number=store_number,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                phone=phone,
-                locator_domain=locator_domain,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+            hours = []
+            for hh in sp1.select("div.map-list div.hours div.day-hour-row"):
+                hours.append(
+                    f"{hh.select_one('.daypart').text.strip()}: {''.join(hh.select_one('.time').stripped_strings)}"
+                )
+            for _ in ss:
+                country_code = "US"
+                if _["address"]["addressRegion"] in ca_provinces_codes:
+                    country_code = "CA"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    store_number=page_url.split("-")[-1].split(".")[0].strip(),
+                    page_url=page_url,
+                    location_name=sp1.select_one("span.location-name").text.strip(),
+                    street_address=_["address"]["streetAddress"],
+                    city=_["address"]["addressLocality"],
+                    zip_postal=_["address"]["postalCode"],
+                    state=_["address"]["addressRegion"],
+                    country_code=country_code,
+                    phone=_["address"]["telephone"],
+                    latitude=_["geo"]["latitude"],
+                    longitude=_["geo"]["longitude"],
+                    hours_of_operation="; ".join(hours),
+                )
+
+
+def scrape():
+    start = time.time()
+    result = fetchData()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in result:
+            writer.write_row(rec)
+    end = time.time()
+    log.info(f"{end-start} seconds.")
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    scrape()

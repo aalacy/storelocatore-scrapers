@@ -3,7 +3,7 @@ import demjson
 from time import sleep
 from lxml import etree
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -43,16 +43,17 @@ def fetch_data():
     DOMAIN = "schmizzapublichouse.com"
     start_url = "https://schmizzapublichouse.com/locations/"
 
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         driver.find_element_by_id("id_location").send_keys("1")
-        driver.find_element_by_xpath('//button[@type="submit"]').click()
+        driver.find_element_by_xpath('//button[@class="search-btn"]').click()
         sleep(15)
+        driver.save_screenshot("shmizza.png")
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//a[contains(text(), "View Location")]/@href')
     for store_url in all_locations:
-        with SgChrome() as driver:
+        with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
         data = loc_dom.xpath(
@@ -78,10 +79,9 @@ def fetch_data():
         location_type = data["@type"]
         latitude = data["geo"]["latitude"]
         longitude = data["geo"]["longitude"]
-        hours_of_operation = data["openingHours"]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        hoo = loc_dom.xpath('//div[@class="store-hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

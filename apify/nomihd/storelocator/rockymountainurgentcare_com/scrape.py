@@ -47,22 +47,30 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        if store["hours"]:
-            hours = store["hours"]
+        log.info(page_url)
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
+        sections = store_sel.xpath(
+            '//div[@class="siteorigin-widget-tinymce textwidget"]'
+        )
+        for sec in sections:
+            if "Urgent Care" in "".join(sec.xpath("h2/text()")).strip():
+                phone = sec.xpath('p/a[contains(@href,"tel:")][1]/text()')
+                if len(phone) > 0:
+                    phone = phone[0]
+                break
 
-            hours_list = []
-            hours_sel = lxml.html.fromstring(hours).xpath("//tr")
-            for hour in hours_sel:
-                hour_info = list(filter(str, hour.xpath(".//text()")))
-                day = hour_info[0].strip()
-                hrs = (
-                    "".join(hour_info[1:]).replace("\n", " ").replace("  ", " ").strip()
+        hours_of_operation = "<MISSING>"
+        text_sections = store_sel.xpath(
+            '//div[@class="siteorigin-widget-tinymce textwidget"]/p'
+        )
+        for sec in text_sections:
+            if "Mon-" in "".join(sec.xpath(".//text()")).strip():
+                hours_of_operation = (
+                    "; ".join(sec.xpath(".//text()")).strip().replace("\n", "").strip()
                 )
-                hours_list.append(f"{day}: {hrs}")
+                break
 
-            hours_of_operation = "; ".join(hours_list)
-        else:
-            hours_of_operation = "<MISSING>"
         latitude = store["lat"].strip()
         longitude = store["lng"].strip()
 

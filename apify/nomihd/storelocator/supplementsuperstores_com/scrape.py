@@ -61,7 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://client.lifterlocator.com/maps/jsonGet/s2faction.myshopify.com?storeName=s2faction.myshopify.com&mapId=660&loadSource=initial&maxResults=10000&radius=1000000&zoom=3&address=&latitude=43.83452678223684&longitude=-46.93359375&initialView=auto&measurement=mi"
     stores_req = session.get(search_url, headers=headers)
@@ -149,6 +148,8 @@ def fetch_data():
             .decode("utf-8")
             .replace("?", "-")
             .strip()
+            .replace("HOURS; ", "")
+            .strip()
         )
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
@@ -172,8 +173,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-        # break
+        yield curr_list
 
     for store_url in stores_html:
         page_url = ""
@@ -244,6 +244,8 @@ def fetch_data():
                 .decode("utf-8")
                 .replace("?", "-")
                 .strip()
+                .replace("HOURS; ", "")
+                .strip()
             )
             if hours_of_operation == "":
                 hours_of_operation = "<MISSING>"
@@ -267,8 +269,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-    return loc_list
+            yield curr_list
 
 
 def scrape():

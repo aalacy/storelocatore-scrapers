@@ -1,8 +1,10 @@
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "familyfootwearcenter_com"
@@ -14,7 +16,7 @@ headers = {
 }
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     if True:
         url = "https://www.familyfootwearcenter.com/store-locations/shoe-stores"
         r = session.get(url, headers=headers)
@@ -39,46 +41,25 @@ def fetch_data():
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
-            coords = soup.select_one("iframe[src*=maps]")["src"]
-            r = session.get(coords, headers=headers)
-            temp = "Family Footwear Center - " + city + "," + " " + state
-            latitude, longitude = (
-                r.text.split(temp, 2)[0]
-                .rsplit('",', 1)[1]
-                .split("]\\n")[0]
-                .replace("[", "")
-                .split(",")
-            )
-            yield SgRecord(
-                locator_domain="https://www.familyfootwearcenter.com/",
-                page_url=page_url,
-                location_name=location_name.strip(),
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code="US",
-                store_number="<MISSING>",
-                phone=phone,
-                location_type="<MISSING>",
-                latitude=latitude.strip(),
-                longitude=longitude.strip(),
-                hours_of_operation=hours_of_operation.strip(),
+            sgw.write_row(
+                SgRecord(
+                    locator_domain="https://www.familyfootwearcenter.com/",
+                    page_url=page_url,
+                    location_name=location_name.strip(),
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code="US",
+                    store_number="<MISSING>",
+                    phone=phone,
+                    location_type="<MISSING>",
+                    latitude="<MISSING>",
+                    longitude="<MISSING>",
+                    hours_of_operation=hours_of_operation.strip(),
+                )
             )
 
 
-def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
-
-
-if __name__ == "__main__":
-    scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

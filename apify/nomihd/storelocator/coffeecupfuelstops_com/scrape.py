@@ -27,6 +27,12 @@ def fetch_data():
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
+        street_address = store_sel.xpath(
+            '//div[@class="sqs-block html-block sqs-block-html"]/div/p[1]/text()'
+        )
+        if len(street_address) > 0:
+            street_address = street_address[0]
+
         locator_domain = website
         store_json_text = (
             "".join(
@@ -39,10 +45,19 @@ def fetch_data():
             .replace("&quot;", '"')
             .replace("&#125;", "}")
         )
+
         store_json = json.loads(store_json_text)["location"]
         location_name = store_json["addressTitle"]
-        street_address = store_json["addressLine1"]
         city = store_json["addressLine2"].strip().split(",")[0].strip()
+        try:
+            street_address = (
+                street_address.split(city)[0].strip().replace("l", ", ").strip()
+            )
+        except:
+            pass
+
+        if "," in street_address[-1]:
+            street_address = "".join(street_address[:-1]).strip()
         state = store_json["addressLine2"].strip().split(",")[1].strip()
         zip = store_json["addressLine2"].strip().split(",")[-1].strip()
 

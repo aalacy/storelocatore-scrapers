@@ -4,12 +4,29 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
 
         for row in data:
             writer.writerow(row)
@@ -17,60 +34,77 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    url = 'https://stores.express.com/'
+    locator_domain = "https://express.com/"
 
     session = SgRequests()
-    headers = {'Accept': 'application/json'}
+    headers = {"Accept": "application/json"}
 
     s = set()
     for i in range(0, 100000, 10):
-        r = session.get(f'https://stores.express.com/search?q=&offset={i}&c=us&storeType=4067208', headers=headers)
-        js = r.json()['response']['entities']
+        r = session.get(
+            f"https://stores.express.com/search?q=&offset={i}&storeType=4067208",
+            headers=headers,
+        )
+        js = r.json()["response"]["entities"]
         for jj in js:
-            j = jj.get('profile')
-            a = j.get('address')
-            locator_domain = url
-            street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or '<MISSING>'
-            city = a.get('city') or '<MISSING>'
+            j = jj.get("profile")
+            a = j.get("address")
+            street_address = (
+                f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
+            )
+            city = a.get("city") or "<MISSING>"
             location_name = f"Express {j.get('c_storeName')}"
-            state = a.get('region') or '<MISSING>'
-            postal = a.get('postalCode') or '<MISSING>'
-            country_code = a.get('countryCode') or '<MISSING>'
-            store_number = '<MISSING>'
-            page_url = j.get('c_pagesUrl') or '<MISSING>'
-            phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
+            state = a.get("region") or "<MISSING>"
+            postal = a.get("postalCode") or "<MISSING>"
+            country_code = a.get("countryCode") or "<MISSING>"
+            store_number = "<MISSING>"
+            page_url = j.get("c_pagesUrl") or "<MISSING>"
+            phone = j.get("mainPhone", {}).get("display") or "<MISSING>"
 
-            # there is one duplication with different URLs
             test = f"{location_name} {street_address} {city} {state} {postal} {phone}"
             if test in s:
                 continue
             s.add(test)
 
-            latitude = j.get('yextDisplayCoordinate', {}).get('lat') or '<MISSING>'
-            longitude = j.get('yextDisplayCoordinate', {}).get('long') or '<MISSING>'
-            location_type = '<MISSING>'
+            latitude = j.get("yextDisplayCoordinate", {}).get("lat") or "<MISSING>"
+            longitude = j.get("yextDisplayCoordinate", {}).get("long") or "<MISSING>"
+            location_type = "<MISSING>"
 
-            hours = j.get('hours', {}).get('normalHours')
+            hours = j.get("hours", {}).get("normalHours")
             _tmp = []
             for h in hours:
-                day = h.get('day')
-                if not h.get('isClosed'):
-                    interval = h.get('intervals')
-                    start = str(interval[0].get('start'))
+                day = h.get("day")
+                if not h.get("isClosed"):
+                    interval = h.get("intervals")
+                    start = str(interval[0].get("start"))
                     if len(start) == 3:
-                        start = f'0{start}'
-                    end = str(interval[0].get('end'))
+                        start = f"0{start}"
+                    end = str(interval[0].get("end"))
                     line = f"{day[:3].capitalize()}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
                 else:
-                    line = f'{day[:3].capitalize()}: Closed'
+                    line = f"{day[:3].capitalize()}: Closed"
                 _tmp.append(line)
 
-            hours_of_operation = ';'.join(_tmp) or '<MISSING>'
-            if hours_of_operation.count('Closed') == 7:
-                hours_of_operation = 'Closed'
+            hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
 
-            row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                   country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+            row = [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                postal,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
             out.append(row)
         if len(js) < 10:
             break

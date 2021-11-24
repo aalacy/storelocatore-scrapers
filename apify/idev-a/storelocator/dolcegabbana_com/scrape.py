@@ -17,6 +17,13 @@ locator_domain = "https://boutique.dolcegabbana.com/"
 base_url = "https://boutique.dolcegabbana.com/directory"
 
 
+def _time(val):
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
+
+
 def _entities(sp, url):
     try:
         return json.loads(sp.select_one("script#js-map-config-dir-map").string.strip())[
@@ -43,7 +50,7 @@ def parse_data(entity, page_url):
     for hh in _["hours"]["normalHours"]:
         times = "closed"
         if not hh["isClosed"]:
-            times = f"{hh['intervals'][0]['start']}-{hh['intervals'][0]['end']}"
+            times = f"{_time(hh['intervals'][0]['start'])}-{_time(hh['intervals'][0]['end'])}"
         hours.append(f"{hh['day']}: {times}")
     location_type = ""
     if "temporary closed" in _.get("additionalHoursText", ""):

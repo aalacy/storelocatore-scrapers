@@ -111,9 +111,11 @@ def fetch_data():
             base = BeautifulSoup(req.text, "lxml")
 
             raw_address = (
-                base.find(class_="storelocator-bread-subtitle").text.strip().split("\n")
+                base.find(class_="storelocator-bread-subtitle")["streetaddress"]
+                .strip()
+                .split(",")
             )
-            state = raw_address[-2].strip()
+            state = raw_address[-1].strip()
             if not state:
                 raw_state = (
                     base.find(class_="storelocator-bread-subtitle")
@@ -124,8 +126,17 @@ def fetch_data():
                     raw_state.rfind(",") + 1 : raw_state.rfind(" ")
                 ].strip()
 
-            zip_code = raw_address[-1].strip()
+            zip_code = base.find(class_="storelocator-bread-subtitle")[
+                "postalcode"
+            ].strip()
 
+            if "Jersey 7631" in zip_code:
+                zip_code = "7631"
+            state = state.replace(zip_code, "").strip()
+
+            if country_code == "Canada":
+                zip_code = state[-7:].strip()
+                state = state[:-7].strip()
             try:
                 hours_of_operation = " ".join(
                     list(base.find(class_="store-hours clearfix").stripped_strings)

@@ -1,8 +1,5 @@
 import csv
-import time
-
-from lxml import html
-from sgselenium import SgFirefox
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -36,45 +33,37 @@ def write_output(data):
 
 def fetch_data():
     out = []
+
     locator_domain = "https://millersmarkets.net/"
-    page_url = "https://millersmarkets.net/contact"
+    api_url = "https://millersmarkets.net/ajax/index.php"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "Referer": "https://millersmarkets.net/contact",
+    }
 
-    with SgFirefox() as fox:
-        fox.get(page_url)
-        time.sleep(10)
-        source = fox.page_source
+    data = {
+        "method": "POST",
+        "apiurl": "https://millersmarkets.rsaamerica.com/Services/SSWebRestApi.svc/GetClientStores/1",
+    }
 
-    tree = html.fromstring(source)
-    divs = tree.xpath("//div[contains(@class, 'fade tab-pane')]")
+    r = session.post(api_url, headers=headers, data=data)
+    js = r.json()["GetClientStores"]
 
-    for d in divs:
-        location_name = "".join(d.xpath(".//h2/text()")).strip()
-        street_address = "".join(
-            d.xpath(".//h2/following-sibling::p[1]/text()")
-        ).strip()
-        line = "".join(d.xpath(".//h2/following-sibling::p[2]/text()")).strip()
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[1]
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-            or "<MISSING>"
-        )
-        text = "".join(d.xpath(".//iframe/@src"))
-        try:
-            latitude, longitude = text.split("q=")[1].split("&")[0].split(",")
-        except:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+    for j in js:
+        page_url = "https://millersmarkets.net/contact"
+        location_name = j.get("ClientStoreName")
         location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(
-                d.xpath(".//b[contains(text(), 'HOURS')]/following-sibling::text()")
-            ).strip()
-            or "<MISSING>"
-        )
+        street_address = j.get("AddressLine1")
+        phone = j.get("StorePhoneNumber")
+        state = j.get("StateName")
+        postal = j.get("ZipCode")
+        country_code = "US"
+        city = j.get("City")
+        store_number = j.get("StoreNumber")
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
+        hours_of_operation = j.get("StoreTimings")
 
         row = [
             locator_domain,

@@ -88,7 +88,8 @@ def fetch_data():
         _tmp = []
         for h in hours:
             date = h.get("formattedDate")
-            t = datetime.strptime(date, "%d/%m/%Y")
+
+            t = datetime.strptime(date, "%m/%d/%Y")
             day = t.strftime("%A")
             open = h.get("openingTime").get("formattedHour")
             if open is None:

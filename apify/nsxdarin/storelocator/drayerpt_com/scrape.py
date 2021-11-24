@@ -52,14 +52,7 @@ def fetch_data():
         if 'lng="' in line:
             llng = line.split('"')[1]
         if "Location Details</a>" in line:
-            locs.append(
-                "https://drayer.urpt.com"
-                + line.split('href="')[1].split('"')[0]
-                + "|"
-                + llat
-                + "|"
-                + llng
-            )
+            locs.append(line.split('href="')[1].split('"')[0] + "|" + llat + "|" + llng)
     for loc in locs:
         logger.info(loc)
         name = ""
