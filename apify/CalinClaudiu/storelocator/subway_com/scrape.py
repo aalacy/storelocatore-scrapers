@@ -420,8 +420,8 @@ if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        granularity=Grain_8(),
-        expected_search_radius_miles=50,
+        granularity=Grain_4(),
+        expected_search_radius_miles=25,
         max_search_results=50,
     )
     with SgWriter(
