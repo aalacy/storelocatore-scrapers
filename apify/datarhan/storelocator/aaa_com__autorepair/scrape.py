@@ -93,7 +93,7 @@ def fetch_data():
         zip_code = poi["entities"][0]["profile"]["address"]["postalCode"]
         country_code = poi["entities"][0]["profile"]["address"]["countryCode"]
         store_number = "<MISSING>"
-        phone = poi["entities"][0]["profile"]["mainPhone"]["number"]
+        phone = poi["entities"][0]["profile"].get("mainPhone", {}).get("number")
         phone = phone if phone else "<MISSING>"
         location_type = poi["entities"][0]["profile"].get("c_branchType")
         location_type = location_type if location_type else "<MISSING>"

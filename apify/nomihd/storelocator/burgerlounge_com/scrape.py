@@ -65,7 +65,7 @@ def fetch_data():
     search_url = "https://www.burgerlounge.com/locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//p/a[contains(@href,"../locations/")]/@href')
+    stores = stores_sel.xpath('//h2/a[contains(@href,"../locations/")]/@href')
     for store_url in stores:
         page_url = "https://www.burgerlounge.com" + store_url.replace("../", "/")
         log.info(page_url)
@@ -91,7 +91,8 @@ def fetch_data():
                 '//div[@class="col-3 locationdescription"]//div[@class="locationaddress"]/p/a[contains(@href,"/maps")]/text()'
             )
         ).strip()
-
+        if "," in street_address[-1]:
+            street_address = "".join(street_address[:-1]).strip()
         temp_address = store_sel.xpath(
             '//div[@class="col-3 locationdescription"]//div[@class="locationaddress"]/p/text()'
         )
@@ -102,9 +103,11 @@ def fetch_data():
                 city_state_zip.append("".join(temp).strip())
 
         city_state_zip = " ".join(city_state_zip).strip()
-        city = city_state_zip.split(",")[0].strip()
-        state = city_state_zip.split(",")[1].strip().split(" ")[0].strip()
-        zip = city_state_zip.split(",")[1].strip().split(" ")[-1].strip()
+        if "Coming Soon" in city_state_zip:
+            continue
+        city = city_state_zip.rsplit(",", 1)[0].strip().replace(", ", "").strip()
+        state = city_state_zip.rsplit(",", 1)[1].strip().split(" ")[0].strip()
+        zip = city_state_zip.rsplit(",", 1)[1].strip().split(" ")[-1].strip()
         phone = "".join(
             store_sel.xpath(
                 '//div[@class="col-3 locationdescription"]//div[@class="locationaddress"]/p/a[contains(@href,"tel:")]/text()'

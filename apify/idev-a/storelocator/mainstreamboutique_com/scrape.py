@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import dirtyjson
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("mainstreamboutique")
@@ -10,6 +12,17 @@ logger = SgLogSetup().get_logger("mainstreamboutique")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+
+
+def _p(val):
+    return (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("-", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
 
 
 def fetch_data():
@@ -32,32 +45,42 @@ def fetch_data():
 
         soup = bs(res, "lxml")
         locations = soup.select("div#addresses_list ul li")
+        logger.info(f"{len(locations)} found")
         for _ in locations:
             store_number = _["onmouseover"].split("(")[1][:-1]
             city = _.select_one("span.city").text.strip()
-            page_url = _.select_one("div.store_website a")["href"]
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            page_url = (
+                "https://mainstreamboutique.com/pages/"
+                + _.select_one("div.store_website a")["href"].split("/")[-1]
+            )
             logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _addr = [
                 aa
                 for aa in sp1.select("div.shg-row > div")[0].stripped_strings
                 if aa.strip()
-            ][2].split(" ")
+            ][2].split()
             _addr = [aa for aa in _addr if aa.strip()]
             hours = []
             if "We are closed" in sp1.select("div.shg-row > div")[1].text:
                 hours = ["Closed"]
             else:
-                hh = list(sp1.select("div.shg-row > div")[1].p.stripped_strings)
+                hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[1:]
                 for x in range(0, len(hh), 2):
                     hours.append(f"{hh[x]} {hh[x+1]}")
             phone = (
                 sp1.select("div.shg-row > div")[2].p.text.strip().split(":")[-1].strip()
             )
 
-            zip_postal = _addr[-1].strip()
-            if not zip_postal.isdigit():
-                zip_postal = ""
+            if not _p(phone):
+                phone = ""
+            zip_postal = ""
+            if _.select_one("span.postal_zip"):
+                zip_postal = _.select_one("span.postal_zip").text.strip()
+            if not zip_postal:
+                zip_postal = _addr[-1].strip()
+                if not zip_postal.isdigit():
+                    zip_postal = ""
             coord = ["", ""]
             for loc in locs:
                 if str(loc["id"]) == store_number:
@@ -80,7 +103,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

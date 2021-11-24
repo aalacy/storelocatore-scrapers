@@ -1,163 +1,187 @@
-import requests
+import csv
 
-from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup
 
-logger = SgLogSetup().get_logger('mysagedental_com')
-
-
-
+from sgrequests import SgRequests
 
 URL = "https://mysagedental.com/"
 
 
-class Scraper(Scrape):
-    def __init__(self, url):
-        Scrape.__init__(self, url)
-        self.data = []
-        self.seen = []
+def write_output(data):
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-    def fetch_data(self):
-        # store data
-        locations_ids = []
-        locations_titles = []
-        street_addresses = []
-        cities = []
-        states = []
-        zip_codes = []
-        latitude_list = []
-        longitude_list = []
-        phone_numbers = []
-        hours = []
-        countries = []
-        location_types = []
-        page_urls = []
-
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
-
-        headers = {
-            'Sec-Fetch-Mode': 'cors',
-            'Referer': 'https://mysagedental.com/find-locations/',
-            'DNT': '1',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36',
-        }
-
-        stores = requests.get('https://mysagedental.com/wp-content/themes/sharkbite-child/assets/js/google-maps-json.php', headers=headers).json()['features']
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
 
 
-        for store in stores:
-            # Store ID
-            location_id = '<MISSING>'
+def fetch_data():
+    # store data
+    locations_ids = []
+    locations_titles = []
+    street_addresses = []
+    cities = []
+    states = []
+    zip_codes = []
+    latitude_list = []
+    longitude_list = []
+    phone_numbers = []
+    hours = []
+    countries = []
+    location_types = []
+    page_urls = []
+    data = []
 
-            # Page url
-            page_url = store['properties']['locpage']
-            logger.info(f"Now scraping {page_url}")
+    base_link = "https://mysagedental.com/wp-admin/admin-ajax.php?action=load_locations"
 
-            # Type
-            location_type = store['properties']['category']
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-            # Name
-            location_title = store['properties']['name']
+    session = SgRequests()
+    stores = session.get(base_link, headers=headers).json()["locations"]
 
-            # Street
-            street_address = store['properties']['address1'] + store['properties']['address2']
+    for store in stores:
+        # Store ID
+        location_id = store["id"]
 
-            # city
-            city = store['properties']['city']
+        # Type
+        location_type = "<MISSING>"
 
-            # zip
-            zipcode = store['properties']['zip']
+        # Name
+        location_title = store["title"]
 
-            # State
-            state = store['properties']['state']
+        # Page url
+        page_url = URL + location_title.lower().replace("east boca", "boca").replace(
+            "hallandale beach", "hallandale"
+        ).split("at 7")[0].strip().replace(" ", "-")
 
-            # Phone
-            phone = store['properties']['phone']
+        # Street
+        street_address = store["address_1"].strip()
 
-            # Lat
-            lat = store['geometry']['coordinates'][1]
+        # city
+        city_line = store["address"].strip().split(",")
+        city = city_line[0].strip()
 
-            # Long
-            lon = store['geometry']['coordinates'][0]
+        # zip
+        zipcode = city_line[-1].strip().split()[1].strip()
 
-            # Hour
-            driver.get(page_url)
-            hour = driver.find_element_by_css_selector('div.locHours').get_attribute('textContent').strip().replace('\n', '').replace('\t', '')
+        # State
+        state = city_line[-1].strip().split()[0].strip()
 
-            # Country
-            country = 'US'
+        # Phone
+        phone = store["phone"]
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
-            page_urls.append(page_url)
+        # Lat
+        lat = store["latitude"]
 
-        for (
-                locations_title,
+        # Long
+        lon = store["longitude"]
+        if not lon:
+            lat = "<MISSING>"
+            lon = "<MISSING>"
+
+        # Hour
+        try:
+            req = session.get(page_url, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            hour = base.find(class_="hours").get_text(" ").strip()
+        except:
+            page_url = "https://mysagedental.com/find-locations/"
+            hour = "<INACCESSIBLE>"
+
+        # Country
+        country = "US"
+
+        # Store data
+        locations_ids.append(location_id)
+        locations_titles.append(location_title)
+        street_addresses.append(street_address)
+        states.append(state)
+        zip_codes.append(zipcode)
+        hours.append(hour)
+        latitude_list.append(lat)
+        longitude_list.append(lon)
+        phone_numbers.append(phone)
+        cities.append(city)
+        countries.append(country)
+        location_types.append(location_type)
+        page_urls.append(page_url)
+
+    for (
+        locations_title,
+        page_url,
+        street_address,
+        city,
+        state,
+        zipcode,
+        phone_number,
+        latitude,
+        longitude,
+        hour,
+        location_id,
+        country,
+        location_type,
+    ) in zip(
+        locations_titles,
+        page_urls,
+        street_addresses,
+        cities,
+        states,
+        zip_codes,
+        phone_numbers,
+        latitude_list,
+        longitude_list,
+        hours,
+        locations_ids,
+        countries,
+        location_types,
+    ):
+        data.append(
+            [
+                URL,
                 page_url,
+                locations_title,
                 street_address,
                 city,
                 state,
                 zipcode,
+                country,
+                location_id,
                 phone_number,
+                location_type,
                 latitude,
                 longitude,
                 hour,
-                location_id,
-                country,
-                location_type,
-        ) in zip(
-            locations_titles,
-            page_urls,
-            street_addresses,
-            cities,
-            states,
-            zip_codes,
-            phone_numbers,
-            latitude_list,
-            longitude_list,
-            hours,
-            locations_ids,
-            countries,
-            location_types,
-        ):
-            self.data.append(
-                [
-                    self.url,
-                    page_url,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hour,
-                ]
-            )
-
-        driver.quit()
+            ]
+        )
+    return data
 
 
-scrape = Scraper(URL)
-scrape.scrape()
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+
+scrape()

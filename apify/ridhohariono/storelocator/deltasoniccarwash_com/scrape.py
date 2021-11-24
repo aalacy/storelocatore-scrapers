@@ -104,7 +104,13 @@ def fetch_data():
             .strip()
         )
         get_hoo = content.find("h3", text="Car Wash")
-        hours_of_operation = get_hoo.find_next("p").get_text(strip=True, separator=",")
+        if not get_hoo:
+            get_hoo = content.find("h3", {"class": "Location-Heading2020"})
+        hours_of_operation = (
+            get_hoo.find_next("p")
+            .get_text(strip=True, separator=",")
+            .replace("Pre-Sale Hours:,", "")
+        )
         if "Coming soon" in hours_of_operation:
             location_type = "COMING_SOON"
         else:

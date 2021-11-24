@@ -13,18 +13,12 @@ headers = {
     "Accept": "application/json",
 }
 
+DOMAIN = "https://stratos-pizzeria.com/"
+MISSING = "<MISSING>"
+
 
 def fetch_data():
     if True:
-        daylist = {
-            "Dimanche": "Sunday",
-            "Lundi": "Monday",
-            "Mardi": "Tuesday",
-            "Mercredi": "Wednesday",
-            "Jeudi": "Thursday",
-            "Vendredi": "Friday",
-            "Samedi": "Saturday",
-        }
         url = "https://stratos-pizzeria.com/wp-admin/admin-ajax.php?action=store_search&lat=46.81388&lng=-71.20798&max_results=100&search_radius=500&autoload=1"
         loclist = session.get(url, headers=headers).json()
         for loc in loclist:
@@ -41,36 +35,23 @@ def fetch_data():
             page_url = loc["url"]
             log.info(location_name)
             phone = loc["phone"]
-            temp = BeautifulSoup(loc["description"], "html.parser")
-            try:
-                hour_list = temp.findAll("table")[1].findAll("tr")[1:]
-            except:
-                hour_list = temp.find("table").findAll("tr")[1:]
-            hours_of_operation = ""
-            for hour in hour_list:
-                hour = hour.findAll("td")
-                day = hour[0].text
-                day = daylist[day]
-                time = (
-                    hour[1]
-                    .text.replace("h", " ")
-                    .replace("à", "-")
-                    .replace("   ", " ")
-                    .strip()
-                )
-                hours_of_operation = hours_of_operation + " " + day + " " + time
+            hours_of_operation = BeautifulSoup(loc["hours"], "html.parser")
+            hours_of_operation = hours_of_operation.get_text(
+                separator="|", strip=True
+            ).replace("|", " ")
+            country_code = "CA"
             yield SgRecord(
-                locator_domain="https://stratos-pizzeria.com/",
+                locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=location_name.strip(),
                 street_address=street_address.strip(),
                 city=city,
                 state=state,
                 zip_postal=zip_postal,
-                country_code="CA",
+                country_code=country_code,
                 store_number=store_number,
                 phone=phone,
-                location_type="<MISSING>",
+                location_type=MISSING,
                 latitude=latitude.strip(),
                 longitude=longitude.strip(),
                 hours_of_operation=hours_of_operation.strip(),

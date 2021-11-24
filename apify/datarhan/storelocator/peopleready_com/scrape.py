@@ -46,18 +46,22 @@ def fetch_data():
     DOMAIN = "peopleready.com"
 
     start_url = "https://www.peopleready.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=25&search_radius=100&autoload=1"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         max_radius_miles=100,
     )
     all_poi = []
     for lat, lng in all_coords:
-        response = session.get(start_url.format(lat, lng))
+        response = session.get(start_url.format(lat, lng), headers=hdr)
         all_poi += json.loads(response.text)
 
     for poi in all_poi:
         store_url = poi["permalink"]
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = poi["store"]

@@ -1,11 +1,9 @@
-import re
+import json
 import csv
-import demjson
 from urllib.parse import urljoin
-from lxml import etree
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -46,55 +44,48 @@ def fetch_data():
     scraped_urls = []
 
     DOMAIN = "goldsmiths.co.uk"
-    start_url = (
-        "https://www.goldsmiths.co.uk/store-finder?q={}+1AS&sort=StoreBV-Goldsmiths"
-    )
-
-    response = session.get("https://www.goldsmiths.co.uk/store-finder")
-    dom = etree.HTML(response.text)
-    geo_data = dom.xpath('//script[contains(text(), "storeList")]/text()')[0]
-    geo_data = re.findall("storeList =(.+?);", geo_data.replace("\n", ""))[0]
-    geo_data = demjson.decode(geo_data)
+    start_url = "https://www.goldsmiths.co.uk/store-finder?q=london&latitude={}&longitude={}&brand=StoreBV-Goldsmiths"
 
     all_locations = []
-    all_codes = DynamicZipSearch(
+    all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        max_radius_miles=200,
+        max_radius_miles=50,
         max_search_results=None,
     )
-    for code in all_codes:
-        response = session.get(start_url.format(code.replace(" ", "+")))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//div[@class="span2 store-details"]/a/@href')
-        next_page = dom.xpath('//a[contains(text(), "See more showrooms")]/@href')
-        while next_page and next_page[0] not in scraped_urls:
-            response = session.get(urljoin(start_url, next_page[0]))
-            scraped_urls.append(next_page[0])
-            dom = etree.HTML(response.text)
-            all_locations += dom.xpath('//div[@class="span2 store-details"]/a/@href')
-            next_page = dom.xpath('//a[contains(text(), "See more showrooms")]/@href')
+    for lat, lng in all_coords:
+        data = session.get(start_url.format(lat, lng))
+        try:
+            data = json.loads(data.text)
+        except Exception:
+            continue
+        all_locations += data["results"]
 
-    for url in list(set(all_locations)):
-        store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath('//h1[@class="stores-store-h"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_data = loc_dom.xpath('//div[@class="address"]/p/text()')
-        street_address = raw_data[0]
-        city = raw_data[1]
-        state = "<MISSING>"
-        zip_code = raw_data[-1]
-        country_code = "<MISSING>"
-        store_number = loc_response.url.split("/")[-1]
-        phone = loc_dom.xpath('//h3[text()="Telephone"]/following-sibling::p/text()')
-        phone = phone[0] if phone else "<MISSING>"
+    for poi in all_locations:
+        store_url = urljoin("https://www.goldsmiths.co.uk/", poi["url"])
+        location_name = poi["displayName"]
+        street_address = poi["address"]["line1"]
+        if poi["address"]["line2"]:
+            street_address += " " + poi["address"]["line2"]
+        city = poi["address"]["town"]
+        state = poi["address"]["region"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["address"]["postalCode"]
+        country_code = poi["address"]["country"]["isocode"]
+        store_number = poi["name"]
+        phone = poi["address"]["phone"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        geo = [elem for elem in geo_data if elem["storeNumber"] == store_number][0]
-        latitude = geo["latitude"]
-        longitude = geo["longitude"]
-        hoo = loc_dom.xpath('//li[@id="weekday_openings"]//text()')
+        latitude = poi["geoPoint"]["latitude"]
+        longitude = poi["geoPoint"]["longitude"]
+        hoo = []
+        for e in poi["openingHours"]["weekDayOpeningList"]:
+            day = e["weekDay"]
+            if e.get("closed"):
+                hoo.append(f"{day} closed")
+            else:
+                opens = e["openingTime"]["formattedHour"]
+                closes = e["closingTime"]["formattedHour"]
+                hoo.append(f"{day} {opens} - {closes}")
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
@@ -114,8 +105,9 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
-        items.append(item)
+        if store_number not in scraped_urls:
+            scraped_urls.append(store_number)
+            items.append(item)
 
     return items
 

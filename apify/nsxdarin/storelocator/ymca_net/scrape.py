@@ -1,139 +1,178 @@
-import csv
 from sgrequests import SgRequests
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger("ymca_net")
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "x-requested-with": "XMLHttpRequest",
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_distance_miles=None,
+    max_search_results=10,
+)
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_location(id):
-    try:
-        session = SgRequests()
-        url = f"https://www.ymca.net/y-profile/?id={id}"
-        page_text = session.get(url, headers=headers).iter_lines()
-
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        website = "ymca.net"
-        typ = "<MISSING>"
-        country = "US"
-        loc = url
-        store = id
-        hours = ""
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        AFound = False
-        for line in page_text:
-            line = str(line)
-            if "<h1>" in line and name == "":
-                name = line.split("<h1>")[1].split("</h1>")[0]
-            if "Set as default Y" in line:
-                while AFound is False:
-                    g = next(page_text)
-                    g = str(g.decode("utf-8"))
-                    if "<br />" in g:
-                        AFound = True
-                        add = g.split("<")[0].strip().replace("\t", "")
-                        g = next(page_text)
-                        g = str(g.decode("utf-8"))
-                        if g.count("<br />") == 2:
-                            add = (
-                                add
-                                + " "
-                                + g.split("<br />")[0].strip().replace("\t", "")
-                            )
-                            csz = g.split("<br />")[1].strip().replace("\t", "")
-                        else:
-                            csz = g.split("<br />")[0].strip().replace("\t", "")
-                        city = csz.split(",")[0]
-                        state = csz.split(",")[1].strip().split(" ")[0]
-                        zc = csz.rsplit(" ", 1)[1]
-            if "Phone:" in line:
-                phone = line.split("Phone:")[1].split("<")[0].strip()
-            if 'data-latitude="' in line:
-                lat = line.split('data-latitude="')[1].split('"')[0]
-            if 'data-longitude"' in line:
-                lng = line.split('data-longitude="')[1].split('"')[0]
-            if "ay: " in line and " - " in line and "<br />" in line:
-                hrs = line.split("<")[0].strip().replace("\t", "")
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        if name != "":
-            if hours == "":
-                hours = "<MISSING>"
-            if phone == "":
-                phone = "<MISSING>"
-            return [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
-    except Exception as e:
-        logger.error(f"{id} >>> {e}")
+logger = SgLogSetup().get_logger("ymca_org")
 
 
 def fetch_data():
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        futures = [executor.submit(fetch_location, id) for id in range(1, 5000)]
-
-        for future in as_completed(futures):
-            poi = future.result()
-            if poi:
-                yield poi
+    alllocs = []
+    for lat, lng in search:
+        try:
+            x = lat
+            y = lng
+            coords = []
+            infos = []
+            url = (
+                "https://www.ymca.org/find-your-y?distance=250&lat="
+                + str(x)
+                + "&lng="
+                + str(y)
+                + "&geolocation_geocoder_address=&type=branch"
+            )
+            r = session.get(url, headers=headers)
+            website = "ymca.org"
+            typ = "<MISSING>"
+            country = "US"
+            logger.info(str(x) + "," + str(y))
+            for line in r.iter_lines():
+                line = str(line.decode("utf-8"))
+                if (
+                    'view-mode-location-listing node--promoted" data-entity-id="'
+                    in line
+                ):
+                    store = line.split(
+                        'view-mode-location-listing node--promoted" data-entity-id="'
+                    )[1].split('"')[0]
+                if 'data-marker-zoom-anchor-id="marker-' in line:
+                    sid = line.split('data-marker-zoom-anchor-id="marker-')[1].split(
+                        '"'
+                    )[0]
+                    llat = line.split('data-lat="')[1].split('"')[0]
+                    llng = line.split('data-lng="')[1].split('"')[0]
+                    coords.append(sid + "|" + llat + "|" + llng)
+                if '<h4><a class="node__title-link" href="' in line:
+                    loc = "https://www.ymca.org" + line.split('href="')[1].split('"')[0]
+                    name = line.split('label-hidden">')[1].split("<")[0]
+                    lat = ""
+                    lng = ""
+                    city = ""
+                    state = ""
+                    add = ""
+                    zc = ""
+                    hours = ""
+                    if loc not in alllocs:
+                        alllocs.append(loc)
+                        r2 = session.get(loc, headers=headers)
+                        HFound = False
+                        logger.info(loc)
+                        for line2 in r2.iter_lines():
+                            line2 = str(line2.decode("utf-8"))
+                            if "Hours of Operation</h4>" in line2:
+                                HFound = True
+                            if HFound and "</tbody>" in line2:
+                                HFound = False
+                            if HFound and "<td>" in line2:
+                                hrs = line2.split("<td>")[1].split("<")[0]
+                                if (
+                                    "am" not in hrs
+                                    and "pm" not in hrs
+                                    and "Closed" not in hrs
+                                ):
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
+                                else:
+                                    hours = hours + " " + hrs
+                if '<span class="address-line1">' in line:
+                    add = line.split('<span class="address-line1">')[1].split("<")[0]
+                if '<span class="address-line2">' in line:
+                    add = (
+                        add
+                        + " "
+                        + line.split('<span class="address-line2">')[1].split("<")[0]
+                    )
+                if '<span class="locality">' in line:
+                    city = line.split('<span class="locality">')[1].split("<")[0]
+                    state = line.split('="administrative-area">')[1].split("<")[0]
+                    zc = line.split('class="postal-code">')[1].split("<")[0]
+                if 'field__item"><a href="tel:+1-' in line:
+                    phone = line.split('field__item"><a href="tel:+1-')[1].split('"')[0]
+                    infos.append(
+                        store
+                        + "|"
+                        + loc
+                        + "|"
+                        + name
+                        + "|"
+                        + add
+                        + "|"
+                        + city
+                        + "|"
+                        + state
+                        + "|"
+                        + zc
+                        + "|"
+                        + phone
+                        + "|"
+                        + hours
+                    )
+                if "</html>" in line:
+                    for info in infos:
+                        store = info.split("|")[0]
+                        loc = info.split("|")[1]
+                        name = info.split("|")[2]
+                        add = info.split("|")[3]
+                        city = info.split("|")[4]
+                        state = info.split("|")[5]
+                        zc = info.split("|")[6]
+                        phone = info.split("|")[7]
+                        hours = info.split("|")[8]
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                        for coord in coords:
+                            if store == coord.split("|")[0]:
+                                lat = coord.split("|")[1]
+                                lng = coord.split("|")[2]
+                        if phone == "":
+                            phone = "<MISSING>"
+                        if hours == "":
+                            hours = "<MISSING>"
+                        name = name.replace("&amp;", "&")
+                        add = add.replace("&amp;", "&")
+                        city = city.replace("&amp;", "&")
+                        hours = hours.replace("&amp;", "&")
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
+        except:
+            pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

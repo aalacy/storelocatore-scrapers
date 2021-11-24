@@ -54,6 +54,8 @@ def get_data(url):
     hours_of_operation = "<MISSING>"
     if blink != "<MISSING>":
         hours_of_operation = blink
+    if hours_of_operation == "":
+        hours_of_operation = "<MISSING>"
     country_code = "US"
     line = "".join(tree.xpath('//div[@class="store-address-line2"]/text()')).replace(
         "-", " "

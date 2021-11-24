@@ -60,18 +60,20 @@ def fetch_data():
         country_code = "US"
         store_number = j.get("storeNumber")
         location_name = j.get("name")
-        phone = j.get("phone")
+        phone = j.get("phone") or "<MISSING>"
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         location_type = "<MISSING>"
-        hours = j.get("hourInfo")
-        hours = html.fromstring(hours)
-        hours_of_operation = (
-            " ".join(hours.xpath("//*//text()"))
-            .replace("\n", "")
-            .split("4th")[0]
-            .strip()
-        )
+        hours = j.get("hourInfo") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(hours.xpath("//*//text()"))
+                .replace("\n", "")
+                .split("4th")[0]
+                .strip()
+            )
 
         row = [
             locator_domain,

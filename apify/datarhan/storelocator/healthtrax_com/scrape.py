@@ -57,6 +57,8 @@ def fetch_data():
     for store_url in all_locations:
         store_url = urljoin(start_url, store_url)
         loc_response = session.get(store_url, headers=hdr)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
         geo = loc_dom.xpath("//div/@data-block-json")
         if geo:
@@ -76,6 +78,11 @@ def fetch_data():
                 '//div[h3[contains(text(), "WE ARE OPEN")]]/p[1]/text()'
             )
         raw_address = [e.strip() for e in raw_address if e.strip()]
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//p[strong[contains(text(), "Location:")]]/a/text()'
+            )
+            raw_address = [e.strip() for e in raw_address if e.strip()]
         street_address = raw_address[0]
         city = raw_address[1].split(", ")[0]
         state = raw_address[1].split(", ")[-1].split()[0]
@@ -103,8 +110,13 @@ def fetch_data():
             hoo = loc_dom.xpath('//div[@class="ClearFix cmsPanelContent"]/p/text()')[
                 2:10
             ]
-        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = [" ".join([s.strip() for s in e.split()]) for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if hours_of_operation.startswith("Sunday"):
+            hoo = loc_dom.xpath(
+                '//div[p[strong[contains(text(), "Hours of Operation:")]]]//text()'
+            )[1:5]
+            hours_of_operation = " ".join(hoo)
 
         item = [
             domain,

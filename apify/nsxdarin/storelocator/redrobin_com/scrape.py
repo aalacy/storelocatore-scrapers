@@ -48,7 +48,9 @@ def fetch_data():
             items = line.split("<loc>https://redrobin.com/locations/")
             for item in items:
                 if "</loc>" in item:
-                    lurl = "https://redrobin.com/locations/" + item.split("<")[0]
+                    lurl = "https://redrobin.com/locations/" + item.split("<")[
+                        0
+                    ].replace(".", "-")
                     if (
                         lurl.count("/") == 6
                         and lurl != "https://redrobin.com/locations/"
@@ -72,6 +74,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if 'alt="Call Restaurant" href="tel:' in line2:
+                phone = line2.split('alt="Call Restaurant" href="tel:')[1].split('"')[0]
             if '"location_name\\":\\"' in line2:
                 name = line2.split('"location_name\\":\\"')[1].split("\\")[0]
                 add = line2.split('\\"address_1\\":\\"')[1].split("\\")[0]
@@ -81,6 +85,18 @@ def fetch_data():
                 phone = line2.split('"local_phone\\":\\"')[1].split("\\")[0]
                 lat = line2.split('"lat\\":\\"')[1].split("\\")[0]
                 lng = line2.split('"lng\\":\\"')[1].split("\\")[0]
+            if '"location_name\\": \\"' in line2:
+                name = line2.split('"location_name\\": \\"')[1].split("\\")[0]
+                add = line2.split('\\"address_1\\": \\"')[1].split("\\")[0]
+                city = line2.split('\\"city\\": \\"')[1].split("\\")[0]
+                state = line2.split('"region\\": \\"')[1].split("\\")[0]
+                zc = line2.split('"post_code\\": \\"')[1].split("\\")[0]
+                try:
+                    phone = line2.split('"local_phone\\": \\"')[1].split("\\")[0]
+                except:
+                    pass
+                lat = line2.split('"lat\\": \\"')[1].split("\\")[0]
+                lng = line2.split('"lng\\": \\"')[1].split("\\")[0]
             if '{"label":"Primary Hours"' in line2:
                 days = (
                     line2.split('{"label":"Primary Hours",')[1]
@@ -157,6 +173,8 @@ def fetch_data():
                     )
                 except:
                     hours = hours + "; Sat: Closed"
+        if "/bc/" in loc:
+            country = "CA"
         if add != "":
             yield [
                 website,

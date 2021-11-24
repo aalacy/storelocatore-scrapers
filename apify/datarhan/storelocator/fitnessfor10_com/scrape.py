@@ -87,6 +87,8 @@ def fetch_data():
         )
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if not loc_dom.xpath("//iframe/@src"):
+            continue
         geo = (
             loc_dom.xpath("//iframe/@src")[0]
             .split("!2d")[-1]
@@ -99,7 +101,15 @@ def fetch_data():
             '//h5[contains(text(), "REGULAR STAFFED HOURS")]/following-sibling::div/*/text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo)
+            .split("Hours ")[-1]
+            .replace("Not staffed", "Closed")
+            .split("Hours: ")[-1]
+            .replace("Not Staffed", "Closed")
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             domain,

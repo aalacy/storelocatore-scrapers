@@ -1,9 +1,8 @@
 import csv
-from lxml import etree
-
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def write_output(data):
@@ -41,52 +40,62 @@ def fetch_data():
     session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
 
     items = []
+    scraped_items = []
 
     DOMAIN = "campingworld.com"
-    start_url = "https://rv.campingworld.com/locationsbystate"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
-    }
-    response = session.get(start_url, headers=headers)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="section-content"]//li/a/@href')
+    start_url = "https://rv.campingworld.com/dealersinradius?miles=400&lat={}&lon={}&locationsearch=true"
 
-    for url in all_locations:
+    all_locations = []
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], max_radius_miles=250
+    )
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng))
+        all_codes = response.text[1:-1]
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+            "x-requested-with": "XMLHttpRequest",
+            "cookie": f"liveagent_oref=https://www.campingworld.com/; liveagent_vc=4; cw_searchLat={lat}; cw_searchLon={lng}; cw_searchDealers={all_codes}",
+        }
+
+        url = "https://rv.campingworld.com/api/locationcards"
+        params = {
+            "limit": "1000",
+            "glcodes": all_codes,
+            "lat": lat,
+            "lon": lng,
+            "locationsearch": "true",
+            "service": "true",
+        }
+        data = session.get(url, params=params, headers=headers).json()
+        all_locations += data["locations"]
+
+    for poi in all_locations:
         base_url = "https://rv.ganderoutdoors.com/dealer/"
-        store_url = urljoin(base_url, url)
-        location_name = ""
-        while not location_name:
-            store_response = session.get(store_url.replace(" ", "%20"), headers=headers)
-            store_dom = etree.HTML(store_response.text)
-            location_name = store_dom.xpath(
-                '//div[@class="col-xs-12 address"]/a/h1/text()'
-            )
-
-        location_name = location_name[0] if location_name else "<MISSING>"
-        if "Camping World" not in location_name:
+        store_url = urljoin(base_url, poi["dealer_url"])
+        location_name = poi["marketingname"]
+        location_name = location_name if location_name else "<MISSING>"
+        if "camping world" not in location_name.lower():
             continue
-        address_raw = store_dom.xpath('//div[@class="col-xs-12 address"]/a/p/text()')
-        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        street_address = address_raw[0]
-        city = address_raw[1].split(", ")[0]
-        state = address_raw[1].split(", ")[-1].split()[0]
-        zip_code = address_raw[1].split(", ")[-1].split()[-1]
+        street_address = poi["billing_street"]
+        city = poi["billing_city"]
+        state = poi["statecode"]
+        zip_code = poi["billing_zip"]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = store_dom.xpath('//a[@class="phone-number"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = poi["phonenumber"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = store_dom.xpath('//meta[@name="geo.position"]/@content')[0].split(
-            ";"
-        )[0]
-        longitude = store_dom.xpath('//meta[@name="geo.position"]/@content')[0].split(
-            ";"
-        )[1]
-        hoo = store_dom.xpath(
-            '//div[@id="dealerHours"]/div[@class="storehours"]//div[@class="row hours-row"]//text()'
-        )
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        latitude = poi["lat"]
+        longitude = poi["lon"]
+        mf_open = poi["store_hours_mf_open"]
+        mf_close = poi["store_hours_mf_closed"]
+        sat_open = poi["store_hours_sat_open"]
+        sat_close = poi["store_hours_sat_closed"]
+        sun_open = poi["store_hours_sun_open"]
+        sun_close = poi["store_hours_sun_closed"]
+        hours_of_operation = f"Mon-Fri: {mf_open} - {mf_close} Sat: {sat_open} - {sat_close} Sun: {sun_open} - {sun_close}"
 
         item = [
             DOMAIN,
@@ -105,7 +114,9 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        items.append(item)
+        if store_url not in scraped_items:
+            scraped_items.append(store_url)
+            items.append(item)
 
     return items
 

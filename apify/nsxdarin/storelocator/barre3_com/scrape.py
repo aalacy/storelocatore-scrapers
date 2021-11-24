@@ -39,7 +39,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://storerocket.global.ssl.fastly.net/api/user/jN49m3n4Gy/locations"
+    url = "https://api.storerocket.io/api/user/jN49m3n4Gy/locations"
     r = session.get(url, headers=headers)
     website = "barre3.com"
     typ = "<MISSING>"
@@ -61,6 +61,9 @@ def fetch_data():
         lat = item["lat"]
         lng = item["lng"]
         name = item["name"]
+        add = add.strip()
+        if add == "":
+            add = "<MISSING>"
         if "939-2510" in str(phone):
             phone = "480-939-2510"
         if "811.2828" in str(phone):

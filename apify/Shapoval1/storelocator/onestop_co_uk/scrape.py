@@ -56,97 +56,111 @@ def get_data(_zip):
         "https://www.onestop.co.uk/wp-admin/admin-ajax.php", headers=headers, data=data
     )
     js = r.json()
-    if "locations" in js["message"]:
-        for loc in js["message"]["locations"]:
+    try:
+        if "locations" in js["message"]:
+            for loc in js["message"]["locations"]:
 
-            location_name = loc.get("location").get("name") or "<MISSING>"
-            store_number = "<MISSING>"
-            country_code = "GB"
-            state = "<MISSING>"
-            street_address = (
-                loc.get("location").get("address").get("details").get("lines")[0]
-            )
-            if len(loc.get("location").get("address").get("details").get("lines")) == 2:
+                location_name = loc.get("location").get("name") or "<MISSING>"
+                store_number = "<MISSING>"
+                country_code = "GB"
+                state = "<MISSING>"
                 street_address = (
-                    street_address
-                    + " "
-                    + loc.get("location").get("address").get("details").get("lines")[1]
+                    loc.get("location").get("address").get("details").get("lines")[0]
                 )
-            city = (
-                loc.get("location").get("address").get("details").get("postTown")
-                or "<MISSING>"
-            )
+                if (
+                    len(loc.get("location").get("address").get("details").get("lines"))
+                    == 2
+                ):
+                    street_address = (
+                        street_address
+                        + " "
+                        + loc.get("location")
+                        .get("address")
+                        .get("details")
+                        .get("lines")[1]
+                    )
+                city = (
+                    loc.get("location").get("address").get("details").get("postTown")
+                    or "<MISSING>"
+                )
 
-            postal = (
-                loc.get("location").get("address").get("details").get("postcode")
-                or "<MISSING>"
-            )
-            phone = (
-                loc.get("location").get("contact").get("phoneNumbers").get("main")
-                or "<MISSING>"
-            )
-            latitude = (
-                loc.get("location").get("coordinates").get("latitude") or "<MISSING>"
-            )
-            longitude = (
-                loc.get("location").get("coordinates").get("longitude") or "<MISSING>"
-            )
-            location_type = loc.get("location").get("types")[0] or "<MISSING>"
-            try:
-                monday_hrs = f"Monday: {loc.get('location').get('openingHours').get('standard').get('monday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('monday').get('intervals')[0].get('end')}"
-                tuesday_hrs = f"Tuesday: {loc.get('location').get('openingHours').get('standard').get('tuesday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('tuesday').get('intervals')[0].get('end')}"
-                wednesday_hrs = f"Wednesday: {loc.get('location').get('openingHours').get('standard').get('wednesday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('wednesday').get('intervals')[0].get('end')}"
-                thursday_hrs = f"Thursday: {loc.get('location').get('openingHours').get('standard').get('thursday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('thursday').get('intervals')[0].get('end')}"
-                friday_hrs = f"Friday: {loc.get('location').get('openingHours').get('standard').get('friday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('friday').get('intervals')[0].get('end')}"
-                saturday_hrs = f"Saturday: {loc.get('location').get('openingHours').get('standard').get('saturday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('saturday').get('intervals')[0].get('end')}"
-                sunday_hrs = f"Sunday: {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('end')}"
-            except AttributeError:
-                monday_hrs = "<MISSING>"
-                tuesday_hrs = "<MISSING>"
-                wednesday_hrs = "<MISSING>"
-                thursday_hrs = "<MISSING>"
-                friday_hrs = "<MISSING>"
-                saturday_hrs = "<MISSING>"
-                sunday_hrs = "<MISSING>"
+                postal = (
+                    loc.get("location").get("address").get("details").get("postcode")
+                    or "<MISSING>"
+                )
+                phone = (
+                    loc.get("location").get("contact").get("phoneNumbers").get("main")
+                    or "<MISSING>"
+                )
+                latitude = (
+                    loc.get("location").get("coordinates").get("latitude")
+                    or "<MISSING>"
+                )
+                longitude = (
+                    loc.get("location").get("coordinates").get("longitude")
+                    or "<MISSING>"
+                )
+                location_type = loc.get("location").get("types")[0] or "<MISSING>"
+                try:
+                    monday_hrs = f"Monday: {loc.get('location').get('openingHours').get('standard').get('monday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('monday').get('intervals')[0].get('end')}"
+                    tuesday_hrs = f"Tuesday: {loc.get('location').get('openingHours').get('standard').get('tuesday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('tuesday').get('intervals')[0].get('end')}"
+                    wednesday_hrs = f"Wednesday: {loc.get('location').get('openingHours').get('standard').get('wednesday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('wednesday').get('intervals')[0].get('end')}"
+                    thursday_hrs = f"Thursday: {loc.get('location').get('openingHours').get('standard').get('thursday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('thursday').get('intervals')[0].get('end')}"
+                    friday_hrs = f"Friday: {loc.get('location').get('openingHours').get('standard').get('friday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('friday').get('intervals')[0].get('end')}"
+                    saturday_hrs = f"Saturday: {loc.get('location').get('openingHours').get('standard').get('saturday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('saturday').get('intervals')[0].get('end')}"
+                    try:
+                        sunday_hrs = f"Sunday: {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('start')} - {loc.get('location').get('openingHours').get('standard').get('sunday').get('intervals')[0].get('end')}"
+                    except:
+                        sunday_hrs = "Sunday Closed"
+                except:
+                    monday_hrs = "<MISSING>"
+                    tuesday_hrs = "<MISSING>"
+                    wednesday_hrs = "<MISSING>"
+                    thursday_hrs = "<MISSING>"
+                    friday_hrs = "<MISSING>"
+                    saturday_hrs = "<MISSING>"
+                    sunday_hrs = "<MISSING>"
 
-            hours_of_operation = (
-                monday_hrs
-                + " "
-                + tuesday_hrs
-                + " "
-                + wednesday_hrs
-                + " "
-                + thursday_hrs
-                + " "
-                + friday_hrs
-                + " "
-                + saturday_hrs
-                + " "
-                + sunday_hrs
-                or "<MISSING>"
-            )
-            if hours_of_operation.count("<MISSING>") == 7:
-                hours_of_operation = "<MISSING>"
-            page_url = f"https://www.onestop.co.uk/store/?store={loc.get('location').get('id')}"
+                hours_of_operation = (
+                    monday_hrs
+                    + " "
+                    + tuesday_hrs
+                    + " "
+                    + wednesday_hrs
+                    + " "
+                    + thursday_hrs
+                    + " "
+                    + friday_hrs
+                    + " "
+                    + saturday_hrs
+                    + " "
+                    + sunday_hrs
+                    or "<MISSING>"
+                )
+                if hours_of_operation.count("<MISSING>") == 7:
+                    hours_of_operation = "<MISSING>"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            rows.append(row)
+                page_url = f"https://www.onestop.co.uk/store/?store={loc.get('location').get('id')}"
 
+                row = [
+                    locator_domain,
+                    page_url,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    postal,
+                    country_code,
+                    store_number,
+                    phone,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hours_of_operation,
+                ]
+                rows.append(row)
+    except:
+        return
     return rows
 
 

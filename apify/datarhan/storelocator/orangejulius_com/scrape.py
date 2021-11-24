@@ -1,6 +1,5 @@
 import csv
 import json
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -44,7 +43,7 @@ def fetch_data():
     items = []
     scraped_items = []
 
-    start_url = "https://orangejulius.com/api/vtl/locations?country=us&lat={}&long={}"
+    start_url = "https://prod-orangejulius-dairyqueen.dotcmscloud.com/api/vtl/locations?country=us&lat={}&long={}"
 
     all_locations = []
     all_coordinates = DynamicGeoSearch(
@@ -56,9 +55,11 @@ def fetch_data():
         all_locations += data["locations"]
 
     for poi in all_locations:
-        store_url = urljoin(start_url, poi["url"])
+        store_url = "https://www.dairyqueen.com/en-us" + poi["url"]
         location_name = poi["title"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = (
+            location_name.split(":")[-1].strip() if location_name else "<MISSING>"
+        )
         street_address = poi["address3"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
@@ -71,7 +72,9 @@ def fetch_data():
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["storeNo"]
         phone = "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = poi["conceptType"]
+        if poi["tempClosed"] or poi["comingSoon"]:
+            continue
         latitude = poi["latlong"].split(",")[0]
         longitude = poi["latlong"].split(",")[1]
         longitude = longitude if longitude else "<MISSING>"

@@ -49,33 +49,31 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//ul[contains(@class, "locations")]/li')
-    for poi_html in all_locations:
-        store_url = poi_html.xpath('.//span[@class="field-content"]/a/@href')[0]
-        location_name = poi_html.xpath('.//span[@class="field-content"]/a/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        if "Production Meat" in location_name:
-            continue
-        street_address = poi_html.xpath('.//span[@class="address-line1"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath('.//span[@class="locality"]/text()')
-        city = city[0] if city else "<MISSING>"
-        state = poi_html.xpath('.//span[@class="administrative-area"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//span[@class="postal-code"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = poi_html.xpath('.//span[@class="country"]/text()')
-        country_code = country_code[0] if country_code else "<MISSING>"
+    all_locations = dom.xpath('//a[contains(text(), "Store Details")]/@href')
+    for store_url in all_locations:
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath("//h1/span/text()")[0]
+        street_address = loc_dom.xpath('//span[@class="address-line1"]/text()')[0]
+        city = loc_dom.xpath('//span[@class="locality"]/text()')[0]
+        state = loc_dom.xpath('//span[@class="administrative-area"]/text()')[0]
+        zip_code = loc_dom.xpath('//span[@class="postal-code"]/text()')[0]
+        country_code = loc_dom.xpath('//span[@class="country"]/text()')[0]
         store_number = "<MISSING>"
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="field phone label-inline"]//a/text()')[0]
         location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        hoo = poi_html.xpath(
-            './/span[contains(text(), "Hours: ")]/following-sibling::div/text()'
+        hoo = loc_dom.xpath(
+            '//p[strong[contains(text(), "Grocery Store Hours")]]/text()'
         )
-        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = [e.strip() for e in hoo if e.strip() and "a.m" in e]
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[contains(text(), "Store Hours")]/following-sibling::div[1]//text()'
+            )
+        hoo = [e.strip() for e in hoo if e.strip() and "a.m" in e]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

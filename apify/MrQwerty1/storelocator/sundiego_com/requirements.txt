@@ -1,0 +1,6 @@
+usaddress==0.5.10
+webdriver_manager==3.4.2
+lxml==4.6.2
+selenium==3.141.0
+sgselenium==0.1.4
+sglogging==0.0.4

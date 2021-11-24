@@ -100,7 +100,7 @@ def fetch_data():
             for ph in phone_list:
                 hours_list.append("".join(ph.xpath("a/text()")).strip())
 
-            if len(hours_list) > 1:  # It was 0 before
+            if len(hours_list) > 0:  # It was 0 before
                 phone = hours_list[-1].strip()
             else:
                 phone = "<MISSING>"
@@ -157,7 +157,6 @@ def fetch_data():
                 and (city == "" or city == "<MISSING>")
                 and (state == "" or state == "<MISSING>")
                 and (zip == "" or zip == "<MISSING>")
-                and (phone == "" or phone == "<MISSING>")
                 and (latitude == "" or latitude == "<MISSING>")
                 and (longitude == "" or longitude == "<MISSING>")
                 and (hours_of_operation == "" or hours_of_operation == "<MISSING>")

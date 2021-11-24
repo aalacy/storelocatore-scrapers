@@ -274,16 +274,17 @@ def get_hours(location, page_schema):
 
     hours = []
     for hour in location_hours:
-        day = hour["day"]
-        day_hours = hour["hours"]
+        day = hour["titleText"]
         if re.search("today", day, re.IGNORECASE):
             continue
 
-        if isinstance(day_hours, list):
-            starttime, endtime = day_hours
-            timerange = f"{starttime} - {endtime}"
-        else:
-            timerange = day_hours
+        startTime = hour["startTime"]
+        endTime = hour["endTime"]
+        timerange = (
+            startTime
+            if re.search("open 24 hours", startTime, re.IGNORECASE)
+            else f"{startTime}-{endTime}"
+        )
 
         hours.append(f"{day}: {timerange}")
 

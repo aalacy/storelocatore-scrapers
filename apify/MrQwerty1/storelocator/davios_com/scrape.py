@@ -77,21 +77,7 @@ def get_data(url):
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
     location_type = "<MISSING>"
-
-    _tmp = []
-    h3 = tree.xpath("//div[@class='view-content']/h3")
-    for h in h3:
-        name = "".join(h.xpath("./text()")).strip()
-        divs = h.xpath("./following-sibling::div[1]//li/div")
-        f = []
-        for d in divs:
-            day = "".join(d.xpath("./div[1]/text()")).strip()
-            time = " ".join("".join(d.xpath("./div[2]//text()")).split())
-            f.append(f"{day}: {time}")
-        line = f"{name}: " + ";".join(f)
-        _tmp.append(line)
-
-    hours_of_operation = " | ".join(_tmp) or "<MISSING>"
+    hours_of_operation = "<INACCESSIBLE>"
 
     row = [
         locator_domain,

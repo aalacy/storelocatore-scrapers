@@ -92,6 +92,7 @@ def fetch_data():
         lng,
         hours,
     ]
+    allinfo = []
     loc = "<MISSING>"
     store = "<MISSING>"
     hours = "<MISSING>"
@@ -140,22 +141,28 @@ def fetch_data():
         info = name + "|" + add
         if info not in addresses:
             addresses.append(info)
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            add = add.strip()
+            if add[-1:] == "\\" or add[-1:] == ",":
+                add = add[:-1]
+            addinfo = add + "|" + city + "|" + zc
+            if addinfo not in allinfo:
+                allinfo.append(addinfo)
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

@@ -1,6 +1,8 @@
 import csv
 import re
 from bs4 import BeautifulSoup as bs
+
+from sgscrape.sgpostal import parse_address_intl
 from sgrequests import SgRequests
 from sglogging import sglog
 
@@ -94,6 +96,8 @@ def fetch_data():
         page_url = row["link"]
         data = pull_content(page_url)
         content = data.find("div", {"class": "store-detail"})
+        if not content:
+            continue
         locator_domain = DOMAIN
         location_name = handle_missing(
             content.find("h1").get_text(strip=True, separator=" - ")
@@ -108,21 +112,15 @@ def fetch_data():
             phone = "<MISSING>"
         latitude = handle_missing(content.find("span", {"itemprop": "latitude"}).text)
         longitude = handle_missing(content.find("span", {"itemprop": "longitude"}).text)
-        split_addr = address.split(",")
-        if len(split_addr) < 4:
-            street_address = handle_missing(split_addr[0])
-            city = handle_missing(split_addr[1])
-            state = handle_missing(row["region"])
-            zip_code = handle_missing(split_addr[2])
-        else:
-            street_address = ", ".join(split_addr[:2])
-            if len(split_addr) < 5:
-                city = handle_missing(split_addr[2])
-                state = handle_missing(row["region"])
-            else:
-                city = handle_missing(split_addr[2])
-                state = handle_missing(split_addr[-2])
-            zip_code = split_addr[-1]
+        addr = parse_address_intl(address)
+        street_address = handle_missing(addr.street_address_1)
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        city = handle_missing(addr.city)
+        if city == "<MISSING>":
+            city = location_name.split(",")[-1].strip()
+        zip_code = handle_missing(addr.postcode)
+        state = handle_missing(row["region"])
         country_code = "UK"
         store_number = "<MISSING>"
         get_hours = content.find("div", {"id": "normalOpeningTimes"})

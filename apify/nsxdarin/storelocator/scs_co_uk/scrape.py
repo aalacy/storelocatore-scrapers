@@ -98,6 +98,9 @@ def fetch_data():
             phone = phone.split("tel:")[1].split("'")[0]
         if add not in locs:
             locs.append(add)
+            phone = phone.replace("Pre Delivery:", "").strip()
+            if "," in phone:
+                phone = phone.split(",")[0].strip()
             yield [
                 website,
                 purl,
@@ -156,17 +159,20 @@ def fetch_data():
                     .replace("\n", "")
                 )
                 days = hrinfo.split('<td class="day">')
-                for day in days:
-                    if "b-store-hours" not in day:
-                        hrs = (
-                            day.split("<")[0]
-                            + ": "
-                            + day.split('class="hour">')[1].split("<")[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+                try:
+                    for day in days:
+                        if "b-store-hours" not in day:
+                            hrs = (
+                                day.split("<")[0]
+                                + ": "
+                                + day.split('class="hour">')[1].split("<")[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                except:
+                    hours = "<MISSING>"
                 phone = phone.replace('"', "'")
                 if "tel:" in phone:
                     phone = phone.split("tel:")[1].split("'")[0]
@@ -174,6 +180,9 @@ def fetch_data():
                     phone = "<MISSING>"
                 if add not in locs:
                     locs.append(add)
+                    phone = phone.replace("Pre Delivery:", "").strip()
+                    if "," in phone:
+                        phone = phone.split(",")[0].strip()
                     yield [
                         website,
                         purl,

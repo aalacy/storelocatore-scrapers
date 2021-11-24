@@ -48,7 +48,7 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if "locations:" in line:
             line = line.replace('"categories": [{"name"', "")
-            items = line.split('{"name": "')
+            items = line.split('"name": "')
             for item in items:
                 if '"slug": "' in item:
                     loc = (
@@ -84,6 +84,8 @@ def fetch_data():
                         hours = "Monday - Thursday: 4:00 pm - 10:00 pm; Friday - Saturday: 12:00 pm - 11:00 pm; Sunday: 12:00 pm - 10:00 pm"
                     name = name.replace("\\u0027", "'")
                     add = add.replace("\\u0027", "'")
+                    if "; Open" in hours:
+                        hours = hours.split("; Open")[0]
                     yield [
                         website,
                         loc,

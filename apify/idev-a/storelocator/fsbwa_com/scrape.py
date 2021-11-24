@@ -2,46 +2,89 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("fsbwa")
+import json
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 
+def _p(val):
+    if val:
+        return (
+            val.replace("(", "")
+            .replace(")", "")
+            .replace("+", "")
+            .replace("-", "")
+            .replace(".", " ")
+            .replace("to", "")
+            .replace(" ", "")
+            .strip()
+            .isdigit()
+        )
+    else:
+        return False
+
+
+def _ii(locations, _):
+    phone = ""
+    hours = []
+    for loc in locations:
+        if loc.a.text.strip() == _["name"].strip():
+            phone = (
+                loc.select("div.col-sm-6")[0]
+                .select("p.text-display--small-p")[-1]
+                .text.strip()
+            )
+            if not _p(phone):
+                phone = ""
+            hours = list(
+                loc.select("div.col-sm-6")[1]
+                .select_one("div.text-display--small-p")
+                .stripped_strings
+            )
+            break
+    return phone, hours
+
+
 def fetch_data():
     locator_domain = "https://www.fsbwa.com"
     base_url = "https://www.fsbwa.com/locations"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.location-list div.location-item.match")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = locator_domain + link.a["href"]
-            logger.info(page_url)
-            res = session.get(page_url, headers=_headers).text
-            sp1 = bs(res, "lxml")
-            addr = list(sp1.select_one("div.address").stripped_strings)[-2:]
-            latitude = res.split("var lat = ")[1].split("var lng = ")[0].strip()[1:-2]
-            longitude = res.split("var lng = ")[1].split("if (")[0].strip()[1:-2]
+        res = session.get(base_url, headers=_headers).text
+        locations = bs(res, "lxml").select("li.locations-list__item")
+        links = json.loads(
+            res.split("window.locations =")[1].split("window.lat =")[0].strip()[:-1]
+        )
+        for _ in links:
+            page_url = _["url"]
+            street_address = _["address"]["address1"]
+            if _["address"]["address2"]:
+                street_address += " " + _["address"]["address2"]
+            phone, hours = _ii(locations, _)
+            location_type = ""
+            if _["color"] == "blue":
+                location_type = "Branch"
+            if _["color"] == "orange":
+                location_type = "Commercial Lending"
+            if _["color"] == "green":
+                location_type = "Home Lending"
             yield SgRecord(
                 page_url=page_url,
-                store_number=link["id"].replace("location", ""),
-                location_name=sp1.h1.text.strip(),
-                street_address=" ".join(addr[:-1]),
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=street_address,
+                city=_["address"]["city"],
+                state=_["address"]["state"],
+                zip_postal=_["address"]["zip"],
+                latitude=_["lat"],
+                longitude=_["lng"],
                 country_code="US",
-                phone=sp1.select_one("div.phone p").text.strip(),
+                phone=phone,
+                location_type=location_type,
                 locator_domain=locator_domain,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation="; ".join(
-                    [hh.text for hh in sp1.select("div.hours p") if hh.text.strip()]
-                ).replace("Normal business hours are", ""),
+                hours_of_operation="; ".join(hours),
+                raw_address=_["address"]["formatted_address"],
             )
 
 

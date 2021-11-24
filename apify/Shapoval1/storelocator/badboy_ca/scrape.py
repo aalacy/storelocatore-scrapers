@@ -1,5 +1,4 @@
 import csv
-import json
 from lxml import html
 from sgrequests import SgRequests
 
@@ -51,56 +50,85 @@ def fetch_data():
         .split("jsonLocations:")[1]
         .split("imageLocations:")[0]
         .replace('"currentStoreId":"1"},', '"currentStoreId":"1"}')
+        .replace('/div> "},', '/div> "}')
     )
-    js = json.loads(jsblock)
-    for j in js["items"]:
-        page_url = "".join(
-            j.get("attributes").get("store_page_url").get("value")
-        ).strip()
+
+    jsblock = (
+        jsblock.split('"block":"')[1]
+        .replace('"}', "")
+        .replace("\\", "")
+        .replace("> <", "><")
+        .strip()
+    )
+
+    block = html.fromstring(jsblock)
+    div = block.xpath("//a")
+    for d in div:
+
+        page_url = "".join(d.xpath(".//@href")).strip()
         if page_url.find("https") == -1:
-            page_url = f"https://www.badboy.ca/{page_url}"
-        phone = j.get("phone")
-        location_name = j.get("name")
-        location_type = "<MISSING>"
-        street_address = j.get("address")
-        country_code = j.get("country")
-        state = j.get("state")
-        postal = j.get("zip")
-        city = "".join(j.get("city"))
-        if city.find("Ottawa") != -1:
-            state = "Ontario"
-        store_number = j.get("id")
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        hours = j.get("schedule_array")
-        tmp = []
-        for i in days:
-            day = i
-            open = (
-                "".join(hours.get(i).get("from").get("hours"))
-                + ":"
-                + "".join(hours.get(i).get("from").get("minutes"))
-            )
-            close = (
-                "".join(hours.get(i).get("to").get("hours"))
-                + ":"
-                + "".join(hours.get(i).get("to").get("minutes"))
-            )
-            status = "".join(hours.get(i).get(f"{i}_status"))
-            line = f"{day}  {open} - {close}"
-            if status == "0":
-                line = f"{day} Closed"
-            tmp.append(line)
-        hours_of_operation = ";".join(tmp) or "<MISSING>"
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+            page_url = f"{locator_domain}{page_url}"
+
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        phone = (
+            "".join(tree.xpath('//div[@class="store_phone"]//text()'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        ad = (
+            "".join(tree.xpath('//div[@class="store_address"]/text()'))
+            .replace("\n", "")
+            .replace("Canada  225", "Canada Ontario")
+            .replace(", ,", ",")
+            .strip()
+        )
+
+        location_name = (
+            "".join(tree.xpath('//div[@class="store_contact_info-inner"]/h3[1]/text()'))
+            or "<MISSING>"
+        )
+        if page_url.find("ottawa") != -1:
+            location_name = "Ottawa Store"
+        location_type = "Lastman's Bad Boy"
+        street_address = ad.split(",")[0].strip()
+        country_code = "Canada"
+        try:
+            state = ad.split(",")[2].split()[-3].strip()
+        except:
+            state = ad.split(",")[3].split()[-3].strip()
+        postal = " ".join(ad.split(",")[2].split()[-2:]).strip()
+        city = ad.split(",")[1].strip()
+        if ad.count(",") == 3:
+            street_address = street_address + " " + ad.split(",")[1].strip()
+            city = ad.split(",")[2].strip()
+            postal = " ".join(ad.split(",")[3].split()[-2:]).strip()
+        store_number = "<MISSING>"
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="opening_hours"]/text()'))
+            .replace("\n", "")
+            .replace(" (", " ")
+            .replace(") ", " ")
+            .strip()
+            or "<MISSING>"
+        )
+
+        latitude = (
+            "".join(tree.xpath('//script[contains(text(), "LatLng")]/text()'))
+            .split("LatLng(")[1]
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            "".join(tree.xpath('//script[contains(text(), "LatLng")]/text()'))
+            .split("LatLng(")[1]
+            .split(",")[1]
+            .split(")")[0]
+            .strip()
+        )
 
         row = [
             locator_domain,

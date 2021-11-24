@@ -2,6 +2,7 @@ import csv
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -46,7 +47,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = []
-    all_states = dom.xpath('//div[@id="state-list"]/a/@href')
+    all_states = dom.xpath('//a[@class="location-list"]/@href')
     for state_url in all_states:
         state_response = session.get("https://www.famousdaves.com" + state_url)
         state_dom = etree.HTML(state_response.text)
@@ -61,23 +62,46 @@ def fetch_data():
             './/div[@class="row location-store-address"]/p[1]/text()'
         )
         street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath('.//div[@class="row location-store-address"]/p[2]/text()')
-        city = city[0].split(",")[0] if city else "<MISSING>"
-        state = poi_html.xpath(
-            './/div[@class="row location-store-address"]/p[2]/text()'
-        )
-        state = state[0].split(",")[-1].split()[0] if state else "<MISSING>"
-        zip_code = (
+        addr = parse_address_intl(
             poi_html.xpath('.//div[@class="row location-store-address"]/p[2]/text()')[0]
-            .split(",")[-1]
-            .split()[-1]
         )
+        city = addr.city
+        if not city:
+            city = poi_html.xpath(
+                './/div[@class="row location-store-address"]/p[2]/text()'
+            )[0].split(", ")[0]
+        city = city if city else "<MISSING>"
+        state = addr.state
+        if not state:
+            state = (
+                poi_html.xpath(
+                    './/div[@class="row location-store-address"]/p[2]/text()'
+                )[0]
+                .split(", ")[-1]
+                .split()[0]
+            )
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = (
+                poi_html.xpath(
+                    './/div[@class="row location-store-address"]/p[2]/text()'
+                )[0]
+                .split(", ")[-1]
+                .split()[-1]
+            )
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
+        if len(zip_code) == 2:
+            zip_code = "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//span[@class="location-store-phone-number"]/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if len(state) > 2:
+            state = "<MISSING>"
+            zip_code = "<MISSING>"
 
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
@@ -87,17 +111,34 @@ def fetch_data():
             '//div[@class="row location-store-hours"]//text()'
         )
         hours_of_operation = [
-            elem.strip().replace("\xa0", "")
+            elem.strip().replace("\xa0", " ")
             for elem in hours_of_operation
             if elem.strip()
         ]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-        if not hours_of_operation.endswith("pm"):
-            hours_of_operation = " ".join(hours_of_operation.split()[:-1])
         if "SorryFolks!" in hours_of_operation:
             hours_of_operation = "<MISSING>"
+        if not hours_of_operation:
+            hours_of_operation = " ".join(
+                loc_dom.xpath('//div[@class="row location-store-hours"]/p/text()')[
+                    0
+                ].split()
+            )
+        hours_of_operation = (
+            hours_of_operation.split("-->")[-1]
+            .split("Go is available.")[-1]
+            .split("WE")[0]
+            .split("We've")[0]
+            .split("Opening on")[-1]
+            .split("Tax ")[0]
+            .split("To Go")[0]
+            .split("Temporarily closed")[0]
+            .split("Dining Room: ")[-1]
+            .split("Hours:")[-1]
+            .split("Dine-In:")[-1]
+        ).strip()
 
         item = [
             DOMAIN,

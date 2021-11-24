@@ -22,10 +22,10 @@ def fetch_data():
         for link in links:
             logger.info(link["href"])
             sp1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
-            locations = sp1.select(
+            locs = sp1.select(
                 "div.et_pb_row_7 div.et_pb_css_mix_blend_mode_passthrough"
             )
-            for _ in locations:
+            for _ in locs:
                 addr = list(_.select_one("div.et_pb_text_inner").stripped_strings)[:2]
                 _hr = _.find("h4", string=re.compile(r"Hours", re.IGNORECASE))
                 hours = []
@@ -35,6 +35,7 @@ def fetch_data():
                         for hh in _hr.find_next_siblings()
                         if hh.text.strip()
                     ]
+
                 yield SgRecord(
                     page_url=link["href"],
                     location_name=link.text.strip(),
@@ -63,6 +64,7 @@ def fetch_data():
             if _hr:
                 hours = list(_hr.find_next_sibling().stripped_strings)
             coord = sp1.iframe["src"].split("!2d")[1].split("!2m")[0].split("!3d")
+
             yield SgRecord(
                 page_url=link["href"],
                 location_name=link.text.strip(),
@@ -74,8 +76,8 @@ def fetch_data():
                 longitude=coord[0],
                 country_code="US",
                 phone=phone,
-                locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                locator_domain=locator_domain,
             )
 
 

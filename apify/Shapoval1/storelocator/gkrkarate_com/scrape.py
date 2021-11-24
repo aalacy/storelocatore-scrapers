@@ -39,6 +39,7 @@ def get_data():
     data = {"action": "your-maps/map-pins"}
     r = session.post("https://www.gkrkarate.com/wp/wp-admin/admin-ajax.php", data=data)
     js = r.json()["items"]
+    s = set()
     for j in js:
         location_name = "".join(j.get("name"))
         street_address = f"{j.get('streetNumber')} {j.get('streetName')}".replace(
@@ -64,6 +65,12 @@ def get_data():
         phone = (
             "".join(tree.xpath('//span[@itemprop="telephone"]/a/text()')) or "<MISSING>"
         )
+
+        line = latitude
+        if line in s:
+            continue
+        s.add(line)
+
         row = [
             locator_domain,
             page_url,

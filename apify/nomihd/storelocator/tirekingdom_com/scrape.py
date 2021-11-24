@@ -5,7 +5,7 @@ from sglogging import sglog
 import json
 import us
 
-website = "tirekingdom_com"
+website = "tirekingdom.com"
 domain = "https://www.tirekingdom.com/"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -75,7 +75,6 @@ def fetch_data():
     latitude = ""
     longitude = ""
     hours_of_operation = ""
-    loc_list = []
 
     locations_resp = session.get(
         "https://www.tirekingdom.com/stores.sitemap.xml",
@@ -84,6 +83,7 @@ def fetch_data():
     stores = locations_resp.text.split("<loc>")
     for index in range(1, len(stores)):
         page_url = stores[index].split("</loc>")[0].strip()
+        log.info(page_url)
         store_number = page_url.split("/store/")[1].split("/")[0].strip()
 
         data = {"storeID": store_number}
@@ -94,7 +94,6 @@ def fetch_data():
             data=data,
             headers=headers,
         )
-
         store_json = json.loads(stores_resp.text)["output"]["store"]
 
         location_name = store_json["brand"]["brandName"]
@@ -164,10 +163,7 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        loc_list.append(curr_list)
-        #     break
-        # break
-    return loc_list
+        yield curr_list
 
 
 def scrape():

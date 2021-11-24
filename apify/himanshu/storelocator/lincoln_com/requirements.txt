@@ -1,3 +1,3 @@
-sgrequests==0.1.8
-sgzip==0.4.0
+sgzip==0.5.3
 sglogging==0.0.4
+sgrequests==0.1.8
