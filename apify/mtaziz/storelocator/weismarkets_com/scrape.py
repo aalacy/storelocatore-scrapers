@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ssl
 from lxml import html
-
+import time
 
 try:
     _create_unverified_https_context = (
@@ -34,13 +34,14 @@ headers = {
     "user-agent": "MMozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
 
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+)
+
 
 def get_driver(url, class_name, timeout, driver=None):
     if driver is not None:
         driver.quit()
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
-    )
     x = 0
     while True:
         x = x + 1
@@ -57,16 +58,26 @@ def get_driver(url, class_name, timeout, driver=None):
             break
         except Exception:
             driver.quit()
-            if x == 3:
+            if x == 6:
                 raise Exception("Fix the issue:(")
-            continue
+            return
     return driver
 
 
-def get_page_urls(class_name, timeout):
-    driver1 = get_driver(LOCATION_URL, class_name, timeout)
-    logger.info(f"pulling the data from {LOCATION_URL}")
-    sel1 = html.fromstring(driver1.page_source)
+def get_page_urls():
+    base_url = "https://www.weismarkets.com/"
+    class_name_main_nav = "main-navigation"
+    timeout3 = 20
+    driver = get_driver(base_url, class_name_main_nav, timeout3)
+    stores_link_xpath = '//nav[contains(@class, "menu-links")]/a[contains(@href, "https://www.weismarkets.com/stores#")]'
+    WebDriverWait(driver, 20).until(
+        EC.element_to_be_clickable((By.XPATH, stores_link_xpath))
+    )
+    driver.find_element_by_xpath(stores_link_xpath).click()
+    time.sleep(20)
+    logger.info(f"Store Clicked!")
+    logger.info("Pulling the data for store URL")
+    sel1 = html.fromstring(driver.page_source)
     uls = sel1.xpath('//*[contains(@ng-if, "stores.length")]/li')
     ln_sn_page_urls = []
     for ul in uls:
@@ -84,14 +95,16 @@ def get_page_urls(class_name, timeout):
     return ln_sn_page_urls
 
 
-def fetch_records(idx, ln_sn_purl, sgw: SgWriter):
-    MISSING = SgRecord.MISSING
+def fetch_records(idx, ln_sn_purl, driver, sgw: SgWriter):
     location_name, store_number, page_url = ln_sn_purl
     class_name2 = "hours-and-contact-header"
-    timeout1 = 40
-    driver2 = get_driver(page_url, class_name2, timeout1)
-    sel2 = html.fromstring(driver2.page_source)
-
+    timeout = 40
+    driver.get(page_url)
+    WebDriverWait(driver, timeout).until(
+        EC.presence_of_element_located((By.CLASS_NAME, class_name2))
+    )
+    time.sleep(20)
+    sel2 = html.fromstring(driver.page_source)
     street_address = sel2.xpath('//meta[@property="og:street-address"]/@content')
     street_address = "".join(street_address)
     street_address = street_address if street_address else MISSING
@@ -128,15 +141,16 @@ def fetch_records(idx, ln_sn_purl, sgw: SgWriter):
     except:
         phone = MISSING
 
-    hours = ""
+    hours = []
     days = sel2.xpath('//dl[contains(@aria-label, "Store Hours")]/dt/text()')
     hours_list = sel2.xpath('//dl[contains(@aria-label, "Store Hours")]/dd//text()')
 
     for x in range(len(days)):
         day = days[x].strip()
         hour = hours_list[x].strip()
-        hours = hours + day + " " + hour + "; "
-    hours = hours.rstrip(";")
+        day_hour = day + " " + hour
+        hours.append(day_hour)
+    hoo = "; ".join(hours)
     raw_address = MISSING
 
     item = SgRecord(
@@ -153,27 +167,29 @@ def fetch_records(idx, ln_sn_purl, sgw: SgWriter):
         location_type=location_type,
         latitude=latitude,
         longitude=longitude,
-        hours_of_operation=hours,
+        hours_of_operation=hoo,
         raw_address=raw_address,
     )
     sgw.write_row(item)
 
 
 def fetch_data(sgw: SgWriter):
-    class_name1 = "store-preview__info"
-    logger.info(f"Class Name: {class_name1}")
-    timeout = 60
-    page_urls = get_page_urls(class_name1, timeout)
-    logger.info(f"page urls: {page_urls[0:2]}")
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        tasks = []
-        task = [
-            executor.submit(fetch_records, idx, store_url, sgw)
-            for idx, store_url in enumerate(page_urls[0:])
-        ]
-        tasks.extend(task)
-        for future in as_completed(tasks):
-            future.result()
+    page_urls = get_page_urls()
+    logger.info(f"page urls: {page_urls}")
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent=user_agent,
+        is_headless=True,
+    ) as driver:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            tasks = []
+            task = [
+                executor.submit(fetch_records, idx, store_url, driver, sgw)
+                for idx, store_url in enumerate(page_urls[0:])
+            ]
+            tasks.extend(task)
+            for future in as_completed(tasks):
+                future.result()
 
 
 def scrape():
