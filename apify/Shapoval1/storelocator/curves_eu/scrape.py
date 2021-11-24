@@ -34,23 +34,22 @@ def get_data(url, sgw: SgWriter):
     ad = tree.xpath(
         '//div[./div/div/img[@class="attachment-large size-large"]]/preceding-sibling::div//text()'
     )
+    location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
     ad = list(filter(None, [a.strip() for a in ad]))
     phone = "".join(ad[-1]).strip()
     adr = " ".join(ad[1:-1])
 
     a = parse_address(International_Parser(), adr)
-    street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-        "None", ""
-    ).strip()
+    street_address = " ".join(ad[:-3]).replace(f"{location_name}", "").strip()
     state = a.state or "<MISSING>"
-    postal = a.postcode or "<MISSING>"
+    postal = "".join(ad[-3])
     country_code = (
         page_url.split("https://www.curves.eu/")[1].split("/")[0].upper().strip()
     )
     if country_code == "EN":
         country_code = "UK"
     city = a.city or "<MISSING>"
-    location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
+
     latitude = "".join(tree.xpath("//div/@data-lat")) or "<MISSING>"
     longitude = "".join(tree.xpath("//div/@data-lng")) or "<MISSING>"
     hours_of_operation = (
