@@ -7,6 +7,29 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
+def get_additional(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    phone = (
+        "".join(tree.xpath("//a[@class='brand-phone']/text()"))
+        .replace("phone-number", "")
+        .strip()
+    )
+    if not phone:
+        phone = "".join(
+            tree.xpath("//a[contains(text(), 'Call Now at')]/@href")
+        ).replace("tel:", "")
+
+    _tmp = []
+    hours = tree.xpath("//div[@class='working-hours']/div")
+    for h in hours:
+        day = "".join(h.xpath("./div[1]//text()")).strip()
+        inter = "".join(h.xpath("./div[2]//text()")).strip()
+        _tmp.append(f"{day}: {inter}")
+
+    return phone, ";".join(_tmp)
+
+
 def fetch_data(coords, country_code, sgw):
     lat, lng = coords
     if country_code == "us":
@@ -25,7 +48,7 @@ def fetch_data(coords, country_code, sgw):
             .replace("&#8217;", "'")
             .lower()
         )
-        page_url = f"https://www.novusglass.com/en-us/shop/{slug}/"
+        page_url = f"https://www.novusglass.com/en-{country_code}/shop/{slug}/"
         street_address = f'{j.get("address")} {j.get("address2") or ""}'.strip()
         if "NULL" in street_address or "MOBILE" in street_address:
             street_address = SgRecord.MISSING
@@ -34,23 +57,15 @@ def fetch_data(coords, country_code, sgw):
         postal = j.get("zip") or ""
         if "NULL" in postal:
             postal = SgRecord.MISSING
-        country_code = j.get("country")
         store_number = j.get("id")
-        phone = j.get("phone")
         latitude = j.get("lat")
         longitude = j.get("lng")
         location_name = f"NOVUS GLASS OF {city}"
 
-        _tmp = []
-        source = j.get("hours") or "<html></html>"
-        tree = html.fromstring(source)
-        tr = tree.xpath("//tr")
-        for t in tr:
-            day = "".join(t.xpath("./td[1]//text()")).strip()
-            inter = "".join(t.xpath("./td[2]//text()")).strip()
-            _tmp.append(f"{day}: {inter}")
-
-        hours_of_operation = ";".join(_tmp)
+        try:
+            phone, hours_of_operation = get_additional(page_url)
+        except:
+            phone, hours_of_operation = SgRecord.MISSING, SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
@@ -77,6 +92,7 @@ if __name__ == "__main__":
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0",
     }
+
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
