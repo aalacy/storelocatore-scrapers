@@ -102,7 +102,11 @@ def fetch_data(city_list):
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         city_list = get_city_list()
         results = fetch_data(city_list)
         for rec in results:
