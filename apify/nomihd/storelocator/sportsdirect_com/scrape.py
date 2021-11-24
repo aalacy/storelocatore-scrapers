@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -35,8 +35,13 @@ def fetch_data():
 
             retry_count = 0
             while "var store =" not in store_req.text and retry_count < 3:
-                store_req = session.get(page_url, headers=headers)
-                retry_count = retry_count + 1
+                try:
+                    store_req = SgRequests.raise_on_err(
+                        session.get(page_url, headers=headers)
+                    )
+                    retry_count = retry_count + 1
+                except SgRequestError as e:
+                    log.info(e.status_code)
 
             store_sel = lxml.html.fromstring(store_req.text)
             if "var store =" in store_req.text:
@@ -51,6 +56,13 @@ def fetch_data():
                 location_name = store_json["formattedStoreNameLong"]
                 street_address = store_json["address"]
                 city = store_json["town"]
+                if city:
+                    if "," in city:
+                        city = city.split(",")[-1].strip()
+
+                if city == "Festival Place Shopping Centre":
+                    city = "<MISSING>"
+
                 state = store_json["county"]
                 zip = store_json["postCode"]
                 country_code = store_json["countryCode"]
