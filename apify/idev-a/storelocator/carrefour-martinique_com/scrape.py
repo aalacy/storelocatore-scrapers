@@ -54,7 +54,7 @@ def fetch_data():
                 yield SgRecord(
                     page_url=base_url,
                     store_number=_["store_code"],
-                    location_name="Convenience Store",
+                    location_name="Carrefour " + _["name"],
                     street_address=_["address"],
                     city=" ".join(c_z[1:]),
                     zip_postal=c_z[0],
@@ -62,6 +62,7 @@ def fetch_data():
                     longitude=_["latlng"]["longitude"],
                     country_code=country,
                     phone=_["store_phone"],
+                    location_type="Convenience Store",
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
                 )
