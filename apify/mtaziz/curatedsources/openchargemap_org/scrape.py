@@ -49,12 +49,12 @@ country_list = [
 # It is found that after 3/4/5 retries, the request gets through with SUCCESS
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
+@retry(stop=stop_after_attempt(20), wait=tenacity.wait_fixed(10))
 def get_response(url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
         logger.info(f"Status Code: {response.status_code}")
-        time.sleep(random.randint(10, 30))
+        time.sleep(random.randint(20, 50))
         if response.status_code == 200:
             logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
             return response
