@@ -84,7 +84,7 @@ def fetch_data():
             locator_domain="https://www.rebeccataylor.com/",
             page_url=link,
             location_name=title,
-            street_address=street.strip(),
+            street_address=street.replace(",", "").strip(),
             city=city.replace(",", "").strip(),
             state=state.strip(),
             zip_postal=pcode.strip(),

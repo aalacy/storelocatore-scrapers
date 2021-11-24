@@ -53,11 +53,18 @@ def fetch_data():
             if HFound and 'gas-price-section">' in line2:
                 HFound = False
             if HFound and 'itemprop="openingHours" datetime="' in line2:
-                hrs = line2.split('itemprop="openingHours" datetime="')[1].split('"')[0]
+                hrs = (
+                    line2.split('itemprop="openingHours" datetime="')[1]
+                    .split('"')[0]
+                    .strip()
+                )
                 if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + "; " + hrs
+                    if "pm" in hrs:
+                        hours = hours + ": " + hrs
+                    else:
+                        hours = hours + "; " + hrs
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
             if 'itemprop="longitude" content="' in line2:
@@ -71,17 +78,17 @@ def fetch_data():
                     .split("<")[0]
                     .replace("&nbsp;", " ")
                 )
-            if 'itemprop="streetAddress">' in line2:
-                add = line2.split('itemprop="streetAddress">')[1].split("<")[0]
-            if 'itemprop="addressLocality">' in line2:
-                city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
-            if 'itemprop="addressRegion">' in line2:
-                state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
-            if 'itemprop="postalCode">' in line2:
-                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
-            if phone == "" and 'itemprop="telephone">' in line2:
+            if '"streetAddressOutput">' in line2:
+                add = line2.split('"streetAddressOutput">')[1].split("<")[0]
+            if 'addressLocalityOutput">' in line2:
+                city = line2.split('addressLocalityOutput">')[1].split("<")[0]
+            if '"addressRegionOutput">' in line2:
+                state = line2.split('"addressRegionOutput">')[1].split("<")[0]
+            if 'zipCodeOutput">' in line2:
+                zc = line2.split('zipCodeOutput">')[1].split("<")[0]
+            if phone == "" and 'telephoneOutput">' in line2:
                 phone = (
-                    line2.split('itemprop="telephone">')[1]
+                    line2.split('telephoneOutput">')[1]
                     .split("<")[0]
                     .strip()
                     .replace("\t", "")
@@ -90,8 +97,14 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
-        if add != "" and IsGas:
+        if add != "" and IsGas is True:
             loc = loc.replace("/ ", "/").replace(" ", "-")
+            if "colchester-vt-314" in loc:
+                hours = "Mon-Fri.: 6:00am - 1:30pm, 6:00pm - 9:00pm; Sat.: 7:00am - 9:30am, 6:00pm - 8:00pm; Sun.: 7:00am - 7:00pm"
+            if "w-san-antonio-san-antonio-tx-1449" in loc:
+                hours = "Mon-Fri.: 6:00am - 9:00pm; Sat.: 7:00am - 7:00pm; Sun.: 7:00am - 7:00pm"
+            if "las-vegas-bus-ctr-las-vegas-nv-563" in loc:
+                hours = "Mon-Fri.: 6:00am - 7:00pm; Sat.: 6:00am - 5:00pm; Sun.: 9:00am - 6:00pm"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

@@ -1,13 +1,25 @@
 import re
+import ssl
 import demjson
 import urllib.parse
 from lxml import etree
+from time import sleep
+from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
@@ -17,16 +29,19 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    session = SgRequests(proxy_rotation_failure_threshold=1)
-    response = session.get(start_url)
+    session = SgRequests(proxy_country="uk")
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
     all_states = dom.xpath(
         '//h1[contains(text(), "View All Stores")]/following-sibling::div[1]//a/@href'
     )
     for state_url in all_states:
+        sleep(uniform(0, 10))
         full_state_url = urllib.parse.urljoin(start_url, state_url)
-        state_response = session.get(full_state_url, headers=hdr)
+        state_response = session.get(full_state_url)
+        if state_response.status_code == 503:
+            continue
         state_dom = etree.HTML(state_response.text)
 
         all_stores = state_dom.xpath(
@@ -35,6 +50,7 @@ def fetch_data():
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
             if store_url and "/store/null" not in store_url:
+                sleep(uniform(0, 10))
                 store_url = urllib.parse.urljoin(start_url, store_url[0])
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"

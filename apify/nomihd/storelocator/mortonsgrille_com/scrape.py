@@ -4,12 +4,14 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import httpx
 
 website = "mortonsgrille.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "www.mortonsgrille.com",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -89,122 +91,175 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.mortonsgrille.com/locations/"
-    search_res = session.get(search_url, headers=headers)
+    search_urls_list = [
+        "https://www.mortonsgrille.com/locations/",
+        "https://www.mortonsgrille.com/locations/international.asp",
+    ]
+    timeout = httpx.Timeout(120.0, connect=120.0)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+    with SgRequests(
+        dont_retry_status_codes=([404]), timeout_config=timeout, verify_ssl=False
+    ) as session:
+        for search_url in search_urls_list:
+            search_res = session.get(search_url, headers=headers)
 
-    countries = search_sel.xpath("//section/div/div")
+            search_sel = lxml.html.fromstring(search_res.text)
+            countries = search_sel.xpath("//section/div/div")
+            if (
+                search_url
+                == "https://www.mortonsgrille.com/locations/international.asp"
+            ):
+                countries = search_sel.xpath(
+                    '//section//div[@style="float:left; width:300px;"]'
+                )
 
-    for country in countries:
+            for country in countries:
 
-        locator_domain = website
-        locations = country.xpath(".//h4")
+                locator_domain = website
+                locations = country.xpath(".//h4")
 
-        for no, location in enumerate(locations, 1):
+                for no, location in enumerate(locations, 1):
 
-            page_url = (
-                search_url + "".join(location.xpath("./a/@href")).strip()
-            ).strip()
-            page_url = page_url.replace("//locations", "")
-            location_name = location.xpath(".//text()")[0].strip()
+                    page_url = (
+                        "https://www.mortonsgrille.com/locations/"
+                        + "".join(location.xpath("./a/@href")).strip()
+                    ).strip()
+                    page_url = page_url.replace("#", "").strip()
+                    log.info(page_url)
 
-            store_info = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in country.xpath(
-                            f"./p[count(./preceding-sibling::h4)={no}]//text()"
+                    page_url = page_url.replace("//locations", "")
+                    location_name = location.xpath(".//text()")[0].strip()
+                    if (
+                        location_name == "HOURS OF OPERATION"
+                        or location_name == "MANAGERS"
+                    ):
+                        continue
+                    store_info = list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in country.xpath(
+                                    f"./p[count(./preceding-sibling::h4)={no}]//text()"
+                                )
+                            ],
                         )
-                    ],
-                )
-            )
+                    )
+                    if (
+                        store_info[-1]
+                        .upper()
+                        .replace("TEL:", "")
+                        .strip()
+                        .replace("+", "")
+                        .replace("-", "")
+                        .replace("(", "")
+                        .replace(")", "")
+                        .strip()
+                        .replace(" ", "")
+                        .strip()
+                        .isdigit()
+                    ):
+                        raw_address = " ".join(store_info[:-1]).replace("\n", " ")
+                        phone = store_info[-1].upper().replace("TEL:", "").strip()
 
-            raw_address = " ".join(store_info[:-1]).replace("\n", " ")
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
+                    else:
+                        raw_address = " ".join(store_info).replace("\n", " ")
+                        phone = "<MISSING>"
+                    formatted_addr = parser.parse_address_intl(raw_address)
+                    street_address = formatted_addr.street_address_1
+                    if formatted_addr.street_address_2:
+                        street_address = (
+                            street_address + ", " + formatted_addr.street_address_2
+                        )
 
-            city = formatted_addr.city
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
+                    city = formatted_addr.city
+                    state = formatted_addr.state
+                    zip = formatted_addr.postcode
 
-            country_code = country.xpath("./h2/text()")[0].strip()
-            phone = store_info[-1].upper().replace("TEL:", "").strip()
-            store_number = "<MISSING>"
+                    country_code = country.xpath("./h2/text()")[0].strip()
+                    store_number = "<MISSING>"
 
-            location_type = "<MISSING>"
+                    location_type = "<MISSING>"
 
-            if page_url == search_url:
-                hours_of_operation = "<MISSING>"
-                latitude, longitude = "<MISSING>", "<MISSING>"
-            else:
-                log.info(page_url)
-                store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)
+                    if page_url == search_url:
+                        hours_of_operation = "<MISSING>"
+                        latitude, longitude = "<MISSING>", "<MISSING>"
+                    else:
+                        store_res = session.get(page_url, headers=headers)
+                        store_sel = lxml.html.fromstring(store_res.text)
 
-                hours = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                "//h5[text()='Hours of Operation']/following-sibling::p/text()"
+                        hours = list(
+                            filter(
+                                str,
+                                [
+                                    x.strip()
+                                    for x in store_sel.xpath(
+                                        "//h5[text()='Hours of Operation']/following-sibling::p/text()"
+                                    )
+                                ],
                             )
-                        ],
+                        )
+                        hours = list(filter(validhour, hours))
+
+                        hours_of_operation = (
+                            "; ".join(hours)
+                            .replace("; :", ":")
+                            .strip()
+                            .encode("ascii", "replace")
+                            .decode("utf-8")
+                            .replace("?", "-")
+                            .strip()
+                            .replace("---", "-")
+                            .strip()
+                        )
+
+                        map_link = "".join(
+                            store_sel.xpath('//a[contains(@href,"maps")]/@href')
+                        )
+
+                        if not map_link:
+                            map_link = "".join(
+                                store_sel.xpath('//iframe[contains(@src,"maps")]/@src')
+                            )
+
+                        latitude, longitude = get_latlng(map_link)
+
+                    if location_name == "Shenzhen, China":
+                        street_address = "5033 Yitian Road"
+
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
-                )
-                hours = list(filter(validhour, hours))
-
-                hours_of_operation = (
-                    "; ".join(hours)
-                    .replace("; :", ":")
-                    .strip()
-                    .encode("ascii", "replace")
-                    .decode("utf-8")
-                    .replace("?", "-")
-                    .strip()
-                    .replace("---", "-")
-                    .strip()
-                )
-
-                map_link = "".join(store_sel.xpath('//a[contains(@href,"maps")]/@href'))
-
-                if not map_link:
-                    map_link = "".join(
-                        store_sel.xpath('//iframe[contains(@src,"maps")]/@src')
-                    )
-
-                latitude, longitude = get_latlng(map_link)
-
-            if location_name == "Shenzhen, China":
-                street_address = "5033 Yitian Road"
-
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

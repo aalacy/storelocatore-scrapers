@@ -64,7 +64,10 @@ def fetch_data(coord, sgw: SgWriter):
     api = f"https://www.stinker.com/system/wp-admin/admin-ajax.php?action=lookupLocations&lkp={token}&lat={lat}&lng={lng}"
 
     r = session.get(api, headers=headers)
-    js = r.json()["locations"]
+    try:
+        js = r.json()["locations"]
+    except:
+        return
 
     for j in js:
         loc = j.get("latLng")

@@ -34,7 +34,7 @@ def fetch_data():
         "https://camper.com/en_US/shops/uk",
     ]
     base = "https://www.camper.com/en_US/shops"
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us", dont_retry_status_codes=([404])) as session:
         for country_url in countires:
 
             api_url = country_url
@@ -55,7 +55,7 @@ def fetch_data():
 
                 street_address = store["address1"]
                 city = store["cityName"]
-                state = store["region"]
+                state = store.get("region", "<MISSING>")
                 if state.isdigit():
                     state = "<MISSING>"
 
