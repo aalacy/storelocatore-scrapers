@@ -19,9 +19,6 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
 
 logger = SgLogSetup().get_logger("newportcreamery")
 
@@ -58,7 +55,7 @@ def _hours_phone(temp, street, state):
 def fetch_data():
     locator_domain = "https://www.newportcreamery.com/"
     page_url = "https://www.newportcreamery.com/locations"
-    base_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.seoFriendlyDropDownMenu"
+    base_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.SearchBoxRtl"
     with SgChrome() as driver:
         driver.get(page_url)
         exist = False
@@ -72,6 +69,7 @@ def fetch_data():
                         "props" not in _json
                         or "WRchTxt7-t1i" not in _json["props"]["render"]["compProps"]
                     ):
+                        logger.warning("=== not exist")
                         continue
                     exist = True
                     locations = _json["props"]["render"]["compProps"]
