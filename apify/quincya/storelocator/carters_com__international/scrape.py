@@ -47,7 +47,7 @@ def fetch_data(sgw: SgWriter):
             + "&id=carters"
         )
 
-        if num % 20 == 0:
+        if num % 15 == 0:
             session = SgRequests()
             session.proxies = proxies
         num = num + 1
