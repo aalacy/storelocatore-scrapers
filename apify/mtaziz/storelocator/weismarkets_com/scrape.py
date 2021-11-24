@@ -75,7 +75,7 @@ def get_page_urls():
     )
     driver.find_element_by_xpath(stores_link_xpath).click()
     time.sleep(20)
-    logger.info(f"Store Clicked!")
+    logger.info("Store Clicked!")
     logger.info("Pulling the data for store URL")
     sel1 = html.fromstring(driver.page_source)
     uls = sel1.xpath('//*[contains(@ng-if, "stores.length")]/li')
