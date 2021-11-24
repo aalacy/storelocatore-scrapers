@@ -39,15 +39,22 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = []
-            if len(sp1.select("div#hours dl")) > 1:
-                temp = list(sp1.select("div#hours dl")[-1].stripped_strings)
-                for x in range(0, len(temp), 2):
-                    hours.append(f"{temp[x]} {temp[x+1]}")
+            hr = list(sp1.select_one("div#hours dl").stripped_strings)
+            for x, hh in enumerate(hr):
+                if "Regular Hours" in hh:
+                    temp = hr[x + 1 :]
+                    if len(temp) % 2 == 0:
+                        for x in range(0, len(temp), 2):
+                            hours.append(f"{temp[x]} {temp[x+1]}")
+
+                    break
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["loc_id"],
                 location_name=info.select_one(".store-name").text.strip(),
-                street_address=" ".join(addr[:-1]),
+                street_address=" ".join(addr[:-1]).replace(
+                    "Centene Community Ice Center", ""
+                ),
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
@@ -57,6 +64,7 @@ def fetch_data():
                 phone=info.select_one(".phone").text.strip(),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr).replace("Centene Community Ice Center", ""),
             )
 
 

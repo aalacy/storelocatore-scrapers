@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import json
 
 website = "actionurgentcare.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -86,19 +86,37 @@ def fetch_data():
         phone = " ".join(
             store_sel.xpath('//span[@itemprop="telephone"]//text()')
         ).strip()
-
         if len(street_address) <= 0:
             appoint_link = "".join(
                 store_sel.xpath('//div[@class="app-container"]/iframe/@data-src')
             ).strip()
-            temp_sel = lxml.html.fromstring(session.get(appoint_link).text)
-            raw_info = temp_sel.xpath('//div[@class="address"]/text()')
-            add_list = raw_info[0].split(",")
-            street_address = ", ".join(add_list[:-2]).strip()
-            city = add_list[-2].strip()
-            state = add_list[-1].strip().split(" ")[0].strip()
-            zip = add_list[-1].strip().split(" ")[-1].strip()
-            phone = raw_info[-1].strip()
+            if len(appoint_link) > 0:
+                temp_sel = lxml.html.fromstring(session.get(appoint_link).text)
+                raw_info = temp_sel.xpath('//div[@class="address"]/text()')
+                add_list = raw_info[0].split(",")
+                street_address = ", ".join(add_list[:-2]).strip()
+                city = add_list[-2].strip()
+                state = add_list[-1].strip().split(" ")[0].strip()
+                zip = add_list[-1].strip().split(" ")[-1].strip()
+                phone = raw_info[-1].strip()
+            else:
+                clinicID = "".join(
+                    store_sel.xpath('//div[@class="app-container"]//div/@clinic-id')
+                ).strip()
+                store_json = json.loads(
+                    session.get(
+                        "https://actionurgentcare.com/wp-admin/admin-ajax.php?widgetType=clinic-appointment&id={}&action=get_clinic_details".format(
+                            clinicID
+                        )
+                    ).text
+                )["data"]["data"]
+
+                add_list = store_json["address"].split(",")
+                street_address = ", ".join(add_list[:-2]).strip()
+                city = add_list[-2].strip()
+                state = add_list[-1].strip().split(" ")[0].strip()
+                zip = add_list[-1].strip().split(" ")[-1].strip()
+                phone = store_json["phone_number"].replace("+1", "").strip()
 
         store_number = "<MISSING>"
 
