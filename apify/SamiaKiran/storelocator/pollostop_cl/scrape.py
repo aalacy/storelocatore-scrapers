@@ -15,11 +15,8 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 headers = {
-    "x-orion-domain": "www.fajitaexpress.cl",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
     "content-type": "application/json",
-    "origin": "https://www.fajitaexpress.cl",
-    "referer": "https://www.fajitaexpress.cl/",
 }
 
 DOMAIN = "https://pollostop.cl/"
