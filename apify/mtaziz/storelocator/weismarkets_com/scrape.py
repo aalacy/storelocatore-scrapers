@@ -24,7 +24,7 @@ else:
 
 
 LOCATION_URL = "https://www.weismarkets.com/stores/?coordinates=40.539711620149,-75.733030850299&zoom=10"
-MAX_WORKERS = 10
+MAX_WORKERS = 1
 DOMAIN = "weismarkets.com"
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("weismarkets_com")
@@ -96,15 +96,22 @@ def get_page_urls():
 
 
 def fetch_records(idx, ln_sn_purl, driver, sgw: SgWriter):
+
     location_name, store_number, page_url = ln_sn_purl
     class_name2 = "hours-and-contact-header"
     timeout = 40
-    driver.get(page_url)
-    WebDriverWait(driver, timeout).until(
-        EC.presence_of_element_located((By.CLASS_NAME, class_name2))
-    )
-    time.sleep(20)
-    sel2 = html.fromstring(driver.page_source)
+    logger.info(f"[{idx}] Pulling the data for {page_url}")
+    try:
+        driver.set_page_load_timeout(300)
+        driver.get(page_url)
+        WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.CLASS_NAME, class_name2))
+        )
+        time.sleep(5)
+        pg_source = driver.page_source
+    except Exception as e:
+        logger.info(f"[{idx}] please fix this {e} | page URL: {page_url}")
+    sel2 = html.fromstring(pg_source)
     street_address = sel2.xpath('//meta[@property="og:street-address"]/@content')
     street_address = "".join(street_address)
     street_address = street_address if street_address else MISSING
