@@ -8,20 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import json
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium import SgSelenium
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "laseraway.com"
 BASE_URL = "https://www.laseraway.com/"
@@ -70,38 +56,18 @@ def pull_content(url):
     return soup
 
 
-def wait_load(driver, number=0):
-    number += 1
-    try:
-        WebDriverWait(driver, 3).until(
-            lambda driver: driver.execute_script("return jQuery.active == 0")
-        )
-        WebDriverWait(driver, 3).until(
-            EC.presence_of_element_located((By.ID, "wpsl-js-js-extra"))
-        )
-    except:
-        driver.refresh()
-        if number < 3:
-            log.info(f"Try to Refresh for ({number}) times")
-            return wait_load(driver, number)
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(SITEMAP_URL)
     content = soup.find("h4", text="Locations").parent.find_all("li")
     page_urls = list(set([row.find("a")["href"] for row in content]))
-    driver = SgSelenium().chrome()
     for page_url in page_urls:
         check_url = page_url.replace("https://www.laseraway.com/locations/", "").split(
             "/"
         )
         if len(check_url) < 3:
             continue
-        log.info("Pull content => " + page_url)
-        driver.get(page_url)
-        wait_load(driver)
-        store = bs(driver.page_source, "lxml")
+        store = pull_content(page_url)
         location_name = (
             store.find("div", {"class": "location-map-hours"}).find("h4").text.strip()
         )
@@ -148,7 +114,6 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=f"{street_address}, {city}, {state}, {zip_postal}",
         )
-    driver.quit()
 
 
 def scrape():
@@ -158,7 +123,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.ZIP,
                 }
             )
         )

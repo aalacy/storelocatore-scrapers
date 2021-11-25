@@ -86,7 +86,7 @@ def fetch_data():
         )
         if "; <" in hours:
             hours = hours.split("; <")[0].strip()
-        if CS is True:
+        if CS is False:
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

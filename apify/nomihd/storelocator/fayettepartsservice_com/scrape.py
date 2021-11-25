@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "fayettepartsservice.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -20,7 +22,7 @@ def fetch_data():
     search_url = "https://www.fayettepartsservice.com/locations"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="image-container"]/a/@href')
+    stores = stores_sel.xpath('//li[./a[contains(@href,"/locations")]]/ul/li/a/@href')
 
     for store_url in stores:
         page_url = "https://www.fayettepartsservice.com" + store_url
@@ -31,9 +33,18 @@ def fetch_data():
         locator_domain = website
         location_name = "".join(store_sel.xpath("//h1/span/text()")).strip()
 
+        latitude = "".join(
+            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lat')
+        ).strip()
+        longitude = "".join(
+            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lng')
+        ).strip()
+
         raw_address = ""
         if "/newpage7fe6dbf7" in page_url:
             raw_address = "531 Rodi Rd, Pittsburgh, PA"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
         else:
             raw_address = "".join(
                 store_sel.xpath('//div[@data-type="inlineMap"]/@data-address')
@@ -81,13 +92,6 @@ def fetch_data():
             if "am " in "".join(sec.xpath("text()")).strip():
                 hours_of_operation = "; ".join(sec.xpath("text()")).strip()
 
-        latitude = "".join(
-            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lat')
-        ).strip()
-        longitude = "".join(
-            store_sel.xpath('//div[@data-type="inlineMap"]/@data-lng')
-        ).strip()
-
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -110,7 +114,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

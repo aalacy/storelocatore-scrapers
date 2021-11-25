@@ -128,9 +128,6 @@ def fetch_data(sgw: SgWriter):
 
         if "241 W Main" in street_address:
             street_address = "241 W Main St."
-
-        if street_address != "<MISSING>":
-            location_type = "The Frios Location"
         if (
             "The Frios Mobile" in street_address
             or "Frios Cart" in street_address
@@ -152,9 +149,13 @@ def fetch_data(sgw: SgWriter):
                 4
             ].text.strip()
         if "-" not in phone:
+            phone = base.find_all(class_="elementor-text-editor elementor-clearfix")[
+                5
+            ].text.strip()
+        if "-" not in phone:
             phone = "<MISSING>"
 
-        hours = base.find_all(class_="elementor-text-editor elementor-clearfix")[6:15]
+        hours = base.find_all(class_="elementor-text-editor elementor-clearfix")[4:15]
         hours_of_operation = "<MISSING>"
         for row in hours:
             if "day:" in row.text.lower():
@@ -168,6 +169,9 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation.count("Varies") > 4:
             hours_of_operation = "<MISSING>"
 
+        if hours_of_operation.count("TBD") > 4:
+            hours_of_operation = "<MISSING>"
+
         if "TBD" in phone.upper():
             phone = "<MISSING>"
         if city.lower() == "city":
@@ -178,9 +182,55 @@ def fetch_data(sgw: SgWriter):
         if "Keller, Texas" in location_name:
             street_address = street_address.replace("Keller", "").strip()
             city = "Keller"
+        if "Lake Conroe" in city:
+            city = "Montgomery"
+            state = "TX"
+        if "Pflugerville" in city:
+            state = "TX"
         if "Pop cart!" in street_address:
             street_address = "<MISSING>"
             location_type = "The Frios Mobile"
+        if "University" in city:
+            state = ""
+            street_address = " ".join(city.split()[:-1]).strip()
+        if "Frios Sweet" in street_address:
+            street_address = "<MISSING>"
+            location_type = "The Frios Mobile"
+
+        if street_address != "<MISSING>":
+            location_type = "The Frios Location"
+
+        if not state or len(state) > 20 or "Love" in state:
+            city = (
+                base.find_all(class_="elementor-heading-title elementor-size-default")[
+                    1
+                ]
+                .text.replace("-", ",")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                base.find_all(class_="elementor-heading-title elementor-size-default")[
+                    1
+                ]
+                .text.replace("-", ",")
+                .split(",")[1]
+                .strip()
+            )
+
+        if city == "City":
+            city = ""
+            state = ""
+
+        if city == "Northeast Georgia":
+            city = ""
+            state = "Georgia"
+        if "Columbia, South Carolina" in location_name:
+            city = "Columbia"
+            state = "South Carolina"
+        if "Rock Hill" in location_name:
+            city = "Rock Hill"
+            state = "SC"
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
