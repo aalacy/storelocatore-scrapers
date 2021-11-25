@@ -65,11 +65,7 @@ def fetch_data():
                 phone = MISSING
             else:
                 phone = phone.text
-            try:
-                address = bs.find("a", {"data-test-id": "location_address_link"}).text
-            except AttributeError:
-                address = bs.find("a", {"data-test-id": "location_address_link"}
-                
+            address = bs.find("a", {"data-test-id": "location_address_link"}).text
             coords = bs.find("div", {"id": "locationMap"})
             lat = coords["data-lat"]
             lng = coords["data-lng"]
