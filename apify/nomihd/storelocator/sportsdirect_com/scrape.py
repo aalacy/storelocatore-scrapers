@@ -61,6 +61,16 @@ def fetch_data():
 
                 state = store_json["county"]
                 zip = store_json["postCode"]
+                raw_address = ""
+                if street_address and len(street_address) > 0:
+                    raw_address = street_address
+                if city and len(city) > 0:
+                    raw_address = raw_address + ", " + city
+                if state and len(state) > 0:
+                    raw_address = raw_address + ", " + state
+                if zip and len(zip) > 0:
+                    raw_address = raw_address + ", " + zip
+
                 country_code = store_json["countryCode"]
                 if country_code != "GB" and country_code != "IE":
                     state = "<MISSING>"
@@ -113,6 +123,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
             else:
                 location_name = "".join(
@@ -188,6 +199,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 
