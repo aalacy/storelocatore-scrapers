@@ -10,23 +10,16 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 session = SgRequests()
-website = "pizzanta_cl"
+website = "pollostop_cl"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-api_url = "https://api.getjusto.com/graphql?operationName=getWebsitePage_cached"
-
-
 headers = {
-    "sec-ch-ua-mobile": "?0",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
     "content-type": "application/json",
-    "origin": "https://www.pizzanta.cl",
-    "referer": "https://www.pizzanta.cl/",
-    "accept-language": "en-US,en;q=0.9",
 }
 
-DOMAIN = "https://pizzanta.cl/"
+DOMAIN = "https://pollostop.cl/"
 MISSING = SgRecord.MISSING
 
 
@@ -39,45 +32,37 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        url = "https://www.pizzanta.cl/locales"
-        log.info("Fetching Page and Website Id's....")
+        url = "https://www.pollostop.cl/locales"
         r = session.get(url, headers=headers)
-        page_id = r.text.split('"path":"/"},{"_id":"')[1].split('"')[0]
         website_id = r.text.split('{"website":{"_id":"')[1].split('"')[0]
+        api_url = (
+            url
+        ) = "https://api.getjusto.com/graphql?operationName=getWebsitePage_cached"
         payload = json.dumps(
             {
-                "operationName": "getWebsitePage_cached",
-                "variables": {"pageId": page_id, "websiteId": website_id},
-                "query": "query getWebsitePage_cached($pageId: ID, $websiteId: ID) {\n  page(pageId: $pageId, websiteId: $websiteId) {\n    _id\n    path\n    activeComponents {\n      _id\n      options\n      componentTypeId\n      schedule {\n        isScheduled\n        latestScheduleStatus\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
+                "operationName": "getStoresZones",
+                "variables": {"websiteId": website_id},
+                "query": "query getStoresZones($websiteId: ID) {\n  stores(websiteId: $websiteId) {\n    items {\n      _id\n      name\n      phone\n      humanSchedule {\n        days\n        schedule\n        __typename\n      }\n      acceptDelivery\n      acceptGo\n      zones {\n        _id\n        deliveryLimits\n        __typename\n      }\n      address {\n        placeId\n        location\n        address\n        addressSecondary\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
             }
         )
         loclist = session.post(api_url, headers=headers, data=payload).json()["data"][
-            "page"
-        ]["activeComponents"][1]["options"]["stores"]
+            "stores"
+        ]["items"]
         for loc in loclist:
             location_name = strip_accents(loc["name"])
-            try:
-                phone = loc["phone"]
-            except:
-                phone = MISSING
+            phone = loc["phone"]
             log.info(location_name)
-            place_id = loc["placeId"]
-            hours_of_operation = loc["otherText"]
-            address_url = (
-                "https://api.getjusto.com/graphql?operationName=getPlaceDetails_cached"
+            temp = loc["address"]
+            raw_address = strip_accents(
+                temp["address"] + " " + temp["addressSecondary"]
             )
-            payload = json.dumps(
-                {
-                    "operationName": "getPlaceDetails_cached",
-                    "variables": {"placeId": place_id},
-                    "query": "query getPlaceDetails_cached($placeId: ID) {\n  place(placeId: $placeId) {\n    _id\n    text\n    secondaryText\n    location\n    __typename\n  }\n}\n",
-                }
-            )
-            log.info(f"Fetching address details for {location_name}")
-            temp = session.post(address_url, headers=headers, data=payload).json()[
-                "data"
-            ]["place"]
-            raw_address = strip_accents(temp["text"] + " " + temp["secondaryText"])
+            if not loc["humanSchedule"]:
+                hours_of_operation = MISSING
+            else:
+                hours_of_operation = loc["humanSchedule"][0]
+                hours_of_operation = strip_accents(
+                    hours_of_operation["days"] + " " + hours_of_operation["schedule"]
+                )
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -98,7 +83,7 @@ def fetch_data():
             country_code = "Chile"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="https://www.pizzanta.cl/locales",
+                page_url="https://www.pollostop.cl/locales",
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
