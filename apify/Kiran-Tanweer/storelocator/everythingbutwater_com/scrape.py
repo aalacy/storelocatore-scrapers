@@ -38,7 +38,11 @@ def fetch_data():
                 phone = phone_hours[0].text.strip()
                 hours = phone_hours[1].text.strip()
                 if hours == "":
-                    hours = MISSING
+                    hours = phone_hours[-1].text.strip()
+                    if hours == "Opening soon":
+                        hours = "Coming Soon"
+                    else:
+                        hours = "Closed Temporarily"
             except AttributeError:
                 continue
             parsed = parser.parse_address_usa(address)
