@@ -49,7 +49,7 @@ country_list = [
 
 @retry(stop=stop_after_attempt(20), wait=tenacity.wait_fixed(10))
 def get_response(url):
-    with SgRequests() as http:
+    with SgRequests(timeout_config=300) as http:
         response = http.get(url, headers=headers)
         logger.info(f"Status Code: {response.status_code}")
         if response.status_code == 200:
