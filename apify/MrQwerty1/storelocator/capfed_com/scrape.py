@@ -1,140 +1,82 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.capfed.com/locations/branch-locations")
     tree = html.fromstring(r.text)
 
     return tree.xpath("//a[@class='location-search__result-name']/@href")
 
 
-def get_data(url):
-    locator_domain = "https://www.capfed.com/"
+def get_data(url, sgw: SgWriter):
     page_url = f"https://www.capfed.com{url}"
-
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//h1[@class=' hero__heading']/text()")).strip()
-    street_address = (
-        ", ".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).strip()
-        or "<MISSING>"
-    )
-    city = (
-        "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
-        or "<MISSING>"
-    )
-    state = (
-        "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
-        or "<MISSING>"
-    )
-    postal = (
-        "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
-        or "<MISSING>"
-    )
-    country_code = "US"
-    store_number = "<MISSING>"
+    location_name = "".join(tree.xpath("//title/text()")).strip()
+    street_address = ", ".join(
+        tree.xpath("//span[@itemprop='streetAddress']/text()")
+    ).strip()
+    city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
+    state = "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
+    postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
     try:
-        phone = (
-            tree.xpath("//span[@itemprop='telephone']/text()")[0].strip() or "<MISSING>"
-        )
+        phone = tree.xpath("//span[@itemprop='telephone']/text()")[0].strip()
     except IndexError:
-        phone = "<MISSING>"
-    latitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-latitude")) or "<MISSING>"
-    )
-    longitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-longitude")) or "<MISSING>"
-    )
-    location_type = "Branch"
+        phone = SgRecord.MISSING
+    latitude = "".join(tree.xpath("//div[@data-latitude]/@data-latitude"))
+    longitude = "".join(tree.xpath("//div[@data-latitude]/@data-longitude"))
 
     _tmp = []
     hours = tree.xpath(
         "//div[@class='location-details__hours' and ./h2[contains(text(), 'Lobby')]]/text()"
     )
-
     for h in hours:
         if h.strip():
             _tmp.append(f"{h.strip()}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
-    if location_name.lower().find("soon") != -1:
+    if "soon" in location_name.lower():
         hours_of_operation = "Coming Soon"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        store_number=SgRecord.MISSING,
+        phone=phone,
+        location_type="Branch",
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.capfed.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -46,11 +46,10 @@ def fetch_data():
         "extensions": {
             "persistedQuery": {
                 "version": 1,
-                "sha256Hash": "4e8b93beb8554126cfe7b082c716d13297910daae0eb4691387679eef7c1c09c",
+                "sha256Hash": "1856bf7ae9bb5827c6ea52e98bbbc6b7ea4c1d475622b778101f4390dbc99768",
                 "sender": "vtex.store-locator@0.x",
                 "provider": "vtex.store-locator@0.x",
             },
-            "variables": "eyJsYXRpdHVkZSI6bnVsbCwibG9uZ2l0dWRlIjpudWxsfQ==",
         },
     }
     stores_req = session.post(
@@ -90,16 +89,23 @@ def fetch_data():
             5: "Friday",
             6: "Saturday",
         }
+        days_list = []
         if store["businessHours"]:
             hours = store["businessHours"]
             hours_list = []
             for hour in hours:
                 day = weekdays_dict[hour["dayOfWeek"]]
                 time = hour["openingTime"] + " - " + hour["closingTime"]
+                days_list.append(day)
                 hours_list.append(day + ":" + time)
 
-        hours_of_operation = "; ".join(hours_list).strip()
+        for day in weekdays_dict.values():
+            if day not in days_list:
+                hours_list.append(day + ":Closed")
 
+        hours_of_operation = "; ".join(hours_list).strip()
+        if hours_of_operation.count("Closed") == 7:
+            continue
         latitude = str(store["address"]["location"]["latitude"])
         longitude = str(store["address"]["location"]["longitude"])
 

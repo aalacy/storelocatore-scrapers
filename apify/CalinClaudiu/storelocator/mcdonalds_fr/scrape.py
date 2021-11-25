@@ -94,11 +94,11 @@ def scrape():
             part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 0],
+            mapping=["geometry", "coordinates", 1],
             part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 1],
+            mapping=["geometry", "coordinates", 0],
         ),
         street_address=sp.MappingField(
             mapping=["properties", "address", "lines"],

@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 import re
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import ssl
 
 try:
@@ -60,15 +60,35 @@ def fetch_data():
             "script", string=re.compile(r"new google.maps.Marker\(")
         ).string.split("new google.maps.Marker(")[1:]
         for _ in locations:
-            raw_address = [
+            _addr = [
                 aa.text.strip()
-                for aa in _.select_one("p.store-phone").find_previous_siblings("p")
+                for aa in _.select_one("p.store-phone").find_previous_siblings("p")[
+                    ::-1
+                ]
             ]
-            addr = parse_address_intl(" ".join(raw_address))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            if "Hotel Chocolat" in _addr[0]:
+                del _addr[0]
+            raw_address = " ".join(_addr)
+            addr = parse_address_intl(raw_address)
             ss = json.loads(_.select_one("a.get-dir-store-detail")["data-gtmdata"])
+            _city = ss["city"].replace(".", "")
+            if _city in raw_address:
+                idx = raw_address.rfind(_city)
+                street_address = raw_address[:idx]
+            else:
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+            if not street_address:
+                street_address = _addr[0]
+            if (
+                len(street_address.split()) == 2
+                and street_address.split()[0] == "Unit"
+                and ss.get("postalCode")
+                and ss.get("postalCode") in raw_address
+            ):
+                idx = raw_address.rfind(ss.get("postalCode"))
+                street_address = raw_address[:idx]
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in _.select("div.working-hours > p")
@@ -78,13 +98,16 @@ def fetch_data():
             ]
             page_url = locator_domain + _.select_one("a.store-details-link")["href"]
             coord = _latlng(markers, ss["name"])
+            state = addr.state
+            if state and state.replace("-", "").isdigit():
+                state = ""
             yield SgRecord(
                 page_url=page_url,
                 store_number=ss["ID"],
                 location_name=ss["name"],
                 street_address=street_address,
                 city=ss["city"],
-                state=addr.state,
+                state=state,
                 zip_postal=ss.get("postalCode"),
                 country_code=addr.country,
                 phone=_.select_one("p.store-phone").text.strip(),
@@ -93,7 +116,7 @@ def fetch_data():
                 location_type=", ".join(location_type),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=" ".join(raw_address),
+                raw_address=raw_address,
             )
 
 

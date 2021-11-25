@@ -155,6 +155,8 @@ def fetch_data():
                         .replace("(", "")
                         .replace(")", "")
                         .strip()
+                        .replace(" ", "")
+                        .strip()
                         .isdigit()
                     ):
                         raw_address = " ".join(store_info[:-1]).replace("\n", " ")

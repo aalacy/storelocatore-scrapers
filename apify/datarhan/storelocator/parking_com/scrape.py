@@ -41,13 +41,21 @@ def fetch_data():
                 continue
             page_url = urljoin("https://www.parking.com/", poi["url"])
             location_type = "Monthly" if poi["sellsMonthly"] else "Daily"
+            city = poi_data["ldjson"][0]["address"]["addressLocality"]
+            if not city:
+                city = (
+                    poi_data["ldjson"][0]["hasMap"]
+                    .split("/")[3]
+                    .title()
+                    .replace("-", " ")
+                )
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
-                location_name=poi["name"].strip(),
+                location_name=" ".join(poi["name"].split()),
                 street_address=poi_data["ldjson"][0]["address"]["streetAddress"],
-                city=poi_data["ldjson"][0]["address"]["addressLocality"],
+                city=city,
                 state=poi_data["ldjson"][0]["address"]["addressRegion"],
                 zip_postal=poi_data["ldjson"][0]["address"]["postalCode"],
                 country_code=poi_data["lot"]["country"],

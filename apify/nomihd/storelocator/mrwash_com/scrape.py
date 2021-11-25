@@ -35,16 +35,18 @@ def fetch_data():
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath(
-            '//div[@class="elementor-row"]//div[@class="elementor-text-editor elementor-clearfix"]/a/@href'
+            '//ul[@class="elementor-icon-list-items"][1]//a/@href'
         )
         for store_url in stores:
+            if "facebook" in store_url:
+                break
             page_url = store_url
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
 
             locator_domain = website
-            location_name = "".join(
+            location_name = " ".join(
                 store_sel.xpath(
                     '//div/h2[@class="elementor-heading-title elementor-size-large"]/text()'
                 )
@@ -105,6 +107,17 @@ def fetch_data():
                 )
 
             hours_of_operation = "; ".join(hours_list).strip()
+            if page_url == "https://mrwash.com/silver-spring-md/":
+                hours_of_operation = (
+                    " ".join(
+                        store_sel.xpath(
+                            '//div[./div/h2[contains(text(),"Hours of operation") or contains(text(),"hours of Operation") or contains(text(),"hours of operation")]]/following-sibling::div[1]//h5/b/text()'
+                        )
+                    )
+                    .strip()
+                    .replace(" pm", " pm;")
+                    .strip()
+                )
 
             latitude = "<MISSING>"
             longitude = "<MISSING>"
