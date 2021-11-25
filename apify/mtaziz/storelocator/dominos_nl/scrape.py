@@ -391,7 +391,7 @@ def fetch_records_eu_global(idx, curl, sgw: SgWriter):
 
             rec = SgRecord(
                 locator_domain=DOMAIN,
-                page_url=MISSING,
+                page_url="<INACCESSIBLE>",
                 location_name=name,
                 street_address=add1,
                 city=city,

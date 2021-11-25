@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("ditchwitch")
@@ -71,11 +71,11 @@ def fetch_records(search):
 
 if __name__ == "__main__":
     search = DynamicZipAndGeoSearch(
-        country_codes=SearchableCountries.ALL, granularity=Grain_4()
+        country_codes=SearchableCountries.ALL, granularity=Grain_8()
     )
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
         for rec in fetch_records(search):
