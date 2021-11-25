@@ -58,7 +58,7 @@ def fetch_data():
             raw_address = strip_accents(
                 temp["address"] + " " + temp["addressSecondary"]
             )
-            location_name = loc["name"]
+            location_name = strip_accents(loc["name"])
             phone = loc["phone"]
             if phone is None:
                 phone = MISSING
