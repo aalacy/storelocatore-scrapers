@@ -68,8 +68,8 @@ def fetch_data():
             try:
                 address = bs.find("a", {"data-test-id": "location_address_link"}).text
             except AttributeError:
-                print(store)
-                print(bs.find("a", {"data-test-id": "location_address_link"}))
+                address = bs.find("a", {"data-test-id": "location_address_link"}
+                
             coords = bs.find("div", {"id": "locationMap"})
             lat = coords["data-lat"]
             lng = coords["data-lng"]
