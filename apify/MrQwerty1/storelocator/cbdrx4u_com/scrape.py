@@ -15,7 +15,7 @@ def get_international(line):
     ).strip()
     city = adr.city
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or ""
 
     return street, city, state, postal
 

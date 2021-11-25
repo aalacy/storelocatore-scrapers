@@ -103,7 +103,14 @@ def fetch_data():
                         )
 
                 if raw_address:
-                    raw_address = raw_address.replace("\n", "").strip()
+                    raw_address = (
+                        raw_address.replace("\r\n", "")
+                        .strip()
+                        .replace("\n", "")
+                        .strip()
+                        .replace("\r", "")
+                        .strip()
+                    )
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if formatted_addr.street_address_2:

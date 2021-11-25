@@ -104,7 +104,8 @@ def fetch_data():
                 hours_list.append(day + ":Closed")
 
         hours_of_operation = "; ".join(hours_list).strip()
-
+        if hours_of_operation.count("Closed") == 7:
+            continue
         latitude = str(store["address"]["location"]["latitude"])
         longitude = str(store["address"]["location"]["longitude"])
 
