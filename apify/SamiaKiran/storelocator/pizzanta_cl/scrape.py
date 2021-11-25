@@ -98,7 +98,7 @@ def fetch_data():
             country_code = "Chile"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=DOMAIN,
+                page_url="https://www.pizzanta.cl/locales",
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
