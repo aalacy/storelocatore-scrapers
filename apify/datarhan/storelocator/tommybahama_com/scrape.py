@@ -201,7 +201,7 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {SgRecord.Headers.STREET_ADDRESS}
             )
         )
     ) as writer:
