@@ -73,30 +73,30 @@ def fetch_data():
         all_locations = re.findall("storeid=(.+?)&", response.text)
 
         for store_number in all_locations:
-            if not store_number.isdigit():
-                continue
             store_url = "https://www.mynavyexchange.com/storelocator/storedetails.jsp?storeid={}&zipcode=&state={}&radius=&city=&country="
             store_url = store_url.format(store_number, state)
             loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
 
-            raw_address = loc_dom.xpath(
+            raw_data = loc_dom.xpath(
                 '//h3[contains(text(), "ADDRESS")]/following-sibling::p[1]/text()'
             )
-            raw_address = [
-                " ".join([l.strip() for l in e.split()])
-                for e in raw_address
-                if e.strip()
-            ][0].split(", ")
+            raw_data = " ".join([e.strip() for e in raw_data[0].split() if e.strip()])
+            raw_address = raw_data.replace("WMTC Bridgeport", "").strip()
             location_name = loc_dom.xpath("//div/h2/text()")[0]
-            addr = parse_address_intl(" ".join(raw_address))
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
+            if not street_address:
+                continue
+            city = addr.city
+            if city:
+                street_address = raw_data.split(", ")[0][: -(len(city) + 2)]
             phone = loc_dom.xpath(
                 '//dt[contains(text(), "Main:")]/following-sibling::dd/text()'
             )[0].strip()
-            geo = re.findall(r"addMarker\((.+?)\);", loc_response.text)[0].split(", ")
+            geo = loc_dom.xpath('//input[@id="endPoint"]/@value')[0].split(",")
             hoo = loc_dom.xpath(
                 '//h4[contains(text(), " Regular:")]/following-sibling::div[1]//text()'
             )
@@ -107,7 +107,7 @@ def fetch_data():
                 page_url=store_url,
                 location_name=location_name,
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code=addr.country,
@@ -117,6 +117,7 @@ def fetch_data():
                 latitude=geo[0],
                 longitude=geo[1],
                 hours_of_operation=hoo,
+                raw_address=raw_address,
             )
 
             yield item
