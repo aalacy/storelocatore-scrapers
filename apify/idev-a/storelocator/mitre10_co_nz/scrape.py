@@ -8,6 +8,16 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from webdriver_manager.chrome import ChromeDriverManager
 import dirtyjson as json
 from bs4 import BeautifulSoup as bs
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("mitre10")
 
