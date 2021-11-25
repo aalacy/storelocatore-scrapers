@@ -7,9 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 import tenacity
-import time
 import ssl
-import random
 
 try:
     _create_unverified_https_context = (
@@ -51,10 +49,9 @@ country_list = [
 
 @retry(stop=stop_after_attempt(20), wait=tenacity.wait_fixed(10))
 def get_response(url):
-    with SgRequests() as http:
+    with SgRequests(timeout_config=300) as http:
         response = http.get(url, headers=headers)
         logger.info(f"Status Code: {response.status_code}")
-        time.sleep(random.randint(20, 50))
         if response.status_code == 200:
             logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
             return response
