@@ -52,7 +52,7 @@ def fetch_data():
             "stores"
         ]["items"]
         for loc in loclist:
-            location_name = loc["name"]
+            location_name = strip_accents(loc["name"])
             phone = loc["phone"]
             log.info(location_name)
             temp = loc["address"]
