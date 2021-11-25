@@ -132,14 +132,21 @@ def fetch_data():
                 if len(location_name) <= 0:
                     continue
 
-                raw_address = store_sel.xpath(
+                temp_address = store_sel.xpath(
                     '//div[@id="StoreDetailsContainer"]//div[@class="StoreFinderList"][./div[@itemprop="address"]]/div/text()'
                 )
 
-                street_address = raw_address[0].strip()
-                city = raw_address[1].strip()
+                add_list = []
+                raw_address = ""
+                for temp in temp_address:
+                    if len("".join(temp).strip()) > 0:
+                        add_list.append("".join(temp).strip())
+
+                raw_address = ", ".join(add_list).strip()
+                street_address = temp_address[0].strip()
+                city = temp_address[1].strip()
                 state = "<MISSING>"
-                zip = raw_address[-1]
+                zip = temp_address[-1]
                 country_code = "".join(store.xpath("@data-country-code")).strip()
 
                 store_number = page_url.split("-")[-1].strip()
