@@ -95,13 +95,17 @@ def fetch_data():
             phone = MISSING
             store_number = MISSING
             location_type = MISSING
-            latlong = (
-                row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
-                .replace("https://www.google.com/maps/place/", "")
-                .split(",")
-            )
-            latitude = latlong[0]
-            longitude = latlong[1]
+            try:
+                latlong = (
+                    row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
+                    .replace("https://www.google.com/maps/place/", "")
+                    .split(",")
+                )
+                latitude = latlong[0]
+                longitude = latlong[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             hours_of_operation = row.find(
                 "div", {"class": "locations__results-hours"}
             ).get_text(strip=True, separator=",")
