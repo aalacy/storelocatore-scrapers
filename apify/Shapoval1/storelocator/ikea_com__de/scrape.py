@@ -1,5 +1,5 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
