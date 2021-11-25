@@ -5,11 +5,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
-import re
+from sgscrape.sgpostal import parse_address_usa
 
-DOMAIN = "frame-store.com"
-LOCATION_URL = "https://frame-store.com/pages/stores"
+DOMAIN = "lasirenafoods.com"
+LOCATION_URL = "https://lasirenafoods.com/pages/store-finder"
+API_URL = "https://www.lasirenafoods.com/wp-admin/admin-ajax.php?action=store_search&lat=39.099727&lng=-94.578567&max_results=2500&search_radius=50000&autoload=1"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -23,7 +23,7 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -51,48 +51,31 @@ def pull_content(url):
     return soup
 
 
-def get_latlong(url):
-    latlong = re.search(r"@([\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
-    if not latlong:
-        return MISSING, MISSING
-    return latlong.group(1), latlong.group(2)
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.select(
-        "div#shopify-section-store-locator div.section__body div.section__block > div.section__content"
-    )
-    for row in contents:
-        location_name = row.find("h4").text.strip()
-        info = row.find("ul").find_all("li")
-        raw_address = info[0].text.replace("\n", ",").strip()
+    data = session.get(API_URL, headers=HEADERS).json()
+    for row in data:
+        location_name = row["store"].strip()
+        street_address = row["address"].replace("MaiettaGa28110", "").strip()
+        city = row["city"]
+        state = row["state"]
+        zip_postal = row["zip"]
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        try:
-            phone = info[1].find("a").text.strip()
-            hours_of_operation = (
-                info[2]
-                .find("table")
-                .get_text(strip=True, separator=",")
-                .replace("day,", "day: ")
-                .replace("a,m", "am")
-                .replace(",-", " -")
-                .replace("1,1", "11")
-            )
-        except:
-            phone = MISSING
-            hours_of_operation = MISSING
-        location_type = MISSING
-        if "Opening" in info[1].text.strip():
-            location_type = "COMING_SOON"
+        street_address = street_address.replace(state.title(), "")
+        phone = MISSING if "E+09" in row["phone"] else row["phone"]
         country_code = "US"
-        if "UK" in location_name:
-            country_code = "UK"
-            state = MISSING
-        store_number = MISSING
-        map_link = row.find("a", text="View on map")["href"]
-        latitude, longitude = get_latlong(map_link)
+        hours_of_operation = (
+            bs(row["hours"], "lxml")
+            .get_text(strip=True, separator=",")
+            .replace("es,", "es: ")
+            .replace("Sábado,", "Sábado: ")
+            .replace("Domingo,", "Domingo: ")
+        )
+        location_type = MISSING
+        store_number = row["id"]
+        latitude = row["lat"]
+        longitude = row["lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -120,7 +103,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
                 }
             )
         )
