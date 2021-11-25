@@ -16,9 +16,7 @@ headers = {
 def fetch_data():
     url = "https://www.allbirds.com/pages/stores"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    lines = r.iter_lines(decode_unicode=True)
+    lines = r.iter_lines()
     website = "allbirds.com"
     store = "<MISSING>"
     purl = "<MISSING>"
@@ -38,10 +36,8 @@ def fetch_data():
         if "see map</a></p>" in line.lower():
             murl = line.split('href="')[1].split('"')[0]
             r2 = session.get(murl, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            lat = r2.url.split("@")[1].split(",")[0]
-            lng = r2.url.split("@")[1].split(",")[1]
+            lat = str(r2.url).split("@")[1].split(",")[0]
+            lng = str(r2.url).split("@")[1].split(",")[1]
         if "location</h3>" in line.lower():
             g = next(lines)
             h = next(lines)
@@ -53,7 +49,15 @@ def fetch_data():
                 state = h.split(",")[1].strip().split(" ")[0].strip()
             except:
                 state = "<MISSING>"
-            zc = h.split("<")[0].rsplit(" ", 1)[1].strip()
+            if ", Paramus, NJ" in g:
+                add = g.split(",")[0]
+                city = "Paramus"
+                state = "NJ"
+                zc = "07652"
+                lat = "40.9176318"
+                lng = "-74.0780812"
+            else:
+                zc = h.split("<")[0].rsplit(" ", 1)[1].strip()
             if Intl is False:
                 country = "US"
             else:
