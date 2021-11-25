@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 DOMAIN = "frame-store.com"
 LOCATION_URL = "https://frame-store.com/pages/stores"
@@ -50,6 +51,13 @@ def pull_content(url):
     return soup
 
 
+def get_latlong(url):
+    latlong = re.search(r"@([\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
+        return MISSING, MISSING
+    return latlong.group(1), latlong.group(2)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -68,6 +76,9 @@ def fetch_data():
                 .find("table")
                 .get_text(strip=True, separator=",")
                 .replace("day,", "day: ")
+                .replace("a,m", "am")
+                .replace(",-", " -")
+                .replace("1,1", "11")
             )
         except:
             phone = MISSING
@@ -80,8 +91,8 @@ def fetch_data():
             country_code = "UK"
             state = MISSING
         store_number = MISSING
-        latitude = MISSING
-        longitude = MISSING
+        map_link = row.find("a", text="View on map")["href"]
+        latitude, longitude = get_latlong(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
