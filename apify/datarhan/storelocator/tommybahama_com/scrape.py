@@ -27,6 +27,8 @@ def fetch_data():
 
     for url in list(set(all_locations)):
         store_url = urljoin(start_url, url.split("?")[0])
+        if "marlin-bars" in store_url:
+            continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         raw_data = loc_dom.xpath(
