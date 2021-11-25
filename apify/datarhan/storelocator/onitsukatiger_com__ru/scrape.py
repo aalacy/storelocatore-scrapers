@@ -1,4 +1,5 @@
 from w3lib.url import add_or_replace_parameter
+from lxml import etree
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -36,6 +37,14 @@ def fetch_data():
 
         for i, poi in all_locations.items():
             page_url = "https://www.onitsukatiger.com" + poi["URL"]
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+
+            hoo = loc_dom.xpath(
+                '//table[@class="store-openings weekday_openings"]//text()'
+            )
+            hoo = hoo = [e.strip() for e in hoo if e.strip()]
+            hoo = " ".join(hoo)
 
             item = SgRecord(
                 locator_domain=domain,
@@ -51,7 +60,7 @@ def fetch_data():
                 location_type=poi["StoreType"],
                 latitude=poi["Latitude"],
                 longitude=poi["Longitude"],
-                hours_of_operation="",
+                hours_of_operation=hoo,
             )
 
             yield item
