@@ -30,7 +30,6 @@ def fetch_data():
     phones = loc.findAll("ul")
 
     for loc, coords, ph in zip(loc_block, coords_block, phones):
-        print(loc)
         title = loc.find("h3").text
         address = loc.findAll("p")[1].text
         details = address.split("\n")
