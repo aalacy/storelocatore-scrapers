@@ -10,7 +10,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import retry, stop_after_attempt
-import json
 import ssl
 from lxml import html
 import time
@@ -87,7 +86,7 @@ def get_phone(storenum):
         EC.element_to_be_clickable((By.XPATH, location_xpath))
     )
     driver.find_element_by_xpath(location_xpath).click()
-    logger.info(f"Location Link Clicked")
+    logger.info("Location Link Clicked")
     time.sleep(5)
     selphone = html.fromstring(driver.page_source, "lxml")
     phone_xpath = '//a[contains(@href, "tel:")]/@phone'
