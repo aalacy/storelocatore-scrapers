@@ -62,9 +62,11 @@ def fetch_data(sgw: SgWriter):
             location_type = ""
             phone = ""
 
-            if "Store Hours" in item.find_all(class_="map-address")[-1]:
+            if "Store Hours" in item.find_all(class_="map-address")[-1].text:
                 hours_of_operation = (
-                    item.find_all(class_="map-address")[-1].split("Hours:")[0].strip()
+                    item.find_all(class_="map-address")[-1]
+                    .text.split("Hours:")[1]
+                    .strip()
                 )
             else:
                 hours_of_operation = ""
