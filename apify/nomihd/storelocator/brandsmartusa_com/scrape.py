@@ -230,6 +230,8 @@ def fetch_data():
             country_code = "US"
             phone = "(954) 327-6600"
 
+        if "BrandsMart USA" not in location_name:
+            location_name = "BrandsMart USA " + location_name
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
