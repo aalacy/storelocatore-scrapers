@@ -5,20 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgselenium import SgSelenium
 from sgscrape.sgpostal import parse_address_intl
 import re
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
 
 DOMAIN = "ulsterbank.ie"
 LOCATION_URL = "https://locator.ulsterbank.ie"
@@ -65,25 +53,27 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
-    driver.get(LOCATION_URL)
-    driver.implicitly_wait(10)
-    try:
-        driver.find_element_by_id("onetrust-accept-btn-handler").click()
-    except:
-        pass
-    driver.execute_script(
-        "return document.getElementsByClassName('bl-captcha')[0].remove();"
+    req = session.get(LOCATION_URL)
+    soup = bs(req.content, "lxml")
+    csrf = soup.find("input", id="csrf-token")["value"]
+    payload = {
+        "CSRFToken": csrf,
+        "lat": 53.1423672,
+        "lng": -7.692053599999999,
+        "site": "ulsterbank_roi",
+        "pageDepth": 4,
+        "search_term": "ireland",
+        "searchMiles": 5,
+        "offSetMiles": 50,
+        "maxMiles": 15000,
+        "listSizeInNumbers": 10000,
+        "search-type": 1,
+    }
+    req = session.post(
+        "https://locator.ulsterbank.ie/content/branchlocator/en/ulsterbank_roi/searchresults/_jcr_content/par/searchresults.search.html",
+        data=payload,
     )
-    driver.execute_script("return document.getElementById('maxMiles').value = '10000'")
-    driver.execute_script(
-        "return document.getElementById('listSizeInNumbers').value = '10000'"
-    )
-    driver.find_element_by_id("search-input").send_keys("Ireland")
-    driver.find_element_by_id("search-button").click()
-    driver.implicitly_wait(10)
-    contents = bs(driver.page_source, "lxml").select("div.results-marker-link")
-    driver.quit()
+    contents = bs(req.content, "lxml").select("div.results-marker-link")
     for row in contents:
         page_url = LOCATION_URL + row.find("a")["href"]
         store = pull_content(page_url)
@@ -119,7 +109,7 @@ def fetch_data():
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
