@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("villagepubvegas")
 
@@ -53,7 +55,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
