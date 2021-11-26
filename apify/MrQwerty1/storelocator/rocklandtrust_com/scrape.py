@@ -22,12 +22,14 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         text = j.get("description") or "<html></html>"
+        text = text.replace("&nbsp;", " ").replace("&amp;", "&")
         tree = html.fromstring(text)
         street_address = j.get("address")
         city = j.get("city")
         state = j.get("state")
         postal = j.get("zip")
         page_url = tree.xpath("//a[not(contains(@href, 'mailto'))]/@href")[0]
+
         location_name = j.get("name") or ""
         phone = j.get("phone")
         latitude = j.get("lat")
@@ -42,10 +44,16 @@ def fetch_data(sgw: SgWriter):
             hours = hours.split("Drive")[0]
         elif hours.find("Teller") != -1:
             hours = hours.split("Teller")[0]
+        if "Video" in hours:
+            hours = hours.split("Video")[0]
+        if ":;" in hours:
+            hours = hours.split(":;")[-1]
 
         hours_of_operation = hours
         if not hours_of_operation:
             hours_of_operation = get_hoo(page_url)
+        if hours_of_operation.endswith(";"):
+            hours_of_operation = hours_of_operation[:-1]
 
         row = SgRecord(
             location_name=location_name,
