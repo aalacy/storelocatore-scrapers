@@ -1,13 +1,13 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-import re
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import ssl
+import re
 
 try:
     _create_unverified_https_context = (
@@ -45,7 +45,7 @@ def fetch_data():
         driver.get(base_url)
         with SgRequests() as session:
             session.get(locator_domain, headers=_headers())
-            locations = bs(driver.page_source, "html.parser").select(
+            locations = bs(driver.page_source, "lxml").select(
                 "div.accordions .location-sm"
             )
             for location in locations:
