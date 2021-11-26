@@ -68,7 +68,7 @@ def fetch_data():
             latitude = poi["locLati"]
             longitude = poi["locLongi"]
             hoo = loc_dom.xpath(
-                '//ul[descendant::span[contains(text(), "Monday")]]//text()'
+                '//ul[descendant::*[contains(text(), "Monday")]]//text()'
             )
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 

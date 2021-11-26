@@ -56,7 +56,11 @@ def fetch_data():
                 + "&CSRFToken=47258482-bb64-4eb0-9f18-77468d8a8186"
             )
             stores_req = session.get(search_url, headers=headers2)
-            soup = BeautifulSoup(stores_req.text, "html.parser")
+            try:
+                soup = BeautifulSoup(stores_req.text, "html.parser")
+            except AttributeError:
+                continue
+
             locations = soup.find("div", {"class": "map-canvas"})
             if str(locations).find("map-canvas anime") == -1:
                 locations = locations["data-stores"]
