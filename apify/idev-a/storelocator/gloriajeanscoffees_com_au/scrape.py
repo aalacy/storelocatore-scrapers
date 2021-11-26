@@ -9,8 +9,8 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://gloriajeanscoffees.com.au/"
-base_url = "https://www.gloriajeanscoffees.com.au/wp/wp-admin/admin-ajax.php?action=store_search&lat=-19.258963&lng=146.816948&max_results=25&search_radius=10&autoload=1"
+locator_domain = "https://www.gloriajeansnc.com"
+base_url = "https://www.gloriajeansnc.com/wp-admin/admin-ajax.php?action=store_search&lat=35.18735&lng=33.35061&max_results=25&search_radius=10&autoload=1"
 
 
 def fetch_data():
@@ -29,7 +29,7 @@ def fetch_data():
             yield SgRecord(
                 page_url="",
                 store_number=_["id"],
-                location_name=_["store"].replace('&#8217;', "'"),
+                location_name=_["store"].replace("&#8217;", "'"),
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
