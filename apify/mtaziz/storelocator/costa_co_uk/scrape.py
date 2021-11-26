@@ -3,8 +3,13 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
 import ssl
+import json
 
 try:
     _create_unverified_https_context = (
@@ -18,45 +23,39 @@ else:
 
 logger = SgLogSetup().get_logger("costa_co_uk")
 DOMAIN = "costa.co.uk"
-MISSING = "<MISSING>"
-
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.BRITAIN],
-    max_radius_miles=5,
-    max_search_results=500,
-    granularity=Grain_8(),
-)
+MISSING = SgRecord.MISSING
+MAX_WORKERS = 16
 
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
 
 
-def fetch_data():
-    s = set()
-    total = 0
-    for lat, lng in search:
-        x = lat
-        y = lng
-        url = (
-            "https://www.costa.co.uk/api/locations/stores?latitude="
-            + str(x)
-            + "&longitude="
-            + str(y)
-            + "&maxrec=500"
-        )
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
-        session = SgRequests()
-        logger.info(f"Pulling the data for (latitude, longitude) : ({lat, lng}) ")
-        r = session.get(url, headers=headers, verify=False, timeout=500)
-        logger.info(f"Pulling the data from : {url} ")
-        total += len(json.loads(r.content)["stores"])
-        for item in json.loads(r.content)["stores"]:
+
+def fetch_records(latlng, sgw):
+    total = 0
+    lat, lng = latlng
+    url = f"https://www.costa.co.uk/api/locations/stores?latitude={str(lat)}&longitude={str(lng)}&maxrec=500"
+    r = get_response(url)
+    js = json.loads(r.content)["stores"]
+    logger.info(f"Pulling the data from : {r.url} ")
+    if js:
+        total += len(js)
+        for item in js:
             locator_domain = DOMAIN
             store_number = item["storeNo8Digit"]
             location_type = item["storeType"]
-            page_url = MISSING
 
             # Phone
             phone = item["telephone"]
@@ -128,10 +127,17 @@ def fetch_data():
 
             # Latitude and Longitude
             latitude = item["latitude"]
-            longitude = item["longitude"]
+            latitude = latitude if latitude else MISSING
 
-            # Search location found at
-            search.found_location_at(latitude, longitude)
+            longitude = item["longitude"]
+            longitude = longitude if longitude else MISSING
+
+            # page url
+            page_url = ""
+            if MISSING not in latitude or MISSING not in longitude:
+                page_url = f"https://www.costa.co.uk/locations/store-locator/map?latitude={latitude}&longitude={longitude}"
+            else:
+                page_url = "https://www.costa.co.uk/locations/store-locator"
 
             # Hours of Operation
             soh = item["storeOperatingHours"]
@@ -151,13 +157,9 @@ def fetch_data():
                 in hours_of_operation
             ):
                 hours_of_operation = MISSING
-            if store_number in s:
-                continue
-            s.add(store_number)
 
-            addinfo = f"{add}, {city}, {zip_postal}, {country_code}"
-            raw_address = addinfo
-            yield SgRecord(
+            raw_address = MISSING
+            item = SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
@@ -174,21 +176,46 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
+            sgw.write_row(item)
         logger.info(
             f'Number of items found: {len(json.loads(r.content)["stores"])} : Total: {total}'
         )
+    else:
+        return
+
+
+def fetch_data(sgw: SgWriter):
+    logger.info("Started")
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN],
+        expected_search_radius_miles=10,
+        granularity=Grain_8(),
+        use_state=False,
+    )
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+        task_global = [executor.submit(fetch_records, latlng, sgw) for latlng in search]
+        tasks.extend(task_global)
+        for future in as_completed(tasks):
+            future.result()
 
 
 def scrape():
-    logger.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
 
-    logger.info(f"No of records being processed: {count}")
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
     logger.info("Finished")
 
 

@@ -22,6 +22,8 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
     for store in stores:
+        if "description" in store and "opening" in store["description"].lower():
+            continue
         page_url = "<MISSING>"
         locator_domain = website
         location_name = store["name"]

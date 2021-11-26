@@ -1,173 +1,54 @@
-import csv
-
-from sglogging import SgLogSetup
-
+import httpx
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+from concurrent import futures
+from sglogging import sglog
 
-logger = SgLogSetup().get_logger("ashleyfurniture_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+locator_domain = "https://ashleyfurniture.com/"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
-def fetch_data():
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    api_url = f"https://stores.ashleyfurniture.com/umbraco/surface/locate/GetDataByCoordinates?longitude={long}&latitude={lat}&distance=50000&units=miles&amenities=&paymentMethods="
 
-    us_state_abbrev = {
-        "Alabama": "AL",
-        "Alaska": "AK",
-        "American Samoa": "AS",
-        "Arizona": "AZ",
-        "Arkansas": "AR",
-        "California": "CA",
-        "Colorado": "CO",
-        "Connecticut": "CT",
-        "Delaware": "DE",
-        "District of Columbia": "DC",
-        "Florida": "FL",
-        "Georgia": "GA",
-        "Guam": "GU",
-        "Hawaii": "HI",
-        "Idaho": "ID",
-        "Illinois": "IL",
-        "Indiana": "IN",
-        "Iowa": "IA",
-        "Kansas": "KS",
-        "Kentucky": "KY",
-        "Louisiana": "LA",
-        "Maine": "ME",
-        "Maryland": "MD",
-        "Massachusetts": "MA",
-        "Michigan": "MI",
-        "Minnesota": "MN",
-        "Mississippi": "MS",
-        "Missouri": "MO",
-        "Montana": "MT",
-        "Nebraska": "NE",
-        "Nevada": "NV",
-        "New Hampshire": "NH",
-        "New Jersey": "NJ",
-        "New Mexico": "NM",
-        "New York": "NY",
-        "North Carolina": "NC",
-        "North Dakota": "ND",
-        "Northern Mariana Islands": "MP",
-        "Ohio": "OH",
-        "Oklahoma": "OK",
-        "Oregon": "OR",
-        "Pennsylvania": "PA",
-        "Puerto Rico": "PR",
-        "Rhode Island": "RI",
-        "South Carolina": "SC",
-        "South Dakota": "SD",
-        "Tennessee": "TN",
-        "Texas": "TX",
-        "Utah": "UT",
-        "Vermont": "VT",
-        "Virgin Islands": "VI",
-        "Virginia": "VA",
-        "Washington": "WA",
-        "West Virginia": "WV",
-        "Wisconsin": "WI",
-        "Wyoming": "WY",
-        "Alberta": "AB",
-        "British Columbia": "BC",
-        "Manitoba": "MB",
-        "New Brunswick": "NB",
-        "Nova Scotia": "NS",
-        "Nunavut": "NU",
-        "Newfoundland and Labrador": "NL",
-        "Ontario": "ON",
-        "Northwest Territories": "NT",
-        "Prince Edward Island": "PE",
-        "Quebec": "QC",
-        "Saskatchewan": "SK",
-        "Yukon": "YT",
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
     }
+    try:
+        r = SgRequests.raise_on_err(session.post(api_url, headers=headers))
+        log.info(f"## Response: {r}")
+        assert isinstance(r, httpx.Response)
+        assert 200 == r.status_code
+        js = r.json()["StoreLocations"]
 
-    abbrev_us_state = dict(map(reversed, us_state_abbrev.items()))
-    session = SgRequests()
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
-    locator_domain = "ashleyfurniture.com"
-
-    all_store_data = []
-
-    base_link = "https://stores.ashleyfurniture.com/umbraco/surface/locate/GetDataByState?region="
-
-    for st in abbrev_us_state:
-        api_link = base_link + st
-        logger.info(api_link)
-        stores = session.get(api_link, headers=headers).json()["StoreLocations"]
-
-        for store in stores:
-
-            raw_address = store["ExtraData"]["Address"]
-            try:
-                street_address = (
-                    raw_address["AddressNonStruct_Line1"]
-                    + " "
-                    + raw_address["AddressNonStruct_Line2"]
-                ).strip()
-            except:
-                street_address = raw_address["AddressNonStruct_Line1"].strip()
-
-            city = raw_address["Locality"]
-            if city == "Guatemala":
-                continue
-            state = raw_address["Region"]
-            zip_code = raw_address["PostalCode"]
-            country_code = raw_address["CountryCode"]
-            if country_code not in ["US", "CA"]:
-                continue
-
-            location_name = store["Name"] + " " + city
-            store_number = store["LocationNumber"]
-
-            link = (
-                "https://stores.ashleyfurniture.com/store/"
-                + country_code.lower()
-                + "/"
-                + abbrev_us_state[st].lower().replace(" ", "-")
-                + "/"
-                + city.lower().replace(" ", "-")
-                + "/"
-                + store_number
-            )
-            phone = store["ExtraData"]["Phone"]
-            location_type = "<MISSING>"
+        for j in js:
+            store_number = j.get("LocationNumber")
+            page_url = "https://stores.ashleyfurniture.com/"
+            location_name = j.get("Name") or "<MISSING>"
+            street_address = j.get("Address") or "<MISSING>"
+            city = j.get("ExtraData").get("Address").get("Locality") or "<MISSING>"
+            state = j.get("ExtraData").get("Address").get("Region") or "<MISSING>"
+            postal = j.get("ExtraData").get("Address").get("PostalCode") or "<MISSING>"
+            country_code = "".join(j.get("ExtraData").get("Address").get("CountryCode"))
+            city_slug = city.replace(" ", "-").lower()
+            state_slug = state.replace(" ", "-").lower()
+            if country_code == "US":
+                page_url = f"https://stores.ashleyfurniture.com/store/us/{state_slug}/{city_slug}/{store_number}/"
+            if country_code == "CA":
+                page_url = f"https://stores.ashleyfurniture.com/store/ca/{state_slug}/{city_slug}/{store_number}/"
+            phone = j.get("ExtraData").get("Phone") or "<MISSING>"
+            latitude = j.get("Location").get("coordinates")[1] or "<MISSING>"
+            longitude = j.get("Location").get("coordinates")[0] or "<MISSING>"
 
             hours_of_operation = ""
             try:
-                raw_hours = store["ExtraData"]["HoursOfOpStruct"]
+                raw_hours = j["ExtraData"]["HoursOfOpStruct"]
                 for day in raw_hours:
                     if day == "SpecialHours":
                         continue
@@ -188,7 +69,7 @@ def fetch_data():
                 try:
                     hours_of_operation = ""
                     days = ["Su ", "Mo ", "Tu ", "We ", "Th ", "Fr ", "Sa "]
-                    raw_hours = store["ExtraData"]["CustomerServiceHours"].split(",")
+                    raw_hours = j["ExtraData"]["CustomerServiceHours"].split(",")
                     for i, day in enumerate(days):
                         hours_of_operation = (
                             hours_of_operation + " " + day + raw_hours[i]
@@ -199,34 +80,54 @@ def fetch_data():
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
 
-            latitude = store["Location"]["coordinates"][1]
-            longitude = store["Location"]["coordinates"][0]
-
-            all_store_data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
 
-    return all_store_data
+            sgw.write_row(row)
+    except Exception as e:
+        log.info(f"Err at #L100: {e}")
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+
+    for country in SearchableCountries.ALL:
+        country = str(country).lower()
+        if country != "us":
+            continue
+        coords = DynamicGeoSearch(
+            country_codes=[f"{country}"],
+            max_search_distance_miles=5,
+            expected_search_radius_miles=5,
+            max_search_results=None,
+            granularity=Grain_1_KM(),
+        )
+
+        with futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+            for future in futures.as_completed(future_to_url):
+                future.result()
 
 
-scrape()
+if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)
