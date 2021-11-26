@@ -131,6 +131,9 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             )
         except:
             hours_of_operation = MISSING
+        country_code = strip_accents(
+            soup.find("abbr", {"itemprop": "addressCountry"}).text
+        )
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=next_r.url,
