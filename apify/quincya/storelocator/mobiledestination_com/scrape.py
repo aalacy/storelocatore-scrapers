@@ -49,7 +49,11 @@ def fetch_data(sgw: SgWriter):
         country_code = store["address"]["addressCountry"]["name"]
         store_number = link.split("locations/")[1].split("/")[0]
         location_type = "<MISSING>"
-        phone = store["telephone"]
+
+        try:
+            phone = store["telephone"]
+        except:
+            phone = ""
 
         hours_of_operation = " ".join(
             list(base.find(class_="store-hours").ul.stripped_strings)

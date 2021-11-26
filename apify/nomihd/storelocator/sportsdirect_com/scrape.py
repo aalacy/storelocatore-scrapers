@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -35,8 +35,13 @@ def fetch_data():
 
             retry_count = 0
             while "var store =" not in store_req.text and retry_count < 3:
-                store_req = session.get(page_url, headers=headers)
-                retry_count = retry_count + 1
+                try:
+                    store_req = SgRequests.raise_on_err(
+                        session.get(page_url, headers=headers)
+                    )
+                    retry_count = retry_count + 1
+                except SgRequestError as e:
+                    log.info(e.status_code)
 
             store_sel = lxml.html.fromstring(store_req.text)
             if "var store =" in store_req.text:
@@ -51,15 +56,21 @@ def fetch_data():
                 location_name = store_json["formattedStoreNameLong"]
                 street_address = store_json["address"]
                 city = store_json["town"]
-                if city:
-                    if "," in city:
-                        city = city.split(",")[-1].strip()
-
                 if city == "Festival Place Shopping Centre":
-                    city = "<MISSING>"
+                    city = "Basingstoke"
 
                 state = store_json["county"]
                 zip = store_json["postCode"]
+                raw_address = ""
+                if street_address and len(street_address) > 0:
+                    raw_address = street_address
+                if city and len(city) > 0:
+                    raw_address = raw_address + ", " + city
+                if state and len(state) > 0:
+                    raw_address = raw_address + ", " + state
+                if zip and len(zip) > 0:
+                    raw_address = raw_address + ", " + zip
+
                 country_code = store_json["countryCode"]
                 if country_code != "GB" and country_code != "IE":
                     state = "<MISSING>"
@@ -112,6 +123,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
             else:
                 location_name = "".join(
@@ -120,14 +132,21 @@ def fetch_data():
                 if len(location_name) <= 0:
                     continue
 
-                raw_address = store_sel.xpath(
+                temp_address = store_sel.xpath(
                     '//div[@id="StoreDetailsContainer"]//div[@class="StoreFinderList"][./div[@itemprop="address"]]/div/text()'
                 )
 
-                street_address = raw_address[0].strip()
-                city = raw_address[1].strip()
+                add_list = []
+                raw_address = ""
+                for temp in temp_address:
+                    if len("".join(temp).strip()) > 0:
+                        add_list.append("".join(temp).strip())
+
+                raw_address = ", ".join(add_list).strip()
+                street_address = temp_address[0].strip()
+                city = temp_address[1].strip()
                 state = "<MISSING>"
-                zip = raw_address[-1]
+                zip = temp_address[-1]
                 country_code = "".join(store.xpath("@data-country-code")).strip()
 
                 store_number = page_url.split("-")[-1].strip()
@@ -187,6 +206,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 
