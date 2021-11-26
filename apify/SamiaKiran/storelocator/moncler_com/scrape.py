@@ -42,7 +42,7 @@ def fetch_data():
             try:
                 state = loc["stateCode"]
             except:
-                state= MISSING
+                state = MISSING
             try:
                 zip_postal = loc["postalCode"]
             except:
@@ -71,7 +71,6 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
-
 
 
 def scrape():
