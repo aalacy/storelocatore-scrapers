@@ -35,7 +35,7 @@ def parse_addy(addy):
 def fetch_data():
     locator_domain = "https://www.saintlukeskc.org/"
 
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome() as driver:
         driver.get(locator_domain)
         driver.implicitly_wait(5)
 
