@@ -8,7 +8,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import ssl
 from lxml import html
 import time
@@ -24,7 +23,7 @@ else:
 
 
 LOCATION_URL = "https://www.weismarkets.com/stores/?coordinates=40.539711620149,-75.733030850299&zoom=10"
-MAX_WORKERS = 10
+MAX_WORKERS = 1
 DOMAIN = "weismarkets.com"
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("weismarkets_com")
@@ -58,9 +57,9 @@ def get_driver(url, class_name, timeout, driver=None):
             break
         except Exception:
             driver.quit()
-            if x == 6:
-                raise Exception("Fix the issue:(")
-            return
+            if x == 10:
+                raise Exception(f"Fix the issue {url}:(")
+            continue
     return driver
 
 
@@ -95,101 +94,92 @@ def get_page_urls():
     return ln_sn_page_urls
 
 
-def fetch_records(idx, ln_sn_purl, driver, sgw: SgWriter):
-    location_name, store_number, page_url = ln_sn_purl
-    class_name2 = "hours-and-contact-header"
-    timeout = 40
-    driver.get(page_url)
-    WebDriverWait(driver, timeout).until(
-        EC.presence_of_element_located((By.CLASS_NAME, class_name2))
-    )
-    time.sleep(20)
-    sel2 = html.fromstring(driver.page_source)
-    street_address = sel2.xpath('//meta[@property="og:street-address"]/@content')
-    street_address = "".join(street_address)
-    street_address = street_address if street_address else MISSING
-
-    city = sel2.xpath('//meta[@property="og:locality"]/@content')
-    city = "".join(city)
-    city = city if city else MISSING
-    logger.info(f"[{idx}] City: {city}")
-
-    state = sel2.xpath('//meta[@property="og:region"]/@content')
-    state = "".join(state)
-    state = state if state else MISSING
-
-    zip_postal = sel2.xpath('//meta[@property="og:postal-code"]/@content')
-    zip_postal = "".join(zip_postal)
-    zip_postal = zip_postal if zip_postal else MISSING
-
-    country_code = sel2.xpath('//meta[@property="og:country-name"]/@content')
-    cc = "".join(country_code)
-    country_code = cc if cc else MISSING
-
-    latitude = sel2.xpath('//meta[@property="og:location:latitude"]/@content')
-    latitude = "".join(latitude)
-    latitude = latitude if latitude else MISSING
-
-    longitude = sel2.xpath('//meta[@property="og:location:longitude"]/@content')
-    longitude = "".join(longitude)
-    longitude = longitude if longitude else MISSING
-
-    location_type = MISSING
-    try:
-        phone = sel2.xpath('//meta[@property="og:phone_number"]/@content')
-        phone = "".join(phone)
-    except:
-        phone = MISSING
-
-    hours = []
-    days = sel2.xpath('//dl[contains(@aria-label, "Store Hours")]/dt/text()')
-    hours_list = sel2.xpath('//dl[contains(@aria-label, "Store Hours")]/dd//text()')
-
-    for x in range(len(days)):
-        day = days[x].strip()
-        hour = hours_list[x].strip()
-        day_hour = day + " " + hour
-        hours.append(day_hour)
-    hoo = "; ".join(hours)
-    raw_address = MISSING
-
-    item = SgRecord(
-        locator_domain="weismarkets.com",
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=location_type,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hoo,
-        raw_address=raw_address,
-    )
-    sgw.write_row(item)
-
-
-def fetch_data(sgw: SgWriter):
+def fetch_data():
+    logger.info("Pulling store URLs")
     page_urls = get_page_urls()
-    logger.info(f"page urls: {page_urls}")
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(),
-        user_agent=user_agent,
-        is_headless=True,
-    ) as driver:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            tasks = []
-            task = [
-                executor.submit(fetch_records, idx, store_url, driver, sgw)
-                for idx, store_url in enumerate(page_urls[0:])
-            ]
-            tasks.extend(task)
-            for future in as_completed(tasks):
-                future.result()
+    logger.info(f"Store URLs Scraping Finished: {page_urls[0:5]}")
+
+    for idx, ln_sn_purl in enumerate(page_urls[0:]):
+        location_name, store_number, page_url = ln_sn_purl
+        class_name2 = "hours-and-contact-header"
+        timeout = 20
+        driver = get_driver(page_url, class_name2, timeout)
+        logger.info(f"[{idx}] Pulling the data for {page_url}")
+        sel2 = html.fromstring(driver.page_source)
+        street_address = sel2.xpath('//meta[@property="og:street-address"]/@content')
+        street_address = "".join(street_address)
+        street_address = street_address if street_address else MISSING
+
+        city = sel2.xpath('//meta[@property="og:locality"]/@content')
+        city = "".join(city)
+        city = city if city else MISSING
+        logger.info(f"[{idx}] City: {city}")
+
+        state = sel2.xpath('//meta[@property="og:region"]/@content')
+        state = "".join(state)
+        state = state if state else MISSING
+
+        zip_postal = sel2.xpath('//meta[@property="og:postal-code"]/@content')
+        zip_postal = "".join(zip_postal)
+        zip_postal = zip_postal if zip_postal else MISSING
+
+        country_code = sel2.xpath('//meta[@property="og:country-name"]/@content')
+        cc = "".join(country_code)
+        country_code = cc if cc else MISSING
+
+        latitude = sel2.xpath('//meta[@property="og:location:latitude"]/@content')
+        latitude = "".join(latitude)
+        latitude = latitude if latitude else MISSING
+
+        longitude = sel2.xpath('//meta[@property="og:location:longitude"]/@content')
+        longitude = "".join(longitude)
+        longitude = longitude if longitude else MISSING
+
+        location_type = MISSING
+        try:
+            phone = sel2.xpath('//meta[@property="og:phone_number"]/@content')
+            phone = "".join(phone)
+        except:
+            phone = MISSING
+
+        hours = []
+        hoo = ""
+        try:
+            days = sel2.xpath('//dl[contains(@aria-label, "Store Hours")]/dt/text()')
+            hours_list = sel2.xpath(
+                '//dl[contains(@aria-label, "Store Hours")]/dd//text()'
+            )
+
+            for x in range(len(days)):
+                day = days[x].strip()
+                hour = hours_list[x].strip()
+                day_hour = day + " " + hour
+                hours.append(day_hour)
+            hoo = "; ".join(hours)
+
+        except:
+            hoo = MISSING
+
+        raw_address = MISSING
+
+        item = SgRecord(
+            locator_domain="weismarkets.com",
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+            raw_address=raw_address,
+        )
+        yield item
 
 
 def scrape():
@@ -208,8 +198,8 @@ def scrape():
             )
         )
     ) as writer:
-        fetch_data(writer)
-    logger.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
