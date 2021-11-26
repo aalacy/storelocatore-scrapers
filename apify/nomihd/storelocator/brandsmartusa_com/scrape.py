@@ -171,6 +171,8 @@ def fetch_data():
                                 or "Saturday" in day
                                 or "Sunday" in day
                             ):
+                                if ":" not in day:
+                                    day = day + ":"
                                 hours_list.append(day + time)
 
                     hours_of_operation = (
@@ -205,6 +207,9 @@ def fetch_data():
                                     or "Saturday" in day
                                     or "Sunday" in day
                                 ):
+                                    if ":" not in day:
+                                        day = day + ":"
+
                                     hours_list.append(day + time)
 
                         hours_of_operation = (
@@ -246,7 +251,10 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hours_of_operation.split("; Black Friday")[0]
+            .strip()
+            .replace("---", " - ")
+            .strip(),
         )
 
 
