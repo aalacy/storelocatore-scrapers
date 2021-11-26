@@ -74,7 +74,6 @@ def fetch_data():
         data=payload,
     )
     contents = bs(req.content, "lxml").select("div.results-marker-link")
-    print(len(contents))
     for row in contents:
         page_url = LOCATION_URL + row.find("a")["href"]
         store = pull_content(page_url)
