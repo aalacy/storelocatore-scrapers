@@ -1,12 +1,8 @@
 from lxml import html
-import random
 import ssl
 import time
 import json
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -51,7 +47,7 @@ def stringify_children(nodes):
 
 def fetch_stores():
     with SgChrome(user_agent=user_agent) as driver:
-        response = driver.get(page_url)
+        driver.get(page_url)
 
         time.sleep(30)
         body = html.fromstring(driver.page_source, "lxml")
