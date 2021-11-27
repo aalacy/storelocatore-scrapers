@@ -37,7 +37,7 @@ def get_driver():
 def fetch_records(search):
     driver = get_driver()
     for zip in search:
-        url = f"https://www.mitre10.co.nz/store-locator?q={zip}&page=0&type=data"
+        url = f"{base_url}?q={zip}&page=0&type=data"
         driver.get(url)
         try:
             locations = json.loads(bs(driver.page_source, "lxml").text)["data"]
@@ -52,8 +52,9 @@ def fetch_records(search):
             hours = []
             for day, hh in _["openings"].items():
                 hours.append(f"{day}: {hh}")
+            page_url = f"{base_url}?branchId={_['storeCode']}&storeName={_['sanitisedDisplayName']}"
             yield SgRecord(
-                page_url=locator_domain + _["url"],
+                page_url=page_url,
                 location_name=_["displayName"],
                 store_number=_["storeCode"],
                 street_address=street_address,

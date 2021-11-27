@@ -1,46 +1,43 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://carrows.com/"
-page_url = "https://carrows.com/locations/"
-base_url = "https://carrows.com/index.php?hcs=locatoraid&hcrand=2187&hca=search%3Asearch%2F%2Fproduct%2F_PRODUCT_%2Flat%2F%2Flng%2F%2Flimit%2F100"
+locator_domain = "https://gloriajeanscoffees.com.au/"
+base_url = "https://www.gloriajeanscoffees.com.au/wp/wp-admin/admin-ajax.php?action=store_search&lat=-19.258963&lng=146.816948&max_results=25&search_radius=10&autoload=1"
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
-        for _ in locations["results"]:
-            street_address = _["street1"]
-            if _["street2"]:
-                street_address += " " + _["street2"]
+        for _ in locations:
+            street_address = _["address"]
+            if _["address2"]:
+                street_address += " " + _["address2"]
             hours = []
-            for hh in list(bs(_["website"], "lxml").stripped_strings):
-                hh = hh.split("Open")[0].strip()
-                if (
-                    "Hours" in hh or "Delivery" in hh or not hh
-                ) and "Thanksgiving" not in hh:
-                    continue
-                hours.append(hh)
+            if _["hours"]:
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in bs(_["hours"], "lxml").select("table tr")
+                ]
             yield SgRecord(
-                page_url=page_url,
-                location_name=_["name"],
+                page_url="",
                 store_number=_["id"],
+                location_name=_["store"].replace("&#8217;", "'"),
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["zip"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
+                latitude=_["lat"],
+                longitude=_["lng"],
                 country_code=_["country"],
-                phone=bs(_["phone"], "lxml").text.strip(),
+                phone=_["phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
