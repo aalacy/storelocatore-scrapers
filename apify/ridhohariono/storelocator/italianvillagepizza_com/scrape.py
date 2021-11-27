@@ -7,8 +7,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_usa
 
-DOMAIN = "xianfoods.com"
-LOCATION_URL = "https://www.xianfoods.com/"
+DOMAIN = "italianvillagepizza.com"
+LOCATION_URL = "https://italianvillagepizza.com/pizza-store-locations/"
 HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
@@ -56,35 +56,23 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find("div", {"id": "locations-section"}).find_all(
-        "div", {"class": "sqs-block image-block sqs-block-image"}
+    contents = soup.select(
+        "section.elementor-section.elementor-inner-section.elementor-element.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default"
     )
     for row in contents:
-        info = row.find_next("div", {"class": "sqs-block html-block sqs-block-html"})
-        if "coming" in info.text.strip().lower():
-            continue
-        location_name = row.find(
-            "div", {"class": "image-title sqs-dynamic-text"}
-        ).text.strip()
-        raw_address = info.find("a").get_text(strip=True, separator=",")
+        info = row.select("h2.elementor-heading-title.elementor-size-default")
+        location_name = info[0].text.strip()
+        raw_address = (
+            info[1].get_text(strip=True, separator=",").replace("PA15034", "PA 15034")
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = info[2].text.strip()
         country_code = "US"
-        phone = MISSING
         store_number = MISSING
-        location_type = "OPEN"
+        location_type = MISSING
         latitude = MISSING
         longitude = MISSING
-        if "Reopening soon!" in info.text.strip():
-            hours_of_operation = MISSING
-            location_type = "TEMP_CLOSED"
-        else:
-            hoo_content = info.find("p")
-            hoo_content.find("a").decompose()
-            for unused_element in hoo_content.find_all("em"):
-                unused_element.decompose()
-            hours_of_operation = hoo_content.get_text(
-                strip=True, separator=","
-            ).replace(":,", ": ")
+        hours_of_operation = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -121,7 +109,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
