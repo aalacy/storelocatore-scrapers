@@ -2,7 +2,7 @@ from sgpostal.sgpostal import parse_address_intl
 import random
 import re
 import time
-import json
+
 import ssl
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -69,7 +69,7 @@ def fetch_stores():
                 )
                 break
 
-        log.debug(f"Completed page")
+        log.debug("Completed page")
 
         stores = []
         for button in buttons:
