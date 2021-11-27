@@ -61,7 +61,6 @@ def fetch_data():
     )
     for row in contents:
         info = row.find_next("div", {"class": "sqs-block html-block sqs-block-html"})
-        # raw_address = info.find("p").find("strong").get_text(strip=True, separator=",")
         if "coming" in info.text.strip().lower():
             continue
         location_name = row.find(
