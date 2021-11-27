@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 
 website = "usbank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
