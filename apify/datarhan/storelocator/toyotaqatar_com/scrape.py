@@ -25,6 +25,9 @@ def fetch_data():
         hoo = " ".join([e.strip() for e in poi["hours"].split()])
         if hoo.startswith("|"):
             hoo = hoo[1:]
+        loc_type = poi["cat"]
+        if loc_type != 1:
+            continue
 
         item = SgRecord(
             locator_domain=domain,
@@ -37,7 +40,7 @@ def fetch_data():
             country_code="Qatar",
             store_number="",
             phone=poi["tel"],
-            location_type=poi["cat"],
+            location_type="",
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation=hoo,
