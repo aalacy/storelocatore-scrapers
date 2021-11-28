@@ -56,10 +56,19 @@ class ExampleSearchIteration(SearchIteration):
                 hours = []
                 for day, hh in _["openings"].items():
                     hours.append(f"{day}: {hh}")
+                city = _["town"]
+                if city in [
+                    "CFC",
+                    "CoolPoint",
+                    "Emporium Mall",
+                    "WTC Mall",
+                    "Mushroom_Darkstore-GT",
+                ]:
+                    city = ""
                 yield SgRecord(
                     location_name=f"{_['displayName']} - {_['town']}",
                     street_address=street_address,
-                    city=_["town"],
+                    city=city,
                     state=_.get("state"),
                     zip_postal=_.get("postalCode"),
                     country_code=current_country,
