@@ -37,6 +37,9 @@ def fetch_data():
             zip_postal = addr[-1].strip()
             if zip_postal.startswith("Co."):
                 zip_postal = ""
+            if len(zip_postal.split()) == 1 or zip_postal == "Portlaoise":
+                zip_postal = ""
+                c_idx += 1
             if addr[-2].strip().startswith("Co."):
                 c_idx -= 1
             city = addr[c_idx].replace(",", "").strip()

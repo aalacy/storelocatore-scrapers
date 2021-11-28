@@ -106,7 +106,7 @@ def scrape():
     url = "https://toniandguy.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(mapping=["url"]),
+        page_url=sp.MappingField(mapping=["url"], part_of_record_identity=True),
         location_name=sp.MappingField(mapping=["name"]),
         latitude=sp.MappingField(
             mapping=["lat"],
@@ -119,7 +119,7 @@ def scrape():
         state=sp.MappingField(mapping=["state"]),
         zipcode=sp.MappingField(mapping=["zip"]),
         country_code=sp.MappingField(mapping=["country"]),
-        phone=sp.MappingField(mapping=["phone"]),
+        phone=sp.MappingField(mapping=["phone"], part_of_record_identity=True),
         store_number=sp.MissingField(),
         hours_of_operation=sp.MappingField(
             mapping=["hours"],
