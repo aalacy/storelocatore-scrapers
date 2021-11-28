@@ -33,7 +33,17 @@ def fetch_data():
                 end = list(trs[-1].stripped_strings)
                 for x in range(len(days)):
                     hours.append(f"{days[x]}: {start[x]} - {end[x]}")
-            street_address = " ".join(addr[:-2]).strip()
+            c_idx = -2
+            zip_postal = addr[-1].strip()
+            if zip_postal.startswith("Co."):
+                zip_postal = ""
+            if len(zip_postal.split()) == 1 or zip_postal == "Portlaoise":
+                zip_postal = ""
+                c_idx += 1
+            if addr[-2].strip().startswith("Co."):
+                c_idx -= 1
+            city = addr[c_idx].replace(",", "").strip()
+            street_address = " ".join(addr[:c_idx]).strip()
             if street_address.endswith(","):
                 street_address = street_address[:-1]
             yield SgRecord(
@@ -42,8 +52,8 @@ def fetch_data():
                 .replace("&#8211;", "'")
                 .replace("&#8217;", "'"),
                 street_address=street_address,
-                city=addr[-2].replace(",", "").strip(),
-                zip_postal=addr[-1].strip(),
+                city=city.replace(",", ""),
+                zip_postal=zip_postal,
                 latitude=_["store_latitude"],
                 longitude=_["store_longitude"],
                 country_code="Ireland",

@@ -14,7 +14,7 @@ def get_international(line):
     ).strip()
     city = adr.city or ""
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or ""
     country = adr.country or ""
 
     return street_address, city, state, postal, country
@@ -32,6 +32,11 @@ def fetch_data(sgw: SgWriter):
         street_address, city, state, postal, country = get_international(raw_address)
         if not country and "MEXICO" in raw_address:
             country = "Mexico"
+        if country == "India" and "Pune" in street_address:
+            city = "Pune"
+            street_address = street_address.replace("Pune", "").strip()
+        postal = postal.replace("C.P.", " ").replace("CEP", "").strip()
+
         phone = (
             "".join(
                 d.xpath(

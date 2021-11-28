@@ -8,6 +8,16 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from webdriver_manager.chrome import ChromeDriverManager
 import dirtyjson as json
 from bs4 import BeautifulSoup as bs
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("mitre10")
 
@@ -27,7 +37,7 @@ def get_driver():
 def fetch_records(search):
     driver = get_driver()
     for zip in search:
-        url = f"https://www.mitre10.co.nz/store-locator?q={zip}&page=0&type=data"
+        url = f"{base_url}?q={zip}&page=0&type=data"
         driver.get(url)
         try:
             locations = json.loads(bs(driver.page_source, "lxml").text)["data"]
@@ -42,8 +52,9 @@ def fetch_records(search):
             hours = []
             for day, hh in _["openings"].items():
                 hours.append(f"{day}: {hh}")
+            page_url = f"{base_url}?branchId={_['storeCode']}&storeName={_['sanitisedDisplayName']}"
             yield SgRecord(
-                page_url=locator_domain + _["url"],
+                page_url=page_url,
                 location_name=_["displayName"],
                 store_number=_["storeCode"],
                 street_address=street_address,
