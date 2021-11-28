@@ -34,12 +34,12 @@ def fetch_data():
             hours = []
             for hh in ss.get("openingHoursSpecification", []):
                 hours.append(f"{hh['dayOfWeek']}: {hh['opens']} - {hh['closes']}")
+            city = addr["addressRegion"]
             yield SgRecord(
                 page_url=page_url,
                 location_name=ss["name"],
                 street_address=addr["streetAddress"],
-                city=addr["addressLocality"],
-                state=addr["addressRegion"],
+                city=city,
                 zip_postal=addr["postalCode"],
                 latitude=ss["geo"]["latitude"],
                 longitude=ss["geo"]["longitude"],
