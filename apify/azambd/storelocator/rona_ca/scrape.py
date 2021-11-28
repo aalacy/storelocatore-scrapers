@@ -9,6 +9,10 @@ from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+
 DOMAIN = "rona.ca"
 website = "https://www.rona.ca"
 MISSING = "<MISSING>"
@@ -17,8 +21,20 @@ MISSING = "<MISSING>"
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(idx, url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        log.info(response)
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            log.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
 def getXMLRoot(text):
@@ -44,7 +60,9 @@ def getXMLObjectVariable(Object, varNames, noVal=MISSING, noText=False):
 
 
 def request_with_retries(url):
-    return session.get(url, headers=headers)
+    r = session.get(url, headers=headers)
+    log.info(r)
+    return r
 
 
 def fetchStores():
@@ -59,7 +77,7 @@ def fetchStores():
 
 
 def getJSObject(response, varName, noVal=MISSING):
-    JSObject = re.findall(f"{varName} = (.+?);", response)
+    JSObject = re.findall(f"{varName} = (.+?)<", response)
     if JSObject is None or len(JSObject) == 0:
         return noVal
     return JSObject[0]
@@ -122,11 +140,13 @@ def fetchData():
     for page_url in page_urls:
         count = count + 1
         log.debug(f"{count}. fetching {page_url} ...")
-        response = request_with_retries(page_url)
+        response = get_response(count, page_url)
         body = html.fromstring(response.text, "lxml")
-        storeDetails = getJSObject(response.text, "_storeDetails", {})
+
+        storeDetails = getJSObject(response.text, "]", {})
         storeDetails = storeDetails.replace("\u00E9", "").replace("\\'", "")
-        storeDetails = json.loads(jsToPyDict(storeDetails))
+
+        storeDetails = json.loads(storeDetails)
 
         store_number = getJSONObjectVariable(storeDetails, "id")
         location_name = getJSONObjectVariable(storeDetails, "name")
