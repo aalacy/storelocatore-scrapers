@@ -46,7 +46,11 @@ def fetch_data():
                             + " and "
                             + "".join(title.split("and")[1]).strip()
                         )
-                    if "Branch and ATM" in title or "Branch" in title:
+                    if (
+                        "Branch and ATM" in title
+                        and "U.S. Bank Branch Hill Guinea Pike - Kroger ATM"
+                        not in title
+                    ) or "Branch" in title:
                         page_url = (
                             base_url
                             + "".join(
@@ -161,13 +165,15 @@ def fetch_data():
                             and len(city_state_zip) <= 0
                             and len(phone) <= 0
                         ):
-                            json_data = json.loads(
-                                "".join(
-                                    store_sel.xpath(
-                                        '//script[@type="application/ld+json"]/text()'
-                                    )
-                                ).strip()
-                            )[0]
+                            json_str = "".join(
+                                store_sel.xpath(
+                                    '//script[@type="application/ld+json"]/text()'
+                                )
+                            ).strip()
+                            if len(json_str) <= 0:
+                                continue
+
+                            json_data = json.loads(json_str)[0]
                             street_address = json_data["address"]["streetAddress"]
                             city = json_data["address"]["addressLocality"]
                             state = json_data["address"]["addressRegion"]
