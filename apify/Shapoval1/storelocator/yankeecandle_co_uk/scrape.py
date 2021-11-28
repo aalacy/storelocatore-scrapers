@@ -29,6 +29,7 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("long") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
         store_number = j.get("id")
+        location_type = "Yankee Candle® Stockists"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -41,7 +42,7 @@ def fetch_data(sgw: SgWriter):
             country_code=SgRecord.MISSING,
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
