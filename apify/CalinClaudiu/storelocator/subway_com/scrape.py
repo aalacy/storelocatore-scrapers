@@ -93,6 +93,7 @@ class ExampleSearchIteration(SearchIteration):
             ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             locations = None
             try:
+                logzilla.info(f"{url} <- in do")
                 locations = SgRequests.raise_on_err(http.get(url, headers=headers)).text
                 locations = locations.split("(", 1)[1]
                 locations = locations.rsplit(")", 1)[0]
@@ -250,6 +251,7 @@ def get_links(url, http):
         headers[
             "user-agent"
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        logzilla.info(f"{url} <- in get-links")
         index = SgRequests.raise_on_err(
             http.get(urlB + url["link"], headers=headers)
         ).text
