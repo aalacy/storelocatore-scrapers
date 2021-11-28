@@ -10,8 +10,6 @@ import tenacity
 from lxml import html
 import re
 import json
-import random
-import time
 
 
 logger = SgLogSetup().get_logger("smart_com__gb__en")
