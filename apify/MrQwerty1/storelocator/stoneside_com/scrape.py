@@ -18,13 +18,15 @@ def get_urls():
 def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.stoneside.com{slug}"
     r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    tree = html.fromstring(r.text.replace("wicket:id", "wicket"))
     text = "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
     j = json.loads(text)
     location_name = j.get("name")
 
     a = j.get("address") or {}
-    street_address = a.get("streetAddress")
+    street_address = ", ".join(
+        tree.xpath("//div[contains(@wicket, 'address')]/text()")
+    ).strip()
     city = a.get("addressLocality")
     state = a.get("addressRegion")
     postal = a.get("postalCode")

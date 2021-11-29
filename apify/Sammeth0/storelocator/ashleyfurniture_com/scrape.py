@@ -5,7 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
 from concurrent import futures
 from sglogging import sglog
 
@@ -15,7 +15,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 def get_data(coords, sgw: SgWriter):
     lat, long = coords
-    api_url = f"https://stores.ashleyfurniture.com/umbraco/surface/locate/GetDataByCoordinates?longitude={long}&latitude={lat}&distance=500&units=miles&amenities=&paymentMethods="
+    api_url = f"https://stores.ashleyfurniture.com/umbraco/surface/locate/GetDataByCoordinates?longitude={long}&latitude={lat}&distance=50000&units=miles&amenities=&paymentMethods="
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
@@ -36,6 +36,12 @@ def get_data(coords, sgw: SgWriter):
             state = j.get("ExtraData").get("Address").get("Region") or "<MISSING>"
             postal = j.get("ExtraData").get("Address").get("PostalCode") or "<MISSING>"
             country_code = "".join(j.get("ExtraData").get("Address").get("CountryCode"))
+            city_slug = city.replace(" ", "-").lower()
+            state_slug = state.replace(" ", "-").lower()
+            if country_code == "US":
+                page_url = f"https://stores.ashleyfurniture.com/store/us/{state_slug}/{city_slug}/{store_number}/"
+            if country_code == "CA":
+                page_url = f"https://stores.ashleyfurniture.com/store/ca/{state_slug}/{city_slug}/{store_number}/"
             phone = j.get("ExtraData").get("Phone") or "<MISSING>"
             latitude = j.get("Location").get("coordinates")[1] or "<MISSING>"
             longitude = j.get("Location").get("coordinates")[0] or "<MISSING>"
@@ -100,12 +106,14 @@ def fetch_data(sgw: SgWriter):
 
     for country in SearchableCountries.ALL:
         country = str(country).lower()
+        if country != "us":
+            continue
         coords = DynamicGeoSearch(
             country_codes=[f"{country}"],
-            max_search_distance_miles=10,
-            expected_search_radius_miles=10,
+            max_search_distance_miles=5,
+            expected_search_radius_miles=5,
             max_search_results=None,
-            granularity=Grain_2(),
+            granularity=Grain_1_KM(),
         )
 
         with futures.ThreadPoolExecutor(max_workers=5) as executor:
