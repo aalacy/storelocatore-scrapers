@@ -25,9 +25,8 @@ def fetch_data(sgw: SgWriter):
         data = re.findall(r'GeoResponse.execute\((.+),"",7\)', response.text)
         if not data:
             continue
-        data = json.loads(json.loads(data[0]))
-
-        for poi in data["L"][0]["O"]:
+        data = json.loads(json.loads(data[0]))["L"][0]["O"]
+        for poi in data:
 
             store_url = "https://www.tods.com/us-en/store-locator.html"
             location_name = poi.get("U").get("name") or "<MISSING>"
