@@ -64,6 +64,8 @@ def fetch_data():
     contents = soup.find_all("a", {"class": "et_pb_button et_pb_promo_button"})
     for row in contents:
         page_url = LOCATION_URL + row["href"]
+        if "relocated-page" in page_url:
+            continue
         store = pull_content(page_url)
         content = store.find(
             "div",
