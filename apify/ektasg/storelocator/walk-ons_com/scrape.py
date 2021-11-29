@@ -1,6 +1,6 @@
 from sglogging import sglog
 from bs4 import BeautifulSoup
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -30,9 +30,12 @@ def fetch_data():
             location_name = link.text
             link = link["href"]
             if (
-                link.find("locations.walk-ons.com") == -1
-                and "Viera, FL" in location_name
+                "maps.google" in link
+                or "tel" in link
+                or "facebook.com/WalkOnsOxford/" in link
             ):
+                break
+            if link.find("locations.walk-ons.com") == -1:
                 log.info(link)
                 temp = loc.findAll("div")
                 address = temp[0].get_text(separator="|", strip=True).split("|")
@@ -52,28 +55,39 @@ def fetch_data():
                     .replace("Hours", "")
                 )
 
-            elif link.find("locations.walk-ons.com") == -1:
-                continue
             else:
                 log.info(link)
                 phone = soup.select_one("a[href*=tel]").text
-                r = session.get(link, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
-                street_address = soup.find("span", {"class": "c-address-street-1"}).text
-                city = soup.find("span", {"class": "c-address-city"}).text
-                state = soup.find("span", {"class": "c-address-state"}).text
-                zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
-                phone = soup.select_one("a[href*=tel]").text
-                latitude = str(soup).split("lat: ", 1)[1].split(",", 1)[0]
-                longitude = str(soup).split("lng: ", 1)[1].split(",", 1)[0]
-                country_code = "US"
-                hour_list = soup.find("tbody", {"class": "hours-body"}).findAll("tr")
-                hours_of_operation = ""
-                for hour in hour_list:
-                    hour = hour.findAll("td")
-                    day = hour[0].text
-                    time = hour[1].text
-                    hours_of_operation = hours_of_operation + day + " " + time + " "
+                try:
+                    r = SgRequests.raise_on_err(session.get(link, headers=headers))
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    street_address = soup.find(
+                        "span", {"class": "c-address-street-1"}
+                    ).text
+                    city = soup.find("span", {"class": "c-address-city"}).text
+                    state = soup.find("span", {"class": "c-address-state"}).text
+                    zip_postal = soup.find(
+                        "span", {"class": "c-address-postal-code"}
+                    ).text
+                    phone = soup.select_one("a[href*=tel]").text
+                    latitude = str(soup).split("lat: ", 1)[1].split(",", 1)[0]
+                    longitude = str(soup).split("lng: ", 1)[1].split(",", 1)[0]
+                    country_code = "US"
+                    hour_list = soup.find("tbody", {"class": "hours-body"}).findAll(
+                        "tr"
+                    )
+                    hours_list = []
+                    for hour in hour_list:
+                        hour = hour.findAll("td")
+                        day = hour[0].text
+                        time = hour[1].text
+                        hours_list.append(day + ":" + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+                except SgRequestError as e:
+                    log.error(e.message)
+                    continue
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=link,

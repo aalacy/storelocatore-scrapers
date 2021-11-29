@@ -121,7 +121,7 @@ def get_data():
             location_soup = bs(driver.page_source, "html.parser")
             latitude = location_soup.find(
                 "input", attrs={"class": "location-geo", "type": "hidden"}
-            )["value"].split(", ")[0]
+            )["value"].split(",")[0]
             longitude = (
                 location_soup.find(
                     "input", attrs={"class": "location-geo", "type": "hidden"}
@@ -130,36 +130,50 @@ def get_data():
                 .strip()
             )
 
-            hours_parts = [
-                part
-                for part in location_soup.find("div", attrs={"class": "card"})
-                .text.strip()
-                .split("\n")
-                if part != "" and part.lower() != "hours"
-            ]
+            try:
+                hours_parts = [
+                    part
+                    for part in location_soup.find("div", attrs={"class": "card"})
+                    .text.strip()
+                    .split("\n")
+                    if part != "" and part.lower() != "hours"
+                ]
+
+            except Exception:
+                hours = "<MISSING>"
 
             try:
                 if hours_parts[0] != "M":
                     hours = "<MISSING>"
+
+                else:
+                    hours = ""
+                    for part in hours_parts:
+
+                        if "vary" in part:
+                            hours = "<MISSING>"
+                            break
+
+                        if "(" in part:
+                            break
+
+                        if ": " in part:
+                            break
+
+                        hours = hours + part + " "
+
             except Exception:
                 hours = "<MISSING>"
-            else:
-                hours = ""
-                for part in hours_parts:
-
-                    if "vary" in part:
-                        hours = "<MISSING>"
-                        break
-
-                    if "(" in part:
-                        break
-
-                    if ": " in part:
-                        break
-
-                    hours = hours + part + " "
 
             hours = hours.strip()
+            if zipp in state:
+                state = zipp
+                zipp = "<MISSING>"
+
+            if "Fax" in phone:
+                phone = location_soup.find(
+                    "a", attrs={"class": "phone-number"}
+                ).text.strip()
 
             yield {
                 "locator_domain": locator_domain,
@@ -172,7 +186,7 @@ def get_data():
                 "street_address": address,
                 "state": state,
                 "zip": zipp,
-                "phone": phone,
+                "phone": phone.replace("203-867-5254", "").strip(),
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,

@@ -1,0 +1,12 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 3 concerning rows. Examples:
+             street_address              REASON  rowNumber
+35   Shopping Plaza Ste. 20  ADDR_HAS_NO_NUMBER         35
+184             22128  Road  ADDR_HAS_NO_NUMBER        184
+320                3  Plaza  ADDR_HAS_NO_NUMBER        320
+
+
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+   state           phone   zip          REASON  rowNumber
+61    VT  (802) 546-1321  5156  INVALID_US_ZIP         61
