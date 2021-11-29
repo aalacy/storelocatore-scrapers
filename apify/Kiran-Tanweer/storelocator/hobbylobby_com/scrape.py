@@ -48,7 +48,9 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
-        search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        )
         for zipcode in search:
             search_url = (
                 "https://www.hobbylobby.com/stores/search?q="
@@ -56,7 +58,11 @@ def fetch_data():
                 + "&CSRFToken=47258482-bb64-4eb0-9f18-77468d8a8186"
             )
             stores_req = session.get(search_url, headers=headers2)
-            soup = BeautifulSoup(stores_req.text, "html.parser")
+            try:
+                soup = BeautifulSoup(stores_req.text, "html.parser")
+            except AttributeError:
+                continue
+
             locations = soup.find("div", {"class": "map-canvas"})
             if str(locations).find("map-canvas anime") == -1:
                 locations = locations["data-stores"]
