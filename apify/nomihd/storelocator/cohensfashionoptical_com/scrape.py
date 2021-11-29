@@ -67,6 +67,11 @@ def fetch_data():
                     log.info(page_url)
                     store_res = session.get(page_url, headers=headers)
                     store_sel = lxml.html.fromstring(store_res.text)
+                    location_type = "".join(
+                        store_sel.xpath('//span[@class="locationClosed"]/text()')
+                    ).strip()
+                    if location_type:
+                        location_type = "Temporarily " + location_type
 
                     phone = store["address_phone"]
 
@@ -98,6 +103,11 @@ def fetch_data():
                     raw_address = "<MISSING>"
 
                     street_address = store["store_address"]
+                    if not street_address or len(street_address) <= 0:
+                        street_address = "".join(
+                            store_sel.xpath("//address/span[1]/text()")
+                        ).strip()
+
                     city = store["address_city"]
                     state = store["address_state"]
                     zip = store["address_zipcode"]
