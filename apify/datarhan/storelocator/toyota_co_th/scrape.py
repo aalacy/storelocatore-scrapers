@@ -14,12 +14,17 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
-    data = session.get(start_url, headers=hdr).json()
+    import requests
+
+    session = requests.session()
+    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
+
+    data = session.get(start_url, headers=hdr, proxies=proxies).json()
     total_page = data["info"]["page_total"]
     all_locations = data["data"]
     for page in range(2, total_page + 1):
         url = f"https://www.toyota.co.th/index.php/app/dealer/fnc/json_dealer_list/page/{page}/keyword//province//district//type_of/1/type_sr/1/type_sc/1/type_bp/1/mode/more/lang/en"
-        data = session.get(url, headers=hdr).json()
+        data = session.get(url, headers=hdr, proxies=proxies).json()
         all_locations += data["data"]
 
     for poi in all_locations:
@@ -30,6 +35,9 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
+        hoo = poi["en"]["showroom"]["open"]
+        if hoo == "-":
+            hoo = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -41,11 +49,11 @@ def fetch_data():
             zip_postal=addr.postcode,
             country_code="TH",
             store_number=poi["branch_code"],
-            phone=poi["tel_call_center"],
+            phone=poi["tel_call_center"].split(",")[0],
             location_type="",
             latitude=poi["location"]["lat"],
             longitude=poi["location"]["lon"],
-            hours_of_operation=poi["en"]["showroom"]["open"],
+            hours_of_operation=hoo,
             raw_address=raw_address,
         )
 
