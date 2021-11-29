@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "shoppersstop.com"
+BASE_URL = "https://www.shoppersstop.com"
 LOCATION_URL = "https://www.shoppersstop.com/store-finder"
 API_URL = "https://www.shoppersstop.com/store-finder?q={}&page={}"
 HEADERS = {
@@ -35,6 +36,13 @@ def fetch_data():
         data = session.get(url, headers=HEADERS).json()
         log.info("Get location from " + url)
         for row in data["results"]:
+            page_url = (
+                BASE_URL
+                + "/storecode/"
+                + row["code"]
+                + "/"
+                + row["displayName"].replace(" ", "_")
+            )
             location_name = row["displayName"]
             if row["address"]["line2"]:
                 street_address = (
@@ -85,7 +93,7 @@ def fetch_data():
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=LOCATION_URL,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
