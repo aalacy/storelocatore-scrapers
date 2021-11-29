@@ -12,7 +12,7 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    expected_search_radius_miles=None,
     max_search_results=50,
 )
 
@@ -179,7 +179,8 @@ def scrape():
             is_required=False,
         ),
         location_type=sp.MappingField(
-            mapping=["storeType", "displayName"],
+            mapping=["featuredServices"],
+            value_transform=lambda x: "auto" if "TIRE_AND_LUBE" in x else "<MISSING>",
             part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),

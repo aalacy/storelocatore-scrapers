@@ -27,6 +27,10 @@ def fetch_data(sgw: SgWriter):
     # Using phones to match lat/lng
     geos = re.findall(r'[0-9]{2}\.[0-9]+,"lng":-[0-9]{2,3}\.[0-9]+', str(base))
     phones = re.findall(r'"phone":"[0-9]+', str(base))
+    names = re.findall(r'"name":"[a-z A-Z]+","openTableId', str(base))
+    if len(geos) - len(names) == 1:
+        geos.pop(0)
+        phones.pop(0)
 
     all_scripts = base.find_all("script")
     for script in all_scripts:
@@ -37,7 +41,6 @@ def fetch_data(sgw: SgWriter):
         store = json.loads(item)
 
         locator_domain = "urthcaffe.com"
-        location_name = store["name"]
         street_address = store["address"]["streetAddress"].replace("\n", " ")
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
@@ -52,6 +55,7 @@ def fetch_data(sgw: SgWriter):
                 geo = geos[i]
                 latitude = geo.split(",")[0]
                 longitude = geo.split(":")[-1]
+                location_name = names[i].split(':"')[1].split('",')[0]
 
         hours_of_operation = " ".join(store["openingHours"])
         link = store["url"]

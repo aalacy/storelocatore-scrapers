@@ -2,12 +2,15 @@ import time
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
 from sgrequests import SgRequests
 from sglogging import sglog
 
 session = SgRequests()
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 DOMAIN = "planetfitness.com"
 
@@ -58,7 +61,7 @@ def reqDetailPageAPI(url):
 
 
 def fetchData():
-    apiUrl = "https://cde-assets-planetfitness.s3.amazonaws.com/locations.json"
+    apiUrl = "https://www.planetfitness.com/gyms/pfx/api/clubs/locations"
     dpid = reqFirstAPI(apiUrl)
     d = dpid["clubs"]
     log.info(f"Total Locations: {len(d)}")
@@ -131,7 +134,7 @@ def scrape():
     count = 0
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1

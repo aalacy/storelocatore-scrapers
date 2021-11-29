@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import dirtyjson
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("millersfresh")
 
@@ -21,9 +23,8 @@ def fetch_data():
         links = soup.select("li#region-list ul li a")
         logger.info(f"{len(links)} found")
         for link in links:
-            page_url = locator_domain + link["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            url = locator_domain + link["href"]
+            sp1 = bs(session.get(url, headers=_headers).text, "lxml")
             scripts = sp1.find_all("script", string=re.compile(r"var phoneNumber;"))
             for script in scripts:
                 phone = (
@@ -39,9 +40,11 @@ def fetch_data():
                 if _["street2"]:
                     street_address += " " + _["street2"]
                 hours = []
-                for hh in _["hours"].split(","):
-                    if "&amp;" not in hh:
-                        hours.append(hh)
+                for hh in _["hours"].split(". "):
+                    if " on" in hh or "closing " in hh.lower() or "opens" in hh.lower():
+                        break
+                    hours.append(hh.replace("&amp;", "&").split("*")[0].strip())
+                page_url = f"http://www.eathomegrown.com/locations?location={_['slug']}"
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["storeName"].replace("&amp;", "&"),
@@ -57,9 +60,11 @@ def fetch_data():
                     hours_of_operation="; ".join(hours),
                 )
 
+            break
+
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
