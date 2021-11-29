@@ -41,7 +41,6 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         phone = poi_html.xpath('.//div[@id="dealer-phone"]/text()')[0].strip()
         geo = poi_html.xpath('.//div[@id="dealer-map"]/text()')[0].strip().split(", ")
-        print(location_name)
         with SgChrome() as driver:
             driver.get(start_url)
             sleep(5)
