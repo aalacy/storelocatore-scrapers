@@ -11,59 +11,21 @@ def fetch_data(sgw: SgWriter):
 
     start_url = "https://www.geocms.it/Server/servlet/S3JXServletCall?parameters=method_name%3DGetObject%26callback%3Dscube.geocms.GeoResponse.execute%26id%3D7%26query%3D%255BcountryCode%255D%2520%253D%2520%255B{}%255D%26clear%3Dtrue%26licenza%3Dgeo-todsgroupspa%26progetto%3DTods%26lang%3DALL&encoding=UTF-8"
     domain = "https://www.tods.com/"
-
-    countries = [
-        "AT",
-        "AU",
-        "AZ",
-        "BE",
-        "BH",
-        "BR",
-        "CH",
-        "CN",
-        "CZ",
-        "DE",
-        "ES",
-        "FR",
-        "GB",
-        "GR",
-        "HK",
-        "ID",
-        "IN",
-        "JP",
-        "KR",
-        "KW",
-        "KZ",
-        "LB",
-        "MO",
-        "MY",
-        "NL",
-        "PA",
-        "PH",
-        "PR",
-        "PT",
-        "QA",
-        "RU",
-        "SA",
-        "SG",
-        "TH",
-        "TR",
-        "TW",
-        "UA",
-        "US",
-        "ZA",
-    ]
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+
+    response = session.get(
+        "https://www.tods.com/etc/designs/todssite/statics/geocms/language/en_GB.js?fdsf=",
+        headers=hdr,
+    )
+    countries = re.findall(r"COUNTRY_LABEL\['(.+?)'\] =", response.text)
     for country in countries:
         response = session.get(start_url.format(country), headers=hdr)
-
-        try:
-            data = re.findall(r'GeoResponse.execute\((.+),"",7\)', response.text)[0]
-        except:
+        data = re.findall(r'GeoResponse.execute\((.+),"",7\)', response.text)
+        if not data:
             continue
-        data = json.loads(json.loads(data))
+        data = json.loads(json.loads(data[0]))
 
         for poi in data["L"][0]["O"]:
 
