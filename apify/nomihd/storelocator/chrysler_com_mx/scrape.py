@@ -30,8 +30,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.chrysler.com.mx/distribuidores"
-
     with SgRequests() as session:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.MEXICO],
