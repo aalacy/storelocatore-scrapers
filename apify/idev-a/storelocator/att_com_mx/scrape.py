@@ -65,7 +65,7 @@ def fetch_data():
                 header1["request-type"] = "plans"
                 try:
                     res = session.get(json_url, headers=header1)
-                    if not res.text:
+                    if res.status_code != 200:
                         continue
                     locations = res.json()["objectResponse"]
                 except:
