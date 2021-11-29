@@ -69,7 +69,7 @@ def fetch_data():
         state = row["address"]["addressRegion"]
         zip_postal = row["address"]["postalCode"]
         country_code = "US"
-        phone = row["telephone"]
+        phone = MISSING if not row["telephone"] else row["telephone"]
         store_number = MISSING
         location_type = row["@type"]
         latlong = info.find("div", {"class": "gmaps"})
