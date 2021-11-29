@@ -79,6 +79,8 @@ def fetch_data():
         url = API_URL.format(lat, long)
         log.info("Fetch data from => " + url)
         data = session.get(url, headers=HEADERS).json()
+        if not data["nearest_stores"]["data"]:
+            continue
         for key, val in data["nearest_stores"]["data"].items():
             store_number = val["id"]
             search.found_location_at(lat, long)
