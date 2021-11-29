@@ -33,13 +33,18 @@ def fetch_data(http, search):
                     ": ".join(hh.stripped_strings)
                     for hh in bs(_["hours"], "lxml").select("table tr")
                 ]
+            state = _["state"]
+            zip_postal = _["zip"]
+            if state.isdigit() and not zip_postal:
+                state = ""
+                zip_postal = _["state"]
             yield SgRecord(
                 store_number=_["id"],
                 location_name=_["store"].replace("&#8217;", "'"),
                 street_address=street_address,
                 city=_["city"],
-                state=_["state"],
-                zip_postal=_["zip"],
+                state=state,
+                zip_postal=zip_postal,
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code=_["country"],
