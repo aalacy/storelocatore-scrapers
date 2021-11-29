@@ -7,6 +7,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "bareminerals.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -212,6 +214,47 @@ def process_record(raw_results_from_one_coordinate):
                 if time is not None:
                     hours_list.append(day + ": " + time)
 
+        if len(hours_list) <= 0:
+            try:
+                for key in store.keys():
+                    if key == "monopen":
+                        if store["monopen"]:
+                            day = "Monday:"
+                            time = store["monopen"] + " - " + store["monclose"]
+                            hours_list.append(day + time)
+                    if key == "tueopen":
+                        if store["tueopen"]:
+                            day = "Tuesday:"
+                            time = store["tueopen"] + " - " + store["tueclose"]
+                            hours_list.append(day + time)
+                    if key == "wedopen":
+                        if store["wedopen"]:
+                            day = "Wednesday:"
+                            time = store["wedopen"] + " - " + store["wedclose"]
+                            hours_list.append(day + time)
+                    if key == "thuopen":
+                        if store["thuopen"]:
+                            day = "Thursday:"
+                            time = store["thuopen"] + " - " + store["thuclose"]
+                            hours_list.append(day + time)
+                    if key == "friopen":
+                        if store["friopen"]:
+                            day = "Friday:"
+                            time = store["friopen"] + " - " + store["friclose"]
+                            hours_list.append(day + time)
+                    if key == "satopen":
+                        if store["satopen"]:
+                            day = "Saturday:"
+                            time = store["satopen"] + " - " + store["satclose"]
+                            hours_list.append(day + time)
+                    if key == "sunopen":
+                        if store["sunopen"]:
+                            day = "Sunday:"
+                            time = store["sunopen"] + " - " + store["sunclose"]
+                            hours_list.append(day + time)
+
+            except:
+                pass
         hours_of_operation = "; ".join(hours_list).strip()
         latitude = store["latitude"]
         longitude = store["longitude"]
@@ -237,8 +280,10 @@ def process_record(raw_results_from_one_coordinate):
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
-        countries = ["US", "AT", "CA", "FR", "DE", "IE", "UK"]
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        countries = ["US", "AT", "CA", "FR", "DE", "IE", "GB"]
 
         totalCountries = len(countries)
         currentCountryCount = 0
@@ -246,7 +291,7 @@ def scrape():
             if country != "US":
                 try:
                     search = DynamicGeoSearch(
-                        max_radius_miles=100, country_codes=[country]
+                        expected_search_radius_miles=100, country_codes=[country]
                     )
                     results = parallelize(
                         search_space=[

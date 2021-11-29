@@ -9,13 +9,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
-from webdriver_manager.chrome import ChromeDriverManager
+
 from sgselenium import SgChrome
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
 
 website = "https://www.chanel.com"
 MISSING = SgRecord.MISSING
@@ -134,51 +135,39 @@ def getStoreDetails(store, countryCode):
     )
 
 
-def fetchRequest(driver, http, lat, lng, headers=None, failed=0):
-    if failed == 5:
-        raise Exception("Can't able to get headers")
-
-    if headers is None:
-        headers = fetchHeaders(driver)
-    try:
-        data = f"geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22United+States%22%2C%22short_name%22%3A%22US%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22geometry%22%3A%7B%22location%22%3A%7B%22lat%22%3A{lat}%2C%22lng%22%3A{lng}%7D%2C%22location_type%22%3A%22APPROXIMATE%22%7D%2C%22types%22%3A%5B%22postal_code%22%5D%7D%5D&iframe=true&radius=70.00"
-        response = http.post(jsonUrl, headers=headers, data=data)
-        response_text = response.text
-        if len(response_text) > 0 and '"stores"' in response_text:
-            return headers, json.loads(response_text)["stores"]
-        else:
-            log.info("Failed trying to get header again")
-            return headers, fetchRequest(driver, http, lat, lng, None, failed + 1)
-    except Exception as e:
-        log.info(f"Failed trying to get header again {e}")
-        return headers, fetchRequest(driver, http, lat, lng, None, failed + 1)
+def fetchRequest(headers, http, lat, lng):
+    data = f"geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22United+States%22%2C%22short_name%22%3A%22US%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22geometry%22%3A%7B%22location%22%3A%7B%22lat%22%3A{lat}%2C%22lng%22%3A{lng}%7D%2C%22location_type%22%3A%22APPROXIMATE%22%7D%2C%22types%22%3A%5B%22postal_code%22%5D%7D%5D&iframe=true&radius=70.00"
+    response = http.post(jsonUrl, headers=headers, data=data)
+    response_text = response.text
+    return json.loads(response_text)["stores"]
 
 
 def fetch_records(
-    driver, http: SgRequests, search: DynamicGeoSearch
+    headers, http: SgRequests, search: DynamicGeoSearch
 ) -> Iterable[SgRecord]:
     count = 0
 
     state = CrawlStateSingleton.get_instance()
-    headers = None
     for lat, lng in search:
         count = count + 1
         countryCode = search.current_country()
         rec_count = state.get_misc_value(countryCode, default_factory=lambda: 0)
         state.set_misc_value(countryCode, rec_count + 1)
+        try:
+            newStores = fetchRequest(headers, http, lat, lng)
+            for store in newStores:
+                yield getStoreDetails(store, countryCode)
 
-        headers, newStores = fetchRequest(driver, http, lat, lng, headers)
-        for store in newStores:
-            yield getStoreDetails(store, countryCode)
-
-        if len(newStores) == 0:
-            log.debug(
-                f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
-            )
-        else:
-            log.info(
-                f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
-            )
+            if len(newStores) == 0:
+                log.debug(
+                    f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+                )
+            else:
+                log.info(
+                    f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+                )
+        except Exception as e:
+            log.error(f"Can't load data from {countryCode}: {lat, lng}, Error:{e}")
 
 
 def scrape():
@@ -189,12 +178,13 @@ def scrape():
         country_codes=country_codes, expected_search_radius_miles=50
     )
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        with SgChrome(
-            is_headless=True, executable_path=ChromeDriverManager().install()
-        ) as driver:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        with SgChrome() as driver:
+            headers = fetchHeaders(driver)
             with SgRequests() as http:
-                for rec in fetch_records(driver, http, search):
+                for rec in fetch_records(headers, http, search):
                     writer.write_row(rec)
 
     state = CrawlStateSingleton.get_instance()

@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "us.hsbc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -31,13 +33,13 @@ def fetch_data():
 
     for url in urls_list:
         stores = []
-        if "/data/branches" in url:
+        if "data-type-branches" in url:
             stores_req = session.get(
                 "https://www.us.hsbc.com" + url.replace(".cdata", ".udata"),
                 headers=headers,
             )
             stores = json.loads(stores_req.text)["branches"]
-        elif "/data/atms" in url:
+        elif "data-type-atms" in url:
             stores_req = session.get(
                 "https://www.us.hsbc.com" + url.replace(".cdata", ".udata"),
                 headers=headers,
@@ -57,7 +59,7 @@ def fetch_data():
             if "phoneNumber" in store:
                 phone = store["phoneNumber"][list(store["phoneNumber"].keys())[0]]
 
-            store_number = store["BranchCode"]
+            store_number = "<MISSING>"
             location_type = store["Type"]
 
             hours_list = []
@@ -93,7 +95,19 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

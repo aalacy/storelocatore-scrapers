@@ -6,4 +6,3 @@
 - --ignore GeoConsistencyValidator 
 - --ignore CountryValidator 
 - --ignore LatLngDuplicationValidator
-
