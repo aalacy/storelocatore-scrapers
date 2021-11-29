@@ -1,9 +1,11 @@
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
 website = "moncler_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -13,7 +15,7 @@ headers = {
 }
 
 DOMAIN = "https://www.moncler.com/en-us/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -36,7 +38,10 @@ def fetch_data():
             except:
                 street_address = loc["address1"]
             city = loc["city"]
-            state = loc["stateCode"]
+            try:
+                state = loc["stateCode"]
+            except:
+                state = MISSING
             try:
                 zip_postal = loc["postalCode"]
             except:
@@ -70,7 +75,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
