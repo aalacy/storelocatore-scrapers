@@ -8,15 +8,24 @@ from sgpostal.sgpostal import parse_address_intl
 
 def fetch_data():
     session = SgRequests()
+    import requests
 
+    session = requests.session()
     start_url = "https://www.toyota.co.th/index.php/app/dealer/fnc/json_dealer_list/page/1/keyword//province//district//type_of/1/type_sr/1/type_sc/1/type_bp/1/mode/more/lang/en"
     domain = "toyota.co.th"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
+    data = session.get(start_url, headers=hdr, proxies=proxies).json()
+    total_page = data["info"]["page_total"]
+    all_locations = data["data"]
+    for page in range(2, total_page + 1):
+        url = f"https://www.toyota.co.th/index.php/app/dealer/fnc/json_dealer_list/page/{page}/keyword//province//district//type_of/1/type_sr/1/type_sc/1/type_bp/1/mode/more/lang/en"
+        data = session.get(url, headers=hdr, proxies=proxies).json()
+        all_locations += data["data"]
 
-    data = session.get(start_url, headers=hdr).json()
-    for poi in data["data"]:
+    for poi in all_locations:
         if poi["showroom"] != "Y":
             continue
         raw_address = poi["en"]["address"]
@@ -27,7 +36,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["website"],
+            page_url=poi["website"].split(",")[0].strip(),
             location_name=poi["en"]["name"],
             street_address=street_address,
             city=addr.city,
@@ -49,9 +58,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS})
         )
     ) as writer:
         for item in fetch_data():
