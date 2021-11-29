@@ -80,7 +80,7 @@ def get_response(urlnum, url):
 
 def get_googlemap_place_details_urls():
     class_name = "container-fluid"
-    driver = get_driver(LOCATION_URL, "container-fluid", 30)
+    driver = get_driver(LOCATION_URL, class_name, 30)
     iframe_xpath = '//iframe[contains(@src, "google.com/maps/d/embed?mid=")]'
     iframe = driver.find_element_by_xpath(iframe_xpath)
     driver.switch_to.frame(iframe)
