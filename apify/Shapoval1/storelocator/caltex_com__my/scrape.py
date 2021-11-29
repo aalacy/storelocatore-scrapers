@@ -25,6 +25,8 @@ def fetch_data(sgw: SgWriter):
         postal = j.get("postalCode") or "<MISSING>"
         country_code = "MY"
         city = j.get("city") or "<MISSING>"
+        if city == "<MISSING>":
+            city = j.get("state") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         phone = j.get("phoneNumber") or "<MISSING>"
