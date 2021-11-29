@@ -60,11 +60,15 @@ def get_data(page_url, sgw: SgWriter):
         ).strip()
 
     _tmp = []
-    days = tree.xpath(
-        "//div[@class='locations-single-address']//span[@class='company-info-hours-day']/text()"
+    days = set(
+        tree.xpath(
+            "//div[@class='locations-single-address']//span[@class='company-info-hours-day']/text()"
+        )
     )
-    times = tree.xpath(
-        "//div[@class='locations-single-address']//li[@class='company-info-hours-openclose']/text()"
+    times = set(
+        tree.xpath(
+            "//div[@class='locations-single-address']//li[@class='company-info-hours-openclose']/text()"
+        )
     )
 
     for d, t in zip(days, times):
