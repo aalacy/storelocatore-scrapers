@@ -1,4 +1,13 @@
+import re
+import ssl
+
 from bs4 import BeautifulSoup
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
+
+from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -6,6 +15,12 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
+
+from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+logger = SgLogSetup().get_logger("storagewest.com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -19,57 +34,59 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    items = base.find_all(class_="StateLink")
+    items = base.find_all(class_="sow-image-container")
     locator_domain = "https://www.storagewest.com"
+
+    driver = SgChrome(user_agent=user_agent).driver()
 
     all_links = []
     for item in items:
-        link = item.a["href"]
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        link = locator_domain + item.a["href"]
+        if "locations" not in link:
+            continue
 
-        links = base.find_all(class_="divLocationsSearchResultFacilityName")
-        for i in links:
-            all_links.append(i.a["href"])
-
-    for link in all_links:
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        location_name = base.h1.text.strip()
-
-        raw_address = list(
-            base.find(class_="divFacilityContentTitleSmall").stripped_strings
+        logger.info(link)
+        driver.get(link)
+        WebDriverWait(driver, 30).until(
+            ec.presence_of_element_located((By.ID, "wpsl-stores"))
         )
-        street_address = raw_address[0].replace(",", "").strip()
-        city = raw_address[-1][:-8].strip()
-        state = raw_address[-1].strip()[-8:-6].strip()
-        zip_code = raw_address[-1][-6:].strip()
+        base = BeautifulSoup(driver.page_source, "lxml")
+
+        links = base.find(id="wpsl-stores").ul.find_all("li", recursive=False)
+        for i in links:
+            all_links.append([i.a["href"], i["data-store-id"]])
+    driver.close()
+
+    for i in all_links:
+        final_link = i[0]
+        logger.info(final_link)
+        req = session.get(final_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        raw_address = list(base.find(class_="mb-5").stripped_strings)
+        location_name = raw_address[0]
+        street_address = raw_address[1].replace(",", "").strip()
+        city_line = raw_address[2].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
         location_type = ""
-        store_number = base.article["id"].split("-")[-1]
-        phone = base.find(class_="facilityInformationPhone").text.strip()
-        hours_of_operation = " ".join(
-            list(
-                base.find(
-                    class_="divContainerFlexColumn divFacilityContentHoursOfficeHours"
-                )
-                .find(class_="divFacilityContentContentSmall")
-                .stripped_strings
-            )
+        store_number = i[1]
+        phone = base.find(class_="mb-5").find("a", {"href": re.compile(r"tel:")}).text
+        hours_of_operation = (
+            " ".join(list(base.find(class_="mb-5").table.stripped_strings))
+            .split("Closed on")[0]
+            .strip()
         )
 
-        latitude = base.find(class_="divFacilityContentLocationGetDirection")[
-            "data-tolat"
-        ]
-        longitude = base.find(class_="divFacilityContentLocationGetDirection")[
-            "data-tolng"
-        ]
+        latitude = ""
+        longitude = ""
 
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=link,
+                page_url=final_link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,

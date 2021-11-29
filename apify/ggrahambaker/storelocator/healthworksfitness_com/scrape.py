@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import re
 
@@ -53,6 +53,13 @@ def pull_content(url):
     return soup
 
 
+def get_latlong(url):
+    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
+    if not longlat:
+        return "<MISSING>", "<MISSING>"
+    return longlat.group(2), longlat.group(1)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -64,30 +71,72 @@ def fetch_data():
             },
         )
         .find("ul")
-        .find_all("a")
+        .find_all("li")
     )
     for row in page_urls:
-        page_url = row["href"]
+        page_url = row.find("a")["href"]
         content = pull_content(page_url)
-        location_name = row.text.strip()
-        info = content.find("strong", text="Location & Hours").find_next("div")
-        if len(info.text) < 1:
-            info = info.find_next("div").find_next("div")
-        info = re.sub(
-            r"@Healthworks Outdoors:.*",
-            "",
-            info.get_text(strip=True, separator="@"),
-        ).split("@Club Hours@")
-        raw_address = info[0]
+        if "healthworksfitness" not in page_url:
+            info = row.text.replace("\n", ",").split("–")
+            location_name = info[0].strip()
+            raw_address = info[1].strip()
+            if "gymit" in page_url:
+                location_type = "gymit"
+                phone = content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+                hours_of_operation = (
+                    content.find("strong", text="HOURS")
+                    .find_next("p")
+                    .get_text(strip=True, separator=",")
+                )
+                coord = content.find("iframe", {"src": re.compile(r"\/maps\/.*")})[
+                    "src"
+                ]
+                latitude, longitude = get_latlong(coord)
+            elif "republicbos" in page_url:
+                location_type = "republicbos"
+                coord = content.find("div", {"class": "map-marker"})
+                latitude = coord["data-lat"]
+                longitude = coord["data-lng"]
+                phone = coord["data-mapinfo"].split("-")[1].strip()
+                hours_of_operation = MISSING
+            else:
+                phone = content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+                location_type = "healthworksfitness"
+                hoo = content.select(
+                    "div.col.sqs-col-4.span-4 h2[style='white-space:pre-wrap;']"
+                )
+                hours_of_operation = ""
+                for hday in hoo:
+                    hours_of_operation += hday.text.strip() + ","
+                hours_of_operation = (
+                    hours_of_operation.replace("day,", "day: ")
+                    .replace("day ", "day: ")
+                    .rstrip(",")
+                )
+                latitude = MISSING
+                longitude = MISSING
+        else:
+            location_name = row.text.strip()
+            info = content.find("strong", text="Location & Hours").find_next("div")
+            if len(info.text) < 1:
+                info = info.find_next("div").find_next("div")
+            info = re.sub(
+                r"@Healthworks Outdoors:.*",
+                "",
+                info.get_text(strip=True, separator="@"),
+            ).split("@Club Hours@")
+            raw_address = info[0]
+            hours_of_operation = info[1].replace("@", ",")
+            phone = content.find(
+                "strong", text=re.compile(r"Telephone:.*")
+            ).next_sibling
+            location_type = "healthworksfitness"
+            coord = content.find("div", {"class": "map-marker"})
+            latitude = coord["data-lat"]
+            longitude = coord["data-lng"]
         street_address, city, state, zip_postal = getAddress(raw_address)
-        hours_of_operation = info[1].replace("@", ",")
-        phone = content.find("strong", text=re.compile(r"Telephone:.*")).next_sibling
         country_code = "us"
         store_number = MISSING
-        location_type = "healthworksfitness"
-        coord = content.find("div", {"class": "map-marker"})
-        latitude = coord["data-lat"]
-        longitude = coord["data-lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -111,20 +160,11 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

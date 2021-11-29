@@ -1,65 +1,32 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://www.nbtbank.com/"
-    api_url = "https://www.nbtbank.com/content/branchResults.cshtml"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    page_url = "https://www.nbtbank.com/locations/index.html"
+    api = "https://www.nbtbank.com/locations/locations.json"
+    r = session.get(api, headers=headers)
     js = r.json()["features"]
 
     for j in js:
-        geo = j.get("geometry", {}).get("coordinates") or ["<MISSING>", "<MISSING>"]
+        geo = j.get("geometry", {}).get("coordinates") or [
+            SgRecord.MISSING,
+            SgRecord.MISSING,
+        ]
         j = j.get("properties")
-        locator_domain = url
-        location_name = j.get("name") or "<MISSING>"
+        location_name = j.get("name")
         if location_name.find("ATM") != -1:
             continue
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
+        street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        phone = j.get("phone")
         latitude = geo[1]
         longitude = geo[0]
-        location_type = "<MISSING>"
 
         _tmp = []
         days = [
@@ -82,33 +49,43 @@ def fetch_data():
             time = j.get(f"Lobby_{part}") or "Closed"
             _tmp.append(f"{d}: {time}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.nbtbank.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+        "If-Modified-Since": "Fri, 19 Nov 2021 11:17:57 GMT",
+        "If-None-Match": 'W/"0x8D9AB4E3D952DB8"',
+    }
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

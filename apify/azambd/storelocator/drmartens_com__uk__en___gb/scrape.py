@@ -1,9 +1,9 @@
-import re
 from sgpostal.sgpostal import parse_address_intl
 import time
 import json
-from typing import Iterable, Tuple, Callable
-from httpx import Timeout
+from typing import Iterable
+import re
+
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -11,19 +11,13 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import SearchableCountries
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-DOMAIN = "drmartens.com"
 MISSING = SgRecord.MISSING
 website = "https://www.drmartens.com"
 store_url = f"{website}/uk/en_gb/store-finder"
 
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-hdr = {
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-}
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def get_var_name(value):
@@ -60,11 +54,15 @@ def get_phone(Source):
 
 def get_address(raw_address):
     try:
+
         if raw_address is not None and raw_address != MISSING:
             data = parse_address_intl(raw_address)
             street_address = data.street_address_1
-            if data.street_address_2 is not None:
+            if data.street_address_2 is not None and data.street_address_1 is not None:
                 street_address = street_address + " " + data.street_address_2
+            elif data.street_address_2 is not None and data.street_address_1 is None:
+                street_address = data.street_address_2
+
             city = data.city
             state = data.state
             zip_postal = data.postcode
@@ -84,30 +82,23 @@ def get_address(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-class DrmSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self.__http = http
-        self.__state = CrawlStateSingleton.get_instance()
+def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]:
+    states = CrawlStateSingleton.get_instance()
+    count = 0
+    for zipCode in search:
 
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+        log.debug(f"Searching {zipCode} ...")
+        count = count + 1
+
         stores = []  # type: ignore
         page = 0
-
-        zipcode = str(zipcode).replace(" ", "%20")
+        zipCode = str(zipCode).replace(" ", "%20")
         while True:
-            url = f"{store_url}?q={zipcode}&page={page}"
-            response = SgRequests.raise_on_err(self.__http.get(url, headers=hdr))
+            url = f"{store_url}?q={zipCode}&page={page}"
+            response = http.get(url)
             try:
                 newStores = (json.loads(response.text))["data"]
-            except Exception as e:
-                log.info(f"***Response has err: {e}")
+            except Exception:
                 newStores = []
             stores = stores + newStores
             if len(newStores) < 10:
@@ -115,40 +106,43 @@ class DrmSearchIteration(SearchIteration):
             else:
                 page = page + 1
 
-        log.info(f"From {current_country}=> {zipcode} stores = {len(stores)}")
-
-        rec_count = self.__state.get_misc_value(
-            current_country, default_factory=lambda: 0
-        )
-        self.__state.set_misc_value(current_country, rec_count + len(stores))
-
-        country_code = current_country.upper()
+        country_code = search.current_country()
+        log.info(f"From {country_code}, {zipCode} stores = {len(stores)}")
+        rec_count = states.get_misc_value(country_code, default_factory=lambda: 0)
+        states.set_misc_value(country_code, rec_count + len(stores))
 
         for store in stores:
             store_number = MISSING
-            location_type = MISSING
-            page_url = store_url
+
+            page_url = MISSING
+            country_code = country_code.upper()
             location_name = get_JSON_object_variable(store, "displayName")
+            location_type = "Store"
+            if "Permanently Closed" in location_name:
+                location_type = "Permanently Closed"
             latitude = get_JSON_object_variable(store, "latitude")
             longitude = get_JSON_object_variable(store, "longitude")
+
             phone = get_phone(get_JSON_object_variable(store, "phone"))
 
             street_address = get_JSON_object_variable(store, "line1")
             line2 = get_JSON_object_variable(store, "line2")
+
             if line2 is not None and line2 != MISSING:
                 street_address += " " + line2
 
-            street_address = street_address.strip()
             town = get_JSON_object_variable(store, "town")
             postalCode = get_JSON_object_variable(store, "postalCode")
-            hoo, city, state, zip_postal = get_address(
+            street_address, city, state, zip_postal = get_address(
                 f"{street_address} {town} {postalCode}"
             )
 
             if zip_postal == MISSING:
                 zip_postal = postalCode
 
-            raw_address = f"{street_address.strip()} {town} {postalCode}"
+            raw_address = f"{street_address} {town} {postalCode}"
+            if MISSING in raw_address:
+                raw_address = MISSING
 
             hours_of_operation = []
             hoo = get_JSON_object_variable(store, "openings")
@@ -161,7 +155,7 @@ class DrmSearchIteration(SearchIteration):
                 hours_of_operation = MISSING
 
             yield SgRecord(
-                locator_domain=DOMAIN,
+                locator_domain="drmartens.com",
                 store_number=store_number,
                 page_url=page_url,
                 location_name=location_name,
@@ -170,7 +164,7 @@ class DrmSearchIteration(SearchIteration):
                 city=city,
                 zip_postal=zip_postal,
                 state=state,
-                country_code=country_code,
+                country_code=MISSING,
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,
@@ -180,28 +174,19 @@ class DrmSearchIteration(SearchIteration):
 
 
 def scrape():
-    log.info(f"Start Crawling {website} ...")
+    log.info(f"Start scrapping {website} ...")
     start = time.time()
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicZipSearch", max_search_distance_miles=50
+    search = DynamicZipSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=50
     )
-    gTimeout = Timeout(timeout=161, connect=161)
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId),
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
-        with SgRequests(
-            timeout_config=gTimeout, dont_retry_status_codes_exceptions=set([504])
-        ) as http:
-            search_iter = DrmSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
-
-            for rec in par_search.run():
+        with SgRequests() as http:
+            for rec in fetch_data(http, search):
                 writer.write_row(rec)
-
     state = CrawlStateSingleton.get_instance()
     log.debug("Printing number of records by country-code:")
     for country_code in SearchableCountries.ALL:

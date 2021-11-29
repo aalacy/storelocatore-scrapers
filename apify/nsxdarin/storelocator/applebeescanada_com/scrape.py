@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("applebeescanada_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,7 +22,6 @@ def fetch_data():
     country = "CA"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '"tb-button__link" href="https://applebeescanada.com/location/' in line:
             locs.append(line.split('"tb-button__link" href="')[1].split('"')[0])
     for loc in locs:
@@ -61,10 +36,8 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        HFound = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '<h1 class="tb-heading has-text-color"' in line2:
                 name = (
                     line2.split('<h1 class="tb-heading has-text-color"')[1]
@@ -130,26 +103,18 @@ def fetch_data():
             if 'data-markerlat="' in line2:
                 lat = line2.split('data-markerlat="')[1].split('"')[0]
                 lng = line2.split('data-markerlon="')[1].split('"')[0]
-            if "day<br />" in line2 or "Week<" in line2:
-                if '"tb-field"' in line2:
-                    HFound = True
-                    hours = line2.split("<p>")[1].split("<")[0] + ": "
-            if HFound and "</div>" in line2:
-                HFound = False
-            if HFound and '"tb-field"' not in line2:
-                if "<br />" in line2:
-                    hours = hours + "; " + line2.split(">")[1].split("<")[0]
+            if "day:" in line2:
+                hrs = line2.rsplit("<", 1)[0]
+                if ">" in hrs:
+                    hrs = hrs.rsplit(">", 1)[1]
+                if hours == "":
+                    hours = hrs
                 else:
-                    hours = hours + ": " + line2.split("<")[0]
-            if "day to " in line2:
-                try:
-                    hours = line2.split('"><p>')[1].split("<")[0]
-                except:
-                    pass
-            if "day & " in line2:
-                hours = hours + "; " + line2.split("<")[0]
+                    hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if "location/applebees-thunderbay" in loc:
+            hours = "Sun-Sat: 11:30 AM to 8:00 PM"
         if "huron-church" in loc:
             phone = "519-972-3000"
             name = "Applebee's Huron Church"
@@ -166,27 +131,29 @@ def fetch_data():
             hours = "Sunday to Thursday: 8:00 AM to 10:00 PM; Friday to Saturday: 8:00 AM to 11:00 PM"
         if "(" in hours:
             hours = hours.split("(")[0].strip()
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

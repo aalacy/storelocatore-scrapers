@@ -129,8 +129,6 @@ if __name__ == "__main__":
         deduper=SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.STORE_NUMBER,
                 }

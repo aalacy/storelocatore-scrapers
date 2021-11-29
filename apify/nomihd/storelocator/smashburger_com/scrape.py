@@ -43,19 +43,12 @@ def fetch_data():
 
                 raw_address = "<MISSING>"
 
-                street_address = " ".join(
-                    store_sel.xpath('//span[@itemprop="streetAddress"]//text()')
-                ).strip()
+                add_list = store_sel.xpath("//div[@data-lat]/div/span/text()")
+                street_address = ", ".join(add_list[:-3]).strip()
 
-                city = "".join(
-                    store_sel.xpath('//span[@itemprop="addressLocality"]//text()')
-                ).strip()
-                state = "".join(
-                    store_sel.xpath('//span[@itemprop="addressRegion"]//text()')
-                ).strip()
-                zip = "".join(
-                    store_sel.xpath('//span[@itemprop="postalCode"]//text()')
-                ).strip()
+                city = add_list[-3].strip()
+                state = add_list[-2].strip()
+                zip = add_list[-1].strip()
 
                 country_code = page_url.split("locations/")[1].split("/")[0].upper()
 

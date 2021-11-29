@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
                 street_address = (
                     "".join(
                         tree.xpath(
-                            '//h3[text()="Address"]/following-sibling::p[1]/text()[1]'
+                            '//h3[text()="Address"]/following-sibling::p[1]/span[1]/text()'
                         )
                     )
                     .replace("\n", "")
@@ -50,7 +50,7 @@ def fetch_data(sgw: SgWriter):
                 ad = (
                     "".join(
                         tree.xpath(
-                            '//h3[text()="Address"]/following-sibling::p[1]/text()[2]'
+                            '//h3[text()="Address"]/following-sibling::p[1]/span[2]/text()'
                         )
                     )
                     .replace("\n", "")
