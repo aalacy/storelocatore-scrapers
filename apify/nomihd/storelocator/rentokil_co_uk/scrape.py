@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import ssl
-from seleniumwire import webdriver
+from seleniumwire import webdriver  # noqa
 
 try:
     _create_unverified_https_context = (
