@@ -1,119 +1,69 @@
-import csv
 import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    items = []
-
     session = SgRequests()
 
-    DOMAIN = "pizzafactory.com"
-    start_url = "https://data.api.powerchord.com/forte/locator/5c36116a9710500007b99d7e"
+    domain = "pizzafactory.com"
+    start_url = "https://www.pizzafactory.com/locations/"
 
-    body = '{"radius":80000,"countToReturn":300,"latitude":34.0692042,"longitude":-118.4066574,"onLocator":true,"showLocationAssignments":true,"isTerritorySearch":false,"searchText":"90210"}'
-    headers = {
-        "content-type": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-        "authorization": "Panda eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJjIjoiIiwiZCI6MzE1MzYwMDAwLCJkaWQiOiIiLCJoIjoibG9jYXRpb25zLnBpenphZmFjdG9yeS5jb20iLCJpIjoxNjA5MTU3MjYyLCJvIjoiNWMzNjExNmE5NzEwNTAwMDA3Yjk5ZDdlIiwicyI6ImJjOGNiNjg4LWIyMTEtNDUzYi1hNjY2LWYxMjUxN2I1YWFkOCIsInQiOiI1YzM2MTE2YTk3MTA1MDAwMDdiOTlkN2UifQ.DACslw-YavCDQYrWDsjO4q_z2g3iHKY3oGboneAOrHpWv05l6-B8iL0HiTxLjCeMx0OhYfcSUIAuoYd3-iWf_g",
-    }
-    response = session.post(start_url, data=body, headers=headers)
-    data = json.loads(response.text)
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
 
-    for poi in data:
-        store_url = "https://{}.pizzafactory.com/".format(poi["subdomain"])
-        location_name = poi["name"]
-        street_address = poi["address1"]
-        if poi["address2"]:
-            street_address += ", " + poi["address2"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["locationExternalID"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = poi["type"]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        for day, hours in poi["hours"].items():
-            if hours:
-                opens = hours[0]["open"]
-                closes = hours[0]["close"]
-                hours_of_operation.append(f"{day} {opens} - {closes}")
-            else:
-                hours_of_operation.append(f"{day} closed")
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+    all_locations = dom.xpath('//a[contains(@id, "search_result")]/@href')
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
+        poi = json.loads(poi)
+        hoo = loc_dom.xpath('//div[@class="location-info__hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else SgRecord.MISSING
+        phone = poi["telephone"]
+        if phone == "+1":
+            phone = ""
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=poi["name"],
+            street_address=poi["address"]["streetAddress"],
+            city=poi["address"]["addressLocality"],
+            state=poi["address"]["addressRegion"],
+            zip_postal=poi["address"]["postalCode"],
+            country_code=poi["address"]["addressCountry"],
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=poi["@type"],
+            latitude=poi["geo"]["latitude"],
+            longitude=poi["geo"]["longitude"],
+            hours_of_operation=hours_of_operation,
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            location_name,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

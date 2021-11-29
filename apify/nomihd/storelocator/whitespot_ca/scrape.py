@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "whitespot.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -60,6 +62,27 @@ def fetch_data():
         log.info(page_url)
         page_res = session.get(page_url, headers=headers)
         page_sel = lxml.html.fromstring(page_res.text)
+        if len(street_address) <= 0:
+            street_address = (
+                "".join(page_sel.xpath('//*[@class="location__address"]/text()'))
+                .strip()
+                .split(",")[0]
+                .strip()
+            )
+
+        if len(zip) <= 0:
+            zip = (
+                "".join(page_sel.xpath('//*[@class="location__address"]/text()'))
+                .strip()
+                .split(",")[-1]
+                .strip()
+            )
+
+        if len(phone) <= 0:
+            phone = "".join(
+                page_sel.xpath('//div[@class="location__phone"]/a/text()')
+            ).strip()
+
         hours_list = list(
             filter(str, page_sel.xpath('//table[@class="location__hours"]//tr//text()'))
         )
@@ -106,7 +129,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

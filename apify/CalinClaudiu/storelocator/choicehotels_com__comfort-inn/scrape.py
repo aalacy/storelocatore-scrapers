@@ -1,46 +1,92 @@
-from typing import Iterable
-
+from typing import Iterable, Tuple, Callable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sglogging import sglog
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
-    headers = {}
-    headers[
-        "accept"
-    ] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-US,en;q=0.9"
-    headers["cache-control"] = "no-cache"
-    headers["pragma"] = "no-cache"
-    headers["sec-ch-ua-mobile"] = "?0"
-    headers["sec-fetch-dest"] = "document"
-    headers["sec-fetch-mode"] = "navigate"
-    headers["sec-fetch-site"] = "none"
-    headers["sec-fetch-user"] = "?1"
-    headers["upgrade-insecure-requests"] = "1"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    state = CrawlStateSingleton.get_instance()
-    for lat, lng in search:
-        rec_count = state.get_misc_value(
-            search.current_country(), default_factory=lambda: 0
-        )
-        state.set_misc_value(search.current_country(), rec_count + 1)
+def fix_comma(x):
+    h = []
+    try:
+        for i in x.split(","):
+            if len(i.strip()) >= 1:
+                h.append(i)
+        return ", ".join(h)
+    except Exception:
+        return x
+
+
+class ExampleSearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
+
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
+
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        """
+        This method gets called on each iteration of the search.
+        It provides you with all the data you could get from the search instance, as well as
+        a method to register found locations.
+
+        :param coord: The current coordinate (lat, long)
+        :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
+        :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
+        :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
+        :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
+        """
+
+        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
+        lat, lng = coord
+        # just some clever accounting of locations/country:
         url = str(
-            f"https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3021-07-15&checkOutDate=3021-07-17&favorCoOpHotels=false&hotelSortOrder=&include=&lat={lat}&lon={lng}&minors=0&optimizeResponse=&placeName=&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
+            "https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3022-05-19&checkOutDate=3022-05-20&hotelSortOrder=RELEVANCE&include=amenity_groups%2C%20amenity_totals%2C%20rating%2C%20relative_media%2C%20renovation_info%2C%20awards_info"
+            + f"&lat={lat}&lon={lng}&"
+            + "optimizeResponse=image_url&placeId=404698&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         )
+        headers = {}
+        headers[
+            "accept"
+        ] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+        headers["accept-encoding"] = "gzip, deflate, br"
+        headers["accept-language"] = "en-US,en;q=0.9"
+        headers["cache-control"] = "no-cache"
+        headers["pragma"] = "no-cache"
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         try:
-            locations = http.get(url, headers=headers).json()
-        except Exception:
+            locations = SgRequests.raise_on_err(http.get(url, headers=headers)).json()
+            errorName = None
+        except Exception as e:
+            logzilla.error(f"{e} , {url}<-F")
             locations = {"hotelCount": 0}
-        if locations["hotelCount"] > 0:
+            locations["status"] = "FAIL"
+            errorName = str(e)
+        if (
+            locations["status"] == "OK"
+            and locations["hotelCount"] > 0
+            and "NONEXISTENT_HOTEL_INFO" not in str(locations)
+        ):
             for record in locations["hotels"]:
                 try:
                     record["address"]["subdivision"] = record["address"]["subdivision"]
@@ -73,6 +119,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
 
                 try:
                     record["lat"] = record["lat"]
+                    found_location_at(record["lat"], record["lon"])
                 except KeyError:
                     record["lat"] = SgRecord.MISSING
 
@@ -111,7 +158,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         longitude=str(record["lon"]),
                         locator_domain="https://www.choicehotels.com/",
                         hours_of_operation=SgRecord.MISSING,
-                        raw_address=SgRecord.MISSING,
+                        raw_address=errorName if errorName else SgRecord.MISSING,
                     )
                 except KeyError:
                     yield SgRecord(
@@ -129,19 +176,28 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
                         longitude=SgRecord.MISSING,
                         locator_domain=SgRecord.MISSING,
                         hours_of_operation=SgRecord.MISSING,
-                        raw_address=str(record),
+                        raw_address=errorName if errorName else str(record),
                     )
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, expected_search_radius_miles=100
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+        granularity=Grain_8(),
+        expected_search_radius_miles=100,
     )
+
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
     ) as writer:
         with SgRequests() as http:
-            for rec in fetch_records(http, search):
-                writer.write_row(rec)
+            search_iter = ExampleSearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=SearchableCountries.ALL,
+            )
 
-    state = CrawlStateSingleton.get_instance()
+            for rec in par_search.run():
+                writer.write_row(rec)

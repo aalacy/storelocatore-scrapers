@@ -1,166 +1,127 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+import ssl
 import json
-import sgzip
-import time
-from sglogging import SgLogSetup
+from lxml import etree
+from urllib.parse import urljoin
 
-logger = SgLogSetup().get_logger('cinnabon_com')
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-
-
-
-# def request_wrapper(url, method, headers, data=None):
-#     request_counter = 0
-#     if method == "get":
-#         while True:
-#             try:
-#                 r = session.get(url, headers=headers)
-#                 return r
-#                 break
-#             except:
-#                 time.sleep(2)
-#                 request_counter = request_counter + 1
-#                 if request_counter > 10:
-#                     return None
-#                     break
-#     elif method == "post":
-#         while True:
-#             try:
-#                 if data:
-#                     r = session.post(url, headers=headers, data=data)
-#                 else:
-#                     r = session.post(url, headers=headers)
-#                 return r
-#                 break
-#             except:
-#                 time.sleep(2)
-#                 request_counter = request_counter + 1
-#                 if request_counter > 10:
-#                     return None
-#                     break
-#     else:
-#         return None
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', 'w') as output_file:
-        writer = csv.writer(output_file, delimiter=",")
-
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-
-        # logger.info("data::" + str(data))
-        for i in data or []:
-            writer.writerow(i)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
-    addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 30
-    # current_results_len = 0  # need to update with no of count.
-    zip_code = search.next_zip()
-    # coord = search.next_coord()
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-        # 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-
-
+    start_url = "https://locations.cinnabon.com/index.html"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    # it will used in store data.
-    locator_domain = "https://www.cinnabon.com/"
-    page_url = "<MISSING>"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    all_locations = []
+    all_states = dom.xpath('//a[@class="Directory-listLink"]')
+    for state_html in all_states:
+        total = int(state_html.xpath("@data-count")[0][1:-1])
+        url = state_html.xpath("@href")
+        if total == 1:
+            all_locations += url
+            continue
+        response = session.get(urljoin(start_url, url[0]), headers=hdr)
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath('//a[@class="Directory-listLink"]')
+        for city_html in all_cities:
+            total = int(city_html.xpath("@data-count")[0][1:-1])
+            url = city_html.xpath("@href")
+            if total == 1:
+                all_locations += url
+                continue
 
-    while zip_code:
-        result_coords = []
+            response = session.get(urljoin(start_url, url[0]), headers=hdr)
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//a[@data-ya-track="visitpage"]/@href')
 
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        # time.sleep(5)
-        try:
-            r = session.get('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity='+str(zip_code)+'&userfilters=8c753773-7ff5-4f6f-a550-822523cbafad&userfilters=3431a520-d000-46bb-9058-b000edc96867&userfilters=43ba8d22-b606-4d69-8b91-437e5d6264fd', headers=headers)
-        except:
-            pass
-        json_data = r.json()
-        current_results_len = json_data['Locations']
-        for location_list in json_data['Locations']:
-            if location_list['ComingSoon'] == False and "Cinnabon" in location_list['LocationName']:
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        if store_url == "https://locations.cinnabon.com/":
+            continue
+        if url.endswith(".") and not store_url.endswith("."):
+            store_url += "."
+        loc_response = session.get(store_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+        phone = loc_dom.xpath(
+            '//div[@class="Core-infoContent"]//div[@itemprop="telephone"]/text()'
+        )
+        phone = phone[0] if phone else SgRecord.MISSING
+        location_type = SgRecord.MISSING
+        temp = loc_dom.xpath('//h2[@class="Core-title"]/text()')
+        if temp and "Temporarily Closed" in temp[0]:
+            location_type = "Temporarily Closed"
+        hoo = loc_dom.xpath('//script[@class="js-hours-config"]/text()')
+        hours = []
+        if hoo:
+            hoo = json.loads(hoo[0])
+            for e in hoo["hours"]:
+                day = e["day"]
+                if e["isClosed"]:
+                    hours.append(f"{day} closed")
+                else:
+                    opens = str(e["intervals"][0]["start"])
+                    opens = opens[:-2] + ":" + opens[-2:]
+                    closes = str(e["intervals"][0]["end"])
+                    closes = closes[:-2] + ":" + closes[-2:]
+                    hours.append(f"{day} {opens} - {closes}")
+        hours = " ".join(hours) if hours else SgRecord.MISSING
 
-                country_code = location_list['CountryName']
-                location_name = location_list["AlternativeName"]
-                phone = location_list['Tel']
-                zipp = location_list['PostalCode']
-                state = location_list['Region']
-                city = location_list['Locality']
-                street_address = location_list['StreetAddress']
-                location_type = location_list['LocationType']['Name']
-                latitude = location_list['Latitude']
-                longitude = location_list['Longitude']
-                store_number = location_list['StoreNumber']
-                page_url = location_list['Website']
-                if page_url == None:
-                    page_url = "https://www.cinnabon.com/" + \
-                        state.lower() + "/" + "-".join(city.lower().split()) + \
-                        "/" + "bakery-" + store_number
-                hours_of_operation = "Monnday"+" "+str(location_list['Hours']['Monday'])+" "+"Tuesday"+" "+str(location_list['Hours']['Tuesday'])+" "+"Wednesday"+" "+str(location_list['Hours']['Wednesday'])+" "+"Thursday"+" "+str(location_list['Hours']['Thursday'])+" "+"Friday"+" "+str(location_list['Hours']['Friday'])+" "+"Saturday"+" "+str(location_list['Hours']['Saturday'])+" "+"Sunday"+" "+str(location_list['Hours']['Sunday'])
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=loc_dom.xpath('//a[@class="Hero-geoText"]/text()')[0],
+            street_address=loc_dom.xpath(
+                '//div[@class="Core-infoContent"]//span[@class="c-address-street-1"]/text()'
+            )[0],
+            city=loc_dom.xpath(
+                '//div[@class="Core-infoContent"]//span[@class="c-address-city"]/text()'
+            )[0],
+            state=loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0],
+            zip_postal=loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0],
+            country_code=loc_dom.xpath(
+                '//div[@class="Core-infoContent"]//address/@data-country'
+            )[0],
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0],
+            longitude=loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0],
+            hours_of_operation=hours,
+        )
 
-
-                result_coords.append((latitude, longitude))
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                store = [x if x else "<MISSING>" for x in store]
-                store = ['<MISSING>' if x == ' ' or x ==
-                         None else x for x in store]
-
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
-
-                # logger.info("data = " + str(store))
-                # logger.info(
-                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
-               
-        if len(current_results_len) < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        if len(current_results_len) == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        # else:
-        #     raise Exception("expected at most " +
-        #                     str(MAX_RESULTS) + " results")
-
-        zip_code = search.next_zip()
-
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -119,6 +119,10 @@ def fetch_data():
                 name = "Wolfchase Galleria"
             if "store/2816" in surl:
                 name = "Carlsbad Premium Outlets"
+            name = name.replace("&amp;", "&")
+            add = add.replace("&amp;", "&")
+            if name == "":
+                name = "ALDO Footware & Accessories"
             yield SgRecord(
                 locator_domain=website,
                 page_url=surl,
@@ -187,6 +191,10 @@ def fetch_data():
             name = "Wolfchase Galleria"
         if "store/2816" in purl:
             name = "Carlsbad Premium Outlets"
+        name = name.replace("&amp;", "&")
+        add = add.replace("&amp;", "&")
+        if name == "":
+            name = "ALDO Footware & Accessories"
         yield SgRecord(
             locator_domain=website,
             page_url=purl,

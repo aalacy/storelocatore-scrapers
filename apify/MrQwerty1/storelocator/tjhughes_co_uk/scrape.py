@@ -8,8 +8,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
     api_url = "https://www.tjhughes.co.uk/map"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0"
+    }
 
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(),' function initialize() {')]/text()")
@@ -31,7 +34,6 @@ def fetch_data(sgw: SgWriter):
         city = "".join(
             root.xpath("//span[contains(@class, 'branch-city')]/text()")
         ).strip()
-        state = "<INACCESSIBLE>"
         postal = "".join(
             root.xpath("//span[contains(@class, 'branch-postcode')]/text()")
         ).strip()
@@ -59,7 +61,7 @@ def fetch_data(sgw: SgWriter):
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=state,
+            state=SgRecord.MISSING,
             zip_postal=postal,
             country_code=country_code,
             store_number=store_number,

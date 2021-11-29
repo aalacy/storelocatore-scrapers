@@ -6,6 +6,8 @@ from sglogging import SgLogSetup
 import re
 from sgscrape.sgpostal import parse_address_intl
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("facelogicspa")
 
@@ -33,7 +35,7 @@ def fetch_data():
                 res = session.get(page_url, headers=_headers)
             except:
                 continue
-            if res.status_code != 200:
+            if res.status_code != 200 or res.url.endswith("facelogiccle.com"):
                 continue
             sp1 = bs(res.text, "lxml")
             location_name = (
@@ -184,7 +186,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

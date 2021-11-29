@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("dunkindonuts")
 
@@ -22,10 +22,10 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("div.dd-store__detail.js-store")
         logger.info(f"{len(links)} found")
+
         for link in links:
-            addr = parse_address_intl(
-                link.select_one("div.dd-detail__address address").text
-            )
+            raw_address = link.select_one("div.dd-detail__address address").text.strip()
+            addr = parse_address_intl(raw_address + ", ประเทศไทย")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -40,6 +40,7 @@ def fetch_data():
                 zip_postal=addr.postcode,
                 country_code="Thailand",
                 locator_domain=locator_domain,
+                raw_address=raw_address,
             )
 
 

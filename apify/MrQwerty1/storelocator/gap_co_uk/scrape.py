@@ -1,38 +1,13 @@
-import csv
-
 from concurrent import futures
 from lxml import html
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
 
 
 def get_ids(coord):
@@ -67,7 +42,6 @@ def get_data(_id):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
     street_address = (
         "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).strip()
         or "<MISSING>"
@@ -105,6 +79,11 @@ def get_data(_id):
     if location_type.startswith(","):
         location_type = location_type.replace(",", "").strip()
 
+    if "," in location_type:
+        location_name = "Gap"
+    else:
+        location_name = location_type
+
     hours = tree.xpath("//span[@class='store-hours']//text()")
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = (
@@ -114,6 +93,7 @@ def get_data(_id):
             "",
         )
         .replace("p>;", "")
+        .replace(";>", "")
         or "<MISSING>"
     )
 
@@ -137,8 +117,7 @@ def get_data(_id):
     return row
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     _ids = set()
     coords = static_coordinate_list(radius=20, country_code=SearchableCountries.BRITAIN)
 
@@ -152,17 +131,27 @@ def fetch_data():
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, _id): _id for _id in _ids}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+            out = future.result()
+            if out:
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=out[0],
+                        page_url=out[1],
+                        location_name=out[2],
+                        street_address=out[3],
+                        city=out[4],
+                        state=out[5],
+                        zip_postal=out[6],
+                        country_code=out[7],
+                        store_number=out[8],
+                        phone=out[9],
+                        location_type=out[10],
+                        latitude=out[11],
+                        longitude=out[12],
+                        hours_of_operation=out[13],
+                    )
+                )
 
-    return out
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-if __name__ == "__main__":
-    scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
