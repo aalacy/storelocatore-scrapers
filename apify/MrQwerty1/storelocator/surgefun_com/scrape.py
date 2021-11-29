@@ -51,8 +51,6 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//preceding::h2[2]/text()"))
 
         r = session.get(page_url, headers=headers)
-        if r.status_code == 301:
-            continue
         tree = html.fromstring(r.text)
 
         ad = (
@@ -85,16 +83,19 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
 
-        r = session.get(f"https://plondex.com/wp/jsonquery/loadloc/9/{ids}")
-        tree = html.fromstring(r.text)
-        hours_of_operation = (
-            " ".join(
-                tree.xpath('//div[./*[contains(text(), "Business Hours")]]//text()')
+        try:
+            r = session.get(f"https://plondex.com/wp/jsonquery/loadloc/9/{ids}")
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//div[./*[contains(text(), "Business Hours")]]//text()')
+                )
+                .replace("Business Hours", "")
+                .replace("\n", "")
+                .strip()
             )
-            .replace("Business Hours", "")
-            .replace("\n", "")
-            .strip()
-        )
+        except:
+            hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -105,11 +106,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
             raw_address=adr,
         )
