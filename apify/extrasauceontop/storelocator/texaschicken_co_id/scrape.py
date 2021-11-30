@@ -40,8 +40,8 @@ def get_data():
         locator_domain = "texaschicken.co.id"
         page_url = "http://www.texaschicken.co.id/location"
         location_name = location["name"]
-        latitude = location["latitude"]
-        longitude = location["longitude"]
+        latitude = location["latitude"].split(",")[0]
+        longitude = location["longitude"].split(",")[0]
         city = location["city"]
         store_number = location["placeid"]
 
