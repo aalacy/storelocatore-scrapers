@@ -1,6 +1,4 @@
-import re
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -12,44 +10,44 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.toyotazambia.co.zm/dealers/"
-    domain = "toyotazambia.co.zm"
+    start_url = "https://www.toyota.co.zw/en/dealership/toyota-zimbabwe"
+    domain = "toyota.co.zw"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@class="media-box post-image"]/@href')
-    for url in all_locations:
-        page_url = urljoin(start_url, url)
+    all_locations = dom.xpath('//div[@class="concessions"]//a/@href')
+    for page_url in all_locations:
         loc_response = session.get(page_url)
-        store_number = page_url.split("=")[-1]
-        url = f"https://www.toyotazambia.co.zm/Umbraco/Api/Dealers/GetDealer?dealerId={store_number}"
-        poi = session.get(url).json()
-        hoo = poi["WorkingTime"]
-        if hoo == "n/a":
-            hoo = ""
-        geo = ["", ""]
-        geo_data = re.findall(r"LatLng\((.+?)\);", loc_response.text)
-        if geo_data:
-            geo = geo_data[0].split(", ")
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        raw_address = loc_dom.xpath('//div[@class="location-info"]/div/text()')
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+        types = loc_dom.xpath('//div[@class="concession-services"]//text()')
+        types = [e.strip() for e in types if e.strip()]
+        location_type = ", ".join(types)
+        geo = loc_dom.xpath('//script[contains(text(), "map_markers")]/text()')[
+            0
+        ].split(",")[1:3]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["Name"],
-            street_address=poi["Address"],
-            city=poi["City"],
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1],
             state="",
             zip_postal="",
-            country_code="ZM",
-            store_number=store_number,
-            phone=poi["Phone"].split("/")[0].strip(),
-            location_type="",
+            country_code="ZW",
+            store_number="",
+            phone=phone,
+            location_type=location_type,
             latitude=geo[0],
             longitude=geo[1],
-            hours_of_operation=hoo,
+            hours_of_operation="",
         )
 
         yield item
