@@ -20,10 +20,18 @@ def fetch_data():
 
     all_locations = dom.xpath('//section[div[div[@class="title-h5"]]]')
     for poi_html in all_locations:
-        location_name = poi_html.xpath('//div[@class="title-h5"]/span/text()')[0]
+        location_name = poi_html.xpath('.//div[@class="title-h5"]/span/text()')[0]
         if "Тойота Сервис" in location_name:
             continue
-        raw_address = poi_html.xpath(".//p/a/text()")[0]
+        raw_address = poi_html.xpath(
+            './/div[@class="title-h5"]/following-sibling::p[1]//text()'
+        )
+        raw_address = [e.strip() for e in raw_address if e.strip()][0]
+        street_address = raw_address.split(" - ")[0]
+        city = raw_address.split(" - ")[-1]
+        if street_address.startswith("г."):
+            city = street_address.split(", ")[0].replace("г.", "")
+            street_address = ", ".join(street_address.split(", ")[1:])
         phone = poi_html.xpath(".//p[a]/text()")[1].strip()
         page_url = poi_html.xpath(".//p/a/@href")[-1]
         geo = poi_html.xpath(".//p/a/@href")[0]
@@ -43,8 +51,8 @@ def fetch_data():
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=raw_address.split(" - ")[0],
-            city=raw_address.split(" - ")[-1],
+            street_address=street_address,
+            city=city,
             state="",
             zip_postal="",
             country_code="KZ",
