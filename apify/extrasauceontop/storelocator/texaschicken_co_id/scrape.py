@@ -22,7 +22,6 @@ def extract_json(html_string):
                 try:
                     json_objects.append(json.loads(html_string[start : end + 1]))
                 except Exception:
-                    print(html_string[start : end + 1])
                     pass
         count = count + 1
 
