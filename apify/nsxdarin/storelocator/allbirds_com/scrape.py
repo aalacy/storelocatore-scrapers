@@ -19,7 +19,7 @@ def fetch_data():
     lines = r.iter_lines()
     website = "allbirds.com"
     store = "<MISSING>"
-    purl = "<MISSING>"
+    purl = " https://www.allbirds.com/pages/stores"
     lat = "<MISSING>"
     lng = "<MISSING>"
     typ = "Store"
@@ -154,6 +154,29 @@ def fetch_data():
                     zc = "94304"
                 if len(state) == 2:
                     country = "US"
+                if "SF Premium" in add:
+                    add = "3228 Livermore Outlets Drive"
+                if "660 Stanford" in add:
+                    hours = "Mon-Thu: 11am-7pm; Fri-Sat: 10am-7pm; Sun: 12pm-6pm"
+                if "77 West" in add:
+                    hours = "Mon-Sat: 10am-8pm; Sun: 11am-7pm"
+                if "Suite 1985," in add:
+                    add = add.replace("1985,", "1985")
+                if "10250 Santa" in add:
+                    hours = "Mon-Sat: 10am-9pm; Sun: 11am-8pm"
+                if "219 N" in add:
+                    hours = "Mon-Sat: 10am-7pm; Sun: 11am-6pm"
+                if "Center," in add:
+                    add = add.replace("Center,", "Center")
+                if "1st Ave," in add:
+                    add = add.replace("1st Ave,", "1st Ave")
+                if "Strasse 28," in add:
+                    add = add.replace("Strasse 28,", "Strasse 28")
+                if city == "Paramus":
+                    add = "One Garden State Plaza"
+                if country == "KR" or country == "CN" or country == "JP":
+                    if "98616" in phone:
+                        phone = "<MISSING>"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=purl,
