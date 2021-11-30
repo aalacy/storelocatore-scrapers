@@ -45,7 +45,7 @@ def fetch_data():
             zip_postal="",
             country_code="ZM",
             store_number=store_number,
-            phone=poi["Phone"],
+            phone=poi["Phone"].split("/")[0].strip(),
             location_type="",
             latitude=geo[0],
             longitude=geo[1],
