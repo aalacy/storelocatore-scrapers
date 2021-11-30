@@ -36,98 +36,108 @@ def fetch_data():
     with SgRequests() as session:
         search_res = session.get(api_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
-        stores = search_sel.xpath("//optgroup/option")
+        sections = search_sel.xpath("//optgroup")
+        for sec in sections:
+            location_type = "".join(sec.xpath("@label")).strip()
+            stores = sec.xpath("option")
 
-        for _, store in enumerate(stores, 1):
+            for store in stores:
 
-            locator_domain = website
+                locator_domain = website
 
-            location_name = "".join(store.xpath(".//text()"))
-            no = "".join(store.xpath("./@value"))
-            page_url = f"https://alfaromeo.co.nz/get-dealers-by-region/{no}"
+                location_name = "".join(store.xpath(".//text()"))
+                no = "".join(store.xpath("./@value"))
+                page_url = f"https://alfaromeo.co.nz/get-dealers-by-region/{no}"
 
-            log.info(page_url)
-            store_res = session.get(page_url, headers=headers)
-            json_res = json.loads(store_res.text)
-
-            store_sel = lxml.html.fromstring(json_res["html"])
-
-            location_type = "<MISSING>"
-
-            raw_address = ", ".join(
-                list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath("//h6[@class='address']//text()")
-                        ],
-                    )
-                )
-            )
-
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
-            city = formatted_addr.city
-            if city:
-                city = city.replace("New Plymouth New Plymouth", "New Plymouth").strip()
-            state = formatted_addr.state
-
-            zip = formatted_addr.postcode
-            if zip:
-                zip = zip.split(" ")[-1].strip()
-
-            country_code = "NZ"
-
-            phone = "".join(store_sel.xpath("//a[@class='phone']//text()")).strip()
-
-            url = "".join(store_sel.xpath(".//a[last()]/@href"))
-            if "http" in url:
-                page_url = url
                 log.info(page_url)
                 store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)
+                json_res = json.loads(store_res.text)
 
-                hours = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//div[contains(./h4/text(),"SALES")]/p[last()]//text()'
-                            )
-                        ],
+                store_sel = lxml.html.fromstring(json_res["html"])
+
+                raw_address = ", ".join(
+                    list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    "//h6[@class='address']//text()"
+                                )
+                            ],
+                        )
                     )
                 )
-                hours_of_operation = "; ".join(hours).replace(".;", ":").strip()
-            else:
-                hours_of_operation = "<MISSING>"
 
-            store_number = no
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-            latitude, longitude = json_res["dealers"][0][1], json_res["dealers"][0][2]
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                if street_address is not None:
+                    street_address = street_address.replace("Ste", "Suite")
+                city = formatted_addr.city
+                if city:
+                    city = city.replace(
+                        "New Plymouth New Plymouth", "New Plymouth"
+                    ).strip()
+                state = formatted_addr.state
+
+                zip = formatted_addr.postcode
+                if zip:
+                    zip = zip.split(" ")[-1].strip()
+
+                country_code = "NZ"
+
+                phone = "".join(store_sel.xpath("//a[@class='phone']//text()")).strip()
+
+                url = "".join(store_sel.xpath(".//a[last()]/@href"))
+                if "http" in url:
+                    page_url = url
+                    log.info(page_url)
+                    store_res = session.get(page_url, headers=headers)
+                    store_sel = lxml.html.fromstring(store_res.text)
+
+                    hours = list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    '//div[contains(./h4/text(),"SALES")]/p[last()]//text()'
+                                )
+                            ],
+                        )
+                    )
+                    hours_of_operation = "; ".join(hours).replace(".;", ":").strip()
+                else:
+                    hours_of_operation = "<MISSING>"
+
+                store_number = no
+
+                latitude, longitude = (
+                    json_res["dealers"][0][1],
+                    json_res["dealers"][0][2],
+                )
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
