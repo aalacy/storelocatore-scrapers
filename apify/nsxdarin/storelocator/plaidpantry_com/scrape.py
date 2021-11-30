@@ -12,6 +12,7 @@ headers = {
 
 logger = SgLogSetup().get_logger("plaidpantry_com")
 
+
 def fetch_data():
     locs = []
     url = "https://www.plaidpantry.com/store-locator/"
