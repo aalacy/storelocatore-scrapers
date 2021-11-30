@@ -4,6 +4,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
+from httpx import Timeout
 
 logger = SgLogSetup().get_logger("walmart_com")
 
@@ -23,7 +24,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
     session = SgRequests()
     try:
         results = SgRequests.raise_on_err(
-            session.get(start_url, headers=headers, timeout=timeout)
+            session.get(start_url, headers=headers, timeout_config=timeout)
         )
     except exceptions.RequestException as requestsException:
         if "ProxyError" in str(requestsException):
@@ -55,7 +56,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
+    session = SgRequests()
     maxZ = search.items_remaining()
     total = 0
     for code in search:
@@ -70,7 +71,9 @@ def fetch_data():
         )
         try:
             r2 = SgRequests.raise_on_err(
-                session.get(url, headers=headers, timeout=15)
+                session.get(
+                    url, headers=headers, timeout_config=Timeout(timeout=61, connect=61)
+                )
             ).json()
         except Exception:
             r2 = api_get(url, headers, 15, 0, 15).json()
