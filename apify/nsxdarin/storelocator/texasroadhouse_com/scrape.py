@@ -87,6 +87,17 @@ def fetch_data():
                 phone = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
+            cname = (
+                name.replace("-W,", ",")
+                .replace("-E,", ",")
+                .replace("-S,", ",")
+                .replace("-N,", ",")
+            )
+            cname = cname.replace("-NE,", ",")
+            cname = cname.replace("-NW,", ",")
+            cname = cname.replace("-SE,", ",")
+            cname = cname.replace("-SW,", ",")
+            city = cname.split(",")[0]
             if add != "" and city != "<MISSING>":
                 name = name.replace("\\u0027", "'")
                 add = add.replace("\\u0027", "'")

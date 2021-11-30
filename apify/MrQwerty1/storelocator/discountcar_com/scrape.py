@@ -37,7 +37,9 @@ def fetch_data(sgw: SgWriter):
         elif country == "GB":
             page_url = f"https://www.enterprise.com/en/car-rental/locations/uk/-{store_number}.html".lower()
         else:
-            page_url = f"https://www.enterprise.com/en/car-rental/locations/{country_name}/-{store_number}.html".lower()
+            page_url = f"https://www.enterprise.com/en/car-rental/locations/{country_name}/-{store_number}.html".lower().replace(
+                "virgin-islands,-british", "tortola"
+            )
 
         row = SgRecord(
             page_url=page_url,

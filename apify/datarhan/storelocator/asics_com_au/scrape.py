@@ -35,7 +35,7 @@ def fetch_data():
             country_code=poi["countryCode"],
             store_number=store_number,
             phone=poi["phone"],
-            location_type="",
+            location_type=poi["iconMarkerStore"],
             latitude=poi["latitude"],
             longitude=poi["longitude"],
             hours_of_operation=hoo,
