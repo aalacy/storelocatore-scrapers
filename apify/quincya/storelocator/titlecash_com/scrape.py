@@ -45,8 +45,9 @@ def fetch_data(sgw: SgWriter):
 
     for i in all_links:
         link = locator_domain + i["href"]
-
         req = session.get(link, headers=headers)
+        if req.status_code == 403:
+            continue
         base = BeautifulSoup(req.text, "lxml")
 
         location_name = ""
