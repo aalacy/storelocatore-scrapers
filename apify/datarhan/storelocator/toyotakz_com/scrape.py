@@ -33,6 +33,8 @@ def fetch_data():
             city = street_address.split(", ")[0].replace("г.", "")
             street_address = ", ".join(street_address.split(", ")[1:])
         phone = poi_html.xpath(".//p[a]/text()")[1].strip()
+        if not phone:
+            phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
         page_url = poi_html.xpath(".//p/a/@href")[-1]
         geo = poi_html.xpath(".//p/a/@href")[0]
         latitude = ""
