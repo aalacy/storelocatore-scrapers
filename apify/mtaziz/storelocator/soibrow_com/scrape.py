@@ -14,6 +14,7 @@ import ssl
 from lxml import html
 import time
 from sgpostal.sgpostal import parse_address_intl
+from selenium.webdriver.common.action_chains import ActionChains
 
 
 try:
@@ -85,6 +86,9 @@ def get_phone(storenum):
     WebDriverWait(driver, 40).until(
         EC.element_to_be_clickable((By.XPATH, location_xpath))
     )
+    element = driver.find_element_by_xpath(location_xpath)
+    actions = ActionChains(driver)
+    actions.move_to_element(element).perform()
     driver.find_element_by_xpath(location_xpath).click()
     logger.info("Location Link Clicked")
     time.sleep(5)

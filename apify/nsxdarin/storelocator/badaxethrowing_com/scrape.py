@@ -69,7 +69,10 @@ def fetch_data():
                     add = line2.split('"streetAddress": "')[1].split('"')[0]
                     if "," in add:
                         add = add.split(",")[0]
-                    zc = add.rsplit(" ", 1)[1]
+                    try:
+                        zc = add.rsplit(" ", 1)[1]
+                    except:
+                        zc = "<MISSING>"
                 if '"addressLocality": "' in line2:
                     city = line2.split('"addressLocality": "')[1].split('"')[0]
                 if '"addressRegion": "' in line2:

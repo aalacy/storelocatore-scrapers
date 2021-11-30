@@ -19,7 +19,7 @@ headers = {
 }
 
 
-DOMAIN = "https://www.simplyfresh.info/"
+DOMAIN = "https://verlo.com/"
 MISSING = SgRecord.MISSING
 
 
@@ -57,6 +57,8 @@ def fetch_data():
             hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
             hours_of_operation = hours_of_operation.findAll("meta")
             hours_of_operation = " ".join(x["content"] for x in hours_of_operation)
+            if "Sun" not in hours_of_operation:
+                hours_of_operation = "Sun closed " + hours_of_operation
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
