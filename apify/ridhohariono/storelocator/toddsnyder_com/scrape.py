@@ -81,7 +81,7 @@ def fetch_data():
         raw_address = info[0]
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = info[1].strip()
-        hours_of_operation = info[2].strip()
+        hours_of_operation = ",".join(info[-2:])
         country_code = "US"
         store_number = MISSING
         location_type = "toddsnyder"

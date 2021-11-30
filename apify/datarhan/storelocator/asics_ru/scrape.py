@@ -39,15 +39,25 @@ def fetch_data():
             street_address = poi["Address"]
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            city = poi["City"]
+            zip_code = poi["Postcode"]
+            if "ru-ru" in url:
+                if street_address.split(",")[0].isdigit():
+                    zip_code = street_address.split(",")[0]
+                    city = street_address.split(",")[1]
+                    street_address = ", ".join(street_address.split(",")[2:])
+                else:
+                    city = street_address.split(",")[0]
+                    street_address = ", ".join(street_address.split(",")[1:])
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["Title"],
                 street_address=street_address,
-                city=poi["City"],
+                city=city,
                 state=poi["Region"],
-                zip_postal=poi["Postcode"],
+                zip_postal=zip_code,
                 country_code=poi["URL"].split("/")[1].upper(),
                 store_number=poi["ID"],
                 phone=poi["Phone"],
@@ -55,6 +65,7 @@ def fetch_data():
                 latitude=poi["Latitude"],
                 longitude=poi["Longitude"],
                 hours_of_operation="",
+                raw_address=street_address,
             )
 
             yield item
