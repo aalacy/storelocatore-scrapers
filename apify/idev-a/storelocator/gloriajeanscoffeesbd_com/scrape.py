@@ -22,20 +22,17 @@ def fetch_data():
         locations = soup.select('div[data-elementor-type="footer"] ul')[-1].select("li")
         for _ in locations:
             block = list(_.stripped_strings)
-            try:
-                addr = block[1].split(",")
-                yield SgRecord(
-                    page_url=base_url,
-                    location_name=block[0].replace(":", "").strip(),
-                    street_address=", ".join(addr[:-1]),
-                    city=addr[-1].split()[0].split("-")[0].strip(),
-                    zip_postal=addr[-1].split()[-1].split("-")[-1].strip(),
-                    country_code="Bangladesh",
-                    locator_domain=locator_domain,
-                    raw_address=block[1],
-                )
-            except:
-                import  pdb; pdb.set_trace()
+            addr = block[1].split(",")
+            yield SgRecord(
+                page_url=base_url,
+                location_name=block[0].replace(":", "").strip(),
+                street_address=", ".join(addr[:-1]),
+                city=addr[-1].split()[0].split("-")[0].strip(),
+                zip_postal=addr[-1].split()[-1].split("-")[-1].strip(),
+                country_code="Bangladesh",
+                locator_domain=locator_domain,
+                raw_address=block[1],
+            )
 
 
 if __name__ == "__main__":
