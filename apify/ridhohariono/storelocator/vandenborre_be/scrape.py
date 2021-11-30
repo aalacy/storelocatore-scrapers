@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import json
 
-DOMAIN = "vandenborre.com"
+DOMAIN = "vandenborre.be"
 LOCATION_URL = "https://www.vandenborre.be/sitemap/fr/magasin/liste"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
