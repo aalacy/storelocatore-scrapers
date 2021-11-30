@@ -410,6 +410,7 @@ def fetch_main(state, http):
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
     for next_r in state.request_stack_iter():
+        logzilla.info(f"{urlB + next_r.url} <- INDEX!")
         index = SgRequests.raise_on_err(
             http.get(urlB + next_r.url, headers=headers)
         ).text
