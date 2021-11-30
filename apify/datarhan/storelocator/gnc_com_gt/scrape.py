@@ -20,6 +20,9 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//article[@class="item-content"]/div/div[p[strong]]')
+    all_locations += dom.xpath(
+        '//article[@class="item-content"]/div[@data-icon="gpicon-accordion"]'
+    )
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//strong/text()")
         location_name = " ".join([e.strip() for e in location_name if e.strip()])
@@ -32,7 +35,7 @@ def fetch_data():
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
         phone = poi_html.xpath('.//*[contains(text(), "Tel.")]/text()')
-        phone = phone[0].replace("Tel.", "") if phone else ""
+        phone = phone[0].replace("Tel.", "").split("/")[0] if phone else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -58,9 +61,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS})
         )
     ) as writer:
         for item in fetch_data():
