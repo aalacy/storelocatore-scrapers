@@ -18,6 +18,8 @@ def fetch_data():
 
     for poi in data["DATA"]:
         location_name = f'{poi["DEALER"]} {poi["TITLE"]}'
+        if poi["TYPE"] != "1":
+            continue
 
         item = SgRecord(
             locator_domain=domain,
@@ -30,7 +32,7 @@ def fetch_data():
             country_code="TW",
             store_number=poi["KEY"],
             phone=poi["TEL"],
-            location_type=poi["TYPE"],
+            location_type="",
             latitude=poi["LAT"],
             longitude=poi["LNG"],
             hours_of_operation=poi["TIME"],
