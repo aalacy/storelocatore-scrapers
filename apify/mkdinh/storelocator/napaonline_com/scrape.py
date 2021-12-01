@@ -130,11 +130,11 @@ def fetch_locations(postal, driver, writer):
 
 
 def fetch_data():
-    with ThreadPoolExecutor() as executor, get_driver() as driver, SgWriter(
+    with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
-    ) as writer:
+    ) as writer, ThreadPoolExecutor() as executor, get_driver() as driver:
         search = static_zipcode_list(country_code=SearchableCountries.USA, radius=10)
         futures = [
             executor.submit(fetch_locations, postal, driver, writer)
