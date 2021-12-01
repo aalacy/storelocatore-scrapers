@@ -66,9 +66,11 @@ def fetch_data():
             ).decompose()
         except:
             pass
-        hours_of_operation = hoo_content.get_text(strip=True, separator=",").replace(
-            "day,", "day: "
-        )
+        hours_of_operation = (
+            hoo_content.get_text(strip=True, separator=",")
+            .replace("day,", "day: ")
+            .replace("Schedule Your Eye Exam", "")
+        ).rstrip(",")
         latitude = row["map"]["lat"]
         longitude = row["map"]["lon"]
         log.info("Append {} => {}".format(location_name, street_address))

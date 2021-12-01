@@ -37,7 +37,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://www.carters.com"
 
     countries = base.find(id="country").find_all("option")[1:]
-
+    num = 1
     for i in countries:
         country_code = i["value"]
         final_link = (
@@ -46,6 +46,11 @@ def fetch_data(sgw: SgWriter):
             + country_code
             + "&id=carters"
         )
+
+        if num % 15 == 0:
+            session = SgRequests()
+            session.proxies = proxies
+        num = num + 1
 
         logger.info(final_link)
         final_req = session.get(final_link, headers=headers)
