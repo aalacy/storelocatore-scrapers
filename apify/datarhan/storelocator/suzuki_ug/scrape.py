@@ -51,13 +51,14 @@ def fetch_data():
             city=addr.city,
             state=addr.state,
             zip_postal=addr.postcode,
-            country_code="NG",
+            country_code="UG",
             store_number="",
             phone=phone,
             location_type=location_type,
             latitude="",
             longitude="",
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item
