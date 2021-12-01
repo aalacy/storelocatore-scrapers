@@ -49,6 +49,9 @@ def fetch_data():
         hoo = " ".join(hoo).split("*")[0].strip()
         if "Store hours" in hoo:
             hoo = SgRecord.MISSING
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        if len(zip_code.strip()) == 2:
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -57,7 +60,7 @@ def fetch_data():
             street_address=raw_address[0],
             city=raw_address[1].split(", ")[0],
             state=raw_address[1].split(", ")[-1].split()[0],
-            zip_postal=raw_address[1].split(", ")[-1].split()[-1],
+            zip_postal=zip_code,
             country_code=SgRecord.MISSING,
             store_number=SgRecord.MISSING,
             phone=phone,

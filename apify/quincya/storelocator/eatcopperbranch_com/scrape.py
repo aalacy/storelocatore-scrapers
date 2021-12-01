@@ -50,6 +50,7 @@ def fetch_data(sgw: SgWriter):
         street_address = ", ".join(raw_address[:-3])
         if not street_address:
             street_address = raw_address[0]
+        street_address = street_address.split(",")[0].strip()
         city = raw_address[-3].strip()
         state = raw_address[-2].strip()
         zip_code = raw_address[-1].strip()
