@@ -35,9 +35,11 @@ def fetch_data():
                 res = session.get(page_url, headers=_headers)
             except:
                 continue
-            if res.status_code != 200 or res.url.endswith("facelogiccle.com"):
+            if res.status_code != 200:
                 continue
             sp1 = bs(res.text, "lxml")
+            if not sp1.title.text:
+                continue
             location_name = (
                 sp1.title.text.split("-")[-1]
                 .split("|")[-1]
@@ -162,6 +164,8 @@ def fetch_data():
                         _addr = sp1.select_one("div#footerinfo p").text.split("|")
                         phone = _addr[-1]
                         del _addr[-1]
+                    if not _addr:
+                        continue
                     addr = parse_address_intl(" ".join(_addr))
                     street_address = addr.street_address_1
                     if addr.street_address_2:
