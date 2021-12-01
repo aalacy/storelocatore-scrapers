@@ -20,7 +20,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[contains(text(), "allDealers")]/text()')[0]
-    all_locations = re.findall("allDealers =(.+\]);", data)[0]
+    all_locations = re.findall(r"allDealers =(.+\]);", data)[0]
     all_locations = json.loads(all_locations)
 
     for poi in all_locations:
