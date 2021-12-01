@@ -1,5 +1,4 @@
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -32,7 +31,7 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//h4[contains(text(), "Toonzaal")]/following-sibling::div//text()'
         )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = " ".join(" ".join([e.strip() for e in hoo if e.strip()]).split())
 
         item = SgRecord(
             locator_domain=domain,
