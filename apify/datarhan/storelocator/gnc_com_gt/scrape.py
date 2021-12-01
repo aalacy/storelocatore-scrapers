@@ -21,7 +21,7 @@ def fetch_data():
 
     all_locations = dom.xpath('//article[@class="item-content"]/div/div[p[strong]]')
     all_locations += dom.xpath(
-        '//article[@class="item-content"]/div[@data-icon="gpicon-accordion"]'
+        '//article[@class="item-content"]/div[@data-icon="gpicon-accordion"]/div[@data-icon="gpicon-textblock"]'
     )
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//strong/text()")
