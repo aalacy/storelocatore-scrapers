@@ -88,6 +88,15 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h2[text()="Öffnungszeiten"]/following-sibling::div[1]/div[1]//div[@class="openinghours-line"]//text()'
+                    )
+                )
+                or "<MISSING>"
+            )
         hours_of_operation = " ".join(hours_of_operation.split())
         if location_name.find(".") != -1:
             location_name = location_name.split(".")[0].strip()

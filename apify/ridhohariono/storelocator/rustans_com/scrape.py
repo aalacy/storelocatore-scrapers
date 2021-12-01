@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 DOMAIN = "rustans.com"
 LOCATION_URL = "https://rustans.com/pages/store-finder"
@@ -68,13 +69,14 @@ def fetch_data():
                 strip=True, separator=","
             )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = MISSING
-        for val in addr:
-            if "+63" in val:
-                phone = (
-                    val.split("-")[0].split("and")[0].split("/")[0].split("Local")[0]
-                )
-                break
+        phone = (
+            info.find("span", text=re.compile(r"\+63.*"))
+            .text.split("-")[0]
+            .split("and")[0]
+            .split("/")[0]
+            .split("Local")[0]
+            .strip()
+        )
         country_code = "PH"
         hoo = ""
         for val in addr:
