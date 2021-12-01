@@ -130,7 +130,6 @@ if __name__ == "__main__":
             SgRecordID(
                 {
                     SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.STORE_NUMBER,
                 }
             ),
             duplicate_streak_failure_factor=-1,
