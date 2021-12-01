@@ -32,7 +32,6 @@ def fetch_data():
         latitude = poi_html.xpath("@data-lat")[0]
         longitude = poi_html.xpath("@data-lng")[0]
         state = poi_html.xpath(".//h6/text()")[0]
-        street_address = poi_html.xpath('.//div[@class="address"]/text()')[0].strip()
         phone = poi_html.xpath(".//ul/li/text()")[0].strip()
         raw_address = loc_dom.xpath('//h3[@class="address"]/text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
