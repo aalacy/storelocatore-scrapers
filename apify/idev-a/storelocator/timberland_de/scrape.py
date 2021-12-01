@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 
@@ -13,8 +13,8 @@ locator_domain = "https://www.timberland.de"
 locator_url = (
     "https://hosted.where2getit.com/timberland/timberlandeu/index_de.newdesign.html"
 )
-country_url = "https://hosted.where2getit.com/timberland/timberlandeu/rest/getlist?lang=de_DE&like=0.2946610991577996"
-json_url = "https://hosted.where2getit.com/timberland/timberlandeu/rest/locatorsearch?like=0.31616223781492603&lang=de_DE"
+
+json_url = "https://hosted.where2getit.com/timberland/timberlandeu/rest/locatorsearch?like=0.05419636461621935&lang=de_DE"
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
@@ -24,7 +24,7 @@ headers = {
 def fetch_records(search, token):
     for lat, lng in search:
         current_country = search.current_country()
-        with SgRequests(proxy_country="us") as http:
+        with SgRequests(proxy_country="de") as http:
             payload = {
                 "request": {
                     "appkey": token,
@@ -36,7 +36,7 @@ def fetch_records(search, token):
                         "geolocs": {
                             "geoloc": [
                                 {
-                                    "addressline": "seoul",
+                                    "addressline": "",
                                     "country": current_country.upper(),
                                     "latitude": str(lat),
                                     "longitude": str(lng),
@@ -92,8 +92,6 @@ def fetch_records(search, token):
                     location_name = " ".join(
                         bs(_["name"], "lxml").stripped_strings
                     ).replace("&reg;", "®")
-                    if "timberland" not in location_name:
-                        continue
                     street_address = _["address1"]
                     if _["address2"]:
                         street_address += " " + _["address2"]
@@ -137,7 +135,7 @@ if __name__ == "__main__":
             )
         ) as writer:
             search = DynamicGeoSearch(
-                country_codes=SearchableCountries.ALL, granularity=Grain_8()
+                country_codes=SearchableCountries.ALL, granularity=Grain_4()
             )
 
             for rec in fetch_records(search, token):

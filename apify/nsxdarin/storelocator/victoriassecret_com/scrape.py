@@ -114,6 +114,7 @@ def fetch_data():
                     hours = "<MISSING>"
                     state = "<MISSING>"
                     country = item.split('countryCode\\":\\"')[1].split('\\"')[0]
+                    store = store + "-" + country
                     try:
                         phone = item.split('"phone\\":\\"')[1].split('\\"')[0]
                     except:
