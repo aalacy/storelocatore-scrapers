@@ -39,7 +39,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr.city,
                 state="",
-                zip_postal=poi["plant_code"],
+                zip_postal=addr.postcode,
                 country_code="PH",
                 store_number=poi["code"],
                 phone=poi["contacts"][0]["contact_number"],
