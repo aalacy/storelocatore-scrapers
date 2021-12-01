@@ -1,15 +1,14 @@
-import re
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "risingroll_com"
+website = "kingkullen_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -18,44 +17,26 @@ headers = {
 }
 
 
-DOMAIN = "https://risingroll.com"
+DOMAIN = "https://kingkullen.com/"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        url = "https://risingroll.com/locations/"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "pm-location"})
+        url = "https://kingkullen.com/wp-json/wpgmza/v1/features"
+        loclist = session.get(url, headers=headers).json()["markers"]
         for loc in loclist:
-            if "coming soon" in loc.text.lower():
-                continue
-            page_url = loc.find("a", string=re.compile("View Location & Menu"))
-            if not page_url:
-                page_url = url
-            else:
-                page_url = DOMAIN + page_url["href"]
-            location_name = loc.find("h4").text
-            log.info(page_url)
-            address = (
-                loc.find("a", {"class": "address-link"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
+            location_name = loc["title"]
+            log.info(location_name)
+            description = loc["description"]
+            soup = BeautifulSoup(description, "html.parser")
+            hours_of_operation = (
+                soup.find("p").get_text(separator="|", strip=True).replace("|", " ")
             )
-            try:
-                hours_of_operation = (
-                    loc.find("div", {"class": "hours"})
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
-            except:
-                hours_of_operation = MISSING
-            try:
-                phone = loc.select_one("a[href*=tel]").text
-            except:
-                phone = MISSING
-            address = address.replace(",", " ")
+            phone = soup.select_one("a[href*=tel]").text
+            store_number = loc["id"]
+            address = loc["address"]
+            address = address.replace(",", " ").replace("USA", "")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -81,35 +62,40 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-
+            country_code = "USA"
+            latitude = loc["lat"]
+            longitude = loc["lng"]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name.strip(),
+                page_url="https://kingkullen.com/store-locator/",
+                location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
-                country_code="US",
-                store_number=MISSING,
+                country_code=country_code,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
-                hours_of_operation=hours_of_operation.strip(),
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
 
 
 def scrape():
+    log.info("Started")
+    count = 0
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
