@@ -54,7 +54,7 @@ def fetch_data():
             longitude = loc["longtitude"]
             store_number = loc["id"]
             page_url = DOMAIN + loc["url"]
-            # log.info(page_url)
+            log.info(page_url)
             try:
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
@@ -68,7 +68,6 @@ def fetch_data():
                 )
             except:
                 hours_of_operation = MISSING
-                print(page_url)
             street_address = loc["address"]
             city = loc["city"]
             state = loc["state"]
