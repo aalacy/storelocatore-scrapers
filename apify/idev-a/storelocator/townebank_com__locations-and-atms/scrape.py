@@ -25,7 +25,7 @@ def fetch_data(writer):
         )
         for _ in locations:
             location_type = ""
-            if "ATM not available" in _["notes"]:
+            if "not available" in _["notes"]:
                 location_type = "branch"
             elif "location only includes an ATM" in _["notes"]:
                 location_type = "atm"
