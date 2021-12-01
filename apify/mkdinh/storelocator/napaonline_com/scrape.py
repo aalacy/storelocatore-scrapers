@@ -16,7 +16,6 @@ from sgzip.static import static_zipcode_list
 from sgscrape.sgpostal import parse_address, USA_Best_Parser
 
 logger = SgLogSetup().get_logger("napaonline_com")
-
 user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0"
 )
@@ -25,22 +24,12 @@ base_url = "https://www.napaonline.com/stores"
 
 def get_driver():
     driver = SgChrome(
-        is_headless=False, seleniumwire_auto_config=False, user_agent=user_agent
+        is_headless=True, seleniumwire_auto_config=False, user_agent=user_agent
     ).driver()
     driver.set_script_timeout(600)
     load_initial_page(driver)
 
     return driver
-
-
-def write_output(data):
-    with SgWriter(
-        SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
-        )
-    ) as writer:
-        for row in data:
-            writer.write_row(row)
 
 
 @retry(stop=stop_after_attempt(3))
@@ -82,18 +71,17 @@ def load_initial_page(driver):
     sleep(20)
 
 
-def fetch_locations(postal, driver):
+def fetch_locations(postal, driver, writer):
     soup = fetch(postal, driver)
 
     if not soup:
-        return []
+        return
 
     canvas = soup.find("div", id="map_canvas")
 
     if not canvas:
-        return []
+        return
 
-    pois = []
     locations = json.loads(canvas.attrs["data-stores"])
     for _, location in locations.items():
         locator_domain = "napaonline.com"
@@ -122,7 +110,7 @@ def fetch_locations(postal, driver):
 
         hours_of_operation = get_hours(store_number, soup)
 
-        pois.append(
+        writer.write_row(
             SgRecord(
                 locator_domain=locator_domain,
                 location_name=location_name,
@@ -140,27 +128,25 @@ def fetch_locations(postal, driver):
             )
         )
 
-    return pois
-
 
 def fetch_data():
-    driver = get_driver()
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=25)
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+        )
+    ) as writer, ThreadPoolExecutor() as executor, get_driver() as driver:
+        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=10)
         futures = [
-            executor.submit(fetch_locations, postal, driver) for postal in search
+            executor.submit(fetch_locations, postal, driver, writer)
+            for postal in search
         ]
-
         for future in as_completed(futures):
-            locations = future.result()
-            for location in locations:
-                yield location
+            pass
 
 
 def scrape():
     now = dt.now()
-    data = fetch_data()
-    write_output(data)
+    fetch_data()
     logger.info(f"duration: {dt.now() - now}")
 
 
