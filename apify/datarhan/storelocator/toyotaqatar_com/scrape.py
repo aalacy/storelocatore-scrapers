@@ -1,10 +1,19 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+import ssl
 import pandas as pd
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
@@ -16,6 +25,9 @@ def fetch_data():
         hoo = " ".join([e.strip() for e in poi["hours"].split()])
         if hoo.startswith("|"):
             hoo = hoo[1:]
+        loc_type = poi["cat"]
+        if loc_type != 1:
+            continue
 
         item = SgRecord(
             locator_domain=domain,
@@ -28,7 +40,7 @@ def fetch_data():
             country_code="Qatar",
             store_number="",
             phone=poi["tel"],
-            location_type=poi["cat"],
+            location_type="",
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation=hoo,

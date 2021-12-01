@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_4
+from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 import json
@@ -410,6 +410,7 @@ def fetch_main(state, http):
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
     for next_r in state.request_stack_iter():
+        logzilla.info(f"{urlB + next_r.url} <- INDEX!")
         index = SgRequests.raise_on_err(
             http.get(urlB + next_r.url, headers=headers)
         ).text
@@ -422,9 +423,8 @@ if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        granularity=Grain_4(),
-        expected_search_radius_miles=25,
-        max_search_results=50,
+        granularity=Grain_8(),
+        expected_search_radius_miles=100,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
