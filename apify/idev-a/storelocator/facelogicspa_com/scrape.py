@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -38,7 +38,7 @@ def fetch_data():
             if res.status_code != 200:
                 continue
             sp1 = bs(res.text, "lxml")
-            if not sp1.title.text:
+            if not sp1.title:
                 continue
             location_name = (
                 sp1.title.text.split("-")[-1]

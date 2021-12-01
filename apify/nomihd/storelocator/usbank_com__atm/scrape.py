@@ -20,7 +20,7 @@ def fetch_data():
     # Your scraper here
     search_url = "https://locations.usbank.com/index.html"
     base_url = "https://locations.usbank.com"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         states_req = session.get(search_url, headers=headers)
         states_sel = lxml.html.fromstring(states_req.text)
         states = states_sel.xpath('//li/a[@class="stateListItemLink"]/@href')
