@@ -31,7 +31,7 @@ def fetch_data():
     contents = soup.find("markers").find_all("marker")
     for row in contents:
         page_url = row["permalink"]
-        location_name = row["name"]
+        location_name = row["name"].replace("&#8211;", "-")
         street_address = row["address"].strip()
         city_state_zip = row["city_state_zip"].split(",")
         city = city_state_zip[0]
@@ -41,7 +41,10 @@ def fetch_data():
         country_code = "US"
         store_number = row["id"]
         hours_of_operation = row["times"]
-        location_type = row["features"].strip()
+        if "Temporarily Closed" in row["branch_status"]:
+            location_type = "TEMP_CLOSED"
+        else:
+            location_type = row["features"].strip()
         latitude = row["lat"]
         longitude = row["lng"]
         log.info("Append {} => {}".format(location_name, street_address))
