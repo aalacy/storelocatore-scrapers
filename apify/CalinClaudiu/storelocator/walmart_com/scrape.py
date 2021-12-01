@@ -13,7 +13,7 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    expected_search_radius_miles=None,
     max_search_results=50,
 )
 
@@ -53,7 +53,7 @@ def api_get(start_url, headers, attempts, maxRetries):
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
+    session = SgRequests()
     maxZ = search.items_remaining()
     total = 0
     for code in search:
