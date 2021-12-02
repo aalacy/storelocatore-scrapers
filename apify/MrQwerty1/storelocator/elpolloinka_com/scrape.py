@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from typing import List
 
 
 def get_urls():
@@ -119,7 +120,7 @@ def get_data(page_url, sgw: SgWriter):
 
     location_name = "".join(tree.xpath("//h2[@class='heading']//text()")).strip()
     line = tree.xpath("//p[@class='address']/text()")
-    raw = list(filter(None, [l.strip() for l in line]))
+    raw = list(filter(None, [l.strip() for l in line]))  # type: List
     raw_address = ", ".join(raw)
 
     street_address = ", ".join(raw[:-1]).strip()
