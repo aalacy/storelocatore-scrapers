@@ -55,11 +55,13 @@ def fetch_data():
                     .split("lobby hours", 1)[1]
                     .split("drive", 1)[0]
                     .replace("\n", " ")
+                    .strip(":")
+                    .replace("(by appointment 9:00am-10:00am; 3:00pm-5:30pm)", " ")
                     .strip()
                 )
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=url,
+                    page_url=link,
                     location_name=title,
                     street_address=street,
                     city=city.strip(),
@@ -90,6 +92,8 @@ def fetch_data():
                     .split("lobby hours", 1)[1]
                     .split("drive", 1)[0]
                     .replace("\n", " ")
+                    .strip(":")
+                    .replace("(by appointment 9:00am-10:00am; 3:00pm-5:30pm)", " ")
                     .strip()
                 )
 
@@ -104,7 +108,7 @@ def fetch_data():
                     pcode = pcode[0:5]
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=url,
+                    page_url=link,
                     location_name=title,
                     street_address=street,
                     city=city.strip(),
@@ -128,7 +132,11 @@ def fetch_data():
                 .splitlines()
             )
             phone = loc[0].split(" at ", 1)[1]
-            hours = loc[1]
+            hours = (
+                loc[1]
+                .strip(":")
+                .replace("(by appointment 9:00am-10:00am; 3:00pm-5:30pm)", " ")
+            )
             address = loc[2].split(", ")
             state = address[-1]
             city = address[-2]
@@ -136,7 +144,7 @@ def fetch_data():
             state, pcode = state.lstrip().split(" ", 1)
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=link,
                 location_name=title,
                 street_address=street,
                 city=city.strip(),

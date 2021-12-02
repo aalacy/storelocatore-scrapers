@@ -15,7 +15,7 @@ def fetch_data():
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "X-Requested-With": "XMLHttpRequest",
     }
-    country_codes = ["kr/ko-kr", "sg/en-sg", "my/en-my"]
+    country_codes = ["kr/ko-kr", "sg/en-sg", "my/en-my", "th/en-th"]
     for code in country_codes:
         frm = {
             "lat": "0",
@@ -30,22 +30,24 @@ def fetch_data():
                 start_url.format(code, page), headers=hdr, data=frm
             ).json()
             for poi in data["items"]:
-                page_url = f"https://www.onitsukatiger.com/kr/ko-kr/store-finder/{poi['url_key']}/"
-                hoo_week_days = poi["attributes"]["weekday_openings_day"][
-                    "frontend_label"
-                ]
-                hoo_week_time = poi["attributes"]["weekday_openings_times"][
-                    "option_title"
-                ]
-                hoo = f"{hoo_week_days} - {hoo_week_time}"
-                if poi["attributes"].get("weekend_openings_times"):
-                    hoo_weekend = poi["attributes"]["weekend_openings_times"][
+                page_url = f"https://www.onitsukatiger.com/{code}/store-finder/{poi['url_key']}/"
+                hoo = ""
+                if poi["attributes"].get("weekday_openings_day"):
+                    hoo_week_days = poi["attributes"]["weekday_openings_day"][
                         "frontend_label"
                     ]
-                    hoo_weekend_time = poi["attributes"]["weekend_openings_times"][
+                    hoo_week_time = poi["attributes"]["weekday_openings_times"][
                         "option_title"
                     ]
-                    hoo += f", {hoo_weekend} - {hoo_weekend_time}"
+                    hoo = f"{hoo_week_days} - {hoo_week_time}"
+                    if poi["attributes"].get("weekend_openings_times"):
+                        hoo_weekend = poi["attributes"]["weekend_openings_times"][
+                            "frontend_label"
+                        ]
+                        hoo_weekend_time = poi["attributes"]["weekend_openings_times"][
+                            "option_title"
+                        ]
+                        hoo += f", {hoo_weekend} - {hoo_weekend_time}"
 
                 item = SgRecord(
                     locator_domain=domain,

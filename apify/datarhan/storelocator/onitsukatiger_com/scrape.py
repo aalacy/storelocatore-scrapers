@@ -29,6 +29,9 @@ def fetch_data():
             if poi["storeHours"]:
                 hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
                 hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            state = poi["stateCode"]
+            if state and state.isdigit():
+                state = ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -36,7 +39,7 @@ def fetch_data():
                 location_name=poi["name"],
                 street_address=street_address,
                 city=poi["city"],
-                state=poi["stateCode"],
+                state=state,
                 zip_postal=poi["postalCode"],
                 country_code=poi["countryCode"],
                 store_number=store_number,
