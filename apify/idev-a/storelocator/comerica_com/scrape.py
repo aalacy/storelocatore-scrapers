@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import json
@@ -12,7 +12,7 @@ headers = {
 }
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA], granularity=Grain_8()
+    country_codes=[SearchableCountries.USA], granularity=Grain_4()
 )
 
 
@@ -21,7 +21,7 @@ def fetch_data():
     maxZ = search.items_remaining()
     total = 0
     for code in search:
-        with SgRequests(proxy_country="us") as session:
+        with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=7) as session:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
             found = 0

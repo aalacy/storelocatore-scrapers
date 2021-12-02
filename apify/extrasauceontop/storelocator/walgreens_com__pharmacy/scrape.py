@@ -22,7 +22,6 @@ def get_data():
 
         url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
         response = session.post(url, data=params).json()
-
         try:
             response["results"]
         except Exception:
