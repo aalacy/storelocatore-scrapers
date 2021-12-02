@@ -69,6 +69,10 @@ def fetch_data():
 
             city = store["location_city"]
             state = store["location_state"]
+            if not state:
+                if "location_nonUS_region" in store:
+                    state = store["location_nonUS_region"]
+
             zip = store["location_zipcode"]
 
             country_code = store["location_country_name"]

@@ -33,7 +33,6 @@ def fetch_data():
         typ = "<MISSING>"
         logger.info("Pulling Stores")
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if "href='/menu/" in line:
                 stub = line.split("href='/menu/")[1].split("'")[0]
                 lurl = url + "/" + stub + ".php"
@@ -54,7 +53,6 @@ def fetch_data():
             store = "<MISSING>"
             hours = ""
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
                 if "maps.LatLng(" in line2:
                     lat = line2.split("maps.LatLng(")[1].split(",")[0].strip()
                     lng = (
