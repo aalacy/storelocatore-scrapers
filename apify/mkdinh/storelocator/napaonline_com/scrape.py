@@ -134,8 +134,8 @@ def fetch_data():
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
-    ) as writer, ThreadPoolExecutor() as executor, get_driver() as driver:
-        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=10)
+    ) as writer, ThreadPoolExecutor(max_workers=1) as executor, get_driver() as driver:
+        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=5)
         futures = [
             executor.submit(fetch_locations, postal, driver, writer)
             for postal in search
