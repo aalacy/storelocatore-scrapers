@@ -9,8 +9,6 @@ import tenacity
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 import json
-import time
-import random
 import ssl
 
 logger = SgLogSetup().get_logger(logger_name="Scraper")
@@ -88,10 +86,9 @@ def get_response(urlnum, country, url):
         },
     }
 
-    with SgRequests(timeout_config=300, verify_ssl=False) as http:
+    with SgRequests(timeout_config=600, verify_ssl=False) as http:
         logger.info(f"[{urlnum}] Pulling the data from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
-        time.sleep(random.randint(10, 30))
         if r.status_code == 200:
             if r.json() is not None:
                 logger.info(f"HTTP Status Code: {r.status_code}")
