@@ -99,8 +99,6 @@ def fetch_data():
                                 latitude = store_json["geo"]["latitude"]
                                 longitude = store_json["geo"]["longitude"]
                                 store_number = stores[key]["cost_center"]
-                                raw_address = store_json["name"]
-
                                 state = ""
                                 try:
                                     temp_address = "".join(
