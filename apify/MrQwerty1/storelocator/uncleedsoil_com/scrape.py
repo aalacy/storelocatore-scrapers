@@ -78,7 +78,9 @@ def fetch_data(sgw: SgWriter):
         street_address = " ".join(s.values())
         city = a.get("city")
         state = a.get("subdivision")
-        postal = a.get("postalCode")
+        postal = a.get("postalCode") or ""
+        if "-" in postal:
+            postal = postal.split("-")[0].strip()
 
         g = a.get("location") or {}
         latitude = g.get("latitude")
