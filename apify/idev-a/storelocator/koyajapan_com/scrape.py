@@ -37,13 +37,6 @@ def fetch_data():
                 )
 
             try:
-                note = _.select("p")[2].text.strip()
-                if "COMING SOON" in note:
-                    continue
-            except:
-                pass
-
-            try:
                 coord = (
                     _.select("a")[-1]["href"]
                     .split("/@")[1]
