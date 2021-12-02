@@ -268,7 +268,7 @@ def fetch_data(sgw: SgWriter):
             tasks = []
             task = [
                 executor.submit(fetch_records, idx, country_n_url, sgw)
-                for idx, country_n_url in enumerate(sub_city_or_state[0:10])
+                for idx, country_n_url in enumerate(sub_city_or_state[0:])
             ]
             tasks.extend(task)
             for future in as_completed(tasks):
