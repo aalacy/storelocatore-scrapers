@@ -20,7 +20,7 @@ base_url = "https://www.carrefour.fr/magasin/"
 
 
 def fetch_data():
-    with SgRequests(proxy_country="fr") as session:
+    with SgRequests(proxy_country="fr", retries_with_fresh_proxy_ip=7) as session:
         regions = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "li.store-locator-footer-list__item a"
         )
