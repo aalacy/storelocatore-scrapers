@@ -66,6 +66,9 @@ def fetch_data():
 
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
+
+            if not street_address:
+                street_address = raw_address.split(",")[0].strip()
             city = formatted_addr.city
             state = formatted_addr.state
             zip = formatted_addr.postcode

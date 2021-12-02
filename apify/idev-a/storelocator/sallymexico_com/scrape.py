@@ -23,7 +23,9 @@ asset_url = r"https://e.clarity.ms/collect"
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    ) as driver:
         driver.get(base_url)
         rr = driver.wait_for_request(json_url, timeout=15)
         hours = [
@@ -42,7 +44,7 @@ def fetch_data():
                 page_url=base_url,
                 store_number=_["id"],
                 location_name=_["name"],
-                street_address=street_address,
+                street_address=street_address.replace("\n", " "),
                 city=_["city"],
                 state=_["stateCode"],
                 zip_postal=_["postalCode"],
