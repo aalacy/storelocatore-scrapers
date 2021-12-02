@@ -18,11 +18,20 @@ def fetch_data():
     data = session.get(start_url, headers=hdr).json()
 
     for store_number, poi in data["map_data"]["locations"].items():
+        page_url = etree.HTML(poi["infowindow_content"]).xpath("//a/@href")[0]
+        page_url = "https://www.suzuki.be" + page_url
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+
         raw_address = etree.HTML(poi["infowindow_content"]).xpath(
             '//p[@class="address"]/text()'
         )
         raw_address = [e.strip() for e in raw_address if e.strip()]
         phone = etree.HTML(poi["infowindow_content"]).xpath("//a/text()")[-1].strip()
+        hoo = loc_dom.xpath(
+            '//h4[contains(text(), "Toonzaal")]/following-sibling::div//text()'
+        )
+        hoo = " ".join(" ".join([e.strip() for e in hoo if e.strip()]).split())
 
         item = SgRecord(
             locator_domain=domain,
@@ -38,7 +47,7 @@ def fetch_data():
             location_type="",
             latitude=poi["latitude"],
             longitude=poi["longitude"],
-            hours_of_operation="",
+            hours_of_operation=hoo,
         )
 
         yield item
