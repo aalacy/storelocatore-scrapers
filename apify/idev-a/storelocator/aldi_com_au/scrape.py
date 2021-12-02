@@ -28,7 +28,7 @@ def fetch_records(search):
             progress = (
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
-            
+
             res = http.get(base_url.format(lng1, lat1, lng, lat), headers=headers)
             if res.status_code != 200:
                 logger.info(f"[{lat}, {lng}] [{progress}] ================ ")
