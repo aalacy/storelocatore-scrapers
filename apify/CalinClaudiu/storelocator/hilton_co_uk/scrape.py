@@ -21,6 +21,7 @@ headers_c = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
+MISSING = SgRecord.MISSING
 QUERY_LIMIT = 500
 MAX_WORKERS = 15
 API_ENDPOINT_URL = "https://www.hilton.com/graphql/customer?appName=dx_shop_search_app&operationName=hotelSummaryOptions_locationPage"
@@ -112,7 +113,6 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                 data_hotels = hotel_summary_options["hotels"]
                 try:
                     for idx1, _ in enumerate(data_hotels[0:]):
-                        MISSING = SgRecord.MISSING
                         DOMAIN = "https://www.hilton.com/en/"
                         locator_domain = DOMAIN
                         ln = _["name"]
@@ -148,7 +148,6 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                         hours_of_operation = MISSING
                         raw_address = a["addressFmt"]
                         raw_address = raw_address if raw_address else MISSING
-                        #             row = []
 
                         item = SgRecord(
                             locator_domain=locator_domain,
