@@ -135,7 +135,7 @@ if __name__ == "__main__":
             )
         ) as writer:
             search = DynamicGeoSearch(
-                country_codes=SearchableCountries.ALL, granularity=Grain_4()
+                country_codes=SearchableCountries.ALL, granularity=Grain_8()
             )
 
             for rec in fetch_records(search, token):
