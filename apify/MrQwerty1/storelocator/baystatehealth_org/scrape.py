@@ -125,7 +125,9 @@ def get_data(url, _types, coords, sgw: SgWriter):
                 latitude, longitude = coords[k]
                 break
     location_type = _types.get(url)
-    hours = tree.xpath("//div[@id='main_2_contentpanel_1_pnlOfficeHours']//text()")
+    hours = tree.xpath(
+        "//div[@id='main_2_contentpanel_1_pnlOfficeHours']//text()|//div[@id='main_2_contentpanel_0_pnlOfficeHours']//text()"
+    )
     hours = list(filter(None, [h.strip() for h in hours]))
 
     if hours:
