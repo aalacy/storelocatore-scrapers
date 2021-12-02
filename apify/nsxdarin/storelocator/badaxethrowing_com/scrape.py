@@ -127,6 +127,14 @@ def fetch_data():
                     zc = "20018"
                 if "30 Hill St" in add:
                     zc = "94014"
+                if "Minneapolis" in name:
+                    city = "Minneapolis"
+                if "axe-throwing-surrey" in loc:
+                    add = "8132, 109 130 St #109"
+                if "axe-throwing-vaughan" in loc:
+                    add = "171, 3 Maplecrete Rd #3"
+                if "axe-throwing-winnipeg" in loc:
+                    add = "1393, 6 Border St #6"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=lurl,

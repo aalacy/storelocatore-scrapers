@@ -23,7 +23,7 @@ headers_c = {
 
 MISSING = SgRecord.MISSING
 QUERY_LIMIT = 500
-MAX_WORKERS = 15
+MAX_WORKERS = 10
 API_ENDPOINT_URL = "https://www.hilton.com/graphql/customer?appName=dx_shop_search_app&operationName=hotelSummaryOptions_locationPage"
 
 
@@ -256,18 +256,19 @@ def get_cities_for_cn_gb_us(countries):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgRequests(verify_ssl=False) as session:
+    with SgRequests(verify_ssl=False, timeout_config=300) as session:
         countries = gen_countries(session)
         sub_city_or_state = get_cities_for_cn_gb_us(countries)
         sub_city_or_state = [
             dict(t) for t in {tuple(d.items()) for d in sub_city_or_state}
         ]
+
         logger.info(f"after adding sub city or state: {sub_city_or_state}")
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = []
             task = [
                 executor.submit(fetch_records, idx, country_n_url, sgw)
-                for idx, country_n_url in enumerate(sub_city_or_state[0:])
+                for idx, country_n_url in enumerate(sub_city_or_state[0:10])
             ]
             tasks.extend(task)
             for future in as_completed(tasks):
