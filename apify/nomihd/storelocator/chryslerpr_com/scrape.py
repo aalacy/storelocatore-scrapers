@@ -101,7 +101,19 @@ def fetch_data():
                     [x.strip() for x in store.xpath(".//p[2]//text()")],
                 )
             )
-            hours_of_operation = " ".join(hours)
+            hours_of_operation = (
+                ", ".join(hours)
+                .strip()
+                .split(", Horario de Servicio y Piezas:")[0]
+                .strip()
+                .replace("Horarios:", "")
+                .strip()
+                .replace(":,", ":")
+                .strip()
+            )
+            if len(hours_of_operation) > 0:
+                if hours_of_operation[0] == ",":
+                    hours_of_operation = "".join(hours_of_operation[1:]).strip()
             map_link = "".join(store.xpath('.//iframe[contains(@src,"maps")]/@src'))
             latitude, longitude = get_latlng(map_link)
 
