@@ -85,6 +85,10 @@ def fetch_data():
                     if "de " in location_name
                     else "<MISSING>"
                 )
+
+            if not city or city == "<MISSING>":
+                city = "San Pedro"
+                street_address = street_address.replace("San Pedro", "").strip()
             state = formatted_addr.state
             zip = formatted_addr.postcode
 
