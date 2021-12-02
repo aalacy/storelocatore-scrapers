@@ -119,10 +119,11 @@ def get_data(page_url, sgw: SgWriter):
 
     location_name = "".join(tree.xpath("//h2[@class='heading']//text()")).strip()
     line = tree.xpath("//p[@class='address']/text()")
-    raw_address = list(filter(None, [l.strip() for l in line]))
+    raw = list(filter(None, [l.strip() for l in line]))
+    raw_address = ", ".join(raw)
 
-    street_address = ", ".join(raw_address[:-1]).strip()
-    line = raw_address[-1]
+    street_address = ", ".join(raw[:-1]).strip()
+    line = raw[-1]
     city = line.split(",")[0].strip()
     line = line.split(",")[1].strip()
     state = line.split()[0]
@@ -149,7 +150,7 @@ def get_data(page_url, sgw: SgWriter):
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
-        raw_address=", ".join(raw_address),
+        raw_address=raw_address,
     )
 
     sgw.write_row(row)
