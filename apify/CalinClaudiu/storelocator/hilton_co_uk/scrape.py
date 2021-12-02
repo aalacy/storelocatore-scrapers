@@ -246,8 +246,6 @@ def get_cities_for_cn_gb_us(countries):
     for num, country_n_url in enumerate(countries):
         country_name = country_n_url["text"]
         country_link = country_n_url["link"]
-        complete = country_n_url["complete"]
-
         for dnum, i in enumerate(highly_dense_state_or_country_list[0:]):
             if i["c_or_s_name"].lower() in country_name.lower():
                 city_province = get_city_province(num, country_name, country_link)
@@ -259,7 +257,6 @@ def get_cities_for_cn_gb_us(countries):
 
 
 def fetch_data(sgw: SgWriter):
-    state = CrawlStateSingleton.get_instance()
     with SgRequests(verify_ssl=False) as session:
         countries = gen_countries(session)
         sub_city_or_state = get_cities_for_cn_gb_us(countries)
