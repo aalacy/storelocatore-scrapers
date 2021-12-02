@@ -33,7 +33,6 @@ def parallel_run_one(link):
 
     for _ in locations:
 
-        page_url = f"https://www.wellsfargo.com/locator/bank/?slindex={_['index']}"
         hours_of_operation = "; ".join(_.get("arrDailyEvents", []))
         if (
             "incidentMessage" in _
@@ -43,8 +42,13 @@ def parallel_run_one(link):
         ):
             hours_of_operation = "Temporary closed"
 
+        if "ATM" in _["locationType"]:
+            hours_of_operation = _["serviceDetails"]["atmServices"]["atmSiteHours"]
+
+        if "Hours vary" in hours_of_operation:
+            hours_of_operation = ""
+
         yield SgRecord(
-            page_url=page_url,
             location_name=_["branchName"],
             street_address=_["locationLine1Address"],
             city=_["city"],
