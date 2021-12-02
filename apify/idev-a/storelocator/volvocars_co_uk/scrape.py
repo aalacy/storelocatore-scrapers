@@ -103,10 +103,6 @@ def fetch_data():
                     _["phoneNumbers"]["service"] and _["phoneNumbers"]["service"] != "0"
                 ):
                     phone = _["phoneNumbers"]["service"]
-                if not phone:
-                    import pdb
-
-                    pdb.set_trace()
                 location_type = []
                 for lt in _["capabilities"]:
                     if type(lt) == bool:
