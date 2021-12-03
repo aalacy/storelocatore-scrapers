@@ -43,6 +43,8 @@ def fetch_data():
                     '//span[@itemprop="streetAddress"]/text()'
                 )[0]
                 city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
+                zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
+                zip_code = zip_code[0].strip() if zip_code else ""
                 phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
                 phone = phone[0] if phone else ""
                 location_type = loc_dom.xpath('//header[@itemprop="name"]/h3/text()')[
@@ -55,11 +57,14 @@ def fetch_data():
                 hoo = loc_dom.xpath(
                     '//section[h4[contains(text(), "Showroom")]]//p//text()'
                 )
+                if not hoo:
+                    hoo = loc_dom.xpath('//span[@itemprop="openingHours"]//text()')
                 hoo = (
                     ", ".join([e.strip() for e in hoo if e.strip()])
                     .split("Chiusura")[0]
                     .strip()
                 )
+                hoo = " ".join(hoo.split())
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -68,7 +73,7 @@ def fetch_data():
                     street_address=street_address,
                     city=city,
                     state="",
-                    zip_postal="",
+                    zip_postal=zip_code,
                     country_code="IT",
                     store_number="",
                     phone=phone,
