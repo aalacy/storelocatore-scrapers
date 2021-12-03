@@ -37,6 +37,7 @@ def fetch_data():
                 pass
             else:
                 link = "https://www.llbean.com" + alink["href"]
+            
             r = session.get(link, headers=headers)
 
             soup = BeautifulSoup(r.text, "html.parser")
