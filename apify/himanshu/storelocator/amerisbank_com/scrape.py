@@ -22,8 +22,6 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    addresses = []
-
     bank_locations_url = "https://banks.amerisbank.com/"
 
     for bank_state_link in BeautifulSoup(
