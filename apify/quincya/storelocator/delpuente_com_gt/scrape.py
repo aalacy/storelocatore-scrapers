@@ -2,6 +2,8 @@ import re
 
 from bs4 import BeautifulSoup
 
+from sglogging import sglog
+
 from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
@@ -10,6 +12,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
+
+log = sglog.SgLogSetup().get_logger("elpuente.com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -26,9 +30,12 @@ def fetch_data(sgw: SgWriter):
     response = session.get(base_link, headers=headers)
     base = BeautifulSoup(response.text, "lxml")
 
-    items = base.find(class_="entry-content").find_all("a")
+    items = base.find(class_="sub-menu").find_all("a")
+    log.info("Locations found: " + str(len(items)))
+
     for item in items:
         link = item["href"]
+        log.info(link)
 
         response = session.get(link, headers=headers)
         base = BeautifulSoup(response.text, "lxml")

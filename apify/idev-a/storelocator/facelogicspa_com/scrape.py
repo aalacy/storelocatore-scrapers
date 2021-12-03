@@ -38,7 +38,7 @@ def fetch_data():
             if res.status_code != 200:
                 continue
             sp1 = bs(res.text, "lxml")
-            if not sp1.title.text:
+            if not sp1.title:
                 continue
             location_name = (
                 sp1.title.text.split("-")[-1]
