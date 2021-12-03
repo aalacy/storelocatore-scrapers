@@ -34,6 +34,11 @@ def fetch_data(sgw: SgWriter):
                 tmp.append(i)
                 break
         hours_of_operation = "".join(tmp).replace("\n", "").strip()
+        location_type = (
+            "".join(d.xpath(".//following-sibling::p[1]/b[2]/text()"))
+            .replace(":", "")
+            .strip()
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -46,7 +51,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
