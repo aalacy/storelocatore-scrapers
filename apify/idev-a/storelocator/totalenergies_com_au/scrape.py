@@ -42,9 +42,9 @@ def _d(store_number):
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(1000):
-            for b in range(1000):
-                for c in range(1000):
+        for a in range(20):
+            for b in range(100):
+                for c in range(100):
                     logger.info(f"{a, b, c}")
                     try:
                         data = http.get(
