@@ -26,7 +26,7 @@ def fetch_data():
         if poi["address2"]:
             street_address += " " + poi["address2"]
         hoo = [e.strip() for e in all_hoo if location_name in e]
-        hoo = hoo[0] if hoo else ""
+        hoo = hoo[0].split(": ")[-1] if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,

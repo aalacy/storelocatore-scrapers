@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import lxml.html
 
 log = sglog.SgLogSetup().get_logger(logger_name="bigmamaspizza.com")
 
@@ -37,15 +38,19 @@ def fetch_data():
             if page_url:
                 page_url = page_url["href"]
                 log.info(page_url)
-                soup1 = bs(session.get(page_url, headers=headers).text, "lxml")
+                store_sel = lxml.html.fromstring(
+                    session.get(page_url, headers=headers).text
+                )
                 try:
-                    hours_of_operation = " ".join(
-                        list(
-                            soup1.find("div", {"id": "store-hours"})
-                            .find("table")
-                            .stripped_strings
-                        )
-                    )
+                    hours = store_sel.xpath('//div[@id="store-hours"]/table//tr')
+                    hours_list = []
+                    for hour in hours:
+                        day = "".join(hour.xpath("td[1]//text()")).strip()
+                        time = "".join(hour.xpath("td[2]//text()")).strip()
+                        if len(time) > 0:
+                            hours_list.append(day + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
                 except:
                     hours_of_operation = "<MISSING>"
             else:

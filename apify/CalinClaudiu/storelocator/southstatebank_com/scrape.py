@@ -11,11 +11,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     titlelist = []
     url = "https://southstatebank.com/Global/About/CRA/Locations-Listing"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=location-detail]")
 
@@ -28,7 +28,7 @@ def fetch_data():
         if link in titlelist:
             continue
         titlelist.append(link)
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
         street = soup.find("div", {"class": "address"}).findAll("p")[0].text
@@ -80,22 +80,24 @@ def fetch_data():
             city = city + " " + state.replace(",", "")
             state, pcode = pcode.split(" ", 1)
         store = link.split("/")[-2]
-        yield SgRecord(
-            page_url=link,
-            location_name=title,
-            street_address=street,
-            city=city.replace(",", ""),
-            state=state,
-            zip_postal=pcode,
-            country_code="US",
-            store_number=store,
-            phone=phone,
-            location_type=ltype,
-            latitude=lat,
-            longitude=longt,
-            locator_domain="https://southstatebank.com/",
-            hours_of_operation=hours,
-            raw_address="<MISSING>",
+        sgw.write_row(
+            SgRecord(
+                page_url=link,
+                location_name=title,
+                street_address=street,
+                city=city.replace(",", ""),
+                state=state,
+                zip_postal=pcode,
+                country_code="US",
+                store_number=store,
+                phone=phone,
+                location_type=ltype,
+                latitude=lat,
+                longitude=longt,
+                locator_domain="https://southstatebank.com/",
+                hours_of_operation=hours,
+                raw_address="<MISSING>",
+            )
         )
         p += 1
 

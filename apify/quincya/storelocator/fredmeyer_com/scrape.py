@@ -34,18 +34,19 @@ def fetch_data(sgw: SgWriter):
     for i, item in enumerate(items):
         link = item.text
         if "stores/details" in link:
-
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            try:
-                script = base.find(
-                    "script", attrs={"type": "application/ld+json"}
-                ).contents[0]
-            except:
-                log.info(link)
-                raise
-            store = json.loads(script)
+            script = base.find("script", attrs={"type": "application/ld+json"})
+            if not script:
+                log.info("Retrying .. " + link)
+                session = SgRequests()
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                script = base.find("script", attrs={"type": "application/ld+json"})
+            else:
+                pass
+            store = json.loads(script.contents[0])
             location_name = store["name"]
 
             try:

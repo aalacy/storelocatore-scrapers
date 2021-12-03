@@ -48,8 +48,29 @@ def fetch_data():
 
                 store_info = store_sel.xpath('//div[@class="addres_box"]//text()')
 
-                raw_address = " ".join(store_info[1:2]).replace("\n", " ").strip()
-
+                raw_address = (
+                    ", ".join(store_info[1:2])
+                    .replace("\n", " ")
+                    .strip()
+                    .replace("\r", "")
+                    .strip()
+                    .split("Tel No")[0]
+                    .strip()
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", " - ")
+                    .strip()
+                )
+                try:
+                    temp_add = (
+                        raw_address.rsplit("-", 1)[-1].strip().replace(" ", "").strip()
+                    )
+                    if temp_add.isdigit():
+                        raw_address = (
+                            raw_address.rsplit("-", 1)[0].strip() + ", " + temp_add
+                        )
+                except:
+                    pass
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if formatted_addr.street_address_2:
@@ -62,8 +83,45 @@ def fetch_data():
                 city = formatted_addr.city
                 state = state_url.split("state=")[-1].strip()
                 zip = formatted_addr.postcode
+                if zip:
+                    zip = zip.split("-")[-1].strip()
 
-                country_code = "IND"
+                if not zip:
+                    try:
+                        temp_zip = (
+                            raw_address.split(",")[-1].strip().replace(" ", "").strip()
+                        )
+                        if temp_zip.isdigit() and len(temp_zip) == 6:
+                            zip = temp_zip
+                    except:
+                        pass
+
+                if not zip:
+                    try:
+                        temp_zip = (
+                            raw_address.split(" ")[-1]
+                            .strip()
+                            .replace(" ", "")
+                            .strip()
+                            .replace(".", "")
+                            .strip()
+                        )
+                        if temp_zip.isdigit():
+                            zip = temp_zip
+                            if len(zip) == 3:
+                                zip = raw_address.split(" ")[-2].strip() + zip
+                                if len(zip) != 6:
+                                    zip = "<MISSING>"
+                            else:
+                                zip = "<MISSING>"
+                    except:
+                        pass
+
+                if city and "-413001" in city:
+                    city = "<MISSING>"
+                    zip = "413001"
+
+                country_code = "IN"
 
                 store_number = "<MISSING>"
 

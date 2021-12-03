@@ -6,7 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -32,16 +31,11 @@ def fetch_data():
         street_address = poi["address"]["line1"]
         if poi["address"]["line2"]:
             street_address += ", " + poi["address"]["line2"]
-        if poi["address"]["line3"]:
-            street_address += ", " + poi["address"]["line3"]
-        street_address = street_address if street_address else "<MISSING>"
-        raw_adr = f'{street_address} {poi["address"]["city"]}'
-        addr = parse_address_intl(raw_adr)
-        street_address = addr.street_address_1
-        if street_address and addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        if not street_address and addr.street_address_2:
-            street_address = addr.street_address_2
+        city = poi["address"]["line3"]
+        if not city:
+            city = poi["address"]["city"]
+        if city.split()[-1].isdigit():
+            city = " ".join(city.split()[:-1])
         state = poi["address"]["stateCode"]
         zip_code = poi["address"]["postalCode"]
         country_code = poi["address"]["countryCode"]
@@ -62,7 +56,7 @@ def fetch_data():
             page_url=store_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
@@ -72,7 +66,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_adr,
         )
 
         yield item

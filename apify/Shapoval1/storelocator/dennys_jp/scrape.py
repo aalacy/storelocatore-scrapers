@@ -1,5 +1,5 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://dennys.jp/"
     api_url = "https://shop.dennys.jp/api/poi?uuid=925c420c-115d-4283-9405-93713571ede7&extra_fields=brand&bounds=35.648369157374255%2C139.669189453125%2C35.71975793933433%2C139.866943359375&zoom=14&_=1630872555682"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -24,7 +24,6 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
 
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
