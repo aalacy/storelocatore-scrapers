@@ -39,9 +39,8 @@ def fetch_data():
             try:
                 soup = BeautifulSoup(r.text, "html.parser")
             except:
-                session1 = SgRequests()
-                r = session1.get(link, headers=headersss)
-                soup = BeautifulSoup(r.text, "html.parser")
+                driver.get(link)
+                soup = BeautifulSoup(driver.page_source, "html.parser")
             title = soup.find("h1").text
             try:
                 address = (
