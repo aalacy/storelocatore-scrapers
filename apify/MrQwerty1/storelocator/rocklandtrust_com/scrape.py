@@ -46,6 +46,8 @@ def fetch_data(sgw: SgWriter):
             hours = hours.split("Teller")[0]
         if "Video" in hours:
             hours = hours.split("Video")[0]
+        if ":;" in hours:
+            hours = hours.split(":;")[-1]
 
         hours_of_operation = hours
         if not hours_of_operation:

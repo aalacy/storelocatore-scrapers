@@ -164,7 +164,9 @@ def fetch_records(search):
                         page_url=page_url,
                         store_number=_["cid"],
                         location_name=_["name"],
-                        street_address=street_address,
+                        street_address=street_address.replace(
+                            "Inside Golf Town", ""
+                        ).strip(),
                         city=_["city"],
                         state=_["state"],
                         zip_postal=_["zip"],

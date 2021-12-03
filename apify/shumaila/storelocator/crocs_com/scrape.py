@@ -90,6 +90,7 @@ def fetch_data():
                     )
                 except:
                     pass
+                street = street.replace("&#xa0;", " ").replace("&#x96;", " ").strip()
             except:
                 continue
             street = street.replace("None", "")
