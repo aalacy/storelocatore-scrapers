@@ -131,16 +131,17 @@ def fetch_data():
                                     location_type = "Branch"
 
                             hours = store_sel.xpath(
-                                '//table[@class="lobbyTimes"]//tr[position()>1]'
+                                '//div[@class="branchLobby"]//tr[@class="times"]'
                             )
+                            if len(hours) > 0:
+                                hours = hours[1:]
                             hours_list = []
                             for hour in hours:
-                                day = "".join(hour.xpath("th//text()")).strip()
-                                time = "".join(hour.xpath("td//text()")).strip()
+                                day = "".join(hour.xpath(".//th//text()")).strip()
+                                time = "".join(hour.xpath(".//td//text()")).strip()
                                 hours_list.append(day + ":" + time)
 
                             hours_of_operation = "; ".join(hours_list).strip()
-
                             latitude = ""
                             try:
                                 latitude = (
@@ -197,6 +198,8 @@ def fetch_data():
                                         hours_list.append(day + ":" + time)
                                     else:
                                         hours_list.append(day + ":Closed")
+
+                                hours_of_operation = "; ".join(hours_list).strip()
 
                             if "https://locations.usbank.com" == page_url:
                                 continue

@@ -21,9 +21,12 @@ def fetch_data():
         hoo = []
         for e in poi["toyotaCenterTiming"]:
             day = e["DayTitle"]
-            opens = e["DayOpeningTiming"]
-            closes = e["DayClosingTiming"]
-            hoo.append(f"{day} {opens} - {closes}")
+            if e["DayOpeningTiming"]:
+                opens = e["DayOpeningTiming"]
+                closes = e["DayClosingTiming"]
+                hoo.append(f"{day} {opens} - {closes}")
+            else:
+                hoo.append(f"{day} Closed")
         hoo = " ".join(hoo)
         location_type = poi["category"].strip()
         if location_type.endswith(","):
@@ -41,7 +44,7 @@ def fetch_data():
             zip_postal=poi["postal"],
             country_code="SA",
             store_number="",
-            phone=poi["phone"],
+            phone=poi["phone"].split("/")[0].strip(),
             location_type=location_type,
             latitude=poi["lat"],
             longitude=poi["lng"],
