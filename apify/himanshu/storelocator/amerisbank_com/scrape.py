@@ -102,7 +102,8 @@ def fetch_data():
                         "Drive-Thru Hours Monday: Drive-Thru Service Not Available Tuesday: Drive-Thru Service Not Available Wednesday: Drive-Thru Service Not Available Thursday: Drive-Thru Service Not Available Friday: Drive-Thru Service Not Available Saturday: Drive-Thru Service Not Available Sunday: Drive-Thru Service Not Available ",
                         "",
                     )
-                    .replace("HOURS ", "").replace("By Appointment Only","")
+                    .replace("HOURS ", "")
+                    .replace("By Appointment Only", "")
                     .replace(" Drive-Thru Hours", ", Drive-Thru Hours")
                     .replace("Branch Lobby Hours ", "")
                 )
@@ -141,4 +142,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
