@@ -17,10 +17,12 @@ def fetch_data(_zip, sgw: SgWriter):
             break
 
         for j in js:
-            location_name = "Kay Jewelers"
+            location_name = j.get("displayName")
             location_type = "Kay Jewelers"
             slug = j.get("url")
             page_url = f"https://www.kay.com{slug}"
+            if "/null" in page_url:
+                page_url = SgRecord.MISSING
             street_address = f'{j.get("line1")} {j.get("line2") or ""}'.strip()
             city = j.get("town")
             state = j.get("regionIsoCodeShort")
@@ -32,7 +34,6 @@ def fetch_data(_zip, sgw: SgWriter):
             store_number = j.get("name")
             _type = j.get("baseStore") or ""
             if _type == "kayoutlet":
-                location_name = "Kay Jewelers Outlet"
                 location_type = "Kay Jewelers Outlet"
 
             _tmp = []

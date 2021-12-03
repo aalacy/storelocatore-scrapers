@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from lxml import html
 
 
 def fetch_data(sgw: SgWriter):
@@ -28,12 +29,14 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         phone = j.get("p") or "<MISSING>"
-        hours = j.get("wod") or "<MISSING>"
-        tmp = []
-        if hours != "<MISSING>":
-            for h in hours:
-                tmp.append(h)
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(tree.xpath('//dl[@class="m-store-info__shophours-data"]/*/text()'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,

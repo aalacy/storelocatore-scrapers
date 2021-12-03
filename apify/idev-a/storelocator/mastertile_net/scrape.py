@@ -22,7 +22,7 @@ def fetch_data():
             res.split("var locations =")[1].split("var states")[0].strip()[:-1]
         )
         for _ in locations:
-            modal = sp1.select_one(f"locationModal{_['id']}")
+            modal = sp1.select_one(f"div#locationModal{_['id']}")
             _hr = modal.find("h5", string=re.compile(r"^Business Hours"))
             hours = []
             if _hr:
