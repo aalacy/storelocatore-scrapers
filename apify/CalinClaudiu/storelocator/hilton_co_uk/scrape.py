@@ -9,8 +9,6 @@ import tenacity
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 import json
-import time
-import random
 import ssl
 
 logger = SgLogSetup().get_logger(logger_name="Scraper")
@@ -23,7 +21,7 @@ headers_c = {
 
 MISSING = SgRecord.MISSING
 QUERY_LIMIT = 500
-MAX_WORKERS = 15
+MAX_WORKERS = 10
 API_ENDPOINT_URL = "https://www.hilton.com/graphql/customer?appName=dx_shop_search_app&operationName=hotelSummaryOptions_locationPage"
 
 
@@ -88,10 +86,9 @@ def get_response(urlnum, country, url):
         },
     }
 
-    with SgRequests(timeout_config=300, verify_ssl=False) as http:
+    with SgRequests(timeout_config=600, verify_ssl=False) as http:
         logger.info(f"[{urlnum}] Pulling the data from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
-        time.sleep(random.randint(10, 30))
         if r.status_code == 200:
             if r.json() is not None:
                 logger.info(f"HTTP Status Code: {r.status_code}")
@@ -256,12 +253,13 @@ def get_cities_for_cn_gb_us(countries):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgRequests(verify_ssl=False) as session:
+    with SgRequests(verify_ssl=False, timeout_config=300) as session:
         countries = gen_countries(session)
         sub_city_or_state = get_cities_for_cn_gb_us(countries)
         sub_city_or_state = [
             dict(t) for t in {tuple(d.items()) for d in sub_city_or_state}
         ]
+
         logger.info(f"after adding sub city or state: {sub_city_or_state}")
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = []

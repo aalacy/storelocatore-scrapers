@@ -1,4 +1,5 @@
 from lxml import etree
+from time import sleep
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -12,6 +13,7 @@ def fetch_data():
     domain = "suzuki.ro"
     with SgFirefox() as driver:
         driver.get(start_url)
+        sleep(10)
         dom = etree.HTML(driver.page_source)
         all_locations = dom.xpath("//a[h2]")
         for poi_html in all_locations:

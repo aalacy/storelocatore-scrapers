@@ -64,7 +64,6 @@ def fetch_data():
             if "day:</td>" in line2:
                 day = line2.split(">")[1].split("<")[0]
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 hrs = day + " " + g.split(">")[1].split("<")[0]
                 if hours == "":
                     hours = hrs
