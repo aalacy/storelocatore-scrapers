@@ -37,13 +37,6 @@ def fetch_data():
                 )
 
             try:
-                note = _.select("p")[2].text.strip()
-                if "COMING SOON" in note:
-                    continue
-            except:
-                pass
-
-            try:
                 coord = (
                     _.select("a")[-1]["href"]
                     .split("/@")[1]
@@ -70,7 +63,15 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

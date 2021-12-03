@@ -131,6 +131,10 @@ def fetch_data():
             zc = "NE11 9XS"
         if "stores/milton-keynes" in loc:
             zc = "MK1 1QB"
+        if "/stores/croydon" in loc:
+            city = "Croydon"
+            add = "Access via Hesterman Way"
+            zc = "CR0 4YA"
         if "planning-studios" not in loc:
             yield SgRecord(
                 locator_domain=website,

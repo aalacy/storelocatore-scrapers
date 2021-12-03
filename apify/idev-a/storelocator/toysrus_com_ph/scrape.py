@@ -24,7 +24,7 @@ json_url = "https://toysrus.com.ph/stores/fetch"
 def fetch_data():
     with SgChrome() as driver:
         driver.get(base_url)
-        rr = driver.wait_for_request(json_url)
+        rr = driver.wait_for_request(json_url, timeout=30)
         locations = json.loads(rr.response.body)["stores"]
         for _ in locations:
             addr = parse_address_intl(_["address"] + ", Philippines")
