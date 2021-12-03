@@ -19,15 +19,12 @@ headers = {
 
 
 def fetch_data():
-    cleanr = re.compile(r"<[^>]+>")
-    pattern = re.compile(r"\s\s+")
     url = "https://www.ombudsman.com/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.select("a[href*=state]")
     for st in statelist:
         stlink = st["href"]
-        print(stlink)
         r = session.get(stlink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         if r.url == "https://az.ombudsman.com/locations/":
