@@ -1,5 +1,5 @@
 import re as regEx
-from typing import Any
+from typing import Any, Optional, Dict
 
 from bs4 import BeautifulSoup, ResultSet
 from sglogging import sglog
@@ -41,7 +41,7 @@ def xml_to_dict(store: ResultSet) -> dict:
     return {tag.name: tag.getText() for tag in store.find_all()}
 
 
-def extract_address(location: str):
+def extract_address(location: str) -> Dict[str, str]:
     ad = parse_address_usa(location)
     parts = [ad.street_address_1, ad.street_address_2]
     address = " ".join([part for part in parts if part]).strip()
@@ -53,10 +53,10 @@ def extract_address(location: str):
     }
 
 
-def extract_hours(operatinghours: str) -> str:
+def extract_hours(operatinghours: str) -> Optional[str]:
     if operatinghours:
         operatinghours = operatinghours.replace("\n", "")
-        operatinghours = operatinghours.replace("\r", "")
+        operatinghours = operatinghours.replace("\r", " ")
         internal_br = "(?<=[a-zA-Z])<br>(?=[a-zA-Z])"
         hours = regEx.sub(internal_br, ", ", operatinghours).strip()
         tags = regEx.compile("<.*?>")
@@ -65,7 +65,7 @@ def extract_hours(operatinghours: str) -> str:
         hours = regEx.sub(double_space, ", ", hours).strip()
         return hours
     else:
-        return ""
+        return None
 
 
 def transform_record(raw: Any) -> SgRecord:

@@ -31,14 +31,14 @@ def fetch_data():
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 temp = (
-                    soup.findAll("section", {"data-element_type": "section"})[7]
+                    soup.findAll("div", {"class": "elementor-col-50"})[2]
                     .get_text(separator="|", strip=True)
                     .split("|")
                 )
-                hours_of_operation = " ".join(x for x in temp[2:-2])
-                location_name = soup.find("h1").text
-                phone = temp[0]
-                address = temp[1]
+                hours_of_operation = " ".join(x for x in temp[3:-2])
+                location_name = temp[0]
+                phone = temp[1]
+                address = temp[2]
                 address = address.replace(",", " ")
                 address = usaddress.parse(address)
                 i = 0

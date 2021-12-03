@@ -1,45 +1,18 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("massmutual_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://financialprofessionals.massmutual.com/us"
 
@@ -59,14 +32,28 @@ def fetch_data():
     for state in states:
         logger.info("Getting links for State: " + state.text)
         state_link = "https://financialprofessionals.massmutual.com" + state["href"]
-        req = session.get(state_link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+
+        try:
+            req = session.get(state_link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+        except:
+            logger.info("Retrying ..")
+            session = SgRequests()
+            req = session.get(state_link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
         cities = base.find(class_="list-unstyled search-by-city-list").find_all("a")
         for city in cities:
             city_link = "https://financialprofessionals.massmutual.com" + city["href"]
-            req = session.get(city_link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+
+            try:
+                req = session.get(city_link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+            except:
+                logger.info("Retrying ..")
+                session = SgRequests()
+                req = session.get(city_link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
 
             city_data = base.find_all(class_="media-body row")
             for row in city_data:
@@ -109,8 +96,14 @@ def fetch_data():
     logger.info("Processing " + str(len(all_links)) + " potential links ..")
     for row in all_links:
         link = row[0]
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        try:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+        except:
+            logger.info("Retrying ..")
+            session = SgRequests()
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
         got_page = True
         try:
@@ -130,7 +123,6 @@ def fetch_data():
             loc_str = location_name + "_" + street_address
             if loc_str in found_poi:
                 continue
-
             found_poi.append(loc_str)
 
             city = base.find(class_="es-address-locality").text.strip()
@@ -157,6 +149,9 @@ def fetch_data():
 
             latitude = format(lat, ".4f")
             longitude = format(lon, ".4f")
+            if latitude == "0.0000":
+                latitude = ""
+                longitude = ""
         else:
             link = row[-1]
             location_name = row[1]
@@ -167,27 +162,25 @@ def fetch_data():
             loc_type = row[6]
             phone = row[7]
 
-        yield [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -28,6 +28,8 @@ def fetch_data():
             page_url = "https://www.mainevent.com" + store_url
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
+            if "Coming soon" in store_req.text:
+                continue
             store_sel = lxml.html.fromstring(store_req.text)
             json_text = "".join(
                 store_sel.xpath('//script[@type="application/ld+json"]/text()')

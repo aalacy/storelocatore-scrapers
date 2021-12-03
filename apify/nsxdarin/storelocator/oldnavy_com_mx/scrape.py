@@ -126,6 +126,8 @@ def fetch_data():
         zc = adds[x].split("|")[3]
         lat = coords[x].split("|")[0]
         lng = coords[x].split("|")[1]
+        typ = "Old Navy"
+        name = "Old Navy"
         hours = hoursarray[x]
         phone = phones[x]
         hours = hours.replace("Abierto de ", "")
@@ -150,6 +152,31 @@ def fetch_data():
                 longitude=lng,
                 hours_of_operation=hours,
             )
+    name = "Old Navy"
+    typ = "Old Navy"
+    lat = "19.384574"
+    lng = "-99.082539"
+    add = "Avenida Canal de Tezontle #1512 Col. Alfonso Ortiz Tirado"
+    state = "Ciudad de Mexico C.P."
+    city = "Delegación Iztapalapa"
+    zc = "9020"
+    hours = "Abierto de lunes a domingo de 11:00 a.m. a 9:00 p.m."
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
 
 
 def scrape():
