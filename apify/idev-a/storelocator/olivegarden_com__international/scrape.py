@@ -56,7 +56,7 @@ def _p(val):
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("article ul li")
+        locations = soup.select("main ul li")
         for _ in locations:
             if _.ul:
                 continue
@@ -71,7 +71,7 @@ def fetch_data():
             elif _p(block[-1]):
                 phone = _p(block[-1])
                 del block[-1]
-            raw_address = " ".join(block[1:])
+            raw_address = " ".join(block[1:]).replace("\n", " ")
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -108,9 +108,8 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.RAW_ADDRESS,
                     SgRecord.Headers.PHONE,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.STREET_ADDRESS,
                 }
             )
         )
