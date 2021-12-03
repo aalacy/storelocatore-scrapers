@@ -23,7 +23,7 @@ def get_international(line):
 
 
 def get_hoo(page_url):
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = tree.xpath("//div[@class='details']/text()")
     if len(text) > 1:
@@ -34,7 +34,7 @@ def get_hoo(page_url):
 
 def fetch_data(sgw: SgWriter):
     api = "http://www.mosburger.com.sg/mos_outlets.php"
-    r = session.get(api)
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
 
     divs = tree.xpath("//tr[./td[@class='shopname']]")
@@ -57,7 +57,7 @@ def fetch_data(sgw: SgWriter):
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
+            city=SgRecord.MISSING,
             state=state,
             zip_postal=postal,
             country_code="SG",
@@ -72,6 +72,13 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "http://www.mosburger.com.sg/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+    }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
