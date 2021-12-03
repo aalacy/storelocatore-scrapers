@@ -1,6 +1,5 @@
 import re
 import json
-import html5lib
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
