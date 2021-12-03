@@ -34,69 +34,72 @@ def fetch_data():
     with SgRequests(dont_retry_status_codes=([404])) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
+        sections = search_sel.xpath(
+            '//div[@class="col-xs-12 col-sm-12 col-md-3 app-wrp-adv-stores-section"]'
+        )
+        for section in sections:
+            state = "".join(section.xpath("h5/text()")).strip()
+            stores = section.xpath('.//ul[@class="app-lsu-adv-stores-unit"]')
 
-        stores = search_sel.xpath('//ul[@class="app-lsu-adv-stores-unit"]')
+            for store in stores:
 
-        for store in stores:
+                page_url = search_url
 
-            page_url = search_url
+                locator_domain = website
 
-            locator_domain = website
+                location_name = "".join(store.xpath("li/text()")).strip()
 
-            location_name = "".join(store.xpath("li/text()")).strip()
+                raw_address = ", ".join(
+                    store.xpath("ul[@class='app-lsu-adv-stores-address']/li[1]/text()")
+                ).strip()
 
-            raw_address = ", ".join(
-                store.xpath("ul[@class='app-lsu-adv-stores-address']/li[1]/text()")
-            ).strip()
+                street_address = raw_address
+                city = "<MISSING>"
+                if "city" in raw_address.split(",")[-1].strip().lower():
+                    street_address = ", ".join(raw_address.split(",")[:-1]).strip()
+                    city = raw_address.split(",")[-1].strip()
 
-            street_address = raw_address
-            city = "<MISSING>"
-            if "city" in raw_address.split(",")[-1].strip().lower():
-                street_address = ", ".join(raw_address.split(",")[:-1]).strip()
-                city = raw_address.split(",")[-1].strip()
+                if (
+                    city
+                    == "2014A 2nd Level Festival Supermall Corporate Ave Filinvest Corporation City Alabang"
+                ):
+                    street_address = "2014A 2nd Level Festival Supermall Corporate Ave Filinvest Corporation"
+                    city = "Alabang"
 
-            if (
-                city
-                == "2014A 2nd Level Festival Supermall Corporate Ave Filinvest Corporation City Alabang"
-            ):
-                street_address = "2014A 2nd Level Festival Supermall Corporate Ave Filinvest Corporation"
-                city = "Alabang"
+                zip = "<MISSING>"
+                if city.split(" ")[-1].strip().isdigit():
+                    zip = city.split(" ")[-1].strip()
+                    city = " ".join(city.split(" ")[:-1]).strip()
 
-            state = "<MISSING>"
-            zip = "<MISSING>"
-            if city.split(" ")[-1].strip().isdigit():
-                zip = city.split(" ")[-1].strip()
-                city = " ".join(city.split(" ")[:-1]).strip()
+                country_code = "PH"
 
-            country_code = "PH"
+                store_number = "<MISSING>"
 
-            store_number = "<MISSING>"
+                phone = "".join(
+                    store.xpath("ul[@class='app-lsu-adv-stores-address']/li[2]/text()")
+                ).strip()
 
-            phone = "".join(
-                store.xpath("ul[@class='app-lsu-adv-stores-address']/li[2]/text()")
-            ).strip()
+                location_type = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
-            location_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-            latitude, longitude = "<MISSING>", "<MISSING>"
-
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():

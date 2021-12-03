@@ -7,3 +7,6 @@ The crawler, at first scrapes the country-based map URL such as for Albania, `ht
 
 
 
+# `street_address`
+
+Please note that if `street_address` is found to have `<MISSING>`, it is replaced with `location_name`. 
