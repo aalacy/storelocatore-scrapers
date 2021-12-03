@@ -48,7 +48,7 @@ def fetch_data():
                     .split("!3d")
                 )
                 yield SgRecord(
-                    page_url=base_url,
+                    page_url=page_url,
                     location_name=_.h4.text.strip(),
                     street_address=street_address,
                     city=addr.city,

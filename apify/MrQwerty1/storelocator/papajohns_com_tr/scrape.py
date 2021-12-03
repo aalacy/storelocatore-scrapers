@@ -13,7 +13,7 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or ""
     state = adr.state
     postal = adr.postcode
 
@@ -38,6 +38,10 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//abbr[@title='Adres']/following-sibling::text()[1]")
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
+    if "/" in city:
+        state = city.split("/")[-1].strip()
+        city = city.split("/")[0].strip()
+
     phone = "".join(
         tree.xpath("//abbr[@title='Telefon']/following-sibling::text()[1]")
     ).strip()
