@@ -12,7 +12,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?latitude=37.09024&longitude=-95.712891&q=&page=1&searchStores=true&searchRestaurants=true&searchOutlets=true&searchInternational=true"
+    start_url = "https://www.tommybahama.com/en/store-finder?latitude=37.09024&longitude=-95.712891&q=&page=1&searchStores=true&searchRestaurants=false&searchOutlets=true&searchInternational=true"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 

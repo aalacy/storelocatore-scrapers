@@ -69,7 +69,10 @@ def fetch_data():
                     add = line2.split('"streetAddress": "')[1].split('"')[0]
                     if "," in add:
                         add = add.split(",")[0]
-                    zc = add.rsplit(" ", 1)[1]
+                    try:
+                        zc = add.rsplit(" ", 1)[1]
+                    except:
+                        zc = "<MISSING>"
                 if '"addressLocality": "' in line2:
                     city = line2.split('"addressLocality": "')[1].split('"')[0]
                 if '"addressRegion": "' in line2:
@@ -124,6 +127,14 @@ def fetch_data():
                     zc = "20018"
                 if "30 Hill St" in add:
                     zc = "94014"
+                if "Minneapolis" in name:
+                    city = "Minneapolis"
+                if "axe-throwing-surrey" in loc:
+                    add = "8132, 109 130 St #109"
+                if "axe-throwing-vaughan" in loc:
+                    add = "171, 3 Maplecrete Rd #3"
+                if "axe-throwing-winnipeg" in loc:
+                    add = "1393, 6 Border St #6"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=lurl,

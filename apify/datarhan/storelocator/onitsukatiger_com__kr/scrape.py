@@ -30,7 +30,7 @@ def fetch_data():
                 start_url.format(code, page), headers=hdr, data=frm
             ).json()
             for poi in data["items"]:
-                page_url = f"https://www.onitsukatiger.com/kr/ko-kr/store-finder/{poi['url_key']}/"
+                page_url = f"https://www.onitsukatiger.com/{code}/store-finder/{poi['url_key']}/"
                 hoo = ""
                 if poi["attributes"].get("weekday_openings_day"):
                     hoo_week_days = poi["attributes"]["weekday_openings_day"][
