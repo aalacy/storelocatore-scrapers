@@ -38,8 +38,8 @@ def fetch_data(sgw: SgWriter):
             city = "".join(ad[0]).split(",")[1].strip()
         try:
             state = "".join(ad[0]).split(",")[2].split()[0].strip()
-            postal = "".join(ad[0]).split(",")[2].split()[1:]
-            postal = " ".join(postal)
+            postals = "".join(ad[0]).split(",")[2].split()[1:]
+            postal = " ".join(postals)
         except:
             state = "<MISSING>"
             postal = "<MISSING>"
