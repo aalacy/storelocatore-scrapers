@@ -21,7 +21,7 @@ headers_c = {
 
 MISSING = SgRecord.MISSING
 QUERY_LIMIT = 500
-MAX_WORKERS = 10
+MAX_WORKERS = 5
 API_ENDPOINT_URL = "https://www.hilton.com/graphql/customer?appName=dx_shop_search_app&operationName=hotelSummaryOptions_locationPage"
 
 
@@ -69,8 +69,11 @@ highly_dense_state_or_country_list = [
     {"country_or_state_code": "CO", "c_or_s_name": "Colorado", "count_current": "117"},
 ]
 
+TEMPORARY_ERROR_CODES = (408, 500, 502, 503, 504)
+# 404
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def get_response(urlnum, country, url):
     path_per_country_or_state = url.split("/en/")[-1].rstrip("/")
     logger.info(f"{country} | {path_per_country_or_state}")
@@ -89,10 +92,15 @@ def get_response(urlnum, country, url):
     with SgRequests(timeout_config=600, verify_ssl=False) as http:
         logger.info(f"[{urlnum}] Pulling the data from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
-        if r.status_code == 200:
-            if r.json() is not None:
+        if r.status_code not in TEMPORARY_ERROR_CODES:
+            cities = r.json()
+            hotel_summary_options = cities["data"]["locationPage"][
+                "hotelSummaryOptions"
+            ]
+            if hotel_summary_options is not None:
                 logger.info(f"HTTP Status Code: {r.status_code}")
                 return r
+            raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
         raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
@@ -252,20 +260,31 @@ def get_cities_for_cn_gb_us(countries):
     return cities_list
 
 
+def dedupe(texas_dup_test):
+    s = set()
+    texas_deduped = []
+    for i in texas_dup_test:
+        linkd = i["link"]
+        if linkd not in s:
+            texas_deduped.append(i)
+        s.add(linkd)
+    return texas_deduped
+
+
 def fetch_data(sgw: SgWriter):
     with SgRequests(verify_ssl=False, timeout_config=300) as session:
         countries = gen_countries(session)
+        logger.info("Pulling URLs those having more than 150 Stores")
         sub_city_or_state = get_cities_for_cn_gb_us(countries)
-        sub_city_or_state = [
-            dict(t) for t in {tuple(d.items()) for d in sub_city_or_state}
-        ]
-
-        logger.info(f"after adding sub city or state: {sub_city_or_state}")
+        logger.info(f"Raw Count: {len(sub_city_or_state)} ")
+        sub_city_or_state_deduped = dedupe(sub_city_or_state)
+        logger.info(f"After Deduplication Count: {len(sub_city_or_state_deduped)}")
+        logger.info("Pulling Sub-Pages Finished")
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = []
             task = [
                 executor.submit(fetch_records, idx, country_n_url, sgw)
-                for idx, country_n_url in enumerate(sub_city_or_state[0:])
+                for idx, country_n_url in enumerate(sub_city_or_state_deduped[0:])
             ]
             tasks.extend(task)
             for future in as_completed(tasks):
