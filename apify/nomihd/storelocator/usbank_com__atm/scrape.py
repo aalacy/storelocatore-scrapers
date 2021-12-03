@@ -20,7 +20,7 @@ def fetch_data():
     # Your scraper here
     search_url = "https://locations.usbank.com/index.html"
     base_url = "https://locations.usbank.com"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         states_req = session.get(search_url, headers=headers)
         states_sel = lxml.html.fromstring(states_req.text)
         states = states_sel.xpath('//li/a[@class="stateListItemLink"]/@href')
@@ -131,16 +131,17 @@ def fetch_data():
                                     location_type = "Branch"
 
                             hours = store_sel.xpath(
-                                '//table[@class="lobbyTimes"]//tr[position()>1]'
+                                '//div[@class="branchLobby"]//tr[@class="times"]'
                             )
+                            if len(hours) > 0:
+                                hours = hours[1:]
                             hours_list = []
                             for hour in hours:
-                                day = "".join(hour.xpath("th//text()")).strip()
-                                time = "".join(hour.xpath("td//text()")).strip()
+                                day = "".join(hour.xpath(".//th//text()")).strip()
+                                time = "".join(hour.xpath(".//td//text()")).strip()
                                 hours_list.append(day + ":" + time)
 
                             hours_of_operation = "; ".join(hours_list).strip()
-
                             latitude = ""
                             try:
                                 latitude = (
@@ -197,6 +198,8 @@ def fetch_data():
                                         hours_list.append(day + ":" + time)
                                     else:
                                         hours_list.append(day + ":Closed")
+
+                                hours_of_operation = "; ".join(hours_list).strip()
 
                             if "https://locations.usbank.com" == page_url:
                                 continue
