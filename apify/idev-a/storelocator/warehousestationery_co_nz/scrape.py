@@ -39,6 +39,18 @@ def fetch_data():
                 street_address = ss["Address1"]
                 if ss["Address2"]:
                     street_address += " " + ss["Address2"]
+                street_address = (
+                    street_address.replace("WSL - Located inside the Warehouse", "")
+                    .replace("WSL - Inside the Warehouse", "")
+                    .replace("WSL - Located inside The Warehouse", "")
+                    .strip()
+                )
+                if street_address.startswith("Warehouse Stationery"):
+                    street_address = street_address.replace(
+                        "Warehouse Stationery", ""
+                    ).strip()
+                if street_address.startswith(","):
+                    street_address = street_address[1:]
                 sp1 = bs(res, "lxml")
                 hours = [
                     ": ".join(hh.stripped_strings)
@@ -51,7 +63,7 @@ def fetch_data():
                     page_url=page_url,
                     store_number=ss["ID"],
                     location_name=ss["Name"],
-                    street_address=street_address,
+                    street_address=street_address.strip(),
                     city=ss["City"],
                     state=ss["StateCode"],
                     zip_postal=ss["PostalCode"],
