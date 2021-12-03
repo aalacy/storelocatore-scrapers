@@ -72,7 +72,7 @@ def fetch_data(sgw: SgWriter):
                 )
                 longitude = j.get("location").get("lng")
         hours_of_operation = (
-            "".join(d.xpath('.//div[@class="restaurant-summary__times"]/p/text()'))
+            "".join(d.xpath('.//div[@class="restaurant-summary__times"]/p//text()'))
             .replace("\n", "")
             .strip()
         )

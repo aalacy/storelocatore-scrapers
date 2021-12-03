@@ -1,11 +1,13 @@
 import json
+import time
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
+from sgselenium.sgselenium import SgFirefox
 
 
 def get_hours(hours) -> str:
@@ -23,106 +25,104 @@ def get_hours(hours) -> str:
 
 
 def fetch_data(sgw: SgWriter):
-    r = session.get("https://houseofair.com/locations/", headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//a[text()="Home"]')
-
-    for d in div:
-        page_url = "".join(d.xpath(".//@href"))
-        if page_url.startswith("/"):
-            page_url = f"https://houseofair.com{page_url}"
-
-        if ".pl" in page_url:
-            page_url = "http://www.houseofair.pl/kontakt"
-
-        location_name = "".join(
-            d.xpath('.//preceding::h3[@class="topspace0"][1]/a/text()')
-        ).strip()
-        ad = (
-            " ".join(
-                d.xpath(
-                    './/preceding::h3[@class="topspace0"][1]/following-sibling::p[1]/text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
-
-        city = a.city
-        state = a.state
-        postal = a.postcode
-        country_code = "US"
-        if ad.find("Poland") != -1:
-            country_code = "PL"
-
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        jsBlock = "".join(tree.xpath('//script[@type="application/ld+json"]/text()'))
-        map_link = "".join(tree.xpath("//iframe/@src"))
-        try:
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        phone = "".join(
-            tree.xpath('//div[@class="contact-text"]//a[contains(@href, "tel")]/text()')
-        )
-
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//h3[contains(text(), "Park Access Hours")]/following-sibling::ul/li//text() | //h2[text()=" Hours of Operation"]/following-sibling::ul/li//text() | //div[@class="hours-right"]/p/text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if "Phone" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("Phone")[0].strip()
-
-        hours_of_operation = " ".join(hours_of_operation.split())
-        if jsBlock:
-            js = json.loads(jsBlock)
-            phone = js.get("telephone")
-            latitude = js.get("geo").get("latitude")
-            longitude = js.get("geo").get("longitude")
-            hours = js.get("openingHoursSpecification")
-            hours_of_operation = get_hours(hours)
-
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=ad,
-        )
-
-        sgw.write_row(row)
-
-
-if __name__ == "__main__":
-    locator_domain = "https://houseofair.com"
+    locator_domain = "https://houseofair.com/"
+    api_url = "https://houseofair.com/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath("//h3/a")
+    for d in div:
 
-    with SgRequests() as session:
-        with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-            fetch_data(writer)
+        page_url = "".join(d.xpath(".//@href"))
+        if page_url.find("https://www.houseofair.pl") != -1:
+            page_url = "http://www.houseofair.pl/kontakt"
+
+        location_name = "".join(d.xpath(".//text()")).strip()
+        street_address = "".join(d.xpath(".//following::p[1]/text()[1]")).strip()
+        ad = "".join(d.xpath(".//following::p[1]/text()[2]")).replace("\n", "").strip()
+
+        a = parse_address(International_Parser(), ad)
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = a.country or "USA"
+        city = a.city or "<MISSING>"
+        with SgFirefox() as driver:
+            time.sleep(5)
+            driver.get(page_url)
+            time.sleep(5)
+            a = driver.page_source
+            tree1 = html.fromstring(a)
+
+            js_block = (
+                "".join(
+                    tree1.xpath('//script[@type="application/ld+json"]/text()')
+                ).split("}}]}}")[0]
+                + "}}]}}"
+            )
+            map_link = "".join(tree1.xpath("//iframe/@src"))
+            try:
+                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
+            if latitude == "<MISSING>":
+                driver.switch_to.frame(0)
+                ll = driver.find_element_by_xpath(
+                    '//div[@class="google-maps-link"]/a'
+                ).get_attribute("href")
+                latitude = ll.split("ll=")[1].split(",")[0].strip()
+                longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
+                driver.switch_to.default_content()
+
+            phone_list = tree1.xpath('//a[contains(@href, "tel")][1]//text()')
+            phone_list = list(filter(None, [a.strip() for a in phone_list]))
+            phone = (
+                "".join(phone_list[0]).replace("Phone:", "").replace("\n", "").strip()
+            )
+            hours_of_operation = (
+                " ".join(
+                    tree1.xpath(
+                        '//h3[contains(text(), "Park Access Hours")]/following-sibling::ul/li//text() | //h2[contains(text(), "Hours of Operation")]/following::ul[1]/li//text() | //div[@class="hours-right"]/p/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            if "Phone" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Phone")[0].strip()
+
+            hours_of_operation = " ".join(hours_of_operation.split())
+            if hours_of_operation == "<MISSING>" and js_block:
+                js = json.loads(js_block)
+                hours = js.get("openingHoursSpecification")
+                hours_of_operation = get_hours(hours)
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

@@ -104,7 +104,16 @@ def fetch_data(sgw: SgWriter):
             postal = a.get("zip") or "<MISSING>"
             country_code = "US"
             city = a.get("city") or "<MISSING>"
-
+            if (
+                city.find("Tumwater - Salon 117") != -1
+                or city.find("Longview - Salon 074") != -1
+            ):
+                city = city.split("-")[0].strip()
+            if (
+                city.find("116 - Lebanon") != -1
+                or city.find("Salon 126 - Roseburg") != -1
+            ):
+                city = city.split("-")[1].strip()
             phone = j.get("phone") or "<MISSING>"
             hours = j.get("weeklySchedules")
             hours_of_operation = get_hours(hours)

@@ -140,7 +140,7 @@ def fetch_data():
             latitude, longitude = get_latlng(map_link)
 
             if phone:
-                if phone.replace(" ", "").strip().isalpha():
+                if not phone.replace(" ", "").strip().isdigit():
                     phone = "<MISSING>"
 
             if city == "Unit 2 Clifton Way":
@@ -172,10 +172,10 @@ def scrape():
         deduper=SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PHONE,
                 }
             )
         )

@@ -119,15 +119,13 @@ def fetch_records(http, state):
             sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
         except:
             try:
-                page_url = "https://" + urlparse(next_r.url).netloc
+                page_url = "https://www." + urlparse(next_r.url).netloc
                 sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
             except:
                 if "www" in next_r.url:
                     logger.info("wwwww ========")
                     yield _d(store, phone, hours, base_url)
                     continue
-                page_url = "https://www." + urlparse(next_r.url).netloc
-                sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
 
         if sp1.select("table.mabel-bhi-businesshours"):
             hours = [

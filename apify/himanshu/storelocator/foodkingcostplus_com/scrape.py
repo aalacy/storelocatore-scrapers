@@ -22,7 +22,7 @@ def fetch_data():
         for i in range(len(location_list)):
             store_data = location_list[i]
             locator_domain = website
-            page_url = "<MISSING>"
+            page_url = "https://foodkingcostplus.com/contact-us/"
             location_name = store_data["title"]
             cleanr = list(
                 BeautifulSoup(store_data["description"], "lxml").stripped_strings

@@ -10,14 +10,19 @@ def fetch_data(_zip, sgw: SgWriter):
     for i in range(777):
         api = f"https://www.kay.com/store-finder/find?q={_zip}&page={i}&includeKayStores=true&includeKayOutletStores=true"
 
-        r = session.get(api, headers=headers)
-        js = r.json().get("data") or []
+        try:
+            r = session.get(api, headers=headers)
+            js = r.json().get("data") or []
+        except:
+            break
 
         for j in js:
-            location_name = "Kay Jewelers"
+            location_name = j.get("displayName")
             location_type = "Kay Jewelers"
             slug = j.get("url")
             page_url = f"https://www.kay.com{slug}"
+            if "/null" in page_url:
+                page_url = SgRecord.MISSING
             street_address = f'{j.get("line1")} {j.get("line2") or ""}'.strip()
             city = j.get("town")
             state = j.get("regionIsoCodeShort")
@@ -29,7 +34,6 @@ def fetch_data(_zip, sgw: SgWriter):
             store_number = j.get("name")
             _type = j.get("baseStore") or ""
             if _type == "kayoutlet":
-                location_name = "Kay Jewelers Outlet"
                 location_type = "Kay Jewelers Outlet"
 
             _tmp = []
@@ -69,6 +73,6 @@ if __name__ == "__main__":
     }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         for _z in DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], max_search_distance_miles=100
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
         ):
             fetch_data(_z, writer)
