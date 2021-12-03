@@ -149,7 +149,10 @@ def fetch_data():
                 .strip()
             )
 
-            if "Closed for season".upper() in hours_of_operation.upper():
+            if (
+                "Closed for season".upper() in hours_of_operation.upper()
+                or "Closed for seaon" in hours_of_operation
+            ):
                 location_type = "Temporarily Closed"
             store_number = (
                 "".join(
