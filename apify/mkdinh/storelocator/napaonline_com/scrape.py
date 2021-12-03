@@ -33,7 +33,7 @@ def get_driver():
 
 
 @retry(stop=stop_after_attempt(3))
-def fetch(postal, driver):
+def fetch(postal, driver, retry = 0):
     try:
         html = driver.execute_async_script(
             f"""
@@ -45,6 +45,9 @@ def fetch(postal, driver):
 
         return bs(html, "html.parser")
     except:
+        if retry < 3:
+            return fetch(postal, driver, retry + 1)
+        
         return None
 
 
