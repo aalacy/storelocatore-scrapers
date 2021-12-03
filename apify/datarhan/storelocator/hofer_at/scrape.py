@@ -6,8 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://www.hofer.at/at/de/.get-stores-in-radius.json?_1630317579779&latitude=48.0819112&longitude=13.8589415&radius=50000"
     domain = "hofer.at"
     hdr = {
@@ -17,7 +16,7 @@ def fetch_data():
 
     all_locations = response["stores"]
     for poi in all_locations:
-        hoo = poi["openingHours"]
+        hoo = poi.get("openingHours")
         if hoo == "Mo-So - closed":
             if (
                 poi.get("comment")
