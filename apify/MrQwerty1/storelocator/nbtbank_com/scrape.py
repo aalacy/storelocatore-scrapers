@@ -3,7 +3,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
 import json
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
@@ -16,7 +20,7 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.nbtbank.com/locations/index.html"
         api = "https://www.nbtbank.com/locations/locations.json"
         driver.get(api)
-        js = json.loads(driver.find_element_by_css_selector("body").text)["features"]
+        js = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["features"]
 
         for j in js:
             geo = j.get("geometry", {}).get("coordinates") or [
