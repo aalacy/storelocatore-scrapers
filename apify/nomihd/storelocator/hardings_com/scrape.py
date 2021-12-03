@@ -31,10 +31,7 @@ def fetch_data():
             page_url = search_url
 
             locator_domain = website
-            location_name = store["retailerName"]
-            if location_name == "":
-                location_name = "<MISSING>"
-
+            location_name = store["name"]
             street_address = store["address1"]
             city = store["city"]
             state = store["state"]
@@ -51,12 +48,6 @@ def fetch_data():
             latitude = store["latitude"]
             longitude = store["longitude"]
 
-            if latitude == "" or latitude is None:
-                latitude = "<MISSING>"
-            if longitude == "" or longitude is None:
-                longitude = "<MISSING>"
-
-            hours_of_operation = ""
             hours_list = []
             try:
                 hours = store["hourInfo"].split(";")
