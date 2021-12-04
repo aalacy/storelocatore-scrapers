@@ -27,9 +27,6 @@ def fetch_data():
             res = session.get(
                 f"{base_url}?region={region['value']}", headers=_headers
             ).text
-            locs = json.loads(
-                res.split("var markers =")[1].split("var common")[0].strip()[:-1]
-            )
             slugs = bs(res, "lxml").select("select#comuna option")
             for slug in slugs:
                 page_url = (
