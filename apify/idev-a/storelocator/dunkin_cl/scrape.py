@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
-import json
 
 logger = SgLogSetup().get_logger("dunkin")
 
