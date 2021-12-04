@@ -118,6 +118,8 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
             data_hotels = hotel_summary_options["hotels"]
             if not data_hotels:
                 return
+            elif data_hotels is None:
+                return
             else:
                 try:
                     for idx1, _ in enumerate(data_hotels[0:]):
