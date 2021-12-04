@@ -83,7 +83,7 @@ def fetch_data():
     log.info(f"Total stores = {len(stores)}")
 
     state = MISSING
-    country_code = "ES"
+    country_code = "BE"
 
     for store in stores:
         store_number = get_JSON_object_variable(store, "EAGId")
