@@ -9,7 +9,7 @@ import json
 session = SgRequests()
 website = "dicos_com_cn"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers={
+headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
@@ -21,20 +21,22 @@ def fetch_data():
     if True:
         url = "http://www.dicos.com.cn/store.html"
         r = session.get(url, headers=headers)
-        loclist = r.text.split('var DealerArray = ')[1].split('}];')[0]
-        loclist = json.loads(loclist+"}]")
+        loclist = r.text.split("var DealerArray = ")[1].split("}];")[0]
+        loclist = json.loads(loclist + "}]")
         for loc in loclist:
             location_name = loc["dealername"]
             log.info(location_name)
             store_number = loc["id"]
             phone = loc["phone"]
             street_address = loc["address"]
-            city = loc['city']
+            city = loc["city"]
             state = loc["province"]
             latitude = loc["lat"]
             longitude = loc["lng"]
             country_code = "CN"
-            raw_address = street_address+" "+loc['district']+ " "+city+" "+state
+            raw_address = (
+                street_address + " " + loc["district"] + " " + city + " " + state
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -50,7 +52,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=MISSING,
-                raw_address = raw_address
+                raw_address=raw_address,
             )
 
 
