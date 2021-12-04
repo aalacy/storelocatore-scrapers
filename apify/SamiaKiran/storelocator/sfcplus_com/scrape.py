@@ -37,7 +37,6 @@ def fetch_data():
                 phone = MISSING
             elif "No" in phone:
                 phone = MISSING
-            print(phone)
 
             raw_address = location_name + " " + address[0]
             pa = parse_address_intl(raw_address)
