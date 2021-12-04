@@ -32,6 +32,13 @@ def fetch_data():
             temp = loc.findAll("div")
             location_name = temp[0].text
             address = temp[2].get_text(separator="|", strip=True).split("|")
+            phone = address[-1]
+            if "Al" in phone:
+                phone = MISSING
+            elif "No" in phone:
+                phone = MISSING
+            print(phone)
+
             raw_address = location_name + " " + address[0]
             pa = parse_address_intl(raw_address)
 
@@ -46,9 +53,7 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            phone = address[-1]
-            if phone.isalpha():
-                phone = MISSING
+
             country_code = "UAE"
             hours_of_operation = MISSING
             yield SgRecord(
