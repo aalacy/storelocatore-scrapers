@@ -217,32 +217,65 @@ def gen_countries(session):
 
 def get_city_province(num, country_name, country_link):
     city_or_province_list = []
+    r1 = None
     r_city = get_response(num, country_name, country_link)
     cities = r_city.json()
     if cities is not None:
         hotel_summary_options = cities["data"]["locationPage"]["hotelSummaryOptions"]
         data_hotels = hotel_summary_options["hotels"]
-        city_interlinks = cities["data"]["locationPage"]["location"]["interlinks"]
-        logger.info(f"{country_name} : {len(data_hotels)}")
-
-        existing = {}
-        existing["link"] = country_link
-        existing["text"] = country_name
-        existing["complete"] = False
-        logger.info(f"store count type: {type(len(data_hotels))}")
-        if len(data_hotels) == 150:
-            logger.info("It returns 150 items that means it has more than 150 stores")
-            for city_ilink in city_interlinks:
-                d_new = {}
-                city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
-                d_new["link"] = city_path
-                d_new["text"] = country_name
-                d_new["complete"] = False
-                d_new["city_name"] = city_ilink["name"]
-                city_or_province_list.append(d_new)
-            city_or_province_list.append(existing)
+        if data_hotels is None:
+            r1 = get_response(num, country_name, country_link)
+            cities_1 = r1.json()
+            hotel_summary_options_1 = cities_1["data"]["locationPage"][
+                "hotelSummaryOptions"
+            ]
+            data_hotels_1 = hotel_summary_options_1["hotels"]
+            city_interlinks = cities_1["data"]["locationPage"]["location"]["interlinks"]
+            logger.info(f"{country_name} : {len(data_hotels_1)}")
+            existing = {}
+            existing["link"] = country_link
+            existing["text"] = country_name
+            existing["complete"] = False
+            logger.info(f"store count type: {type(len(data_hotels_1))}")
+            if len(data_hotels_1) == 150:
+                logger.info(
+                    "It returns 150 items that means it has more than 150 stores"
+                )
+                for city_ilink in city_interlinks:
+                    d_new = {}
+                    city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
+                    d_new["link"] = city_path
+                    d_new["text"] = country_name
+                    d_new["complete"] = False
+                    d_new["city_name"] = city_ilink["name"]
+                    city_or_province_list.append(d_new)
+                city_or_province_list.append(existing)
+            else:
+                city_or_province_list.append(existing)
         else:
-            city_or_province_list.append(existing)
+            city_interlinks = cities["data"]["locationPage"]["location"]["interlinks"]
+            logger.info(f"{country_name} : {len(data_hotels)}")
+
+            existing = {}
+            existing["link"] = country_link
+            existing["text"] = country_name
+            existing["complete"] = False
+            logger.info(f"store count type: {type(len(data_hotels))}")
+            if len(data_hotels) == 150:
+                logger.info(
+                    "It returns 150 items that means it has more than 150 stores"
+                )
+                for city_ilink in city_interlinks:
+                    d_new = {}
+                    city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
+                    d_new["link"] = city_path
+                    d_new["text"] = country_name
+                    d_new["complete"] = False
+                    d_new["city_name"] = city_ilink["name"]
+                    city_or_province_list.append(d_new)
+                city_or_province_list.append(existing)
+            else:
+                city_or_province_list.append(existing)
 
     return city_or_province_list
 
