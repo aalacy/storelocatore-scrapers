@@ -29,8 +29,9 @@ def fetch_data(sgw: SgWriter):
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         ad = tree.xpath('//a[contains(@href, "goo")]//text()')
-        if location_name.find("BAYVIEW") != -1:
+        if location_name.find("Bayview") != -1:
             ad = tree.xpath('//a[contains(@href, "goo")]/following::p[1]//text()')
+
         street_address = "".join(ad[0])
         city = "<MISSING>"
         if street_address.find(",") != -1:
