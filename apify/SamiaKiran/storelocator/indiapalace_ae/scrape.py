@@ -1,60 +1,63 @@
-import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-website = "grottopizza_com"
+website = "indiapalace_ae"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://grottopizza.com"
+DOMAIN = "https://indiapalace.ae/"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        url = "https://www.grottopizza.com/locations/"
-        r = session.get(url, headers=headers)
+        r = session.get(DOMAIN, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("a", string=re.compile("see specials"))
+        loclist = soup.findAll("div", {"class": "slide_wrap"})
         for loc in loclist:
-            page_url = loc["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
             location_name = (
-                soup.find("h1").get_text(separator="|", strip=True).replace("|", " ")
+                loc.find("h3").get_text(separator="|", strip=True).split("|")[0]
             )
-            temp = soup.findAll("div", {"class": "et_pb_code_inner"})
+            log.info(location_name)
+            temp = loc.find("div", {"class": "prd_store_cont"}).findAll("li")
+            coords = temp[1].find("a")["href"].split("!3d")[1].split("!4d")
+            latitude = coords[0]
+            longitude = coords[1]
+            address = loc.find("div", {"class": "hide_open_addrss"}).findAll("span")
+            phone = address[-1].text
+            raw_address = address[0].text
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
             hours_of_operation = (
-                temp[4]
+                loc.find("div", {"class": "open_now"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
-                .replace("Hours of Operation", "")
             )
-            if "Thank you" in hours_of_operation:
-                hours_of_operation = MISSING
-            temp = temp[3]
-            phone = temp.find("a", {"class": "phone-link"}).text
-            address = temp.find("p").get_text(separator="|", strip=True).split("|")
-            street_address = address[0]
-            address = address[1].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
-            country_code = "US"
+            country_code = "UAE"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url,
+                page_url=DOMAIN,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -64,9 +67,10 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
@@ -74,7 +78,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:
