@@ -103,9 +103,13 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
     data_json_t = r.json()
     if data_json_t is None:
         r1 = get_response(idx, country_name, country_link)
+    elif not data_json_t:
+        r1 = get_response(idx, country_name, country_link)
     else:
         r1 = r
     data_json = r1.json()
+    if data_json["data"]["locationPage"] is None:
+        return
     if not data_json["data"]["locationPage"]:
         return
     else:
@@ -115,6 +119,10 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
             hotel_summary_options = data_json["data"]["locationPage"][
                 "hotelSummaryOptions"
             ]
+            if hotel_summary_options is None:
+                return
+            if not hotel_summary_options:
+                return
             data_hotels = hotel_summary_options["hotels"]
             if not data_hotels:
                 return
@@ -217,45 +225,17 @@ def gen_countries(session):
 
 def get_city_province(num, country_name, country_link):
     city_or_province_list = []
-    r1 = None
-    r_city = get_response(num, country_name, country_link)
-    cities = r_city.json()
-    if cities is not None:
-        hotel_summary_options = cities["data"]["locationPage"]["hotelSummaryOptions"]
-        data_hotels = hotel_summary_options["hotels"]
-        if data_hotels is None:
-            r1 = get_response(num, country_name, country_link)
-            cities_1 = r1.json()
-            hotel_summary_options_1 = cities_1["data"]["locationPage"][
-                "hotelSummaryOptions"
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            r_city = get_response(num, country_name, country_link)
+            cities = r_city.json()
+            data_hotels = cities["data"]["locationPage"]["hotelSummaryOptions"][
+                "hotels"
             ]
-            data_hotels_1 = hotel_summary_options_1["hotels"]
-            city_interlinks = cities_1["data"]["locationPage"]["location"]["interlinks"]
-            logger.info(f"{country_name} : {len(data_hotels_1)}")
-            existing = {}
-            existing["link"] = country_link
-            existing["text"] = country_name
-            existing["complete"] = False
-            logger.info(f"store count type: {type(len(data_hotels_1))}")
-            if len(data_hotels_1) == 150:
-                logger.info(
-                    "It returns 150 items that means it has more than 150 stores"
-                )
-                for city_ilink in city_interlinks:
-                    d_new = {}
-                    city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
-                    d_new["link"] = city_path
-                    d_new["text"] = country_name
-                    d_new["complete"] = False
-                    d_new["city_name"] = city_ilink["name"]
-                    city_or_province_list.append(d_new)
-                city_or_province_list.append(existing)
-            else:
-                city_or_province_list.append(existing)
-        else:
             city_interlinks = cities["data"]["locationPage"]["location"]["interlinks"]
             logger.info(f"{country_name} : {len(data_hotels)}")
-
             existing = {}
             existing["link"] = country_link
             existing["text"] = country_name
@@ -276,7 +256,11 @@ def get_city_province(num, country_name, country_link):
                 city_or_province_list.append(existing)
             else:
                 city_or_province_list.append(existing)
-
+            break
+        except Exception as e:
+            if x == 5:
+                logger.info(f"Fix the issue: {e} | {country_name} | {country_link}")
+            continue
     return city_or_province_list
 
 
@@ -324,7 +308,10 @@ def fetch_data(sgw: SgWriter):
             ]
             tasks.extend(task)
             for future in as_completed(tasks):
-                future.result()
+                if future.result() is not None:
+                    future.result()
+                else:
+                    continue
 
 
 def scrape():
