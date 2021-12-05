@@ -19,7 +19,7 @@ def fetch_data():
     # Your scraper here
     search_url = "https://www.dodge.com.ec/concesionarios/"
 
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us") as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)

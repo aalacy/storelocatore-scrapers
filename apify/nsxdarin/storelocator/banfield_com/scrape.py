@@ -48,6 +48,8 @@ def fetch_data():
         store = ""
         zc = ""
         r2 = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(r2.text)
+
         if r2.encoding is None:
             r2.encoding = "utf-8"
         for line2 in r2.iter_lines():
@@ -86,8 +88,15 @@ def fetch_data():
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-            if 'class="hospital-id">(#' in line2:
-                store = line2.split('class="hospital-id">(#')[1].split(")")[0]
+
+        store = (
+            "".join(store_sel.xpath('//div[@class="hospital-id"]/text()'))
+            .strip()
+            .replace("(#", "")
+            .strip()
+            .replace(")", "")
+            .strip()
+        )
 
         add = add.replace("&amp;", "&").replace("amp;", "&")
 
