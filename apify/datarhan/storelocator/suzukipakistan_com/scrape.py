@@ -34,6 +34,9 @@ def fetch_data():
         closes = poi["SuzukiDealersData"]["DealerClosesTiming"]["Value"]
         closed = poi["SuzukiDealersData"]["DealerClosedDays"]["Text"]
         hoo = f"Open: {opens}, Closes {closes}, Close On: {closed}"
+        phone = poi["SuzukiDealersData"]["DealerContactNumber"]["Text"]
+        if phone:
+            phone = phone.split(",")[0].split("/")[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -45,9 +48,7 @@ def fetch_data():
             zip_postal=addr.postcode,
             country_code="Pakistan",
             store_number=poi["SuzukiDealersData"]["DealerCode"]["Text"],
-            phone=poi["SuzukiDealersData"]["DealerContactNumber"]["Text"]
-            .split(",")[0]
-            .split("/")[0],
+            phone=phone,
             location_type="",
             latitude=poi["GoogleMapPart"]["Lat"],
             longitude=poi["GoogleMapPart"]["Lng"],
