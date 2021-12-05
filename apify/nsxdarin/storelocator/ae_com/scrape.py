@@ -65,7 +65,7 @@ def fetch_data():
     )
     locs = []
     for page in page_urls:
-        if page.count("/") >= 6 and "antofagasta" in page:
+        if page.count("/") >= 6:
             locs.append(page)
     for loc in locs:
         try:
