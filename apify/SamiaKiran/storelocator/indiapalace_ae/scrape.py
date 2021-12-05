@@ -35,7 +35,7 @@ def fetch_data():
             longitude = coords[1]
             address = loc.find("div", {"class": "hide_open_addrss"}).findAll("span")
             phone = address[-1].text
-            raw_address = address[0].text
+            raw_address = address[0].text.replace("\n", " ")
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

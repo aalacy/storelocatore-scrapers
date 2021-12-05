@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -5,20 +6,19 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-import json
+import re
 
-
-DOMAIN = "smaaash.com"
-LOCATION_URL = "https://smaaash.com/store-locator/"
-API_URL = "https://smaaash.in/Home/getAllLocation"
+DOMAIN = "weigels.com"
+BASE_URL = "https://weigels.com"
+LOCATION_URL = "https://weigels.com/locations/"
 HEADERS = {
-    "Accept": "application/json",
+    "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests(verify_ssl=False)
+session = SgRequests()
 
 
 def getAddress(raw_address):
@@ -46,41 +46,53 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def get_latlong(url):
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
+        return "<MISSING>", "<MISSING>"
+    return latlong.group(1), latlong.group(2)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
-    data = json.loads(session.get(API_URL, headers=HEADERS).json())
-    for row in data["Table1"]:
-        location_name = row["BM_CityCenter"]
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select("div.location-detail div.viewstore a")
+    for row in contents:
+        if DOMAIN in row["href"]:
+            page_url = row["href"]
+        else:
+            page_url = BASE_URL + row["href"]
+        store = pull_content(page_url)
+        location_name = (
+            store.find("div", {"class": "store-content-left"}).find("h4").text.strip()
+        )
         raw_address = (
-            row["BM_Address"].replace("Smaaash, ", "").replace("\r\n", "").strip()
+            store.find("h2", {"class": "locationAddress"})
+            .text.replace("\n", "")
+            .strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        if city == MISSING:
-            city = row["CM_CityName"]
-            street_address = " ".join(
-                street_address.replace(city, "").rstrip(",").split()
-            )
-        phone = MISSING
-        country_code = "IN"
-        store_number = row["BM_BranchID"]
-        if row["WeekDayTime"] and row["WeekendDayTime"]:
-            hours_of_operation = (
-                "Mon - Fri: "
-                + row["WeekDayTime"].replace("|", " - ").strip()
-                + ", Sat - Sun: "
-                + row["WeekendDayTime"].replace("|", " - ").strip()
-            )
-        else:
-            hours_of_operation = (
-                "Mon - Fri: 11:00 AM - 10:00 PM, Sat - Sun: 11:00 AM - 10:00 PM"
-            )
+        phone = (
+            store.find("div", {"class": "locationHours"})
+            .text.replace("TEL: ", "")
+            .strip()
+        )
+        hours_of_operation = MISSING
+        country_code = "US"
+        store_number = location_name.split("#")[1]
         location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
+        map_link = store.find("div", {"class": "directions-link"}).find("a")["href"]
+        latitude, longitude = get_latlong(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -100,7 +112,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
