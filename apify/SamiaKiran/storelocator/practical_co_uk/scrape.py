@@ -86,6 +86,7 @@ def fetch_data():
             if "mon" not in hours_of_operation:
                 if "weekdays" not in hours_of_operation:
                     hours_of_operation = MISSING
+            hours_of_operation = hours_of_operation.strip("-").strip(",")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
