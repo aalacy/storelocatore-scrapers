@@ -76,6 +76,7 @@ def fetch_data():
                 .replace("16.30losed", "16.30 closed")
                 .replace("(last collection 30 mins before closing) ", "")
                 .replace("Delivery & Collection Service", "")
+                .replace("now open..... ", "")
             )
             if "out of hours" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("out of hours")[0]
