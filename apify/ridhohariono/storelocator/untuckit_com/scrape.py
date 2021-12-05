@@ -99,6 +99,11 @@ def fetch_data():
         if "london" in raw_address.lower():
             city = "London"
             country_code = "UK"
+            if "W12 7HT" in raw_address:
+                zip_postal = "W12 7HT"
+                street_address = re.sub(
+                    r"W12 7HT", "", street_address, flags=re.IGNORECASE
+                ).strip()
         elif len(zip_postal.split(" ")) > 1:
             country_code = "CA"
         else:
