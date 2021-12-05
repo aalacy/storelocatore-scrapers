@@ -259,7 +259,10 @@ def fetch_data():
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
-                location_name=location_name.replace("Store HoursManagers", "").strip(),
+                location_name=location_name.replace("Store HoursManagers", "")
+                .strip()
+                .replace("Managers", "")
+                .strip(),
                 street_address=street_address,
                 city=city,
                 state=state,
