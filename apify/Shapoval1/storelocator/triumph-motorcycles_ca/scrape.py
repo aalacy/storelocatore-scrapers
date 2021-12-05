@@ -26,7 +26,7 @@ def fetch_data(sgw: SgWriter):
             country_codes = "".join(d.xpath(".//text()"))
             with SgRequests() as http:
                 r = http.get(
-                    url=f"https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode={slug}&SiteLanguageCode=en-CA&Skip=0&Take=50&CurrentUrl=www.triumph-motorcycles.ca"
+                    url=f"https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode={slug}&SiteLanguageCode=en-CA&Skip=0&Take=50000&CurrentUrl=www.triumph-motorcycles.ca"
                 )
                 assert isinstance(r, httpx.Response)
                 assert 200 == r.status_code
@@ -98,6 +98,8 @@ def fetch_data(sgw: SgWriter):
                             country_code = "LT"
                         if postal == "0":
                             postal = "<MISSING>"
+                        if country_code == "Russia":
+                            continue
 
                         row = SgRecord(
                             locator_domain=locator_domain,
@@ -125,6 +127,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

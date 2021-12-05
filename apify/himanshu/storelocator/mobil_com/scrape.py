@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -16,10 +15,11 @@ def fetch_data():
     domain = "exxon.com"
 
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=5,
     )
     for lat, lng in all_coords:
-        url = start_url.format(lat, lat + 0.4, lng, lng + 1.0)
+        url = start_url.format(lat, lat + 3.0, lng, lng + 5.0)
         try:
             all_locations = session.get(url).json()
         except Exception:
@@ -28,19 +28,26 @@ def fetch_data():
             street_address = poi["AddressLine1"]
             if poi["AddressLine2"]:
                 street_address += ", " + poi["AddressLine2"]
-            hoo = etree.HTML(poi["WeeklyOperatingHours"]).xpath("//text()")
+            hoo = ""
+            if poi["WeeklyOperatingHours"]:
+                hoo = etree.HTML(poi["WeeklyOperatingHours"]).xpath("//text()")
             hoo = " ".join(hoo)
+            store_number = poi["LocationID"]
+            city = poi["City"]
+            state = poi["StateProvince"]
+            location_name = poi["LocationName"]
+            page_url = f'https://www.exxon.com/en/find-station/exxon-{city.replace(" ", "").lower()}-{state.lower()}-{location_name.lower().replace(" ", "")}-{store_number}'
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.exxon.com/en/find-station/",
-                location_name=poi["LocationName"],
+                page_url=page_url,
+                location_name=location_name,
                 street_address=street_address,
-                city=poi["City"],
-                state=poi["StateProvince"],
+                city=city,
+                state=state,
                 zip_postal=poi["PostalCode"],
                 country_code=poi["Country"],
-                store_number=poi["LocationID"],
+                store_number=store_number,
                 phone=poi["Telephone"],
                 location_type=poi["EntityType"],
                 latitude=poi["Latitude"],
