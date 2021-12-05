@@ -70,7 +70,7 @@ highly_dense_state_or_country_list = [
 ]
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(60))
 def get_response(urlnum, country, url):
     path_per_country_or_state = url.split("/en/")[-1].rstrip("/")
     logger.info(f"{country} | {path_per_country_or_state}")
@@ -90,24 +90,37 @@ def get_response(urlnum, country, url):
         logger.info(f"[{urlnum}] Pulling the data from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
         if r.status_code == 200:
-            if r.json() is not None:
-                logger.info(f"HTTP Status Code: {r.status_code}")
-                return r
+            logger.info(f"HTTP Status Code: {r.status_code}")
+            return r
         raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
 def fetch_records(idx, country_n_url, sgw: SgWriter):
     country_name = country_n_url["text"]
     country_link = country_n_url["link"]
+    r1 = None
     r = get_response(idx, country_name, country_link)
-    data_json = r.json()
-    try:
-        if "hotelSummaryOptions" in data_json["data"]["locationPage"]:
+    data_json_t = r.json()
+    if data_json_t is None:
+        r1 = get_response(idx, country_name, country_link)
+    else:
+        r1 = r
+    data_json = r1.json()
+    if not data_json["data"]["locationPage"]:
+        return
+    else:
+        if "hotelSummaryOptions" not in data_json["data"]["locationPage"]:
+            return
+        else:
             hotel_summary_options = data_json["data"]["locationPage"][
                 "hotelSummaryOptions"
             ]
-            if hotel_summary_options is not None:
-                data_hotels = hotel_summary_options["hotels"]
+            data_hotels = hotel_summary_options["hotels"]
+            if not data_hotels:
+                return
+            elif data_hotels is None:
+                return
+            else:
                 try:
                     for idx1, _ in enumerate(data_hotels[0:]):
                         DOMAIN = "https://www.hilton.com/en/"
@@ -164,14 +177,11 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                             raw_address=raw_address,
                         )
                         sgw.write_row(item)
+
                 except Exception as e:
                     logger.info(
                         f"Please fix this >> {e} | {country_name} | {country_link} | data_JSON: {data_json}"
                     )
-    except Exception as e:
-        logger.info(
-            f"Please fix this >> {e} | {country_name} | {country_link} | data_JSON: {data_json}"
-        )
 
 
 def gen_countries(session):
@@ -207,32 +217,65 @@ def gen_countries(session):
 
 def get_city_province(num, country_name, country_link):
     city_or_province_list = []
+    r1 = None
     r_city = get_response(num, country_name, country_link)
     cities = r_city.json()
     if cities is not None:
         hotel_summary_options = cities["data"]["locationPage"]["hotelSummaryOptions"]
         data_hotels = hotel_summary_options["hotels"]
-        city_interlinks = cities["data"]["locationPage"]["location"]["interlinks"]
-        logger.info(f"{country_name} : {len(data_hotels)}")
-
-        existing = {}
-        existing["link"] = country_link
-        existing["text"] = country_name
-        existing["complete"] = False
-        logger.info(f"store count type: {type(len(data_hotels))}")
-        if len(data_hotels) == 150:
-            logger.info("It returns 150 items that means it has more than 150 stores")
-            for city_ilink in city_interlinks:
-                d_new = {}
-                city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
-                d_new["link"] = city_path
-                d_new["text"] = country_name
-                d_new["complete"] = False
-                d_new["city_name"] = city_ilink["name"]
-                city_or_province_list.append(d_new)
-            city_or_province_list.append(existing)
+        if data_hotels is None:
+            r1 = get_response(num, country_name, country_link)
+            cities_1 = r1.json()
+            hotel_summary_options_1 = cities_1["data"]["locationPage"][
+                "hotelSummaryOptions"
+            ]
+            data_hotels_1 = hotel_summary_options_1["hotels"]
+            city_interlinks = cities_1["data"]["locationPage"]["location"]["interlinks"]
+            logger.info(f"{country_name} : {len(data_hotels_1)}")
+            existing = {}
+            existing["link"] = country_link
+            existing["text"] = country_name
+            existing["complete"] = False
+            logger.info(f"store count type: {type(len(data_hotels_1))}")
+            if len(data_hotels_1) == 150:
+                logger.info(
+                    "It returns 150 items that means it has more than 150 stores"
+                )
+                for city_ilink in city_interlinks:
+                    d_new = {}
+                    city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
+                    d_new["link"] = city_path
+                    d_new["text"] = country_name
+                    d_new["complete"] = False
+                    d_new["city_name"] = city_ilink["name"]
+                    city_or_province_list.append(d_new)
+                city_or_province_list.append(existing)
+            else:
+                city_or_province_list.append(existing)
         else:
-            city_or_province_list.append(existing)
+            city_interlinks = cities["data"]["locationPage"]["location"]["interlinks"]
+            logger.info(f"{country_name} : {len(data_hotels)}")
+
+            existing = {}
+            existing["link"] = country_link
+            existing["text"] = country_name
+            existing["complete"] = False
+            logger.info(f"store count type: {type(len(data_hotels))}")
+            if len(data_hotels) == 150:
+                logger.info(
+                    "It returns 150 items that means it has more than 150 stores"
+                )
+                for city_ilink in city_interlinks:
+                    d_new = {}
+                    city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
+                    d_new["link"] = city_path
+                    d_new["text"] = country_name
+                    d_new["complete"] = False
+                    d_new["city_name"] = city_ilink["name"]
+                    city_or_province_list.append(d_new)
+                city_or_province_list.append(existing)
+            else:
+                city_or_province_list.append(existing)
 
     return city_or_province_list
 
@@ -252,20 +295,32 @@ def get_cities_for_cn_gb_us(countries):
     return cities_list
 
 
+def dedupe(texas_dup_test):
+    s = set()
+    texas_deduped = []
+    for i in texas_dup_test:
+        linkd = i["link"]
+        if linkd not in s:
+            texas_deduped.append(i)
+        s.add(linkd)
+    return texas_deduped
+
+
 def fetch_data(sgw: SgWriter):
     with SgRequests(verify_ssl=False, timeout_config=300) as session:
         countries = gen_countries(session)
-        sub_city_or_state = get_cities_for_cn_gb_us(countries)
-        sub_city_or_state = [
-            dict(t) for t in {tuple(d.items()) for d in sub_city_or_state}
-        ]
+        logger.info("Pulling URLs those having more than 150 Stores")
+        sub_city_or_state = get_cities_for_cn_gb_us(countries[0:])
+        logger.info(f"Raw Count: {len(sub_city_or_state)} ")
+        sub_city_or_state_deduped = dedupe(sub_city_or_state)
+        logger.info(f"After Deduplication Count: {len(sub_city_or_state_deduped)}")
+        logger.info("Pulling Sub-Pages Finished")
 
-        logger.info(f"after adding sub city or state: {sub_city_or_state}")
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = []
             task = [
                 executor.submit(fetch_records, idx, country_n_url, sgw)
-                for idx, country_n_url in enumerate(sub_city_or_state[0:])
+                for idx, country_n_url in enumerate(sub_city_or_state_deduped[0:])
             ]
             tasks.extend(task)
             for future in as_completed(tasks):
