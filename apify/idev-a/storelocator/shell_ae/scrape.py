@@ -65,9 +65,7 @@ if __name__ == "__main__":
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=2000
         )
     ) as writer:
-        search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, expected_search_radius_miles=100
-        )
+        search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
         results = fetch_data(search)
         for rec in results:
             writer.write_row(rec)

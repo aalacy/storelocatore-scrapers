@@ -1,5 +1,4 @@
 import json
-import httpx
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -7,19 +6,22 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
+from sglogging import sglog
+
+locator_domain = "https://ashleyfurniturestore.co.nz/"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def fetch_data(sgw: SgWriter):
-    with SgRequests() as http:
-        locator_domain = "https://ashleyfurniturestore.co.nz/"
-        api_url = "https://shy.elfsight.com/p/boot/?a=&callback=__esappsPlatformBoot1638455246306&shop=ashley-furniture-homestore-new-zealand.myshopify.com&w=698b9be0-bef6-11e9-9eea-a35d26055ef1"
-        session = SgRequests()
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        }
-        r = http.get(url=api_url, headers=headers)
-        assert isinstance(r, httpx.Response)
-        assert 200 == r.status_code
+
+    api_url = "https://shy.elfsight.com/p/boot/?a=&callback=__esappsPlatformBoot1638455246306&shop=ashley-furniture-homestore-new-zealand.myshopify.com&w=698b9be0-bef6-11e9-9eea-a35d26055ef1"
+    log.info(f"Api URL: {api_url}")
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    try:
+        r = SgRequests.raise_on_err(session.get(api_url, headers=headers))
         div = r.text.split("esappsPlatformBoot1638455246306(")[1].split(");")[0].strip()
         js = json.loads(div)
         for j in js["data"]["widgets"].values():
@@ -79,6 +81,9 @@ def fetch_data(sgw: SgWriter):
                 )
 
                 sgw.write_row(row)
+
+    except Exception as e:
+        log.info(f"Err at #L100: {e}")
 
 
 if __name__ == "__main__":
