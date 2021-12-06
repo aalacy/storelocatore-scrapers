@@ -36,6 +36,9 @@ def fetch_data():
         data = session.get(start_url, headers=hdr).json()
 
         for poi in data["dealers"]:
+            location_type = ", ".join(poi["services"])
+            if "ShowRoom" not in location_type:
+                continue
             if not poi["address"]:
                 continue
             street_address = poi["address"]["address1"]
@@ -61,7 +64,7 @@ def fetch_data():
                 country_code=poi["country"],
                 store_number="",
                 phone=poi["phone"],
-                location_type=", ".join(poi["services"]),
+                location_type=location_type,
                 latitude=poi["address"].get("geo", {}).get("lat"),
                 longitude=poi["address"].get("geo", {}).get("lon"),
                 hours_of_operation=hoo,
