@@ -3,7 +3,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
 import json
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
@@ -12,11 +16,10 @@ user_agent = (
 
 def fetch_data(sgw: SgWriter):
     with SgChrome(user_agent=user_agent) as driver:
-
         page_url = "https://www.nbtbank.com/locations/index.html"
         api = "https://www.nbtbank.com/locations/locations.json"
         driver.get(api)
-        js = json.loads(driver.find_element_by_css_selector("body").text)["features"]
+        js = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["features"]
 
         for j in js:
             geo = j.get("geometry", {}).get("coordinates") or [
@@ -24,9 +27,10 @@ def fetch_data(sgw: SgWriter):
                 SgRecord.MISSING,
             ]
             j = j.get("properties")
-            location_name = j.get("name")
-            if location_name.find("ATM") != -1:
-                continue
+            location_name = j.get("name") or ""
+            location_type = "Branch"
+            if "ATM" in location_name:
+                location_type = "ATM"
             street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
             city = j.get("city")
             state = j.get("state")
@@ -53,8 +57,9 @@ def fetch_data(sgw: SgWriter):
                 else:
                     part = d[:3]
 
-                time = j.get(f"Lobby_{part}") or "Closed"
-                _tmp.append(f"{d}: {time}")
+                time = j.get(f"Lobby_{part}")
+                if time:
+                    _tmp.append(f"{d}: {time}")
 
             hours_of_operation = ";".join(_tmp)
 
@@ -69,6 +74,7 @@ def fetch_data(sgw: SgWriter):
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,
+                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )

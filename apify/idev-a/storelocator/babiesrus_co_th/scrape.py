@@ -30,6 +30,8 @@ def fetch_data():
             street_address = _["data-store-address1"]
             if _["data-store-address2"]:
                 street_address += " " + _["data-store-address2"]
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             hours = []
             temp = {}
             for hh in bs(_["data-store-details"], "lxml").select(
