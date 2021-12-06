@@ -1,4 +1,3 @@
-import ssl
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -7,22 +6,19 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     start_url = "https://www.toyota.com.vn/api/common/provinces"
     domain = "toyota.com.vn"
+
+    with SgFirefox() as driver:
+        driver.get("https://www.toyota.com.vn/danh-sach-dai-ly")
+        token = driver.get_cookie("D1N")["value"]
+
     hdr = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "*/*",
@@ -31,7 +27,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
         "Connection": "keep-alive",
         "Referer": "https://www.toyota.com.vn/danh-sach-dai-ly",
-        "Cookie": "D1N=b15bfa3c0d478cf87e79df558cd7e331; _gcl_au=1.1.1458270597.1638207025; _ga=GA1.3.1162425954.1638207028; _gid=GA1.3.1535220884.1638207028; _gat_gtag_UA_117677845_1=1; _gat_UA-213713550-1=1; _gat_UA-179435511-2=1; _gat_UA-176787957-2=1; _gat_UA-144133814-1=1; _fbp=fb.2.1638207030405.1955918600",
+        "Cookie": f"D1N={token}",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
