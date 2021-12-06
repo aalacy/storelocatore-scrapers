@@ -2,8 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import dirtyjson as json
-from sgscrape.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 locator_domain = "https://dodofranchise.com/"
@@ -41,6 +41,7 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
             yield SgRecord(
+                page_url=locator_domain,
                 location_name=location_name,
                 street_address=street_address,
                 city=addr.city,
@@ -56,7 +57,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
