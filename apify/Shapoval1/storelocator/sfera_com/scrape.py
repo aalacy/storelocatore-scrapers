@@ -39,9 +39,9 @@ def fetch_data(sgw: SgWriter):
         )
         tree = html.fromstring(r.text)
         div = tree.xpath('//div[contains(@id, "tiendas_obj")]')
-        for d in div:
+        for li in div:
             ad = (
-                "".join(d.xpath("./div[1]/following-sibling::text()[1]"))
+                "".join(li.xpath("./div[1]/following-sibling::text()[1]"))
                 .replace("\n", "")
                 .strip()
             )
@@ -61,21 +61,21 @@ def fetch_data(sgw: SgWriter):
             city = a.city or "<MISSING>"
 
             phone = (
-                "".join(d.xpath('.//span[@class="tientextos2"]/text()'))
+                "".join(li.xpath('.//span[@class="tientextos2"]/text()'))
                 .replace("\n", "")
                 .strip()
                 or "<MISSING>"
             )
             try:
-                latitude = "".join(d.xpath(".//@onclick")).split(",")[1].strip()
+                latitude = "".join(li.xpath(".//@onclick")).split(",")[1].strip()
                 longitude = (
-                    "".join(d.xpath(".//@onclick")).split(",")[2].split(")")[0].strip()
+                    "".join(li.xpath(".//@onclick")).split(",")[2].split(")")[0].strip()
                 )
             except:
                 latitude, longitude = "<MISSING>", "<MISSING>"
             hours_of_operation = (
                 " ".join(
-                    d.xpath('.//span[@class="tientextos2"]/following-sibling::text()')
+                    li.xpath('.//span[@class="tientextos2"]/following-sibling::text()')
                 )
                 .replace("\n", "")
                 .strip()
