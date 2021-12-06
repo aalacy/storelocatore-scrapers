@@ -58,17 +58,21 @@ def pull_content(url):
 def get_hoo(url, hoo_api):
     soup = pull_content(url)
     hoo = (
-        re.sub(
-            r"Holiday Hours.*",
-            "",
-            soup.find("h2", text=re.compile(r"Hours", re.IGNORECASE))
-            .find_next("p")
-            .get_text(strip=True, separator=","),
-            re.IGNORECASE,
+        (
+            re.sub(
+                r"Holiday Hours.*|Black Friday.*|12\..*|Easter.*",
+                "",
+                soup.find("h2", text=re.compile(r"Hours", re.IGNORECASE))
+                .find_next("p")
+                .get_text(strip=True, separator=","),
+                re.IGNORECASE,
+            )
+            .replace("|", "")
+            .strip()
         )
-        .replace("|", "")
+        .rstrip(",")
         .strip()
-    ).rstrip(",")
+    )
     if "day" not in hoo:
         hoo = (
             (
@@ -112,7 +116,8 @@ def fetch_data():
         location_type = row["category"]
         latitude = row["latitude"]
         longitude = row["longitude"]
-        log.info("Append {} => {}".format(location_name, street_address))
+        # log.info("Append {} => {}".format(location_name, street_address))
+        print(hours_of_operation)
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
