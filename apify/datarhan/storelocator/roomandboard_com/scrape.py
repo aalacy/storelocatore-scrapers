@@ -1,6 +1,7 @@
 import ssl
 import json
 from lxml import etree
+from time import sleep
 from urllib.parse import urljoin
 
 from sgscrape.sgrecord import SgRecord
@@ -27,14 +28,14 @@ def fetch_data():
         driver.get(start_url)
         try:
             driver.find_element_by_xpath('//button[contains(text(), "See")]').click()
+            sleep(2)
             driver.find_element_by_xpath('//button[@id="submit"]').click()
+            sleep(10)
         except Exception:
             pass
         dom = etree.HTML(driver.page_source)
 
-        all_locations = dom.xpath(
-            '//li[contains(@class, "Heading Heading--4")]/a/@href'
-        )
+        all_locations = dom.xpath('//a[contains(@href, "stores/")]/@href')
         for url in all_locations:
             store_url = urljoin("https://www.roomandboard.com", url)
             driver.get(store_url)
@@ -43,21 +44,14 @@ def fetch_data():
             poi = json.loads(poi)
 
             location_name = poi["name"]
-            location_name = location_name if location_name else "<MISSING>"
             street_address = poi["address"]["streetAddress"]
-            street_address = street_address if street_address else "<MISSING>"
+            if not street_address:
+                continue
             city = poi["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
             state = poi["address"]["addressRegion"]
-            state = state if state else "<MISSING>"
             zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
             phone = poi.get("telephone")
-            phone = phone if phone else "<MISSING>"
             location_type = poi["@type"]
-            location_type = location_type if location_type else "<MISSING>"
             geo = loc_dom.xpath('//a[contains(@href, "/@")]/@href')
             latitude = ""
             longitude = ""
@@ -81,8 +75,8 @@ def fetch_data():
                 city=city,
                 state=state,
                 zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
+                country_code="",
+                store_number="",
                 phone=phone,
                 location_type=location_type,
                 latitude=latitude,

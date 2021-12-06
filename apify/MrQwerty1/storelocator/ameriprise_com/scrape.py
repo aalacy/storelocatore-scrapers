@@ -27,9 +27,9 @@ def fetch_data(_zip, sgw):
                 location_type = "Team"
 
             location_name = j.get("displayName") or ""
-            location_name = location_name.replace("&amp;", "&")
+            location_name = location_name.replace("&amp;", "&").replace("&#39;", "'")
             slug = j.get("advisorURL")
-            page_url = f"https://www.ameripriseadvisors.com{slug}"
+            page_url = f"https://www.ameripriseadvisors.com{slug}/contact/"
             country_code = "US"
 
             locations = j.get("locations") or []
@@ -55,7 +55,7 @@ def fetch_data(_zip, sgw):
                     "Saturday",
                     "Sunday",
                 ]
-                hours = j.get("locationOfficeHours") or []
+                hours = loc.get("locationOfficeHours") or []
                 for h in hours:
                     enabled = h.get("enabled")
                     index = h.get("dayOfWeek")

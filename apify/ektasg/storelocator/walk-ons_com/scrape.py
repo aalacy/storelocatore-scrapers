@@ -30,9 +30,12 @@ def fetch_data():
             location_name = link.text
             link = link["href"]
             if (
-                link.find("locations.walk-ons.com") == -1
-                and "Viera, FL" in location_name
+                "maps.google" in link
+                or "tel" in link
+                or "facebook.com/WalkOnsOxford/" in link
             ):
+                break
+            if link.find("locations.walk-ons.com") == -1:
                 log.info(link)
                 temp = loc.findAll("div")
                 address = temp[0].get_text(separator="|", strip=True).split("|")
@@ -52,8 +55,6 @@ def fetch_data():
                     .replace("Hours", "")
                 )
 
-            elif link.find("locations.walk-ons.com") == -1:
-                continue
             else:
                 log.info(link)
                 phone = soup.select_one("a[href*=tel]").text

@@ -26,7 +26,8 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("a", string=re.compile("Branch Details"))
         for loc in loclist:
-            page_url = "https://bankri.com/" + loc["href"]
+
+            page_url = loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -38,7 +39,7 @@ def fetch_data():
             )
             if "!3m" in latitude:
                 latitude = latitude.split("!3m")[0]
-            location_name = soup.find("h2").text
+            location_name = soup.find("h1").text
             temp = soup.findAll(
                 "span", {"elementor-heading-title elementor-size-default"}
             )
