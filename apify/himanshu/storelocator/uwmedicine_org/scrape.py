@@ -81,7 +81,7 @@ def fetch_data(sgw: SgWriter):
                             and '"address"' in str(tag)
                         ).contents[0]
                     )["@graph"][0]
-                    location_name = data["name"]
+                    location_name = data["name"].replace("&#039;", "'")
                     street_address = data["address"]["streetAddress"]
 
                     if re.search(r"\d", street_address):
