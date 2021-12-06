@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -88,36 +88,43 @@ def fetch_data():
                 if "/contact/" in link:
                     page_url = link
                     log.info(page_url)
-                    store_req = session.get(page_url, headers=headers)
-                    store_sel = lxml.html.fromstring(store_req.text)
-                    map_link = "".join(
-                        store_sel.xpath(
-                            '//a[@id="cpMain_UserControlContainer12_ctl00_hlDirections"]/@href'
-                        )
-                    ).strip()
                     try:
-                        latitude = map_link.split("/")[-1].strip().split(",")[0].strip()
-                    except:
-                        pass
-
-                    try:
-                        longitude = (
-                            map_link.split("/")[-1].strip().split(",")[-1].strip()
+                        store_req = SgRequests.raise_on_err(
+                            session.get(page_url, headers=headers)
                         )
-                    except:
-                        pass
+                        store_sel = lxml.html.fromstring(store_req.text)
+                        map_link = "".join(
+                            store_sel.xpath(
+                                '//a[@id="cpMain_UserControlContainer12_ctl00_hlDirections"]/@href'
+                            )
+                        ).strip()
+                        try:
+                            latitude = (
+                                map_link.split("/")[-1].strip().split(",")[0].strip()
+                            )
+                        except:
+                            pass
 
-                    hours = store_sel.xpath(
-                        '//div[contains(@class,"office-hours")]/text()'
-                    )
-                    hours_list = []
-                    for hour in hours:
-                        if len("".join(hour).strip()) > 0:
-                            hours_list.append("".join(hour).strip())
+                        try:
+                            longitude = (
+                                map_link.split("/")[-1].strip().split(",")[-1].strip()
+                            )
+                        except:
+                            pass
 
-                    hours_of_operation = (
-                        "; ".join(hours_list).strip().replace("\n", "").strip()
-                    )
+                        hours = store_sel.xpath(
+                            '//div[contains(@class,"office-hours")]/text()'
+                        )
+                        hours_list = []
+                        for hour in hours:
+                            if len("".join(hour).strip()) > 0:
+                                hours_list.append("".join(hour).strip())
+
+                        hours_of_operation = (
+                            "; ".join(hours_list).strip().replace("\n", "").strip()
+                        )
+                    except SgRequestError as e:
+                        log.error(e.status_code)
 
                 yield SgRecord(
                     locator_domain=locator_domain,
