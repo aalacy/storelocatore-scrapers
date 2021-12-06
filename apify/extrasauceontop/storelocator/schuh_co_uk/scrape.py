@@ -22,7 +22,6 @@ hours_key_list = [
 ]
 
 
-
 def get_driver(url, class_name, driver=None):
     if driver is not None:
         driver.quit()
@@ -192,8 +191,16 @@ def get_data():
             hours = ""
             for open_key, close_key in hours_key_list:
                 day = open_key[:3]
-                open_time = str(location_data[open_key])[:-2] + ":" + str(location_data[open_key])[-2:]
-                end_time = str(location_data[close_key])[:-2] + ":" + str(location_data[close_key])[-2:]
+                open_time = (
+                    str(location_data[open_key])[:-2]
+                    + ":"
+                    + str(location_data[open_key])[-2:]
+                )
+                end_time = (
+                    str(location_data[close_key])[:-2]
+                    + ":"
+                    + str(location_data[close_key])[-2:]
+                )
 
                 hours = hours + day + " " + open_time + "-" + end_time + ", "
             hours = hours[:-2]
