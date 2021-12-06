@@ -82,10 +82,6 @@ def fetch_data():
 
             store_number = page_url.split("=")[1].strip()
 
-            map_link = "".join(
-                store.xpath(".//a[contains(@href,'maps')]//@href")
-            ).strip()
-
             latitude, longitude = (
                 lat_list[index].split('",')[0].strip(),
                 lng_list[index].split('",')[0].strip(),
