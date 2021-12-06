@@ -27,7 +27,13 @@ def fetch_data():
         longt = loc["lng"]
         phone = loc["phone"]
         link = loc["web"]
-
+        if "Dr Suite" in city or "1020 " in city:
+            temp = title.split(",", 1)[0]
+            if temp in city:
+                street = street + " " + city.replace(temp, "")
+            else:
+                street = street + " " + city
+            city = temp
         yield SgRecord(
             locator_domain="https://alohamindmath.com/",
             page_url=link,
