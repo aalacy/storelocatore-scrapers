@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import re
 
@@ -69,16 +69,17 @@ def fetch_data():
     for row in page_urls:
         page_url = row["href"]
         content = pull_content(page_url)
-        info = content.find("div", {"class": "inner"}).find("div", {"class": "inner"})
+        info = content.find("div", {"class": "inner"})
         location_name = (
             content.find("h4", {"class": "homepage-heading"}).text.split(":")[0].strip()
         )
         addr_phone = (
-            info.find("p", {"class": "homepage-text"})
-            .get_text(strip=True, separator="@")
+            info.find("h4", text=re.compile(r"ADDRESS.*PHONE", re.IGNORECASE))
+            .find_next("p", {"class": "homepage-text"})
+            .get_text(strip=True, separator="@@")
             .replace("Address: ", "")
             .replace("Phone: ", "")
-            .split("@")
+            .split("@@")
         )
         raw_address = addr_phone[0]
         street_address, city, state, zip_postal = getAddress(raw_address)
@@ -120,20 +121,11 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

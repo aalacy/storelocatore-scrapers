@@ -45,7 +45,7 @@ def fetch_data():
             location_name = loc_dom.xpath('//h1[@itemprop="name"]/text()')[0]
             street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]//text()')
             street_address = " ".join([e.strip() for e in street_address if e.strip()])
-            city = loc_dom.xpath('//span[@itemprop="addressLocality"]')[0]
+            city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
             state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')[0]
             zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]//text()')[0]
             phone = loc_dom.xpath('//a[@class="store-phone"]/text()')[0]
