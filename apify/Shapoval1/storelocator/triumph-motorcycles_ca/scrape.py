@@ -100,6 +100,13 @@ def fetch_data(sgw: SgWriter):
                             postal = "<MISSING>"
                         if country_code == "Russia":
                             continue
+                        if (
+                            street_address == "68 Badstubenweg"
+                            or street_address.find("Center 1") != -1
+                        ):
+                            country_code = "Austria"
+                        if street_address.find("Södra Vägen 66") != -1:
+                            country_code = "Sweden"
 
                         row = SgRecord(
                             locator_domain=locator_domain,
