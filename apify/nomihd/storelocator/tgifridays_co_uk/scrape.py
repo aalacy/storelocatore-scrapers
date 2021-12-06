@@ -90,6 +90,8 @@ def fetch_data():
             city = "<MISSING>"
             state = "<MISSING>"
             zip = "<MISSING>"
+        elif "permanently closed" in store_req.text:
+            continue
         else:
             street_address = raw_address[0].strip()
             city = raw_address[1].strip()
@@ -214,7 +216,6 @@ def fetch_data():
             if ";" == hours_of_operation[-1]:
                 hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
-        log.info(hours_of_operation)
         map_link = "".join(
             store_sel.xpath('//a[contains(text(),"View map")]/@href')
         ).strip()
