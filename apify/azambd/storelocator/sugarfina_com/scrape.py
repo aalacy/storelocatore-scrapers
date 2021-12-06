@@ -91,7 +91,8 @@ def get_items(driver, page, count=0):
 
 def fetch_data():
     page = 0
-    lat_longs = []
+    count = 0
+    counts = []
 
     store_number = MISSING
 
@@ -99,11 +100,14 @@ def fetch_data():
         while True:
             page = page + 1
             items = get_items(driver, page)
-            if len(items) < 9:
-                break
+            log.info(f"Current Page: {page} and Locations: {len(items)}")
 
             for item in items:
+                count = count + 1
                 location_name = stringify_children_text(item, ".//name")
+                if location_name is MISSING:
+                    continue
+
                 page_url = stringify_children_text(item, ".//store_details_link")
                 if page_url == MISSING:
                     page_url = store_url
@@ -113,6 +117,7 @@ def fetch_data():
                 city = stringify_children_text(item, ".//city")
                 state = stringify_children_text(item, ".//region")
                 zip_postal = stringify_children_text(item, ".//postal_code")
+                log.info(f"Location Name: {location_name}, Zip: {zip_postal}")
                 phone = stringify_children_text(item, ".//phone")
                 latitude = stringify_children_text(item, ".//lat")
                 longitude = stringify_children_text(item, ".//lng")
@@ -125,12 +130,7 @@ def fetch_data():
                 if raw_address[len(raw_address) - 1] == ",":
                     raw_address = raw_address[:-1]
 
-                lat_long = latitude + "_" + longitude
-                if MISSING in lat_long:
-                    continue
-                elif lat_long in lat_longs:
-                    continue
-                lat_longs.append(lat_long)
+                counts.append(count)
 
                 yield SgRecord(
                     locator_domain="sugarfina.com",
@@ -150,7 +150,9 @@ def fetch_data():
                     raw_address=raw_address,
                 )
 
-            log.debug(f"{page}. total stores = {len(lat_longs) - 1}")
+            log.debug(f"{page}. total stores = {len(counts)}")
+            if len(items) < 9:
+                break
 
 
 def scrape():

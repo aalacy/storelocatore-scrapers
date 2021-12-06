@@ -73,7 +73,6 @@ highly_dense_state_or_country_list = [
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(60))
 def get_response(urlnum, country, url):
     path_per_country_or_state = url.split("/en/")[-1].rstrip("/")
-    logger.info(f"{country} | {path_per_country_or_state}")
     payload1 = {
         "query": "query hotelSummaryOptions_locationPage($language: String!, $path: String!, $queryLimit: Int!, $currencyCode: String!, $distanceUnit: HotelDistanceUnit, $titleFormat: MarkdownFormatType!) {\n  locationPage(language: $language, path: $path) {\n    location {\n      interlinkTitle\n      interlinks {\n        uri\n        name\n      }\n      _id: uri\n      title(format: $titleFormat)\n      accessibilityTitle\n      meta {\n        pageTitle\n        description\n      }\n      name\n      brandCode\n      category\n      uri\n      globalBounds\n      breadcrumbs {\n        uri\n        name\n      }\n      about {\n        desc\n        headline\n        shortDesc\n      }\n      paths {\n        base\n      }\n    }\n    match {\n      address {\n        city\n        country\n        countryName\n        postalCode\n        state\n        stateName\n      }\n      geometry {\n        location {\n          latitude\n          longitude\n        }\n        bounds {\n          northeast {\n            latitude\n            longitude\n          }\n          southwest {\n            latitude\n            longitude\n          }\n        }\n      }\n      name\n      type\n    }\n    hotelSummaryOptions(distanceUnit: $distanceUnit, sortBy: distance) {\n      _hotels {\n        totalSize\n      }\n      bounds {\n        northeast {\n          latitude\n          longitude\n        }\n        southwest {\n          latitude\n          longitude\n        }\n      }\n      amenities {\n        id\n        name\n      }\n      amenityCategories {\n        name\n        id\n        amenityIds\n      }\n      brands {\n        code\n        name\n      }\n      hotels(first: $queryLimit) {\n        amenityIds\n        brandCode\n        ctyhocn\n        distance\n        distanceFmt\n        facilityOverview {\n          allowAdultsOnly\n          homeUrl\n        }\n        name\n        contactInfo {\n          phoneNumber\n        }\n        display {\n          open\n          openDate\n          preOpenMsg\n          resEnabled\n          resEnabledDate\n        }\n        disclaimers {\n          desc\n          type\n        }\n        address {\n          addressFmt\n          addressLine1\n          city\n          country\n          countryName\n          postalCode\n          state\n          stateName\n        }\n        localization {\n          currencyCode\n          coordinate {\n            latitude\n            longitude\n          }\n        }\n        masterImage(variant: searchPropertyImageThumbnail) {\n          altText\n          variants {\n            size\n            url\n          }\n        }\n        leadRate {\n          lowest {\n            rateAmount(currencyCode: $currencyCode)\n            rateAmountFmt(decimal: 0, strategy: trunc)\n            ratePlan {\n              ratePlanName\n              ratePlanDesc\n            }\n          }\n        }\n      }\n    }\n  }\n}\n",
         "operationName": "hotelSummaryOptions_locationPage",
@@ -87,7 +86,7 @@ def get_response(urlnum, country, url):
     }
 
     with SgRequests(timeout_config=600, verify_ssl=False) as http:
-        logger.info(f"[{urlnum}] Pulling the data from: {url}")
+        logger.info(f"[{urlnum}] | {country} | Pulling from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
         if r.status_code == 200:
             logger.info(f"HTTP Status Code: {r.status_code}")
@@ -103,9 +102,13 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
     data_json_t = r.json()
     if data_json_t is None:
         r1 = get_response(idx, country_name, country_link)
+    elif not data_json_t:
+        r1 = get_response(idx, country_name, country_link)
     else:
         r1 = r
     data_json = r1.json()
+    if data_json["data"]["locationPage"] is None:
+        return
     if not data_json["data"]["locationPage"]:
         return
     else:
@@ -115,6 +118,10 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
             hotel_summary_options = data_json["data"]["locationPage"][
                 "hotelSummaryOptions"
             ]
+            if hotel_summary_options is None:
+                return
+            if not hotel_summary_options:
+                return
             data_hotels = hotel_summary_options["hotels"]
             if not data_hotels:
                 return
@@ -217,45 +224,17 @@ def gen_countries(session):
 
 def get_city_province(num, country_name, country_link):
     city_or_province_list = []
-    r1 = None
-    r_city = get_response(num, country_name, country_link)
-    cities = r_city.json()
-    if cities is not None:
-        hotel_summary_options = cities["data"]["locationPage"]["hotelSummaryOptions"]
-        data_hotels = hotel_summary_options["hotels"]
-        if data_hotels is None:
-            r1 = get_response(num, country_name, country_link)
-            cities_1 = r1.json()
-            hotel_summary_options_1 = cities_1["data"]["locationPage"][
-                "hotelSummaryOptions"
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            r_city = get_response(num, country_name, country_link)
+            cities = r_city.json()
+            data_hotels = cities["data"]["locationPage"]["hotelSummaryOptions"][
+                "hotels"
             ]
-            data_hotels_1 = hotel_summary_options_1["hotels"]
-            city_interlinks = cities_1["data"]["locationPage"]["location"]["interlinks"]
-            logger.info(f"{country_name} : {len(data_hotels_1)}")
-            existing = {}
-            existing["link"] = country_link
-            existing["text"] = country_name
-            existing["complete"] = False
-            logger.info(f"store count type: {type(len(data_hotels_1))}")
-            if len(data_hotels_1) == 150:
-                logger.info(
-                    "It returns 150 items that means it has more than 150 stores"
-                )
-                for city_ilink in city_interlinks:
-                    d_new = {}
-                    city_path = "http://www.hilton.com/en/" + city_ilink["uri"]
-                    d_new["link"] = city_path
-                    d_new["text"] = country_name
-                    d_new["complete"] = False
-                    d_new["city_name"] = city_ilink["name"]
-                    city_or_province_list.append(d_new)
-                city_or_province_list.append(existing)
-            else:
-                city_or_province_list.append(existing)
-        else:
             city_interlinks = cities["data"]["locationPage"]["location"]["interlinks"]
             logger.info(f"{country_name} : {len(data_hotels)}")
-
             existing = {}
             existing["link"] = country_link
             existing["text"] = country_name
@@ -276,7 +255,11 @@ def get_city_province(num, country_name, country_link):
                 city_or_province_list.append(existing)
             else:
                 city_or_province_list.append(existing)
-
+            break
+        except Exception as e:
+            if x == 5:
+                logger.info(f"Fix the issue: {e} | {country_name} | {country_link}")
+            continue
     return city_or_province_list
 
 
@@ -324,7 +307,10 @@ def fetch_data(sgw: SgWriter):
             ]
             tasks.extend(task)
             for future in as_completed(tasks):
-                future.result()
+                if future.result() is not None:
+                    future.result()
+                else:
+                    continue
 
 
 def scrape():
