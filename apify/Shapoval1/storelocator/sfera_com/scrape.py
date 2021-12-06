@@ -38,8 +38,8 @@ def fetch_data(sgw: SgWriter):
             "https://www.sfera.com/one/mod/tiendas_ajax.php", headers=headers, data=data
         )
         tree = html.fromstring(r.text)
-        div = tree.xpath('//div[contains(@id, "tiendas_obj")]')
-        for li in div:
+        divs = tree.xpath('//div[contains(@id, "tiendas_obj")]')
+        for li in divs:
             ad = (
                 "".join(li.xpath("./div[1]/following-sibling::text()[1]"))
                 .replace("\n", "")
