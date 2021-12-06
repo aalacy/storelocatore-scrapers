@@ -15,27 +15,6 @@ headers = {
 }
 
 
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
     search_url = "https://www.ramtrucks.co.nz/locate-a-dealer/"
@@ -46,7 +25,10 @@ def fetch_data():
         search_sel = lxml.html.fromstring(search_res.text)
         stores = search_sel.xpath('//div[@id="js-dealerResults"]/div')
 
-        for no, store in enumerate(stores, 1):
+        lat_list = search_res.text.split('"gmapLatitude":"')
+        lng_list = search_res.text.split('"gmapLongitude":"')
+
+        for index, store in enumerate(stores, 1):
 
             locator_domain = website
 
@@ -103,11 +85,10 @@ def fetch_data():
 
             store_number = page_url.split("=")[1].strip()
 
-            map_link = "".join(
-                store.xpath(".//a[contains(@href,'maps')]//@href")
-            ).strip()
-
-            latitude, longitude = get_latlng(map_link)
+            latitude, longitude = (
+                lat_list[index].split('",')[0].strip(),
+                lng_list[index].split('",')[0].strip(),
+            )
 
             yield SgRecord(
                 locator_domain=locator_domain,
