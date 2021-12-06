@@ -32,7 +32,6 @@ def get_driver():
     return driver
 
 
-@retry(stop=stop_after_attempt(3))
 def fetch(postal, driver, retry=0):
     try:
         html = driver.execute_async_script(
@@ -138,7 +137,7 @@ def fetch_data():
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
     ) as writer, ThreadPoolExecutor(max_workers=1) as executor, get_driver() as driver:
-        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=10)
+        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=2)
         futures = [
             executor.submit(fetch_locations, postal, driver, writer)
             for postal in search
