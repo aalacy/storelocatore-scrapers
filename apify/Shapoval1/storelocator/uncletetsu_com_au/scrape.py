@@ -19,7 +19,7 @@ def fetch_data(sgw: SgWriter):
         for iframe in iframes:
             driver.switch_to.frame(iframe)
             try:
-                WebDriverWait(driver, 1).until(
+                WebDriverWait(driver, 5).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )
