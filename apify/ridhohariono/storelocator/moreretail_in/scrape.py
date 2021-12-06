@@ -90,7 +90,7 @@ def fetch_data():
             store_number = row["id"]
             location_type = row["store_type"]
             country_code = "IN"
-            location_type = MISSING
+            location_type = row["store_type"]
             if not row["map_location"]:
                 latitude = MISSING
                 longitude = MISSING
