@@ -42,9 +42,15 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if city:
+            if city == "West La":
+                city = "West L.A."
+            if city == "La":
+                city = "L.A."
+
         state = formatted_addr.state
         if state == "Of Industry":
-            city = location_name.replace("STORE", "").strip()
+            city = "City of Industry"
             state = "<MISSING>"
 
         zip = formatted_addr.postcode
