@@ -2,9 +2,13 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
 from sgrequests import SgRequests
 import re
 from bs4 import BeautifulSoup
+
+ssl._create_default_https_context = ssl._create_unverified_context
 from sgselenium.sgselenium import SgChrome
 
 session = SgRequests()
@@ -35,9 +39,8 @@ def fetch_data():
             try:
                 soup = BeautifulSoup(r.text, "html.parser")
             except:
-                session1 = SgRequests()
-                r = session1.get(link, headers=headersss)
-                soup = BeautifulSoup(r.text, "html.parser")
+                driver.get(link)
+                soup = BeautifulSoup(driver.page_source, "html.parser")
             title = soup.find("h1").text
             try:
                 address = (

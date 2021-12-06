@@ -36,7 +36,11 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://honda.com.np/dealer-locations/"
         location_name = l[5][0][1][0]
         location_type = "Automobile Dealer"
-        street_address = l[5][3][0][1][0]
+        street_address = str(l[5][3][0][1][0])
+        city = "<MISSING>"
+        if street_address.find(",") != -1:
+            city = street_address.split(",")[1].strip()
+            street_address = street_address.split(",")[0].strip()
         country_code = "Nepal"
         latitude = l[1][0][0][0]
         longitude = l[1][0][0][1]
@@ -49,7 +53,7 @@ def fetch_data(sgw: SgWriter):
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=SgRecord.MISSING,
+            city=city,
             state=SgRecord.MISSING,
             zip_postal=SgRecord.MISSING,
             country_code=country_code,
@@ -67,6 +71,10 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
         fetch_data(writer)
