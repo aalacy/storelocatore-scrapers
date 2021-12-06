@@ -31,7 +31,10 @@ def fetch_data():
         name = ""
         add = ""
         city = ""
-        state = loc.split("/locations/")[1].split("/")[0].upper()
+        if "/intl/" in loc:
+            state = loc.split("/locations/intl/")[1].split("/")[0].upper()
+        else:
+            state = loc.split("/locations/")[1].split("/")[0].upper()
         zc = ""
         phone = ""
         lat = ""
@@ -91,6 +94,18 @@ def fetch_data():
             country = "AU"
         if state.upper() in canada:
             country = "CA"
+        if "-spain" in state.lower():
+            country = "ES"
+            state = "<MISSING>"
+        if "-thailand" in state.lower():
+            country = "TH"
+            state = "<MISSING>"
+        if "jakarta" in state.lower():
+            country = "ID"
+            state = "<MISSING>"
+        if "singapore" in state.lower():
+            country = "SG"
+            state = "<MISSING>"
         if RB is False:
             if add != "":
                 yield SgRecord(

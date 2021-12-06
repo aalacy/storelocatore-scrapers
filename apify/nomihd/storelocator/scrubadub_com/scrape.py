@@ -28,7 +28,7 @@ def fetch_data():
             '//li[contains(a/text(),"Find Us")]//li/a[not(@href="#")]'
         )
 
-        for idx, store in enumerate(stores, 1):
+        for store in stores:
 
             page_url = "".join(store.xpath("./@href"))
             log.info(page_url)
@@ -50,16 +50,29 @@ def fetch_data():
                     ],
                 )
             )
-            log.info(store_info)
-
-            raw_address = " ".join(store_info[1:]).strip().split("Phone")[0].strip()
+            raw_address = (
+                " ".join(store_info[1:])
+                .strip()
+                .split("Phone")[0]
+                .strip()
+                .replace(
+                    "(Our old address at 235 Market St will no longer have an entrance to the property.)",
+                    "",
+                )
+                .strip()
+            )
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
             if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
+                street_address = (
+                    street_address.replace("Ste", "Suite")
+                    .strip()
+                    .replace("At The Maine Mall", "")
+                    .strip()
+                )
             city = formatted_addr.city
             state = formatted_addr.state
             zip = formatted_addr.postcode
@@ -89,6 +102,10 @@ def fetch_data():
                 .strip("()*;: ")
                 .strip()
                 .replace("(* Weather Permitting);", "")
+                .strip()
+                .replace("; .", "")
+                .strip()
+                .replace("(*);", "")
                 .strip()
             )
             if "Car Wash:" in hours_of_operation:

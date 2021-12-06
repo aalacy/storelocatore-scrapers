@@ -78,7 +78,11 @@ def fetch_data():
                 state = state.replace(", Usa", "").strip()
 
             zip = formatted_addr.postcode
-
+            if not zip:
+                temp_address = "".join(
+                    store_sel.xpath('//div[@class="address"]/p/text()')
+                ).strip()
+                zip = temp_address.split(",")[-1].strip().split(" ")[-1].strip()
             country_code = "US"
 
             store_number = store["id"]
