@@ -31,13 +31,17 @@ def fetch_data(sgw: SgWriter):
                 ll = driver.find_element_by_xpath(
                     '//div[@class="google-maps-link"]/a'
                 ).get_attribute("href")
+                location_name = driver.find_element_by_xpath(
+                    '//div[@class="place-name"]'
+                ).text
             except:
                 ad = "<MISSING>"
                 ll = "<MISSING>"
+                location_name = "<MISSING>"
             ll = "".join(ll)
             ad = "".join(ad)
             driver.switch_to.default_content()
-            location_name = "<MISSING>"
+
             street_address = ad.split(",")[0].strip()
             state = ad.split(",")[1].split()[1].strip()
             postal = ad.split(",")[1].split()[2].strip()
