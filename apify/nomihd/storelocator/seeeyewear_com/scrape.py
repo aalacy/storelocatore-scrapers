@@ -80,10 +80,10 @@ def fetch_data():
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
-    store_list = search_sel.xpath("//p[./strong/span/a[@title]]")
+    store_list = search_sel.xpath("//p[.//strong//a[@title]]")
 
     for store in store_list:
-        page_url = "".join(store.xpath("strong/span/a[@title]/@href"))
+        page_url = "".join(store.xpath(".//strong//a[@title]/@href"))
 
         locator_domain = website
 

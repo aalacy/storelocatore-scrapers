@@ -29,6 +29,9 @@ def fetch_data(sgw: SgWriter):
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             location_name = "".join(tree.xpath("//h1/text()"))
+            store_number = "<MISSING>"
+            if page_url.find("dealers/S") != -1:
+                store_number = page_url.split("dealers/")[1].split(".")[0].strip()
             location_type = (
                 "".join(
                     tree.xpath(
@@ -87,6 +90,18 @@ def fetch_data(sgw: SgWriter):
             if phone.find("(") != -1:
                 phone = phone.split("(")[0].strip()
 
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//section[@class="fad-dealer-details"]/following-sibling::section[1]//*[@class="timings"]/*/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+
             row = SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -96,12 +111,12 @@ def fetch_data(sgw: SgWriter):
                 state=state,
                 zip_postal=postal,
                 country_code=country_code,
-                store_number=SgRecord.MISSING,
+                store_number=store_number,
                 phone=phone,
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
                 raw_address=f"{street_address} {city} {postal}".replace(
                     "<MISSING>", ""
                 ).strip(),
