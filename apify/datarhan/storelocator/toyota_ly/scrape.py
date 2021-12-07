@@ -20,9 +20,7 @@ def fetch_data():
             for e in poi["dealer_phones"]
             if e["dealer_phone_type"] == "Sales"
         ]
-        if not phone:
-            continue
-        phone = phone[0]
+        phone = phone[0] if phone else ""
         hoo = []
         for e in poi["working_hours"]:
             f_day = e["from_day"]
