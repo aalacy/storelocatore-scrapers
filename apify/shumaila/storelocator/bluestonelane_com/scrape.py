@@ -20,6 +20,7 @@ def fetch_data():
     linklist = []
     for div in divlist:
         link = div["href"]
+
         if link in linklist:
             continue
         linklist.append(link)
@@ -31,6 +32,7 @@ def fetch_data():
         try:
             store = street["data-yext-location-id"]
         except:
+
             store = "<MISSING>"
             continue
         url = (
@@ -89,10 +91,11 @@ def fetch_data():
         phone = r.text.split('"telephone":"', 1)[1].split('"', 1)[0].replace("+1", "")
         phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
         ccode = "US"
-        if "-" in pcode:
-            continue
+
         if pcode.isdigit():
             pass
+        elif "-" in pcode:
+            ccode = "GB"
         else:
             ccode = "CA"
         yield SgRecord(
