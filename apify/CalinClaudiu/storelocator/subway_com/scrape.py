@@ -411,9 +411,15 @@ def fetch_main(state, http):
 
     for next_r in state.request_stack_iter():
         logzilla.info(f"{urlB + next_r.url} <- INDEX!")
-        index = SgRequests.raise_on_err(
-            http.get(urlB + next_r.url, headers=headers)
-        ).text
+        try:
+            index = SgRequests.raise_on_err(
+                http.get(urlB + next_r.url, headers=headers)
+            ).text
+        except Exception as e:
+            if "404" in str(e):
+                continue
+            else:
+                raise str(e)
         data = b4(index, "lxml")
         yield parse_loc(data, str(urlB + next_r.url))
 
