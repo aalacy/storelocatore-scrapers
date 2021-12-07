@@ -40,9 +40,9 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["storeName"],
-                street_address=info.select_one(
-                    'span[itemprop="streetAddress"]'
-                ).text.strip(),
+                street_address=info.select_one('span[itemprop="streetAddress"]')
+                .text.replace("Shoppes Of Appomattox", "")
+                .strip(),
                 city=info.select_one('span[itemprop="addressLocality"]').text.strip(),
                 state=info.select_one('span[itemprop="addressRegion"]').text.strip(),
                 zip_postal=addr[-1],
