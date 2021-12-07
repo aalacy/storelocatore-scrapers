@@ -1,5 +1,3 @@
-import re
-
 from bs4 import BeautifulSoup
 
 from sgpostal.sgpostal import parse_address_intl
@@ -68,9 +66,7 @@ def fetch_data(sgw: SgWriter):
         )
         map_str = item.find(class_="directions")["href"]
         try:
-            geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{2,3}\.[0-9]+", map_str)[0].split(
-                ","
-            )
+            geo = map_str.split("=")[-1].split(",")
             latitude = geo[0]
             longitude = geo[1].strip()
         except:
