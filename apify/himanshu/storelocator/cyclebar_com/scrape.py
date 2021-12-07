@@ -75,25 +75,25 @@ def fetch_data(sgw: SgWriter):
                                     + t1
                                 )
                             else:
-                                hours_of = (
+                                hours_of_1 = (
                                     data,
                                     json_data1[data][0][0],
                                     json_data1[data][0][1],
                                     json_data1[data][1][0],
                                     json_data1[data][1][1],
                                 )
-                                d2 = datetime.strptime(hours_of[1], "%H:%M")
+                                d2 = datetime.strptime(hours_of_1[1], "%H:%M")
                                 t2 = d2.strftime("%I:%M %p")
-                                d3 = datetime.strptime(hours_of[2], "%H:%M")
+                                d3 = datetime.strptime(hours_of_1[2], "%H:%M")
                                 t3 = d3.strftime("%I:%M %p")
-                                d4 = datetime.strptime(hours_of[3], "%H:%M")
+                                d4 = datetime.strptime(hours_of_1[3], "%H:%M")
                                 t4 = d4.strftime("%I:%M %p")
-                                d5 = datetime.strptime(hours_of[4], "%H:%M")
+                                d5 = datetime.strptime(hours_of_1[4], "%H:%M")
                                 t5 = d5.strftime("%I:%M %p")
                                 hours_of_operation = (
                                     hours_of_operation
                                     + " "
-                                    + hours_of[0]
+                                    + hours_of_1[0]
                                     + " "
                                     + t2
                                     + " "
