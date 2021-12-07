@@ -95,7 +95,7 @@ def fetch_data():
                     ccode = "CA"
                 else:
                     ccode = soup.find("span", {"itemprop": "addressCountry"}).text
-                # ccode = 'MX'
+
         except:
             try:
                 ccode = (
