@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -13,6 +14,11 @@ def fetch_data():
 
     start_url = "https://www.toyota.com.vn/api/common/provinces"
     domain = "toyota.com.vn"
+
+    with SgFirefox() as driver:
+        driver.get("https://www.toyota.com.vn/danh-sach-dai-ly")
+        token = driver.get_cookie("D1N")["value"]
+
     hdr = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "*/*",
@@ -21,7 +27,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
         "Connection": "keep-alive",
         "Referer": "https://www.toyota.com.vn/danh-sach-dai-ly",
-        "Cookie": "D1N=b15bfa3c0d478cf87e79df558cd7e331",
+        "Cookie": f"D1N={token}",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
