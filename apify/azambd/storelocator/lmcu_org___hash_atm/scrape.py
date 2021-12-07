@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.pause_resume import CrawlStateSingleton
 
 from sgselenium.sgselenium import SgChrome
@@ -193,6 +193,8 @@ def fetch_data(search):
         log.info(
             f"{totalZip}. zip {zipCode} => {len(data)} stores; total store = {count}"
         )
+        if count >= 1697:
+            break
 
     log.info(f"Total stores = {count}")
 
@@ -201,8 +203,7 @@ def scrape():
     CrawlStateSingleton.get_instance().save(override=True)
     start = time.time()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        granularity=Grain_4(),
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=300
     )
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
