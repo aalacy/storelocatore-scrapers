@@ -92,7 +92,7 @@ def fetch_data():
         location_type = MISSING
         country_code = "AU"
 
-        for page_url in page_urls[0:50]:
+        for page_url in page_urls:
             count = count + 1
             log.debug(f"{count}. scrapping {page_url} ...")
             body = get_response(driver, page_url)
