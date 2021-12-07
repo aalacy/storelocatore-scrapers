@@ -3,9 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgFirefox
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_data(sgw: SgWriter):
@@ -18,26 +15,13 @@ def fetch_data(sgw: SgWriter):
         iframes = driver.find_elements_by_xpath("//iframe")
         for iframe in iframes:
             driver.switch_to.frame(iframe)
-            try:
-                WebDriverWait(driver, 1).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, '//div[@class="address"]')
-                    )
-                )
-            except:
-                driver.switch_to.default_content()
-            try:
-                ad = driver.find_element_by_xpath('//div[@class="address"]').text
-                ll = driver.find_element_by_xpath(
-                    '//div[@class="google-maps-link"]/a'
-                ).get_attribute("href")
-                location_name = driver.find_element_by_xpath(
-                    '//div[@class="place-name"]'
-                ).text
-            except:
-                ad = "<MISSING>"
-                ll = "<MISSING>"
-                location_name = "<MISSING>"
+            ad = driver.find_element_by_xpath('//div[@class="address"]').text
+            ll = driver.find_element_by_xpath(
+                '//div[@class="google-maps-link"]/a'
+            ).get_attribute("href")
+            location_name = driver.find_element_by_xpath(
+                '//div[@class="place-name"]'
+            ).text
             ll = "".join(ll)
             ad = "".join(ad)
             driver.switch_to.default_content()
