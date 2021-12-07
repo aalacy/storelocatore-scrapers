@@ -82,7 +82,7 @@ def fetch_data(search):
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+            country_codes=[SearchableCountries.USA]
         )
         results = fetch_data(search)
         for rec in results:
