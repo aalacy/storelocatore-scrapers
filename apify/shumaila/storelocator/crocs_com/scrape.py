@@ -80,16 +80,7 @@ def fetch_data():
             longt = loc["longitude"]
             try:
                 street = loc["address1"] + " " + str(loc["address2"])
-                try:
-                    street = (
-                        str(street.encode(encoding="ascii", errors="replace"))
-                        .replace("?", "-")
-                        .replace("b'", "")
-                        .strip()
-                        .replace("'", "")
-                    )
-                except:
-                    pass
+
                 street = street.replace("&#xa0;", " ").replace("&#x96;", " ").strip()
             except:
                 continue
