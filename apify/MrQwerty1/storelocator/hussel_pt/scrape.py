@@ -38,7 +38,7 @@ def fetch_data(sgw: SgWriter):
         source = source.replace("</br>", "<br/>")
         root = html.fromstring(source)
         lines = root.xpath("//text()")
-        if not ", " in lines[1]:
+        if ", " not in lines[1]:
             store_number = lines.pop(1).split("Loja ")[1].split()[0]
         else:
             _tmp = lines.pop(1)
