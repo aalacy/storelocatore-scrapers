@@ -1,8 +1,14 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("wellsfargo")
 
 locator_domain = "https://www.wellsfargo.com/"
 base_url = "https://www.wellsfargo.com/locator/"
@@ -21,12 +27,12 @@ session = SgRequests()
 
 
 def parallel_run_one(link):
+    logger.info(f"[1] {link}")
     session.get(link, headers=_headers)
     locations = session.post(payload_url, headers=_headers).json()["searchResults"]
 
     for _ in locations:
 
-        page_url = f"https://www.wellsfargo.com/locator/bank/?slindex={_['index']}"
         hours_of_operation = "; ".join(_.get("arrDailyEvents", []))
         if (
             "incidentMessage" in _
@@ -36,22 +42,26 @@ def parallel_run_one(link):
         ):
             hours_of_operation = "Temporary closed"
 
-        yield [
-            page_url,
-            _["branchName"],
-            _["locationLine1Address"],
-            _["city"],
-            _["state"],
-            _["postalcode"],
-            "US",
-            _["latitude"],
-            _["longitude"],
-            _["locationType"],
-            _["phone"].strip(),
-            locator_domain,
-            hours_of_operation,
-            "<MISSING>",
-        ]
+        if "ATM" in _["locationType"]:
+            hours_of_operation = _["serviceDetails"]["atmServices"]["atmSiteHours"]
+
+        if "Hours vary" in hours_of_operation:
+            hours_of_operation = ""
+
+        yield SgRecord(
+            location_name=_["branchName"],
+            street_address=_["locationLine1Address"],
+            city=_["city"],
+            state=_["state"],
+            zip_postal=_["postalcode"],
+            country_code="US",
+            phone=_["phone"],
+            latitude=_["latitude"],
+            longitude=_["longitude"],
+            location_type=_["locationType"],
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape_loc_urls(location_urls):
@@ -79,8 +89,9 @@ def scrape_loc_urls_two(location_urls):
 
 
 def parallel_run_two(link):
+    logger.info(f"[2] {link}")
     res = session.get(link, headers=_headers)
-    if "error.html" in res.url:
+    if "error.html" in str(res.url) or "PageNotFound.html" in str(res.url):
         return None
     sp1 = bs(res.text, "lxml")
     if sp1.find("", string=re.compile(r"could not find")):
@@ -103,28 +114,31 @@ def parallel_run_two(link):
         hours = list(_hr.find_next_sibling().stripped_strings)
     addr = [aa for aa in list(sp1.address.stripped_strings) if aa.strip() != ","]
     street_address = " ".join(addr[1].split(",")[:-1])
-    yield [
-        link,
-        addr[0],
-        street_address,
-        addr[1].split(",")[-1],
-        addr[2],
-        addr[3],
-        "US",
-        coord[0],
-        coord[1],
-        location_type,
-        sp1.find("a", href=re.compile(r"tel:")).text.strip(),
-        locator_domain,
-        "; ".join(hours),
-        "<MISSING>",
-    ]
+    phone = ""
+    if sp1.find("a", href=re.compile(r"tel:")):
+        phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
+    yield SgRecord(
+        page_url=link,
+        location_name=addr[0],
+        street_address=street_address,
+        city=addr[1].split(",")[-1],
+        state=addr[2],
+        zip_postal=addr[3],
+        country_code="US",
+        phone=phone,
+        latitude=coord[0],
+        longitude=coord[1],
+        location_type=location_type,
+        locator_domain=locator_domain,
+        hours_of_operation=" ".join(hours),
+    )
 
 
 def fetch_data():
 
     # sitemap1
     links = bs(session.get(sitemap1).text, "lxml").text.strip().split("\n")
+    logger.info(f"{len(links)} sitemap1")
     results = scrape_loc_urls(links)
 
     for result in results:
@@ -137,6 +151,7 @@ def fetch_data():
         .text.strip()
         .split("\n")
     )
+    logger.info(f"{len(links)} sitemap2")
     results = scrape_loc_urls_two(links)
 
     for result in results:
@@ -144,51 +159,20 @@ def fetch_data():
             yield item
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "latitude",
-                "longitude",
-                "location_type",
-                "phone",
-                "locator_domain",
-                "hours_of_operation",
-                "store_number",
-            ]
-        )
-        # Body
-        streets = []
-        for row in data:
-
-            street_check = row[2]
-            if street_check in streets:
-                continue
-            else:
-                streets.append(street_check)
-
-            final_row = []
-            for item in row:
-                if item == "":
-                    final_row.append("<MISSING>")
-                else:
-                    final_row.append(item)
-            writer.writerow(final_row)
-
-
 if __name__ == "__main__":
-
-    results = fetch_data()
-    write_output(results)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            ),
+            duplicate_streak_failure_factor=150,
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

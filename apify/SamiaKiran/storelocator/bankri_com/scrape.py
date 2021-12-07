@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -23,9 +24,10 @@ def fetch_data():
         url = "https://bankri.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "location-results"}).findAll("a")
+        loclist = soup.findAll("a", string=re.compile("Branch Details"))
         for loc in loclist:
-            page_url = "https://bankri.com/" + loc["href"]
+
+            page_url = loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -37,30 +39,24 @@ def fetch_data():
             )
             if "!3m" in latitude:
                 latitude = latitude.split("!3m")[0]
-            location_name = soup.find("h2").text
-            address = (
-                soup.findAll("td", {"class": "tablecontent1"})[1]
-                .get_text(separator="|", strip=True)
-                .split("|")
+            location_name = soup.find("h1").text
+            temp = soup.findAll(
+                "span", {"elementor-heading-title elementor-size-default"}
             )
-            phone = address[2]
-            street_address = address[0]
-            address = address[1].split(",")
+            phone = temp[2].text
+            street_address = temp[0].text
+            address = temp[1].text.split(",")
             city = address[0]
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
             country_code = "US"
-            hours_of_operation = " ".join(
-                x.text.replace("\n", " ")
-                for x in soup.findAll("table")[1].findAll("tr")[1:]
+            hours_of_operation = (
+                soup.find("table")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Lobby Hours", "")
             )
-            if not hours_of_operation:
-                hours_of_operation = " ".join(
-                    x.text.replace("\n", " ")
-                    for x in soup.findAll("table")[2].findAll("tr")[1:]
-                )
-
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

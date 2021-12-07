@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     api_url = "https://holtzmancorp.com/holtzman-propane-locations/"
-    session = SgRequests()
+
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -92,12 +92,21 @@ def fetch_data(sgw: SgWriter):
                 f'.//preceding::div/p[contains(text(), "{slug_street}")]/following-sibling::p/iframe/@src'
             )
         )
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = " ".join(info.split()[-2:])
+
         hours_of_operation = "<MISSING>"
+        cms = "".join(d.xpath('.//span[contains(text(),"Coming Soon")]/text()'))
+        if phone == "Coming Soon!":
+            phone = "<MISSING>"
+            hours_of_operation = "Coming Soon"
+        if cms:
+            hours_of_operation = "Coming Soon"
         if page_url != "https://holtzmancorp.com/holtzman-propane-locations/":
-            session = SgRequests()
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
 
@@ -110,9 +119,6 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
-            cms = "".join(tree.xpath('//p[./b[text()="COMING SOON"]]//text()'))
-            if cms:
-                hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -129,6 +135,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)

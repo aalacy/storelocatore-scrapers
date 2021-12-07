@@ -22,10 +22,16 @@ session = SgRequests()
 def fetch_data():
     # Your scraper here
 
-    url = "https://www.clarksoneyecare.com/_next/data/oZIpffJn05XGI8Sg6t6gs/locations.json"
-
+    url = "https://www.clarksoneyecare.com/locations"
     res = session.get(url)
-    loc_list = res.json()["pageProps"]["locations"]
+    soup = BeautifulSoup(res.text, "html.parser")
+    script = (
+        str(soup.find("script", {"id": "__NEXT_DATA__"}))
+        .replace('<script id="__NEXT_DATA__" type="application/json">', "")
+        .replace("</script>", "")
+    )
+
+    loc_list = json.loads(script)["props"]["pageProps"]["locations"]
     logger.info(len(loc_list))
 
     for loc in loc_list:

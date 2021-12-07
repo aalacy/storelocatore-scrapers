@@ -7,9 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 import tenacity
-import time
 import ssl
-import random
 
 try:
     _create_unverified_https_context = (
@@ -49,12 +47,11 @@ country_list = [
 # It is found that after 3/4/5 retries, the request gets through with SUCCESS
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
+@retry(stop=stop_after_attempt(20), wait=tenacity.wait_fixed(10))
 def get_response(url):
-    with SgRequests() as http:
+    with SgRequests(timeout_config=300) as http:
         response = http.get(url, headers=headers)
         logger.info(f"Status Code: {response.status_code}")
-        time.sleep(random.randint(10, 30))
         if response.status_code == 200:
             logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
             return response
@@ -67,6 +64,57 @@ def get_api_urls():
         API_ENDPOINT_URL = f"{BASE_API}&key={str(API_KEY)}&output=json&countrycode={str(country_a2['country_code'])}&maxresults={str(MAX_RESULTS)}&compact=false"
         api_urls.append((country_a2["country_code"], API_ENDPOINT_URL))
     return api_urls
+
+
+def get_custom_locname(_):
+    location_name = ""
+    if "OperatorInfo" in _ and _["OperatorInfo"] is not None:
+        try:
+            if "Title" in _["OperatorInfo"]:
+                ln = _["OperatorInfo"]["Title"]
+                if ln is not None:
+                    location_name = ln + " " + "Charging Station"
+                else:
+                    location_name = MISSING
+            else:
+                location_name = MISSING
+        except:
+            location_name = MISSING
+    else:
+        location_name = "OperatorInfo Unavailable"
+    return location_name
+
+
+def remove_parenthesis_n_string(locname):
+    ln = None
+    if "(" in locname and ")" in locname:
+        ln1 = locname.split("(")[0].strip()
+        ln2 = locname.split("(")[-1].strip()
+        ln3 = ln2.split(")")[-1].strip()
+        ln4 = ln1 + " " + ln3
+        ln = ln4.strip()
+    else:
+        ln = locname
+    return ln
+
+
+def get_custom_location_type(_):
+    location_type = ""
+    if "StatusType" in _:
+        try:
+            if "IsOperational" in _["StatusType"]:
+                lt = _["StatusType"]["IsOperational"]
+                if lt is not None:
+                    location_type = "IsOperational: " + str(lt)
+                else:
+                    location_type = MISSING
+            else:
+                location_type = MISSING
+        except:
+            location_type = MISSING
+    else:
+        location_type = MISSING
+    return location_type
 
 
 def fetch_records(url_country, sgw: SgWriter):
@@ -86,7 +134,9 @@ def fetch_records(url_country, sgw: SgWriter):
         for _ in data:
             locator_domain = DOMAIN
             ai = _["AddressInfo"]
-            location_name = ai["Title"] or MISSING
+            # Custom Location Name
+            locname = get_custom_locname(_)
+            location_name = remove_parenthesis_n_string(locname)
             street_address = ai["AddressLine1"] or MISSING
             city = ai["Town"] or MISSING
             state = ai["StateOrProvince"] or MISSING
@@ -96,7 +146,9 @@ def fetch_records(url_country, sgw: SgWriter):
             latitude = ai["Latitude"] or MISSING
             longitude = ai["Longitude"] or MISSING
             phone = ai["ContactTelephone1"] or MISSING
-            location_type = MISSING
+
+            # Custom Location Type
+            location_type = get_custom_location_type(_)
             hours_of_operation = MISSING
             raw_address = MISSING
             page_url = ai["RelatedURL"] or MISSING
