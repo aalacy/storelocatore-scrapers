@@ -297,12 +297,7 @@ def fetch_data(sgw: SgWriter):
     with SgRequests(verify_ssl=False, timeout_config=300) as session:
         countries = gen_countries(session)
         logger.info("Pulling URLs those having more than 150 Stores")
-        countries_usa = []
-        for i in countries:
-            link = i["link"]
-            if "/usa/" in link:
-                countries_usa.append(i)
-        sub_city_or_state = get_cities_for_cn_gb_us(countries_usa[0:])
+        sub_city_or_state = get_cities_for_cn_gb_us(countries[0:])
         logger.info(f"Raw Count: {len(sub_city_or_state)} ")
         sub_city_or_state_deduped = dedupe(sub_city_or_state)
         logger.info(f"After Deduplication Count: {len(sub_city_or_state_deduped)}")
