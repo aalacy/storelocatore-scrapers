@@ -58,8 +58,8 @@ def fetch_data():
                     .replace("losed", "losed ")
                     .strip()
                 )
-            except Exception as e:
-                print(e)
+            except:
+
                 hours = (
                     soup.find("div", {"class": "hours"})
                     .text.replace("SHOWROOM HOURS", "")
