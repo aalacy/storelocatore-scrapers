@@ -31,7 +31,9 @@ def fetch_data():
             '//div[@class="text-3xl mb-5 suzuki-bold"]/text()'
         )[0]
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
-        hoo = loc_dom.xpath('//span[contains(text(), "am to")]/text()')
+        hoo = loc_dom.xpath(
+            '//div[@class="info grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-5"]/div[2]//text()'
+        )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
         geo = (
             loc_dom.xpath('//a[@class="theme-link text-base"]/@href')[0]
