@@ -45,7 +45,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
 
 
 def fetch_data():
-    session = SgRequests(proxy_rotation_failure_threshold=20)
+    session = SgRequests()
     maxZ = search.items_remaining()
     total = 0
     for code in search:
@@ -59,7 +59,7 @@ def fetch_data():
             + "&distance=50"
         )
         try:
-            r2 = session.get(url, headers=headers, timeout=15).json()
+            r2 = session.get(url, headers=headers).json()
         except:
             r2 = api_get(url, headers, 15, 0, 15).json()
         if r2["payload"]["nbrOfStores"]:

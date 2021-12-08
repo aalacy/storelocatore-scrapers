@@ -1,9 +1,9 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -31,42 +31,34 @@ def fetch_data():
         )
         for loc in loclist:
             if loc.text.find("VIEW DETAILS") > -1:
-                page_url = "https://portaviarestaurants.com/beverly-hills" + loc["href"]
+                page_url = "https://portaviarestaurants.com" + loc["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
-                location_name = soup.find(
-                    "h2", {"class": "elementor-heading-title"}
-                ).text
+                location_name = soup.findAll(
+                    "h2", {"class": "elementor-heading-title elementor-size-default"}
+                )
+                location_name = location_name[0].text + " " + location_name[1].text
+                if "We are open for" in location_name:
+                    location_name = location_name.split("We are open for")[0]
                 temp = soup.findAll("span", {"class": "elementor-icon-list-text"})
                 phone = temp[0].text
-                address = temp[2].text + " " + temp[3].text
-                address = address.replace(",", " ")
-                address = usaddress.parse(address)
-                i = 0
-                street_address = ""
-                city = ""
-                state = ""
-                zip_postal = ""
-                while i < len(address):
-                    temp = address[i]
-                    if (
-                        temp[1].find("Address") != -1
-                        or temp[1].find("Street") != -1
-                        or temp[1].find("Recipient") != -1
-                        or temp[1].find("Occupancy") != -1
-                        or temp[1].find("BuildingName") != -1
-                        or temp[1].find("USPSBoxType") != -1
-                        or temp[1].find("USPSBoxID") != -1
-                    ):
-                        street_address = street_address + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        zip_postal = zip_postal + " " + temp[0]
-                    i += 1
+                address = temp[2].text
+                raw_address = address.replace(",", " ")
+
+                pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
 
                 hourlist = soup.findAll(
                     "div",
@@ -78,6 +70,7 @@ def fetch_data():
                             hr.get_text(separator="|", strip=True)
                             .replace("|", " ")
                             .replace("Hours", "")
+                            .split("Thanksgiving")[0]
                         )
                         break
                 country_code = "US"
@@ -96,6 +89,7 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
                 )
 
 

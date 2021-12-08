@@ -35,25 +35,30 @@ def fetch_data():
             latitude = loc["lat"]
             longitude = loc["lng"]
             r = session.get(page_url, headers=headers)
-            address = json.loads(
-                r.text.split(',"address":')[1].split(',"description"')[0]
-            )
-            street_address = address["streetAddress"]
-            city = address["addressLocality"]
-            state = address["addressRegion"]
-            country_code = "US"
-            zip_postal = address["postalCode"]
             soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                street_address = (
+                    soup.find("span", {"class": "c-address-street-1"}).text
+                    + " "
+                    + soup.find("span", {"class": "c-address-street-2"}).text
+                )
+            except:
+                street_address = soup.find("span", {"class": "c-address-street-1"}).text
+
+            city = soup.find("span", {"class": "c-address-city"}).text
+            state = soup.find("span", {"class": "c-address-state"}).text
+            zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
             hours_of_operation = (
                 soup.find("tbody", {"class": "hours-body"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=location_name,
-                street_address=street_address.strip(),
+                street_address=street_address,
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),

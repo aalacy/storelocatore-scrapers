@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from tenacity import retry, stop_after_attempt
 
 
 def get_hoo(page_url):
@@ -14,7 +15,11 @@ def get_hoo(page_url):
     text = "".join(
         tree.xpath("//script[contains(text(), 'window.JSContext =')]/text()")
     )
-    js = json.loads(text.split("window.JSContext =")[1].replace(";", ""))["profile"]
+
+    try:
+        js = json.loads(text.split("window.JSContext =")[1].replace(";", ""))["profile"]
+    except:
+        return ""
     source = js.get("office_hours") or "<html></html>"
     root = html.fromstring(source)
 
@@ -28,6 +33,7 @@ def get_states():
     return tree.xpath("//a[@class='Directory-listLink']/@href")
 
 
+@retry(stop=stop_after_attempt(3))
 def generate_links():
     urls = []
     states = get_states()
@@ -49,12 +55,15 @@ def get_urls(states):
             yield from get_urls(children)
 
 
-def get_data(url, sgw: SgWriter):
+def get_data(url, sgw: SgWriter, retry=0):
     try:
         r = session.get(url)
         j = r.json()["profile"]
     except:
-        return
+        if retry < 3:
+            return get_data(url, sgw, retry + 1)
+        else:
+            return
 
     page_url = j.get("c_baseURL") or url.replace(".json", "")
     location_name = j.get("name")
@@ -127,7 +136,7 @@ def get_data(url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = generate_links()
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

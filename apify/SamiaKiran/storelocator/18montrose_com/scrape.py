@@ -52,6 +52,8 @@ def fetch_data():
             )
             country_code = "GB"
             phone = loc.findAll("p")[-2].text.replace("tel", "")
+            if "Sunday" in phone:
+                phone = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,

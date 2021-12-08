@@ -13,7 +13,7 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or ""
     state = adr.state
     postal = adr.postcode
     country = adr.country
@@ -38,7 +38,20 @@ def get_data(slug, sgw: SgWriter):
 
     location_name = "".join(d.xpath(".//h3/text()")).strip()
     raw_address = " ".join("".join(d.xpath(".//address[not(./a)]/text()")).split())
+    iscoming = tree.xpath(
+        "//h1/preceding-sibling::p[contains(text(), 'Opening') or contains(text(), 'OPENING')]"
+    )
+    if "Opening" in raw_address or "Coming" in raw_address or iscoming:
+        return
     street_address, city, state, postal, country_code = get_international(raw_address)
+    if not city:
+        city = SgRecord.MISSING
+    if city[0].isdigit():
+        postal = city
+        city = SgRecord.MISSING
+    if city[-1].isdigit():
+        postal = city.split()[-1]
+        city = city.replace(postal, "").strip()
     try:
         phone = d.xpath(".//a[contains(@href, 'tel:')]/text()")[0].strip()
     except IndexError:
