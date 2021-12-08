@@ -13,7 +13,8 @@ logger = SgLogSetup().get_logger("totalwine_com")
 @retry(stop=stop_after_attempt(5))
 def get_url(url):
     headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/plain, */*",
     }
     session = SgRequests()
     response = session.get(url, headers=headers)
@@ -91,7 +92,7 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi.get("address1")
         if street_address:
-            if poi["address2"]:
+            if poi.get("address2"):
                 street_address = poi["address2"]
         else:
             street_address = poi.get("address2")

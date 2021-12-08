@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
                     './/preceding::div[@class="branch__topic site-color-heading"][1]/text()'
                 )
             )
-            city = a.city or "<MISSING>"
+            city = location_name
             latitude = "".join(d.xpath(".//div/@data-lat"))
             longitude = "".join(d.xpath(".//div/@data-lng"))
             phone = (

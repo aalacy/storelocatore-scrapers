@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 logger = SgLogSetup().get_logger("carrossier")
 
@@ -48,7 +48,7 @@ def fetch_data(search):
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],
-                    location_name=_["store"],
+                    location_name=_["store"].replace("&#8217;", "'"),
                     street_address=street_address,
                     city=_["city"].strip(),
                     state=_["state"].strip(),
@@ -65,12 +65,12 @@ def fetch_data(search):
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-            granularity=Grain_8(),
+            granularity=Grain_4(),
         )
         results = fetch_data(search)
         for rec in results:
