@@ -92,6 +92,51 @@ def fetch_data(sgw: SgWriter):
                     if "-" in street_address:
                         street_address = street_address.split("-")[0].strip()
 
+                str_up = street_address.upper()
+                if state:
+                    st_up = " " + state.upper() + " "
+                    if st_up in str_up:
+                        c_loc = str_up.find(st_up)
+                        street_address = street_address[:c_loc].strip()
+
+                if city:
+                    if city in street_address:
+                        street_address = street_address[
+                            : street_address.rfind(city)
+                        ].strip()
+                if state == "Michael" and country_code == "Barbados":
+                    city = "St. Michael"
+                    state = ""
+
+                if street_address[-1:] == ",":
+                    street_address = street_address[:-1].strip()
+
+                if len(street_address) < 10:
+                    street_address = raw_address
+
+                str_up = street_address.upper()
+                c_up = country_code.upper()
+                if c_up in str_up:
+                    c_loc = str_up.find(c_up)
+                    street_address = street_address[:c_loc].strip()
+
+                if zip_code:
+                    if zip_code in street_address:
+                        street_address = street_address.replace(zip_code, "")
+
+                if "Jardim Pirajussara" in street_address:
+                    city = "Jardim Pirajussara"
+                    street_address = street_address.replace(
+                        "Jardim Pirajussara", ""
+                    ).strip()
+
+                street_address = (
+                    street_address.replace("23 AL-", "")
+                    .replace("Alger", "")
+                    .split("- Cambridge")[0]
+                    .strip()
+                )
+
                 store_number = "<MISSING>"
                 phone = item.find(class_="off-phone").text.replace("Phone:", "").strip()
                 latitude = "<MISSING>"
@@ -120,6 +165,7 @@ def fetch_data(sgw: SgWriter):
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
                 )
 

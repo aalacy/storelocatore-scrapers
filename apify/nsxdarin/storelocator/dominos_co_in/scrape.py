@@ -18,6 +18,7 @@ def fetch_data():
     url = "https://www.dominos.co.in/store-locations/"
     states = []
     cities = []
+    allids = []
     places = []
     website = "dominos.co.in"
     typ = "<MISSING>"
@@ -55,12 +56,15 @@ def fetch_data():
             r2 = session.get(curl, headers=headers)
             logger.info(str(cid))
             for item in json.loads(r2.content)["data"]:
-                places.append(
-                    "https://www.dominos.co.in/store-locations/pizza-delivery-food-restaurants-in-"
-                    + item["link"]
-                    + "|"
-                    + sname
-                )
+                plid = item["link"].rsplit("-", 1)[1]
+                if plid not in allids:
+                    allids.append(plid)
+                    places.append(
+                        "https://www.dominos.co.in/store-locations/pizza-delivery-food-restaurants-in-"
+                        + item["link"]
+                        + "|"
+                        + sname
+                    )
         except:
             pass
     for curl in places:
@@ -81,12 +85,12 @@ def fetch_data():
             lines = r2.iter_lines()
             for line2 in lines:
                 if (
-                    '<a class="nav-link" href="https://www.dominos.co.in/store-location/'
+                    '<a class="nav-link" href="https://www.dominos.co.in/store-locations/'
                     in line2
                     and loc == ""
                 ):
                     loc = line2.split('href="')[1].split('"')[0]
-                    city = loc.split("location/")[1].split("/")[0].upper()
+                    city = loc.split("locations/")[1].split("/")[0].upper()
                     g = next(lines)
                     add = ""
                     phone = ""

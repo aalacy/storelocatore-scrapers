@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -12,16 +13,16 @@ headers = {
 
 
 def fetch_data():
-
+    pattern = re.compile(r"\s\s+")
     url = "https://www.peoplesjewellers.com/store-finder/view-all-states"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    state_list = soup.find("div", {"id": "0"}).findAll("a")
+    state_list = soup.select("a[href*=view-stores]")
 
     for slink in state_list:
         slink = "https://www.peoplesjewellers.com/store-finder/" + slink["href"]
 
-        r = session.get(slink, headers=headers, verify=False)
+        r = session.get(slink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         branchlist = soup.find("div", {"class": "view-all-stores"}).findAll(
             "div", {"class": "col-lg-3"}
@@ -37,7 +38,7 @@ def fetch_data():
 
                 link = "https://www.peoplesjewellers.com" + branch.find("a")["href"]
 
-                r = session.get(link, headers=headers, verify=False)
+                r = session.get(link, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 title = soup.find("h1", {"itemprop": "name"}).text
                 street = soup.find("span", {"itemprop": "streetAddress"}).text
@@ -52,13 +53,12 @@ def fetch_data():
                 hours = (
                     str(soup)
                     .split('"openings":', 1)[1]
+                    .split("{", 1)[1]
                     .split("}", 1)[0]
-                    .split(",")[-1]
-                    .split(":", 1)[1]
                     .replace('"', "")
-                    .replace("\n", " ")
-                    .strip()
+                    .replace(":", " ")
                 )
+                hours = re.sub(pattern, " ", hours).strip()
             else:
 
                 street = branch.find("span", {"itemprop": "streetAddress"}).text

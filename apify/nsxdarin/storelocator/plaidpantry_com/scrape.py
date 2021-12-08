@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("plaidpantry_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,7 +22,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "location.push('https://www.plaidpantry.com/store/" in line:
             locs.append(line.split("('")[1].split("'")[0])
     for loc in locs:
@@ -64,9 +39,10 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if "<div class='page_title'><h1>" in line2:
-                name = line2.split("<div class='page_title'><h1>")[1].split("<")[0]
+            if '<h2 class="h1">' in line2:
+                name = line2.split('<h2 class="h1">')[1].split("<")[0]
+            if "<title>" in line2:
+                store = line2.split("Plaid Pantry ")[1].split("<")[0]
             if '<p class="store-address"><strong><a' in line2:
                 addinfo = (
                     line2.split('<p class="store-address"><strong><a')[1]
@@ -90,33 +66,34 @@ def fetch_data():
             if "day:</td>" in line2:
                 day = line2.split(">")[1].split("<")[0]
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 hrs = day + " " + g.split(">")[1].split("<")[0]
                 if hours == "":
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
