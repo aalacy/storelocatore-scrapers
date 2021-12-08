@@ -41,13 +41,9 @@ def fetch_data():
                     street_address += " " + _["street2"]
                 hours = []
                 for hh in _["hours"].split(". "):
-                    if (
-                        " on" in hh
-                        or "closed " in hh.lower()
-                        or "closing " in hh.lower()
-                    ):
+                    if " on" in hh or "closing " in hh.lower() or "opens" in hh.lower():
                         break
-                    hours.append(hh.replace("&amp;", "&"))
+                    hours.append(hh.replace("&amp;", "&").split("*")[0].strip())
                 page_url = f"http://www.eathomegrown.com/locations?location={_['slug']}"
                 yield SgRecord(
                     page_url=page_url,
