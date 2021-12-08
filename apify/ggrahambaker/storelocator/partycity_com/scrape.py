@@ -1,4 +1,6 @@
 import json
+from lxml import html
+from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -7,7 +9,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from typing import Iterable
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
-from lxml import html
 
 DOMAIN = "partycity.com"
 logger = SgLogSetup().get_logger(logger_name="partycity_com")
@@ -22,25 +23,28 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     url = "https://stores.partycity.com/us/"
     store_url_list = []
     http = SgRequests()
-    r1 = http.get(url, headers=headers)
-    sel1 = html.fromstring(r1.text, "lxml")
-    state_list = sel1.xpath(
-        '//div[@class="tlsmap_list"]/div/div/a[@class="gaq-link"]/@href'
+    r = http.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    state_list = soup.find("div", {"class": "tlsmap_list"}).findAll(
+        "a", {"class": "gaq-link"}
     )
     for idx1, state_url in enumerate(state_list[0:]):
-        r2 = http.get(state_url, headers=headers, timeout=180)
-        sel2 = html.fromstring(r2.text, "lxml")
-        city_list = sel2.xpath(
-            '//div[contains(@class, "map-list-item")]/a[contains(@class, "gaq-link")]/@href'
+        logger.info(f"Fetching from : {state_url.text}")
+        state_url = state_url["href"]
+        r = http.get(state_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        city_list = soup.find("div", {"class": "tlsmap_list"}).findAll(
+            "a", {"class": "gaq-link"}
         )
-        logger.info(f"city_list: {city_list}")
         for city_url in city_list:
-            r3 = http.get(city_url, headers=headers, timeout=180)
-            sel3 = html.fromstring(r3.text, "lxml")
-            loclist = sel3.xpath(
-                '//div[contains(@class, "map-list-item-section")]/a[contains(@class, "gaq-link store-info")]/@href'
+            city_url = city_url["href"]
+            r = http.get(city_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            loclist = soup.find("div", {"class": "tlsmap_list"}).findAll(
+                "div", {"class": "map-list-item-section map-list-item-top mb-15"}
             )
             for loc in loclist:
+                loc = loc.find("a")["href"]
                 store_url_list.append(loc)
                 logger.info(loc)
                 state.push_request(SerializableRequest(url=loc))
@@ -49,7 +53,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
-        r = http.get(next_r.url, headers=headers, timeout=180)
+        r = http.get(next_r.url, headers=headers)
         logger.info(f"Pulling the data from: {next_r.url}")
         sel = html.fromstring(r.text, "lxml")
         js = sel.xpath("//script[@type='application/ld+json']/text()")

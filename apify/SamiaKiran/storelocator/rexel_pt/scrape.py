@@ -50,15 +50,13 @@ def fetch_data():
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
 
-            city = pa.city
-            city = city.strip() if city else MISSING
-
             state = pa.state
             state = state.strip() if state else MISSING
 
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
-
+            city = loc.split("city: ")[1].split("',")[0].replace("'", "")
+            zip_postal = (
+                loc.split("zipcode: ")[1].split("',")[0].replace("'", "").split()[0]
+            )
             latitude = loc.split("latitude: ")[1].split(",")[0]
             longitude = loc.split("longitude: ")[1].split(",")[0]
             country_code = "PT"
