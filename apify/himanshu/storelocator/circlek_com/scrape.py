@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sgpostal.sgpostal import parse_address_intl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import Retrying, stop_after_attempt
@@ -58,13 +58,15 @@ def fetch_page(page, session):
         "page": page,
     }
     logger.info(f"{url} page={page}")
-    response = session.get(url, headers=headers, params=params)
     try:
+        response = SgRequests.raise_on_err(
+            session.get(url, headers=headers, params=params)
+        )
         data = response.json()["stores"]
         stores = data.items() if isinstance(data, dict) else data
         return stores
-    except Exception as e:
-        logger.error(f"failure to fetch {response.url} >>> {e}")
+    except SgRequestError as e:
+        logger.error(f"failure to fetch data >>> {e.status_code}")
         return []
 
 
@@ -105,6 +107,7 @@ def fetch_details(tup, retry=False):
         page_url = page_url.replace("store-locator", "store-europe")
         logger.info(page_url)
         street_address = store["address"]
+        location_name = "Circle K at " + street_address
         city = store["city"]
         country_code = store["country"]
 
@@ -201,6 +204,16 @@ def fetch_details(tup, retry=False):
                     hours_list.append(day + ":" + time)
 
                 hours_of_operation = "; ".join(hours_list).strip()
+                break
+
+        if len(location_name) <= 0:
+            street_address = store["address"]
+            location_name = "Circle K at " + street_address
+            city = store["city"]
+            country_code = store["country"]
+
+            latitude = store["latitude"]
+            longitude = store["longitude"]
 
     return [
         locator_domain,

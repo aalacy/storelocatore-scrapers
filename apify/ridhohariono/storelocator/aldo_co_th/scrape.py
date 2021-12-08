@@ -52,27 +52,43 @@ def pull_content(url):
     return soup
 
 
+def get_phone(url):
+    soup = pull_content(url)
+    phone = soup.find("a", {"class": "font-bold underline contact-link"})
+    if not phone:
+        return MISSING
+    return phone.text.strip()
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.find("div", id="mw-sl__stores__list_block").find_all("li")
     for row in contents:
-        info = (
-            row.find("address", {"class": "mw-sl__store__info"})
-            .get_text(strip=True, separator="@")
-            .replace("\n", ",")
-            .replace("\t", "")
-            .replace("@Directions", "")
-            .strip()
-            .split("@")
-        )
         page_url = row.find("div", {"class": "mw-sl__stores__list__item__right"}).find(
             "a"
         )["href"]
-        location_name = info[0]
-        raw_address = " ".join(", ".join(info[1:]).split()).strip()
+        store = pull_content(page_url).find(
+            "div", {"id": "mw-store-locator-details-page"}
+        )
+        location_name = row.find(
+            "span", {"class": "mw-sl__store__info__name"}
+        ).text.strip()
+        raw_address = " ".join(
+            store.find(
+                "div", {"class": "mw-sl__details__item mw-sl__details__item--location"}
+            )
+            .get_text(strip=True, separator=",")
+            .replace("Address,", "")
+            .split()
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = MISSING
+        try:
+            phone = store.find(
+                "a", {"class": "font-bold underline contact-link"}
+            ).text.strip()
+        except:
+            phone = MISSING
         country_code = "TH"
         location_type = MISSING
         store_number = row["id"]

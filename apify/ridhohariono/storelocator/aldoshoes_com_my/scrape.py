@@ -52,6 +52,14 @@ def pull_content(url):
     return soup
 
 
+def get_phone(url):
+    soup = pull_content(url)
+    phone = soup.find("a", {"class": "font-bold underline contact-link"})
+    if not phone:
+        return MISSING
+    return phone.text.strip()
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -72,7 +80,7 @@ def fetch_data():
         location_name = info[0]
         raw_address = " ".join(", ".join(info[1:]).split()).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = MISSING
+        phone = get_phone(page_url)
         country_code = "MY"
         location_type = MISSING
         store_number = row["id"]

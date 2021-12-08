@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 
@@ -182,10 +182,26 @@ class ExampleSearchIteration(SearchIteration):
                 f"https://www.starbucks.com/bff/locations?lat={round(lat,6)}&lng={round(lng,6)}&mop=true"
             )
             headers = {}
-            headers["x-requested-with"] = "XMLHttpRequest"
+            headers["accept"] = "application/json"
+            headers["accept-encoding"] = "gzip, deflate, br"
+            headers["accept-language"] = "en-US,en;q=0.9,ro;q=0.8,es;q=0.7"
+            headers["cache-control"] = "no-cache"
+            headers["pragma"] = "no-cache"
+            headers[
+                "referer"
+            ] = "https://www.starbucks.com/store-locator?map=39.21362,-105.911692,8z"
+            headers[
+                "sec-ch-ua"
+            ] = '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"'
+            headers["sec-ch-ua-mobile"] = "?0"
+            headers["sec-ch-ua-platform"] = '"Windows"'
+            headers["sec-fetch-dest"] = "empty"
+            headers["sec-fetch-mode"] = "cors"
+            headers["sec-fetch-site"] = "same-origin"
             headers[
                 "user-agent"
-            ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
+            headers["x-requested-with"] = "XMLHttpRequest"
             try:
                 locations = SgRequests.raise_on_err(
                     http.get(url, headers=headers)
@@ -212,7 +228,7 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_8()
+        search_type="DynamicGeoSearch", granularity=Grain_4()
     )
 
     with SgWriter(
@@ -221,13 +237,12 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        with SgRequests() as http1:
-            search_iter = ExampleSearchIteration()
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=SearchableCountries.ALL,
+        )
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+        for rec in par_search.run():
+            writer.write_row(rec)
