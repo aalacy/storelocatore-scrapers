@@ -70,7 +70,7 @@ highly_dense_state_or_country_list = [
 ]
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(60))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(20))
 def get_response(urlnum, country, url):
     path_per_country_or_state = url.split("/en/")[-1].rstrip("/")
     payload1 = {
@@ -88,25 +88,31 @@ def get_response(urlnum, country, url):
     with SgRequests(timeout_config=600, verify_ssl=False) as http:
         logger.info(f"[{urlnum}] | {country} | Pulling from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
-        if r.status_code == 200:
-            logger.info(f"HTTP Status Code: {r.status_code}")
-            return r
-        raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
+        js = r.json()
+        hot = js["data"]["locationPage"]["hotelSummaryOptions"]
+        try:
+            if (r.status_code == 200 and hot is not None) or (
+                r.status_code == 200 and "errors" in js
+            ):
+                hot2 = js["data"]["locationPage"]["hotelSummaryOptions"]["hotels"]
+                if (r.status_code == 200 and hot2 is not None) or (
+                    r.status_code == 200 and "errors" in js
+                ):
+                    logger.info(f"HTTP Status Code: {r.status_code}")
+                    return r
+                raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
+            raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
+
+        except Exception as e:
+            logger.info(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
+            raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code} {e}")
 
 
 def fetch_records(idx, country_n_url, sgw: SgWriter):
     country_name = country_n_url["text"]
     country_link = country_n_url["link"]
-    r1 = None
     r = get_response(idx, country_name, country_link)
-    data_json_t = r.json()
-    if data_json_t is None:
-        r1 = get_response(idx, country_name, country_link)
-    elif not data_json_t:
-        r1 = get_response(idx, country_name, country_link)
-    else:
-        r1 = r
-    data_json = r1.json()
+    data_json = r.json()
     if data_json["data"]["locationPage"] is None:
         return
     if not data_json["data"]["locationPage"]:
@@ -124,8 +130,6 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                 return
             data_hotels = hotel_summary_options["hotels"]
             if not data_hotels:
-                return
-            elif data_hotels is None:
                 return
             else:
                 try:
