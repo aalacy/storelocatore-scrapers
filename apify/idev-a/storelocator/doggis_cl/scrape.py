@@ -17,7 +17,6 @@ graph_url = "https://api.getjusto.com/graphql?operationName=getPlaceDetails_cach
 def fetch_data():
     with SgChrome() as driver:
         driver.get(base_url)
-        # driver.wait_for_request(graph_url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located(
                 (
