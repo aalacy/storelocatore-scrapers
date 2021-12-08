@@ -45,7 +45,7 @@ def get_data(driver, url):
     locations = []
     try:
         locations = bs(driver.page_source, "lxml").select(
-            "div#DispListArticle div.cz_articlelist_box"
+            "div#DispListArticle div.cz_articlelist_box dl.cz_accordion"
         )
     except:
         driver.close()
@@ -73,7 +73,7 @@ def fetch_data():
             locations = get_data(driver, pref_url.format(pref["value"]))
             logger.info(f"{pref['value']} {len(locations)}")
             for _ in locations:
-                tr = _.select("table tr")
+                tr = _.select("table tbody tr")
                 page_url = "https://as.chizumaru.com" + tr[0].a["href"]
                 raw_address = tr[1].td.text.strip()
                 street_address = city = state = ""
@@ -103,7 +103,7 @@ def fetch_data():
                     country_code="JP",
                     phone=tr[2].td.text.strip(),
                     locator_domain=locator_domain,
-                    hours_of_operation=tr[3].td.text.strip(),
+                    hours_of_operation=tr[3].td.text.split("祝は")[0].strip(),
                     raw_address=raw_address,
                 )
 
