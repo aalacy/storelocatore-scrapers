@@ -1,4 +1,4 @@
-import json
+import demjson
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -36,7 +36,7 @@ def fetch_data():
             longitude = geo[1]
         poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
         if poi:
-            poi = json.loads(poi[0])
+            poi = demjson.decode(poi[0])
             street_address = poi["address"]["streetAddress"]
             city = poi["address"]["addressLocality"]
             state = poi["address"]["addressRegion"]
