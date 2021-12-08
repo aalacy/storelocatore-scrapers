@@ -26,20 +26,22 @@ def fetch_data():
         url = "https://freedomplasma.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist =  soup.findAll('a', string=re.compile('Center Info'))
+        loclist = soup.findAll("a", string=re.compile("Center Info"))
         for loc in loclist:
-            page_url =  loc["href"]
+            page_url = loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             if "Coming Soon" in r.text:
                 continue
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = (
-                soup.find("h1").text
-            )
+            location_name = soup.find("h1").text
             phone = soup.select_one("a[href*=tel]").text
-            address = soup.find("p", {"class": "address"}).get_text(separator="|", strip=True).replace("|"," ")
-            address = address.replace(','," ")                    
+            address = (
+                soup.find("p", {"class": "address"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -66,11 +68,13 @@ def fetch_data():
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
             hours_of_operation = (
-                soup.find("ul", {"class": "hours"}).get_text(separator="|", strip=True).replace("|", " ")
+                soup.find("ul", {"class": "hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
             coords = soup.find("div", {"class": "marker"})
-            latitude = coords['data-lat']
-            longitude = coords['data-lng']
+            latitude = coords["data-lat"]
+            longitude = coords["data-lng"]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
