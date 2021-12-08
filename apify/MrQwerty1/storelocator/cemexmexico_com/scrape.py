@@ -1,8 +1,30 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+
+
+def get_additional(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    try:
+        phones = tree.xpath(
+            "//a[contains(@href, 'tel:')]/text()|//div[@class='b-map-detail__phone']/span/text()"
+        )
+        phones = list(filter(None, [p.strip() for p in phones]))
+        phone = phones[0]
+    except:
+        phone = SgRecord.MISSING
+
+    hours = tree.xpath(
+        "//h4[contains(text(), 'Horarios')]/following-sibling::p//text()"
+    )
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = ";".join(hours)
+
+    return phone, hours_of_operation
 
 
 def fetch_data(sgw: SgWriter):
@@ -51,6 +73,14 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = hours_of_operation.split("<br>")[0].strip()
             if "<" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("<")[0].strip()
+
+            if not phone and not hours_of_operation:
+                try:
+                    phone, hours_of_operation = get_additional(page_url)
+                except:
+                    pass
+            if ":" in phone:
+                phone = phone.split(":")[-1].strip()
 
             row = SgRecord(
                 location_name=location_name,
