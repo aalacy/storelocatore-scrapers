@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import json
 
 logger = SgLogSetup().get_logger("")
 
@@ -13,28 +14,40 @@ _headers = {
 }
 
 locator_domain = "https://www.famima.vn"
-base_url = "https://www.famima.vn/en/sabai/directory?p=1&category=0&zoom=15&is_mile=0&directory_radius=1&view=list&hide_searchbox=1&hide_nav=1&hide_nav_views=0&hide_pager=0&featured_only=0&feature=1&perpage=500&sort=newest&__ajax=%23sabai-embed-wordpress-shortcode-1%20.sabai-directory-listings-container&_=1638268677724"
+base_url = "http://www.famima.vn/cua-hang/mien-nam/?category=6&zoom=15&is_mile=0&directory_radius=1&view=list&hide_searchbox=1&hide_nav=0&hide_nav_views=0&hide_pager=0&featured_only=0&feature=1&perpage=500&_category=6&sort=newest"
+
+
+def _d(res, session):
+    locations = json.loads(
+        res.split("'#sabai-embed-wordpress-shortcode-1 .sabai-directory-map',")[1]
+        .split("null,")[0]
+        .strip()[:-1]
+    )
+    for _ in locations:
+        info = bs(_["content"], "lxml")
+        page_url = info.a["href"]
+        logger.info(page_url)
+        sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+        yield SgRecord(
+            page_url=page_url,
+            location_name=info.a.text.strip(),
+            street_address=sp1.select_one(
+                'span[itemprop="streetAddress"]'
+            ).text.strip(),
+            city=sp1.select_one('span[itemprop="addressRegion"]').text.strip(),
+            country_code="VN",
+            latitude=_["lat"],
+            longitude=_["lng"],
+            phone=sp1.select_one("div.sabai-directory-contact").text.strip(),
+            locator_domain=locator_domain,
+        )
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("div.sabai-directory-main a")
-        for loc in locations:
-            page_url = loc["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            yield SgRecord(
-                page_url=page_url,
-                location_name=loc.text.strip(),
-                street_address=sp1.select_one(
-                    'span[itemprop="streetAddress"]'
-                ).text.strip(),
-                city=sp1.select_one('span[itemprop="addressRegion"]').text.strip(),
-                country_code="VN",
-                phone=sp1.select_one("div.sabai-directory-contact").text.strip(),
-                locator_domain=locator_domain,
-            )
+        res = session.get(base_url, headers=_headers).text
+        for rec in _d(res, session):
+            yield rec
 
 
 if __name__ == "__main__":

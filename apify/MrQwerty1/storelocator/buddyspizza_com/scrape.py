@@ -3,6 +3,8 @@ from lxml import html
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
 
 
@@ -23,7 +25,7 @@ headers_custom_for_location_url = {
     "upgrade-insecure-requests": "1",
 }
 
-session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+session = SgRequests()
 
 
 def get_address(line):
@@ -78,7 +80,7 @@ def get_coords_from_embed(text):
 
 def get_urls():
 
-    r = session.get(URL_LOCATION, headers=headers_custom_for_location_url, timeout=180)
+    r = session.get(URL_LOCATION, headers=headers_custom_for_location_url)
     tree = html.fromstring(r.text, "lxml")
     return tree.xpath("//div[@class='image-slide-title']/preceding-sibling::a/@href")
 
@@ -100,7 +102,7 @@ def fetch_data():
             "upgrade-insecure-requests": "1",
         }
 
-        r = session.get(page_url, headers=headers_custom_with_url_path, timeout=180)
+        r = session.get(page_url, headers=headers_custom_with_url_path)
         tree = html.fromstring(r.text, "lxml")
         location_name = tree.xpath("//meta[@itemprop='name']/@content")
         location_name = [" ".join(ln.split()) for ln in location_name]
@@ -142,6 +144,8 @@ def fetch_data():
         hours_of_operation = "; ".join(hours).replace("*", "") or MISSING
         if ";Dine-in" in hours_of_operation:
             hours_of_operation = hours_of_operation.split(";Dine-in")[0]
+        if tree.xpath("//h3[contains(text(), 'Coming Soon')]"):
+            hours_of_operation = "Coming Soon"
 
         raw_address = line
         yield SgRecord(
@@ -166,7 +170,7 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

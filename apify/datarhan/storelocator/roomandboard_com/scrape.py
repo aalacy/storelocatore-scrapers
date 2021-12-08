@@ -62,7 +62,6 @@ def fetch_data():
             hoo = loc_dom.xpath('//li[span[@class="hours_HoursDay__D_ako"]]//text()')
             hoo = [elem.strip() for elem in hoo if elem.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
             if "," in city:
                 state = city.split(", ")[-1]
                 city = city.split(",")[0]
