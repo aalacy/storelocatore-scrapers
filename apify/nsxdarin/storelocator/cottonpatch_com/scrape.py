@@ -22,17 +22,14 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if (
-            '<a href="https://cottonpatch.com/locations/' in line
-            and '<div class="location-state-group"' in line
+            'href="https://cottonpatch.com/locations/' in line
+            and "cta-button" not in line
+            and 'class="title">' not in line
         ):
-            items = line.split('<a href="https://cottonpatch.com/locations/')
-            for item in items:
-                if "<span></span></a></div>" in item:
-                    locs.append(
-                        "https://cottonpatch.com/locations/" + item.split('"')[0]
-                    )
+            lurl = line.split('href="')[1].split('"')[0]
+            if lurl != "https://cottonpatch.com/locations/":
+                locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -49,26 +46,26 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("<")[0].replace("&#8211;", "-")
-            if add == "" and '<p class="distance">' in line2:
+            if add == "" and 'class="contact-group">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
-                add = g.split("<")[0].strip().replace("\t", "")
-                city = g.split(">")[1].split(",")[0]
-                state = g.split(">")[1].split(",")[1].strip().split(" ")[0]
-                zc = g.split(">")[1].split("<")[0].rsplit(" ", 1)[1]
+                add = g.split("<p>")[1].split("<")[0]
                 g = next(lines)
-                g = str(g.decode("utf-8"))
-                phone = g.split("<")[0].strip().replace("\t", "")
-            if lat == "" and 'class="row map" data-coords="' in line2:
-                lat = line2.split('class="row map" data-coords="')[1].split(",")[0]
-                lng = (
-                    line2.split('class="row map" data-coords="')[1]
-                    .split(",")[1]
-                    .split('"')[0]
+                city = g.split(",")[0].strip().replace("\t", "")
+                state = g.split(",")[1].strip().split(" ")[0]
+                zc = g.split("<")[0].rsplit(" ", 1)[1]
+                g = next(lines)
+                phone = (
+                    g.split("<")[0]
+                    .strip()
+                    .replace("\t", "")
+                    .replace("\r", "")
+                    .replace("\n", "")
                 )
+            if lat == "" and "other_coords=[{lat:" in line2:
+                lat = line2.split("other_coords=[{lat:")[1].split(",")[0]
+                lng = line2.split("lng:")[1].split("}")[0]
             if '<div class="hours-group">' in line2 and hours == "":
                 HFound = True
             if HFound and ">Menu</a>" in line2:
