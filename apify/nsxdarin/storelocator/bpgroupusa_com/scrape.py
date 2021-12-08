@@ -33,9 +33,9 @@ def fetch_data():
     for line in lines:
         if 'id="canada">' in line:
             country = "CA"
+        if 'id="japan">' in line:
+            country = "JP"
         if '<div class="row ourlocations-title" id="china">' in line:
-            LFound = False
-        if '<div class="row ourlocations-title" id="japan">' in line:
             LFound = False
         if (
             LFound
@@ -92,6 +92,23 @@ def fetch_data():
             )
         if '<li><a href="callto:' in line:
             phone = line.split('<li><a href="callto:')[1].split('"')[0]
+
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
 
 
 def scrape():

@@ -50,6 +50,7 @@ def fetch_data():
         zip_postal = temp["fran_zip"]
         country_code = temp["fran_country"]
         hours_of_operation = temp["fran_hours"]
+        location_type = MISSING
         soup = BeautifulSoup(hours_of_operation, "html.parser")
         hours_of_operation = (
             soup.find("p").get_text(separator="|", strip=True).split("|")
@@ -62,6 +63,10 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("Grooming", 1)[0]
         if "Curbside" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("Curbside", 1)[0]
+        if "COMING SOON!" in hours_of_operation:
+            hours_of_operation = MISSING
+            location_type = "COMING SOON"
+        hours_of_operation = hours_of_operation.replace("Hours", "")
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
@@ -73,7 +78,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation.strip(),
