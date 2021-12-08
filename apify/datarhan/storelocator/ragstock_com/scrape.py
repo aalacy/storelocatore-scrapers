@@ -24,6 +24,10 @@ def fetch_data():
             page_url = "https://ragstock.com" + page_url
         loc_response = session.get(page_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
+        location_type = ""
+        temp_closed = loc_dom.xpath('//span[contains(text(), "Temporarily closed")]')
+        if temp_closed:
+            location_type = "Temporarily closed"
         location_name = loc_dom.xpath("//h1/text()")[0]
         raw_data = loc_dom.xpath("//div[h3[strong]]/p[1]/text()")
         raw_address = ", ".join(
@@ -55,7 +59,7 @@ def fetch_data():
             country_code="",
             store_number="",
             phone=phone,
-            location_type="",
+            location_type=location_type,
             latitude=geo[1].split("!")[0],
             longitude=geo[0],
             hours_of_operation=hoo,
