@@ -131,10 +131,6 @@ def get_data():
         state = address_parts[-1].split(", ")[1].split(" ")[0]
         zipp = address_parts[-1].split(", ")[1].split(" ")[1].split("<")[0]
 
-        print(page_url)
-        print(zipp)
-        print("")
-
         if address == "":
             address_parts = str(
                 soup.find_all("div", attrs={"class": "et_pb_text_inner"})[1]
