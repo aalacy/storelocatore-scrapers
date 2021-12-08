@@ -28,7 +28,7 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             city = "".join(
                 l.xpath(".//span[@itemprop='addressLocality']/text()")
-            ).strip()[:-1]
+            ).strip()
             state = "".join(
                 l.xpath(".//span[@itemprop='addressRegion']/text()")
             ).strip()
