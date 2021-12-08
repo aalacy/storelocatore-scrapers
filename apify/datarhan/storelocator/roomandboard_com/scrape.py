@@ -59,7 +59,9 @@ def fetch_data():
                 geo = geo[-1].split("/@")[-1].split(",")[:2]
                 latitude = geo[0]
                 longitude = geo[1]
-            hoo = loc_dom.xpath('//li[span[@class="hours_HoursDay__D_ako"]]//text()')
+            hoo = loc_dom.xpath(
+                '//div[contains(@class, "storeDetails_StoreDetailsHours")]//li[span[@class="hours_HoursDay__D_ako"]]//text()'
+            )
             hoo = [elem.strip() for elem in hoo if elem.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
