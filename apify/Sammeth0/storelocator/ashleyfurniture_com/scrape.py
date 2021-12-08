@@ -127,7 +127,6 @@ def fetch_data(sgw: SgWriter):
             .replace("&#194;", "Â")
             .replace("&#233;", "é")
             .strip()
-            .encode("ascii", "ignore")
             or "<MISSING>"
         )
         city = a.get("addressLocality") or "<MISSING>"
