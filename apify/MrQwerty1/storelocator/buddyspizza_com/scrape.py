@@ -3,6 +3,8 @@ from lxml import html
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
 
 
@@ -168,7 +170,7 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
