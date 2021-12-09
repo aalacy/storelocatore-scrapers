@@ -1,3 +1,4 @@
+import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -37,6 +38,7 @@ def fetch_data(sgw: SgWriter):
         r = session.post(
             "https://www.sfera.com/one/mod/tiendas_ajax.php", headers=headers, data=data
         )
+        time.sleep(5)
         tree = html.fromstring(r.text)
         divs = tree.xpath('//div[contains(@id, "tiendas_obj")]')
         for li in divs:

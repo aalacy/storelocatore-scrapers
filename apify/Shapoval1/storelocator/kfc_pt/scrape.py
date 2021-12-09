@@ -4,7 +4,7 @@ from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -31,8 +31,17 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     div = tree.xpath('//a[.//strong[text()="- ver no Google"]]')
     for d in div:
+        page_url = "https://www.kfc.pt/a-tua-kfc/"
         g_url = "".join(d.xpath(".//@href"))
-
+        location_name = (
+            "".join(d.xpath(".//preceding::strong[1]/text()"))
+            .replace("\n", "")
+            .replace("/", "")
+            .strip()
+        )
+        city = "".join(d.xpath('.//preceding::span[@class="ac_title_class"][1]/text()'))
+        if city.find(" ") != -1:
+            city = city.split()[-1].strip()
         session = SgRequests()
         r = session.get(g_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -50,7 +59,6 @@ def fetch_data(sgw: SgWriter):
         js = json.loads(jsblock)[3][6]
         js = str(js).split(")]}'")[1].strip()
         js = json.loads(js)
-        location_name = js[6][11]
         ad = " ".join(js[6][2]).strip()
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
@@ -59,7 +67,7 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "Portugal"
-        city = a.city or "<MISSING>"
+
         latitude = js[6][9][2]
         longitude = js[6][9][3]
         try:
@@ -71,7 +79,7 @@ def fetch_data(sgw: SgWriter):
 
         row = SgRecord(
             locator_domain=locator_domain,
-            page_url=SgRecord.MISSING,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -91,5 +99,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
         fetch_data(writer)
