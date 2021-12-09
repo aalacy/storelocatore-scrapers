@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
         street_address = store["address"]["streetAddress"]
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
-        zip_code = store["address"]["postalCode"]
+        zip_code = store["address"]["postalCode"].strip()
         country_code = store["address"]["addressCountry"]
         store_number = "<MISSING>"
         location_type = "<MISSING>"

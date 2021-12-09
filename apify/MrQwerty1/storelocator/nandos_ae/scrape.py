@@ -66,6 +66,11 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//h1/following-sibling::ul/li[1]//text()")
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
+    if city == "" and country != "AE":
+        city = raw_address.split(",")[-2].strip()
+    if (city == "" and country == "AE") or "Area" in city:
+        city = raw_address.split(",")[-1].strip()
+
     phone = "".join(tree.xpath("//h1/following-sibling::ul/li[2]//text()"))
     latitude = (
         "".join(tree.xpath("//div[@data-lat]/@data-lat"))

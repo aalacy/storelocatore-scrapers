@@ -43,6 +43,8 @@ def get_data(page_url, sgw: SgWriter):
     street_address = line.pop(0)
     if street_address.endswith(","):
         street_address = street_address[:-1]
+    if "(" in street_address:
+        street_address = street_address.split("(")[0].strip()
     line = line[-1]
     city = line.split(",")[0].strip()
     state = line.split(",")[1].strip()
