@@ -35,12 +35,6 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            store_info = list(
-                filter(
-                    str,
-                    [x.strip() for x in store.xpath("./p//text()")],
-                )
-            )
             raw_address = "".join(store.xpath('.//p[@class="store-suburb"]//text()'))
 
             street_address = "".join(
