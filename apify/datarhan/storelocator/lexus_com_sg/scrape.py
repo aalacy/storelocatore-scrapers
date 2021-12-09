@@ -60,8 +60,6 @@ def fetch_data():
                     geo = poi["addressUrl"].split("=")[-1].split(",")
             if len(geo) == 1:
                 geo = ["", ""]
-            if "+" in geo[0]:
-                print(poi["addressUrl"])
             hoo = []
             for e in poi["openingHrsFulls"]:
                 hoo.append(f'{e["day"]}: {e["time"]}')
