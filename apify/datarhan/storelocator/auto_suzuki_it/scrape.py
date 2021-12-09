@@ -53,9 +53,6 @@ def fetch_data():
                 zip_code = zip_code[0].strip() if zip_code else ""
                 phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
                 phone = phone[0] if phone else ""
-                location_type = loc_dom.xpath('//header[@itemprop="name"]/h3/text()')[
-                    0
-                ].strip()
                 latitude = loc_dom.xpath("//@data-lat")
                 latitude = latitude[0] if latitude else ""
                 longitude = loc_dom.xpath("//@data-lng")
