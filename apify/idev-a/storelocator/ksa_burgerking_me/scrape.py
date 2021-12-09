@@ -27,11 +27,20 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            if street_address.isdigit():
+                street_address = raw_address.split(",")[-1]
             city = addr.city
-            if city == "To" or city == "Park":
+            if city and (
+                city == "To"
+                or city == "Park"
+                or city == "Units"
+                or "Center Point" == city
+                or city == "Hypermarket"
+                or city == "Salmaniyah South"
+                or "Salah Ad" == city
+                or "Umm Al Hamam Al Gharbi" == city
+            ):
                 city = ""
-            elif city in raw_address.split(",")[-1]:
-                city = raw_address.split(",")[-1]
             coord = _.a["href"].split("?q=")[1].split(",")
             yield SgRecord(
                 page_url=base_url,

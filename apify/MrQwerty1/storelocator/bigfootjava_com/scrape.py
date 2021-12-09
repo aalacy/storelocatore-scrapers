@@ -1,4 +1,3 @@
-from sglogging import sglog
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
@@ -7,14 +6,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 
-log = sglog.SgLogSetup().get_logger(logger_name="bigfootjava.com")
-
 
 def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
-    }
     r = session.get("https://bigfootjava.com/locations/", headers=headers)
     tree = html.fromstring(r.text)
 
@@ -22,18 +15,10 @@ def get_urls():
 
 
 def get_data(page_url):
-    locator_domain = "https://bigfootjava.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
-    }
-
-    session = SgRequests()
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//span[@class='locationName']/text()")).strip()
-    if len(location_name) <= 0:
-        return
     line = tree.xpath("//span[@class='locationAddress']/text()")
     line = list(filter(None, [l.strip() for l in line]))
     iscoming = "".join(line).lower()
@@ -49,17 +34,13 @@ def get_data(page_url):
     state = " ".join(line.split()[:-1])
     postal = line.split()[-1]
     country_code = "US"
-    store_number = "<MISSING>"
     phone = (
         "".join(tree.xpath("//p[@class='locationPhone']/text()"))
         .replace("Phone:", "")
         .strip()
-        or "<MISSING>"
     )
-    latitude = "".join(tree.xpath("//div[@data-lat]/@data-lat")) or "<MISSING>"
-    longitude = "".join(tree.xpath("//div[@data-lat]/@data-long")) or "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    latitude = "".join(tree.xpath("//div[@data-lat]/@data-lat"))
+    longitude = "".join(tree.xpath("//div[@data-lat]/@data-long"))
 
     return SgRecord(
         locator_domain=locator_domain,
@@ -70,12 +51,9 @@ def get_data(page_url):
         state=state,
         zip_postal=postal,
         country_code=country_code,
-        store_number=store_number,
         phone=phone,
-        location_type=location_type,
         latitude=latitude,
         longitude=longitude,
-        hours_of_operation=hours_of_operation,
     )
 
 
@@ -91,7 +69,6 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
     count = 0
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
@@ -101,9 +78,11 @@ def scrape():
             writer.write_row(rec)
             count = count + 1
 
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
-
 
 if __name__ == "__main__":
+    locator_domain = "https://bigfootjava.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
+    }
     scrape()

@@ -27,8 +27,6 @@ def fetch_data():
             page_url = f"https://www.burgerking.se/restaurants/{_['slug']}"
             hours = []
             city = state = zip_postal = ""
-            if not _["isOpen"]:
-                hours = ["Closed"]
             url = f"https://bk-se-ordering-api.azurewebsites.net/cms/sv-SE/restaurants/{_['slug']}"
             res = session.get(url, headers=_headers)
             if res.status_code == 200:
@@ -36,12 +34,11 @@ def fetch_data():
                 city = data["storeLocation"]["address"]["city"]
                 state = data["storeLocation"]["address"]["state"]
                 zip_postal = data["storeLocation"]["address"]["postalCode"]
-                if data["isOpen"]:
-                    for hh in data.get("storeOpeningHours", []):
-                        times = "closed"
-                        if hh["isOpen"]:
-                            times = f"{hh['hoursOfBusiness']['opensAt'].split('T')[-1]}-{hh['hoursOfBusiness']['closesAt'].split('T')[-1]}"
-                        hours.append(f"{hh['dayOfTheWeek']}: {times}")
+                for hh in data.get("storeOpeningHours", []):
+                    times = "closed"
+                    if hh["isOpen"]:
+                        times = f"{hh['hoursOfBusiness']['opensAt'].split('T')[-1]}-{hh['hoursOfBusiness']['closesAt'].split('T')[-1]}"
+                    hours.append(f"{hh['dayOfTheWeek']}: {times}")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],

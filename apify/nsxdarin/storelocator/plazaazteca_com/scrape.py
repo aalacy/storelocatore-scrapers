@@ -122,6 +122,10 @@ def fetch_data():
                 hours = "<MISSING>"
             if "allentown" in purl:
                 phone = "(484) 656 7277"
+            if "granby" in purl:
+                hours = "MONDAY - FRIDAY: 11AM - 2:30PM, 4:30PM - 10PM; SATURDAY: 12PM - 2:30PM, 4:30PM - 10PM; SUNDAY: 12PM - 2:30PM, 4:30PM - 9PM"
+            if "state-college" in purl:
+                hours = "MONDAY - SATURDAY: 11AM - 10PM; SUNDAY: 11AM - 9PM"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,

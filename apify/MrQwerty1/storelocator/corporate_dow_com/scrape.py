@@ -40,6 +40,8 @@ def fetch_data(sgw: SgWriter):
                 if "City" in li:
                     city = li.strip()
                     break
+        if city == "Zip":
+            city = line.split("(")[0].split(",")[-1].strip()
         state = adr.state
         postal = adr.postcode
         location_name = j.get("locationName")
