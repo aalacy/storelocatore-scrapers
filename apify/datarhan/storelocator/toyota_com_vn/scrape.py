@@ -1,4 +1,6 @@
+import ssl
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -6,7 +8,12 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
+user_agent = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0"
+)
 
 
 def fetch_data():
@@ -15,8 +22,9 @@ def fetch_data():
     start_url = "https://www.toyota.com.vn/api/common/provinces"
     domain = "toyota.com.vn"
 
-    with SgFirefox() as driver:
+    with SgChrome(user_agent=user_agent) as driver:
         driver.get("https://www.toyota.com.vn/danh-sach-dai-ly")
+        sleep(10)
         token = driver.get_cookie("D1N")["value"]
 
     hdr = {

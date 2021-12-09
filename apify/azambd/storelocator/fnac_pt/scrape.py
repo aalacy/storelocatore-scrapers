@@ -98,7 +98,7 @@ def fetch_data():
         )
         city = get_JSON_object_variable(store, "CityName")
         zip_postal = get_JSON_object_variable(store, "ZipCode")
-        phone = get_JSON_object_variable(store, "Phone")
+        phone = "707313435"  # Default phone is actually their helpline so I think its better to include it rather than missing.
         coord = (
             get_JSON_object_variable(store, "Coord")
             .replace("(", "")

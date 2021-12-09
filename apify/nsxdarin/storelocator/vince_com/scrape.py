@@ -59,6 +59,8 @@ def fetch_data():
                                     hours = hours + "; " + dayhrs
                     except:
                         hours = "<MISSING>"
+                    if "Temporarily Closed" in item:
+                        hours = "Temporarily Closed"
                     typ = item.split('"storeTypeDisplay":"')[1].split('"')[0]
                     if typ == "Retail" or typ == "Outlet":
                         if phone == "":
@@ -72,6 +74,8 @@ def fetch_data():
                             add = add.split("Paseo Village")[1].strip()
                         if "587 Newport" in add:
                             hours = "Sun: 12:00pm-6:00pm; Mon-Sat: 11:00am-7:00pm"
+                        if "; Friday 12/24" in hours:
+                            hours = hours.split("; Friday 12/24")[0]
                         if "Draycott Avenue" not in add:
                             if CS is False:
                                 yield SgRecord(
