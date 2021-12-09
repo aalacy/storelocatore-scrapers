@@ -33,6 +33,9 @@ def fetch_data(sgw: SgWriter):
         raw_address = "".join(d.xpath("//address/text()")).strip()
         street_address, city, state, postal = get_international(raw_address)
         phone = "".join(d.xpath("//div[@class='phoneNumber']//text()")).strip()
+        location_type = "Branch"
+        if t.split("iconImage:")[1].split(",")[0] == "s":
+            location_type = "Drive-Thru"
         hours_of_operation = ";".join(
             d.xpath("//div[@class='openHour']//text()")
         ).strip()
@@ -46,6 +49,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=postal,
             country_code="BN",
             phone=phone,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
