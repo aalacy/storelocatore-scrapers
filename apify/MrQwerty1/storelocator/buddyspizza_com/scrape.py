@@ -1,3 +1,4 @@
+from urllib.parse import unquote
 import usaddress
 from lxml import html
 from sgrequests import SgRequests
@@ -71,7 +72,10 @@ def get_address(line):
 def get_coords_from_embed(text):
     try:
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+        try:
+            longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+        except IndexError:
+            longitude = text.split("!4d")[1].strip().split("?")[0].strip()
     except IndexError:
         latitude, longitude = MISSING, MISSING
 
@@ -127,7 +131,13 @@ def fetch_data():
         )
 
         # Latitude and Longitude
-        text = "".join(tree.xpath("//iframe/@src"))
+        text = unquote(
+            "".join(
+                tree.xpath(
+                    "//div[contains(@data-block-json, 'iframe')]/@data-block-json"
+                )
+            )
+        )
         latitude, longitude = get_coords_from_embed(text)
         location_type = MISSING
 
