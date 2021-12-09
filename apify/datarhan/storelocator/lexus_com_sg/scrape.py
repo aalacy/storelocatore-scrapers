@@ -60,7 +60,13 @@ def fetch_data():
             hoo = []
             for e in poi["openingHrsFulls"]:
                 hoo.append(f'{e["day"]}: {e["time"]}')
-            hoo = " ".join(hoo)
+            hoo = (
+                " ".join(hoo)
+                .replace("<br> ", "")
+                .split("<b>Easter")[0]
+                .split("Customer")[0]
+                .strip()
+            )
             phone = poi["phoneNos"]
             phone = phone[0]["tel"] if phone else ""
 

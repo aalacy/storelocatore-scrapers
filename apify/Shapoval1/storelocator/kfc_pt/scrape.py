@@ -1,6 +1,6 @@
 import json
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -50,7 +50,6 @@ def fetch_data(sgw: SgWriter):
         js = json.loads(jsblock)[3][6]
         js = str(js).split(")]}'")[1].strip()
         js = json.loads(js)
-
         location_name = js[6][11]
         ad = " ".join(js[6][2]).strip()
         a = parse_address(International_Parser(), ad)
@@ -63,7 +62,10 @@ def fetch_data(sgw: SgWriter):
         city = a.city or "<MISSING>"
         latitude = js[6][9][2]
         longitude = js[6][9][3]
-        phone = js[6][178][0][0]
+        try:
+            phone = js[6][178][0][0]
+        except:
+            phone = "<MISSING>"
         hours = js[6][34][1]
         hours_of_operation = get_hours(hours)
 
