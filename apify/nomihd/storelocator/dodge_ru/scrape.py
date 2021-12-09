@@ -44,6 +44,9 @@ def fetch_data():
             location_type = "<MISSING>"
 
             raw_address = store["dealer_adress_en"]
+            if not raw_address:
+                raw_address = store["dealer_adress"]
+
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:

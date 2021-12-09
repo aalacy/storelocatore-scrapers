@@ -1,25 +1,42 @@
+import ssl
 from lxml import etree
 from time import sleep
+import tenacity
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+
+@tenacity.retry(wait=tenacity.wait_fixed(3))
+def get_with_retry(driver, url):
+    driver.get(url)
+    driver.implicitly_wait(30)
+    return driver.page_source
 
 
 def fetch_data():
     start_url = "https://suzuki.ro/gaseste-dealer/"
     domain = "suzuki.ro"
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         sleep(10)
         dom = etree.HTML(driver.page_source)
         all_locations = dom.xpath("//a[h2]")
         for poi_html in all_locations:
             page_url = poi_html.xpath("@href")[0]
-            driver.get(page_url)
-            loc_dom = etree.HTML(driver.page_source)
+
+            response = get_with_retry(driver, page_url)
+            loc_dom = etree.HTML(response)
             location_name = loc_dom.xpath("//h3/text()")[0]
             street_address = loc_dom.xpath(
                 '//div[img[@alt="showroom_location"]]/following-sibling::div[1]/p/text()'
