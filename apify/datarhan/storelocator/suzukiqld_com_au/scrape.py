@@ -1,4 +1,5 @@
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -20,6 +21,15 @@ def fetch_data():
     all_locations = json.loads(response.text.split("8752(")[-1][:-1])
     for poi in all_locations:
         poi = json.loads(poi)
+        response = session.get(
+            f'https://dashboard.digitaldealer.com.au/thirdparty/DealerLocator/GetLocationInfo/id/{poi["id"]}?callback=jQuery183004728628131860446_1638533567148'
+        )
+        zip_code = (
+            etree.HTML(response.text.split("7148(")[-1][:-1])
+            .xpath("//text()")[2]
+            .split(",")[-1]
+            .strip()
+        )
 
         item = SgRecord(
             locator_domain=domain,
@@ -28,7 +38,7 @@ def fetch_data():
             street_address=poi["address"],
             city=poi["suburb"],
             state=poi["state"],
-            zip_postal="",
+            zip_postal=zip_code,
             country_code="AU",
             store_number=poi["id"],
             phone=poi["salesPhone"],
