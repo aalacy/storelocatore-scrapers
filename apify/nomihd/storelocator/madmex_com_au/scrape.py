@@ -34,8 +34,6 @@ params = (
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.madmex.com.au/locations/"
-
     api_url = "https://www.madmex.com.au/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
     with SgRequests() as session:
         api_res = session.get(api_url, headers=headers, params=params)
