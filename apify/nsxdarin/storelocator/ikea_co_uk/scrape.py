@@ -149,6 +149,8 @@ def fetch_data():
             city = "Croydon"
             add = "Access via Hesterman Way"
             zc = "CR0 4YA"
+        if "<span" in hours:
+            hours = hours.split("<span")[0].strip()
         if "planning-studios" not in loc:
             yield SgRecord(
                 locator_domain=website,
