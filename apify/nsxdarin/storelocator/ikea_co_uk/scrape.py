@@ -136,6 +136,9 @@ def fetch_data():
             city = "Glasgow"
             add = "99 Kings Inch Drive"
             zc = "G51 4FB"
+            hours = "Mon-Fri: 09:30 AM - 21:00 PM; Sat-Sun: 09:30 AM - 20:00 PM"
+        if "order-collection-points/aberdeen" in loc:
+            hours = "Mon-Sun: 10:00-18:30"
         if "/stores/nottingham" in loc:
             zc = "NG16 2RP"
         if "stores/gateshead" in loc:
