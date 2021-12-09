@@ -121,11 +121,15 @@ def fetch_data():
                     add = "1850 E Ave. J"
                 if "2845 W Ave L" in rawadd:
                     add = "2845 W Ave L"
+                name = name.replace("</title>", "")
+                if " | " in name:
+                    name = name.split(" | ")[0]
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
                     location_name=name,
-                    street_address=add,
+                    street_address=address,
+                    raw_address=rawadd,
                     city=city,
                     state=state,
                     zip_postal=zc,

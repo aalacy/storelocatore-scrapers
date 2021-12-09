@@ -28,40 +28,43 @@ def fetch_data():
         store = "<MISSING>"
         text = driver.page_source
         text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-        if '"@type":"Restaurant","address":' in text:
-            items = text.split('"@type":"Restaurant","address":')
-            for item in items:
-                if '"addressRegion":"' in item:
-                    name = item.split('"name":"')[1].split('"')[0]
-                    loc = "https://www.woodysdiners.com/locations"
-                    lat = item.split('"lat":')[1].split(",")[0]
-                    lng = item.split('"lng:')[1].split(",")[0]
-                    city = item.split('"addressLocality":"')[1].split('"')[0]
-                    state = item.split('"addressRegion":"')[1].split('"')[0]
-                    zc = item.split('"postalCode":"')[1].split('"')[0]
-                    add = item.split('"streetAddress":"')[1].split('"')[0]
-                    phone = item.split('"telephone":"')[1].split('"')[0]
+        items = text.split(',"RestaurantLocation:')
+        for item in items:
+            if '<html lang="en">' not in item:
+                name = item.split('"name":"')[1].split('"')[0]
+                loc = "https://www.woodysdiners.com/locations"
+                lat = item.split('"lat":')[1].split(",")[0]
+                lng = item.split('"lng":')[1].split(",")[0]
+                city = item.split('"city":"')[1].split('"')[0]
+                state = item.split('"state":"')[1].split('"')[0]
+                zc = item.split('"postalCode":"')[1].split('"')[0]
+                add = item.split('"streetAddress":"')[1].split('"')[0]
+                phone = item.split('"displayPhone":"')[1].split('"')[0]
+                try:
                     hours = (
-                        item.split('"openingHours":["')[1]
+                        item.split('"schemaHours":[')[1]
                         .split("]")[0]
                         .replace('","', "; ")
                     )
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+                except:
+                    hours = "<MISSING>"
+                hours = hours.replace('"', "")
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():

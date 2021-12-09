@@ -10,13 +10,12 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
+from sgscrape.pause_resume import CrawlStateSingleton
 
 from sglogging import sglog
 
 domain = "aldi.pl"
 log = sglog.SgLogSetup().get_logger(logger_name=domain)
-
-session = SgRequests(proxy_country="pl")
 
 
 def fetch_data():
@@ -28,7 +27,8 @@ def fetch_data():
         country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
     )
     for code in all_codes:
-        sleep(uniform(0, 5))
+        sleep(uniform(5, 9))
+        session = SgRequests(proxy_country="pl", retries_with_fresh_proxy_ip=1)
         log.info(f"API Crawl: {search_url.format(code)}")
         response = session.get(search_url.format(code))
         log.info(f"First Response: {response}")
@@ -61,7 +61,7 @@ def fetch_data():
 
         all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
-        next_page = dom.xpath('//a[@title="następna strona"]/@href')
+        next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
         while next_page:
             response = session.get(urljoin(start_url, next_page[0]))
             log.info(f"Third Response: {response}")
@@ -72,7 +72,7 @@ def fetch_data():
             all_locations += dom.xpath(
                 '//td[@class="AlternatingItemTemplateColumnLocation"]'
             )
-            next_page = dom.xpath('//a[@title="następna strona"]/@href')
+            next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
 
         for poi_html in all_locations:
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
@@ -107,6 +107,7 @@ def fetch_data():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     log.info("Started Crawling")
     with SgWriter(
         SgRecordDeduper(

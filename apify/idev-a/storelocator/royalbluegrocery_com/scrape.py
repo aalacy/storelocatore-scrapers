@@ -1,72 +1,114 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+import dirtyjson as json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import re
+import ssl
+import time
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("royalbluegrocery")
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
-locator_domain = "https://www.royalbluegrocery.com"
+locator_domain = "https://www.royalbluegrocery.com/"
+base_url = "https://www.royalbluegrocery.com/locations"
+json_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt"
 
 
-def parse_detail(sp2, detail, page_url):
-    block = sp2.select("div.blockInnerContent")[-1].select("p")
-    addr = parse_address_intl(" ".join(block[0].stripped_strings))
-    hours = []
-    logger.info(f"[*****] {page_url}")
-    if sp2.select_one("h2.pageSubtitle"):
-        hours = (
-            sp2.select_one("h2.pageSubtitle")
-            .text.replace("!", "")
-            .replace("We have reopened on Congress", "")
-            .split(",")
-        )
-    else:
-        hours = [sp2.select("div.blockInnerContent p")[1].text]
+def _pp(locs, street):
+    for loc in locs:
+        if (
+            " ".join(street.lower().split()[:2])
+            in loc.select_one("div.info-element-description span").text.lower()
+        ):
+            return loc.select("div.info-element-description span")[-1].text.strip()
 
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += ", " + addr.street_address_2
-    return SgRecord(
-        page_url=page_url,
-        location_name=detail.text,
-        street_address=street_address,
-        city=addr.city,
-        state=addr.state,
-        zip_postal=addr.postcode,
-        country_code="US",
-        locator_domain=locator_domain,
-        hours_of_operation="; ".join(hours),
-    )
+    return ""
 
 
 def fetch_data():
-    base_url = "https://www.royalbluegrocery.com/locations"
-    with SgRequests() as session:
-        sp = bs(session.get(base_url, headers=_headers).text, "lxml")
-        cities = sp.select("div.itemsCollectionContent  h2 a")
-        logger.info(f"[city] {len(cities)} found")
-        for city in cities:
-            city_url = locator_domain + city["href"]
-            sp1 = bs(session.get(city_url, headers=_headers).text, "lxml")
-            locations = sp1.select("div.itemsCollectionContent h2 a")
-            logger.info(f"[{city.text}] {len(locations)}found")
-            if locations:
-                for detail in locations:
-                    page_url = locator_domain + detail["href"]
-                    sp2 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                    yield parse_detail(sp2, detail, page_url)
-            else:
-                yield parse_detail(sp1, city, city_url)
+    with SgChrome(
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
+    ) as driver:
+        driver.get(base_url)
+        sp = bs(driver.page_source, "lxml")
+        _loc = sp.find(
+            "a", href=re.compile(r"https://www.royalbluegrocery.com/locations")
+        )
+        links = _loc.find_parent().find_parent().find_next_sibling("ul").select("li a")
+        locs = sp.select("div.gallery-item-container div.gallery-item-common-info")
+        for _ in links:
+            page_url = _["href"]
+            logger.info(page_url)
+            del driver.requests
+            time.sleep(1)
+
+            driver.get(page_url)
+            driver.wait_for_request(json_url)
+            ss = {}
+            info = {}
+            for rr in driver.iter_requests():
+                try:
+                    if json_url in rr.url:
+                        ss = json.loads(rr.response.body)["props"]["render"][
+                            "compProps"
+                        ]
+                        for key, val in ss.items():
+                            if val.get("mapData"):
+                                info = val["mapData"]["locations"][0]
+                                break
+                        if info:
+                            break
+                except:
+                    logger.warning("^^^ next url")
+            addr = info["address"].split(",")
+            sp1 = bs(driver.page_source, "lxml")
+            street_address = " ".join(addr[:-3])
+            data = []
+            h6_font = sp1.select("h6.font_6")
+            for h6 in h6_font:
+                if "every" in h6.text.lower() or "open" in h6.text.lower():
+                    data = list(h6.stripped_strings)
+                    if len(data) == 1:
+                        hours = data[0].split("•")[-1]
+                    else:
+                        hours = data[-1]
+
+                    break
+
+            phone = _pp(locs, street_address)
+            if not phone:
+                import pdb
+
+                pdb.set_trace()
+            yield SgRecord(
+                page_url=page_url,
+                location_name=_.text.strip(),
+                street_address=street_address,
+                city=addr[-3].strip(),
+                state=addr[-2].strip().split()[0].strip(),
+                zip_postal=addr[-2].strip().split()[-1].strip(),
+                country_code="US",
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation=hours.replace("\xa0", "").strip(),
+                raw_address=info["address"],
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

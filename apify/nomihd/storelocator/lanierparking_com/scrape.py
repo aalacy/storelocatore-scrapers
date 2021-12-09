@@ -82,8 +82,9 @@ class _SearchIteration(SearchIteration):
                 locator_domain = website
 
                 street_address = store_json["Address"].split("(")[0].strip()
-                if "," == street_address[-1]:
-                    street_address = "".join(street_address[:-1]).strip()
+                if street_address:
+                    if "," == street_address[-1]:
+                        street_address = "".join(street_address[:-1]).strip()
 
                 city = store_json["City"]
                 state = store_json["State"]
@@ -146,7 +147,8 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except:
-            pass
+            raise
+            # pass
 
 
 def scrape():

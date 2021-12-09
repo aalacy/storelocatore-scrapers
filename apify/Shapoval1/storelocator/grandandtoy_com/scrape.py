@@ -32,6 +32,9 @@ def fetch_data(sgw: SgWriter):
         postal = ad.split(",")[2].strip()
         country_code = "CA"
         city = ad.split(",")[1].strip()
+        if city.find("Unit 101") != -1:
+            street_address = street_address + " " + "Unit 101"
+            city = city.replace("Unit 101", "").strip()
         if ad.count(",") == 3:
             street_address = " ".join(ad.split(",")[:2]).strip()
             city = ad.split(",")[2].strip()

@@ -6,13 +6,13 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 from sgzip.dynamic import SearchableCountries, DynamicZipAndGeoSearch
 import re
 
 DOMAIN = "zipscarwash.com"
 BASE_URL = "https://www.zipscarwash.com/"
-LOCATION_URL = "https://www.zipscarwash.com/drive-through-car-wash-locations?code={code}&latitude={latitude}&longitude={longitude}&distance=500"
+LOCATION_URL = "https://www.zipscarwash.com/drive-through-car-wash-locations?code={code}&latitude={latitude}&longitude={longitude}&distance=50"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -27,14 +27,13 @@ MISSING = "<MISSING>"
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -59,7 +58,7 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     max_results = 10
-    max_distance = 500
+    max_distance = 50
     search = DynamicZipAndGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_search_distance_miles=max_distance,
@@ -75,7 +74,7 @@ def fetch_data():
         try:
             soup = pull_content(page_url)
         except:
-            time.sleep(2)
+            time.sleep(3)
             soup = pull_content(page_url)
         store_content = soup.find_all(
             "div",
@@ -96,13 +95,17 @@ def fetch_data():
             phone = MISSING
             store_number = MISSING
             location_type = MISSING
-            latlong = (
-                row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
-                .replace("https://www.google.com/maps/place/", "")
-                .split(",")
-            )
-            latitude = latlong[0]
-            longitude = latlong[1]
+            try:
+                latlong = (
+                    row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
+                    .replace("https://www.google.com/maps/place/", "")
+                    .split(",")
+                )
+                latitude = latlong[0]
+                longitude = latlong[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             hours_of_operation = row.find(
                 "div", {"class": "locations__results-hours"}
             ).get_text(strip=True, separator=",")
@@ -135,7 +138,8 @@ def scrape():
                 {
                     SgRecord.Headers.RAW_ADDRESS,
                 }
-            )
+            ),
+            duplicate_streak_failure_factor=250000,
         )
     ) as writer:
         results = fetch_data()
