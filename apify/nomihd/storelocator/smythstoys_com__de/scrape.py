@@ -7,7 +7,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "mythstoys.com/de"
+website = "smythstoys.com/de"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "authority": "www.smythstoys.com",
@@ -36,7 +36,7 @@ def fetch_data():
         for region in regions:
             stores = region["regionPos"]
             for store in stores:
-                page_url = "<MISSING>"
+                page_url = "https://www.smythstoys.com/de/de-de/store-finder"
 
                 locator_domain = website
                 location_name = store["displayName"]

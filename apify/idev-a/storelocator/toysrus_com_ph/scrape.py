@@ -49,7 +49,7 @@ def fetch_data():
                 country_code="Philippines",
                 phone=_["contact_number"],
                 locator_domain=locator_domain,
-                hours_of_operation=_["open_days"].replace("\n", ";"),
+                hours_of_operation=_["open_days"].strip().replace("\n", ";"),
                 raw_address=_["address"],
             )
 
