@@ -30,11 +30,15 @@ def fetch_data(sgw: SgWriter):
                     "li", {"class": "location-list-result js-location-result"}
                 )
                 for location in info:
+                    loc_id = location.find(
+                        "h2", {"class": "location-card-title"}
+                    ).text.strip()
                     name = location.find(
                         "span", {"class": "location-name-geo"}
                     ).text.strip()
-                    if name not in ids:
-                        ids.append(name)
+
+                    if loc_id not in ids:
+                        ids.append(loc_id)
                         if (
                             location.find("a", {"class": "location-card-title-link"})
                             is None

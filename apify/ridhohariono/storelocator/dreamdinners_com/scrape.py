@@ -1,153 +1,129 @@
-import csv
-import usaddress
+import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_usa
+import json
 
 DOMAIN = "dreamdinners.com"
-BASE_URL = "https://dreamdinners.com"
+BASE_URL = "https://www.dreamdinners.com/"
 LOCATION_URL = "https://dreamdinners.com/main.php?page=locations"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
 
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
 session = SgRequests()
+MISSING = "<MISSING>"
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
 
 def pull_content(url):
-    soup = bs(session.get(url).content, "lxml")
+    log.info("Pull content => " + url)
+    req = session.get(url, headers=HEADERS)
+    soup = bs(req.content, "lxml")
     return soup
 
 
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
-
-
 def fetch_data():
+    log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    locations = []
-    for x in soup.find_all("div", {"class": "row"}):
-        links = x.find_all(
-            "a", {"class": "text-uppercase text-gray-dark location_state"}
+    data = soup.find(
+        "script", string=re.compile(r"var\s+simplemaps_usmap_mapdata\s+=\s+(.*);")
+    )
+    data = json.loads(
+        re.search(r"var\s+simplemaps_usmap_mapdata\s+=\s+(.*);", data.string).group(1)
+    )
+    for key, val in data["locations"].items():
+        page_url = BASE_URL + val["url"]
+        store = pull_content(page_url).find(
+            "div", {"class": "col-lg-6 text-center text-md-left"}
         )
-        if links:
-            for link in links:
-                store_url_list = BASE_URL + link["href"]
-                store_content = pull_content(store_url_list)
-                store_list = store_content.find(
-                    "div", {"id": "store_search_results"}
-                ).find_all("div", {"class": "location"})
-                for row in store_list:
-                    # check coming soon page
-                    coming_soon = row.find("span", string="Coming Soon!")
-                    if coming_soon is None:
-                        individual_store_link = row.find(
-                            "a", string="Store Info & Calendar"
-                        )
-
-                        page_url = BASE_URL + individual_store_link["href"]
-                        store_page_content = pull_content(page_url)
-
-                        section = store_page_content.find_all("section")[1]
-                        content_info = section.find("div", {"class": "container"}).find(
-                            "div", {"class": "col-lg-6 text-center text-md-left"}
-                        )
-                        locator_domain = DOMAIN
-                        location_name = handle_missing(
-                            content_info.find("h3").text
-                        ).strip()
-                        street_address = handle_missing(
-                            content_info.find("p").contents[0].strip()
-                        )
-
-                        addr_content = content_info.find("p").contents
-                        street_address = addr_content[0].strip()
-                        if len(addr_content) == 3:
-                            address = handle_missing(
-                                content_info.find("p").contents[0].strip()
-                                + ","
-                                + content_info.find("p").contents[2].strip()
-                            )
-                        elif len(addr_content) > 3 and len(addr_content) <= 5:
-                            address = handle_missing(
-                                addr_content[0].strip() + "," + addr_content[4].strip()
-                            )
-
-                        parse_addr = usaddress.tag(address)
-                        city = handle_missing(parse_addr[0]["PlaceName"])
-                        state = handle_missing(parse_addr[0]["StateName"])
-                        zip_code = handle_missing(parse_addr[0]["ZipCode"])
-                        country_code = "US"
-                        store_number = page_url.split("=")[2]
-                        phone = handle_missing(
-                            content_info.find(
-                                "div", {"class": "d-none d-md-block"}
-                            ).text
-                        )
-                        location_type = "<MISSING>"
-                        latitude = "<MISSING>"
-                        longitude = "<MISSING>"
-                        hours_of_operation = "<MISSING>"
-                        log.info(
-                            "Append {} => {}".format(location_name, street_address)
-                        )
-                        locations.append(
-                            [
-                                locator_domain,
-                                page_url,
-                                location_name,
-                                street_address,
-                                city,
-                                state,
-                                zip_code,
-                                country_code,
-                                store_number,
-                                phone,
-                                location_type,
-                                latitude,
-                                longitude,
-                                hours_of_operation,
-                            ]
-                        )
-    return locations
+        location_name = store.find(
+            "h3", {"class": "text-uppercase font-weight-bold"}
+        ).text.strip()
+        raw_address = store.find("div").find("p").get_text(strip=True, separator=" ")
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        if "339 A" in street_address:
+            street_address = "339 A North El Camino Real"
+            city = "Encinitas"
+        city = city.replace("Sunnybrook Shopping Center", "").strip()
+        phone = store.find("div").find("a").text.strip()
+        country_code = "US"
+        store_number = key
+        location_type = MISSING
+        latitude = val["lat"]
+        longitude = val["lng"]
+        hours_of_operation = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

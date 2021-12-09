@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -24,6 +26,23 @@ def _coord(street_address, city, zip_postal, locations):
     return coord
 
 
+def _p(val):
+    if (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
+
+
 def fetch_data():
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers).text
@@ -32,9 +51,21 @@ def fetch_data():
             "pois"
         ]
         for link in links:
-            addr = list(link.select_one("div.block-description p").stripped_strings)
-            if len(addr) == 1:
+            if "Opening" in link.p.text:
                 continue
+            if link.select_one("div.block-description").select("p")[-1].a:
+                addr = list(
+                    link.select_one("div.block-description")
+                    .select("p")[-2]
+                    .stripped_strings
+                )
+            else:
+                addr = list(
+                    link.select_one("div.block-description")
+                    .select("p")[-1]
+                    .stripped_strings
+                )
+
             city = addr[1].split(",")[0].strip()
             zip_postal = (
                 addr[1].split(",")[1].replace("\xa0", " ").strip().split(" ")[1].strip()
@@ -45,6 +76,14 @@ def fetch_data():
             location_type = ""
             if "CLOSED UNTIL" in location_name:
                 location_type = "temporarily closed"
+            hours = [
+                " ".join(hh.stripped_strings)
+                for hh in link.select("div.block-description p span")
+            ]
+            phone = ""
+            if _p(addr[-1]):
+                phone = _p(addr[-1])
+                del addr[-1]
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name.split("-")[0],
@@ -61,13 +100,15 @@ def fetch_data():
                 longitude=coord[1],
                 country_code="US",
                 location_type=location_type,
-                phone=addr[-1],
+                phone=phone,
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr).replace("\xa0", " "),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

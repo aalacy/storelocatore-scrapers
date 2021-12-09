@@ -1,0 +1,28 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 14 concerning rows. Examples:
+                              street_address              REASON  rowNumber
+0          Corner Wright Road & Ranford Road  ADDR_HAS_NO_NUMBER          0
+1       Corner Spearwood Avenue & Stock Road  ADDR_HAS_NO_NUMBER          1
+3       Corner Norseman Road & Arthur Street  ADDR_HAS_NO_NUMBER          3
+4  Corner Strelley Street & Busselton Bypass  ADDR_HAS_NO_NUMBER          4
+5         Corner Abernethy & Alexander Roads  ADDR_HAS_NO_NUMBER          5
+
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+Found 38 concerning rows. Examples:
+    zip state                REASON  rowNumber
+0  6112    WA  ZIPCODE_NOT_IN_STATE          0
+1  6163    WA  ZIPCODE_NOT_IN_STATE          1
+2  6021    WA  ZIPCODE_NOT_IN_STATE          2
+3  6450    WA  ZIPCODE_NOT_IN_STATE          3
+4  6280    WA  ZIPCODE_NOT_IN_STATE          4
+
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 41 concerning rows. Examples:
+  state         phone   zip          REASON  rowNumber
+0    WA  08 9498 9600  6112  INVALID_US_ZIP          0
+1    WA  08 9494 0400  6163  INVALID_US_ZIP          1
+2    WA  08 9344 0300  6021  INVALID_US_ZIP          2
+3    WA  08 9071 0200  6450  INVALID_US_ZIP          3
+4    WA  08 9752 6100  6280  INVALID_US_ZIP          4
