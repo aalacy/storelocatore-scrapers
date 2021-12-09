@@ -30,10 +30,10 @@ def fetch_data():
         hours = item["BusinessHours"]
         add = item["Address"]
         city = "Singapore"
+        zc = add.strip().rsplit(" ", 1)[1]
         state = "<MISSING>"
         add = add.split("Singapore")[0].strip()
         phone = "<MISSING>"
-        zc = "<MISSING>"
         add = (
             add.replace("\r", "")
             .replace("\n", "")
@@ -41,7 +41,7 @@ def fetch_data():
             .replace("\\r", "")
             .replace("\\n", "")
         )
-        if "Test" not in name:
+        if "Test" not in name and "Test" not in add:
             add = add.replace(",", "").strip().replace("  ", " ")
             yield SgRecord(
                 locator_domain=website,

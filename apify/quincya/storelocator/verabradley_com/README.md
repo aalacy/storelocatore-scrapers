@@ -1,1 +1,2 @@
 --ignore CountValidator --ignore StateLevelCountValidator (Filtered out independent retailers)
+--ignore StreetAddressHasStateName (Confirmed on website)

@@ -1,12 +1,15 @@
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgpostal.sgpostal import parse_address_intl
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgpostal.sgpostal import parse_address_intl
 from lxml import html
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
 import ssl
 
 
@@ -19,17 +22,10 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-
+MAX_WORKERS = 16
 logger = SgLogSetup().get_logger("bobcat_com")
 MISSING = SgRecord.MISSING
 DOMAIN = "bobcat.com"
-
-
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles=10,
-    use_state=False,
-)
 
 
 headers2 = {
@@ -41,148 +37,187 @@ headers2 = {
 }
 
 
-def fetch_data():
-    with SgRequests() as session:
-        for zipcode in search:
-            url = f"https://bobcat.know-where.com/bobcat/cgi/selection?option=T&option=R&option=E&option=M&option=G&option=W&option=X&option=U&option=P&option=V&option=D&place={zipcode}&lang=en&ll=&stype=place&async=results"
-            rt = session.get(url, headers=headers2)
-            # Check if requests gets through, if so then we can check if there is any data for the store
-            if rt.status_code == 200:
-                selt = html.fromstring(rt.text, "lxml")
-                kw_search_status = selt.xpath('//script[@id="kwSearchStatus"]/text()')
-                kw_search_status = "".join(kw_search_status)
-                logger.info(f"KW Search Status: {kw_search_status}")
-                if "0 locations in your area" in kw_search_status:
-                    logger.info("No locations found in your area! :(")
-                    continue
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers2)
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
-                trs = selt.xpath('//div[@id="kwresults-div"]/table/tr')
-                for idx, tr in enumerate(trs):
-                    locator_domain = DOMAIN
 
-                    # Page URL
-                    page_url = tr.xpath(
-                        './/a[contains(@onclick, "Visit Website")]/@onclick'
+def fetch_records(latlng, sgw: SgWriter):
+    poilat, poilon = latlng
+    api_base_url = "https://bobcat.know-where.com/bobcat/cgi/selection?"
+    options = "option="
+    api_endpoint_url = f"{api_base_url}{options}&ll={poilat}%2C{poilon}&lang=en&stype=ll&async=results&key"
+    logger.info(f"Pulling the data from {api_endpoint_url}")
+
+    rt = get_response(api_endpoint_url)
+
+    # Check if requests gets through, if so then we can check if there is any data for the store
+    logger.info(f"status: {rt.status_code}")
+    selt = html.fromstring(rt.text, "lxml")
+    kw_search_status = selt.xpath('//script[@id="kwSearchStatus"]/text()')
+    kw_search_status = "".join(kw_search_status)
+    logger.info(f"KW Search Status: {kw_search_status}")
+    if "0 locations in your area" in kw_search_status:
+        logger.info("No locations found in your area! :(")
+        return
+    else:
+        trs = selt.xpath('//div[@id="kwresults-div"]/table/tr')
+        for idx, tr in enumerate(trs):
+            locator_domain = DOMAIN
+
+            # Page URL
+            page_url = tr.xpath('.//a[contains(@onclick, "Visit Website")]/@onclick')
+            page_url = "".join(page_url)
+            if page_url:
+                try:
+                    page_url = (
+                        page_url.strip("'")
+                        .strip("'")
+                        .split("this.href=")[-1]
+                        .lstrip("'")
                     )
-                    page_url = "".join(page_url)
-                    if page_url:
-                        try:
-                            page_url = (
-                                page_url.strip("'")
-                                .strip("'")
-                                .split("this.href=")[-1]
-                                .lstrip("'")
-                            )
-                        except:
-                            page_url = MISSING
-                    else:
-                        page_url = MISSING
-                    logger.info(f"[{idx}] page_url: {page_url} | {len(page_url)}")
-
-                    location_name = tr.xpath(".//h4/text()")
-                    location_name = "".join((location_name))
-                    location_name = location_name if location_name else MISSING
-                    logger.info(f"[{idx}] location_name: {location_name}")
-
-                    raw_address_ = tr.xpath(
-                        './/td/div/div/span[@onclick=""]/div/text()'
-                    )
-                    raw_address_ = "".join(raw_address_)
-                    logger.info(f"[{idx}]  Raw Address To be Parsed: {raw_address_}")
-                    pai = parse_address_intl(raw_address_)
-                    logger.info(f"[{idx}] Parsed Address: {pai}")
-
-                    street_address = pai.street_address_1
-                    street_address = street_address if street_address else MISSING
-                    logger.info(f"[{idx}] Street Address: {street_address}")
-
-                    city = pai.city
-                    city = city if city else MISSING
-                    logger.info(f"[{idx}] City: {city}")
-
-                    state = pai.state
-                    state = state if state else MISSING
-                    logger.info(f"[{idx}] State: {state}")
-
-                    zip_postal = pai.postcode
-                    zip_postal = zip_postal if zip_postal else MISSING
-                    logger.info(f"[{idx}] Zip Code: {zip_postal}")
-
-                    country_code = "US"
-                    #     store_number =
-                    store_number = tr.xpath(
-                        './/span[contains(@id, "kw-view-product-line")]/@id'
-                    )
-                    store_number = "".join(store_number)
-                    try:
-                        store_number = store_number.split("-")[-1]
-                    except:
-                        store_number = MISSING
-
-                    phone = tr.xpath(
-                        './/div[@class="kw-result-link-container"]/a[contains(@onclick, "Phone Number")]/text()'
-                    )
-                    phone = "".join(phone)
-                    phone = phone if phone else MISSING
-                    logger.info(f"[{idx}]  Phone: {phone}")
-
-                    # Location Type
-                    location_type = ""
-                    location_type = location_type if location_type else MISSING
-
-                    # Latitude
-                    latitude = ""
-                    latitude = latitude if latitude else MISSING
-
-                    # Longitude
-                    longitude = ""
-                    longitude = longitude if longitude else MISSING
-                    hours_of_operation = MISSING
-
-                    # Raw Address
-                    raw_address = ""
-                    if raw_address_:
-                        raw_address = raw_address_
-                    else:
-                        raw_address = MISSING
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip_postal,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                        raw_address=raw_address,
-                    )
+                except:
+                    page_url = MISSING
             else:
-                logger.info(f"Failed with HTTP Status Code: {rt.status_code}")
-                logger.info(f"Failed Search URL: {url}")
-                raise Exception("Please run with residential proxy! ")
+                page_url = MISSING
+            logger.info(f"[{idx}] page_url: {page_url} | {len(page_url)}")
+
+            location_name = tr.xpath(".//h4/text()")
+            location_name = "".join((location_name))
+            location_name = location_name if location_name else MISSING
+            logger.info(f"[{idx}] location_name: {location_name}")
+
+            raw_address_ = tr.xpath('.//td/div/div/span[@onclick=""]/div/text()')
+            raw_address_ = "".join(raw_address_)
+            logger.info(f"[{idx}]  Raw Address To be Parsed: {raw_address_}")
+            pai = parse_address_intl(raw_address_)
+            logger.info(f"[{idx}] Parsed Address: {pai}")
+
+            street_address = pai.street_address_1
+            street_address = street_address if street_address else MISSING
+            logger.info(f"[{idx}] Street Address: {street_address}")
+
+            city = pai.city
+            city = city if city else MISSING
+            logger.info(f"[{idx}] City: {city}")
+
+            state = pai.state
+            state = state if state else MISSING
+            logger.info(f"[{idx}] State: {state}")
+
+            zip_postal = pai.postcode
+            zip_postal = zip_postal if zip_postal else MISSING
+            logger.info(f"[{idx}] Zip Code: {zip_postal}")
+
+            country_code = ""
+            if " " in zip_postal:
+                country_code = "CA"
+            else:
+                country_code = "US"
+
+            store_number = tr.xpath(
+                './/span[contains(@id, "kw-view-product-line")]/@id'
+            )
+            store_number = "".join(store_number)
+            try:
+                store_number = store_number.split("-")[-1]
+            except:
+                store_number = MISSING
+
+            phone = tr.xpath(
+                './/div[@class="kw-result-link-container"]/a[contains(@onclick, "Phone Number")]/text()'
+            )
+            phone = "".join(phone)
+            phone = phone if phone else MISSING
+            logger.info(f"[{idx}]  Phone: {phone}")
+
+            # Location Type
+            location_type = ""
+            location_type = location_type if location_type else MISSING
+
+            # Latitude
+            latitude = ""
+            latitude = latitude if latitude else MISSING
+
+            # Longitude
+            longitude = ""
+            longitude = longitude if longitude else MISSING
+            hours_of_operation = MISSING
+
+            # Raw Address
+            raw_address = ""
+            if raw_address_:
+                raw_address = raw_address_
+            else:
+                raw_address = MISSING
+            rec = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            sgw.write_row(rec)
+
+
+def fetch_data(sgw: SgWriter):
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+
+        search_us = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA],
+            granularity=Grain_8(),
+            expected_search_radius_miles=50,
+            use_state=False,
+        )
+        task_us = [executor.submit(fetch_records, latlng, sgw) for latlng in search_us]
+
+        tasks.extend(task_us)
+        search_ca = DynamicGeoSearch(
+            country_codes=[SearchableCountries.CANADA],
+            granularity=Grain_8(),
+            expected_search_radius_miles=100,
+            use_state=False,
+        )
+        task_ca = [executor.submit(fetch_records, latlng, sgw) for latlng in search_ca]
+        tasks.extend(task_ca)
+        for future in as_completed(tasks):
+            future.result()
 
 
 def scrape():
     logger.info("Started")
-    count = 0
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.PHONE,
+                }
+            )
         )
     ) as writer:
-
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    logger.info(f"No of records being processed: {count}")
+        fetch_data(writer)
     logger.info("Finished")
 
 
