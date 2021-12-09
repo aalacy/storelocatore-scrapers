@@ -27,12 +27,10 @@ user_agent = (
 
 def fetch_data():
     url = "https://members.purebarre.com/api/brands/purebarre/locations?open_status=external&geoip="
-    # r = session.get(url, headers=headers)
     with SgChrome(user_agent=user_agent) as driver:
         driver.get(url)
         time.sleep(20)
         array = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)
-        # array = json.loads(r.content)
         for item in array["locations"]:
             name = item["name"]
             coming = item["coming_soon"]
