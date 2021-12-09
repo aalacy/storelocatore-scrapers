@@ -60,7 +60,7 @@ def get_hoo(url, hoo_api):
     hoo = (
         (
             re.sub(
-                r"Holiday Hours.*|Black Friday.*|12\..*|Easter.*",
+                r"Holiday Hours.*|Black Friday.*|Easter.*|\d{2}\..*|\d{2}\/.*",
                 "",
                 soup.find("h2", text=re.compile(r"Hours", re.IGNORECASE))
                 .find_next("p")
