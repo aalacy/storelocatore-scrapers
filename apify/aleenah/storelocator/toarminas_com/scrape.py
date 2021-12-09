@@ -31,6 +31,7 @@ def fetch_data():
     loclist = json.loads(state)["KOObject"][0]["locations"]
 
     for loc in loclist:
+        location_type = MISSING
         page_url = loc["locationUrl"]
         log.info(page_url)
         location_name = loc["title"]
