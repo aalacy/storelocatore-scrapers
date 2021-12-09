@@ -70,7 +70,7 @@ highly_dense_state_or_country_list = [
 ]
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(60))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(20))
 def get_response(urlnum, country, url):
     path_per_country_or_state = url.split("/en/")[-1].rstrip("/")
     payload1 = {
@@ -89,15 +89,23 @@ def get_response(urlnum, country, url):
         logger.info(f"[{urlnum}] | {country} | Pulling from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
         js = r.json()
-        hot = js["data"]["locationPage"]["hotelSummaryOptions"]["hotels"]
-        if r.status_code == 200 and hot is not None:
-            logger.info(f"HTTP Status Code: {r.status_code}")
-            return r
-        elif r.status_code == 200 and "errors" in js:
-            return r
-        else:
-            logger.info(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
+        hot = js["data"]["locationPage"]["hotelSummaryOptions"]
+        try:
+            if (r.status_code == 200 and hot is not None) or (
+                r.status_code == 200 and "errors" in js
+            ):
+                hot2 = js["data"]["locationPage"]["hotelSummaryOptions"]["hotels"]
+                if (r.status_code == 200 and hot2 is not None) or (
+                    r.status_code == 200 and "errors" in js
+                ):
+                    logger.info(f"HTTP Status Code: {r.status_code}")
+                    return r
+                raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
             raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
+
+        except Exception as e:
+            logger.info(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
+            raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code} {e}")
 
 
 def fetch_records(idx, country_n_url, sgw: SgWriter):
@@ -289,12 +297,7 @@ def fetch_data(sgw: SgWriter):
     with SgRequests(verify_ssl=False, timeout_config=300) as session:
         countries = gen_countries(session)
         logger.info("Pulling URLs those having more than 150 Stores")
-        countries_usa = []
-        for i in countries:
-            link = i["link"]
-            if "/usa/" in link:
-                countries_usa.append(i)
-        sub_city_or_state = get_cities_for_cn_gb_us(countries_usa[0:])
+        sub_city_or_state = get_cities_for_cn_gb_us(countries[0:])
         logger.info(f"Raw Count: {len(sub_city_or_state)} ")
         sub_city_or_state_deduped = dedupe(sub_city_or_state)
         logger.info(f"After Deduplication Count: {len(sub_city_or_state_deduped)}")

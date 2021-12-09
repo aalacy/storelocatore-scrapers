@@ -170,7 +170,6 @@ def fetch_data():
         logger.info("Pulling %s..." % cc)
         pages = "1"
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '<span class="sr-only">Pagination"</span>' in line:
                 pages = (
                     line.split('<span class="sr-only">Pagination"</span>')[1]
@@ -191,7 +190,6 @@ def fetch_data():
             time.sleep(5)
             AFound = False
             for line2 in lines:
-                line2 = str(line2.decode("utf-8"))
                 if 'data-lf-url="' in line2:
                     curl = (
                         "https://store.tagheuer.com"
@@ -199,7 +197,6 @@ def fetch_data():
                     )
                 if '<span class="components-outlet-item-search-result-basic' in line2:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     name = (
                         g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
                     )
@@ -226,10 +223,8 @@ def fetch_data():
                 if 'address-basic__line"' in line2:
                     AFound = True
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     if ">" in g:
                         g = next(lines)
-                        g = str(g.decode("utf-8"))
                         add = (
                             g.strip()
                             .replace("\r", "")
@@ -241,8 +236,6 @@ def fetch_data():
                 if AFound and "<span" in line2:
                     g = next(lines)
                     h = next(lines)
-                    g = str(g.decode("utf-8"))
-                    h = str(h.decode("utf-8"))
                     city = line2.split(">")[1].split("<")[0].strip()
                     state = g.split(">")[1].split("<")[0].strip()
                     zc = h.split(">")[1].split("<")[0].strip()
