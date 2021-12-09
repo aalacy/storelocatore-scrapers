@@ -1,3 +1,4 @@
+import time
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
@@ -14,7 +15,9 @@ def fetch_data(sgw: SgWriter):
         driver.get(page_url)
         iframes = driver.find_elements_by_xpath("//iframe")
         for iframe in iframes:
+            time.sleep(5)
             driver.switch_to.frame(iframe)
+            time.sleep(5)
             ad = driver.find_element_by_xpath('//div[@class="address"]').text
             ll = driver.find_element_by_xpath(
                 '//div[@class="google-maps-link"]/a'
