@@ -19,7 +19,7 @@ def fetch_data(sgw: SgWriter):
     js = r.json()
     for j in js:
 
-        page_url = "https://www.honda-indonesia.com/dealers"
+        page_url = j.get("url")
         location_name = j.get("name") or "<MISSING>"
         ad = (
             "".join(j.get("address")).replace("\n", " ").replace("\r", " ").strip()
