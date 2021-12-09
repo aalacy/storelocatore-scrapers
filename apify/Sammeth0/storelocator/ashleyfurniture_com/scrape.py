@@ -100,6 +100,69 @@ def fetch_data(sgw: SgWriter):
 
                 sgw.write_row(row)
 
+    api_url = "https://stores.ashleyfurniture.com/sitemap.xml"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.content)
+    div = tree.xpath(
+        '//url/loc[not(contains(text(), "https://stores.ashleyfurniture.com/store/us/"))]'
+    )
+    for d in div:
+
+        page_url = "".join(d.xpath(".//text()"))
+        if page_url.count("/") != 8:
+            continue
+
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = "".join(tree.xpath('//script[contains(text(), "telephone")]/text()'))
+        j = json.loads(div)
+        a = j.get("address")
+        street_address = (
+            str(a.get("streetAddress"))
+            .replace("&#39;", "`")
+            .replace("&#194;", "Â")
+            .replace("&#233;", "é")
+            .strip()
+            or "<MISSING>"
+        )
+        city = a.get("addressLocality") or "<MISSING>"
+        state = a.get("addressRegion") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
+        country_code = a.get("addressCountry") or "<MISSING>"
+        location_name = j.get("name") or "<MISSING>"
+        phone = j.get("telephone") or "<MISSING>"
+        hours = j.get("openingHoursSpecification") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
+        latitude = j.get("geo").get("latitude") or "<MISSING>"
+        longitude = j.get("geo").get("longitude") or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
 
 if __name__ == "__main__":
     session = SgRequests()

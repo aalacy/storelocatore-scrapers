@@ -87,6 +87,10 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = " ".join(hours_of_operation.split())
         if hours_of_operation.find("<") != -1:
             hours_of_operation = hours_of_operation.split("<")[0].strip()
+        if hours_of_operation.find("Bengkel") != -1:
+            hours_of_operation = hours_of_operation.split("Bengkel")[0].strip()
+        if hours_of_operation.find("Service") != -1:
+            hours_of_operation = hours_of_operation.split("Service")[0].strip()
         store_number = j.get("id")
 
         row = SgRecord(

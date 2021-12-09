@@ -22,6 +22,7 @@ def fetch_data():
     all_locations = dom.xpath(
         '//a[@class="w-full block hover:bg-gray-200  py-2 md:py-4"]/@href'
     )
+    all_locations.append(start_url)
     for page_url in all_locations:
         page_url = urljoin(start_url, page_url)
         loc_response = session.get(page_url, headers=hdr)
