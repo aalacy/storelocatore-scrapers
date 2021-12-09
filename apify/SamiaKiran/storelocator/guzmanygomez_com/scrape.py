@@ -36,7 +36,6 @@ def fetch_data():
                 .replace("|", "")
                 .split("– Drive")[0]
             )
-            print(location_name)
             address = soup.find("div", {"class": "order_location"}).findAll("span")
             street_address = address[0].text
             city = address[1].text
