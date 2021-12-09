@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup as bs
 import dirtyjson as json
 from sglogging import SgLogSetup
 import re
+import time
 
 logger = SgLogSetup().get_logger("carrefour")
 
@@ -19,7 +20,7 @@ base_url = "https://www.carrefour.fr/magasin/"
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(proxy_country="fr", retries_with_fresh_proxy_ip=7) as session:
         regions = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "li.store-locator-footer-list__item a"
         )
@@ -38,6 +39,7 @@ def fetch_data():
                 if addr["address2"]:
                     street_address += " " + addr["address2"]
                 hours = []
+                page_url = locator_domain + _["storePageUrl"]
                 try:
                     for day, hh in (
                         _.get("openingWeekPattern", {}).get("timeRanges", {}).items()
@@ -48,12 +50,12 @@ def fetch_data():
                 except:
                     pass
 
-                page_url = locator_domain + _["storePageUrl"]
                 phone = ""
                 location_name = _["name"].replace("&#039;", "'")
                 if page_url != base_url:
                     logger.info(page_url)
                     res = session.get(page_url, headers=_headers)
+                    time.sleep(1)
                     if res.status_code == 200:
                         sp1 = bs(res.text, "lxml")
                         location_name = sp1.select_one(
@@ -70,6 +72,15 @@ def fetch_data():
                             phone = sp1.select_one(
                                 "div.store-meta--telephone a"
                             ).text.strip()
+                        hours = []
+                        for hh in sp1.select(
+                            "div.store-hours div.store-meta__opening-range"
+                        ):
+                            day = hh.select_one("div.store-meta__label").text.strip()
+                            times = ", ".join(
+                                hh.select_one("div.store-meta__time").stripped_strings
+                            )
+                            hours.append(f"{day}: {times}")
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],
