@@ -32,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         country_code = "CH"
         city = "".join(d.xpath(".//@data-city"))
         store_number = "".join(d.xpath(".//@data-index"))
-        latitude = (
+        longitude = (
             "".join(
                 d.xpath(
                     f'.//following::script[contains(text(), "dituContent-{store_number}")]/text()'
@@ -43,7 +43,7 @@ def fetch_data(sgw: SgWriter):
             .split(",")[0]
             .strip()
         )
-        longitude = (
+        latitude = (
             "".join(
                 d.xpath(
                     f'.//following::script[contains(text(), "dituContent-{store_number}")]/text()'

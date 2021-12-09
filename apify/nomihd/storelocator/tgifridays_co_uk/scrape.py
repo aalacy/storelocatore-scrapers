@@ -197,6 +197,19 @@ def fetch_data():
             except:
                 pass
 
+        if len(hours_of_operation) <= 0:
+            try:
+                hours_of_operation = (
+                    store_req.text.split(
+                        "<p>Check out our dine-in opening times below:</p>"
+                    )[1]
+                    .strip()
+                    .split("<span></span></p>")[0]
+                    .strip()
+                )
+            except:
+                pass
+
         try:
             hours_of_operation = (
                 BS(hours_of_operation, "html.parser")
@@ -236,7 +249,7 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hours_of_operation.split(";Learn more")[0].strip(),
         )
 
 
