@@ -50,9 +50,10 @@ def fetch_data(sgw: SgWriter):
             else:
                 raise
 
-        digit = re.search(r"\d", street_address).start(0)
-        if digit != 0:
-            street_address = street_address[digit:]
+        if re.search(r"\d", street_address):
+            digit = str(re.search(r"\d", street_address))
+            start = int(digit.split("(")[1].split(",")[0])
+            street_address = street_address[start:]
 
         if street_address[-1:] == ",":
             street_address = street_address[:-1].strip()
