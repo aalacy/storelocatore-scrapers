@@ -28,6 +28,8 @@ def fetch_data():
                     else:
                         hoo.append(f"{day} closed")
                 hoo = " ".join(hoo)
+            if len(hoo) < 10:
+                hoo = ""
             raw_address = poi["address"].get("line1")
             if raw_address and poi["address"].get("line2"):
                 raw_address += ", " + poi["address"]["line2"]
