@@ -43,7 +43,12 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//span[contains(text(), "Hours")]/following-sibling::fieldset//text()'
         )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split("*")[0]
+            .split("We are open!")[0]
+            .strip()
+        )
         location_name = (
             poi["name"].replace("&#8217", "'").replace("&#8211; Now Open!", "")
         )
