@@ -6,6 +6,15 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_coordinates(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text.replace("!--", "").replace("--", ""))
+    lat = "".join(tree.xpath("//div[@data-latitude]/@data-latitude"))
+    lng = "".join(tree.xpath("//div[@data-longitude]/@data-longitude"))
+
+    return lat, lng
+
+
 def fetch_data(sgw: SgWriter):
     for i in range(1, 300):
         r = session.get(f"https://www.biedronka.pl/pl/sklepy/lista,,,page,{i}")
@@ -33,6 +42,11 @@ def fetch_data(sgw: SgWriter):
                 _tmp.append(f"{day} {inter}")
             hours_of_operation = ";".join(_tmp)
 
+            try:
+                latitude, longitude = get_coordinates(page_url)
+            except:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
             row = SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -41,6 +55,8 @@ def fetch_data(sgw: SgWriter):
                 zip_postal=postal,
                 country_code="PL",
                 store_number=store_number,
+                latitude=latitude,
+                longitude=longitude,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )

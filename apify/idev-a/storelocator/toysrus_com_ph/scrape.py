@@ -31,17 +31,17 @@ def fetch_data():
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            city = addr.city
-            if city in ["Uno"]:
+            if not street_address:
+                street_address = _["address"]
+            city = addr.city or ""
+            if city in ["Uno", "Center", "Highwa", "Poblacion District", "Rh9", "Road"]:
                 city = ""
-            if city:
-                city = city.replace("Brgy 1.", "")
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["store_code"],
                 location_name=_["name"],
                 street_address=street_address,
-                city=addr.city,
+                city=city.replace("Brgy. 1", ""),
                 state=addr.state,
                 zip_postal=addr.postcode,
                 latitude=_["latitude"],
@@ -49,7 +49,7 @@ def fetch_data():
                 country_code="Philippines",
                 phone=_["contact_number"],
                 locator_domain=locator_domain,
-                hours_of_operation=_["open_days"].replace("\n", ";"),
+                hours_of_operation=_["open_days"].strip().replace("\n", ";"),
                 raw_address=_["address"],
             )
 
