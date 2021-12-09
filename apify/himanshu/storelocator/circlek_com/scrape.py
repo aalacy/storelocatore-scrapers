@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sgpostal.sgpostal import parse_address_intl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import Retrying, stop_after_attempt
@@ -58,13 +58,15 @@ def fetch_page(page, session):
         "page": page,
     }
     logger.info(f"{url} page={page}")
-    response = session.get(url, headers=headers, params=params)
     try:
+        response = SgRequests.raise_on_err(
+            session.get(url, headers=headers, params=params)
+        )
         data = response.json()["stores"]
         stores = data.items() if isinstance(data, dict) else data
         return stores
-    except Exception as e:
-        logger.error(f"failure to fetch {response.url} >>> {e}")
+    except SgRequestError as e:
+        logger.error(f"failure to fetch data >>> {e.status_code}")
         return []
 
 
