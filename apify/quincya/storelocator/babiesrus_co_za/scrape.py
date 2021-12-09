@@ -61,6 +61,8 @@ def fetch_data(sgw: SgWriter):
         location_type = ""
         store_number = ""
         phone = item.find(class_="phone-number").text.strip()
+        if "087" not in phone[:5]:
+            continue
         hours_of_operation = (
             " ".join(list(item.find(class_="working-times").stripped_strings))
             .split("Public")[0]
