@@ -29,13 +29,10 @@ def fetch_data():
             location_type = MISSING
             page_url = loc["href"]
             closed = loc.text.split(" - ")
-            print(closed)
             closed = closed[-1]
             if closed == "CLOSED":
-                print(page_url)
                 continue
             elif closed == "TEMP CLOSED" or closed == "TEMPORARILY CLOSED":
-                print(page_url)
                 location_type = "TEMPORARILY CLOSED"
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
