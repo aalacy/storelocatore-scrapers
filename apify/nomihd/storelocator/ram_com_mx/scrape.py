@@ -84,7 +84,7 @@ def fetch_data():
                             store_res = SgRequests.raise_on_err(
                                 session.get(page_url, headers=headers)
                             )
-                            if len(store_res.text) > 0:
+                            try:
                                 store_sel = lxml.html.fromstring(store_res.text)
 
                                 hours = list(
@@ -101,6 +101,8 @@ def fetch_data():
                                 hours_of_operation = (
                                     "; ".join(hours).replace(".;", ":").strip()
                                 )
+                            except:
+                                pass
                     except SgRequestError as e:
                         log.error(e.status_code)
 
