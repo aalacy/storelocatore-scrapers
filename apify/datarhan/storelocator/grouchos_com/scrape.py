@@ -65,7 +65,7 @@ def fetch_data():
             street_address = loc_dom.xpath('//span[@class="street-address"]/text()')[0]
             raw_data = loc_dom.xpath('//span[@class="locality"]/text()')[0].split(", ")
             state = raw_data[1].split()[0]
-            city = raw_data[1].split()[1].split()[0]
+            city = raw_data[0]
             zip_code = raw_data[1].split()[1].split()[-1]
             phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
             latitude = ""
