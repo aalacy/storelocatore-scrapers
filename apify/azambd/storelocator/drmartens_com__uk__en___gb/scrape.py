@@ -2,6 +2,7 @@ from sgpostal.sgpostal import parse_address_intl
 import time
 import json
 from typing import Iterable
+import re
 
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -39,13 +40,29 @@ def get_JSON_object_variable(Object, varNames, noVal=MISSING):
     return value
 
 
+def get_phone(Source):
+    phone = MISSING
+
+    if Source is None or Source == "":
+        return phone
+
+    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
+        phone = match
+        return phone
+    return phone
+
+
 def get_address(raw_address):
     try:
+
         if raw_address is not None and raw_address != MISSING:
             data = parse_address_intl(raw_address)
             street_address = data.street_address_1
-            if data.street_address_2 is not None:
+            if data.street_address_2 is not None and data.street_address_1 is not None:
                 street_address = street_address + " " + data.street_address_2
+            elif data.street_address_2 is not None and data.street_address_1 is None:
+                street_address = data.street_address_2
+
             city = data.city
             state = data.state
             zip_postal = data.postcode
@@ -60,7 +77,7 @@ def get_address(raw_address):
                 zip_postal = MISSING
             return street_address, city, state, zip_postal
     except Exception as e:
-        log.info(f"Address Err: {e}")
+        log.info(f"Address Missing: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
@@ -69,8 +86,10 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
     states = CrawlStateSingleton.get_instance()
     count = 0
     for zipCode in search:
+
         log.debug(f"Searching {zipCode} ...")
         count = count + 1
+
         stores = []  # type: ignore
         page = 0
         zipCode = str(zipCode).replace(" ", "%20")
@@ -94,29 +113,34 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
 
         for store in stores:
             store_number = MISSING
-            location_type = MISSING
-            page_url = store_url
+
+            page_url = MISSING
             country_code = country_code.upper()
             location_name = get_JSON_object_variable(store, "displayName")
+            location_type = "Store"
+            if "Permanently Closed" in location_name:
+                location_type = "Permanently Closed"
             latitude = get_JSON_object_variable(store, "latitude")
             longitude = get_JSON_object_variable(store, "longitude")
-            phone = get_JSON_object_variable(store, "phone").split(":")[-1].strip()
+
+            phone = get_phone(get_JSON_object_variable(store, "phone"))
 
             street_address = get_JSON_object_variable(store, "line1")
             line2 = get_JSON_object_variable(store, "line2")
+
             if line2 is not None and line2 != MISSING:
                 street_address += " " + line2
 
             town = get_JSON_object_variable(store, "town")
             postalCode = get_JSON_object_variable(store, "postalCode")
-            hoo, city, state, zip_postal = get_address(
+            street_address, city, state, zip_postal = get_address(
                 f"{street_address} {town} {postalCode}"
             )
 
             if zip_postal == MISSING:
                 zip_postal = postalCode
 
-            raw_address = f"{street_address}, {city}, {state} {zip_postal}"
+            raw_address = f"{street_address} {town} {postalCode}"
             if MISSING in raw_address:
                 raw_address = MISSING
 
@@ -140,7 +164,7 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
                 city=city,
                 zip_postal=zip_postal,
                 state=state,
-                country_code=country_code,
+                country_code=MISSING,
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,
@@ -155,7 +179,11 @@ def scrape():
     search = DynamicZipSearch(
         country_codes=SearchableCountries.ALL, expected_search_radius_miles=50
     )
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         with SgRequests() as http:
             for rec in fetch_data(http, search):
                 writer.write_row(rec)

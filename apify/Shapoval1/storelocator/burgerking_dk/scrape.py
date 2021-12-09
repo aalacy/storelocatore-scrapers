@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def get_hours(hours) -> str:
@@ -59,17 +60,28 @@ def fetch_data(sgw: SgWriter):
             headers=headers,
         )
         js = r.json()["data"]
+
         page_url = f"https://www.burgerking.dk/restaurants/{slug}"
         location_name = js.get("storeName") or "<MISSING>"
         a = js.get("storeLocation").get("address")
-        street_address = (
+        ad = (
             "".join(js.get("storeAddress"))
             .replace("\n", " ")
             .replace("\t", " ")
             .strip()
         )
+        ad = " ".join(ad.split())
+        b = parse_address(International_Parser(), ad)
+        street_address = f"{b.street_address_1} {b.street_address_2}".replace(
+            "None", ""
+        ).strip()
+
         state = a.get("state") or "<MISSING>"
         postal = a.get("postalCode") or "<MISSING>"
+        if street_address.find("Kbh V") != -1:
+            street_address = ad.split(f"{postal}")[0].strip()
+        if street_address.find(f"{postal}") != -1:
+            street_address = ad.split(f"{postal}")[0].strip()
         country_code = "DK"
         city = a.get("city") or "<MISSING>"
         try:
