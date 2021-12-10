@@ -128,9 +128,7 @@ if __name__ == "__main__":
     with SgWriter(
         deduper=SgRecordDeduper(
             SgRecordID(
-                {
-                    SgRecord.Headers.LOCATION_NAME,
-                }
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
             ),
             duplicate_streak_failure_factor=-1,
         )
