@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-
 from sgrequests import SgRequests
 from sglogging import sglog
 
@@ -61,7 +60,7 @@ def reqDetailPageAPI(url):
 
 
 def fetchData():
-    apiUrl = "https://www.planetfitness.com/gyms/pfx/api/clubs/locations"
+    apiUrl = "https://cde-assets-planetfitness.s3.amazonaws.com/locations.json"
     dpid = reqFirstAPI(apiUrl)
     d = dpid["clubs"]
     log.info(f"Total Locations: {len(d)}")
