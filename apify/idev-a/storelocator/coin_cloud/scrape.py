@@ -1,4 +1,4 @@
- from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -24,7 +24,7 @@ def fetch_data():
             hours = []
             for day, hh in _.get("hours", {}).items():
                 hours.append(f"{day}: {hh}")
-                
+
             page_url = f"https://www.coin.cloud/dcms?location={_['slug']}"
 
             yield SgRecord(
