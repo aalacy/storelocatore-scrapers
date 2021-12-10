@@ -29,7 +29,7 @@ def fetch_data():
                 latitude=_["latitud_gps"],
                 longitude=_["longitud_gps"],
                 country_code="Ecuador",
-                location_type=types[_["categoria_id"]],
+                location_type=types[str(_["categoria_id"])],
                 locator_domain=locator_domain,
                 hours_of_operation=_["horario"],
                 raw_address=raw_address,
