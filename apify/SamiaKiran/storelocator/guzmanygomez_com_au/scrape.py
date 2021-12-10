@@ -74,6 +74,10 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", "")
             )
+            if "26/09/21: 11:30 - 21:30" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split(
+                    "26/09/21: 11:30 - 21:30"
+                )[1]
             country_code = "AUS"
             yield SgRecord(
                 locator_domain=DOMAIN,
