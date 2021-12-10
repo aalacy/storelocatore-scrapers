@@ -10,7 +10,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.schewelshome.com/stores/"
+locator_domain = "https://www.schewelshome.com/"
 base_url = "https://www.schewelshome.com/stores/"
 
 
@@ -40,9 +40,9 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["storeName"],
-                street_address=info.select_one(
-                    'span[itemprop="streetAddress"]'
-                ).text.strip(),
+                street_address=info.select_one('span[itemprop="streetAddress"]')
+                .text.replace("Shoppes Of Appomattox", "")
+                .strip(),
                 city=info.select_one('span[itemprop="addressLocality"]').text.strip(),
                 state=info.select_one('span[itemprop="addressRegion"]').text.strip(),
                 zip_postal=addr[-1],

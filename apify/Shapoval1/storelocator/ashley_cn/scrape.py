@@ -40,8 +40,8 @@ def fetch_data(sgw: SgWriter):
         store_number = x.get("id") or "<MISSING>"
         pos = str(x.get("position")) or "<MISSING>"
         try:
-            latitude = pos.split(",")[0].strip()
-            longitude = pos.split(",")[1].strip()
+            latitude = pos.split(",")[1].strip()
+            longitude = pos.split(",")[0].strip()
         except:
             latitude, longitude = "<MISSING>", "<MISSING>"
         phone = x.get("tel") or "<MISSING>"
