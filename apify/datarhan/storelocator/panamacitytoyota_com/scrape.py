@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -24,8 +23,8 @@ def fetch_data():
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address += ', ' + addr.street_address_2
-        if street_address.endswith(','):
+            street_address += ", " + addr.street_address_2
+        if street_address.endswith(","):
             street_address = street_address[:-1]
 
         item = SgRecord(
@@ -43,7 +42,7 @@ def fetch_data():
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation=hoo,
-            raw_address=raw_address
+            raw_address=raw_address,
         )
 
         yield item
