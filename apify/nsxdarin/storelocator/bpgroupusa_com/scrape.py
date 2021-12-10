@@ -18,7 +18,7 @@ def fetch_data():
     website = "bpgroupusa.com"
     name = "<MISSING>"
     add = "<MISSING>"
-    loc = "<MISSING>"
+    loc = "https://www.bpgroupusa.com/OurLocations.html"
     city = "<MISSING>"
     state = "<MISSING>"
     zc = "<MISSING>"
