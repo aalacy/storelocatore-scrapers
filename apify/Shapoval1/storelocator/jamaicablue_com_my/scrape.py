@@ -6,6 +6,17 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 
 
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = h.get("days")
+        time = h.get("hours")
+        line = f"{day} {time}"
+        tmp.append(line)
+    hours_of_operation = " ".join(tmp).strip()
+    return hours_of_operation
+
+
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.jamaicablue.com.my"
@@ -48,14 +59,8 @@ def fetch_data(sgw: SgWriter):
         phone = j.get("phone_number") or "<MISSING>"
         hours_of_operation = "<MISSING>"
         hours = j.get("opening_hours") or "<MISSING>"
-        tmp = []
         if hours != "<MISSING>":
-            for h in hours:
-                day = h.get("days")
-                time = h.get("hours")
-                line = f"{day} {time}"
-                tmp.append(line)
-            hours_of_operation = " ".join(tmp).strip()
+            hours_of_operation = get_hours(hours)
 
         row = SgRecord(
             locator_domain=locator_domain,
