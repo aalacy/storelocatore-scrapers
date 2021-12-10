@@ -18,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     api = "https://www.buckmason.com/pages/our-stores"
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='store']")
+    divs = tree.xpath("//div[@class='store ']")
 
     for d in divs:
         slug = "".join(d.xpath(".//div[@class='store-title']/a/@href"))
