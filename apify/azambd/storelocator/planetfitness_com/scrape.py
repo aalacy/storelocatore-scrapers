@@ -61,7 +61,7 @@ def reqDetailPageAPI(url):
 
 
 def fetchData():
-    apiUrl = "https://www.planetfitness.com/gyms/pfx/api/clubs/locations"
+    apiUrl = "https://cde-assets-planetfitness.s3.amazonaws.com/locations.json"
     dpid = reqFirstAPI(apiUrl)
     d = dpid["clubs"]
     log.info(f"Total Locations: {len(d)}")
