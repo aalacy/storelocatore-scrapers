@@ -29,6 +29,7 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
     for loc in locs:
+        time.sleep(5)
         TC = False
         logger.info(loc)
         name = ""
