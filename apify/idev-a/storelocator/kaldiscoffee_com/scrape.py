@@ -59,9 +59,6 @@ def fetch_data():
                     )
                 else:
                     _hr = sp1.find("", string=re.compile(r"Fall(.)hours", re.I))
-                    import pdb
-
-                    pdb.set_trace()
                     _hp = _hr.find_parent("p")
                     if not _hp:
                         _hp = _hr.find_parent("h6")
