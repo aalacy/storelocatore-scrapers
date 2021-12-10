@@ -151,6 +151,10 @@ def fetch_data():
             zc = "CR0 4YA"
         if "<span" in hours:
             hours = hours.split("<span")[0].strip()
+        if "stores/exeter" in loc:
+            city = "Exeter"
+            add = "1 IKEA WAY, off Newcourt Way"
+            zc = "EX2 7RX"
         if "planning-studios" not in loc:
             yield SgRecord(
                 locator_domain=website,
