@@ -31,7 +31,7 @@ def fetch_data():
             if page_url in scraped_urls:
                 continue
             scraped_urls.append(page_url)
-            print(page_url)
+
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
             poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
