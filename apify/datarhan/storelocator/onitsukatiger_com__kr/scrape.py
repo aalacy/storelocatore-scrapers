@@ -30,7 +30,7 @@ def fetch_data():
                 start_url.format(code, page), headers=hdr, data=frm
             ).json()
             for poi in data["items"]:
-                page_url = f"https://www.onitsukatiger.com/kr/ko-kr/store-finder/{poi['url_key']}/"
+                page_url = f"https://www.onitsukatiger.com/{code}/store-finder/{poi['url_key']}/"
                 hoo = ""
                 if poi["attributes"].get("weekday_openings_day"):
                     hoo_week_days = poi["attributes"]["weekday_openings_day"][
@@ -48,6 +48,9 @@ def fetch_data():
                             "option_title"
                         ]
                         hoo += f", {hoo_weekend} - {hoo_weekend_time}"
+                state = poi["state"]
+                if state and state.isdigit():
+                    state = ""
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -55,7 +58,7 @@ def fetch_data():
                     location_name=poi["name"],
                     street_address=poi["address"],
                     city=poi["city"],
-                    state=poi["state"],
+                    state=state,
                     zip_postal=poi["zip"],
                     country_code=poi["country"],
                     store_number=poi["id"],
