@@ -1,1 +1,1 @@
---ignore CountryCodeFillRateChecker --ignore LatLngDuplicationValidator (Confirmed scraper correct)
+--ignore CountryCodeFillRateChecker (Confirmed scraper correct)
