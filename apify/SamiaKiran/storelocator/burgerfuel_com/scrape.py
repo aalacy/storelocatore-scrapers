@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
+
+# from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -43,7 +44,7 @@ def fetch_data():
             longitude = coords[1]
             latitude = coords[0]
             phone = temp["phone"].split("-")[0]
-            hours_of_operation = temp["openingHours"]
+            hours_of_operation = loc.split("['openingHours'] = '")[1].split("';")[0]
             hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
                 .get_text(separator="|", strip=True)
