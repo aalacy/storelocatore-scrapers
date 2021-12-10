@@ -18,7 +18,7 @@ def fetch_data():
         for _ in locations:
             raw_address = _["storeAddress"].replace("地址:", "").replace("\n", "")
             raw_address = raw_address.replace("中国", "")
-            state = ""
+            state = city = ""
             if "澳门" in raw_address:
                 city = "澳门"
                 street_address = raw_address.replace("澳门", "")

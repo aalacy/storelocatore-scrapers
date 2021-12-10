@@ -31,7 +31,7 @@ def fetch_data():
                 continue
             phone = loc.split('phone:"')[1].split('"')[0]
             if "Coming Soon!" in phone:
-                continue
+                phone = MISSING
             longitude, latitude = (
                 loc.split("coordinates:[")[1].split("]}")[0].split(",")
             )

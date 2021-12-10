@@ -40,10 +40,18 @@ def fetch_data():
 
                 street_address = store["d_address"]
                 city = store["d_city"]
+                if "," in city:
+                    city = city.rsplit(",", 1)[0].strip()
+
                 state = "<MISSING>"
                 zip = "<MISSING>"
 
                 country_code = key
+
+                if country_code.lower() in city.lower():
+                    city = city.lower().replace(country_code.lower(), "").strip()
+                    if city and city[-1] == ",":
+                        city = "".join(city[:-1]).strip()
 
                 phone = store["d_phone"]
 
