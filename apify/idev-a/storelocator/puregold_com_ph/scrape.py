@@ -87,7 +87,11 @@ def fetch_data():
                     street_address += " " + addr.street_address_2
                 city = addr.city
                 if city:
-                    city = city.replace("Subic Bay Freeport Zone", "").strip()
+                    city = (
+                        city.replace("Subic Bay Freeport Zone", "")
+                        .replace("Guitnang Bayan 1", "")
+                        .strip()
+                    )
                 phone = ""
                 if _.select_one("span.telno"):
                     phone = (

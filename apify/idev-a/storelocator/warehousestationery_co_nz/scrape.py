@@ -32,6 +32,9 @@ def fetch_data():
             street_address = ss["Address1"]
             if ss["Address2"]:
                 street_address += " " + ss["Address2"]
+            if "closed" in street_address:
+                continue
+
             street_address = (
                 street_address.replace("WSL - Located inside the Warehouse", "")
                 .replace("WSL - Inside the Warehouse", "")

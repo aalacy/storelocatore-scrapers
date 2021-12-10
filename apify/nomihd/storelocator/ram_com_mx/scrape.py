@@ -84,22 +84,25 @@ def fetch_data():
                             store_res = SgRequests.raise_on_err(
                                 session.get(page_url, headers=headers)
                             )
-                            store_sel = lxml.html.fromstring(store_res.text)
+                            try:
+                                store_sel = lxml.html.fromstring(store_res.text)
 
-                            hours = list(
-                                filter(
-                                    str,
-                                    [
-                                        x.strip()
-                                        for x in store_sel.xpath(
-                                            '//h6[contains(text(),"Horario de Ventas")]/../ul/li//text()'
-                                        )
-                                    ],
+                                hours = list(
+                                    filter(
+                                        str,
+                                        [
+                                            x.strip()
+                                            for x in store_sel.xpath(
+                                                '//h6[contains(text(),"Horario de Ventas")]/../ul/li//text()'
+                                            )
+                                        ],
+                                    )
                                 )
-                            )
-                            hours_of_operation = (
-                                "; ".join(hours).replace(".;", ":").strip()
-                            )
+                                hours_of_operation = (
+                                    "; ".join(hours).replace(".;", ":").strip()
+                                )
+                            except:
+                                pass
                     except SgRequestError as e:
                         log.error(e.status_code)
 
