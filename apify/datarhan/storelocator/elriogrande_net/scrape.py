@@ -26,6 +26,14 @@ def fetch_data():
             loc_dom = etree.HTML(loc_response.text)
             phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
+            if not phone:
+                phone = (
+                    loc_dom.xpath(
+                        '//h2[contains(text(), "Address")]/following-sibling::h4/text()'
+                    )[-1]
+                    .split(":")[-1]
+                    .strip()
+                )
             raw_address = loc_dom.xpath(
                 '//h2[contains(text(), "Address")]/following-sibling::h4/text()'
             )
