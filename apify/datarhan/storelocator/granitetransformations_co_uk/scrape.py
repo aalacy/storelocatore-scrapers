@@ -20,7 +20,6 @@ def fetch_data():
         '//h2[contains(text(), "All Showrooms")]/following-sibling::ul//h4/a/@href'
     )
     for store_url in all_locations:
-        print(store_url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
