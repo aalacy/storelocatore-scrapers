@@ -29,6 +29,8 @@ def fetch_data():
         loclist = soup.findAll("div", {"class": "location w-dyn-item"})
         for loc in loclist:
             location_name = loc.find("h2").text
+            if "Permanently closed" in location_name:
+                continue
             temp = loc.findAll("div", {"class": "w-richtext"})
             raw_address = (
                 temp[0].find("p").get_text(separator="|", strip=True).replace("|", " ")
