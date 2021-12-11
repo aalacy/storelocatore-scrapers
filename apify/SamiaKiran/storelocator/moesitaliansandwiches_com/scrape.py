@@ -32,7 +32,6 @@ def fetch_data():
             log.info(page_url)
             address = temp[0].get_text(separator="|", strip=True).split("|")
             address = " ".join(address[:-1])
-            zip_postal = address[1]
             phone = temp[1].text
             address = address.replace(",", " ")
             address = usaddress.parse(address)
