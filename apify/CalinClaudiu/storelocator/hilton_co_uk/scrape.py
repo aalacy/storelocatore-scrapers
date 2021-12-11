@@ -114,7 +114,9 @@ def get_response_redirect(urlnum, country, url_to_redirect):
                                 f"Redirect POST HTTP Status Code: {r_redir_post.status_code}"
                             )
                             return r_redir_post
-                        raise Exception(f"{urlnum} : {redir_url} >> Temporary Error: {hot2}")
+                        raise Exception(
+                            f"{urlnum} : {redir_url} >> Temporary Error: {hot2}"
+                        )
                     raise Exception(
                         f"{urlnum} : {redir_url} >> Temporary Error: {hot_redir}"
                     )
