@@ -3,7 +3,7 @@ import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -74,6 +74,8 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
+            if "None" in hours:
+                hours = "<MISSING>"
             title = soup.find("span", {"class": "MiniHero-name"}).text
             title = title.encode("ascii", "ignore").decode("ascii")
             yield SgRecord(
@@ -97,7 +99,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
 
         results = fetch_data()

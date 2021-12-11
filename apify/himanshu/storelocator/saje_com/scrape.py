@@ -1,138 +1,115 @@
-import csv
-import requests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
-logger = SgLogSetup().get_logger('saje_com')
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
+session = SgRequests()
+website = "saje_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                            "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-
+DOMAIN = "https://saje.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    base_url = "https://www.saje.com/store-locator/"
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
+    if True:
+        url = "https://www.saje.com/store-locator/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("td", {"class": "store-location-name"})
+        for loc in loclist:
+            page_url = DOMAIN + loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            raw_address = (
+                soup.find("div", {"class": "store-address1"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Address", "")
+            )
+            pa = parse_address_intl(raw_address)
 
-    for q in soup.find("div",{"class":"canada-stores"}).find_all("table",{"class":"store-locator-ca-table"}):
-        location_name = q.find("td",{"class":"store-location-name"}).text
-        # page_url = q.find("td",{"class":"store-location-name"})['href']
-        phone = q.find("p",{"class":"phone-no"}).text
-        full = list(q.find("td",{"class":"store-location-address"}).stripped_strings)[1].split(',')
-        city = full[0]
-        state = full[1]
-        zipp = full[-1]
-        street_address =  list(q.find("td",{"class":"store-location-address"}).stripped_strings)[0]
-        page_url ="https://www.saje.com/"+q.find("td",{"class":"store-location-name"}).find("a")['href']
-        r1 = requests.get(page_url)
-        soup1= BeautifulSoup(r1.text,"lxml")
-        lat=''
-        log=''
-        lats = str(soup1).split("var myLatlng = new google.maps.LatLng(")[-1].split(");")[0]
-        if len(lats.split(",")) != 2:
-            lat = "<MISSING>"
-            log = "<MISSING>"
-        else:
-            lat = lats.split(",")[0]
-            log = lats.split(",")[1]
-        hours_of_operation = " ".join(list(soup1.find("div",{"class":"store-hours-main"}).stripped_strings)).replace("Holiday hours may vary",'').replace("Store Hours ",'')
-    
-        store = []
-        if "1320 Trans-Canada Highway West" in street_address:
-            lat = "<MISSING>"
-            log = "<MISSING>" 
-        store.append("https://www.saje.com/")
-        store.append(location_name if location_name else "<MISSING>") 
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append("CA")
-        store.append("<MISSING>") 
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append( lat.replace("-80.9667","46.5"))
-        store.append( log.replace("46.5","-80.9667"))
-        store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
-        store.append(page_url if page_url else "<MISSING>")
-        # logger.info("~~~~~~~~~~~~~~~~ ",store)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
-    
-    
-    for q in soup.find("div",{"class":"us-stores"}).find_all("table",{"class":"store-locator-us-table"}):
-        location_name = q.find("td",{"class":"store-location-name"}).text.replace("\n",'')
-        # page_url = q.find("td",{"class":"store-location-name"})['href']
-        lat=''
-        log=''
-        phone = q.find("p",{"class":"phone-no"}).text
-        full = list(q.find("td",{"class":"store-location-address"}).stripped_strings)[1].split(',')
-        city = full[0]
-        state = full[1]
-        zipp = full[-1]
-        street_address =  list(q.find("td",{"class":"store-location-address"}).stripped_strings)[0]
-        page_url ="https://www.saje.com/"+q.find("td",{"class":"store-location-name"}).find("a")['href']
-        r1 = requests.get(page_url)
-        soup1= BeautifulSoup(r1.text,"lxml")
-        try:
-            hours_of_operation = " ".join(list(soup1.find("div",{"class":"store-hours-main"}).stripped_strings)).replace("Holiday hours may vary",'').replace("Store Hours ",'')
-        except:
-            hours_of_operation="<MISSING>"
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
 
+            city = pa.city
+            city = city.strip() if city else MISSING
 
-        soup1= BeautifulSoup(r1.text,"lxml")
-        lats = str(soup1).split("var myLatlng = new google.maps.LatLng(")[-1].split(");")[0]
-        if  len(lats.split(",")) != 2:
-            lat = "<MISSING>"
-            log = "<MISSING>"
-        else:
-            lat = lats.split(",")[0]
-            log = lats.split(",")[1]
-        store = []
+            state = pa.state
+            state = state.strip() if state else MISSING
 
-        store.append("https://www.saje.com/")
-        store.append(location_name if location_name else "<MISSING>") 
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append("US")
-        store.append("<MISSING>") 
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append( lat.replace("-80.9667","46.5"))
-        store.append( log.replace("46.5","-80.9667"))
-        store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
-        store.append(page_url if page_url else "<MISSING>")
-        # logger.info("~~~~~~~~~~~~~~~~ ",store)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        
-        yield store
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-    
-   
+            country_code = pa.country
+            country_code = country_code.strip() if country_code else MISSING
+            location_name = soup.find("div", {"class": "store-details-name"}).text
+            phone = (
+                soup.find("div", {"class": "store-phone"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Phone ", "")
+            )
+            hours_of_operation = (
+                soup.find("div", {"class": "store-hours-main"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Store Hours", "")
+            )
+            if "Holiday" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Holiday")[0]
+            latitude, longitude = (
+                r.text.split("var myLatlng = new google.maps.LatLng(")[1]
+                .split(");")[0]
+                .split(",")
+            )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
-
-
+if __name__ == "__main__":
+    scrape()
