@@ -24,7 +24,7 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
-        if street_address.endswith(","):
+        if street_address and street_address.endswith(","):
             street_address = street_address[:-1]
 
         item = SgRecord(
