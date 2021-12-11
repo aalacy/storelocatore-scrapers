@@ -70,9 +70,64 @@ highly_dense_state_or_country_list = [
 ]
 
 
+@retry(stop=stop_after_attempt(7), wait=tenacity.wait_fixed(20))
+def get_response_redirect(urlnum, country, url_to_redirect):
+    logger.info("Pulling response from to-be-redirected URL")
+    with SgRequests(timeout_config=600, verify_ssl=False) as http:
+        r_redir = http.get(url_to_redirect, headers=headers_c)
+        try:
+            if r_redir.status_code == 200:
+                redir_url = r_redir.url
+                logger.info(f"redirected URL: {redir_url}")
+                path_per_country_or_state_redirect = str(redir_url).split("/en/")[-1]
+                payload_redirect = {
+                    "query": "query hotelSummaryOptions_locationPage($language: String!, $path: String!, $queryLimit: Int!, $currencyCode: String!, $distanceUnit: HotelDistanceUnit, $titleFormat: MarkdownFormatType!) {\n  locationPage(language: $language, path: $path) {\n    location {\n      interlinkTitle\n      interlinks {\n        uri\n        name\n      }\n      _id: uri\n      title(format: $titleFormat)\n      accessibilityTitle\n      meta {\n        pageTitle\n        description\n      }\n      name\n      brandCode\n      category\n      uri\n      globalBounds\n      breadcrumbs {\n        uri\n        name\n      }\n      about {\n        desc\n        headline\n        shortDesc\n      }\n      paths {\n        base\n      }\n    }\n    match {\n      address {\n        city\n        country\n        countryName\n        postalCode\n        state\n        stateName\n      }\n      geometry {\n        location {\n          latitude\n          longitude\n        }\n        bounds {\n          northeast {\n            latitude\n            longitude\n          }\n          southwest {\n            latitude\n            longitude\n          }\n        }\n      }\n      name\n      type\n    }\n    hotelSummaryOptions(distanceUnit: $distanceUnit, sortBy: distance) {\n      _hotels {\n        totalSize\n      }\n      bounds {\n        northeast {\n          latitude\n          longitude\n        }\n        southwest {\n          latitude\n          longitude\n        }\n      }\n      amenities {\n        id\n        name\n      }\n      amenityCategories {\n        name\n        id\n        amenityIds\n      }\n      brands {\n        code\n        name\n      }\n      hotels(first: $queryLimit) {\n        amenityIds\n        brandCode\n        ctyhocn\n        distance\n        distanceFmt\n        facilityOverview {\n          allowAdultsOnly\n          homeUrl\n        }\n        name\n        contactInfo {\n          phoneNumber\n        }\n        display {\n          open\n          openDate\n          preOpenMsg\n          resEnabled\n          resEnabledDate\n        }\n        disclaimers {\n          desc\n          type\n        }\n        address {\n          addressFmt\n          addressLine1\n          city\n          country\n          countryName\n          postalCode\n          state\n          stateName\n        }\n        localization {\n          currencyCode\n          coordinate {\n            latitude\n            longitude\n          }\n        }\n        masterImage(variant: searchPropertyImageThumbnail) {\n          altText\n          variants {\n            size\n            url\n          }\n        }\n        leadRate {\n          lowest {\n            rateAmount(currencyCode: $currencyCode)\n            rateAmountFmt(decimal: 0, strategy: trunc)\n            ratePlan {\n              ratePlanName\n              ratePlanDesc\n            }\n          }\n        }\n      }\n    }\n  }\n}\n",
+                    "operationName": "hotelSummaryOptions_locationPage",
+                    "variables": {
+                        "path": path_per_country_or_state_redirect,
+                        "language": "en",
+                        "queryLimit": QUERY_LIMIT,
+                        "currencyCode": "USD",
+                        "titleFormat": "md",
+                    },
+                }
+                logger.info(f"redirected path: {path_per_country_or_state_redirect}")
+                r_redir_post = http.post(
+                    API_ENDPOINT_URL,
+                    data=json.dumps(payload_redirect),
+                    headers=headers_c,
+                )
+                if r_redir_post.status_code == 200:
+                    js_redir = r_redir_post.json()
+                    hot_redir = js_redir["data"]["locationPage"]["hotelSummaryOptions"]
+                    if (r_redir_post.status_code == 200 and hot_redir is not None) or (
+                        r_redir_post.status_code == 200 and "errors" in js_redir
+                    ):
+                        logger.info("hot_redir is not None")
+                        hot2 = js_redir["data"]["locationPage"]["hotelSummaryOptions"][
+                            "hotels"
+                        ]
+                        if (r_redir_post.status_code == 200 and hot2 is not None) or (
+                            r_redir_post.status_code == 200 and "errors" in js
+                        ):
+                            logger.info(
+                                f"Redirect POST HTTP Status Code: {r_redir_post.status_code}"
+                            )
+                            return r_redir_post
+                        raise Exception(f"{urlnum} : {url} >> Temporary Error: {hot2}")
+                    raise Exception(
+                        f"{urlnum} : {redir_url} >> Temporary Error: {hot_redir}"
+                    )
+                raise Exception(
+                    f"{urlnum} : {redir_url} >> Temporary Error: {r_redir_post.status_code}"
+                )
+        except Exception as e:
+            raise Exception(f"{urlnum} : {url_to_redirect} >> Temporary Error: {e}")
+
+
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(20))
 def get_response(urlnum, country, url):
-    path_per_country_or_state = url.split("/en/")[-1].rstrip("/")
+    path_per_country_or_state = url.split("/en/")[-1]
     payload1 = {
         "query": "query hotelSummaryOptions_locationPage($language: String!, $path: String!, $queryLimit: Int!, $currencyCode: String!, $distanceUnit: HotelDistanceUnit, $titleFormat: MarkdownFormatType!) {\n  locationPage(language: $language, path: $path) {\n    location {\n      interlinkTitle\n      interlinks {\n        uri\n        name\n      }\n      _id: uri\n      title(format: $titleFormat)\n      accessibilityTitle\n      meta {\n        pageTitle\n        description\n      }\n      name\n      brandCode\n      category\n      uri\n      globalBounds\n      breadcrumbs {\n        uri\n        name\n      }\n      about {\n        desc\n        headline\n        shortDesc\n      }\n      paths {\n        base\n      }\n    }\n    match {\n      address {\n        city\n        country\n        countryName\n        postalCode\n        state\n        stateName\n      }\n      geometry {\n        location {\n          latitude\n          longitude\n        }\n        bounds {\n          northeast {\n            latitude\n            longitude\n          }\n          southwest {\n            latitude\n            longitude\n          }\n        }\n      }\n      name\n      type\n    }\n    hotelSummaryOptions(distanceUnit: $distanceUnit, sortBy: distance) {\n      _hotels {\n        totalSize\n      }\n      bounds {\n        northeast {\n          latitude\n          longitude\n        }\n        southwest {\n          latitude\n          longitude\n        }\n      }\n      amenities {\n        id\n        name\n      }\n      amenityCategories {\n        name\n        id\n        amenityIds\n      }\n      brands {\n        code\n        name\n      }\n      hotels(first: $queryLimit) {\n        amenityIds\n        brandCode\n        ctyhocn\n        distance\n        distanceFmt\n        facilityOverview {\n          allowAdultsOnly\n          homeUrl\n        }\n        name\n        contactInfo {\n          phoneNumber\n        }\n        display {\n          open\n          openDate\n          preOpenMsg\n          resEnabled\n          resEnabledDate\n        }\n        disclaimers {\n          desc\n          type\n        }\n        address {\n          addressFmt\n          addressLine1\n          city\n          country\n          countryName\n          postalCode\n          state\n          stateName\n        }\n        localization {\n          currencyCode\n          coordinate {\n            latitude\n            longitude\n          }\n        }\n        masterImage(variant: searchPropertyImageThumbnail) {\n          altText\n          variants {\n            size\n            url\n          }\n        }\n        leadRate {\n          lowest {\n            rateAmount(currencyCode: $currencyCode)\n            rateAmountFmt(decimal: 0, strategy: trunc)\n            ratePlan {\n              ratePlanName\n              ratePlanDesc\n            }\n          }\n        }\n      }\n    }\n  }\n}\n",
         "operationName": "hotelSummaryOptions_locationPage",
@@ -88,24 +143,50 @@ def get_response(urlnum, country, url):
     with SgRequests(timeout_config=600, verify_ssl=False) as http:
         logger.info(f"[{urlnum}] | {country} | Pulling from: {url}")
         r = http.post(API_ENDPOINT_URL, data=json.dumps(payload1), headers=headers_c)
-        js = r.json()
-        hot = js["data"]["locationPage"]["hotelSummaryOptions"]
         try:
-            if (r.status_code == 200 and hot is not None) or (
-                r.status_code == 200 and "errors" in js
-            ):
-                hot2 = js["data"]["locationPage"]["hotelSummaryOptions"]["hotels"]
-                if (r.status_code == 200 and hot2 is not None) or (
-                    r.status_code == 200 and "errors" in js
-                ):
-                    logger.info(f"HTTP Status Code: {r.status_code}")
-                    return r
-                raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
-            raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
-
+            if r.status_code == 200:
+                rtext = r.text
+                if rtext is not None:
+                    js = json.loads(rtext)
+                    hot = js["data"]["locationPage"]["hotelSummaryOptions"]
+                    redirect_path = js["data"]["locationPage"]["location"]["uri"]
+                    if hot is None and path_per_country_or_state != redirect_path:
+                        logger.info(
+                            f"{path_per_country_or_state} not in {redirect_path}"
+                        )
+                        rr = get_response_redirect(urlnum, country, url)
+                        return rr
+                    else:
+                        if (r.status_code == 200 and hot is not None) or (
+                            r.status_code == 200 and "errors" in js
+                        ):
+                            hot2 = js["data"]["locationPage"]["hotelSummaryOptions"][
+                                "hotels"
+                            ]
+                            if (r.status_code == 200 and hot2 is not None) or (
+                                r.status_code == 200 and "errors" in js
+                            ):
+                                logger.info(f"HTTP Status Code: {r.status_code}")
+                                return r
+                            raise Exception(
+                                f"{urlnum} : {url} >> Level 4 - Temporary Error: {r.status_code}"
+                            )
+                        raise Exception(
+                            f"{urlnum} : {url} >> Level 3 - Temporary Error: {r.status_code}"
+                        )
+                raise Exception(
+                    f"{urlnum} : {url} >> Level 3 - Temporary Error: {r.status_code}"
+                )
+            raise Exception(
+                f"{urlnum} : {url} >> Level 1 - Temporary Error: {r.status_code}"
+            )
         except Exception as e:
-            logger.info(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
-            raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code} {e}")
+            logger.info(
+                f"{urlnum} : {url} >> Level 0 - Temporary Error: {r.status_code}"
+            )
+            raise Exception(
+                f"{urlnum} : {url} >> Level 0 - Temporary Error: {r.status_code} {e}"
+            )
 
 
 def fetch_records(idx, country_n_url, sgw: SgWriter):
@@ -300,9 +381,11 @@ def fetch_data(sgw: SgWriter):
         sub_city_or_state = get_cities_for_cn_gb_us(countries[0:])
         logger.info(f"Raw Count: {len(sub_city_or_state)} ")
         sub_city_or_state_deduped = dedupe(sub_city_or_state)
+        for i_dict in sub_city_or_state_deduped:
+            if "http://www.hilton.com/en/locations/swaziland/" in i_dict["link"]:
+                sub_city_or_state_deduped.remove(i_dict)
         logger.info(f"After Deduplication Count: {len(sub_city_or_state_deduped)}")
         logger.info("Pulling Sub-Pages Finished")
-
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = []
             task = [
