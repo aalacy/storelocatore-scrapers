@@ -65,7 +65,7 @@ def fetch_data():
     )
     locs = []
     for page in page_urls:
-        if page.count("/") >= 6:
+        if page.count("/") >= 6 and ".com/es/" not in page and ".com/fr/" not in page:
             locs.append(page)
     for loc in locs:
         try:
@@ -160,6 +160,11 @@ def fetch_data():
             hours = hours.replace("{:", "").strip()
             if city == "Winnipeg":
                 add = add.replace("Suite CRU-101", "").strip()
+            if country != "CA" and country != "US":
+                state = "<MISSING>"
+            name = name.replace("&#39;", "'")
+            add = add.replace("&#39;", "'")
+            city = city.replace("&#39;", "'")
             if city != "":
                 yield SgRecord(
                     locator_domain=website,
