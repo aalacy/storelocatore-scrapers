@@ -19,13 +19,6 @@ DOMAIN = "https://captsub.com/"
 MISSING = SgRecord.MISSING
 
 
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
-
-
 def fetch_data():
     if True:
         url = "http://captsub.com/locations/"
