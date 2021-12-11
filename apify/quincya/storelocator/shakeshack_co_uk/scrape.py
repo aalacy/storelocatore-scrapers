@@ -21,12 +21,12 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    items = base.find_all(class_="l-column l-column-md-4")
+    items = base.find_all(class_="u-c-green u-ta-center")
     locator_domain = "shakeshack.co.uk"
 
-    for item in items:
-
-        location_name = item.a.text.strip()
+    for i in items:
+        item = i.find_previous("div")
+        location_name = item.a.text.strip().title()
         link = item.a["href"]
 
         city = ""
@@ -57,23 +57,30 @@ def fetch_data(sgw: SgWriter):
         if street_address[-1:] == ",":
             street_address = street_address[:-1]
         street_address = street_address.replace("\n", " ").replace("–", "-").strip()
+
+        if "Sussex" in zip_code:
+            city = city + " Sussex"
+            zip_code = zip_code.replace("Sussex", "").strip()
+
         state = "<MISSING>"
         country_code = "GB"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        latitude = ""
+        longitude = ""
 
-        try:
-            phone = re.findall(
-                r"[\d]{5} [\d]{3} [\d]{3}", str(item).replace("0192 3886", "01923 886")
-            )[0]
-        except:
-            phone = "<MISSING>"
-        try:
-            latitude = item.find(class_="marker")["data-lat"]
-            longitude = item.find(class_="marker")["data-lng"]
-        except:
-            latitude = ""
-            longitude = ""
+        if item.find(string="Order on Deliveroo"):
+            location_type = "Delivery only"
+        else:
+            location_type = "Dine in,  Takeaway + Delivery"
+            try:
+                map_str = item.find(string="Get Directions").find_previous()["href"]
+                geo = re.findall(r"[0-9]{1,3}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", map_str)[
+                    0
+                ].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            except:
+                pass
 
         hours_of_operation = (
             item.find(string="Hours")
@@ -81,9 +88,35 @@ def fetch_data(sgw: SgWriter):
             .text.replace("Hours", "")
             .replace("–", "-")
             .replace("\n", " ")
+            .replace("—-", "")
             .split("(")[0]
             .strip()
         )
+
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        try:
+            phone = re.findall(
+                r"[\d]{5} [\d]{3} [\d]{3}",
+                str(base.find(id="section-2")).replace("0192 3886", "01923 886"),
+            )[0]
+        except:
+            phone = "<MISSING>"
+
+        if not latitude:
+            try:
+                map_link = map_str = base.find_all("iframe")[-1]["data-src"]
+                lat_pos = map_link.rfind("!3d")
+                latitude = map_link[
+                    lat_pos + 3 : map_link.find("!", lat_pos + 5)
+                ].strip()
+                lng_pos = map_link.find("!2d")
+                longitude = map_link[
+                    lng_pos + 3 : map_link.find("!", lng_pos + 5)
+                ].strip()
+            except:
+                pass
 
         sgw.write_row(
             SgRecord(
