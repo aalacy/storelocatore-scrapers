@@ -9,7 +9,7 @@ session = SgRequests()
 website = "rplumber_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-headers={
+headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
@@ -20,11 +20,11 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         url = "https://api.rplumber.com/locations"
-        loclist= session.get(url, headers=headers).json()['data']
+        loclist = session.get(url, headers=headers).json()["data"]
         for loc in loclist:
-            location_name = loc['name']
+            location_name = loc["name"]
             if location_name is None:
-                location_name  = "<INACCESSIBLE>"
+                location_name = "<INACCESSIBLE>"
             store_number = loc["id"]
             phone = loc["phone"]
             try:
@@ -38,8 +38,14 @@ def fetch_data():
             country_code = "US"
             latitude = loc["latitude"]
             longitude = loc["longitude"]
-            hours_of_operation = str(loc['hours']).replace("', '"," ").replace("': '"," ").replace("{'","").replace("'}","")
-            if 'None' in hours_of_operation:
+            hours_of_operation = (
+                str(loc["hours"])
+                .replace("', '", " ")
+                .replace("': '", " ")
+                .replace("{'", "")
+                .replace("'}", "")
+            )
+            if "None" in hours_of_operation:
                 hours_of_operation = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
