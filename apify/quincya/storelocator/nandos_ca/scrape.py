@@ -70,7 +70,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
-    )
+        )
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
