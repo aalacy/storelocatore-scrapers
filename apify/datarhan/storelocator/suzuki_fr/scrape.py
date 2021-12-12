@@ -34,13 +34,11 @@ def fetch_data():
                         opens = e["open"]["date"].split()[-1].split(":00.")[0]
                         closes = e["close"]["date"].split()[-1].split(":00.")[0]
                         time.append(f"{opens} - {closes}")
-                hoo.append(f'{day}: {" / ".join(time)}')
+                time = " / ".join(time)
+                if not time:
+                    time = "closed"
+                hoo.append(f"{day}: {time}")
             hoo = " ".join(hoo)
-            if (
-                hoo
-                == "monday:  tuesday:  wednesday:  thursday:  friday:  saturday:  sunday:"
-            ):
-                hoo = ""
 
             item = SgRecord(
                 locator_domain=domain,

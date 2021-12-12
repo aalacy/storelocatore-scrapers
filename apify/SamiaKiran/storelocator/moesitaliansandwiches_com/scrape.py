@@ -26,15 +26,28 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "pm-location"})
         for loc in loclist:
+
             location_name = loc.find("h4").text
             temp = loc.findAll("p")
             page_url = DOMAIN + loc.find("a", {"class": "location-button"})["href"]
             log.info(page_url)
             address = temp[0].get_text(separator="|", strip=True).split("|")
             address = " ".join(address[:-1])
-            zip_postal = address[1]
             phone = temp[1].text
-            address = address.replace(",", " ")
+            hours_of_operation = (
+                loc.find("div", {"class": "hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            if "NOW OFFERING" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split(" NOW OFFERING")[0]
+            elif "NEW" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("NEW")[0]
+            elif "ONLINE" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("ONLINE")[0]
+            elif "DELIVERY" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("DELIVERY")[0]
+            address = address.replace(",", " ").replace("inside Mobil", "")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -60,11 +73,6 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            hours_of_operation = (
-                soup.find("div", {"class": "hours"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
