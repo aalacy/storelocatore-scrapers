@@ -33,13 +33,15 @@ def fetch_data():
             "https://auto.suzuki.de/dealersearch/search", headers=hdr, data=frm
         ).json()
         for poi in all_locations:
-            page_url = poi["dealer"]["homepage"]
-            loc_response = session.get(page_url)
-            loc_dom = etree.HTML(loc_response.text)
-            hoo = loc_dom.xpath(
-                '//div[@class="col-sm-3 sale-open"]//div[@class="one-day-info"]//text()'
-            )
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            page_url = poi["dealer"].get("homepage")
+            hoo = ""
+            if page_url:
+                loc_response = session.get(page_url)
+                loc_dom = etree.HTML(loc_response.text)
+                hoo = loc_dom.xpath(
+                    '//div[@class="col-sm-3 sale-open"]//div[@class="one-day-info"]//text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
