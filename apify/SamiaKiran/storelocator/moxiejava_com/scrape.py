@@ -1,3 +1,4 @@
+import re
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -24,9 +25,7 @@ def fetch_data():
         url = "https://moxiejava.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "kt-tab-inner-content-inner"}).select(
-            "a[href*=location]"
-        )
+        loclist = soup.findAll("a", string=re.compile("More information"))
         for loc in loclist:
             page_url = DOMAIN + loc["href"]
             log.info(page_url)
