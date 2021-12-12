@@ -32,6 +32,9 @@ def fetch_data():
             location_name = _.select_one(".store-name").text.strip()
             raw_address = _.select_one("address a").text.strip()
             addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             try:
                 coord = (
                     _.select_one("address a")["href"]
@@ -55,7 +58,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
-                street_address=addr.street_address_1,
+                street_address=street_address,
                 city=addr.city,
                 state=addr.state,
                 latitude=coord[0],

@@ -55,14 +55,27 @@ def fetch_data():
                 poi["url"] if poi.get("url") and "http" in poi["url"] else start_url
             )
             geo = poi["addressUrl"].split("/@")[-1].split(",")[:2]
+            if "https" in poi["addressUrl"] and "@" in poi["addressUrl"]:
+                if len(geo[0]) > 12:
+                    geo = poi["addressUrl"].split("=")[-1].split(",")
             if len(geo) == 1:
                 geo = ["", ""]
             hoo = []
             for e in poi["openingHrsFulls"]:
                 hoo.append(f'{e["day"]}: {e["time"]}')
-            hoo = " ".join(hoo)
+            hoo = (
+                " ".join(hoo)
+                .replace("<br> ", "")
+                .split("<b>Easter")[0]
+                .split("Customer")[0]
+                .split("Dịch vụ:")[0]
+                .strip()
+            )
             phone = poi["phoneNos"]
             phone = phone[0]["tel"] if phone else ""
+            zip_code = addr.postcode
+            if zip_code:
+                zip_code = zip_code.replace("CEP", "").strip()
 
             item = SgRecord(
                 locator_domain=domain,
@@ -71,7 +84,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_code,
                 country_code=poi["country"],
                 store_number="",
                 phone=phone,
