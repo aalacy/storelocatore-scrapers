@@ -72,6 +72,11 @@ highly_dense_state_or_country_list = [
 
 @retry(stop=stop_after_attempt(7), wait=tenacity.wait_fixed(20))
 def get_response_redirect(urlnum, country, url_to_redirect):
+    # There are some store URLs those may be redirected.
+    # Path as a part of the payload, is formed from store URLs.
+    # Since it's a POST request, the crawler is not able to automatically
+    # get the redirected URL leading the Path to be different than redirected path.
+    # This deals with such redirected store URLs.
     logger.info("Pulling response from to-be-redirected URL")
     with SgRequests(timeout_config=600, verify_ssl=False) as http:
         r_redir = http.get(url_to_redirect, headers=headers_c)
@@ -387,7 +392,7 @@ def fetch_data(sgw: SgWriter):
             if "http://www.hilton.com/en/locations/swaziland/" in i_dict["link"]:
                 sub_city_or_state_deduped.remove(i_dict)
         logger.info(f"After Deduplication Count: {len(sub_city_or_state_deduped)}")
-        logger.info("Pulling Sub-Pages Finished")
+        logger.info("Pulling city-province based finished")
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = []
             task = [
