@@ -47,10 +47,10 @@ def get_data(slug, sgw: SgWriter):
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     _tmp = []
-    hours = tree.xpath("//ul[@class='opening__days']/li/div")
+    hours = tree.xpath("//li[@class='is-active']//ul[@class='opening__days']/li/div")
     for h in hours:
         day = "".join(h.xpath("./div[1]/text()|./div[1]/b/text()")).strip()
-        inter = "".join(h.xpath("./div[2]/text()")).strip()
+        inter = "".join(h.xpath("./div[2]/text()|./div[2]/b/text()")).strip()
         _tmp.append(f"{day}: {inter}")
 
     hours_of_operation = ";".join(_tmp)

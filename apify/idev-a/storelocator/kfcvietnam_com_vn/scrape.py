@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
@@ -28,10 +28,10 @@ header1 = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-base_url = "https://kfcvietnam.com.vn/en/find-a-kfc.html"
+base_url = "https://kfcvietnam.com.vn/vi/find-a-kfc.html"
 locator_domain = "https://kfcvietnam.com.vn"
-detail_url = "https://kfcvietnam.com.vn/en/load_restaurant"
-session = SgRequests().requests_retry_session()
+detail_url = "https://kfcvietnam.com.vn/vi/load_restaurant"
+session = SgRequests()
 max_workers = 2
 
 
@@ -113,7 +113,20 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+
+        session.close()

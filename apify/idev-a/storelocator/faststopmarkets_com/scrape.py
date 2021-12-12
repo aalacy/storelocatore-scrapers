@@ -1,84 +1,49 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgFirefox
-from sgscrape.sgpostal import parse_address_intl
-import json
 from bs4 import BeautifulSoup as bs
-import time
+from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+locator_domain = "https://www.faststopmarkets.com/"
+base_url = "https://faststopmarkets.com/wp-admin/admin-ajax.php?action=store_search&lat=35.5455786&lng=-87.5503628&max_results=1000&search_radius=5000&autoload=1"
 
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
-
-
-def _desc(_):
-    desc = (
-        _["description"]
-        .replace("\u003c", "<")
-        .replace("\u003e", ">")
-        .replace("\u0026", "&")
-        .replace("&nbsp;", "")
-    )
-    return [dd.text for dd in bs(desc, "lxml").select("p") if dd.text.strip()]
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
-    locator_domain = "https://www.faststopmarkets.com/"
-    base_url = "https://www.faststopmarkets.com/locations"
-    with SgFirefox() as driver:
-        driver.get(base_url)
-        exist = False
-        while not exist:
-            time.sleep(1)
-            for rr in driver.requests:
-                if (
-                    rr.url.startswith("https://www.powr.io/wix/map/public")
-                    and rr.response
-                ):
-                    exist = True
-                    locations = json.loads(rr.response.body.decode("utf-8"))["content"][
-                        "locations"
-                    ]
-                    for _ in locations:
-                        if not _["address"]:
-                            continue
-                        addr = parse_address_intl(_["address"])
-                        block = _desc(_)
-                        if block[3].startswith("Drive Thru"):
-                            del block[3]
-                        hours_of_operation = "; ".join(block[3:])
-                        location_name = bs(_["name"], "lxml").text
-                        store_number = location_name.split("#")[-1]
-                        yield SgRecord(
-                            store_number=store_number,
-                            page_url=driver.current_url,
-                            location_name=location_name,
-                            street_address=block[0],
-                            city=addr.city,
-                            state=addr.state,
-                            zip_postal=addr.postcode,
-                            country_code=addr.country,
-                            phone=block[2],
-                            latitude=_["lat"],
-                            longitude=_["lng"],
-                            locator_domain=locator_domain,
-                            hours_of_operation=_valid(hours_of_operation),
-                        )
-
-                    break
+    with SgRequests() as http:
+        locations = http.get(base_url, headers=_headers).json()
+        for _ in locations:
+            street_address = _["address"]
+            if _["address2"]:
+                street_address += " " + _["address2"]
+            hours = []
+            if _["hours"]:
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in bs(_["hours"], "lxml").select("table tr")
+                ]
+            yield SgRecord(
+                store_number=_["id"],
+                location_name=_["store"],
+                street_address=street_address,
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zip"],
+                country_code=_["country"],
+                phone=_["phone"],
+                latitude=_["lat"],
+                longitude=_["lng"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,42 +1,64 @@
 import re
-import demjson
+import ssl
+import demjson3
 import urllib.parse
 from lxml import etree
+from time import sleep
+from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from tenacity import retry
+from tenacity.stop import stop_after_attempt
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+@retry(stop=stop_after_attempt(3))
+def fetch(url, session):
+    return session.get(url)
 
 
 def fetch_data():
     domain = "pagoda.com"
     start_url = "https://www.pagoda.com/store-finder/view-all-states"
 
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
     session = SgRequests()
-    response = session.get(start_url, headers=hdr)
+    response = fetch(start_url, session)
     dom = etree.HTML(response.text)
 
     all_states = dom.xpath(
         '//h1[contains(text(), "View All Stores")]/following-sibling::div[1]//a/@href'
     )
     for state_url in all_states:
+        sleep(uniform(0, 10))
         full_state_url = urllib.parse.urljoin(start_url, state_url)
-        state_response = session.get(full_state_url, headers=hdr)
+        state_response = fetch(full_state_url, session)
+        if state_response.status_code == 503:
+            continue
         state_dom = etree.HTML(state_response.text)
 
-        all_stores = state_dom.xpath('//div/div[p[contains(text(), "Store List")]]')
+        all_stores = state_dom.xpath(
+            '//div[@class="inner-container storefinder-details view-all-stores"]/div[1]/div[@id]'
+        )
         for store_data in all_stores:
             store_url = store_data.xpath(".//a/@href")
             if store_url and "/store/null" not in store_url:
+                sleep(uniform(0, 10))
                 store_url = urllib.parse.urljoin(start_url, store_url[0])
                 store_name_fromlist = store_data.xpath(".//a/text()")
                 location_type = "<MISSING>"
-                store_response = session.get(store_url, headers=hdr)
+                store_response = fetch(store_url, session)
                 store_dom = etree.HTML(store_response.text)
                 data = store_dom.xpath(
                     '//script[contains(text(), "storeInformation")]/text()'
@@ -46,9 +68,11 @@ def fetch_data():
                 data = re.findall(
                     "storeInformation = (.+);", data[0].replace("\n", "")
                 )[0]
-                data = demjson.decode(data)
+                data = demjson3.decode(data)
 
                 store_number = data["name"]
+                if not store_number:
+                    store_number = SgRecord.MISSING
                 location_name = store_dom.xpath('//h1[@itemprop="name"]/text()')
                 if not location_name:
                     location_name = store_name_fromlist
@@ -104,6 +128,8 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
                 hours_of_operation = "<MISSING>"
+            if location_name == "<MISSING>":
+                continue
 
             item = SgRecord(
                 locator_domain=domain,
@@ -127,11 +153,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)

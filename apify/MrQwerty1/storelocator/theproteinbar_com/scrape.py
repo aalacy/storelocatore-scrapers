@@ -1,46 +1,16 @@
-import csv
 import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://www.theproteinbar.com/restaurants/"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.theproteinbar.com"
-    api_url = "https://www.theproteinbar.com/restaurants/"
-
-    session = SgRequests()
-    r = session.get(api_url)
+    r = session.get(api)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'locations:')]/text()"))
     text = text.split("locations:")[1].split("apiKey")[0].strip()[:-1]
@@ -54,13 +24,12 @@ def fetch_data():
             continue
         postal = j.get("postal_code") or "<MISSING>"
         country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
+        store_number = j.get("id")
         page_url = f'https://www.theproteinbar.com{j.get("url")}'
         location_name = j.get("name")
         phone = j.get("phone_number") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
 
         _tmp = []
         text = j.get("hours") or "<html></html>"
@@ -75,35 +44,29 @@ def fetch_data():
         for d, t in zip(days, times):
             _tmp.append(f"{d.strip()}: {t.strip()}")
 
-        hours_of_operation = (
-            ";".join(_tmp).replace("Sat: Fri", "Sat: Closed;Fri") or "<MISSING>"
+        hours_of_operation = ";".join(_tmp).replace("Sat: Fri", "Sat: Closed;Fri")
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.theproteinbar.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

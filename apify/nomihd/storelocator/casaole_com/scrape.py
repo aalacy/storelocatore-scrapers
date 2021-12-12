@@ -4,86 +4,139 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
-
+import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "casaole.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "authority": "casaole.com",
+    "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+    "accept": "*/*",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "x-requested-with": "XMLHttpRequest",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "origin": "https://casaole.com",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://casaole.com/locations/",
+    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
+
+data = {"action": "loadlocations", "distance": "10000", "group_by": "Market"}
+
+
+def split_fulladdress(address_info):
+    street_address = " ".join(address_info[0:-1]).strip(" ,.")
+
+    city_state_zip = (
+        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
+    )
+
+    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
+    state = city_state_zip.split(" ")[-2].strip()
+    zip = city_state_zip.split(" ")[-1].strip()
+
+    if not city or us.states.lookup(zip):
+        city = city + " " + state
+        state = zip
+        zip = "<MISSING>"
+
+    if city and state:
+        if not us.states.lookup(state):
+            city = city + " " + state
+            state = "<MISSING>"
+
+    country_code = "US"
+    return street_address, city, state, zip, country_code
 
 
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://casaole.com/"
-    search_res = session.get(search_url, headers=headers)
-    search_sel = lxml.html.fromstring(search_res.text)
+    api_url = "https://casaole.com/wp-admin/admin-ajax.php"
 
-    stores_list = search_sel.xpath('//div[@class="text-container"]')
+    with SgRequests() as session:
+        api_res = session.post(api_url, headers=headers, data=data)
 
-    for store in stores_list:
+        html_sel = lxml.html.fromstring(api_res.text)
+        stores = html_sel.xpath('//div[@class="marker"]')
 
-        page_url = search_url
-        locator_domain = website
+        for _, store in enumerate(stores, 1):
 
-        location_name = (
-            "".join(search_sel.xpath("//title/text()")).split("|")[0].strip()
-        )
+            locator_domain = website
 
-        raw_address = (
-            " ".join(store.xpath('.//a[@class="address"]/text()'))
-            .replace("\n", " ")
-            .strip()
-        )
+            location_name = "".join(store.xpath(".//h3/text()"))
+            page_url = "".join(store.xpath('.//a[@class="details"]/@href'))
 
-        formatted_addr = parser.parse_address_usa(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            location_type = "<MISSING>"
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            phone = "".join(store.xpath('.//p[@class="map-phone"]/text()'))
 
-        country_code = "US"
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath('//div[@class="hours"]//text()')
+                    ],
+                )
+            )
+            hours_of_operation = "; ".join(hours).replace("day;", "day:").strip()
 
-        store_number = "<MISSING>"
+            raw_address = "<MISSING>"
+            full_address = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store.xpath('.//p[@class="nice-address"]//text()')
+                    ],
+                )
+            )
 
-        phone = "".join(store.xpath('.//a[@class="phone"]/text()'))
+            street_address, city, state, zip, country_code = split_fulladdress(
+                full_address
+            )
 
-        location_type = "<MISSING>"
+            store_number = "<MISSING>"
 
-        hours_of_operation = "<MISSING>"
+            latitude, longitude = "".join(store.xpath("./@data-lat")), "".join(
+                store.xpath("./@data-lng")
+            )
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

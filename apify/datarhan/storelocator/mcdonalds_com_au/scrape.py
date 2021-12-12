@@ -24,7 +24,7 @@ def fetch_data():
                 opens = e[-1][:2] + ":" + e[-1][2:]
                 closes = e[-1][:2] + ":" + e[-1][2:]
                 hoo.append(f"{e[0]} {opens} - {closes}")
-        hours_of_operation = " ".join(hoo)
+        hours_of_operation = " ".join(hoo).replace("99:99 - 99:99", "closed")
 
         item = SgRecord(
             locator_domain=domain,
@@ -38,8 +38,8 @@ def fetch_data():
             store_number=poi["store_code"],
             phone=poi["store_phone"],
             location_type=SgRecord.MISSING,
-            latitude=poi["store_geocode"].split(",")[0],
-            longitude=poi["store_geocode"].split(",")[1],
+            latitude=poi["store_geocode"].split(",")[1],
+            longitude=poi["store_geocode"].split(",")[0],
             hours_of_operation=hours_of_operation,
         )
 

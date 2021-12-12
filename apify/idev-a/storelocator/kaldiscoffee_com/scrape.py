@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("kaldiscoffee")
 
@@ -35,21 +37,45 @@ def fetch_data():
         links = soup.select("a.home-image-grid__link")
         logger.info(f"{len(links)} found")
         for link in links:
+            if not link["href"].startswith("/pages/"):
+                continue
             page_url = locator_domain + link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = ""
-            _hr = sp1.find("strong", string=re.compile(r"Hours"))
+            _hr = sp1.find("strong", string=re.compile(r"^Hours"))
             if _hr:
                 hours = _hr.find_parent("h6").find_next_sibling().text.strip()
             else:
                 _hr = sp1.find("h6", string=re.compile(r"Hours"))
                 if _hr:
-                    hours = _hr.find_next_sibling().text.strip()
+                    hours = "; ".join(
+                        [
+                            hh.text.strip().split("\n")[-1]
+                            for hh in _hr.find_next_siblings()
+                            if hh.text.strip()
+                            and hh.text.strip().split("\n")[-1] != "-"
+                        ]
+                    )
+                else:
+                    _hr = sp1.find("", string=re.compile(r"Fall(.)hours", re.I))
+                    _hp = _hr.find_parent("p")
+                    if not _hp:
+                        _hp = _hr.find_parent("h6")
+                    if _hp:
+                        temp = []
+                        for hh in _hp.find_next_siblings("p"):
+                            _hh = hh.text.lower()
+                            if "phone" in _hh:
+                                break
+                            if "aug" in _hh or "beginning" in _hh:
+                                continue
+                            temp.append("; ".join(hh.stripped_strings))
+                        hours = "; ".join(temp)
             try:
                 coord = (
                     sp1.select("iframe")[-1]["src"]
-                    .split("ll=")[1]
+                    .split("&sll=")[1]
                     .split("&amp;")[0]
                     .split("&")[0]
                     .split(",")
@@ -146,6 +172,20 @@ def fetch_data():
                         .split(" ")[-1]
                         .strip()
                     )
+                elif sp1.find("p", string=re.compile(r"Address")):
+                    addr = list(
+                        sp1.find("p", string=re.compile(r"Address"))
+                        .find_next_sibling("div")
+                        .p.stripped_strings
+                    )
+                    street_address = " ".join(addr[:-1])
+                    city = addr[-1].replace("\xa0", " ").split(",")[0]
+                    state = (
+                        addr[-1].replace("\xa0", " ").split(",")[-1].strip().split()[0]
+                    )
+                    zip_postal = (
+                        addr[-1].replace("\xa0", " ").split(",")[-1].strip().split()[-1]
+                    )
                 else:
                     sibling = (
                         sp1.find("", string=re.compile(r"^Address"))
@@ -199,12 +239,15 @@ def fetch_data():
                 latitude=coord[0],
                 longitude=coord[1],
                 location_type=location_type,
-                hours_of_operation=hours.replace("–", "-"),
+                hours_of_operation=hours.split("Open")[0]
+                .split("Bulk")[0]
+                .replace("–", "-")
+                .replace("\xa0", " "),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
