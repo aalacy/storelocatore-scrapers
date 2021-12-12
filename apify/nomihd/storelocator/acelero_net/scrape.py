@@ -46,7 +46,6 @@ def fetch_data():
             for center in centers:
                 locator_domain = website
                 full_description = center.xpath("./p[1]/text()")
-                log.info(full_description)
                 location_name = center.xpath("./p[1]//text()")[0]
                 raw_address = (
                     " ".join(full_description)
@@ -116,7 +115,10 @@ def fetch_data():
 
                     if hrs_list:
                         hours_of_operation = get_hours(hrs_list)
-                        if "The Freehold Center is a Family" in hours_of_operation:
+                        if (
+                            hours_of_operation
+                            and "The Freehold Center is a Family" in hours_of_operation
+                        ):
                             hours_of_operation = "<MISSING>"
                     else:
                         hours_of_operation = "<MISSING>"
