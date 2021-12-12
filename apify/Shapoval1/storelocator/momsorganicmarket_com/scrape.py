@@ -108,6 +108,17 @@ def fetch_data(sgw: SgWriter):
                     longitude = text.split("@")[1].split(",")[1]
             except IndexError:
                 latitude, longitude = "<MISSING>", "<MISSING>"
+            if latitude == "<MISSING>":
+                text = "".join(ttree.xpath("//div/@data-et-multi-view"))
+                try:
+                    if text.find("ll=") != -1:
+                        latitude = text.split("ll=")[1].split(",")[0]
+                        longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+                    else:
+                        latitude = text.split("@")[1].split(",")[0]
+                        longitude = text.split("@")[1].split(",")[1]
+                except IndexError:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
             if cms:
                 phone, hours_of_operation = "<MISSING>", "Coming Soon"
             if hours_of_operation.find("Hour") != -1:

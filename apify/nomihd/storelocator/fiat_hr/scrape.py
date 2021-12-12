@@ -37,89 +37,103 @@ def fetch_data():
         api_res = session.get(api_url, headers=headers)
 
         html_sel = lxml.html.fromstring(api_res.text)
-        stores = html_sel.xpath('//input[@type="checkbox"]')
+        sections = html_sel.xpath('//div[@class="group-single"]')
+        for section in sections:
+            location_type = "".join(section.xpath("span/text()")).strip()
 
-        for idx, store in enumerate(stores, 1):
+            stores = section.xpath('.//input[@type="checkbox"]')
 
-            locator_domain = website
+            for idx, store in enumerate(stores, 1):
 
-            location_name = "".join(store.xpath("./@data-title"))
-            page_url = search_url
+                locator_domain = website
 
-            location_type = "<MISSING>"
-            store_info = "".join(store.xpath("./@data-description"))
+                location_name = "".join(store.xpath("./@data-title"))
+                page_url = search_url
 
-            raw_address = (
-                store_info.split("<br><hr>")[0]
-                .replace("<br>", "")
-                .replace("  ", " ")
-                .strip()
-            )
+                store_info = "".join(store.xpath("./@data-description"))
 
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
-            city = formatted_addr.city
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
-
-            country_code = "HR"
-
-            phn_hoo = "".join(store_info.split("<br><hr>")[1:])
-            sel = lxml.html.fromstring(phn_hoo)
-
-            data = " ".join(sel.xpath("//text()"))
-
-            if "Telefon:" in data:
-
-                phone = data.split("Telefon:")[1].split("E-mail")[0].strip()
-                hours_of_operation = (
-                    data.split("Kontakt")[0]
-                    .split("Radno vrijeme")[1]
+                raw_address = (
+                    store_info.split("<br><hr>")[0]
+                    .replace("<br>", ", ")
+                    .replace("  ", " ")
                     .strip()
-                    .replace("\n", ";")
-                    .replace(" ;", ";")
-                    .replace(".", "")
-                )
-            else:
-                phone = "<MISSING>"
-                hours_of_operation = (
-                    data.split("Radno vrijeme")[1]
+                    .replace(",,", ",")
+                    .replace(", ,", ",")
                     .strip()
-                    .replace("\n", ";")
-                    .replace(" ;", ";")
-                    .replace(".", "")
                 )
 
-            store_number = "<MISSING>"
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-            latitude, longitude = "".join(store.xpath("./@data-latitude")), "".join(
-                store.xpath("./@data-longitude")
-            )
-            if "<br />" in latitude:
-                latitude, longitude = "<MISSING>", "<MISSING>"
+                if street_address is not None:
+                    street_address = street_address.replace("Ste", "Suite")
+                city = formatted_addr.city
+                state = formatted_addr.state
+                zip = formatted_addr.postcode
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                country_code = "HR"
+
+                phn_hoo = "".join(store_info.split("<br><hr>")[1:])
+                sel = lxml.html.fromstring(phn_hoo)
+
+                data = " ".join(sel.xpath("//text()"))
+
+                if "Telefon:" in data:
+
+                    phone = data.split("Telefon:")[1].split("E-mail")[0].strip()
+                    hours_of_operation = (
+                        data.split("Kontakt")[0]
+                        .split("Radno vrijeme")[1]
+                        .strip()
+                        .replace("\n", ";")
+                        .replace(" ;", ";")
+                        .replace(".", "")
+                        .replace("\r", "")
+                        .strip()
+                        .replace(" ;", "; ")
+                    )
+                else:
+                    phone = "<MISSING>"
+                    hours_of_operation = (
+                        data.split("Radno vrijeme")[1]
+                        .strip()
+                        .replace("\n", ";")
+                        .replace(" ;", ";")
+                        .replace(".", "")
+                        .replace("\r", "")
+                        .strip()
+                        .replace(" ;", "; ")
+                    )
+
+                store_number = "<MISSING>"
+
+                latitude, longitude = "".join(store.xpath("./@data-latitude")), "".join(
+                    store.xpath("./@data-longitude")
+                )
+                if "<br />" in latitude:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():

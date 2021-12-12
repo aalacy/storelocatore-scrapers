@@ -193,6 +193,8 @@ def fetch_data(search):
         log.info(
             f"{totalZip}. zip {zipCode} => {len(data)} stores; total store = {count}"
         )
+        if count >= 1697:
+            break
 
     log.info(f"Total stores = {count}")
 

@@ -9,6 +9,7 @@ import time
 from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import ssl
+from tenacity import retry, stop_after_attempt
 
 try:
     _create_unverified_https_context = (
@@ -20,16 +21,6 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("amplifonusa")
-
-_headers = {
-    "accept": "application/json, text/javascript, */*; q=0.01",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9",
-    "origin": "https://www.amplifonusa.com",
-    "x-requested-with": "XMLHttpRequest",
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
 
 locator_domain = "https://www.amplifonusa.com"
 base_url = "https://www.amplifonusa.com/our-program/clinic-locator/search-results-page?addr=&lat={}&long={}"
@@ -44,17 +35,17 @@ def get_driver():
     ).driver()
 
 
+@retry(stop=stop_after_attempt(3))
 def get_url(driver=None, url=None):
-    while True:
-        if not driver:
-            driver = get_driver()
-        try:
-            driver.get(url)
-            break
-        except:
-            time.sleep(1)
-            logger.info(f"retry {url}")
-            driver = None
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+        driver.wait_for_request(json_url, timeout=20)
+    except:
+        time.sleep(1)
+        logger.info(f"retry {url}")
+        driver = None
 
 
 def fetch_data(search):
@@ -62,7 +53,6 @@ def fetch_data(search):
     for lat, lng in search:
         del driver.requests
         get_url(driver, base_url.format(lat, lng))
-        driver.wait_for_request(json_url, timeout=20)
         locations = bs(driver.page_source, "lxml").select("li.sl-result-list__item")
         logger.info(f"[{lat, lng}] {len(locations)}")
         if locations:
@@ -91,9 +81,7 @@ def fetch_data(search):
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
-        )
+        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
         results = fetch_data(search)
         for rec in results:
             writer.write_row(rec)

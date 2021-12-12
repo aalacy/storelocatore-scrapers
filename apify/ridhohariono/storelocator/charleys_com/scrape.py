@@ -92,10 +92,11 @@ def fetch_data():
         phone = row["phone"]
         country_code = "US"
         if zip_postal is not MISSING:
-            if zip_postal.isnumeric() is False or state == "Ontario":
-                country_code = "CA"
-            if len(zip_postal) < 5:
-                country_code = MISSING
+            if len(zip_postal.split("-")) == 1:
+                if zip_postal.isnumeric() is False or state == "Ontario":
+                    country_code = "CA"
+                if len(zip_postal) < 5:
+                    country_code = MISSING
         store_number = row["store_num"]
         hours_of_operation = get_hoo(page_url)
         latitude = row["lat"]

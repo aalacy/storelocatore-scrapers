@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -8,47 +11,15 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
 
-    data = []
     url = "https://www.epnb.com/about-enb/locations/"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select('a:contains("Branch Details")')
-    p = 0
     for link in linklist:
         link = link["href"]
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip().replace(" Branch Office", "")
         street = soup.find("div", {"class": "street-address"}).text
@@ -60,66 +31,75 @@ def fetch_data():
         else:
             ltype = "Branch"
         phone = soup.find("div", {"class": "phone-number"}).find("a").text
-        hours = soup.find("div", {"class": "location-hours"}).text
-        lat = soup.find("div", {"class": "marker"})["data-lat"]
-        longt = soup.find("div", {"class": "marker"})["data-lng"]
-        hourlist = hours.replace("\xa0", " ").strip().split("Day:")[1:]
+        try:
 
-        if "Drive-Up" in title:
-            hours = ""
-            for hr in hourlist:
+            lat = soup.find("div", {"class": "marker"})["data-lat"]
+            longt = soup.find("div", {"class": "marker"})["data-lng"]
+        except:
+            lat = longt = "<MISSING>"
+        try:
+            hours = soup.find("div", {"class": "location-hours"}).text
+            hourlist = hours.replace("\xa0", " ").strip().split("Day:")[1:]
 
-                try:
-                    hours = (
-                        hours
-                        + hr.split("Drive", 1)[0]
-                        + " "
-                        + hr.split("Drive", 1)[1].split("Hours:", 1)[1].strip()
-                        + " "
-                    )
-                except:
-                    hours = "<MISSING>"
-        else:
-            hours = ""
-            for hr in hourlist:
+            if "Drive-Up" in title:
+                hours = ""
+                for hr in hourlist:
 
-                try:
-                    hours = (
-                        hours
-                        + hr.split("Lobby", 1)[0]
-                        + " "
-                        + hr.split("Lobby Hours:", 1)[1].split("Drive", 1)[0].strip()
-                        + " "
-                    )
-                except:
-                    hours = "<MISSING>"
-        data.append(
-            [
-                "https://www.epnb.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                ltype,
-                lat,
-                longt,
-                hours.strip(),
-            ]
+                    try:
+                        hours = (
+                            hours
+                            + hr.split("Drive", 1)[0]
+                            + " "
+                            + hr.split("Drive", 1)[1].split("Hours:", 1)[1].strip()
+                            + " "
+                        )
+                    except:
+                        hours = "<MISSING>"
+            else:
+                hours = ""
+                for hr in hourlist:
+
+                    try:
+                        hours = (
+                            hours
+                            + hr.split("Lobby", 1)[0]
+                            + " "
+                            + hr.split("Lobby Hours:", 1)[1]
+                            .split("Drive", 1)[0]
+                            .strip()
+                            + " "
+                        )
+                    except:
+                        hours = "<MISSING>"
+        except:
+            hours = "<MISSING>"
+        yield SgRecord(
+            locator_domain="https://www.epnb.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours.strip(),
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

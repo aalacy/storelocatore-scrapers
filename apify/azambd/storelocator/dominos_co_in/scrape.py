@@ -11,23 +11,28 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+
+
 website = "https://www.dominos.co.in"
 MISSING = SgRecord.MISSING
-max_workers = 10
+max_workers = 1
 
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
 def request_with_retries(url, retry=1):
     try:
-        return (session.get(url, headers=headers)).text, url
+        with SgRequests(proxy_country="in") as http:
+            return (http.get(url, headers=headers)).text, url
     except Exception:
-        if retry > 4:
+        if retry > 10:
             log.error(f"Error loading {url}")
             return None, url
         return request_with_retries(url, retry + 1)
