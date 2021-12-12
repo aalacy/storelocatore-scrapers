@@ -52,6 +52,8 @@ def fetch_data():
             all_poi = data["d"]
             for poi in all_poi:
                 page_url = "https://www.kumon.com/{}".format(poi["EpageUrl"])
+                if page_url == "https://www.kumon.com/":
+                    continue
                 location_name = poi["CenterName"]
                 street_address = poi["Address"]
                 if poi.get("Address2"):
@@ -64,6 +66,8 @@ def fetch_data():
                 country_code = poi["Country"]
                 store_number = poi["K2CenterID"]
                 phone = poi["Phone"]
+                if phone and phone.startswith("-"):
+                    phone = phone[1:]
                 latitude = poi["Lat"]
                 longitude = poi["Lng"]
 

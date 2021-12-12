@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://bkchina.cn/restaurant/getMapsListAjax?page=1"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
@@ -24,6 +24,12 @@ def fetch_data():
         all_locations += data["data"]["data"]
 
     for poi in all_locations:
+        latitude = poi["storeLatitude"]
+        longitude = poi["storeLongitude"]
+        if float(latitude) > 90.0:
+            latitude = poi["storeLongitude"]
+            longitude = poi["storeLatitude"]
+
         item = SgRecord(
             locator_domain=domain,
             page_url="https://bkchina.cn/restaurant/index.html",
@@ -36,8 +42,8 @@ def fetch_data():
             store_number=poi["storeNo"],
             phone=poi["storePhone"],
             location_type=SgRecord.MISSING,
-            latitude=poi["storeLatitude"],
-            longitude=poi["storeLongitude"],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=poi["storeBusinessHours"],
         )
 
