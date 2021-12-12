@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
             )
         ) as writer:
             search = DynamicGeoSearch(
-                country_codes=SearchableCountries.ALL, granularity=Grain_4()
+                country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
             )
 
             for rec in fetch_records(search, token):

@@ -45,15 +45,13 @@ def fetch_data():
             state = raw_address[1].split(", ")[-1].split()[0]
             zip_code = raw_address[1].split(", ")[-1].split()[-1]
             country_code = raw_address[-1]
-        store_number = "<MISSING>"
         phone = poi_html.xpath('.//a[@class="phone-number"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        phone = phone[0] if phone else ""
         hoo = poi_html.xpath('//div[@class="store-hours"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = (
+            " ".join(hoo).split("Thanksgiving")[0].strip() if hoo else ""
+        )
 
         item = SgRecord(
             locator_domain=domain,
@@ -64,11 +62,11 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=store_number,
+            store_number="",
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
+            location_type="",
+            latitude="",
+            longitude="",
             hours_of_operation=hours_of_operation,
         )
 

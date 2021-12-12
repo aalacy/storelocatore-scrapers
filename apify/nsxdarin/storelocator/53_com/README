@@ -1,1 +1,1 @@
-rewrite of https://github.com/SafeGraphInc/crawl-service/blob/master/apify/richard/storelocator/53_com/scrape.py
+--ignore StreetAddressHasNumber --ignore StateLevelCountValidator (Confirmed on website)
