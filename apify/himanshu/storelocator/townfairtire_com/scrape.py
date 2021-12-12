@@ -30,9 +30,12 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            if soup.find("script", {"type": "application/ld+json"}) is None:
+            try:
+                loc = json.loads(
+                    soup.find("script", {"type": "application/ld+json"}).text
+                )
+            except:
                 continue
-            loc = json.loads(soup.find("script", {"type": "application/ld+json"}).text)
             location_name = loc["name"]
             address = loc["address"]
             phone = loc["telephone"]

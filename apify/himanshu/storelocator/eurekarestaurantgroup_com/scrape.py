@@ -40,6 +40,7 @@ def fetch_data():
             .find("p")
             .get_text(separator="|", strip=True)
             .replace("|", " ")
+            .replace("Get Directions", "")
         )
         address = address.replace(",", " ")
         address = usaddress.parse(address)
