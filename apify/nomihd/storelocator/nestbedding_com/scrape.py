@@ -4,7 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "nestbedding.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -25,7 +26,7 @@ def fetch_data():
 
     for store in stores_list:
 
-        page_url = search_url
+        page_url = "".join(store.xpath(".//a[@class='shop-detail-link']/@href")).strip()
         locator_domain = website
 
         location_name = "".join(
@@ -86,7 +87,18 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

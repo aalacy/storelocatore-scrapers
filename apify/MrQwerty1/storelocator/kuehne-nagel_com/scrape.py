@@ -20,6 +20,17 @@ def get_international(line):
     return street_address, city, state, postal, country
 
 
+def clean_phone(text):
+    text = str(text).replace("?", "")
+    black_list = [",", ";", "/", "or", "|", "ext", "x"]
+    for b in black_list:
+        if b in text.lower():
+            text = text.lower().split(b)[0].strip()
+
+    text = text.replace("(imp", "")
+    return text
+
+
 def fetch_data(sgw: SgWriter):
     page_url = "https://home.kuehne-nagel.com/locations"
     r = session.get(page_url)
@@ -37,7 +48,8 @@ def fetch_data(sgw: SgWriter):
         phones = d.xpath(".//p[@class='location__phone text-14 mb-0']/text()")
         for p in phones:
             if "phone" in p.lower() and "contact" not in p.lower():
-                phone = p.strip()
+                phone = p.lower().replace("phone", "").replace("contact", "").strip()
+                phone = clean_phone(phone)
                 break
         else:
             phone = SgRecord.MISSING
