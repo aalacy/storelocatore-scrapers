@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from sgpostal.sgpostal import parse_address_intl
 import ssl
+import time
 
 try:
     _create_unverified_https_context = (
@@ -35,6 +36,7 @@ def fetch_data():
                 )
             )
         )
+        time.sleep(10)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.ct-stores div.col-xs-12.col-sm-6.col-md-3")
         for loc in locations:
