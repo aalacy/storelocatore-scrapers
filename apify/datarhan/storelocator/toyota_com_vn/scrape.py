@@ -1,5 +1,6 @@
 import ssl
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -7,22 +8,25 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
+from sgselenium.sgselenium import SgChrome
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
+user_agent = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0"
+)
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     start_url = "https://www.toyota.com.vn/api/common/provinces"
     domain = "toyota.com.vn"
+
+    with SgChrome(user_agent=user_agent) as driver:
+        driver.get("https://www.toyota.com.vn/danh-sach-dai-ly")
+        sleep(10)
+        token = driver.get_cookie("D1N")["value"]
+
     hdr = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "*/*",
@@ -31,7 +35,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
         "Connection": "keep-alive",
         "Referer": "https://www.toyota.com.vn/danh-sach-dai-ly",
-        "Cookie": "D1N=b15bfa3c0d478cf87e79df558cd7e331",
+        "Cookie": f"D1N={token}",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",

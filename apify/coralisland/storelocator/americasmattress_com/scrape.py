@@ -1,4 +1,3 @@
-import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -45,94 +44,45 @@ def fetch_data():
         url = "https://www.americasmattress.com/springfield-il/locations/finderajax"
         loclist = session.post(url, headers=headers).json()
         for loc in loclist:
+            location_name = loc["name"]
+            if "Test Location" in location_name:
+                continue
+            elif "Coming Soon" in location_name:
+                continue
             latitude = loc["latitude"]
             longitude = loc["longtitude"]
             store_number = loc["id"]
-            location_name = loc["name"]
             page_url = DOMAIN + loc["url"]
+            log.info(page_url)
+            try:
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+            except:
+                hours_of_operation = MISSING
+            try:
+                hours_of_operation = (
+                    soup.find("div", {"class": "locations--store-hours"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            except:
+                hours_of_operation = MISSING
             street_address = loc["address"]
             city = loc["city"]
             state = loc["state"]
             zip_postal = loc["zipcode"]
             street_address = loc["address"]
+            if "North Georgia Premium Outlet Mall" in street_address:
+                street_address = soup.find(
+                    "span", {"class": "locations--store-address-line2"}
+                ).text
             phone = loc["phone"]
-            log.info(page_url)
-
-            try:
-                loc = json.loads(loc["hours"])
-
-                if loc["monday"]["open"] is None:
-                    mon = " Mon Closed"
-                else:
-                    mon = "Mon " + loc["monday"]["open"] + "-" + loc["monday"]["close"]
-                if loc["tuesday"]["open"] is None:
-                    tue = " Tue Closed"
-                else:
-                    tue = (
-                        " Tue " + loc["tuesday"]["open"] + "-" + loc["tuesday"]["close"]
-                    )
-                if loc["wednesday"]["open"] is None:
-                    wed = " Wed Closed"
-                else:
-                    wed = (
-                        " Wed "
-                        + loc["wednesday"]["open"]
-                        + "-"
-                        + loc["wednesday"]["close"]
-                    )
-                if loc["thursday"]["open"] is None:
-                    thu = " Thu Closed"
-                else:
-                    try:
-                        thu = (
-                            " Thu "
-                            + loc["thursday"]["open"]
-                            + "-"
-                            + loc["thursday"]["close"]
-                        )
-                    except:
-                        thu = (
-                            " Thu "
-                            + loc["thursday"]["open"]
-                            + "-"
-                            + loc["wednesday"]["close"]
-                        )
-                if loc["friday"]["open"] is None:
-                    fri = " Fri Closed"
-                else:
-                    fri = " Fri " + loc["friday"]["open"] + "-" + loc["friday"]["close"]
-                if loc["saturday"]["open"] is None:
-                    sat = " Sat Closed"
-                else:
-                    sat = (
-                        " Sat "
-                        + loc["saturday"]["open"]
-                        + "-"
-                        + loc["saturday"]["close"]
-                    )
-                if not loc["sunday"]["open"]:
-                    sun = " Sun Closed"
-                elif loc["sunday"]["open"] is None:
-                    sun = " Sun Closed"
-                else:
-                    sun = " Sun " + loc["sunday"]["open"] + "-" + loc["sunday"]["close"]
-                hours_of_operation = (
-                    mon
-                    + tue
-                    + wed
-                    + thu
-                    + fri
-                    + sat
-                    + sun.replace("Sun 0-0", "Sun Closed")
-                )
-            except:
-
-                hours_of_operation = MISSING
-            if (
-                hours_of_operation
-                == " Mon Closed Tue Closed Wed Closed Thu Closed Fri Closed Sat Closed Sun Closed"
-            ):
-                hours_of_operation = MISSING
+            if "@" in street_address:
+                street_address = street_address.split("@")[0]
+            elif "Next" in street_address:
+                street_address = street_address.split("Next")[0]
+            elif "Near" in street_address:
+                street_address = street_address.split("Near")[0]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

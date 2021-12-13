@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://api-lac.menu.app/api/directory/search"
     domain = "burgerking.com.ar"
@@ -46,11 +46,12 @@ def fetch_data():
         }
         hoo = []
         for e in poi["venue"]["serving_times"]:
-            for d in e["days"]:
-                day = days[d]
-                opens = e["time_from"]
-                closes = e["time_to"]
-                hoo.append(f"{day} {opens} - {closes}")
+            if e.get("days"):
+                for d in e["days"]:
+                    day = days[d]
+                    opens = e["time_from"]
+                    closes = e["time_to"]
+                    hoo.append(f"{day} {opens} - {closes}")
         hoo = " ".join(hoo)
 
         item = SgRecord(
