@@ -80,7 +80,7 @@ def fetch_data():
                 [
                     x.strip()
                     for x in store.xpath(
-                        ".//p[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029235_000001-test-product.png']]/text()"
+                        ".//*[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029235_000001-test-product.png']]/text()"
                     )
                 ],
             )
@@ -110,7 +110,7 @@ def fetch_data():
                 [
                     x.strip()
                     for x in store.xpath(
-                        ".//p[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029239_000001-test-product.png']]/text()"
+                        ".//*[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029239_000001-test-product.png']]/text()"
                     )
                 ],
             )
@@ -118,7 +118,9 @@ def fetch_data():
         hours_of_operation = "; ".join(hours)
 
         map_link = "".join(
-            store.xpath('.//a[contains(text(),"Drive to Our Store")]/@href')
+            store.xpath(
+                './/a[@class="btn btn btn-primary btn-lg storebtnn cmap"]/@href'
+            )
         )
 
         latitude, longitude = get_latlng(map_link)

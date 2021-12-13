@@ -2,6 +2,7 @@ from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
 
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -11,6 +12,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
+    session = SgRequests()
     start_url = "https://www.lexus.ae/en/our-locations/"
     domain = "lexus.ae"
     with SgFirefox() as driver:
@@ -18,10 +20,10 @@ def fetch_data():
         dom = etree.HTML(driver.page_source)
 
         all_locations = dom.xpath('//a[contains(text(), "Discover location")]/@href')
-        for page_url in all_locations:
-            if "showroom" not in page_url:
-                continue
+        for page_url in list(set(all_locations)):
             page_url = urljoin(start_url, page_url)
+            if "service-center" in page_url:
+                continue
             driver.get(page_url)
             sleep(5)
             driver.switch_to.frame(
@@ -41,15 +43,22 @@ def fetch_data():
                 .split("/@")[-1]
                 .split(",")[:2]
             )
-            hoo = loc_dom.xpath(
-                '//p[contains(text(), "SALES")]/following-sibling::table//text()'
-            )
-            hoo = [e.replace("\xa0", "").strip() for e in hoo if e.strip()]
-            hoo = " ".join(hoo)
             driver.switch_to.default_content
             loc_dom = etree.HTML(driver.page_source)
             phone = loc_dom.xpath('//p[contains(text(), "Call")]/text()')
             phone = phone[-1] if phone else ""
+
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath(
+                '//p[contains(text(), "SALES")]/following-sibling::table//text()'
+            )
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//p[contains(text(), "PRE-OWNED")]/following-sibling::table//text()'
+                )
+            hoo = [e.replace("\xa0", "").strip() for e in hoo if e.strip()]
+            hoo = " ".join(hoo)
 
             item = SgRecord(
                 locator_domain=domain,
