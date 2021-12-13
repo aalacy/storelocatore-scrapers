@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("uniurgentcare")
 
@@ -16,38 +18,43 @@ def fetch_data():
     base_url = "https://uniurgentcare.com/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("main article .wp-block-column")
+        locations = soup.select("div.module_row div.module_column")
         logger.info(f"{len(locations)} found")
         for _ in locations:
-            page_url = _.h2.a["href"]
+            if not _.h1:
+                continue
+            page_url = _.h1.a["href"]
             logger.info(page_url)
-            addr = list(_.select("p")[1].stripped_strings)[1:]
+            addr = list(_.select("p")[-2].stripped_strings)[1:]
             hours = _.select("p")[-1].stripped_strings
             try:
                 coord = (
-                    _.select("p")[1]
+                    _.select("p")[-2]
                     .select("a")[-1]["href"]
                     .split("&sll=")[1]
                     .split("&")[0]
                     .split(",")
                 )
             except:
-                coord = (
-                    _.select("p")[1]
-                    .select("a")[-1]["href"]
-                    .split("/@")[1]
-                    .split("/data")[0]
-                    .split(",")
-                )
+                try:
+                    coord = (
+                        _.select("p")[-2]
+                        .select("a")[-1]["href"]
+                        .split("/@")[1]
+                        .split("/data")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
-                location_name=_.h2.a.text.strip().replace("–", "-"),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                location_name=_.h1.a.text.strip().replace("–", "-"),
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
-                phone=_.select_one(".location-telephone a").text.strip(),
+                phone=_.h3.text.strip(),
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
@@ -56,7 +63,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
