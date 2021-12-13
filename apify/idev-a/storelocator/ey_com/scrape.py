@@ -35,7 +35,7 @@ def _d(_, state=""):
     elif country_code == "BS":
         zip_postal = ""
     elif country_code == "CA":
-        zip_postal = " ".join(zip_postal.split()[:-2]).strip()
+        zip_postal = " ".join(zip_postal.split()[1:]).strip()
     elif country_code == "SE":
         zip_postal = zip_postal.split(",")[-1].strip()
     elif country_code == "RS":
@@ -50,7 +50,7 @@ def _d(_, state=""):
         zip_postal=zip_postal,
         latitude=_["officeLatitude"],
         longitude=_["officeLongitude"],
-        country_code=_["officeCountryCode"],
+        country_code=country_code,
         phone=_.get("officePhoneNumber"),
         locator_domain=locator_domain,
     )

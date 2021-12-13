@@ -11,6 +11,8 @@ _headers = {
 locator_domain = "https://micomisariato.com"
 base_url = "https://micomisariato.com/api/locales?offset=0&limit=9999"
 
+types = {"1": "Hipermarket", "2": "Mi Comisariato", "3": "Mini"}
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -27,6 +29,7 @@ def fetch_data():
                 latitude=_["latitud_gps"],
                 longitude=_["longitud_gps"],
                 country_code="Ecuador",
+                location_type=types[str(_["categoria_id"])],
                 locator_domain=locator_domain,
                 hours_of_operation=_["horario"],
                 raw_address=raw_address,
