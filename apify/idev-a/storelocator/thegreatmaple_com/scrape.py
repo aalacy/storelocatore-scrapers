@@ -64,16 +64,21 @@ def fetch_data():
                 tt = _hr.find_parent("h4").find_next_siblings()
 
             for hh in tt:
-                if hh.span or not hh.text.strip():
+                if not hh.text.strip():
                     continue
-                if hh.strong or hh.b:
+                if hh.span and hh.span.strong:
+                    hours.append(hh.text.strip())
+                elif hh.strong or hh.b:
                     temp = list(hh.stripped_strings)
                     if "Hour" in temp[-1]:
                         del temp[-1]
                     for x in range(0, len(temp), 2):
                         hours.append(f"{temp[x]} {temp[x+1]}")
                 else:
-                    hours += ["; ".join(hh.stripped_strings)]
+                    for hr in hh.stripped_strings:
+                        if "Hour" in hr:
+                            break
+                        hours.append(hr)
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.text.strip(),
