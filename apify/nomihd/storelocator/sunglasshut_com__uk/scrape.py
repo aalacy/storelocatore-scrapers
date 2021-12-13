@@ -36,7 +36,7 @@ def fetch_data():
     )
 
     with SgRequests(dont_retry_status_codes=([404])) as session:
-        fakeReq = session.get(referUrl, headers=headers)
+        session.get(referUrl, headers=headers)
 
         for lat, long in search:
             log.info(f"{(lat, long)}")
