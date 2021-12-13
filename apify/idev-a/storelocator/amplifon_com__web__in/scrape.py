@@ -28,9 +28,16 @@ def fetch_data():
             )
             for _ in locations:
                 page_url = f"{base_url}/-/store/amplifon-point/{_['shopNumber']}/{_['shopNameForUrl']}/{_['cityForUrl']}/{_['addressForUrl']}"
+                if country == "country":
+                    page_url = base_url
                 state = _["province"]
                 if state == "0":
                     state = ""
+                phone = _["phoneInfo1"]
+                if not phone:
+                    phone = _.get("phoneNumber1")
+                if not phone:
+                    phone = _.get("phoneNumber2")
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["shopName"],
@@ -41,7 +48,7 @@ def fetch_data():
                     latitude=_["latitude"],
                     longitude=_["longitude"],
                     country_code=country,
-                    phone=_["phoneInfo1"],
+                    phone=phone,
                     locator_domain=locator_domain,
                     hours_of_operation=_["openingTime"],
                 )
