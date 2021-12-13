@@ -16,15 +16,16 @@ def fetch_data():
 
     all_locations = response["stores"]
     for poi in all_locations:
-        hoo = poi.get("openingHours")
-        if hoo == "Mo-So - closed":
-            if (
-                poi.get("comment")
-                and "Diese Filiale ist wegen Umbauarbeiten" in poi["comment"]
-            ):
-                hoo = "Temporarily closed"
+        hoo = []
+        for e in poi["openUntilSorted"]["openingHours"]:
+            day = e["day"]
+            if e.get("closed"):
+                hoo.append(f"{day}: closed")
             else:
-                continue
+                opens = e["openFormatted"]
+                closes = e["closeFormatted"]
+                hoo.append(f"{day}: {opens} - {closes}")
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
