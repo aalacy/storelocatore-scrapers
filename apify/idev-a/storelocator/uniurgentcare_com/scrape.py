@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import re
 
 logger = SgLogSetup().get_logger("uniurgentcare")
 
@@ -25,27 +26,24 @@ def fetch_data():
                 continue
             page_url = _.h1.a["href"]
             logger.info(page_url)
-            addr = list(_.select("p")[-2].stripped_strings)[1:]
-            hours = _.select("p")[-1].stripped_strings
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            map_a = sp1.find("a", href=re.compile(r"/maps"))
+            addr = list(map_a.find_parent().stripped_strings)
+            hours = list(_.select("p")[-1].stripped_strings)[1:]
             try:
-                coord = (
-                    _.select("p")[-2]
-                    .select("a")[-1]["href"]
-                    .split("&sll=")[1]
-                    .split("&")[0]
-                    .split(",")
-                )
+                coord = map_a["href"].split("&sll=")[1].split("&")[0].split(",")
             except:
                 try:
-                    coord = (
-                        _.select("p")[-2]
-                        .select("a")[-1]["href"]
-                        .split("/@")[1]
-                        .split("/data")[0]
-                        .split(",")
-                    )
+                    coord = map_a["href"].split("/@")[1].split("/data")[0].split(",")
                 except:
                     coord = ["", ""]
+
+            phone = ""
+            if sp1.select_one("p.location-telephone"):
+                phone = sp1.select_one("p.location-telephone").text.strip()
+            elif sp1.find("a", href=re.compile(r"tel")):
+                phone = sp1.find("a", href=re.compile(r"tel")).text.strip()
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h1.a.text.strip().replace("–", "-"),
@@ -54,7 +52,7 @@ def fetch_data():
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
-                phone=_.h3.text.strip(),
+                phone=phone,
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
