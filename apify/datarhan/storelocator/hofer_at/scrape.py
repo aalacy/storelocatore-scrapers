@@ -31,7 +31,7 @@ def fetch_data():
             page_url="https://www.hofer.at/de/filialen.html",
             location_name=poi["displayName"],
             street_address=poi["streetAddress"],
-            city=poi["city"],
+            city=poi["city"].split(".,")[-1].split(",")[-1].strip(),
             state=SgRecord.MISSING,
             zip_postal=poi["postalCode"],
             country_code=poi["countryCode"],
