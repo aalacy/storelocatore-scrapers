@@ -26,7 +26,11 @@ def fetch_data():
             if "coming soon" in _["hours"].lower():
                 continue
 
-            hours = list(bs(_["hours"], "lxml").stripped_strings)
+            hours = []
+            for hh in bs(_["hours"], "lxml").stripped_strings:
+                if "Hour" in hh or "Please" in hh:
+                    break
+                hours.append(hh)
             if "coming" in _["hours"].lower():
                 hours = []
 
