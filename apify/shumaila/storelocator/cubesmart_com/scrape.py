@@ -2,9 +2,13 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
 from sgrequests import SgRequests
 import re
 from bs4 import BeautifulSoup
+
+ssl._create_default_https_context = ssl._create_unverified_context
 from sgselenium.sgselenium import SgChrome
 
 session = SgRequests()
@@ -30,14 +34,15 @@ def fetch_data():
         for loc in loclist:
 
             link = loc.text
+            flag = 0
 
             r = session.get(link, headers=headersss)
             try:
                 soup = BeautifulSoup(r.text, "html.parser")
             except:
-                session1 = SgRequests()
-                r = session1.get(link, headers=headersss)
-                soup = BeautifulSoup(r.text, "html.parser")
+                driver.get(link)
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                flag = 1
             title = soup.find("h1").text
             try:
                 address = (
@@ -47,24 +52,48 @@ def fetch_data():
 
                 continue
             street, city, state, pcode = address.split(", ")
-            lat = r.text.split('"Latitude": ', 1)[1].split(",", 1)[0]
-            longt = r.text.split('"Longitude": ', 1)[1].split("}", 1)[0].strip()
+            if flag == 0:
+                lat = r.text.split('"Latitude": ', 1)[1].split(",", 1)[0]
+                longt = r.text.split('"Longitude": ', 1)[1].split("}", 1)[0].strip()
+                phone = r.text.split('},"telephone":"', 1)[1].split('"', 1)[0]
+                try:
+                    hours = (
+                        r.text.split('<p class="csHoursList">', 1)[1]
+                        .split("</p>", 1)[0]
+                        .replace("&ndash;", " - ")
+                        .replace("<br>", " ")
+                        .lstrip()
+                    )
+                    hours = re.sub(cleanr, " ", hours).strip()
+                except:
+
+                    hours = "<MISSING>"
+            else:
+                lat = driver.page_source.split('"Latitude": ', 1)[1].split(",", 1)[0]
+                longt = (
+                    driver.page_source.split('"Longitude": ', 1)[1]
+                    .split("}", 1)[0]
+                    .strip()
+                )
+                phone = driver.page_source.split('},"telephone":"', 1)[1].split('"', 1)[
+                    0
+                ]
+                try:
+                    hours = (
+                        driver.page_source.split('<p class="csHoursList">', 1)[1]
+                        .split("</p>", 1)[0]
+                        .replace("&ndash;", " - ")
+                        .replace("<br>", " ")
+                        .lstrip()
+                    )
+                    hours = re.sub(cleanr, " ", hours).strip()
+                except:
+
+                    hours = "<MISSING>"
             store = link.split("/")[-1].split(".", 1)[0]
 
-            phone = r.text.split('},"telephone":"', 1)[1].split('"', 1)[0]
             phone = phone.replace(")", ") ")
-            try:
-                hours = (
-                    r.text.split('<p class="csHoursList">', 1)[1]
-                    .split("</p>", 1)[0]
-                    .replace("&ndash;", " - ")
-                    .replace("<br>", " ")
-                    .lstrip()
-                )
-                hours = re.sub(cleanr, " ", hours).strip()
-            except:
 
-                hours = "<MISSING>"
             yield SgRecord(
                 locator_domain="https://www.cubesmart.com/",
                 page_url=link,
