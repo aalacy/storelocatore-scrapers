@@ -43,9 +43,6 @@ def get_driver(url, class_name, driver=None):
 
 
 def get_data():
-    import time
-
-    print("here")
     days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
     session = SgRequests()
     start_url = "https://www.dreamdoors.co.uk/kitchen-showrooms"
@@ -91,9 +88,6 @@ def get_data():
                         page_response.split("?ll=")[1].split(",")[1].split("&")[0]
                     )
 
-                    print(page_url)
-                    print(latitude)
-                    print(longitude)
                     break
                 except Exception:
                     continue
@@ -106,9 +100,6 @@ def get_data():
             )
             address = address_parts[0]
             zipp = address_parts[-1]
-
-            if len(address_parts) == 2:
-                print("there")
 
             if len(address_parts) == 3:
                 city = address_parts[-2]
@@ -167,11 +158,7 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
-            print("yielded")
-        except Exception as e:
-            print(location_name)
-            print(page_url)
-            print(e)
+        except Exception:
             pass
 
 
