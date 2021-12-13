@@ -68,11 +68,13 @@ def fetch_data(sgw: SgWriter):
         .replace("\n", "")
         .strip()
     )
+    info = tree.xpath("//footer//p/text()")
+    location_name = "".join(info[0]).strip()
 
     row = SgRecord(
         locator_domain=locator_domain,
         page_url=page_url,
-        location_name=SgRecord.MISSING,
+        location_name=location_name,
         street_address=street_address,
         city=city,
         state=state,
