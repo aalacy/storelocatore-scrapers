@@ -20,7 +20,6 @@ headers = {
     "sec-fetch-mode": "navigate",
     "sec-fetch-user": "?1",
     "sec-fetch-dest": "document",
-    "referer": "https://www.banfield.com/",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
@@ -48,6 +47,8 @@ def fetch_data():
         store = ""
         zc = ""
         r2 = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(r2.text)
+
         if r2.encoding is None:
             r2.encoding = "utf-8"
         for line2 in r2.iter_lines():
@@ -86,9 +87,17 @@ def fetch_data():
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-            if 'class="hospital-id">(#' in line2:
-                store = line2.split('class="hospital-id">(#')[1].split(")")[0]
 
+        store = (
+            "".join(store_sel.xpath('//div[@class="hospital-id"]/text()'))
+            .strip()
+            .replace("(#", "")
+            .strip()
+            .replace(")", "")
+            .strip()
+        )
+        if len(store) <= 0:
+            logger.error(page_url)
         add = add.replace("&amp;", "&").replace("amp;", "&")
 
         yield SgRecord(
