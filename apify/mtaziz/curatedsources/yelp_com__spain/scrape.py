@@ -386,11 +386,12 @@ def fetch_data():
 
     # Step 3 - get store urls
     store_urls = get_store_urls(paginated_urls)
+    logger.info(f"Total Store Count: {len(store_urls)}")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [
             executor.submit(fetch_records, sunum, surl)
-            for sunum, surl in enumerate(store_urls[0:10])
+            for sunum, surl in enumerate(store_urls[0:])
         ]
         tasks.extend(task)
         for future in as_completed(tasks):
