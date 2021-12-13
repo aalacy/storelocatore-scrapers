@@ -73,7 +73,7 @@ def get_data():
                     "span", attrs={"itemprop": "addressRegion"}
                 ).text.strip()
             except Exception:
-                continue
+                state = "<MISSING>"
         if us.states.lookup(state):
             country_code = "USA"
         else:
@@ -94,19 +94,32 @@ def get_data():
         try:
             latitude = soup.find("meta", attrs={"itemprop": "latitude"})["content"]
         except Exception:
-            latitude = soup.find("meta", attrs={"property": "latitude"})["content"]
+            try:
+                latitude = soup.find("meta", attrs={"property": "latitude"})["content"]
+            except Exception:
+                latitude = "<MISSING>"
 
         try:
             longitude = soup.find("meta", attrs={"itemprop": "longitude"})["content"]
         except Exception:
-            longitude = soup.find("meta", attrs={"property": "longitude"})["content"]
+            try:
+                longitude = soup.find("meta", attrs={"property": "longitude"})[
+                    "content"
+                ]
+            except Exception:
+                longitude = "<MISSING>"
 
         try:
             city = soup.find(
                 "span", attrs={"class": "Address-field Address-city"}
             ).text.strip()
         except Exception:
-            city = soup.find("span", attrs={"property": "addressLocality"}).text.strip()
+            try:
+                city = soup.find(
+                    "span", attrs={"property": "addressLocality"}
+                ).text.strip()
+            except Exception:
+                city = "<MISSING>"
         store_number = "<MISSING>"
         try:
             address = soup.find(
@@ -123,7 +136,12 @@ def get_data():
         try:
             state = soup.find("span", attrs={"property": "addressRegion"}).text.strip()
         except Exception:
-            state = soup.find("span", attrs={"itemprop": "addressRegion"}).text.strip()
+            try:
+                state = soup.find(
+                    "span", attrs={"itemprop": "addressRegion"}
+                ).text.strip()
+            except Exception:
+                state = "<MISSING>"
 
         try:
             zipp = soup.find("span", attrs={"property": "postalCode"}).text.strip()
@@ -161,6 +179,20 @@ def get_data():
 
         elif "coming soon" in r.lower():
             location_type = "Coming Soon"
+
+        if "https" in country_code:
+            country_code = soup.find(
+                "span", attrs={"property": "addressCountry"}
+            ).text.strip()
+
+        address = address.encode("ascii", errors="ignore").decode().replace("    ", " ")
+
+        if (
+            city == "<MISSING>"
+            and address != "<MISSING>"
+            and len(address.split(", ")) > 2
+        ):
+            city = address.split(", ")[-2]
 
         yield {
             "locator_domain": locator_domain,
