@@ -9,6 +9,7 @@ from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 import time as t
 
+
 def get_driver(url, class_name, driver=None):
     if driver is not None:
         driver.quit()
@@ -43,6 +44,7 @@ def get_driver(url, class_name, driver=None):
 
 def get_data():
     import time
+
     print("here")
     days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
     session = SgRequests()
@@ -85,7 +87,9 @@ def get_data():
                     soup = bs(page_response, "html.parser")
 
                     latitude = page_response.split("?ll=")[1].split(",")[0]
-                    longitude = page_response.split("?ll=")[1].split(",")[1].split("&")[0]
+                    longitude = (
+                        page_response.split("?ll=")[1].split(",")[1].split("&")[0]
+                    )
 
                     print(page_url)
                     print(latitude)
@@ -93,15 +97,18 @@ def get_data():
                     break
                 except Exception:
                     continue
-            
+
             driver.quit()
-            address_parts = soup.find("div", attrs={"class": "address"}).get_text(strip=True, separator='\n').splitlines()[1:]
+            address_parts = (
+                soup.find("div", attrs={"class": "address"})
+                .get_text(strip=True, separator="\n")
+                .splitlines()[1:]
+            )
             address = address_parts[0]
             zipp = address_parts[-1]
 
             if len(address_parts) == 2:
                 print("there")
-
 
             if len(address_parts) == 3:
                 city = address_parts[-2]
@@ -166,6 +173,7 @@ def get_data():
             print(page_url)
             print(e)
             pass
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
