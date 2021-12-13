@@ -193,7 +193,7 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_4(),
-        expected_search_radius_miles=24,
+        expected_search_radius_miles=8,
     )
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)

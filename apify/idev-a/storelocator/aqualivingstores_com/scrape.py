@@ -102,7 +102,7 @@ def fetch_data():
                         hours = "seven days a week"
                     else:
                         hours = (
-                            hh.split("We’re open")[1]
+                            hh.split("open")[1]
                             .split("Please")[0]
                             .split("Give")[0]
                             .split("To")[0]
