@@ -58,17 +58,21 @@ def pull_content(url):
 def get_hoo(url, hoo_api):
     soup = pull_content(url)
     hoo = (
-        re.sub(
-            r"Holiday Hours.*",
-            "",
-            soup.find("h2", text=re.compile(r"Hours", re.IGNORECASE))
-            .find_next("p")
-            .get_text(strip=True, separator=","),
-            re.IGNORECASE,
+        (
+            re.sub(
+                r"Holiday Hours.*|Black Friday.*|Easter.*|\d{2}\..*|\d{2}\/.*",
+                "",
+                soup.find("h2", text=re.compile(r"Hours", re.IGNORECASE))
+                .find_next("p")
+                .get_text(strip=True, separator=","),
+                re.IGNORECASE,
+            )
+            .replace("|", "")
+            .strip()
         )
-        .replace("|", "")
+        .rstrip(",")
         .strip()
-    ).rstrip(",")
+    )
     if "day" not in hoo:
         hoo = (
             (

@@ -1,3 +1,4 @@
+import re
 import ssl
 import json
 from lxml import etree
@@ -59,9 +60,13 @@ def fetch_data():
                 geo = geo[-1].split("/@")[-1].split(",")[:2]
                 latitude = geo[0]
                 longitude = geo[1]
-            hoo = loc_dom.xpath('//li[span[@class="hours_HoursDay__D_ako"]]//text()')
+            hoo = loc_dom.xpath(
+                '//div[contains(@class, "storeDetails_StoreDetailsHours")]//li[span[@class="hours_HoursDay__D_ako"]]//text()'
+            )
             hoo = [elem.strip() for elem in hoo if elem.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            store_number = re.findall('storeNumber":"(.+?)",', driver.page_source)[0]
+
             if "," in city:
                 state = city.split(", ")[-1]
                 city = city.split(",")[0]
@@ -75,7 +80,7 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_code,
                 country_code="",
-                store_number="",
+                store_number=store_number,
                 phone=phone,
                 location_type=location_type,
                 latitude=latitude,
