@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 session = SgRequests()
 headers = {
@@ -29,6 +30,7 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
     for loc in locs:
+        time.sleep(5)
         TC = False
         logger.info(loc)
         name = ""
