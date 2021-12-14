@@ -17,7 +17,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    base = "https://gant.ru"
     search_url = "https://gant.ru/adresa_magazinov/index.php"
 
     with SgRequests() as session:
