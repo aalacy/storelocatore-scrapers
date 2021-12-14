@@ -30,7 +30,12 @@ def fetch_data():
     for poi in all_locations:
         page_url = "https://www.burgerking.com.ar/restaurantes/{}/?id={}&lat={}&lng={}"
         page_url = page_url.format(
-            poi["venue"]["address"].replace(",", "").replace(" ", "-").lower(),
+            poi["venue"]["address"]
+            .replace(",", "")
+            .replace(".", "")
+            .replace(" - ", "-")
+            .replace(" ", "-")
+            .lower(),
             poi["venue"]["id"],
             poi["venue"]["latitude"],
             poi["venue"]["longitude"],

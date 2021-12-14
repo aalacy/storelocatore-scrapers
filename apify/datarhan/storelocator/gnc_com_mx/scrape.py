@@ -17,13 +17,13 @@ def fetch_data():
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.MEXICO], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.MEXICO], expected_search_radius_miles=1
     )
     for lat, lng in all_codes:
         form_key = dom.xpath('//input[@name="form_key"]/@value')[0]
         frm = {
             "search[street]": "",
-            "search[radius]": "10",
+            "search[radius]": "5",
             "search[measurement]": "km",
             "search[latitude]": lat,
             "search[longitude]": lng,
@@ -39,6 +39,7 @@ def fetch_data():
         dom = etree.HTML(response.text)
         data = dom.xpath('//script[contains(text(), "locationList")]/text()')[-1]
         data = json.loads(data)
+
         all_locations = data["*"]["Magento_Ui/js/core/app"]["components"][
             "locationList"
         ]["locationItems"]
