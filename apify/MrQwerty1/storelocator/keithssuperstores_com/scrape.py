@@ -1,3 +1,4 @@
+import typing
 import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -54,7 +55,7 @@ def fetch_data(sgw: SgWriter):
     divs = tree.xpath("//div[contains(@class, 'dmTopContentRow')]//text()")
     divs = list(filter(None, [d.strip() for d in divs]))
     rows = []
-    _tmp = []
+    _tmp = []  # type: typing.List[str]
 
     for i, d in enumerate(divs):
         if "Food Shop:" in d:
