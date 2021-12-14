@@ -1,5 +1,5 @@
 import re
-from yaml import load, CLoader as Loader, loader
+from yaml import load, CLoader as Loader
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
