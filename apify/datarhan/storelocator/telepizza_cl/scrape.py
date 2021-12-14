@@ -4,7 +4,6 @@ from urllib.parse import urljoin
 from time import sleep
 from random import uniform
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -13,13 +12,9 @@ from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests(verify_ssl=False, proxy_country="us")
-
     start_url = "https://www.telepizza.cl/pizzerias"
     domain = "telepizza.cl"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
+
     with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
