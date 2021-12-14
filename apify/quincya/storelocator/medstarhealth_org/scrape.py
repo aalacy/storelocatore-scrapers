@@ -1,4 +1,6 @@
 import json
+import time
+
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
@@ -24,7 +26,14 @@ def fetch_data(sgw: SgWriter):
     for item in items:
         link = "https://www.medstarhealth.org" + item["Url"]
         req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+
+        try:
+            base = BeautifulSoup(req.text, "lxml")
+        except:
+            time.sleep(2)
+            session = SgRequests(verify_ssl=False)
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
         script = (
             base.find("script", attrs={"type": "application ld-json"})
