@@ -29,76 +29,13 @@ def get_data():
         location_name = soup.find(
             "h2", attrs={"class": "et_pb_slide_title"}
         ).text.strip()
+
         if "What Are Our Customers Saying?" in location_name:
             location_name = (
                 soup.find("div", attrs={"class": "et_pb_row et_pb_row_0"})
                 .text.strip()
                 .split("\n")[0]
             )
-
-        address_parts = [
-            item
-            for item in soup.find_all("div", attrs={"class": "et_pb_text_inner"})[1]
-            .text.strip()
-            .split("\n")[1:]
-            if item != ""
-        ]
-
-        if len(address_parts) == 1:
-            address = ""
-            street_parts = address_parts[0].split(",")[0].split(" ")[:-1]
-
-            for part in street_parts:
-                address = address + part + " "
-
-            address = address.strip()
-
-            city = address_parts[0].split(",")[0].split(" ")[-1]
-
-            state = address_parts[0].split(", ")[1].split(" ")[0]
-            zipp = address_parts[0].split(", ")[1].split(" ")[1]
-
-        elif len(address_parts) == 0:
-            address_parts = (
-                soup.text.split("STORE INFO")[1]
-                .split("\n")[0]
-                .strip()
-                .split("Pleasant Hill")
-            )
-
-            address = address_parts[0]
-            city = "Pleasant Hill"
-            state = address_parts[1].split(" ")[1]
-            zipp = address_parts[1].split(" ")[-1]
-
-        else:
-            address_index = -1
-            for part in address_parts:
-                if bool(re.search(r"\d", part[0])) is True:
-                    address = part
-                    address_index = address_parts.index(part)
-
-                    if len(address_parts) - address_index == 3:
-                        address = (
-                            address.strip() + " " + address_parts[address_index + 1]
-                        )
-
-            try:
-                city = address_parts[-1].split(",")[0]
-                state = address_parts[-1].split(", ")[1][0:2]
-                zipp = address_parts[-1].split(", ")[1][-5:]
-
-            except Exception:
-                city = address_parts[-2].split(",")[0]
-                state = address_parts[-2].split(", ")[1][0:2]
-                zipp = address_parts[-2].split(", ")[1][-5:]
-
-        if state == "Te":
-            state = "TX"
-
-        if address.split(" ")[-1] == "Redwood":
-            address = address.replace(" Redwood", "")
-            city = "Redwood City"
 
         country_code = "US"
         store_number = "<MISSING>"
@@ -158,11 +95,69 @@ def get_data():
         if "coming soon" in hours.lower():
             continue
 
-        city = (
-            "".join([i for i in city if not i.isdigit()])
-            .replace("=", "")
-            .replace("-", "")
-        )
+        address_parts = str(
+            soup.find_all("div", attrs={"class": "et_pb_text_inner"})[1]
+        ).split("<br/>")
+
+        start = 0
+        address = ""
+        for part in address_parts[:-1]:
+            for line in part.split("\n"):
+                if start == 1:
+                    line_parts = line.split(">")
+                    for thing in line_parts:
+
+                        try:
+                            if thing[0] == "<":
+                                continue
+
+                        except Exception:
+                            continue
+
+                        address_bit = thing.split("<")[0]
+                        address = address + " " + address_bit
+
+                if "store info" in line.lower():
+                    start = 1
+
+        address = address.replace("\n", "").strip()
+
+        city = address_parts[-1].split(",")[0].strip().split("\n")[-1].split("\r")[-1]
+        try:
+            city = city.split(">")[-1].strip()
+        except Exception:
+            pass
+
+        state = address_parts[-1].split(", ")[1].split(" ")[0]
+        zipp = address_parts[-1].split(", ")[1].split(" ")[1].split("<")[0]
+
+        if address == "":
+            address_parts = str(
+                soup.find_all("div", attrs={"class": "et_pb_text_inner"})[1]
+            ).split("\n")
+            address = ""
+            for part in address_parts[:-1]:
+                for line in part.split("\n"):
+                    if start == 1:
+                        line_parts = line.split(">")
+                        for thing in line_parts:
+
+                            try:
+                                if thing[0] == "<":
+                                    continue
+
+                            except Exception:
+                                continue
+
+                            address_bit = thing.split("<")[0]
+                            address = address + " " + address_bit
+
+                    if "store info" in line.lower():
+                        start = 1
+
+            address = (
+                address.strip().replace("  ", " ").split(location_name.split("-")[0])[0]
+            )
 
         yield {
             "locator_domain": locator_domain,
@@ -216,7 +211,7 @@ def scrape():
         scraper_name="Crawler",
         data_fetcher=get_data,
         field_definitions=field_defs,
-        log_stats_interval=15,
+        log_stats_interval=1000,
     )
     pipeline.run()
 

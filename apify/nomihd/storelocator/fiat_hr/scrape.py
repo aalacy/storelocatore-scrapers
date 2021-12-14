@@ -54,8 +54,11 @@ def fetch_data():
 
                 raw_address = (
                     store_info.split("<br><hr>")[0]
-                    .replace("<br>", "")
+                    .replace("<br>", ", ")
                     .replace("  ", " ")
+                    .strip()
+                    .replace(",,", ",")
+                    .replace(", ,", ",")
                     .strip()
                 )
 
