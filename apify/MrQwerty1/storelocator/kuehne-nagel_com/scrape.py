@@ -45,6 +45,10 @@ def fetch_data(sgw: SgWriter):
             ).split()
         )
         street_address, city, state, postal, country = get_international(raw_address)
+        if street_address.isnumeric() or len(street_address) < 7:
+            separator = street_address
+            street_address = raw_address.split(separator)[0] + f" {separator}"
+
         phones = d.xpath(".//p[@class='location__phone text-14 mb-0']/text()")
         for p in phones:
             if "phone" in p.lower() and "contact" not in p.lower():
