@@ -32,6 +32,7 @@ def fetch_data():
         "French Polynesia",
         "Papua New Guinea",
         "Republic of Palau",
+        "Kenya",
     ]
 
     for country_code in countries:
