@@ -47,7 +47,6 @@ def fetch_data():
             try:
                 state = loc["stateCode"]
             except:
-                print(loc)
                 state = MISSING
             country_code = loc["countryCode"]
             yield SgRecord(
