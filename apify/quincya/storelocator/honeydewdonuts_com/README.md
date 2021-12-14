@@ -1,3 +1,2 @@
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore GeoConsistencyValidator (Zip or state incorrect for 1 POI)
---ignore CountValidator --ignore StateLevelCountValidator (Validation expected 102 POI, but website has 127 POI)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StoreNumberColumnValidator (Confirmed on website)
+--ignore CountValidator --ignore StateLevelCountValidator (Validation expected 102 POI, but website has 128 POI)

@@ -1,6 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 session = SgRequests()
 headers = {
@@ -10,48 +14,16 @@ headers = {
 logger = SgLogSetup().get_logger("goldfishswimschool_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    url = "https://www.goldfishswimschool.com/SiteMap.xml"
-    r = session.get(url, headers=headers)
+    url = "https://www.goldfishswimschool.com/locations/?CallAjax=GetLocations"
+    r = session.post(url, headers=headers)
     website = "goldfishswimschool.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if (
-            "/contact-us/</loc>" in line
-            and "//www.goldfishswimschool.com/contact-us/" not in line
-        ):
-            locs.append(line.split("<loc>")[1].split("/contact")[0])
+    for item in json.loads(r.content):
+        locs.append("https://www.goldfishswimschool.com" + (item["Path"]))
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -68,25 +40,33 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if 'mob-loc" href="tel:' in line2:
-                phone = line2.split('mob-loc" href="tel:')[1].split('"')[0]
-            if 'data-address="' in line2:
-                try:
-                    name = line2.split('data-businessname="')[1].split('"')[0]
-                    add = line2.split('data-address="')[1].split('"')[0]
-                    city = line2.split('data-city="')[1].split('"')[0]
-                    state = line2.split('data-state="')[1].split('"')[0]
-                    zc = line2.split('data-zip="')[1].split('"')[0]
-                    lat = line2.split('data-latitude="')[1].split('"')[0]
-                    lng = line2.split('data-longitude="')[1].split('"')[0]
-                except:
-                    name = ""
+            if '<strong class="blk">' in line2 and add == "":
+                add = line2.split('<strong class="blk">')[1].split(",")[0]
+                zc = (
+                    line2.split('<strong class="blk">')[1]
+                    .split("<")[0]
+                    .strip()
+                    .rsplit(" ", 1)[1]
+                )
+                state = (
+                    line2.split('<strong class="blk">')[1]
+                    .split("<")[0]
+                    .rsplit(",", 1)[1]
+                    .strip()
+                    .split(" ")[0]
+                )
+            if '<span itemprop="telephone">' in line2:
+                phone = line2.rsplit('">', 1)[1].split("<")[0]
+            if '<strong class="pd_bt-20 rlt blk fnt_t-3 fnt_tc-1">' in line2:
+                name = line2.split(
+                    '<strong class="pd_bt-20 rlt blk fnt_t-3 fnt_tc-1">'
+                )[1].split("<")[0]
+                city = name.split("School - ")[1].strip()
             if "day:" in line2:
                 daycount = daycount + 1
-                if 'class="closed">' in line2:
-                    hrs = line2.split('class="closed">')[1].split(":")[0] + ": Closed"
-                else:
-                    hrs = line2.split(">")[1].split("<")[0]
+                hrs = (
+                    line2.strip().replace("\r", "").replace("\n", "").replace("\t", "")
+                )
                 if daycount <= 7:
                     if hours == "":
                         hours = hrs
@@ -95,27 +75,33 @@ def fetch_data():
         if hours == "":
             hours = "<MISSING>"
         if name != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "burlington-ont" in loc:
+                zc = "L7M 4X7"
+            if "/oakville" in loc:
+                zc = "L6H 2R4"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

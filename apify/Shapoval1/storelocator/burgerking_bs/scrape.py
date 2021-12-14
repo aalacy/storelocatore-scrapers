@@ -22,14 +22,24 @@ def fetch_data(sgw: SgWriter):
             return
         for d in div:
 
-            street_address = "".join(d.xpath('.//div[@class="bk-address1"]/text()'))
-            postal = "".join(d.xpath('.//div[@class="bk-zip"]/text()'))
-            country_code = "".join(d.xpath('.//div[@class="bk-country"]/text()'))
-            city = "".join(d.xpath('.//div[@class="bk-city"]/text()'))
-            store_number = "".join(d.xpath('.//div[@class="bk-counter"]/text()'))
-            latitude = "".join(d.xpath('.//div[@class="bk-latitude"]/text()'))
-            longitude = "".join(d.xpath('.//div[@class="bk-longitude"]/text()'))
-            phone = "".join(d.xpath('.//div[@class="bk-phone"]/text()'))
+            street_address = (
+                "".join(d.xpath('.//div[@class="bk-address1"]/text()')) or "<MISSING>"
+            )
+            postal = "".join(d.xpath('.//div[@class="bk-zip"]/text()')) or "<MISSING>"
+            country_code = (
+                "".join(d.xpath('.//div[@class="bk-country"]/text()')) or "<MISSING>"
+            )
+            city = "".join(d.xpath('.//div[@class="bk-city"]/text()')) or "<MISSING>"
+            store_number = (
+                "".join(d.xpath('.//div[@class="bk-counter"]/text()')) or "<MISSING>"
+            )
+            latitude = (
+                "".join(d.xpath('.//div[@class="bk-latitude"]/text()')) or "<MISSING>"
+            )
+            longitude = (
+                "".join(d.xpath('.//div[@class="bk-longitude"]/text()')) or "<MISSING>"
+            )
+            phone = "".join(d.xpath('.//div[@class="bk-phone"]/text()')) or "<MISSING>"
             hours_of_operation = (
                 "".join(d.xpath('.//div[@class="bk-weekday-hours"]//text()'))
                 + "".join(d.xpath('.//div[@class="bk-weekend-hours"]/text()'))

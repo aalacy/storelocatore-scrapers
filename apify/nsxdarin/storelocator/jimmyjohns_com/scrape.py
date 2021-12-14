@@ -20,13 +20,12 @@ def fetch_data():
         r = session.get(url, headers=headers)
         if r.encoding is None:
             r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if ".html</loc>" in line and "/sandwiches-" in line:
                 lurl = line.split("<loc>")[1].split("<")[0]
                 locs.append(lurl)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
-        logger.info(loc)
         url = loc
         add = ""
         city = ""
@@ -42,7 +41,7 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
@@ -61,6 +60,8 @@ def fetch_data():
                 hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
         if hours == "":
             hours = "<MISSING>"
+        if hours.lower().count("closed") == 7:
+            hours = "Temporarily Closed"
         if phone == "":
             phone = "<MISSING>"
         yield SgRecord(

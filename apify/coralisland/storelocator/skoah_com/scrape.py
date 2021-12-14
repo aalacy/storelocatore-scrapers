@@ -48,7 +48,8 @@ def fetch_data(sgw: SgWriter):
         store = eliminate_space(i.xpath(".//text()"))
         output = []
         output.append(base_url)  # url
-        output.append(base_url + i.xpath("a/@href")[0])
+        link = base_url + i.xpath("a/@href")[0]
+        output.append(link)
         output.append(store[0])  # location name
         output.append(store[1])  # address
         address = store[2].strip().split(",")
@@ -63,8 +64,21 @@ def fetch_data(sgw: SgWriter):
         output.append("<MISSING>")  # store_number
         output.append(store[3])  # phone
         output.append("<MISSING>")  # location type
-        output.append("<MISSING>")  # latitude
-        output.append("<MISSING>")  # longitude
+
+        request = session.get(link, headers=headers)
+        response = etree.HTML(request.text)
+        map_link = response.xpath('//a[@class="btn btn--primary"]/@href')[-1]
+        if "@" in map_link:
+            at_pos = map_link.rfind("@")
+            latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
+            longitude = map_link[
+                map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
+            ].strip()
+        else:
+            latitude = ""
+            longitude = ""
+        output.append(latitude)  # latitude
+        output.append(longitude)  # longitude
         output.append(validate(store[5:-2]))  # opening hours
 
         sgw.write_row(
