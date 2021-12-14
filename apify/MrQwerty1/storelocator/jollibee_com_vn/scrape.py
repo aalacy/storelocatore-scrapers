@@ -49,7 +49,10 @@ def get_data(store_number, sgw: SgWriter):
     title = j.get("title") or ""
     location_name = get_en(title)
     if not location_name:
-        location_name = get_vn(title)
+        try:
+            location_name = get_vn(title)
+        except:
+            return
     adr = j.get("address") or ""
     raw_address = get_en(adr)
     if not raw_address:
