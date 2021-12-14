@@ -44,8 +44,9 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .replace("Su  -", "Su  - Closed")
             .strip()
-            or "<fdfgdgf>"
+            or "<MISSING>"
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,

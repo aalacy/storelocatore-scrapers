@@ -32,7 +32,9 @@ def fetch_data():
                 street_address = poi["address"]
                 if poi["address2"]:
                     street_address += " " + poi["address2"]
-                street_address = street_address if street_address else "<MISSING>"
+                street_address = (
+                    street_address.split(" Go!")[0] if street_address else "<MISSING>"
+                )
                 city = poi["city"]
                 city = city if city else "<MISSING>"
                 state = poi["state"]

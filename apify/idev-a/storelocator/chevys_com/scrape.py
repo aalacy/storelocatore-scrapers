@@ -24,19 +24,26 @@ def fetch_data():
             if "Coming Soon" in link.h2.a.text:
                 continue
             logger.info(page_url)
-            direction = (
-                link.select_one("div.location-links a")["href"]
-                .split("destination=")[1]
-                .strip()
-                .split(",")
-            )
             soup1 = bs(session.get(page_url).text, "lxml")
-            hours = []
-            for _ in soup1.select(".hours .hours--detail"):
-                hours.append(
-                    f"{_.select_one('.day').text}: {_.select_one('.hours').text}"
+            try:
+                direction = (
+                    link.select_one("div.location-links a")["href"]
+                    .split("destination=")[1]
+                    .strip()
+                    .split(",")
                 )
-
+            except:
+                direction = (
+                    soup1.select("div.location-contact p")[1]
+                    .a["href"]
+                    .split("destination=")[1]
+                    .strip()
+                    .split(",")
+                )
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in soup1.select("div.location-hours div.hours div.hours--detail")
+            ]
             address = list(soup1.select_one("div.location-address a").stripped_strings)
             yield SgRecord(
                 page_url=page_url,

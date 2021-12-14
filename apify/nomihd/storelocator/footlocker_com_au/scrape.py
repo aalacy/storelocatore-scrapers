@@ -98,6 +98,8 @@ def get_store_data(store_sel, page_url):
             hours_list.append(day + ":" + time)
 
     hours_of_operation = "; ".join(hours_list).strip()
+    if hours_of_operation.count("Closed") == 7:
+        location_type = "Temporary Closed"
 
     return SgRecord(
         locator_domain=locator_domain,

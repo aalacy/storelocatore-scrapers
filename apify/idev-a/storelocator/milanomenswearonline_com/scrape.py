@@ -54,10 +54,19 @@ def fetch_data():
                     addr = block[:x]
                     hours = block[x + 1 :]
                     break
+            if hours and "Hour" in hours[0]:
+                del hours[0]
+            street_address = (
+                " ".join(addr[:-1])
+                .split("Menswear")[-1]
+                .split("CENTER")[-1]
+                .replace("WOLFCHASE GALLERIA", "")
+                .strip()
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.text.strip(),
-                street_address=" ".join(addr[:-1]),
+                street_address=street_address,
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
@@ -65,6 +74,11 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr)
+                .split("Menswear")[-1]
+                .split("CENTER")[-1]
+                .replace("WOLFCHASE GALLERIA", "")
+                .strip(),
             )
 
 

@@ -10,21 +10,28 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
+from sgscrape.pause_resume import CrawlStateSingleton
+
+from sglogging import sglog
+
+domain = "aldi.pl"
+log = sglog.SgLogSetup().get_logger(logger_name=domain)
 
 
 def fetch_data():
-    session = SgRequests()
 
     start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
-    domain = "aldi.pl"
 
     search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pl-PL&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=PL&Zip={}&Town=&Street=&Radius=100000"
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
     )
     for code in all_codes:
-        sleep(uniform(0, 5))
+        sleep(uniform(5, 9))
+        session = SgRequests(proxy_country="pl", retries_with_fresh_proxy_ip=1)
+        log.info(f"API Crawl: {search_url.format(code)}")
         response = session.get(search_url.format(code))
+        log.info(f"First Response: {response}")
         session_id = str(response.url.raw[-1]).split("=")[-1]
         hdr = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -47,15 +54,17 @@ def fetch_data():
         }
 
         response = session.post(start_url, headers=hdr, data=frm)
+        log.info(f"Second Response: {response}")
         dom = etree.HTML(
             response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
         )
 
         all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
-        next_page = dom.xpath('//a[@title="następna strona"]/@href')
+        next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
         while next_page:
             response = session.get(urljoin(start_url, next_page[0]))
+            log.info(f"Third Response: {response}")
             dom = etree.HTML(
                 response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
             )
@@ -63,7 +72,7 @@ def fetch_data():
             all_locations += dom.xpath(
                 '//td[@class="AlternatingItemTemplateColumnLocation"]'
             )
-            next_page = dom.xpath('//a[@title="następna strona"]/@href')
+            next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
 
         for poi_html in all_locations:
             location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
@@ -98,6 +107,8 @@ def fetch_data():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
+    log.info("Started Crawling")
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(

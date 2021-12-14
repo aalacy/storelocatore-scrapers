@@ -26,19 +26,22 @@ def fetch_data():
         for _ in locations:
             loc = _["location"]
             country_code = loc["extra_fields"]["category_slug"].replace("-", " ")
+            page_url = loc["extra_fields"]["sl_url"].replace(
+                "awww.aqua-tots.com", "www.aqua-tots.com"
+            )
             if country_code and country_code not in ["united states", "canada"]:
                 continue
             if "Bangkok" == loc["state"]:
                 continue
-            page_url = loc["extra_fields"]["sl_url"]
             logger.info(page_url)
+            hours = []
             res1 = session.get(page_url, headers=_headers)
-            if res1.status_code != 200:
-                continue
-            sp1 = bs(res1.text, "lxml")
-            hours = [
-                ": ".join(hh.stripped_strings) for hh in sp1.select("div#hours div.row")
-            ]
+            if res1.status_code == 200:
+                sp1 = bs(res1.text, "lxml")
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in sp1.select("div#hours div.row")
+                ]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
@@ -57,7 +60,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
