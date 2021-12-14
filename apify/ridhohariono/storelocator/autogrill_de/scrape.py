@@ -72,7 +72,7 @@ def fetch_data():
             bs(row["html"], "lxml")
             .get_text(strip=True, separator=",")
             .replace("Autogrill", "")
-        )
+        ).replace("\n", " ")
         street_address, city, state, zip_postal, country_code = getAddress(raw_address)
         street_address = street_address.replace(state, "")
         phone = re.search(r"Tel:(.*)", raw_address, re.IGNORECASE)
