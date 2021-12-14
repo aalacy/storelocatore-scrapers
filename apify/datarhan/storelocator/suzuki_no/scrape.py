@@ -10,7 +10,6 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-
     start_url = "https://suzuki.no/forhandlere/"
     domain = "suzuki.no"
     hdr = {
