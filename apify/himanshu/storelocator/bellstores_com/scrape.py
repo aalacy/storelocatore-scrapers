@@ -8,14 +8,14 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-website = "supermercadosmrspecial_com"
+website = "bellstores_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://supermercadosmrspecial.com/"
+DOMAIN = "https://bellstores.com/"
 MISSING = SgRecord.MISSING
 
 
