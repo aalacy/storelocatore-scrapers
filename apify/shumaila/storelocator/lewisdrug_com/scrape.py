@@ -36,6 +36,7 @@ def fetch_data():
 
         phone = div.select_one("a[href*=tel]").text
         hours = div.find("div", {"class": "store-hours"}).text
+
         hours = (
             re.sub(pattern, " ", str(hours)).replace("\n", " ").split(":", 1)[1].strip()
         )
@@ -54,6 +55,19 @@ def fetch_data():
         state = state.replace(",", "")
         if state in pcode:
             pcode = pcode.replace(state, "")
+        if len(hours) < 4:
+
+            r1 = session.get(link, headers=headers)
+            soup1 = BeautifulSoup(r1.text, "html.parser")
+            hours = soup1.find("div", {"class": "store-hours"}).text
+
+            hours = (
+                re.sub(pattern, " ", str(hours))
+                .replace("\n", " ")
+                .split("Mon", 1)[1]
+                .strip()
+            )
+            hours = "Mon " + hours
         yield SgRecord(
             locator_domain="https://www.lewisdrug.com/",
             page_url=link,
