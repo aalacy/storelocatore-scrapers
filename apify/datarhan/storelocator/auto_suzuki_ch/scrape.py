@@ -18,7 +18,7 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     all_locations = re.findall(
-        "locations\[\d+\] = (.+?)google.maps.event", response.text.replace("\n", "")
+        r"locations\[\d+\] = (.+?)google.maps.event", response.text.replace("\n", "")
     )
     for poi in all_locations:
         poi = yaml.load(poi)
