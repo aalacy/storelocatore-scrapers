@@ -1,53 +1,24 @@
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "granitetransformations.co.uk"
+    domain = "granitetransformations.co.uk"
     start_url = "https://www.granitetransformations.co.uk/locations/"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//span[@class="name"]/a/@href')
+    all_locations = dom.xpath(
+        '//h2[contains(text(), "All Showrooms")]/following-sibling::ul//h4/a/@href'
+    )
     for store_url in all_locations:
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
@@ -56,8 +27,7 @@ def fetch_data():
             '//a[@class="franchise_tile col-md-4"]/span[@class="excerpt"]/text()'
         )[0].strip()
         addr = parse_address_intl(raw_address)
-        location_name = loc_dom.xpath('//strong[@class="brand"]/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        location_name = store_url.split("/")[-2].capitalize()
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address = "{} {}".format(
@@ -77,7 +47,6 @@ def fetch_data():
             street_address = street_address.replace(" Ph1 5Js", "")
         country_code = addr.country
         country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/span/text()')
         phone = phone[0] if phone else "<MISSING>"
         geo = (
@@ -95,31 +64,33 @@ def fetch_data():
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

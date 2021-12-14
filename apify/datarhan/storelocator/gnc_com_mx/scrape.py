@@ -17,7 +17,7 @@ def fetch_data():
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.MEXICO], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.MEXICO], expected_search_radius_miles=5
     )
     for lat, lng in all_codes:
         form_key = dom.xpath('//input[@name="form_key"]/@value')[0]

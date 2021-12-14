@@ -31,7 +31,7 @@ def fetch_data():
                 continue
             phone = loc.split('phone:"')[1].split('"')[0]
             if "Coming Soon!" in phone:
-                continue
+                phone = MISSING
             longitude, latitude = (
                 loc.split("coordinates:[")[1].split("]}")[0].split(",")
             )
@@ -90,7 +90,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:

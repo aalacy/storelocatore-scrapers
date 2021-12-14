@@ -59,7 +59,8 @@ def fetch_data():
                                     hours = hours + "; " + dayhrs
                     except:
                         hours = "<MISSING>"
-                    if "Temporarily Closed" in item:
+                    hours = hours.replace("&:amp;", "&")
+                    if "Temporarily" in item:
                         hours = "Temporarily Closed"
                     typ = item.split('"storeTypeDisplay":"')[1].split('"')[0]
                     if typ == "Retail" or typ == "Outlet":

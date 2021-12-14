@@ -53,8 +53,10 @@ def fetch_data():
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
         latitude = loc_dom.xpath("//@data-lat")
         latitude = latitude[0] if latitude else ""
-        longitude = loc_dom.xpath("//@data-lng")
+        longitude = loc_dom.xpath("//@data-lon")
         longitude = longitude[0] if longitude else ""
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
 
         item = SgRecord(
             locator_domain=domain,
