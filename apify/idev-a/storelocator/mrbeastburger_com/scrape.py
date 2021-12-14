@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 from sglogging import SgLogSetup
 from datetime import datetime, timedelta
 
@@ -58,7 +58,7 @@ def fetch_data(search):
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], granularity=Grain_2()
     )
     with SgWriter(
         SgRecordDeduper(
