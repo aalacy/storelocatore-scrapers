@@ -36,7 +36,11 @@ def fetch_data():
         hoo = f"Open: {opens}, Closes {closes}, Close On: {closed}"
         phone = poi["SuzukiDealersData"]["DealerContactNumber"]["Text"]
         if phone:
-            phone = phone.split(",")[0].split("/")[0]
+            phone = (
+                phone.split(",")[0].split("/")[0].split(";")[0].split(" - ")[0].strip()
+            )
+        if phone and len(phone) > 14 and "(" not in phone:
+            phone = phone.split()[0]
 
         item = SgRecord(
             locator_domain=domain,
