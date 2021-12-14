@@ -90,8 +90,11 @@ def fetch_data():
                 page_url = LOCATION_URL
             latitude = loc["lat"]
             longitude = loc["lng"]
+            try:
 
-            search.found_location_at(latitude, longitude)
+                search.found_location_at(latitude, longitude)
+            except:
+                pass
 
             street_address = loc["address"] + " " + loc["address2"]
             street_address = street_address.strip()
