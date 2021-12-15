@@ -36,7 +36,7 @@ def fetch_data():
             temp = loc.find("div", {"class": "titulo"}).find("a")
             page_url = DOMAIN + temp["href"]
             location_name = strip_accents(temp.text)
-            # log.info(location_name)
+            log.info(location_name)
             temp = loc.findAll("div")
             if "Horario" in temp[2].text:
                 hours_of_operation = (
@@ -80,12 +80,6 @@ def fetch_data():
             latitude, longitude = (
                 coords.find("a")["href"].split("q=")[1].split("&key")[0].split("%2C")
             )
-
-            # hours_of_operation = hours_of_operation.replace('Cafeter PM.',' ').replace('Cafeter PM,',' ').replace(' Cafeter PM y','')
-            if "Cafetería:" in hours_of_operation:
-                temp = hours_of_operation.split(" Cafetería:")[1].split("PM")[0]
-                hours_of_operation = hours_of_operation.replace(temp, " ")
-            print(hours_of_operation)
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
