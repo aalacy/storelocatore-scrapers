@@ -67,6 +67,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hoo,
+                raw_address=raw_address[-1],
             )
 
             yield item

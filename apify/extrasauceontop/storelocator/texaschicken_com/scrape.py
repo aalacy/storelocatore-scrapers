@@ -61,6 +61,7 @@ def scrape_malaysia(session, headers):
         state = location["state"]
         store_number = location["id"]
         address = location["address"]
+        raw_address = location["address"]
         zipp = location["zip"]
         phone = "".join(
             character for character in location["phone"] if character.isdigit() is True
@@ -87,6 +88,7 @@ def scrape_malaysia(session, headers):
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
+                "raw_address": raw_address,
             }
         )
 
@@ -147,7 +149,7 @@ def scrape_singapore(session, headers):
                 .find_all("p")[-1]
                 .text.strip()
             )
-
+            raw_address = address_parts
             address = ""
             address = (
                 address_parts.lower()
@@ -157,7 +159,7 @@ def scrape_singapore(session, headers):
                 .strip()[:-1]
             )
 
-            city = "<MISSING>"
+            city = "Singapore"
             state = "<MISSING>"
             zipp = address_parts.strip().split(" ")[-1]
             country_code = "Singapore"
@@ -185,6 +187,7 @@ def scrape_singapore(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -209,16 +212,15 @@ def scrape_belarus(session, headers):
         page_url = "https://texas-chicken.by/en/restorany"
         location_name = row.find("div", attrs={"class": "metro"}).text.strip()
         address = row.find("div", attrs={"class": "address"}).text.strip()
-        hours = address = (
-            "daily: " + row.find("div", attrs={"class": "work"}).text.strip()
-        )
+        raw_address = address
+        city = address.split(", ")[0]
+        address = address.replace(city + ", ", "")
+        hours = "daily: " + row.find("div", attrs={"class": "work"}).text.strip()
         phone = row.find("div", attrs={"class": "phone"}).text.strip()
 
         location_type = "<MISSING>"
         country_code = "Belarus"
         state = "<MISSING>"
-        city = "<MISSING>"
-        zipp = "<MISSING>"
 
         zipp = "<MISSING>"
         store_number = "<MISSING>"
@@ -244,6 +246,7 @@ def scrape_belarus(session, headers):
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
+                "raw_address": raw_address,
             }
         )
 
@@ -337,6 +340,7 @@ def scrape_bahrain(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": address,
                 }
             )
 
@@ -390,6 +394,7 @@ def scrape_jordan(session, headers):
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
+                "raw_address": address,
             }
         )
 
@@ -451,7 +456,7 @@ def scrape_pakistan(session, headers):
                 .text.strip()
                 .replace('"', "")
             )
-
+            raw_address = address_parts
             address_parts = address_parts.lower().split(", ")
 
             if address_parts[-1] == "pakistan":
@@ -492,6 +497,7 @@ def scrape_pakistan(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -553,6 +559,7 @@ def scrape_riyadh(session, headers):
                 .text.strip()
                 .replace('"', "")
             )
+            raw_address = address_parts
 
             address = address_parts.split(", Riyadh")[0]
 
@@ -588,6 +595,7 @@ def scrape_riyadh(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -650,6 +658,12 @@ def scrape_uae(session, headers):
                 .replace('"', "")
                 .split(", ")
             )
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
 
             address = "".join(part + " " for part in address_parts[:-2])
 
@@ -690,6 +704,7 @@ def scrape_uae(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -756,6 +771,13 @@ def scrape_newzealand(session, headers):
                 .split(", ")
             )
 
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
+
             address = "".join(part + " " for part in address_parts[:-2])
 
             try:
@@ -788,6 +810,7 @@ def scrape_newzealand(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -896,6 +919,7 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(
