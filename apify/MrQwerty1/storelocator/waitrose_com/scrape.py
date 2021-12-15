@@ -105,6 +105,8 @@ def get_data(page_url, sgw: SgWriter):
 
     if "Little" in location_type:
         location_name = "Little Waitrose"
+    elif "from" in location_type:
+        location_name = location_type
     else:
         location_name = "Waitrose"
 
