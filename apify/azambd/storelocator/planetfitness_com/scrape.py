@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sglogging import sglog
+import tenacity
 
 session = SgRequests()
 
@@ -55,6 +56,7 @@ def reqFirstAPI(url):
     return session.get(url, headers=headersAPI).json()
 
 
+@tenacity.retry(wait=tenacity.wait_fixed(5))
 def reqDetailPageAPI(url):
     return session.get(url, headers=headersPFX).json()
 
