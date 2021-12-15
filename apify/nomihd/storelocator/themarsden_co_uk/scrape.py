@@ -38,12 +38,6 @@ def fetch_data():
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
 
-            store_info = list(
-                filter(
-                    str,
-                    [x.strip() for x in store.xpath("./p//text()")],
-                )
-            )
             raw_address = "".join(store.xpath('.//p[contains(@class,"addr")]//text()'))
 
             formatted_addr = parser.parse_address_intl(raw_address)
