@@ -105,7 +105,7 @@ def get_response_custom(url):
 def gen_main_cat_urls():
     main_cat_urls = []
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.SPAIN], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.SPAIN], expected_search_radius_miles=20
     )
     for k, v in MAIN_CATEGORY_KEYWORDS.items():
         for dzip in search:
@@ -346,6 +346,11 @@ def fetch_records(sunum, surl):
             matched_category = ", ".join(matched_categories_list)
         else:
             matched_category = MISSING
+        cat = " ".join(category.split())
+        if cat:
+            category = category
+        else:
+            category = MISSING
         row = [
             vk_id,
             category,
@@ -386,6 +391,7 @@ def fetch_data():
 
     # Step 3 - get store urls
     store_urls = get_store_urls(paginated_urls)
+
     logger.info(f"Total Store Count: {len(store_urls)}")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
