@@ -28,7 +28,6 @@ def fetch_data(sgw: SgWriter):
         main_links.append(main_link)
 
     for link in main_links:
-        print(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
