@@ -72,6 +72,7 @@ def get_response(url):
         r = http.get(url, headers=headers_c)
         try:
             if r.status_code == 200:
+                logger.info(f"HTTP status code: {r.status_code} for {url}")
                 return r
             raise Exception(f"Please fix {url}")
         except Exception as e:
@@ -111,6 +112,7 @@ def gen_main_cat_urls():
         for dzip in search:
             cat_url = f"https://www.yelp.com/search?cflt={v}&find_loc={dzip}%2C%20{COUNTRY_TO_BE_CRAWLED}"
             main_cat_urls.append(cat_url)
+    logger.info(f"Total Search URLs: {len(main_cat_urls)}")
     return main_cat_urls
 
 
