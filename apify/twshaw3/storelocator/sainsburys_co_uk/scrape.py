@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def handle_missing(field):
-    if field is None or (type(field) == type("x") and len(field.strip()) == 0):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
         return SgRecord.MISSING
     return field
 
