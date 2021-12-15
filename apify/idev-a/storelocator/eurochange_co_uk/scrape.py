@@ -7,6 +7,16 @@ from sgscrape.sgpostal import parse_address_intl
 import json
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 locator_domain = "https://www.eurochange.co.uk"
 base_url = "https://www.eurochange.co.uk/branches/GetBranches/51.5073509/-0.1277583?Latitude=51.5073509&longitude=-0.1277583"
