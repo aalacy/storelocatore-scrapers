@@ -29,7 +29,13 @@ def fetch_data():
             hours = []
             hr = list(bs(_["h"], "lxml").stripped_strings)
             if hr:
-                hours = hr[1:]
+                for hh in hr[1:]:
+                    if "Holiday" in hh or "Delivery" in hh:
+                        break
+
+                    if "Hour" in hh:
+                        continue
+                    hours.append(hh)
             yield SgRecord(
                 page_url=_["url"],
                 store_number=_["id"],
