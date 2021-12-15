@@ -23,7 +23,6 @@ def fetch_data(sgw: SgWriter):
         div = tree.xpath('//select[@id="dealer-country-select"]/option')
         for d in div:
             slug = "".join(d.xpath(".//@value"))
-            country_codes = "".join(d.xpath(".//text()"))
             with SgRequests() as http:
                 r = http.get(
                     url=f"https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode={slug}&SiteLanguageCode=en-CA&Skip=0&Take=50000&CurrentUrl=www.triumph-motorcycles.ca"
@@ -76,52 +75,47 @@ def fetch_data(sgw: SgWriter):
                         "".join(j.get("OpeningTimes")).replace("<br/>", " ").strip()
                     ) or "<MISSING>"
                     hours_of_operation = " ".join(hours_of_operation.split())
-                    with SgRequests() as http:
-                        r = http.get(url=page_url, headers=headers)
-                        assert isinstance(r, httpx.Response)
-                        assert 200 == r.status_code
+                    if hours_of_operation == "<MISSING>" and page_url.count("/") > 3:
+                        try:
+                            r = http.get(url=page_url, headers=headers)
+                            assert isinstance(r, httpx.Response)
+                            assert 200 == r.status_code
+                        except AssertionError:
+                            continue
+
                         tree = html.fromstring(r.text)
-                        country_cod = (
+                        hours_of_operation = (
                             " ".join(
                                 tree.xpath(
-                                    '//p[@class="dealer-location__address-text"]/span/text()'
+                                    '//ul[@class="dealer-location__opening-times"]/li//text()'
                                 )
                             )
                             .replace("\n", "")
                             .strip()
                         )
-                        a = parse_address(International_Parser(), country_cod)
-                        country_code = a.country or country_codes
-                        if country_code == "Austria":
-                            country_code = "Germany"
-                        if postal == "LT-11342":
-                            country_code = "LT"
-                        if postal == "0":
-                            postal = "<MISSING>"
-                        if country_code == "Russia":
-                            continue
-
-                        row = SgRecord(
-                            locator_domain=locator_domain,
-                            page_url=page_url,
-                            location_name=location_name,
-                            street_address=street_address,
-                            city=city,
-                            state=state,
-                            zip_postal=postal,
-                            country_code=country_code,
-                            store_number=SgRecord.MISSING,
-                            phone=phone,
-                            location_type=SgRecord.MISSING,
-                            latitude=latitude,
-                            longitude=longitude,
-                            hours_of_operation=hours_of_operation,
-                            raw_address=f"{ad} {postal}".replace(
-                                "<MISSING>", ""
-                            ).strip(),
+                        hours_of_operation = (
+                            " ".join(hours_of_operation.split()) or "<MISSING>"
                         )
 
-                        sgw.write_row(row)
+                    row = SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=postal,
+                        country_code=SgRecord.MISSING,
+                        store_number=SgRecord.MISSING,
+                        phone=phone,
+                        location_type=SgRecord.MISSING,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=f"{ad} {postal}".replace("<MISSING>", "").strip(),
+                    )
+
+                    sgw.write_row(row)
 
 
 if __name__ == "__main__":

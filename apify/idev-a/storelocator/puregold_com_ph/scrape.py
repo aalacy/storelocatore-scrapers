@@ -87,7 +87,11 @@ def fetch_data():
                     street_address += " " + addr.street_address_2
                 city = addr.city
                 if city:
-                    city = city.replace("Subic Bay Freeport Zone", "").strip()
+                    city = (
+                        city.replace("Subic Bay Freeport Zone", "")
+                        .replace("Guitnang Bayan 1", "")
+                        .strip()
+                    )
                 phone = ""
                 if _.select_one("span.telno"):
                     phone = (
@@ -105,9 +109,17 @@ def fetch_data():
                         .split(")")[0]
                         .split(",")
                     )
+                name = _.strong.text.split("-")[0].strip()
+                location_name = ""
+                if name == "PG JR":
+                    location_name = "PureGold Jr"
+                elif name == "PG EXTRA":
+                    location_name = "PureGold Extra"
+                elif name == "PPCI":
+                    location_name = "PureGold"
                 yield SgRecord(
                     page_url=base_url,
-                    location_name=_.strong.text.strip(),
+                    location_name=location_name,
                     street_address=street_address,
                     city=city,
                     state=addr.state,
