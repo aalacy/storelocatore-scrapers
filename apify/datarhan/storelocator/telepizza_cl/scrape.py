@@ -1,4 +1,5 @@
 import re
+import ssl
 from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
@@ -8,14 +9,21 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
     start_url = "https://www.telepizza.cl/pizzerias"
     domain = "telepizza.cl"
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
         all_areas = dom.xpath('//ul[@class="areas"]/li/a/@href')

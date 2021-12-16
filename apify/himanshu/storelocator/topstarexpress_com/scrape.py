@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("topstarexpress_com")
@@ -97,7 +97,7 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
