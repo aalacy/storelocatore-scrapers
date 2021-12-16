@@ -52,7 +52,6 @@ def fetch_data(sgw: SgWriter):
             phone = ""
 
         location_type = "<MISSING>"
-        raw_item = str(item).replace("&quot;", '"')
 
         try:
             latitude = re.findall(r'mapLat":[0-9]{2}\.[0-9]+', str(item))[0].split(":")[
