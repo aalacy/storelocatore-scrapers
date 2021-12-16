@@ -22,15 +22,16 @@ def fetch_data():
             hours = []
             for day, hh in _["openings"].items():
                 hours.append(f"{day}: {hh}")
+            location_name = f"Carrefor {_['storeFormat']} {_['displayName']}"
             yield SgRecord(
                 page_url=base_url,
-                location_name=_["name"],
-                street_address=street_address,
+                location_name=location_name,
                 city=_["town"],
                 zip_postal=_["postalCode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 country_code="Lebanon",
+                phone=_["phone"],
                 location_type=_["storeFormat"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),

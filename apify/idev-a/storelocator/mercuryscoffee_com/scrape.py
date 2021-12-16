@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import SgRecordID
@@ -33,7 +33,7 @@ def fetch_data():
 
             hours = []
             for y, bb in enumerate(block):
-                if bb.startswith("MON"):
+                if bb.startswith("MON") or bb.startswith("SUN"):
                     raw_address = " ".join(block[:y])
                     hours = block[y:-1]
                     break
