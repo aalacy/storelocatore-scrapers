@@ -4,16 +4,14 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-import re
 
-DOMAIN = "autogrill.de"
-LOCATION_URL = "https://autogrill.de/en/content/contacts"
-API_URL = "https://autogrill.de/vyaggio/branches/4"
+DOMAIN = "jopetrol.jo"
+LOCATION_URL = "http://www.jopetrol.jo/Pages/viewpage.aspx?pageID=80"
 HEADERS = {
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
@@ -51,63 +49,38 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    req = session.get(url, headers=HEADERS)
-    if req.status_code == 404:
-        return False
-    soup = bs(req.content, "lxml")
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
 
-def fix_coord(coord):
-    result = str(coord).split(".")
-    return result[0] + "." + result[1]
+def get_address(lat, lng):
+    gmap = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lng}&key=AIzaSyCr7eBd94pwm-FAn8E-4L_b_IhEj0_4G3c"
+    data = session.get(gmap, headers=HEADERS).json()
+    return data["results"][1]["formatted_address"]
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    data = session.get(API_URL, headers=HEADERS).json()
-    for row in data:
-        location_name = row["title"]
-        raw_address = (
-            bs(row["html"], "lxml")
-            .get_text(strip=True, separator=",")
-            .replace("Autogrill", "")
-            .strip()
-        ).replace("\n", " ")
-        phone = re.search(r"Tel:(.*)", raw_address, re.IGNORECASE)
-        if not phone:
-            phone = MISSING
-        else:
-            phone = phone.group(1).replace("Tel: ", "").strip()
-        raw_address = (
-            re.sub(r"Tel.*", "", raw_address)
-            .rstrip(",")
-            .replace("+", "-")
-            .replace("Limmtquai", "Limmatquai")
-            .strip()
-        )
-        street_address, city, state, zip_postal, country_code = getAddress(raw_address)
-        street_address = street_address.replace(state, "")
-        if (
-            street_address.replace(" ", "").strip().isnumeric()
-            or len(street_address) == 0
-            or len(street_address) < 5
-        ):
-            if zip_postal is not MISSING:
-                street_address = " ".join(
-                    raw_address.split(zip_postal)[0].split(",")[1:]
-                )
-            elif street_address:
-                street_address = " ".join(
-                    raw_address.split(street_address)[0].split(",")[1:]
-                )
-        store_number = row["id"]
-        location_type = MISSING
-        latitude = fix_coord(row["lat"])
-        longitude = fix_coord(row["lon"])
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select("a.btn.btn-primary.back-color-move.white.js-btn-stationMap")
+    for row in contents:
+        latitude = row["data-lat"].strip()
+        longitude = row["data-lng"].strip()
+        if not latitude:
+            continue
+        location_name = "Jopetrol"
+        raw_address = get_address(latitude, longitude)
+        street_address, city, state, zip_postal, country = getAddress(raw_address)
+        phone = row.parent.parent.select_one(
+            "div.text-center div:nth-child(3) span.station-data.fontSizeNewsBreif"
+        ).text.strip()
         hours_of_operation = MISSING
-        if "Zürich-Flughafen" in country_code:
-            country_code = "DE"
+        if country == "Jordan":
+            country_code = "JO"
+        else:
+            country_code = country
+        store_number = MISSING
+        location_type = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -131,21 +104,11 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
