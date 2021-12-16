@@ -67,7 +67,7 @@ def fetch_data():
         log.info(f"total page: {len(next_page)}")
         while next_page:
             next_page_link = urljoin(start_url, next_page[0])
-            print(f"Next page link: {next_page_link}")
+            log.info(f"Next page link: {next_page_link}")
             response = session.get(next_page_link)
             log.info(f"Third Response: {response}")
             dom = etree.HTML(
