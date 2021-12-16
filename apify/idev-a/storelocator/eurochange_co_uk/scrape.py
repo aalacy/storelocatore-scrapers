@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import json
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
