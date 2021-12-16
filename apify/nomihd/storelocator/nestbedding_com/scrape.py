@@ -27,19 +27,21 @@ def fetch_data():
     for store in stores_list:
 
         page_url = "".join(store.xpath(".//a[@class='shop-detail-link']/@href")).strip()
+        if len(page_url) <= 0:
+            page_url = "https://www.nestbedding.com/pages/contact-us"
+
         locator_domain = website
 
         location_name = "".join(
             store.xpath('.//h3[@class="shop-title"]/text()')
         ).strip()
 
-        street_address = " ".join(
-            store.xpath('.//div[@class="shop-info-address-line"]/text()')
-        ).strip()
-
-        city = "".join(store.xpath("./@data-city")).strip()
-        state = "".join(store.xpath("./@data-state")).strip()
-        zip = "<MISSING>"
+        raw_address = store.xpath('.//div[@class="shop-info-address-line"]/text()')
+        street_address = raw_address[0].strip()
+        city_state_zip = raw_address[1].strip()
+        city = city_state_zip.split(",")[0].strip()
+        state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
+        zip = city_state_zip.split(",")[-1].strip().split(" ")[-1].strip()
 
         country_code = "US"
 

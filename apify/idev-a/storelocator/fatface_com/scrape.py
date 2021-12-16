@@ -48,18 +48,26 @@ def fetch_data():
 
             if "currently closed" in soup.select_one('p[itemprop="description"]').text:
                 hours_of_operation = "Closed"
+
+            street_address = location["address1"]
+            if location["address2"]:
+                street_address += " " + location["address2"]
+
+            phone = location["phone"]
+            if phone:
+                phone = phone.split("PHONE")[0].strip()
             yield SgRecord(
                 page_url=page_url,
                 store_number=location["id"],
                 location_name=location["name"],
-                street_address=f'{location["address1"]} {location["address2"]}',
+                street_address=street_address,
                 city=location["city"],
                 state=location["state"],
                 zip_postal=location["postalCode"],
                 country_code=location["countryCode"],
                 latitude=location["latitude"],
                 longitude=location["longitude"],
-                phone=location["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
