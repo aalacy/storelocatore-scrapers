@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("industriapizzeria")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -22,6 +27,7 @@ def fetch_data():
         locations = soup.select("div.restaurant-list ul li a")
         for _ in locations:
             page_url = locator_domain + _["href"]
+            logger.info(page_url)
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = [
                 hh.text
@@ -29,7 +35,7 @@ def fetch_data():
             ]
             if "COMING SOON" in hours:
                 continue
-            if not re.search(r"tel:", hours[-1], re.IGNORECASE):
+            if hours and not re.search(r"tel:", hours[-1], re.IGNORECASE):
                 del hours[-1]
             for x, hh in enumerate(hours):
                 if not re.search(r"Monday", hh, re.IGNORECASE):
@@ -38,19 +44,19 @@ def fetch_data():
             if hours:
                 if "we have closed" not in " ".join(hours):
                     hours_of_operation = hours[0].replace("\n", "; ")
-            addr = parse_address_intl(
-                soup1.select_one("div.entry-content.our-restaurants p").text.replace(
-                    "|", ""
-                )
-            )
-            phone = (
-                soup1.find(
-                    "h3", string=re.compile(r"Our Contact Information", re.IGNORECASE)
-                )
-                .find_next_sibling("p")
-                .text.replace("TEL:", "")
-                .strip()
-            )
+            raw_address = []
+            for aa in list(
+                soup1.select_one("div.entry-content.our-restaurants p").stripped_strings
+            ):
+                if "Address" in aa:
+                    continue
+                if "contact" in aa.lower() or "open" in aa.lower():
+                    break
+                raw_address.append(", ".join(aa.split("|")))
+            addr = parse_address_intl(" ".join(raw_address))
+            phone = ""
+            if soup1.find("a", href=re.compile(r"tel:")):
+                phone = soup1.find("a", href=re.compile(r"tel:")).text.strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.text,
@@ -62,11 +68,12 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation=_valid(hours_of_operation),
+                raw_address=" ".join(raw_address),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

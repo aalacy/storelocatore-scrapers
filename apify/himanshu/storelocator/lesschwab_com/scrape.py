@@ -1,126 +1,116 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import json
+from lxml import etree
+from urllib.parse import urljoin
 
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    base_url = "https://www.lesschwab.com"
-    r = session.get(base_url + "/stores/")
-    soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36",
+    session = SgRequests()
+    scraped_urls = []
+    start_url = "https://www.lesschwab.com/stores/?latitude={}&longitude={}"
+    domain = "lesschwab.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    for atag in soup.find("div", {"class": "footer__container__item"}).find_all("a"):
-        url = base_url + atag["href"]
-        soup1 = BeautifulSoup(session.get(url, headers=headers).text, "lxml")
-        locations = soup1.find_all(
-            class_="storeDetails storeDetails--brief js-store-details-brief"
-        )
-        stores = json.loads(soup1.find(class_="map-canvas")["data-locations"])
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+    )
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng), headers=hdr)
+        dom = etree.HTML(response.text)
 
-        for i in range(len(locations)):
-            store = []
-            location = locations[i]
-            store = stores[i]
-
-            if "soon" in location.find(class_="storeDetails__contact").text.lower():
+        all_locations = dom.xpath('//a[@title="Store Details"]/@href')
+        for url in list(set(all_locations)):
+            page_url = urljoin(start_url, url)
+            if page_url in scraped_urls:
                 continue
-            locator_domain = base_url
-            link = base_url + location.address.a["href"]
-            street_address = (
-                location.find(class_="storeDetails__streetName")
-                .text.strip()
-                .replace("tire shop", "")
-                .strip()
-            )
-            street_address = street_address[street_address.find(".") + 1 :].strip()
-            location_name = street_address + " Les Schwab Tire Center"
-            city_line = location.address.span.text.strip().split(",")
-            city = city_line[0].strip()
-            state = city_line[-1].strip().split()[0].strip()
-            zip_code = city_line[-1].strip().split()[1].strip()
-            country_code = "US"
-            store_number = "<MISSING>"
-            location_type = "Tire Center"
-            if "mobile" in street_address.lower():
-                location_type = street_address
-            try:
-                phone = location.find(class_="storeDetails__contact").span.text.strip()
-            except:
-                phone = "<MISSING>"
-            try:
-                hours_of_operation = (
-                    location.find(class_="storeDetails__information")
-                    .div.text.replace("PM", "PM ")
-                    .strip()
-                )
-            except:
-                hours_of_operation = "<MISSING>"
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-            if "mobile" in street_address.lower():
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+            scraped_urls.append(page_url)
 
-            return_main_object.append(
-                [
-                    locator_domain,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                    link,
-                ]
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
+            if poi:
+                poi = json.loads(poi[0])
+                hoo = loc_dom.xpath(
+                    '//section[@class="storeDetails__hoursInformation"]/div/p/text()'
+                )
+                hoo = " ".join(hoo)
+                location_name = poi["name"]
+                street_address = poi["address"]["streetAddress"]
+                city = poi["address"]["addressLocality"]
+                state = poi["address"]["addressRegion"]
+                zip_code = poi["address"]["postalCode"]
+                phone = poi["telephone"]
+                loc_type = poi["@type"]
+            else:
+                location_name = street_address = loc_dom.xpath(
+                    '//a[@title="Store Details"]/text()'
+                )[-1].strip()[3:]
+                raw_address = loc_dom.xpath(
+                    '//div[@class="storeSearch__resultsSection"]//address[@class="storeDetails__address"]//div[@class="storeDetails__zip"]/text()'
+                )
+                if raw_address:
+                    raw_address = raw_address[0].strip().split(", ")
+                    city = raw_address[0]
+                    state = raw_address[-1].split()[0]
+                    zip_code = raw_address[-1].split()[0]
+                    if len(zip_code) == 2:
+                        zip_code = ""
+                else:
+                    raw_address = loc_dom.xpath(
+                        "//div[@data-locations]//address//text()"
+                    )
+                    raw_address = [e.strip() for e in raw_address if e.strip()]
+                    city = raw_address[-1].split(", ")[0]
+                    state = raw_address[-1].split(", ")[-1].split()[0]
+                    zip_code = raw_address[-1].split(", ")[-1].split()[-1]
+                loc_type = ""
+                hoo = list(
+                    set(
+                        loc_dom.xpath(
+                            '//h6[contains(text(), "Hours")]/following-sibling::div[1]/p/text()'
+                        )
+                    )
+                )
+                hoo = " ".join(hoo)
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code="",
+                store_number="",
+                phone=phone,
+                location_type=loc_type,
+                latitude="",
+                longitude="",
+                hours_of_operation=hoo,
             )
-    return return_main_object
+
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

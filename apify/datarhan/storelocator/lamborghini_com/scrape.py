@@ -5,11 +5,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
     domain = "lamborghini.com"
@@ -22,7 +21,6 @@ def fetch_data():
         street_address = poi["address"].get("address")
         if not street_address:
             continue
-        street_address = street_address if street_address else "<MISSING>"
         addr = parse_address_intl(street_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
@@ -38,13 +36,11 @@ def fetch_data():
             state = poi["address"]["zip"].split()[0]
         store_number = poi["nid"]
         phone = poi.get("contact", {}).get("phone")
-        phone = phone if phone else "<MISSING>"
         location_type = poi["type"]["label"]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["coordinates"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["coordinates"]["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
+        latitude = poi.get("coordinates", {}).get("latitude")
+        longitude = poi.get("coordinates", {}).get("longitude")
+        latitude = latitude.replace(",", ".") if latitude else ""
+        longitude = longitude.replace(",", ".") if longitude else ""
 
         item = SgRecord(
             locator_domain=domain,

@@ -76,7 +76,6 @@ def scrape():
                 {
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.STORE_NUMBER,
                 }
             )
         )

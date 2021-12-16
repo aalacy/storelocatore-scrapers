@@ -8,6 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+DOMAIN = "encompasshealth.com"
 website = "https://encompasshealth.com"
 json_url = f"{website}/api/locationservice/locationsearchresults/no_facet/21.190439,72.87756929999999/1000/1/75000"
 MISSING = SgRecord.MISSING
@@ -17,7 +18,7 @@ headers = {
 }
 
 session = SgRequests()
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def get_var_name(value):
@@ -38,6 +39,20 @@ def get_JSON_object_variable(Object, varNames, noVal=MISSING):
         except Exception:
             return noVal
     if value is None or len(value) == 0:
+        return noVal
+    return value
+
+
+def get_JSON_object_variable_type(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    if value is None:
         return noVal
     return value
 
@@ -98,7 +113,12 @@ def fetch_data():
             count = count - 1
             continue
         store_number = MISSING
-        location_type = MISSING
+
+        location_type_check = get_JSON_object_variable_type(store, "isNew")
+        if location_type_check is False:
+            location_type = MISSING
+        else:
+            location_type = "Coming Soon"
 
         location_name = get_JSON_object_variable(store, "title")
         street_address = get_JSON_object_variable(
@@ -123,7 +143,7 @@ def fetch_data():
             raw_address = raw_address[:-1]
 
         yield SgRecord(
-            locator_domain=website,
+            locator_domain=DOMAIN,
             store_number=store_number,
             page_url=page_url,
             location_name=location_name,
@@ -142,7 +162,7 @@ def fetch_data():
 
 
 def scrape():
-    log.info(f"Start scrapping {website} ...")
+    log.info(f"Start Crawling {website} ...")
     start = time.time()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in fetch_data():

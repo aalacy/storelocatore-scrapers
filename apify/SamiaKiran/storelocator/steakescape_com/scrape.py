@@ -53,19 +53,7 @@ def fetch_data():
                         zip_postal = temp.split('"postalCode":"')[1].split('"')[0]
                         phone = temp.split('"telephone":"')[1].split('"')[0]
                     except:
-
-                        address = (
-                            soup.find("div", {"class": "h7 h8 h9"})
-                            .find("p")
-                            .get_text(separator="|", strip=True)
-                            .split("|")[0]
-                        )
-                        address = address.split(",")
-                        street_address = address[0]
-                        city = address[1]
-                        state = address[2]
-                        zip_postal = MISSING
-                        phone = r.text.split('"telephone":"')[1].split('"')[0]
+                        continue
 
                     try:
                         hours_of_operation = (

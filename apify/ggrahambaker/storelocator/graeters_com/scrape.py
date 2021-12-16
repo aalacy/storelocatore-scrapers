@@ -1,92 +1,141 @@
-import csv
+import usaddress
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent import futures
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def get_urls():
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+    }
+    r = session.get("https://www.graeters.com/sitemap.xml", headers=headers)
+    tree = html.fromstring(r.content)
+    return tree.xpath("//url/loc[contains(text(), '/retail-stores/')]/text()")
 
-def fetch_data():
-    locator_domain = 'https://www.graeters.com/'
-    ext = 'stores/locations-list'
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
+def get_data(url, sgw: SgWriter):
+    locator_domain = "http://graeters.com/"
+    page_url = url
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+    }
+    r = session.get(page_url, headers=headers)
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+    tree = html.fromstring(r.text)
+    ad = "".join(tree.xpath('//address[@class="location-address"]/text()'))
+    if page_url == "https://www.graeters.com/stores/retail-stores/louisville/ferncreek":
+        ad = (
+            "".join(tree.xpath('//p[contains(text(),"located at")]/text()'))
+            .split("located at")[1]
+            .split("and")[0]
+            .strip()
+        )
+    a = usaddress.tag(ad, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+        "None", ""
+    ).strip()
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
+
+    country_code = "US"
+    location_name = "".join(
+        tree.xpath('//div[contains(@class, "location-details")]//h1//text()')
+    )
+    phone = "".join(tree.xpath('//a[@class="location-phone"]/text()')) or "<MISSING>"
+    hours_of_operation = (
+        " ".join(
+            tree.xpath(
+                '//span[text()="Get Directions"]/preceding::ul[1]/li/text() | //span[text()="Get it delivered now"]/preceding::ul[1]/li/text() | //span[text()="Get it delivered now with Uber Eats"]/preceding::ul[1]/li/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+
+    try:
+        latitude = (
+            "".join(tree.xpath('//a[text()="Get Directions"]/@href'))
+            .split("/")[-1]
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            "".join(tree.xpath('//a[text()="Get Directions"]/@href'))
+            .split("/")[-1]
+            .split(",")[1]
+            .strip()
+        )
+    except:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+    p_closed = "".join(tree.xpath('//strong[text()="PERMANENTLY CLOSED"]/text()'))
+    if p_closed:
+        return
+
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=SgRecord.MISSING,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+        raw_address=ad,
+    )
+
+    sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
     session = SgRequests()
-    req = session.get(locator_domain+ext, headers = HEADERS)
-    base = BeautifulSoup(req.text,"lxml")
-
-    hrefs = base.find(class_="column main").find_all("a")
-    link_list = []
-    for a in hrefs:
-        href = a['href']
-        if "retail-stores/" in href:
-            street = str(a).split('> ')[1].split(",")[0]
-            link_list.append([locator_domain+"stores/"+href, street])
-
-    all_store_data = []
-
-    for link_row in link_list:
-        link = link_row[0]
-        req = session.get(link, headers = HEADERS)
-        base = BeautifulSoup(req.text,"lxml")
-
-        coords = base.find(class_="location-button action primary")["href"].split("/")[-1].split(",")
-
-        lat = coords[0]
-        longit = coords[1]
-
-        phone_number = base.find(class_="location-phone").text.strip()
-
-        location_name = base.h1.text.strip()
-
-        street_address = link_row[1].replace("Towne","Town").replace("W. ","West ").replace("E. ","East ").replace("N. ","North ").replace("S. ","South ").replace("147 Easton","142 Easton")
-        if street_address == "6509 Bardstown Road":
-            city = "Louisville"
-            state = "KY"
-            zip_code = "40291"
-        else:
-            addy = base.find(class_="location-address").text.replace("Hwy","Highway").replace("Pike","Pk").replace(" St "," Street ").replace(" Rd "," Road ").replace("N. ","North ").replace(" S. "," South ").replace(" W High"," West High").replace(".,","").replace(street_address,"").strip()
-
-            if addy[:1] == "," or addy[:1] == ".":
-                addy = addy[1:].strip()
-            city, state, zip_code = addy_ext(addy)
-
-        if city == "Suite 116 Beachwood":
-            city = "Beachwood"
-            street_address = street_address + " Suite 116"
-
-        hours = " ".join(list(base.find(class_="widget block block-static-block").ul.stripped_strings)).replace("Temporarily No Bakery","").strip()
-
-        country_code = 'US'
-        page_url = link
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-
-    return all_store_data
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
