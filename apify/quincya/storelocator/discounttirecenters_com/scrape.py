@@ -99,7 +99,7 @@ def fetch_data(sgw: SgWriter):
                 street_address = new_raw_data2[0].split(city)[0].strip()
                 phone = new_raw_data2[1]
 
-        if not hours_of_operation:
+        if not hours_of_operation or "day" not in hours_of_operation:
             hours_of_operation = " ".join(
                 list(base.find(class_="open-hours-data").stripped_strings)
             )
