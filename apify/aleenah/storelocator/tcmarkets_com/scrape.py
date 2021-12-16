@@ -1,134 +1,143 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import usaddress
 import re
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('tcmarkets_com')
-
+logger = SgLogSetup().get_logger("tcmarkets_com")
 
 
 def get_value(item):
-    if item == None or len(item) == 0:
-        item = '<MISSING>'
+    if item is None or len(item) == 0:
+        item = "<MISSING>"
     return item
+
 
 def parse_address(address):
     address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
+
+    street = ""
+    city = ""
+    state = ""
+    zipcode = ""
     for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
+        if addr[1] == "PlaceName":
+            city += addr[0].replace(",", "") + " "
+        elif addr[1] == "ZipCode":
+            zipcode = addr[0].replace(",", "")
+        elif addr[1] == "StateName":
+            state = addr[0].replace(",", "")
         else:
-            street += addr[0].replace(',', '') + ' '
+            street += addr[0].replace(",", "") + " "
     return {
-        'street': get_value(street),
-        'city' : get_value(city),
-        'state' : get_value(state),
-        'zipcode' : get_value(zipcode)
+        "street": get_value(street),
+        "city": get_value(city),
+        "state": get_value(state),
+        "zipcode": get_value(zipcode),
     }
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
+def write_output(data):
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 session = SgRequests()
 
-all=[]
 
 def fetch_data():
     # Your scraper here
 
-
     res = session.get("https://tcmarkets.com/store-finder/")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    stores = soup.find_all('a', {'itemprop': 'url'})
+    soup = BeautifulSoup(res.text, "html.parser")
+    stores = soup.find_all("a", {"itemprop": "url"})
 
     del stores[0]
     for store in stores:
-        url=store.get('href')
+        url = store.get("href")
+
         logger.info(url)
-        if 'https://tcmarkets.com/store-finder/dixon-ace-hardware/' in url:
+        if "https://tcmarkets.com/store-finder/dixon-ace-hardware/" in url:
             continue
         res = session.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        data = soup.find('div', {'class': 'fl-rich-text'}).find_all('p')
-        #data=re.findall(r'Store Address([a-zA-Z0-9,\.\(\)\- #&\']+)Store Hours:([a-zA-Z0-9\. \-:]+)',str(soup).replace('<strong>','').replace('</p>','').replace('<p>','').replace('\n','').replace('</strong>','').replace('<br>','').replace('<br/>','').replace('\xa0','').replace('&nbsp;','').replace('Services Offered:',''))[0]
+        soup = BeautifulSoup(res.text, "html.parser")
+        data = soup.find("div", {"class": "fl-rich-text"}).find_all("p")
 
         for p in data:
-            if 'Store Address' in p.text:
-                addr=p
-        phone=""
-        if 'Hours' not in addr.text:
+            if "Store Address" in p.text:
+                addr = p
+
+        phone = ""
+        if "Hours" not in addr.text:
             ad = addr
             tim = data[data.index(addr) + 1].text.strip()
-            addr=addr.text.strip()
-            p = re.findall(r'\([\d]{3}\)[\d \-]+', tim)
+            addr = addr.text.strip()
+            p = re.findall(r"\([\d]{3}\)[\d \-]+", tim)
             logger.info(p)
             if p != []:
                 phone = p[0]
-                
+
                 tim = data[data.index(ad) + 2].text.strip()
         else:
 
-            addr=addr.text.strip()
-            tim = re.findall('Store Hours:(.*)', addr, re.DOTALL)[0]
+            addr = addr.text.strip()
+            tim = re.findall("Store Hours:(.*)", addr, re.DOTALL)[0]
 
-            addr = addr.replace(tim, '')
+            addr = addr.replace(tim, "")
 
-        if phone=='':
-            phone = re.findall(r'\([\d]{3}\)[\d \-]+',addr)[0]
+        if phone == "":
+            phone = re.findall(r"\([\d]{3}\)[\d \-]+", addr)[0]
 
-        tim=' '.join(tim.replace('Store Hours:','').strip().split('\n'))
-        addr=' '.join(addr.replace('Store Address','').replace(phone,'').strip().split('\n'))
+        tim = " ".join(tim.replace("Store Hours:", "").strip().split("\n"))
+
+        addr = " ".join(
+            addr.replace("Store Address", "").replace(phone, "").strip().split("\n")
+        )
+
         parsed_address = parse_address(addr)
-        city = parsed_address['city']
-        state = parsed_address['state']
-        zip = parsed_address['zipcode']
-        street = parsed_address['street']
+        city = parsed_address["city"]
+        state = parsed_address["state"]
+        zip = parsed_address["zipcode"]
+        street = parsed_address["street"]
+        if city == "<MISSING>" and state == "<MISSING>" and zip == "<MISSING>":
+            for p in data:
+                if "Store Address" in p.text:
+                    addr = p.text + ", " + data[data.index(p) + 1].text
+                    break
+            addr = addr.replace(phone, "").strip()
+            parsed_address = parse_address(addr)
+            city = parsed_address["city"]
+            state = parsed_address["state"]
+            zip = parsed_address["zipcode"]
 
-        loc=city
-        if loc=='<MISSING>':
-            loc=url.strip().strip('/').split('/')[-1].replace('-',' ').upper()
+        loc = city
+        if loc == "<MISSING>":
+            loc = url.strip().strip("/").split("/")[-1].replace("-", " ").upper()
 
+        yield SgRecord(
+            locator_domain="https://tcmarkets.com",
+            page_url=url,
+            location_name=loc,
+            street_address=street,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code="US",
+            store_number="<MISSING>",
+            phone=phone,
+            location_type="<MISSING>",
+            latitude="<MISSING>",
+            longitude="<MISSING>",
+            hours_of_operation=tim,
+        )
 
-        all.append([
-
-            "https://tcmarkets.com",
-            city,
-            street,
-            city,
-            state,
-            zip,
-            "US",
-            "<MISSING>",  # store #
-            phone,  # phone
-            "<MISSING>",  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
-            tim,  # timing
-            url])
-
-
-
-    return all
 
 def scrape():
     data = fetch_data()

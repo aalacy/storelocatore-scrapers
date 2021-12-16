@@ -1,188 +1,134 @@
-import csv
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+import re
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-DOMAIN = "americasbest.com"
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
-    items = []
-    scraped_items = []
+    domain = "arcb.com"
+    start_url = "https://arcb.com/ajax/apipassthrough/passthrough.html"
 
-    DOMAIN = "arcb.com"
-    start_url = "https://arcb.com/tools/service-search.html"
-    session.get(start_url)
-
-    suggest_forzip_body = '{"accountForConsigneeRoutingExceptions":false,"paymentTerms":"NotSpecified","isConsigneeCodingRequired":false,"isThirdPartyCodingRequired":false,"isFourthPartyCodingRequired":false,"isRemitToPartyCodingRequired":false,"isOtherPartyCodingRequired":false,"shipper":{"locationToCode":{"city":"","state":"","zip":"%s","country":"%s","allowPoBoxes":false,"allowNotServedLocations":false}}}'
-    suggest_url = "https://arcb.com/ajax/apipassthrough/passthrough.html"
-    sug_headers = {
-        "authority": "arcb.com",
-        "accept": "application/json, text/plain, */*",
-        "content-type": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
-        "x-abf-api-destination": "https://apps.abf.com/api/coding/",
+    session.get("https://arcb.com/shipping-tools/international-coverage-area")
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Authorization": "Bearer DHL6KC8Y",
+        "X-Visitor-Session": "9AE3C720B68A9B7C",
+        "X-ABF-API-Destination": "https://apps.abf.com/api/global-network/global-locations",
+        "DNT": "1",
     }
+    session.get("https://arcb.com/user/json2", headers=hdr)
 
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-        max_radius_miles=20,
-        max_search_results=None,
-    )
+    data = session.get(start_url, headers=hdr).json()
+    for poi in data["locations"]:
+        if poi["physicalCountry"] in ["United States", "Canada"]:
+            continue
+        page_url = "https://arcb.com/shipping-tools/international-coverage-area"
+        street_address = poi["physicalAddress1"]
+        if poi["physicalAddress2"]:
+            street_address += ", " + poi["physicalAddress2"]
+        if not street_address:
+            street_address = poi["mailingAddress"]
 
-    for code in all_codes:
-        if len(code.split()[0]) > 3:
-            body = suggest_forzip_body % (code.replace(" ", "+"), "US")
-        else:
-            body = suggest_forzip_body % (code + "0A1", "CA")
-        sug_response = session.post(suggest_url, data=body, headers=sug_headers)
-        if not sug_response.text:
-            continue
-        sug_data = sug_response.json()
-        if "Invalid ZIP Code" in sug_response.text:
-            continue
-        if "This location is not served" in sug_response.text:
-            continue
-        if "We do not pickup from or deliver to PO Boxes" in sug_response.text:
-            continue
-        if sug_data["errors"]:
-            if not sug_data["errors"][0].get("similarZips"):
-                continue
-        if not sug_data["codedShipperLocation"]:
-            multi_result = sug_data["errors"][0]["similarZips"][0]
-            city = multi_result["city"]
-            country = multi_result["country"]
-            state = multi_result["state"]
-            zip_code = multi_result["zipRangeHigh"]
-        else:
-            city = sug_data["codedShipperLocation"]["city"]
-            country = sug_data["codedShipperLocation"]["country"]
-            state = sug_data["codedShipperLocation"]["state"]
-            zip_code = sug_data["codedShipperLocation"]["zip"]
-
-        results_url = "https://arcb.com/ajax/apipassthrough/passthrough.html?city={}&country={}&state={}&zip={}"
-        results_url = results_url.format(
-            city.replace(" ", "+"), country, state, zip_code.replace(" ", "+")
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["displayName"],
+            street_address=street_address,
+            city=poi["physicalCity"],
+            state=poi["physicalState"],
+            zip_postal=poi["physicalZip"],
+            country_code=poi["physicalCountry"],
+            store_number=SgRecord.MISSING,
+            phone=poi["phone"],
+            location_type=SgRecord.MISSING,
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation=SgRecord.MISSING,
         )
-        api_path = "https://apps.abf.com/api/abf-network/routing?city={}&country={}&state={}&zip={}"
-        api_path = api_path.format(
-            city.replace(" ", "+"), country, state, zip_code.replace(" ", "+")
+
+        yield item
+
+    all_locations = []
+    start_url = "https://arcb.com/coverage-area/us-shipping"
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    all_urls = dom.xpath('//nav[@id="block-coveragearealocalnav"]//a/@href')
+    for url in all_urls:
+        response = session.get(urljoin(start_url, url))
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//div[@class="stations"]//a/@href')
+        all_locations += dom.xpath(
+            '//a[@class="expanded dropdown gtm" and contains(@href, "/coverage-area/")]/@href'
         )
-        results_headers = {
-            "authority": "arcb.com",
-            "accept": "application/json, text/plain, */*",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
-            "x-abf-api-destination": api_path,
-        }
-        results_response = session.get(results_url, headers=results_headers)
-        results_headers = {
-            "accept": "application/json, text/plain, */*",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
-            "x-abf-api-destination": "https://apps.abf.com/api/abf-network/routing?city=BEVERLY+HILLS&country=US&state=CA&zip=90210",
-        }
-        results_data = results_response.json()
-        if not results_data.get("locations"):
+        all_urls += dom.xpath(
+            '//h2[contains(text(), "Canadian Service Centers")]/following-sibling::ul//a/@href'
+        )
+
+    for url in list(set(all_locations)):
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        if loc_response.status_code != 200:
             continue
+        loc_dom = etree.HTML(loc_response.text)
+        raw_adr = loc_dom.xpath(
+            '//h4[contains(text(), "Address")]/following-sibling::div/text()'
+        )[:3]
+        phone = loc_dom.xpath(
+            '//h4[contains(text(), "Phone Number")]/following-sibling::div/text()'
+        )
+        phone = phone[0] if phone else ""
+        geo = re.findall(r"LatLng\((.+?)\);", loc_response.text)
+        if not geo:
+            continue
+        geo = geo[0].split(", ")
 
-        for poi in results_data["locations"]:
-            detail_url = "https://arcb.com/ajax/apipassthrough/passthrough.html"
-            api_path_detail = (
-                "https://apps.abf.com/api/abf-network/stations/{}/detailed".format(
-                    poi["station"]["stationNumber"]
-                )
-            )
-            detail_headers = {
-                "accept": "application/json, text/plain, */*",
-                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
-                "x-abf-api-destination": api_path_detail,
-            }
-            detail_response = session.get(detail_url, headers=detail_headers)
-            detail_data = detail_response.json()
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=loc_dom.xpath("//h1/text()")[0],
+            street_address=raw_adr[0],
+            city=raw_adr[1].split(", ")[0],
+            state=raw_adr[1].split(", ")[-1].split()[0],
+            zip_postal=raw_adr[1].split(", ")[-1].split()[1],
+            country_code=raw_adr[-1],
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=geo[0],
+            longitude=geo[1],
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-            store_url = "<MISSING>"
-            location_name = "{}, {} Service Center".format(
-                detail_data["station"]["title"],
-                detail_data["station"]["location"]["state"],
-            )
-            location_name = location_name if location_name else "<MISSING>"
-            street_address = detail_data["station"]["location"]["address"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = detail_data["station"]["location"]["city"]
-            city = city if city else "<MISSING>"
-            state = detail_data["station"]["location"]["state"]
-            state = state if state else "<MISSING>"
-            zip_code = detail_data["station"]["location"]["zip"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = detail_data["station"]["location"]["country"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = detail_data["station"]["stationNumber"]
-            phone = detail_data["station"]["interstatePhone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            if store_number not in scraped_items:
-                scraped_items.append(store_number)
-                items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

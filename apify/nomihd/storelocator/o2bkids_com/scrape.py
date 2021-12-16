@@ -5,6 +5,8 @@ from sgscrape.sgwriter import SgWriter
 from sglogging import sglog
 import lxml.html
 import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "o2bkids.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -22,7 +24,7 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="locations"]/ul/li')
     for store in stores:
-        if "Coming soon" not in "".join(store.xpath("h2/a/text()")).strip():
+        if "coming soon" not in "".join(store.xpath("h2/a/text()")).strip().lower():
             page_url = "".join(store.xpath("h2/a/@href")).strip()
             locator_domain = website
             log.info(page_url)
@@ -135,7 +137,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

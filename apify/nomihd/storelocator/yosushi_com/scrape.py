@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
@@ -27,13 +27,15 @@ def fetch_data():
 
         stores = stores_sel.xpath('//div[@class="restaurant-list"]/div')
         for store in stores:
+            location_type = "<MISSING>"
+
             if (
                 "Kiosk"
                 in "".join(
                     store.xpath('.//div[@class="restaurant-card__badge"]/text()')
                 ).strip()
             ):
-                continue
+                location_type = "Kiosk"
 
             page_url = (
                 "https://yosushi.com"
@@ -44,16 +46,23 @@ def fetch_data():
                 ).strip()
             )
             log.info(page_url)
-            store_req = session.get(page_url, headers=headers)
+            try:
+                store_req = SgRequests.raise_on_err(
+                    session.get(page_url, headers=headers)
+                )
+            except SgRequestError as e:
+                log.info(e.status_code)
+                continue
+
             store_sel = lxml.html.fromstring(store_req.text)
 
-            store_json = json.loads(
-                "".join(
-                    store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                ).strip()
-            )
+            json_str = "".join(
+                store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            ).strip()
+            if len(json_str) <= 0:
+                continue
+            store_json = json.loads(json_str)
 
-            location_type = "<MISSING>"
             location_name = store_json["name"]
 
             locator_domain = website

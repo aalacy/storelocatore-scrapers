@@ -1,4 +1,3 @@
-import re
 import ssl
 from lxml import etree
 
@@ -19,10 +18,10 @@ else:
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.sals-pizza.com/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "sals-pizza.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -33,6 +32,8 @@ def fetch_data():
         '//div[div[div[div[p[contains(text(), "LOCATIONS")]]]]]/following-sibling::ul/li/a/@href'
     )
     for store_url in all_locations:
+        if "coming-soon" in store_url:
+            continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
         raw_address = loc_dom.xpath(
@@ -45,9 +46,12 @@ def fetch_data():
             '//div[h1[span[span[contains(text(), "Hours")]]]]/following-sibling::div[@data-testid="richTextElement"][1]//text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).split("*")[0].strip()
         if "Store hours" in hoo:
             hoo = SgRecord.MISSING
+        zip_code = raw_address[1].split(", ")[-1].split()[-1]
+        if len(zip_code.strip()) == 2:
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -56,7 +60,7 @@ def fetch_data():
             street_address=raw_address[0],
             city=raw_address[1].split(", ")[0],
             state=raw_address[1].split(", ")[-1].split()[0],
-            zip_postal=raw_address[1].split(", ")[-1].split()[-1],
+            zip_postal=zip_code,
             country_code=SgRecord.MISSING,
             store_number=SgRecord.MISSING,
             phone=phone,

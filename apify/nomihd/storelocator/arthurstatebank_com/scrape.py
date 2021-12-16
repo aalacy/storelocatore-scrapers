@@ -4,6 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "arthurstatebank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -32,7 +34,7 @@ def fetch_data():
         location_type = "Branch"
         locator_domain = website
         raw_info = store_sel.xpath(
-            '//div[@class="et_pb_module et_pb_text et_pb_text_1  et_pb_text_align_left et_pb_bg_layout_light"]/div/p/text()'
+            '//div[@class="et_pb_module et_pb_text et_pb_text_1 et_pb_text_align_left et_pb_bg_layout_light"]/div/p/text()'
         )
         phone = raw_info[2].strip().replace("Phone:", "").strip()
         street_address = raw_info[0].strip()
@@ -42,7 +44,7 @@ def fetch_data():
         hours_of_operation = (
             "; ".join(
                 store_sel.xpath(
-                    '//div[@class="et_pb_module et_pb_text et_pb_text_3  et_pb_text_align_left et_pb_bg_layout_light"]/div/p[1]/text()'
+                    '//div[@class="et_pb_module et_pb_text et_pb_text_3 et_pb_text_align_left et_pb_bg_layout_light"]/div/p[1]/text()'
                 )
             )
             .strip()
@@ -51,7 +53,7 @@ def fetch_data():
         )
         if "ATM Only:" in "".join(
             store_sel.xpath(
-                '//div[@class="et_pb_module et_pb_text et_pb_text_3  et_pb_text_align_left et_pb_bg_layout_light"]/div/p[1]/b/text()'
+                '//div[@class="et_pb_module et_pb_text et_pb_text_3 et_pb_text_align_left et_pb_bg_layout_light"]/div/p[1]/b/text()'
             )
         ):
             location_type = "ATM Only"
@@ -95,7 +97,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,38 +1,14 @@
-import csv
-
 from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -65,25 +41,32 @@ def fetch_data():
             base = BeautifulSoup(req.text, "lxml")
 
             if not phone:
-                phone = base.find(class_="b-map-detail__phones").a.text
+                try:
+                    phone = base.find(class_="b-map-detail__phones").a.text
+                except:
+                    phone = ""
             if not location_type:
                 location_type = base.find(
                     class_="b-map-detail__list-services"
                 ).text.strip()
             if not hours_of_operation or hours_of_operation == "Closed":
-                hours_of_operation = (
-                    base.find(class_="b-map-detail__phones")
-                    .find_all("div")[-1]
-                    .text.replace("Opening Hours", "")
-                    .split(" Get")[0]
-                    .strip()
-                )
-                if (
-                    "day" not in hours_of_operation
-                    and "pm" not in hours_of_operation
-                    and "24" not in hours_of_operation
-                ):
-                    hours_of_operation = "<MISSING>"
+                try:
+                    hours_of_operation = (
+                        base.find(class_="b-map-detail__phones")
+                        .find_all("div")[-1]
+                        .text.replace("Opening Hours", "")
+                        .split(" Get")[0]
+                        .strip()
+                    )
+                    if (
+                        "day" not in hours_of_operation
+                        and "pm" not in hours_of_operation
+                        and "24" not in hours_of_operation
+                    ):
+                        hours_of_operation = "<MISSING>"
+                except:
+                    hours_of_operation = ""
+                    link = "https://www.cemex.co.uk/find-your-location.aspx"
         else:
             link = "https://www.cemex.co.uk/find-your-location.aspx"
             phone = "<MISSING>"
@@ -91,28 +74,29 @@ def fetch_data():
         if not location_type:
             location_type = "<MISSING>"
 
-        # Store data
-        yield [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS})
+    )
+) as writer:
+    fetch_data(writer)

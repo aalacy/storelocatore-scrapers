@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("groupeadonis")
 
@@ -14,10 +16,13 @@ _headers = {
 
 def _coord(locs, phone):
     coord = ["", ""]
+    _addr = ""
     for _ in locs:
         if phone in _:
             coord = _[4].split(",")
-    return coord
+            _addr = _[2]
+            break
+    return coord, _addr
 
 
 def fetch_data():
@@ -27,16 +32,16 @@ def fetch_data():
     with SgRequests() as session:
         locs = session.get(json_url, headers=_headers).json()
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("table")[1].select("tbody tr")
+        links = soup.select("div#stores table")[1].select("tbody tr")
         logger.info(f"{len(links)} found")
         for link in links:
             td = link.select("td")
             page_url = locator_domain + td[-1].a["href"]
             logger.info(page_url)
+            phone = td[2].text.strip()
+            coord, _addr = _coord(locs, phone)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = parse_address_intl(
-                " ".join(list(sp1.select_one("div.store p").stripped_strings)[:2])
-            )
+            addr = parse_address_intl(_addr)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -45,8 +50,6 @@ def fetch_data():
                 if hh.select("td")[1].text.strip():
                     hours.append(":".join(hh.stripped_strings))
             location_name = td[0].text.strip()
-            phone = td[2].text.strip()
-            coord = _coord(locs, phone)
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -64,7 +67,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
