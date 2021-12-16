@@ -32,7 +32,10 @@ def fetch_records(search):
             res = http.get(url, headers=headers)
             if res.status_code != 200:
                 continue
-            locations = res.json()
+            try:
+                locations = res.json()
+            except:
+                continue
             if "dealers" in locations:
                 if locations["dealers"]:
                     search.found_location_at(lat, lng)

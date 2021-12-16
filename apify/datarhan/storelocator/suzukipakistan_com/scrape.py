@@ -41,13 +41,16 @@ def fetch_data():
             )
         if phone and len(phone) > 14 and "(" not in phone:
             phone = phone.split()[0]
+        city = addr.city
+        if city and city.endswith("."):
+            city = city[:-1]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=poi["TitlePart"]["Title"],
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
             zip_postal=addr.postcode,
             country_code="Pakistan",

@@ -72,6 +72,7 @@ def get_response(url):
         r = http.get(url, headers=headers_c)
         try:
             if r.status_code == 200:
+                logger.info(f"HTTP status code: {r.status_code} for {url}")
                 return r
             raise Exception(f"Please fix {url}")
         except Exception as e:
@@ -105,12 +106,13 @@ def get_response_custom(url):
 def gen_main_cat_urls():
     main_cat_urls = []
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.SPAIN], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.SPAIN], expected_search_radius_miles=20
     )
     for k, v in MAIN_CATEGORY_KEYWORDS.items():
         for dzip in search:
             cat_url = f"https://www.yelp.com/search?cflt={v}&find_loc={dzip}%2C%20{COUNTRY_TO_BE_CRAWLED}"
             main_cat_urls.append(cat_url)
+    logger.info(f"Total Search URLs: {len(main_cat_urls)}")
     return main_cat_urls
 
 
@@ -346,6 +348,11 @@ def fetch_records(sunum, surl):
             matched_category = ", ".join(matched_categories_list)
         else:
             matched_category = MISSING
+        cat = " ".join(category.split())
+        if cat:
+            category = category
+        else:
+            category = MISSING
         row = [
             vk_id,
             category,
@@ -386,6 +393,7 @@ def fetch_data():
 
     # Step 3 - get store urls
     store_urls = get_store_urls(paginated_urls)
+
     logger.info(f"Total Store Count: {len(store_urls)}")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
