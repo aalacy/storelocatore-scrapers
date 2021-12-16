@@ -1,37 +1,92 @@
+from bs4 import BeautifulSoup
 import re
-from string import capwords
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-import base
-import requests, json
-from urllib.parse import urljoin
-from lxml import html
-crawled = []
-class Scrape(base.Spider):
-
-    def crawl(self):
-        base_url = "https://www.georgiosofp.com/locations1"
-        body = html.fromstring(requests.get(base_url).text).xpath('//div[contains(@class, "row")][contains(@class, "sqs-row")]/div[contains(@class, "col")]/div[contains(@class, "sqs-block")][contains(@class, "html-block")][div/h2]')
-        for result in body:
-            i = base.Item(result)
-            i.add_value('locator_domain', base_url)
-            i.add_xpath('location_name', './div/h2/text()', base.get_first, capwords)
-            i.add_xpath('phone', '//div[@class="contact"]/div[@class="tel"]/a/text()', base.get_first)
-            try:
-                i.add_xpath('latitude', './div/p/a[1]/@href', base.get_first, lambda x: x.split('@')[1].split(',')[0])
-                i.add_xpath('longitude', './div/p/a[1]/@href', base.get_first, lambda x: x.split('@')[1].split(',')[1])
-            except:
-                pass
-            i.add_xpath('phone', './div/p/text()[2]', base.get_first, lambda x: x.strip())
-            czs_re = re.findall(r'(?P<street>.+?),?\s(?P<city>{}.+?),\s(?P<state>[A-Z][A-Z])\s(?P<zip>.+)'.format(capwords(i.as_dict()['location_name'][:3])), result.xpath('./div/p/text()[1]')[0])
-            i.add_value('street_address', czs_re[0][0], lambda x: x.replace('\t', '').strip())
-            i.add_value('city', czs_re[0][1], lambda x: x.replace('\t', '').strip())
-            i.add_value('state', czs_re[0][2])
-            i.add_value('zip', czs_re[0][3])
-            i.add_value('country_code', 'US')
-            i.add_xpath('hours_of_operation', '//div[h4]//text()[preceding-sibling::b[1][text()="Hours:"]][1]', base.get_first, lambda x: x.replace('|', ';'))
-            yield i
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
-if __name__ == '__main__':
-    s = Scrape()
-    s.run()
+def fetch_data():
+
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://www.georgiosofp.com/locations1"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("div", {"class": "sqs-block-content"})
+
+    for div in divlist:
+
+        if "MAPMENU" in div.text:
+            pass
+        else:
+            continue
+        content = re.sub(cleanr, "\n", str(div))
+        content = re.sub(pattern, "\n", str(content)).strip().splitlines()
+        title = content[0]
+        address = content[1]
+        try:
+            street, city, state = address.split(", ", 2)
+        except:
+            street, state = address.split(", ", 1)
+            city = street.strip().split(" ")[-1]
+            street = street.replace(city, "")
+        try:
+            state, pcode = state.strip().split(" ", 1)
+        except:
+            pcode = "<MISSING>"
+        phone = content[2]
+
+        try:
+            lat, longt = (
+                div.select_one("a[href*=maps]")["href"]
+                .split("@", 1)[1]
+                .split("data", 1)[0]
+                .split(",", 1)
+            )
+
+            longt = longt.split(",", 1)[0]
+        except:
+            lat = longt = "<MISSING>"
+        if len(state) > 3:
+            street = street + " " + city
+            city = state
+            temp, pcode = pcode.split(", ")
+            city = city + " " + temp
+            state, pcode = pcode.split(" ", 1)
+        yield SgRecord(
+            locator_domain="https://www.georgiosofp.com/",
+            page_url=url,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=SgRecord.MISSING,
+        )
+
+
+def scrape():
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
+
+scrape()

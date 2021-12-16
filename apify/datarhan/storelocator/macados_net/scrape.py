@@ -22,8 +22,13 @@ def fetch_data():
         street_address = poi["address"]
         if poi["address2"]:
             street_address += " " + poi["address2"]
-        hoo = etree.HTML(poi["hours"]).xpath("//text()")
+        hoo = []
+        if poi["hours"]:
+            hoo = etree.HTML(poi["hours"]).xpath("//text()")
         hoo = " ".join(hoo)
+        location_type = ""
+        if poi["temp_closed"] == "1":
+            location_type = "Temporarily closed"
 
         item = SgRecord(
             locator_domain=domain,
@@ -36,7 +41,7 @@ def fetch_data():
             country_code=poi["country"],
             store_number="",
             phone=poi["phone"],
-            location_type="",
+            location_type=location_type,
             latitude=poi["lat"],
             longitude=poi["lng"],
             hours_of_operation=hoo,

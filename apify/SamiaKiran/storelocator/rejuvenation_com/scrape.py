@@ -1,3 +1,4 @@
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -29,22 +30,41 @@ def fetch_data():
         for loc in loclist[:-1]:
             temp = loc.findAll("p")
             location_name = temp[1].text
-            address = temp[2].get_text(separator="|", strip=True).split("|")
-            street_address = address[0]
-            address = address[1].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
             phone = temp[3].text
             hours_of_operation = (
                 temp[5].get_text(separator="|", strip=True).replace("|", " ")
             )
-
             page_url = "https://www.rejuvenation.com" + str(
                 loc.findAll("button")[1]["onclick"]
             ).replace("window.location.href = '", "").replace("';", "")
             log.info(page_url)
+            raw_address = temp[2].get_text(separator="|", strip=True).replace("|", " ")
+            address = raw_address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -61,6 +81,7 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
