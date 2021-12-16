@@ -22,10 +22,15 @@ def fetch_data():
                 " ".join(bs(_["a"], "lxml").stripped_strings)
                 .replace("&nbsp;", " ")
                 .replace("&#8217;", "'")
+                .split("(")[0]
+                .strip()
             )
             if "Canada" not in raw_address:
                 raw_address += ", Canada"
             addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             hours = []
             hr = list(bs(_["h"], "lxml").stripped_strings)
             if hr:
@@ -40,11 +45,7 @@ def fetch_data():
                 page_url=_["url"],
                 store_number=_["id"],
                 location_name=raw_address,
-                street_address=_["t"]
-                .replace("&nbsp;", " ")
-                .replace("&#8217;", "'")
-                .split("(")[0]
-                .strip(),
+                street_address=street_address.replace("Canada", ""),
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
