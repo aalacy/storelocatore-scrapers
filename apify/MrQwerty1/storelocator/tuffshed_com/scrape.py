@@ -33,6 +33,10 @@ def fetch_data(sgw: SgWriter):
 
         hours = j.get("openingHours") or []
         hours_of_operation = ";".join(hours)
+        if not hours_of_operation and not latitude:
+            continue
+        if not hours_of_operation:
+            hours_of_operation = "Closed"
 
         row = SgRecord(
             page_url=page_url,
@@ -59,7 +63,7 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
-        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCIsImtpZCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCJ9.eyJhdWQiOiJhcGk6Ly9hcGkucHJkLnR1ZmZzaGVkLmlvIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZTY5MzAwZGUtZjQ5NC00Y2Y2LTliMmMtMTVlNzA2MzY2Y2Q5LyIsImlhdCI6MTYzNjczODMyMCwibmJmIjoxNjM2NzM4MzIwLCJleHAiOjE2MzY3NDIyMjAsImFpbyI6IkUyWmdZTkNUZUIzYmZ5N2pmUGE2VzN1czV6TE9Bd0E9IiwiYXBwaWQiOiI5YzM3Njc4ZS0wOTc4LTQ2M2MtOGY1Ny0wOTFlMWQ1NDdkZjciLCJhcHBpZGFjciI6IjEiLCJncm91cHMiOlsiY2M3YThhYWYtNjQ2Ni00NjRiLTlkOTMtZTM4ZWQ5MWZiOWUxIiwiOWJjNjczNDEtMDZiOS00YmNiLWFmMWItMGNkYzYxMWNlYjQxIl0sImlkcCI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0L2U2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOS8iLCJvaWQiOiJkNzkxZmMzNi1mOGVhLTQ4MjgtOGE4Mi0zYzhlOGZjYWIyNzgiLCJyaCI6IjAuQVRnQTNnQ1Q1cFQwOWt5YkxCWG5CalpzMlk1bk41eDRDVHhHajFjSkhoMVVmZmM0QUFBLiIsInN1YiI6ImQ3OTFmYzM2LWY4ZWEtNDgyOC04YTgyLTNjOGU4ZmNhYjI3OCIsInRpZCI6ImU2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOSIsInV0aSI6Ijg5N3FsdjdnU1UtVTR2b3BvbkVoQUEiLCJ2ZXIiOiIxLjAifQ.JQnqUyaxI2lThDc3EKyCKaHHkwzpeTyxJ4HvNas24MyzsxfbDkzKQDWx09VHXDnIaV5JqUBxmm5xhg13L6a3GI22lJ3sRTIPcRE0eZ4k8Hnm-RC-WIYEuUTbCFFcNEHe_Bw-JVyvmHy0YgpTJmlvdHeaZxelGMs7Ne04sKai5kMdMFNmgAZZ7SpZnNfv8j-KxCCXBjEMNZzJq3gzWVFgXEgV4BFCQyi7qMhAxgQ31lsrjfyX8bxgqb_A5HDHgcLFcRHAVF01tk0zH1diJu022MHse3QKwv8sPGJbVKRlr5O0BjgbtbR7-McgPZBQkq8GSmSweIOANsVJrVxUDINE5w",
+        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCIsImtpZCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCJ9.eyJhdWQiOiJhcGk6Ly9hcGkucHJkLnR1ZmZzaGVkLmlvIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZTY5MzAwZGUtZjQ5NC00Y2Y2LTliMmMtMTVlNzA2MzY2Y2Q5LyIsImlhdCI6MTYzOTExMjgzMCwibmJmIjoxNjM5MTEyODMwLCJleHAiOjE2MzkxMTY3MzAsImFpbyI6IkUyWmdZSWo3OXVxZnczazJWeGxoODMyTEJYWW9Bd0E9IiwiYXBwaWQiOiI5YzM3Njc4ZS0wOTc4LTQ2M2MtOGY1Ny0wOTFlMWQ1NDdkZjciLCJhcHBpZGFjciI6IjEiLCJncm91cHMiOlsiY2M3YThhYWYtNjQ2Ni00NjRiLTlkOTMtZTM4ZWQ5MWZiOWUxIiwiOWJjNjczNDEtMDZiOS00YmNiLWFmMWItMGNkYzYxMWNlYjQxIl0sImlkcCI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0L2U2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOS8iLCJvaWQiOiJkNzkxZmMzNi1mOGVhLTQ4MjgtOGE4Mi0zYzhlOGZjYWIyNzgiLCJyaCI6IjAuQVRnQTNnQ1Q1cFQwOWt5YkxCWG5CalpzMlk1bk41eDRDVHhHajFjSkhoMVVmZmM0QUFBLiIsInN1YiI6ImQ3OTFmYzM2LWY4ZWEtNDgyOC04YTgyLTNjOGU4ZmNhYjI3OCIsInRpZCI6ImU2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOSIsInV0aSI6Ilg0eU5MZno1dmtXTE1kNFZTNEl5QUEiLCJ2ZXIiOiIxLjAifQ.KUo2Mb4b_cP9jU5uZnRBKlPh_FmsnT6P7O1STYi-6ofZmt_ad2bMAF15U6v5xxgCQ4ExyakhMSb4yGUeU3uh65Zylh5uDs2uMyba_31VzSuOgUCfvuaXkeIrr3O7cR_QpXc1nBHrQIh31mOpCIRuFBHDZFpmNLeeyd2ShCyOeHF5brVz3uHM2QnIrzKtJXObEc7OiasxhPsVz5Ijy5GwplHvs1ZE0sqM0apAESwZagWomSqtn-pzB5SykLBs84LCx9uKq7fVC91k52PSO0hJ_kk0NAjlwIMsgs08gYE78r9xCchVJi3lWus4awLzfwOXLaRI2LJQLsTkV_8V4WDSoA",
         "Origin": "https://www.tuffshed.com",
         "Connection": "keep-alive",
         "Referer": "https://www.tuffshed.com/",

@@ -9,14 +9,14 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "soccerpost_com"
+website = "toarminas_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
-DOMAIN = "https://soccerpost.com/"
+DOMAIN = "https://toarminas.com/"
 MISSING = SgRecord.MISSING
 
 
@@ -31,6 +31,7 @@ def fetch_data():
     loclist = json.loads(state)["KOObject"][0]["locations"]
 
     for loc in loclist:
+        location_type = MISSING
         page_url = loc["locationUrl"]
         log.info(page_url)
         location_name = loc["title"]

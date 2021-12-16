@@ -18,7 +18,7 @@ def fetch_data():
     website = "bpgroupusa.com"
     name = "<MISSING>"
     add = "<MISSING>"
-    loc = "<MISSING>"
+    loc = "https://www.bpgroupusa.com/OurLocations.html"
     city = "<MISSING>"
     state = "<MISSING>"
     zc = "<MISSING>"
@@ -58,6 +58,7 @@ def fetch_data():
                 .replace("<br />", "")
                 .replace("  ", " ")
             )
+            zc = zc.replace("JAPAN", "").strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -90,9 +91,24 @@ def fetch_data():
                 .split("<")[0]
                 .replace("OJ8", "0J8")
             )
+        if (
+            LocFound
+            and '<li><a href="https://www.google.com/maps/dir/?api=1&destination='
+            in line
+        ):
+            lat = line.split(
+                '<li><a href="https://www.google.com/maps/dir/?api=1&destination='
+            )[1].split(",")[0]
+            lng = (
+                line.split(
+                    '<li><a href="https://www.google.com/maps/dir/?api=1&destination='
+                )[1]
+                .split(",")[1]
+                .split('"')[0]
+            )
         if '<li><a href="callto:' in line:
             phone = line.split('<li><a href="callto:')[1].split('"')[0]
-
+    zc = zc.replace("JAPAN", "").strip()
     yield SgRecord(
         locator_domain=website,
         page_url=loc,

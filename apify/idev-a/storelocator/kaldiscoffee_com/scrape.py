@@ -59,9 +59,6 @@ def fetch_data():
                     )
                 else:
                     _hr = sp1.find("", string=re.compile(r"Fall(.)hours", re.I))
-                    import pdb
-
-                    pdb.set_trace()
                     _hp = _hr.find_parent("p")
                     if not _hp:
                         _hp = _hr.find_parent("h6")
@@ -75,6 +72,11 @@ def fetch_data():
                                 continue
                             temp.append("; ".join(hh.stripped_strings))
                         hours = "; ".join(temp)
+
+            if not hours:
+                import pdb
+
+                pdb.set_trace()
             try:
                 coord = (
                     sp1.select("iframe")[-1]["src"]
@@ -92,7 +94,18 @@ def fetch_data():
                         .split("!3d")[::-1]
                     )
                 except:
-                    coord = ["", ""]
+                    try:
+                        coord = (
+                            sp1.select("iframe")[-1]["src"]
+                            .split("&ll=")[1]
+                            .split("&spn")[0]
+                            .split(",")
+                        )
+                    except:
+                        coord = ["", ""]
+                        import pdb
+
+                        pdb.set_trace()
             phone = ""
             try:
                 street_address = sp1.select_one(".street-address").text.strip()
@@ -245,7 +258,8 @@ def fetch_data():
                 hours_of_operation=hours.split("Open")[0]
                 .split("Bulk")[0]
                 .replace("–", "-")
-                .replace("\xa0", " "),
+                .replace("\xa0", " ")
+                .replace("Normal Hours:", ""),
             )
 
 
