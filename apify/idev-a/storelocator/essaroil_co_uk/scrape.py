@@ -40,7 +40,7 @@ def fetch_data():
                 if "Telephone" in _p:
                     phone = _p.split(":")[-1]
                 elif "Opening times" in _p:
-                    hours = _p.split(":")[-1]
+                    hours = _p.replace("Opening times:", "").replace("and", "; ")
 
             coord = (
                 sp1.h1.find_next_sibling()
