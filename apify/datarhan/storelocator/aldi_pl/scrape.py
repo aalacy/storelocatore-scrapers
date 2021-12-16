@@ -10,7 +10,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
-from sgscrape.pause_resume import CrawlStateSingleton
 
 from sglogging import sglog
 
@@ -26,9 +25,10 @@ def fetch_data():
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.POLAND], expected_search_radius_miles=50
     )
+
     for code in all_codes:
         sleep(uniform(5, 9))
-        session = SgRequests(proxy_country="pl", retries_with_fresh_proxy_ip=1)
+        session = SgRequests(retries_with_fresh_proxy_ip=1)
         log.info(f"API Crawl: {search_url.format(code)}")
         response = session.get(search_url.format(code))
         log.info(f"First Response: {response}")
@@ -60,10 +60,15 @@ def fetch_data():
         )
 
         all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
+
         all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
+
         next_page = dom.xpath('//div[@class="ButtonPageNextOn"]/a/@href')
+        log.info(f"total page: {len(next_page)}")
         while next_page:
-            response = session.get(urljoin(start_url, next_page[0]))
+            next_page_link = urljoin(start_url, next_page[0])
+            log.info(f"Next page link: {next_page_link}")
+            response = session.get(next_page_link)
             log.info(f"Third Response: {response}")
             dom = etree.HTML(
                 response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
@@ -107,8 +112,8 @@ def fetch_data():
 
 
 def scrape():
-    CrawlStateSingleton.get_instance().save(override=True)
     log.info("Started Crawling")
+    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -118,6 +123,9 @@ def scrape():
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
+            count = count + 1
+
+    log.info(f"Total Rows: {count}")
 
 
 if __name__ == "__main__":
