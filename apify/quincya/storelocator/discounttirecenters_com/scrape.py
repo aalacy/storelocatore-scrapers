@@ -104,6 +104,9 @@ def fetch_data(sgw: SgWriter):
                 list(base.find(class_="open-hours-data").stripped_strings)
             )
 
+        if street_address[-1] == ",":
+            street_address = street_address[:-1]
+
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
