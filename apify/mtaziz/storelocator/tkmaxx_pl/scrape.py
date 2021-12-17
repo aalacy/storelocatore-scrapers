@@ -46,8 +46,9 @@ def get_response_pu(url):
                     if "website has not been found" not in r.text:
                         tree = html.fromstring(r.text)
                         d = tree.xpath("//div[@class='nearby-store active-store']")[0]
+                        location_name = "".join(d.xpath("./a/text()")).strip()
                         logger.info(
-                            f"HTTP status code for PAGE URL: {r.status_code} for {url}"
+                            f"HTTP status code for PAGE URL: {r.status_code} for {url} | {location_name}"
                         )
                         return r
                     raise Exception(f"Please fix the issue of redirection{url}")
