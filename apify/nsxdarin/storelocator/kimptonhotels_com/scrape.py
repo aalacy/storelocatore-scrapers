@@ -54,7 +54,6 @@ def fetch_data():
                     rawadd = line2.split('<span class="visible-content">')[1].split(
                         "</span>"
                     )[0]
-                    print(rawadd)
                     country = rawadd.rsplit("<br/>", 1)[1]
                     add = rawadd.split("<br/>")[0]
                     if rawadd.count("<br/>") == 3:
