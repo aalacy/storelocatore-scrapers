@@ -1,52 +1,27 @@
-import csv
+from lxml import etree
+
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 logger = SgLogSetup().get_logger("econolube_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
-    url = "https://www.econolube.com/page-sitemap.xml"
-    r = session.get(url, headers=headers)
-    website = "econolube.com"
-    typ = "<MISSING>"
-    country = "US"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+    session = SgRequests()
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
+    start_url = "https://www.econolube.com/page-sitemap.xml"
+    domain = "econolube.com"
+
+    response = session.get(start_url, headers=headers)
+    all_locations = []
+    for line in response.iter_lines():
+        line = str(line)
         if "<loc>https://www.econolube.com/locations/" in line and "-" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             if (
@@ -61,63 +36,68 @@ def fetch_data():
                 or "8" in lurl
                 or "9" in lurl
             ):
-                locs.append(line.split("<loc>")[1].split("<")[0])
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "<h1>" in line2:
-                name = line2.split("<h1>")[1].split("<")[0]
-            if '"streetAddress":"' in line2:
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                hours = (
-                    line2.split(',"openingHours":["')[1]
-                    .split('"]')[0]
-                    .replace('","', "; ")
-                )
-            if 'data-center="{latitude: ' in line2:
-                lat = line2.split('data-center="{latitude: ')[1].split(",")[0]
-                lng = line2.split("longitude: ")[1].split("}")[0].strip()
-            if 'data-storeid="' in line2 and store == "":
-                store = line2.split('data-storeid="')[1].split('"')[0]
-        if store == "":
-            store = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
+                all_locations.append(line.split("<loc>")[1].split("<")[0])
+
+    for page_url in all_locations:
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        location_name = loc_dom.xpath('//div[@class="segment-store-info"]/h2/a/text()')
+        if not location_name:
+            location_name = loc_dom.xpath("//h1/text()")
+        location_name = location_name[0]
+        raw_address = loc_dom.xpath('//div[@class="segment-address"]/p/text()')
+        if not raw_address:
+            raw_address = loc_dom.xpath("//address/span/text()")
+        if len(raw_address) == 1:
+            raw_address += loc_dom.xpath("//address/following-sibling::span[1]/text()")
+        phone = loc_dom.xpath('//div[@class="segment-address"]/div/a/text()')
+        if not phone:
+            phone = loc_dom.xpath('//p[@class="franchise-phone"]/a/text()')
+        phone = phone[0] if phone else ""
+        geo = loc_dom.xpath('//a[@title="Make this My Econo"]/@href')[0].split("/")[
+            -3:-1
         ]
+        hoo = loc_dom.xpath(
+            '//h3[contains(text(), "Store Hours")]/following-sibling::p//text()'
+        )
+        hoo = hoo[:6] if hoo else ""
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[h2[contains(text(), "Store Hours:")]]/span//text()'
+            )
+        hoo = " ".join(hoo)
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[-1].split(", ")[0],
+            state=raw_address[-1].split(", ")[-1].split()[0],
+            zip_postal=raw_address[-1].split(", ")[-1].split()[-1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo[0],
+            longitude=geo[1],
+            hours_of_operation=hoo,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

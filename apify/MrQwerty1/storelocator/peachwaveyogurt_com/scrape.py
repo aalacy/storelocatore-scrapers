@@ -65,7 +65,7 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "Peachwave"
+    location_name = "".join(tree.xpath("//title/text()")).split("-")[0].strip()
     line = tree.xpath("//div[@class='address']/p//text()")
     line = list(filter(None, [l.replace("\xa0", " ").strip() for l in line]))
     if not line:
@@ -75,8 +75,12 @@ def get_data(page_url, sgw: SgWriter):
 
     raw_address = ", ".join(line)
     street_address, city, state, postal = get_address(raw_address)
+    if street_address.startswith("Park"):
+        street_address = street_address.split(",")[-1].strip()
 
     country_code = "US"
+    if "Cayman" in city:
+        country_code = "KY"
     store_number = page_url.split("/")[-1]
     phone = "".join(tree.xpath("//div[@class='phone']/p/text()")).strip()
     if "Coming" in phone:
@@ -101,6 +105,8 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(f"{day}: {time}")
 
     hours_of_operation = ";".join(_tmp)
+    if tree.xpath("//p[contains(text(), 'Opening')]"):
+        hours_of_operation = "Coming Soon"
 
     row = SgRecord(
         page_url=page_url,

@@ -48,7 +48,6 @@ def fetch_data():
             locator_domain = website
 
             location_name = "".join(store_info_divs[0].xpath(".//text()")).strip()
-            page_url = search_url + location_name
 
             full_address = list(
                 filter(
@@ -60,6 +59,11 @@ def fetch_data():
                 full_address = full_address[:-1]
 
             street_address = " ".join(full_address[0:-1])
+            if "International Airport" in street_address:
+                street_address = street_address.split("International Airport")[
+                    -1
+                ].strip()
+
             city_state_zip = full_address[-1]
 
             city = city_state_zip.split(",")[0].strip()
@@ -78,13 +82,12 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            hours = list(
-                filter(
-                    str,
-                    [x.strip() for x in store_info_divs[-1].xpath(".//text()")],
-                )
-            )
-            hours_of_operation = "; ".join(hours)
+            hours = store_info_divs[-1].xpath("p")
+            hours_list = []
+            for hour in hours:
+                hours_list.append("".join(hour.xpath(".//text()")).strip())
+
+            hours_of_operation = "; ".join(hours_list)
             latitude, longitude = "<MISSING>", "<MISSING>"
             raw_address = "<MISSING>"
 
@@ -111,7 +114,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

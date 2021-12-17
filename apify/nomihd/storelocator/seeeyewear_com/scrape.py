@@ -30,7 +30,13 @@ def split_fulladdress(address_info):
     street_address = " ".join(address_info[0:-1]).strip(" ,.")
 
     city_state_zip = (
-        address_info[-1].replace(",", "").replace(".", "").replace("  ", " ").strip()
+        address_info[-1]
+        .replace("\xa0", " ")
+        .strip()
+        .replace(",", "")
+        .replace(".", "")
+        .replace("  ", " ")
+        .strip()
     )
 
     city = " ".join(city_state_zip.split(" ")[:-2]).strip()
@@ -70,15 +76,14 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.seeeyewear.com"
-    search_url = "https://www.seeeyewear.com/locations"
+    search_url = "https://seeeyewear.com/pages/see-eyewear-locations"
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
-    store_list = search_sel.xpath('//div[./h1="Locations"]//a')
+    store_list = search_sel.xpath("//p[.//strong//a[@title]]")
 
     for store in store_list:
-        page_url = base + store.xpath("./@href")[0].strip()
+        page_url = "".join(store.xpath(".//strong//a[@title]/@href"))
 
         locator_domain = website
 
@@ -89,57 +94,40 @@ def fetch_data():
         store_info = list(
             filter(
                 str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath('//div[@class="loc_left"]/p//text()')
-                ],
+                [x.strip() for x in store.xpath(".//text()")],
             )
         )
 
         raw_address = "<MISSING>"
 
-        full_address = store_info
+        full_address = store_info[1:-2]
         street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
-        location_name = "".join(store_sel.xpath("//h1//text()")).strip()
+        location_name = store_info[0]
 
-        phone = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//a[contains(@href,"tel:")]//text() | //tr[td="Phone"]/td[2]/text()'
-                    )
-                ],
-            )
-        )
-        phone = " ".join(phone[:1]).strip()
+        phone = store_info[-2]
         store_number = "<MISSING>"
         location_type = "<MISSING>"
 
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath('//div[@class="week_hrs"]/table//text()')
-                ],
-            )
-        )
+        raw_info = store_sel.xpath('//div[@style="text-align: center;"]//text()')
+        raw_hours_list = []
+        for index in range(0, len(raw_info)):
+            if "MONDAY" in raw_info[index]:
+                raw_hours_list = raw_info[index:]
+                break
+
+        hours_list = []
+        for raw in raw_hours_list:
+            if len("".join(raw).strip()) > 0:
+                hours_list.append("".join(raw).strip())
+
         hours_of_operation = (
-            "; ".join(hours)
-            .replace("Office Hours", "")
+            "; ".join(hours_list)
             .strip()
-            .replace("Mon;", "Mon:")
-            .replace("Tue;", "Tue:")
-            .replace("Wed;", "Wed:")
-            .replace("Sat;", "Sat:")
-            .replace("Sun;", "Sun:")
-            .replace("day;", "day:")
-            .replace("Thur;", "Thur:")
-            .replace("Thurs;", "Thurs:")
-            .replace("Fri;", "Fri:")
+            .replace("DAY;", "DAY:")
+            .strip()
+            .replace("; –", "-")
+            .strip()
         )
         map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
 

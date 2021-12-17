@@ -25,6 +25,8 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("Lat") or ""
         longitude = j.get("Lng") or ""
 
+        if "." not in latitude:
+            continue
         if len(state.strip()) > 2 or state.lower() == "bc" or state == "":
             country_code = "MX"
 
