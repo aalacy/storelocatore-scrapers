@@ -27,7 +27,9 @@ def fetch_data(sgw: SgWriter):
         )
         ad = "".join(d.xpath(".//address/text()[1]")).replace("&#44;", ",")
         a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}"
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
         if street_address == "15":
             street_address = ad.split(",")[0].strip()
         state = a.state or "<MISSING>"

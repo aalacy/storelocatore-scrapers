@@ -22,6 +22,7 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("div.dd-store__detail.js-store")
         logger.info(f"{len(links)} found")
+
         for link in links:
             raw_address = link.select_one("div.dd-detail__address address").text.strip()
             addr = parse_address_intl(raw_address + ", ประเทศไทย")
