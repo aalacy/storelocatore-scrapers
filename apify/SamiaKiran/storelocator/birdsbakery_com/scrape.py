@@ -7,13 +7,13 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "bargainbasementhomecenter_com"
+website = "birdsbakery_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://bargainbasementhomecenter.com/"
+DOMAIN = "https://birdsbakery.com/"
 MISSING = SgRecord.MISSING
 
 
