@@ -57,6 +57,8 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Opening hours", "")
             )
+            if not city:
+                city = location_name.replace("branch", "")
             coords = soup.find("div", {"class": "branch-information-map"})
             latitude = coords["data-lat"]
             longitude = coords["data-lng"]
