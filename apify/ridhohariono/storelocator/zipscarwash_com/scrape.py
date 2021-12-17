@@ -49,9 +49,18 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def pull_content(url):
+def pull_content(url, num=0):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        if num <= 5:
+            num += 1
+            log.info(f"Try to refresh for ({num}) times...")
+            time.sleep(2)
+            return pull_content(url, num)
+        else:
+            return False
     return soup
 
 
@@ -71,11 +80,10 @@ def fetch_data():
             % (lat, long, search.items_remaining())
         )
         page_url = LOCATION_URL.format(code=zipcode, latitude=lat, longitude=long)
-        try:
-            soup = pull_content(page_url)
-        except:
-            time.sleep(3)
-            soup = pull_content(page_url)
+        soup = pull_content(page_url)
+        if not soup:
+            log.info(f"Skipping invalid url => {page_url}")
+            continue
         store_content = soup.find_all(
             "div",
             {

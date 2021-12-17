@@ -41,6 +41,11 @@ def fetch_data(sgw: SgWriter):
         .replace("\n", "")
         .strip()
     )
+    hours_of_operation = (
+        " ".join(tree.xpath('//div[@class="rte rte-setting"]/p[3]/text()'))
+        .replace("\n", "")
+        .strip()
+    )
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -56,7 +61,7 @@ def fetch_data(sgw: SgWriter):
         location_type=SgRecord.MISSING,
         latitude=SgRecord.MISSING,
         longitude=SgRecord.MISSING,
-        hours_of_operation=SgRecord.MISSING,
+        hours_of_operation=hours_of_operation,
         raw_address=f"{street_address} {ad}",
     )
 

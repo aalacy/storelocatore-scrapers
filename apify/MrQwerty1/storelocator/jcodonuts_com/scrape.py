@@ -12,7 +12,9 @@ def fetch_data(sgw: SgWriter):
     for j in r.json()["results"]:
         location_name = j.get("title") or ""
         loc = j.get("location") or {}
-        street_address = loc.get("address")
+        street_address = loc.get("address") or ""
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = loc.get("city")
         state = loc.get("province")
         postal = loc.get("zipcode")
