@@ -103,7 +103,7 @@ def fetch_data():
             phone = phone.replace("Call", "")
             if not city:
                 city = r.text.split('"city":"')[1].split('"')[0]
-            store_number = r.text.split('"id":"')[1].split('"')[0]
+            store_number = r.text.split('"franchisee":"')[1].split('"')[0]
             latitude = MISSING
             longitude = MISSING
             yield SgRecord(
