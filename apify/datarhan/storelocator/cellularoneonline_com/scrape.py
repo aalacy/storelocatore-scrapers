@@ -50,7 +50,7 @@ def fetch_data():
             .replace("Cellular One Store,", "")
             .strip()
         )
-        print(raw_address)
+
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
