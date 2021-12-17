@@ -1,5 +1,6 @@
-from bs4 import BeautifulSoup
 import re
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -7,9 +8,15 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "ho-chunkgaming_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
+
+DOMAIN = "https://ho-chunkgaming.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -26,14 +33,22 @@ def fetch_data():
             r = session.get(link, headers=headers, verify=False)
         except:
             continue
+        log.info(link)
         soup = BeautifulSoup(r.text, "html.parser")
-        maindiv = soup.find("div", {"class": "footer-addr"}).text
-        maindiv = re.sub(pattern, "\n", maindiv).lstrip().splitlines()
-        title = maindiv[0]
-        street = maindiv[1]
-        city, state = maindiv[2].split(", ")
-        state, pcode = state.lstrip().split(" ", 1)
-        phone = maindiv[3]
+        address = (
+            soup.find("div", {"class": "footer-addr"})
+            .get_text(separator="|", strip=True)
+            .split("|")
+        )
+        title = address[0]
+        phone = address[3]
+        street = address[1].split("\n")
+        street = " ".join(x.strip() for x in street)
+        address = address[2].split(",")
+        city = address[0]
+        address = address[1].split()
+        state = address[0]
+        pcode = address[1]
         hours = ""
         if len(hours) < 2:
             hourslist = soup.findAll("p", {"class": "footerp-p"})
@@ -113,7 +128,11 @@ def fetch_data():
                 try:
                     lat, longt = r.text.split("&sll=", 1)[1].split('"', 1)[0].split(",")
                 except:
-                    lat = longt = "<MISSING>"
+                    lat, longt = (
+                        soup.select_one("a[href*=geo]")["href"]
+                        .split("geo:")[1]
+                        .split(",")
+                    )
         yield SgRecord(
             locator_domain="https://www.ho-chunkgaming.com/",
             page_url=link,

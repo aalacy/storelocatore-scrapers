@@ -1,38 +1,14 @@
-import csv
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -46,24 +22,39 @@ def fetch_data():
         "84eca792-36b8-45b6-9851-465cd482c3d2"
     ]["data"]["settings"]["markers"]
 
-    data = []
     locator_domain = "https://gobigo.ca/"
 
     for store in stores:
         location_name = store["infoTitle"]
         raw_address = store["position"].split(",")
-        street_address = (
-            raw_address[0].encode("ascii", "replace").decode().replace("?", "-").strip()
-        )
-        city = raw_address[1].split("BC")[0].strip()
-        state = "BC"
-        try:
-            zip_code = raw_address[1].split("BC")[1].replace("*", "8").strip().upper()
-        except:
-            raw_address = store["infoAddress"].split(",")
-            zip_code = raw_address[2].split("BC")[1].replace("*", "8").strip().upper()
+        street_address = raw_address[0].strip()
+        if "BC" in str(raw_address):
+            state = "BC"
+        elif "AB" in str(raw_address):
+            state = "AB"
+        else:
+            state = ""
+        if state:
+            city = raw_address[1].split(state)[0].strip()
+            try:
+                zip_code = (
+                    raw_address[-1].split(state)[1].replace("*", "8").strip().upper()
+                )
+            except:
+                raw_address = store["infoAddress"].split(",")
+                zip_code = (
+                    raw_address[2].split(state)[1].replace("*", "8").strip().upper()
+                )
+        else:
+            city = raw_address[1].strip()
+            zip_code = raw_address[-1].strip()
         if not zip_code:
-            zip_code = "<MISSING>"
+            if "7380 Gilley Avenue" in street_address:
+                zip_code = "V5J 4X5"
+            elif "V7P 1B7" in str(store):
+                zip_code = "V7P 1B7"
+            else:
+                zip_code = ""
         country_code = "CA"
         location_type = "<MISSING>"
         phone = store["infoPhone"].strip()
@@ -83,92 +74,100 @@ def fetch_data():
             link = "https://www.bigotiresvictoria.com/Contact-Us"
         if link:
             req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            try:
-                hours_of_operation = " ".join(
-                    list(
-                        base.find_all(class_="list simple margin-top-20")[
-                            -1
-                        ].stripped_strings
-                    )
-                )
-            except:
+            if req.status_code:
+                base = BeautifulSoup(req.text, "lxml")
                 try:
-                    hours_of_operation = (
-                        base.find(class_="ourloc wrapper")
-                        .find_all("p")[-1]
-                        .text.strip()
+                    hours_of_operation = " ".join(
+                        list(
+                            base.find_all(class_="list simple margin-top-20")[
+                                -1
+                            ].stripped_strings
+                        )
                     )
                 except:
                     try:
                         hours_of_operation = (
-                            " ".join(
-                                list(
-                                    base.find_all(class_="locationhours")[
-                                        -1
-                                    ].stripped_strings
-                                )
-                            )
-                            .replace("Hours:", "")
-                            .strip()
+                            base.find(class_="ourloc wrapper")
+                            .find_all("p")[-1]
+                            .text.strip()
                         )
                     except:
                         try:
                             hours_of_operation = (
-                                base.find(class_="locwidget-hours")
-                                .text.replace("Hours:", "")
+                                " ".join(
+                                    list(
+                                        base.find_all(class_="locationhours")[
+                                            -1
+                                        ].stripped_strings
+                                    )
+                                )
+                                .replace("Hours:", "")
                                 .strip()
                             )
                         except:
-                            hours_of_operation = "<MISSING>"
-            hours_of_operation = (
-                hours_of_operation.replace("PMSat", "PM Sat")
-                .split("Holidays: view")[0]
-                .strip()
-            )
-            if latitude == "<MISSING>":
-                try:
-                    map_link = base.iframe["src"]
-                    lat_pos = map_link.rfind("!3d")
-                    latitude = map_link[
-                        lat_pos + 3 : map_link.find("!", lat_pos + 5)
-                    ].strip()
-                    lng_pos = map_link.find("!2d")
-                    longitude = map_link[
-                        lng_pos + 3 : map_link.find("!", lng_pos + 5)
-                    ].strip()
-                except:
-                    pass
+                            try:
+                                hours_of_operation = (
+                                    base.find(class_="locwidget-hours")
+                                    .text.replace("Hours:", "")
+                                    .strip()
+                                )
+                            except:
+                                try:
+                                    hours_of_operation = (
+                                        base.find_all(
+                                            class_="left-aligned secondaryHPT"
+                                        )[-1]
+                                        .text.split("open")[1]
+                                        .split(".")[0]
+                                        .strip()
+                                    )
+                                except:
+                                    hours_of_operation = "<MISSING>"
+                hours_of_operation = (
+                    hours_of_operation.replace("PMSat", "PM Sat")
+                    .replace("Hours", "")
+                    .split("Holidays: view")[0]
+                    .strip()
+                )
+                if latitude == "<MISSING>":
+                    try:
+                        map_link = base.iframe["src"]
+                        lat_pos = map_link.rfind("!3d")
+                        latitude = map_link[
+                            lat_pos + 3 : map_link.find("!", lat_pos + 5)
+                        ].strip()
+                        lng_pos = map_link.find("!2d")
+                        longitude = map_link[
+                            lng_pos + 3 : map_link.find("!", lng_pos + 5)
+                        ].strip()
+                    except:
+                        pass
+            else:
+                link = "https://gobigo.ca/#/!search?season_id=all&search_by=size"
+                hours_of_operation = "<MISSING>"
         else:
             link = "https://gobigo.ca/#/!search?season_id=all&search_by=size"
             hours_of_operation = "<MISSING>"
 
-        # Store data
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)
