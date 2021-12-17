@@ -1,53 +1,34 @@
-import csv
+import datetime
+import json
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://shopqualityfoods.com"
-    page_url = "https://api.freshop.com/1/stores?app_key=quality_foods&has_address=true&is_selectable=true&limit=100&token=1b1c419a91098b618a2ae7209acc5043"
+def fetch_data(sgw: SgWriter):
     session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+
+    locator_domain = "https://www.shopqualityfoods.com/"
+    api_url = "https://api.freshop.com/1/stores?app_key=quality_foods&has_address=true&is_selectable=true&limit=100&token={}"
+    d = datetime.datetime.now()
+    unixtime = datetime.datetime.timestamp(d) * 1000
+    frm = {
+        "app_key": "quality_foods",
+        "referrer": "https://www.shopqualityfoods.com/",
+        "utc": str(unixtime).split(".")[0],
     }
-    r = session.get(page_url, headers=headers)
-    js = r.json()
+    r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    token = r["token"]
+
+    r = session.get(api_url.format(token))
+    js = json.loads(r.text)
     for j in js["items"]:
         page_url = (
             j.get("url") or "https://www.shopqualityfoods.com/my-store/store-locator"
         )
         location_name = j.get("name")
-        location_type = "<MISSING>"
         street_address = j.get("address_1")
         phone = "".join(j.get("phone_md")).replace("Phone:", "").strip()
         state = j.get("state")
@@ -59,31 +40,29 @@ def fetch_data():
         longitude = j.get("longitude")
         hours_of_operation = "".join(j.get("hours_md")).replace("\n", " ").strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

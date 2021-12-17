@@ -77,12 +77,15 @@ def fetch_data():
                 hours = line2.split(">")[1].split("<")[0].replace("～", "-")
         if "," in raw_address:
             add = raw_address.split(",")[0].strip()
+        else:
+            add = "<MISSING>"
         if (
             "a" not in add
             and "e" not in add
             and "i" not in add
             and "o" not in add
             and "u" not in add
+            and "MISSING" not in add
         ):
             add = (
                 raw_address.split(",")[0].strip()

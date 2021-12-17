@@ -75,6 +75,9 @@ def fetch_data(sgw: SgWriter):
                 state = "<MISSING>"
                 postal = a.get("postalCode")
                 country_code = a.get("country").get("isocode")
+                if country_code == "US":
+                    state = "".join(a.get("postalCode")).split()[0].strip()
+                    postal = "".join(a.get("postalCode")).split()[1].strip()
                 formattedAddress = a.get("formattedAddress")
                 city = a.get("town")
                 latitude = l.get("geoPoint").get("latitude")

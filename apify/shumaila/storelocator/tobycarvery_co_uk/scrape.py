@@ -1,6 +1,9 @@
-import csv
 from bs4 import BeautifulSoup
 import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -9,54 +12,29 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
 
-    data = []
-    url = "https://www.tobycarvery.co.uk/restaurants?search=#"
-    r = session.get(url, headers=headers, verify=False)
+    url = "https://www.tobycarvery.co.uk/sitemap.xml"
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=restaurants]")
-    streetlist = []
-    p = 0
+    divlist = soup.findAll("loc")
     for div in divlist:
-        link = div["href"]
-        if link in streetlist:
+        link = div.text
+
+        try:
+            if len(link.split("/restaurants/", 1)[1].split("/")) == 2:
+                pass
+            else:
+                continue
+        except:
             continue
-        streetlist.append(link)
-        r = session.get(link, headers=headers, verify=False)
-        loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
-            "</script", 1
-        )[0]
+        r = session.get(link, headers=headers)
+        try:
+            loc = r.text.split('<script type="application/ld+json">', 1)[1].split(
+                "</script", 1
+            )[0]
+        except:
+            continue
         loc = loc.replace("\n", "").strip()
         loc = json.loads(loc)
         title = loc["name"]
@@ -69,8 +47,8 @@ def fetch_data():
             state = "<MISSING>"
         pcode = loc["address"]["postalCode"]
         ccode = loc["address"]["addressCountry"]
-        longt = loc["geo"]["latitude"]
-        lat = loc["geo"]["longitude"]
+        lat = loc["geo"]["latitude"]
+        longt = loc["geo"]["longitude"]
         hourslist = json.loads(str(loc["openingHoursSpecification"]).replace("'", '"'))
         hours = ""
         for hr in hourslist:
@@ -81,33 +59,32 @@ def fetch_data():
             else:
                 time = opens + "-" + closes
             hours = hours + hr["dayOfWeek"][0] + " " + time + " "
-        data.append(
-            [
-                "https://www.tobycarvery.co.uk/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                longt,
-                lat,
-                hours,
-            ]
+        yield SgRecord(
+            locator_domain="https://www.tobycarvery.co.uk/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code=ccode,
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
