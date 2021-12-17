@@ -21,20 +21,20 @@ def fetch_data(sgw: SgWriter):
         "Cache-Control": "max-age=0",
     }
     r = session.get(
-        "https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_states&nonce=d052372089",
+        "https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_states&nonce=17939f5583",
         headers=headers,
     )
     js = r.json()["data"]
     for j in js:
         state = j
         r = session.get(
-            f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_cities&state={state}&nonce=26481af5ff"
+            f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_cities&state={state}&nonce=7e3397fbda"
         )
         js = r.json()
         for j in js["data"]:
             city = j
             r = session.get(
-                f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs&state={state}&city={city}&nonce=9755b3aba5",
+                f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs&state={state}&city={city}&nonce=0e7a3ce73d",
                 headers=headers,
             )
             js = r.json()["data"]
