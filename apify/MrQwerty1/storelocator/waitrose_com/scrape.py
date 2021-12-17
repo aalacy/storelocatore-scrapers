@@ -54,6 +54,8 @@ def get_js(lat, lng, _id):
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
+    if r.status_code == 404:
+        return
     tree = html.fromstring(r.text)
 
     latitude = "".join(tree.xpath("//a[@data-lat]/@data-lat"))
@@ -103,6 +105,8 @@ def get_data(page_url, sgw: SgWriter):
 
     if "Little" in location_type:
         location_name = "Little Waitrose"
+    elif "from" in location_type:
+        location_name = location_type
     else:
         location_name = "Waitrose"
 
