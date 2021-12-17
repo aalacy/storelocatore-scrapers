@@ -7,8 +7,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://api.storerocket.io/api/user/WLy8GYO4r0/locations"
     domain = "aerocaredirect.com"
@@ -29,7 +28,7 @@ def fetch_data():
         phone = ""
         if poi.get("fields"):
             phone = poi["fields"][0]["pivot_field_value"]
-        phone = phone if phone else "<MISSING>"
+        phone = phone if phone and phone != "() -" else "<MISSING>"
 
         item = SgRecord(
             locator_domain=domain,

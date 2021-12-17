@@ -1,3 +1,5 @@
+import datetime
+import json
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -6,13 +8,22 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-
-    locator_domain = "https://www.mycountrymart.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=mycountrymart&has_address=true&limit=100&token=f76384e31fe17c62ba4d5e41a8322596"
     session = SgRequests()
 
-    r = session.get(api_url)
-    js = r.json()
+    locator_domain = "https://www.mycountrymart.com"
+    api_url = "https://api.freshop.com/1/stores?app_key=mycountrymart&has_address=true&is_selectable=true&limit=100&token={}"
+    d = datetime.datetime.now()
+    unixtime = datetime.datetime.timestamp(d) * 1000
+    frm = {
+        "app_key": "mycountrymart",
+        "referrer": "https://www.mycountrymart.com/",
+        "utc": str(unixtime).split(".")[0],
+    }
+    r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    token = r["token"]
+
+    r = session.get(api_url.format(token))
+    js = json.loads(r.text)
 
     for j in js["items"]:
 

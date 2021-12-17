@@ -144,7 +144,7 @@ def _detail(_, json_locations, session):
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
-        raw_address=brand_website,
+        location_type=brand_website,
     )
 
 

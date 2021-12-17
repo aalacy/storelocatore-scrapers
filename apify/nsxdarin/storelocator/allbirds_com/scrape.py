@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("allbirds_com")
 
@@ -10,42 +13,13 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.allbirds.com/pages/stores"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    lines = r.iter_lines(decode_unicode=True)
+    lines = r.iter_lines()
     website = "allbirds.com"
     store = "<MISSING>"
-    purl = "<MISSING>"
+    purl = " https://www.allbirds.com/pages/stores"
     lat = "<MISSING>"
     lng = "<MISSING>"
     typ = "Store"
@@ -62,10 +36,8 @@ def fetch_data():
         if "see map</a></p>" in line.lower():
             murl = line.split('href="')[1].split('"')[0]
             r2 = session.get(murl, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            lat = r2.url.split("@")[1].split(",")[0]
-            lng = r2.url.split("@")[1].split(",")[1]
+            lat = str(r2.url).split("@")[1].split(",")[0]
+            lng = str(r2.url).split("@")[1].split(",")[1]
         if "location</h3>" in line.lower():
             g = next(lines)
             h = next(lines)
@@ -77,7 +49,15 @@ def fetch_data():
                 state = h.split(",")[1].strip().split(" ")[0].strip()
             except:
                 state = "<MISSING>"
-            zc = h.split("<")[0].rsplit(" ", 1)[1].strip()
+            if ", Paramus, NJ" in g:
+                add = g.split(",")[0]
+                city = "Paramus"
+                state = "NJ"
+                zc = "07652"
+                lat = "40.9176318"
+                lng = "-74.0780812"
+            else:
+                zc = h.split("<")[0].rsplit(" ", 1)[1].strip()
             if Intl is False:
                 country = "US"
             else:
@@ -166,27 +146,60 @@ def fetch_data():
                     zc = "<MISSING>"
                 if "<" in zc and zc != "<MISSING>":
                     zc = zc.split("<")[0].strip()
-                yield [
-                    website,
-                    purl,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                if "675 Ponce de Leon" in add:
+                    add = add + " Suite W115B"
+                    zc = "30308"
+                if "660 Stanford Shopping Center" in add:
+                    add = add + " Room #9"
+                    zc = "94304"
+                if len(state) == 2:
+                    country = "US"
+                if "SF Premium" in add:
+                    add = "3228 Livermore Outlets Drive"
+                if "660 Stanford" in add:
+                    hours = "Mon-Thu: 11am-7pm; Fri-Sat: 10am-7pm; Sun: 12pm-6pm"
+                if "77 West" in add:
+                    hours = "Mon-Sat: 10am-8pm; Sun: 11am-7pm"
+                if "Suite 1985," in add:
+                    add = add.replace("1985,", "1985")
+                if "10250 Santa" in add:
+                    hours = "Mon-Sat: 10am-9pm; Sun: 11am-8pm"
+                if "219 N" in add:
+                    hours = "Mon-Sat: 10am-7pm; Sun: 11am-6pm"
+                if "Center," in add:
+                    add = add.replace("Center,", "Center")
+                if "1st Ave," in add:
+                    add = add.replace("1st Ave,", "1st Ave")
+                if "Strasse 28," in add:
+                    add = add.replace("Strasse 28,", "Strasse 28")
+                if city == "Paramus":
+                    add = "One Garden State Plaza"
+                if country == "KR" or country == "CN" or country == "JP":
+                    if "98616" in phone:
+                        phone = "<MISSING>"
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -52,6 +52,7 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
+
             a = usaddress.tag(ad, tag_mapping=tag)[0]
             street_address = f"{a.get('address1')} {a.get('address2')}".replace(
                 "None", ""
@@ -66,9 +67,19 @@ def fetch_data(sgw: SgWriter):
                 .strip()
             )
             hours_of_operation = "<INACCESSIBLE>"
+            key = (
+                "".join(
+                    tree.xpath(
+                        "//style[@data-vue-ssr-id]/following-sibling::link[1]/@href"
+                    )
+                )
+                .split("static/")[1]
+                .split("/")[0]
+                .strip()
+            )
             session = SgRequests()
             r = session.get(
-                "https://www.erewhonmarket.com/_nuxt/static/1628897867/locations/state.js"
+                f"https://www.erewhonmarket.com/_nuxt/static/{key}/locations/state.js"
             )
 
             latitude = (
