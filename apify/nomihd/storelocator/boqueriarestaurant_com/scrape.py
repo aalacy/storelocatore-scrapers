@@ -39,9 +39,8 @@ def fetch_data():
     json_res = json.loads(api_res.text)
 
     stores_list = search_sel.xpath(
-        '//div[@class="vc_tta-panels" and .//strong[contains(./text(),"HOURS")]]/div[.//text()="HOURS"]'
+        '//div[@class="vc_tta-panels" and .//p[contains(./text(),"Hours")]]/div[.//text()="Hours"]'
     )
-
     for store in stores_list:
         name = "".join(store.xpath(".//h3/text()")).strip()
 
@@ -79,28 +78,15 @@ def fetch_data():
         hours = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[strong]/span/text()")],
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        ".//div[./p[contains(text(),'Hours')]]/p[2]//text()"
+                    )
+                ],
             )
         )
-        if not hours:
-            hours = list(
-                filter(
-                    str,
-                    [x.strip() for x in store.xpath(".//p[strong]/text()")],
-                )
-            )
-
-        if not hours:
-            hours = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store.xpath(".//p[contains(text(),'HOURS')]/text()")
-                    ],
-                )
-            )
-        hours_of_operation = "; ".join(hours).replace("HOURS;", "").strip()
+        hours_of_operation = "; ".join(hours).strip()
 
         latitude = store_json["location"]["latitude"]
         longitude = store_json["location"]["longitude"]

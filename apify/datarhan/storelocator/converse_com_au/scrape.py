@@ -1,18 +1,29 @@
+import ssl
 from lxml import etree
 from urllib.parse import urljoin
+from time import sleep
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
     start_url = "https://www.converse.com.au/allstores"
     domain = "converse.com.au"
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
@@ -24,6 +35,7 @@ def fetch_data():
             url = l.xpath("@href")[0]
             store_url = urljoin(start_url, url)
             driver.get(store_url)
+            sleep(10)
             loc_dom = etree.HTML(driver.page_source)
 
             location_name = loc_dom.xpath('//div[@class="store-type"]/text()')[0]
@@ -41,6 +53,11 @@ def fetch_data():
             ].split(", ")
             hoo = loc_dom.xpath('//div[@class="hours"]//ul//span/text()')
             hoo = " ".join(hoo)
+            geo = (
+                loc_dom.xpath('//a[contains(@href, "maps/@")]/@href')[0]
+                .split("@")[-1]
+                .split(",")[:2]
+            )
 
             item = SgRecord(
                 locator_domain=domain,
@@ -56,8 +73,8 @@ def fetch_data():
                 store_number=SgRecord.MISSING,
                 phone=loc_dom.xpath('//span[@itemprop="telephone"]/text()')[0],
                 location_type=SgRecord.MISSING,
-                latitude=SgRecord.MISSING,
-                longitude=SgRecord.MISSING,
+                latitude=geo[0],
+                longitude=geo[1],
                 hours_of_operation=hoo,
             )
 
