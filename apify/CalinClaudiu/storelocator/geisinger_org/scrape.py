@@ -175,6 +175,11 @@ def fetch_data():
         except:
             lat = "<INACCESSIBLE>"
             lng = "<INACCESSIBLE>"
+        if str(lat) == "0":
+            lat = "<INACCESSIBLE>"
+        if str(lng) == "0":
+            lng = "<INACCESSIBLE>"
+
         logger.info(f"latlng: {lat}, {lng}")
 
         sta_list = []
