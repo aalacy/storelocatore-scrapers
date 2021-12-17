@@ -16,6 +16,7 @@ headers = {
 
 def fetch_data():
     coords = ["35,-110", "45,-95", "35,-85", "45,-75", "21,-155", "60,-150"]
+    coords = ["35,-85"]
     for coord in coords:
         latc = coord.split(",")[0]
         lngc = coord.split(",")[1]
@@ -43,6 +44,9 @@ def fetch_data():
             lng = item["longitude"]
             loc = "<MISSING>"
             website = "baskinrobbins.com"
+            status = item["status"]
+            if "INACTIVE" in status:
+                name = name + " - Temporarily Closed"
             try:
                 phone = item["phoneNumber"]
             except:
