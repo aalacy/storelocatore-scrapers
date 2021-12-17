@@ -3,6 +3,8 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import pgeocode
 import re
 import ssl
@@ -20,7 +22,7 @@ else:
 logger = SgLogSetup().get_logger("hollandandbarrett_com")
 DOMAIN = "https://www.hollandandbarrett.com"
 URL_LOCATION = "https://www.hollandandbarrett.com/stores/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
@@ -78,14 +80,14 @@ def get_country_code(zip_postal):
     return country_code
 
 
-def fetch_data():
+def fetch_data(http: SgRequests):
     start_url = (
         "https://cdn1.assets.hollandandbarrett.com/page-data/stores/page-data.json"
     )
-    response = session.get(start_url, headers=headers, timeout=180)
+    response = http.get(start_url, headers=headers)
     page_data = json.loads(response.text)
     data_json = page_data["result"]["pageContext"]["storeDetails"]
-    for idx, data in enumerate(data_json):
+    for idx, data in enumerate(data_json[0:]):
         data_store = data["store"]
         data_store = json.loads(data_store)
         logger.info(f"Data: {data}")
@@ -93,7 +95,8 @@ def fetch_data():
         locator_domain = DOMAIN
         location_name = data_store["branchName"]
         location_name = location_name if location_name else MISSING
-        page_url = f'{DOMAIN}{data["storePath"]}'
+        slug = data["slug"]
+        page_url = f"{URL_LOCATION}{slug}"
         street_address = data_store["addressLine1"]
         street_address = street_address if street_address else MISSING
         city_raw = data_store["town"]
@@ -113,6 +116,7 @@ def fetch_data():
             .replace("IRELAND", "")
             .replace("BURTON", "")
             .replace("CRICK", "")
+            .replace("None", "")
         )
         zip_postal = zip_postal if zip_postal else MISSING
         if MISSING not in zip_postal:
@@ -149,6 +153,7 @@ def fetch_data():
             longitude = longitude if longitude else MISSING
 
         raw_address = f'{data_store["addressLine1"]},{data_store["addressLine2"]}, {city_raw}, {zip_postal}'
+        raw_address = raw_address.replace("<MISSING>", "").strip().rstrip(",")
         hours_of_operation = ""
         hoo = f'Mon {data_store["openMon"]}; Tue {data_store["openTue"]}; Wed {data_store["openWed"]}; Thu {data_store["openThu"]}; Fri {data_store["openFri"]}; Sat {data_store["openSat"]}; Sun {data_store["openSun"]}'
         if "Mon ; Tue ; Wed ; Thu ; Fri ; Sat ; Sun " in hoo:
@@ -185,11 +190,14 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        with SgRequests() as http:
+            results = fetch_data(http)
+            for rec in results:
+                writer.write_row(rec)
+                count = count + 1
 
     logger.info(f"No of records being processed: {count}")
     logger.info("Finished")

@@ -1,44 +1,18 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_link = "https://www.localiyours.com/"
+    base_link = "https://www.localiyours.com"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -51,15 +25,13 @@ def fetch_data():
     content = base.find(class_="pm-map-wrap pm-location-search-list")
     items = content.find_all("section")
 
-    js = base.find(class_="js-react-on-rails-component").contents[0]
+    js = base.find(id="popmenu-apollo-state").contents[0]
     lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', str(js))
     lngs = re.findall(r'lng":-[0-9]{2,3}\.[0-9]+', str(js))
 
     if len(lats) > len(items):
         lats.pop(0)
         lngs.pop(0)
-
-    data = []
 
     for i, item in enumerate(items):
         locator_domain = "localiyours.com"
@@ -81,39 +53,41 @@ def fetch_data():
         location_type = "<MISSING>"
 
         hours_of_operation = (
-            item.find("div", attrs={"class": "hours"})
-            .text.replace("\xa0", " ")
-            .replace("pmF", "pm F")
-            .replace("pmS", "pm S")
+            (
+                item.find("div", attrs={"class": "hours"})
+                .text.replace("\xa0", " ")
+                .replace("pmF", "pm F")
+                .replace("pmS", "pm S")
+            )
+            .split("Open for")[0]
+            .strip()
         )
         hours_of_operation = re.sub(" +", " ", hours_of_operation)
+
         latitude = lats[i].split(":")[1]
         longitude = lngs[i].split(":")[1]
 
-        data.append(
-            [
-                locator_domain,
-                base_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        link = base_link + item.find("a", string="More Info")["href"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

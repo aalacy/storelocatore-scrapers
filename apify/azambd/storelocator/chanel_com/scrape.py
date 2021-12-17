@@ -178,7 +178,9 @@ def scrape():
         country_codes=country_codes, expected_search_radius_miles=50
     )
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         with SgChrome() as driver:
             headers = fetchHeaders(driver)
             with SgRequests() as http:

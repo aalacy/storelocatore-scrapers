@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import json
 from sgscrape.sgpostal import parse_address_intl
-
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("dwmorgan")
 
@@ -48,6 +49,8 @@ def fetch_data():
             if _p(desc[-1]):
                 phone = desc[-1]
                 del desc[-1]
+            if "Region" in desc[0]:
+                del desc[0]
             addr = parse_address_intl(" ".join(desc))
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -65,11 +68,12 @@ def fetch_data():
                 phone=phone,
                 latitude=_["coord_x"],
                 longitude=_["coord_y"],
+                raw_address=" ".join(desc),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

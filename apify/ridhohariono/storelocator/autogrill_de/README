@@ -1,0 +1,55 @@
+--ignore CountryCodeFillRateChecker (International)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 428 concerning rows. Examples:
+                                      street_address              REASON  rowNumber
+0                                                A21  ADDR_HAS_NO_NUMBER          0
+1                            Crocetta Sud A21 Torino  ADDR_HAS_NO_NUMBER          1
+2                           Daunia Ovest A14 Bolagna  ADDR_HAS_NO_NUMBER          2
+3  Drove Est Raccordo Siena Firenze Km. 26+400 Di...  ADDR_HAS_NO_NUMBER          3
+4  Drove Ovest Raccordo Firenze Siena Km. 26+400 ...  ADDR_HAS_NO_NUMBER          4
+
+
+--ignore StreetAddressHasStateName (Confirmed scrape correctly)
+Found 20 concerning rows. Examples:
+                                       street_address                    REASON  rowNumber
+13                            212 S.S. 131 Bis Km. 5+  ADDR_CONTAINS_STATE_NAME         13
+22  San Lorenzo A4 Torino-Trieste Brescia-Padova K...  ADDR_CONTAINS_STATE_NAME         22
+23                                San Trifone Est A14  ADDR_CONTAINS_STATE_NAME         23
+31                           Km. 38,5 Molteno S.S. 36  ADDR_CONTAINS_STATE_NAME         31
+32                                  Stradella Sud A21  ADDR_CONTAINS_STATE_NAME         32
+
+
+--ignore GeoConsistencyValidator (Not US zip_code)
+Found 21 concerning rows. Examples:
+      zip state                REASON  rowNumber
+15  80026    NA  ZIPCODE_NOT_IN_STATE         15
+23  71011  Bari  ZIPCODE_NOT_IN_STATE         23
+47  20040    MI  ZIPCODE_NOT_IN_STATE         47
+48  24040    MI  ZIPCODE_NOT_IN_STATE         48
+98  62029    MC  ZIPCODE_NOT_IN_STATE         98
+
+
+--ignore CountryValidator (NOT US STATE)
+Found 11 concerning rows. Examples:
+         state      phone    zip            REASON  rowNumber
+15          NA  <MISSING>  80026  INVALID_US_STATE         15
+23        Bari  <MISSING>  71011  INVALID_US_STATE         23
+98          MC  <MISSING>  62029  INVALID_US_STATE         98
+182  Barcelona  <MISSING>  08840  INVALID_US_STATE        182
+378    Navarra  <MISSING>  31892  INVALID_US_STATE        378
+
+
+--ignore LatLngDuplicationValidator (Same address with different location_name/service)
+Found 11 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+               latitude           longitude                                     street_address  num_addrs
+8             37.578540           14.338350  {Sacchitello Nord A19 Catania, Sacchitello Sud...          2
+114           41.686983           13.188915  {Stazione Di Servizio La Macchia Est A1 Napoli...          2
+290             44.4561            11.28042         {051-593864, Centro Servizi Cantagallo A1}          2
+308             44.6618            10.85587  {Secchia Ovest A1, Stazione Di Servizio Secchi...          2
+478             45.5931              9.9656    {Sebino A4, Stazione Di Servizio Sebino Sud A4}          2
+483           45.627454            8.714819  {Aeroporto Milano Malpensa Aeroporto Malpensa ...          2
+590  48.126766763534405   10.10942554473877                      {Illertal Ost, Illertal West}          2
+611           49.120206            4.245095  {3 26 08 15 28 Autoroute A4, 3 26 77 19 59 Aut...          2
+627  50.265929988358145    9.88273478882445                              {Rhön West, Rhön Ost}          2
+662    51.0076240657669  10.252901090551745  {Eisenach Süd Rasthof Eisenach An Der Bab 4, 4...          2
