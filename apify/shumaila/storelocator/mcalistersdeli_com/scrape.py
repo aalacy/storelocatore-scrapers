@@ -21,7 +21,11 @@ MISSING = SgRecord.MISSING
 
 def store_data(soup):
     location_name = soup.find("h2", {"class": "Core-title"}).text
-    phone = soup.find("div", {"itemprop": "telephone"}).text
+
+    try:
+        phone = soup.find("div", {"itemprop": "telephone"}).text
+    except:
+        phone = ""
     try:
         street_address = (
             soup.find("span", {"class": "c-address-street-1"}).text
