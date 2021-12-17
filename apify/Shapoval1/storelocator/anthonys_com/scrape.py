@@ -91,6 +91,16 @@ def get_data(url, sgw: SgWriter):
         .replace("\n", "")
         .strip()
     ) or "<MISSING>"
+    if hours_of_operation == "<MISSING>":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//strong[contains(text(), "Hours")]/following-sibling::text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
     if hours_of_operation.find("Coming soon") != -1:
         hours_of_operation = "Coming soon"
     if hours_of_operation.find("Closed for the season") != -1:
@@ -146,6 +156,9 @@ def get_data(url, sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
+    hours_of_operation = hours_of_operation.replace(
+        "Sundays  |  10am – 2pm", ""
+    ).strip()
 
     row = SgRecord(
         locator_domain=locator_domain,

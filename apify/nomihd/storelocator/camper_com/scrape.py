@@ -55,7 +55,7 @@ def fetch_data():
 
                 street_address = store["address1"]
                 city = store["cityName"]
-                state = store["region"]
+                state = store.get("region", "<MISSING>")
                 if state.isdigit():
                     state = "<MISSING>"
 

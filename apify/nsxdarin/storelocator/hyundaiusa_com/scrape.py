@@ -78,6 +78,8 @@ def fetch_data():
                                 lat = float(lat) / 10
                             if lng >= -50:
                                 lng = float(lng) * 10
+                            if lng <= -181:
+                                lng = float(lng) / 10
                             lat = str(lat)
                             lng = str(lng)
                         except:

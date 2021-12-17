@@ -1,4 +1,4 @@
-import usaddress
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -10,37 +10,18 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://clubchampiongolf.com"
-    session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "If-Modified-Since": "Wed, 13 Oct 2021 19:00:21 GMT",
+        "Cache-Control": "max-age=0",
     }
     data = {
         "searchname": "",
@@ -64,17 +45,26 @@ def fetch_data(sgw: SgWriter):
     r = session.post(
         "https://clubchampiongolf.com/locations", headers=headers, data=data
     )
+    if r.status_code != 200:
+        return
     js = r.json()["features"]
     for j in js:
 
-        slug = "".join(j.get("properties").get("url")).replace(".", "").strip()
-        page_url = f"https://clubchampiongolf.com{slug}"
+        slug = (
+            "".join(j.get("properties").get("url"))
+            .replace(".", "")
+            .replace("fcom", "f.com")
+            .strip()
+        )
+        page_url = slug
+        if page_url.find("https") == -1:
+            page_url = f"https://clubchampiongolf.com{slug}"
+
         location_name = j.get("properties").get("name")
         store_number = j.get("id")
         latitude = j.get("geometry").get("coordinates")[1]
         longitude = j.get("geometry").get("coordinates")[0]
 
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -90,14 +80,14 @@ def fetch_data(sgw: SgWriter):
         if ad.find("(") != -1:
             ad = ad.split("(")[0].strip()
 
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
-        city = a.get("city")
-        state = a.get("state")
-        postal = a.get("postal")
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
+        city = a.city or "<MISSING>"
         phone = "".join(
             tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')
         ).strip()

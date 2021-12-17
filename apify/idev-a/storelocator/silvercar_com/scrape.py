@@ -40,7 +40,6 @@ def fetch_data():
             _hr = sp1.find("h6", string=re.compile(r"^Hours$"))
             if _hr:
                 hours = list(_hr.find_next_sibling().stripped_strings)
-            coord = sp1.select_one("div#map")["data-latlng"].split(",")
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.select_one("span.name").text.strip(),
@@ -48,8 +47,6 @@ def fetch_data():
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split()[0].strip(),
                 zip_postal=addr[1].split(",")[1].strip().split()[-1].strip(),
-                latitude=coord[1].strip(),
-                longitude=coord[0].strip(),
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
