@@ -56,6 +56,8 @@ def fetch_data():
                 store_number = store["key"]
                 locator_domain = website
                 page_url = search_url.replace("/api/search", "").strip()
+                if "tenpo." in page_url:
+                    page_url = "https://tenpo.ichibanya.co.jp/map/" + store_number
                 location_name = store["name"]
                 raw_address = store.get("address", "<MISSING>")
 
