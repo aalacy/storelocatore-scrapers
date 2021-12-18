@@ -18,7 +18,7 @@ logger = SgLogSetup().get_logger("dominos_jp")
 def fetch_data():
     locs = []
     url = "https://www.dominos.jp/sitemap.aspx"
-    r = session.get(url, headers=headers, timeout=60)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if "<loc>https://www.dominos.jp/en/store/" in line:
