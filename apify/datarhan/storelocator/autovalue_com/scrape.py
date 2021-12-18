@@ -32,7 +32,7 @@ def fetch_data():
         poi = loc_dom.xpath('//script[contains(text(), "AutoPartsStore")]/text()')[0]
         poi = demjson.decode(poi)
 
-        location_name = poi["name"].replace("&#39;", "'")
+        location_name = poi["name"].replace("&#39;", "'").replace("&amp;", "&")
         street_address = poi["address"]["streetAddress"]
         city = poi["address"]["addressLocality"]
         state = poi["address"]["addressRegion"]
