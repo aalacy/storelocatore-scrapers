@@ -22,7 +22,6 @@ def fetch_data():
     for i in range(0, len(loclist)):
         loc = loclist[i]
         link = "https://www.streetcorner.com/store/" + loc.split('"', 1)[0]
-        print(link)
 
         try:
             page = session.get(link, headers=headers)
