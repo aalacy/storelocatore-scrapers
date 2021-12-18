@@ -13,18 +13,18 @@ session = SgRequests()
 website = "inglotcosmetics_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-headers={
+headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
 DOMAIN = "https://inglotcosmetics.com/"
 MISSING = SgRecord.MISSING
 
+
 def strip_accents(text):
-    text = unicodedata.normalize('NFD', text)\
-           .encode('ascii', 'ignore')\
-           .decode("utf-8")
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
     return str(text)
+
 
 def fetch_data():
     url = "https://inglotcosmetics.com/index.php?option=com_ajax&plugin=istorelocator&tmpl=component&format=json&lat=0&lng=0&maxdistance=123456&limit=123456&source=com_contactenhanced&file=&category=12"
@@ -40,19 +40,33 @@ def fetch_data():
         location_name = strip_accents(div.find("div", {"class": "loc-name"}).text)
         log.info(location_name)
         try:
-            street_address = strip_accents(div.find("span", {"class": "loc-address"}).get_text(separator='|', strip=True).replace('|'," "))
+            street_address = strip_accents(
+                div.find("span", {"class": "loc-address"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         except:
             pass
         try:
-            city = strip_accents(div.find("span", {"class": "loc-city"}).get_text(separator='|', strip=True).replace('|'," "))
+            city = strip_accents(
+                div.find("span", {"class": "loc-city"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         except:
             pass
         try:
-            zip_postal = strip_accents(div.find("span", {"class": "loc-postcode"}).get_text(separator='|', strip=True).replace('|'," "))
+            zip_postal = strip_accents(
+                div.find("span", {"class": "loc-postcode"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         except:
-           pass
-        raw_address = street_address.strip()+" "+city.strip()+" "+zip_postal.strip()
-        raw_address = raw_address.replace(","," ")
+            pass
+        raw_address = (
+            street_address.strip() + " " + city.strip() + " " + zip_postal.strip()
+        )
+        raw_address = raw_address.replace(",", " ")
         pa = parse_address_intl(raw_address)
 
         street_address = pa.street_address_1
@@ -67,22 +81,22 @@ def fetch_data():
         zip_postal = pa.postcode
         zip_postal = zip_postal.strip() if zip_postal else MISSING
         yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url="https://inglotcosmetics.com/stores",
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=store_number,
-                phone=MISSING,
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=MISSING,
-                raw_address= raw_address
-            )
+            locator_domain=DOMAIN,
+            page_url="https://inglotcosmetics.com/stores",
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=MISSING,
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=MISSING,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
