@@ -56,7 +56,7 @@ def fetch_data():
                     "_m_=HoursPopup&HoursPopup%24_edit_=16580&HoursPopup%24_command_="
                 )
                 r2 = session.post(page_url, headers=headers_2, data=payload)
-                soup_2 = (
+                hours_of_operation = (
                     BeautifulSoup(r2.text, "html.parser")
                     .find("table")
                     .get_text(separator="|", strip=True)
