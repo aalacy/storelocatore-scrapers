@@ -34,7 +34,7 @@ def fetch_data():
                 page_url = "https://www.lunchboxwax.com/ct-milford-marketplace/"
         log.info(page_url)
         subrequest = session.get(page_url)
-        if "COMING SOON" in subrequest.text:
+        if "Coming Soon" in subrequest.text:
             continue
         subsoup = BeautifulSoup(subrequest.text, "html.parser")
         hours_of_operation = (
