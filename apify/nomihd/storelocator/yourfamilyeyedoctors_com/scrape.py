@@ -52,7 +52,11 @@ def fetch_data():
             location_name = store["office"]
             if "Your Family Eye Doctors" not in location_name:
                 continue
-            page_url = store["practiceSchedulerUrl"]
+            page_url = (
+                "https://eyecarespecialtiespa.com/your-family-eye-doctors/{}/".format(
+                    location_name.split("-")[1].strip().replace(" ", "-").strip()
+                )
+            )
 
             location_type = "<MISSING>"
 
@@ -61,7 +65,7 @@ def fetch_data():
 
             city = store["city"]
             state = store["state"]
-            zip = store["zip"]
+            zip = str(store["zip"]).replace(".0", "").strip()
 
             country_code = "US"
 
@@ -71,9 +75,11 @@ def fetch_data():
             hour_list = []
             for hour in hours:
                 day = hour["weekDay"]
-                start = hour["startTime"]
-                end = hour["endTime"]
-                hour_list.append(f"{day}: {start} - {end}")
+                if hour["isClosed"] is True:
+                    time = "Closed"
+                else:
+                    time = hour["startTime"] + " - " + hour["endTime"]
+                hour_list.append(f"{day}: {time}")
 
             hours_of_operation = "; ".join(hour_list)
             store_number = store["storeNumber"]
