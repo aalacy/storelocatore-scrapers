@@ -41,7 +41,11 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//h3[contains(text(), "apertura negozio")]/following-sibling::p/text()'
         )
-        hoo = " ".join([e.strip() for e in hoo])
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h2[contains(text(), "Negozio")]/following-sibling::dl//text()'
+            )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,

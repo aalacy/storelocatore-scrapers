@@ -1,52 +1,46 @@
-import ssl
 from lxml import etree
-from time import sleep
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
 from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+import time
+import ssl
+import json
+from sglogging import SgLogSetup
+import tenacity
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+logger = SgLogSetup().get_logger("toyota.com.vn")
 user_agent = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0"
 )
 
 
+@tenacity.retry(wait=tenacity.wait_fixed(5))
+def get_with_retry(url):
+    with SgChrome(user_agent=user_agent) as driver:
+        driver.get(url)
+        time.sleep(70)
+        return json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)
+
+
 def fetch_data():
-    session = SgRequests(verify_ssl=False)
 
     start_url = "https://www.toyota.com.vn/api/common/provinces"
     domain = "toyota.com.vn"
+    logger.info(f"Started Crawling: {start_url}")
+    jsn = get_with_retry(start_url)
 
-    with SgChrome(user_agent=user_agent) as driver:
-        driver.get("https://www.toyota.com.vn/danh-sach-dai-ly")
-        sleep(10)
-        token = driver.get_cookie("D1N")["value"]
-
-    hdr = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0",
-        "Accept": "*/*",
-        "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
-        "Accept-Encoding": "gzip, deflate, br",
-        "X-Requested-With": "XMLHttpRequest",
-        "Connection": "keep-alive",
-        "Referer": "https://www.toyota.com.vn/danh-sach-dai-ly",
-        "Cookie": f"D1N={token}",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
-    }
-    session.get("https://www.toyota.com.vn/danh-sach-dai-ly")
-    data = session.get(start_url, headers=hdr).json()
-    for p in data["Data_Ext"]["result"]["items"]:
+    for p in jsn["Data_Ext"]["result"]["items"]:
         url = f'https://www.toyota.com.vn/api/common/dealerbyprovinceidanddistrictid?provinceId={p["code"]}&districtId='
-        data = session.get(url, headers=hdr).json()
+        logger.info(f"Crawling: {url}")
+        data = get_with_retry(url)
 
         for poi in data["Data_Ext"]["result"]:
             raw_address = poi["address"]
