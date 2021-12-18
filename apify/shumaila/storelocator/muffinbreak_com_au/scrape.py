@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
