@@ -45,6 +45,7 @@ def fetch_data():
             for store in stores:
 
                 page_url = "https://www.bridgfords.co.uk" + store["branchURL"]
+                log.info(page_url)
                 driver.get(page_url)
                 store_sel = lxml.html.fromstring(driver.page_source)
                 locator_domain = website

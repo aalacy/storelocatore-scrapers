@@ -44,7 +44,7 @@ def fetch_data():
 
             state = pa.state
             state = state.strip() if state else MISSING
-            if not city:
+            if city == MISSING:
                 city = location_name
             zip_postal = loc["Postcode"]
             raw_address = raw_address + " " + zip_postal
