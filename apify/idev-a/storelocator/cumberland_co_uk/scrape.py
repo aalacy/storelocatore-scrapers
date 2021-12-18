@@ -32,6 +32,11 @@ def fetch_data():
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("table.Table--plain tr")
             ]
+            location_type = ""
+            if sp1.select_one("div.pill--error"):
+                error = sp1.select_one("div.pill--error").text
+                if "Closed for refurbishment" in error or "Temporarily closed" in error:
+                    location_type = "Temporarily closed"
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.select_one("div.m-Map-sidebarListHeading").text.strip(),
@@ -44,6 +49,7 @@ def fetch_data():
                 phone=sp1.select_one('div[itemprop="telephone"] a').text.strip(),
                 latitude=coord[0],
                 longitude=coord[1],
+                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
