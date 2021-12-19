@@ -68,6 +68,13 @@ def fetch_data():
             )[1].split(")")[0]
             latitude, longitude = map_info.split(",")[0], map_info.split(",")[1]
 
+            if len(latitude) <= 0:
+                log.info(page_url)
+                store_req = session.get(page_url, headers=headers)
+                map_info = store_req.text.split("myLatlng=new google.maps.LatLng(")[
+                    1
+                ].split(")")[0]
+                latitude, longitude = map_info.split(",")[0], map_info.split(",")[1]
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
