@@ -36,7 +36,7 @@ def fetch_data(sgw: SgWriter):
         state = store["state"]
         zip_code = store["postalCode"]
         country_code = "US"
-        store_number = store["sys"]["id"]
+        store_number = ""
         location_type = ""
         phone = store["phone"]
         latitude = store["gpsLocation"]["lat"]
