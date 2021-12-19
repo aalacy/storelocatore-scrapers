@@ -86,6 +86,12 @@ def fetch_data():
             state = "<MISSING>"
             zc = "<MISSING>"
             hours = "Sun-Wed: 10AM - 10PM; Thur-Sat: 10AM - MIDNIGHT"
+        if "-Sat:" in line:
+            hours = line.split("<span>")[1].split("<")[0]
+        if "Williams" in add:
+            add = add.split("Williams")[0].strip()
+        if "WILLIAMS" in add:
+            add = add.split("WILLIAMS")[0].strip()
         if Found and "</div>" in line:
             if "The Exchange Building" in add:
                 city = "Bondi Junction"
@@ -122,6 +128,26 @@ def fetch_data():
             store = "INTL-" + str(sc)
             add = add.replace("&nbsp;", " ")
             name = name.replace("&nbsp;", " ")
+            if "Perisur" in name:
+                zc = "04500"
+                city = "Coyoacan"
+            if "Williams Sonoma Angel" in name:
+                city = "Puebla"
+                zc = "72450"
+            if "Williams Sonoma Le" in name:
+                city = "Leon"
+                zc = "37150"
+            if "Williams Sonoma Quer" in name:
+                city = "Santiago de Queretaro"
+                zc = "76127"
+            if "Williams Sonoma Andamar" in name:
+                city = "Veracruz"
+                zc = "94298"
+            if "de Quevedo" in add:
+                city = "Coyoacan"
+                zc = "04010"
+            if "Phase 3" in name:
+                phone = "+965 22283101"
             if '<a href="https://www.williams-sonoma.com/stores/' in line and Found:
                 loc = line.split('href="')[1].split('"')[0]
             yield SgRecord(
