@@ -1,5 +1,5 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -13,20 +13,31 @@ def fetch_data(sgw: SgWriter):
     api_url = "https://www.wendys.aw/locations/"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://www.wendys.aw/",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
     }
+
     r = session.get(api_url, headers=headers)
+
     tree = html.fromstring(r.text)
     div = tree.xpath("//h3/a")
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-
+        location_name = "".join(d.xpath(".//text()"))
         session = SgRequests()
-        r = session.get(page_url, headers=headers)
+        r = session.get(page_url, headers=headers, verify=False)
         tree = html.fromstring(r.text)
 
-        location_name = "".join(tree.xpath("//h4//text()"))
         ad = (
             "".join(
                 tree.xpath(
@@ -87,7 +98,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
         fetch_data(writer)
