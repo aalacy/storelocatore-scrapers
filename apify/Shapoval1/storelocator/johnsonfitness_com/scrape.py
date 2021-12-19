@@ -61,6 +61,10 @@ def get_data(zips, sgw: SgWriter):
             or "<MISSING>"
         )
         street_address = " ".join(street_address.split())
+        if street_address.find("(") != -1:
+            street_address = street_address.split("(")[0].strip()
+        if street_address.find("Oklahoma City") != -1:
+            street_address = street_address.split(",")[0].strip()
         city = (
             "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
             .replace("\n", "")
