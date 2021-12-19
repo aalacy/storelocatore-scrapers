@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -36,7 +38,6 @@ def fetch_data():
             .strip()[:-1]
         )["KOObject"][0]["locations"]
         for x, _ in enumerate(locations):
-            hours = []
             blocks = [
                 list(p.stripped_strings)
                 for p in bs(_["description"], "lxml").select("p")
@@ -47,8 +48,9 @@ def fetch_data():
             phone = ""
             if _p(" ".join(blocks[-1])):
                 phone = " ".join(blocks[-1])
+                del blocks[-1]
             hours = []
-            for hh in blocks[1]:
+            for hh in blocks[-1]:
                 if "temporarily closed" in hh.lower():
                     hours = ["Temporarily closed"]
                     break
@@ -89,7 +91,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
