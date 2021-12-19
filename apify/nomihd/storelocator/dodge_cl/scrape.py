@@ -47,7 +47,8 @@ def fetch_data():
         for region in regions[1:]:
 
             r_id = "".join(region.xpath("./@value"))
-            r_id = "9"
+            if r_id == "13":
+                continue
             data1["rid"] = r_id  # update data1
             log.info(r_id)
             region_url = "https://dodge.cl/Async/getCommunesWithConces"
