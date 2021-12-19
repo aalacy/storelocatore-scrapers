@@ -31,6 +31,7 @@ def fetch_data():
                     hours.append(f"{key}: {times}")
             except:
                 pass
+
             yield SgRecord(
                 page_url="https://lavidamassage.com/locations",
                 store_number=_["id"],

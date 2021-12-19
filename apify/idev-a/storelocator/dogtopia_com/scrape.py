@@ -3,6 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -16,14 +17,11 @@ def fetch_data():
     with SgRequests() as session:
         store_list = session.get(base_url, headers=_headers).json()
         for store in store_list:
-            if store["opening_soon"]:
-                continue
-
             addr = store["store_info"]["location_address_info"][0]
             hours = []
             if store["store_info"]["location_hours_info"]:
                 _hr = store["store_info"]["location_hours_info"][0]
-                if "Opening Soon" in _hr.get("coming_soon_header_text", ""):
+                if _hr.get("coming_soon_checkbox") == "on":
                     continue
                 for day in days:
                     day = day.lower()
@@ -34,8 +32,20 @@ def fetch_data():
                     else:
                         times = "closed"
                     hours.append(f"{day}: {times}")
+            if not hours:
+                sp1 = bs(
+                    session.get(
+                        store["link"].replace("locations/", ""), headers=_headers
+                    ).text,
+                    "lxml",
+                )
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in sp1.select("table.uk-table tr")
+                ]
+
             yield SgRecord(
-                page_url=store["link"],
+                page_url=store["link"].replace("locations/", ""),
                 store_number=addr["location_id"],
                 location_name=store["title"]["raw"],
                 street_address=addr["location_street_address"]

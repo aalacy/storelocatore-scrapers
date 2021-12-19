@@ -10,6 +10,14 @@ from selenium.webdriver.common.keys import Keys
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgpostal.sgpostal import parse_address_intl
+import ssl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 session = SgRequests()

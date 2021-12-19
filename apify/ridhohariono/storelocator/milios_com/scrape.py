@@ -95,6 +95,9 @@ def fetch_data():
         )
         raw_address = " ".join(info[:-1])
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "Madison" in street_address and city == MISSING:
+            city = "Madison"
+            street_address = street_address.replace(city, "").strip()
         phone = info[-1]
         hours_of_operation = (
             content.find("div", {"class": "location-info-left"})

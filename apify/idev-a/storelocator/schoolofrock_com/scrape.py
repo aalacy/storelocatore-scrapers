@@ -27,9 +27,12 @@ def fetch_records(http):
         page_url = _["url"]
         logger.info(page_url)
         sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+        bar = sp1.select_one("div.promo-bar")
         if (
-            sp1.select_one("div.promo-bar")
-            and "coming soon" in sp1.select_one("div.promo-bar").text.lower()
+            bar
+            and "coming soon" in bar.text.lower()
+            and "black friday" not in bar.text.lower()
+            and "summer camp" not in bar.text.lower()
         ):
             continue
         hours = [

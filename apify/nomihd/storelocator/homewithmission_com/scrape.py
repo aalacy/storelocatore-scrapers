@@ -115,6 +115,14 @@ def fetch_data():
 
                         location_name = store["title"]
 
+                        if (
+                            location_name
+                            == "dvanced Healthcare Services Home Health- Newark"
+                        ):
+                            location_name = (
+                                "Advanced Healthcare Services Home Health- Newark"
+                            )
+
                         phone = "".join(
                             desc_sel.xpath('//div[@class="office-wrapper"]/text()')
                         ).strip()
@@ -139,8 +147,18 @@ def fetch_data():
                                 '//div[@class="text-wrapper"]/p[./strong[contains(text(),"Hours of Operation:")]]/following-sibling::p[1]/text()'
                             )
 
+                            days_list = []
+                            time_list = []
+                            for day in days:
+                                if len("".join(day).strip()) > 0:
+                                    days_list.append("".join(day).strip())
+
+                            for tim in time:
+                                if len("".join(tim).strip()) > 0:
+                                    time_list.append("".join(tim).strip())
+
                             for index in range(0, len(days)):
-                                hours_list.append(days[index] + time[index])
+                                hours_list.append(days_list[index] + time_list[index])
 
                             hours_of_operation = "; ".join(hours_list).strip()
                             map_link = "".join(

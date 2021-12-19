@@ -67,9 +67,7 @@ def fetch_data():
                 if len(temp) > 3:
                     temp = temp[1:]
                 try:
-                    phone = (
-                        temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
-                    )
+                    phone = soup.select_one("a[href*=tel]").text.replace("Call", "")
                 except:
                     phone = MISSING
                 try:
