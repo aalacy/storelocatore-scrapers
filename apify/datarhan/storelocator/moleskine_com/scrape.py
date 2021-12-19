@@ -7,6 +7,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
+#This is a code change for tue purposes of rerunning in jira automation
 
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
