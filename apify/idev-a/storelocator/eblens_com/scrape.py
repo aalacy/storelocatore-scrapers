@@ -58,7 +58,9 @@ def fetch_records(session, search):
                 .split(",")
             )
             detail = bs(session.get(page_url).text, "lxml")
-
+            hours_of_operation = ""
+            if detail.select_one("ul.storeHours"):
+                hours_of_operation = detail.select_one("ul.storeHours").text.strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -71,7 +73,7 @@ def fetch_records(session, search):
                 latitude=geo[0],
                 longitude=geo[1],
                 locator_domain=locator_domain,
-                hours_of_operation=detail.select_one("ul.storeHours").text.strip(),
+                hours_of_operation=hours_of_operation,
                 raw_address=" ".join(addr),
             )
 
