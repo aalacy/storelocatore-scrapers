@@ -20,10 +20,12 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     div = tree.xpath('//p[text()="LOCATIONS"]/following::ul[1]/li/a')
     for d in div:
-
+        location_type = SgRecord.MISSING
         page_url = "".join(d.xpath(".//@href"))
         location_name = "".join(d.xpath(".//text()"))
         r = session.get(page_url, headers=headers)
+        if "CLOSED FOR THE" in r.text:
+            location_type = "Temporarily Closed"
         tree = html.fromstring(r.text)
         cls = "".join(tree.xpath('//img[contains(@src, "Closed")]/@src'))
         if cls:
@@ -87,7 +89,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
