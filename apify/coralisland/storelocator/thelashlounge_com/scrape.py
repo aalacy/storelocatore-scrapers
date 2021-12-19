@@ -47,7 +47,7 @@ def fetch_data():
             street_address = (
                 address["streetAddress"]
                 .replace("<br/>", "")
-                .replace(" </br>")
+                .replace(" </br>", "")
                 .replace(city, "")
                 .replace(state, "")
                 .replace(zip_postal, "")
