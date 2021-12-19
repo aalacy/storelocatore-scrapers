@@ -40,6 +40,10 @@ def fetch_data():
         hoo = poi_html.xpath(
             './/p[contains(text(), "Horario de Ventas")]/following-sibling::p[1]//text()'
         )
+        if not hoo:
+            hoo = poi_html.xpath(
+                './/p[span[contains(text(), "Horario de Ventas")]]/following-sibling::p[1]//text()'
+            )
         hoo = " ".join([e.strip() for e in hoo])
 
         item = SgRecord(
