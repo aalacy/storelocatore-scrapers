@@ -33,7 +33,22 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//span[contains(text(), "Godziny otwarcia")]/following-sibling::span/text()'
             )
-            hoo = ", ".join([e.strip() for e in hoo]).replace("LOCAL:,", "")
+            hoo = (
+                ", ".join([e.strip() for e in hoo])
+                .split(", Dostawa")[0]
+                .split(", Uwaga")[0]
+                .split(", W dniach")[0]
+                .split(", UWAGA")[0]
+                .split(", Organizujemy")[0]
+                .split(", ,")[0]
+                .split(", niedziela: nieczynne")[0]
+                .split(", poniedziałek - czwartek:")[0]
+                .strip()
+            )
+            if "00, niedziela - czwartek" in hoo:
+                hoo = hoo.split("00, niedziela - czwartek")[0] + "00"
+            if hoo.endswith(","):
+                hoo = hoo[:-1]
 
             item = SgRecord(
                 locator_domain=domain,
