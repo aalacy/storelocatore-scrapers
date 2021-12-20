@@ -13,7 +13,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("name")
         slug = j.get("slug") or ""
-        page_url = f"https://www.gamma.be/nl/winkels-en-openingsuren/{slug}"
+        page_url = f"https://www.gamma.nl/bouwmarkten/{slug}"
 
         a = j.get("address") or {}
         street_address = f'{a.get("street")} {a.get("streetNumber") or ""}'.strip()
@@ -60,7 +60,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.gamma.be/"
+    locator_domain = "https://www.gamma.nl/"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
