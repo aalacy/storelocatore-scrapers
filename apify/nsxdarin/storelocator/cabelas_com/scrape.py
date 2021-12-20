@@ -12,6 +12,7 @@ headers = {
 
 logger = SgLogSetup().get_logger("cabelas_com")
 
+
 def fetch_data():
     locs = []
     url = "https://stores.basspro.com/"
