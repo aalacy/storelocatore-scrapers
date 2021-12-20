@@ -39,15 +39,13 @@ def fetch_data(sgw: SgWriter):
             ad = ad.split("Add:")[1].strip()
         if ad.find("Phone:") != -1:
             ad = ad.split("Phone:")[0].strip()
-        ad = (
-            " ".join(ad.split()[:-3])
-            .replace("3457 Clear Lake City Blvd, Suite 700", "")
-            .strip()
-        )
+        ad = " ".join(ad.split()[:-3]).replace("(El Dorado Blvd)", "").strip()
         a = parse_address(USA_Best_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
+        if street_address.find("(") != -1:
+            street_address = street_address.split("(")[0].strip()
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "US"
