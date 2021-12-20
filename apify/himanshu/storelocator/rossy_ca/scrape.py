@@ -61,7 +61,7 @@ def fetch_data():
             hours_of_operation = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url="https://www.rplumber.com/locations",
+            page_url="https://www.rossy.ca/en/store-finder/",
             location_name=location_name,
             street_address=street_address.strip(),
             city=city.strip(),
