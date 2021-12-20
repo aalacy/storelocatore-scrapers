@@ -38,12 +38,7 @@ def fetch_records(session, search):
         res = session.post(base_url, data=payload)
         if res.status_code != 200:
             continue
-        try:
-            soup = bs(json.loads(res.text)["STOREDISP"], "lxml")
-        except:
-            import pdb
-
-            pdb.set_trace()
+        soup = bs(json.loads(res.text)["STOREDISP"], "lxml")
         locations = soup.select("div.mapAddress")
         logger.info(f"[{zip_code}] {len(locations)}")
         for store in locations:
