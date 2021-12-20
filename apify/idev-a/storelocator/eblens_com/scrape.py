@@ -5,7 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("")
@@ -36,9 +36,14 @@ def fetch_records(session, search):
     for zip_code in search:
         payload = {"locationSearch": zip_code, "maxrows": 20}
         res = session.post(base_url, data=payload)
-        if "No Stores Found" in res.text:
+        if res.status_code != 200:
             continue
-        soup = bs(json.loads(res.text)["STOREDISP"], "lxml")
+        try:
+            soup = bs(json.loads(res.text)["STOREDISP"], "lxml")
+        except:
+            import pdb
+
+            pdb.set_trace()
         locations = soup.select("div.mapAddress")
         logger.info(f"[{zip_code}] {len(locations)}")
         for store in locations:
@@ -80,10 +85,12 @@ def fetch_records(session, search):
 
 if __name__ == "__main__":
     with SgRequests() as http:
-        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        )
         with SgWriter(
             SgRecordDeduper(
-                RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
+                RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
             )
         ) as writer:
             for rec in fetch_records(http, search):
