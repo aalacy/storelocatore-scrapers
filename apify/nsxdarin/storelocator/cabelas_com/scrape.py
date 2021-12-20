@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -44,7 +47,6 @@ def fetch_data():
     website = "cabelas.com"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '<a class="location-card-title-link" href="' in line:
             items = line.split('<a class="location-card-title-link" href="')
             for item in items:
@@ -70,21 +72,31 @@ def fetch_data():
             country = "CA"
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '<h1 class="heading heading-largest">' in line2:
                 name = line2.split('<h1 class="heading heading-largest">')[1].split(
                     "<"
                 )[0]
             if '<span itemprop="telephone">' in line2:
                 phone = line2.split('<span itemprop="telephone">')[1].split("<")[0]
-            if '<p itemprop="openingHours" content="' in line2:
-                hrs = line2.split('<p itemprop="openingHours" content="')[1].split('"')[
-                    0
-                ]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+            if 'itemprop="openingHours" content="' in line2:
+                ditems = line2.split('itemprop="openingHours" content="')
+                for ditem in ditems:
+                    if "'dimension1'" not in ditem:
+                        hrs = (
+                            ditem.split('"')[0]
+                            .replace("<p ; ", "")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .strip()
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
             if '<span><span itemprop="addressLocality">' in line2:
                 city = line2.split('<span><span itemprop="addressLocality">')[1].split(
                     "<"
@@ -144,27 +156,29 @@ def fetch_data():
             name = name.split(",")[0].strip()
         if len(state) == 2:
             country = "US"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
