@@ -3,6 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
+
 from sgrequests import SgRequests
 import re
 from bs4 import BeautifulSoup
@@ -36,14 +37,17 @@ def fetch_data():
             link = loc.text
             flag = 0
 
+            r = session.get(link, headers=headersss)
             try:
-                r = session.get(link, headers=headersss)
                 soup = BeautifulSoup(r.text, "html.parser")
             except:
                 driver.get(link)
                 soup = BeautifulSoup(driver.page_source, "html.parser")
                 flag = 1
-            title = soup.find("h1").text
+            try:
+                title = soup.find("h1").text
+            except:
+                continue
             try:
                 address = (
                     soup.find("div", {"class": "csFacilityAddress"}).find("div").text
