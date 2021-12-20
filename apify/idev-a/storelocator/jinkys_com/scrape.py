@@ -16,23 +16,30 @@ base_url = "https://www.jinkys.com/"
 
 def fetch_data():
     with SgRequests() as session:
-        locations = bs(session.get(base_url, headers=_headers).text, "lxml").find_all(
-            "script", type="application/ld+json"
+        locations = json.loads(
+            bs(session.get(base_url, headers=_headers).text, "lxml")
+            .select_one("script#popmenu-apollo-state")
+            .text.split("window.POPMENU_APOLLO_STATE =")[1]
+            .strip()[:-1]
         )
-        for loc in locations:
-            _ = json.loads(loc.string)
-            addr = _["address"]
+        for key, _ in locations.items():
+            if not key.startswith("RestaurantLocation:"):
+                continue
             yield SgRecord(
                 page_url=base_url,
-                location_name=addr["addressLocality"],
-                street_address=addr["streetAddress"],
-                city=addr["addressLocality"],
-                state=addr["addressRegion"],
-                zip_postal=addr["postalCode"],
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=_["streetAddress"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["postalCode"],
                 country_code="US",
-                phone=_["telephone"],
+                phone=_.get("displayPhone"),
+                latitude=_.get("lat"),
+                longitude=_.get("lng"),
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(_.get("openingHours", [])),
+                hours_of_operation="; ".join(_.get("schemaHours", [])),
+                raw_address=_["fullAddress"],
             )
 
 
@@ -41,9 +48,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
                 }
             )
         )

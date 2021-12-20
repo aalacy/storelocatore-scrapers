@@ -105,8 +105,8 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         if (
-            hours_of_operation.find("When ships port") != -1
-            or hours_of_operation.find("When ships are in port") != -1
+            hours_of_operation.count("When ships port") > 1
+            or hours_of_operation.count("When ships are in port") > 1
         ):
             hours_of_operation = "<MISSING>"
         if hours_of_operation.find("Open May to September") != -1:

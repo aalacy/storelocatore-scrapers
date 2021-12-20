@@ -24,6 +24,7 @@ def fetch_data():
         "https://healthy.kaiserpermanente.org/hawaii/facilities/sitemap",
         "https://healthy.kaiserpermanente.org/maryland-virginia-washington-dc/facilities/sitemap",
         "https://healthy.kaiserpermanente.org/oregon-washington/facilities/sitemap",
+        "https://healthy.kaiserpermanente.org/washington/facilities/sitemap",
     ]
     for url in urls:
         logger.info(url)
@@ -104,6 +105,15 @@ def fetch_data():
                 hours = "<MISSING>"
             if "day" not in hours and "MISSING" not in hours:
                 hours = hours + " - 7 days"
+            if ", Located" in add:
+                add = add.split(", Located")[0].strip()
+            if (
+                "https://healthy.kaiserpermanente.org/georgia/facilities/Kaiser-Permanente-Gwinnett-Comprehensive-Medical-Center-100464"
+                in loc
+            ):
+                add = "3650 Steve Reynolds Blvd"
+            if "Steele-Street-Medical-Center-339023" in loc:
+                add = "505 Steele St S"
             if AF is False:
                 yield SgRecord(
                     locator_domain=website,

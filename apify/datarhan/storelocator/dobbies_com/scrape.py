@@ -74,11 +74,11 @@ def fetch_data():
             location_type = "temporarily closed"
         if loc_dom.xpath('//p[contains(text(), "temporarily closed")]'):
             location_type = "temporarily closed"
-        geo = loc_dom.xpath('//a[contains(@href, "/maps/")]/@href')
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')
         if geo:
-            if "/@" in geo:
+            if "/@" in geo[0]:
                 geo = geo[0].split("/@")[-1].split(",")[:2]
                 latitude = geo[0]
                 longitude = geo[1]

@@ -33,7 +33,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -65,11 +64,13 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    page_urls = soup.select(
-        "div.elementor-inner a.elementor-button-link.elementor-button.elementor-size-sm"
+    contents = soup.select(
+        "div.make-column-clickable-elementor.elementor-column.elementor-col-25.elementor-top-column.elementor-element"
     )
-    for row in page_urls:
-        page_url = row["href"]
+    for row in contents:
+        page_url = row.select_one(
+            "div.elementor-inner a.elementor-button-link.elementor-button.elementor-size-sm"
+        )["href"]
         store = pull_content(page_url)
         content = store.find(
             "section",
@@ -83,15 +84,25 @@ def fetch_data():
         location_name = content.find(
             "h3", {"class": "elementor-heading-title elementor-size-default"}
         ).text.strip()
-        raw_address = info[2].text.replace("\n", ",").strip()
+        if "palm-beach-gardens-information" in page_url:
+            info = row.select(
+                "div.make-column-clickable-elementor.elementor-column.elementor-col-25.elementor-top-column.elementor-element  div.elementor-widget-container div.elementor-text-editor.elementor-clearfix"
+            )
+            raw_address = info[0].get_text(strip=True, separator=",")
+            hours_of_operation = info[1].get_text(strip=True, separator=",")
+        else:
+            raw_address = " ".join(info[2].text.split())
+            hours_of_operation = info[3].get_text(strip=True, separator=",")
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "464 Sw Port" in street_address:
+            street_address = "464 Sw Port St. Lucie Blvd"
+            city = "Port St. Lucie"
         country_code = "US"
-        phone = info[1].text.strip()
+        phone = store.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
         store_number = MISSING
         location_type = MISSING
         latitude = MISSING
         longitude = MISSING
-        hours_of_operation = info[3].get_text(strip=True, separator=",")
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

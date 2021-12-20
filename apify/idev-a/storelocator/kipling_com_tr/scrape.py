@@ -24,7 +24,7 @@ def fetch_data():
             addr = list(_.select_one("p.address").stripped_strings)
             yield SgRecord(
                 page_url=base_url,
-                location_name=_["data-name"],
+                location_name="Kipling",
                 street_address=addr[0],
                 city=_["data-city"],
                 state=_["data-county"],

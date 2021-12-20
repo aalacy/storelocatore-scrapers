@@ -39,8 +39,6 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.shop-container div.shop-address")
         for _ in locations:
-            if _.find_previous_sibling("h3").text != "España":
-                continue
             block = list(_.stripped_strings)
             phone = ""
             if _p(block[-1]):
@@ -49,15 +47,19 @@ def fetch_data():
             if "@" in block[-1]:
                 del block[-1]
             raw_address = " ".join(block[1:])
-            addr = parse_address_intl(raw_address + ", Spain")
+            addr = parse_address_intl(raw_address)
+            location_name = "Kipling"
+            if "outlet" in _.strong.text.lower():
+                location_name = "Kipling Outlet"
+
             yield SgRecord(
                 page_url=base_url,
-                location_name=block[0],
+                location_name=location_name,
                 street_address=block[1:][0],
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code="Spain",
+                country_code=_.find_previous_sibling("h3").text,
                 phone=phone,
                 locator_domain=locator_domain,
                 raw_address=raw_address,

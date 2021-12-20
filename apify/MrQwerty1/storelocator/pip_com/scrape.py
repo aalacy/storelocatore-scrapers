@@ -1,91 +1,93 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_hoo(page_url):
+    _tmp = []
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    hours = tree.xpath("//div[@class='c-cta-row__hours-row']/text()")
+    for h in hours:
+        if not h.strip() or "appointment" in h.lower() or "Fall" in h:
+            continue
+        _tmp.append(h.strip())
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return ";".join(_tmp)
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.pip.com/"
-    data = '{address: "US", distance: "0", allUsLocations: "true"}'
-    session = SgRequests()
-    r = session.post(
-        "https://www.pip.com/Handlers/GetLocationsByAddress.ashx", data=data
-    )
-    js = r.json()
+def get_number(slug):
+    _tmp = []
+    for s in slug:
+        if s.isdigit():
+            _tmp.append(s)
+
+    return "".join(_tmp)
+
+
+def fetch_data(sgw: SgWriter):
+    data = '{"Input":"75022","TopN":-1,"Radius":5000,"Page":1}'
+    r = session.post("https://pip.com/api/location/search", headers=headers, data=data)
+    js = r.json()["results"]
 
     for j in js:
-        street_address = (
-            f"{j.get('Address1')} {j.get('Address2') or ''}".strip() or "<MISSING>"
+        slug = j.get("locationId") or ""
+        store_number = get_number(slug)
+        c = j.get("coordinate") or {}
+        latitude = c.get("lat")
+        longitude = c.get("lng")
+        page_url = f"{locator_domain}{slug}"
+        phone = j.get("phone")
+        street_address = f'{j.get("address1")} {j.get("address2") or ""}'.strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        location_name = f"PIP {city}"
+        try:
+            hours_of_operation = get_hoo(page_url)
+        except:
+            hours_of_operation = SgRecord.MISSING
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            store_number=store_number,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
-        city = j.get("City") or "<MISSING>"
-        state = j.get("State") or "<MISSING>"
-        postal = j.get("Zipcode") or "<MISSING>"
-        country_code = j.get("Country") or "<MISSING>"
-        store_number = j.get("FransId") or "<MISSING>"
-        page_url = f"https://www.pip.com/{store_number}/"
-        location_name = j.get("CenterName")
-        phone = j.get("PhoneNumber") or "<MISSING>"
-        latitude = j.get("Latitude") or "<MISSING>"
-        longitude = j.get("Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = j.get("HoursOfOperation") or "<MISSING>"
 
-        if hours_of_operation.endswith(","):
-            hours_of_operation = hours_of_operation[:-1]
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://pip.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Referer": "https://pip.com/find-a-location?location=75022",
+        "Content-Type": "application/json;charset=utf-8",
+        "Origin": "https://pip.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

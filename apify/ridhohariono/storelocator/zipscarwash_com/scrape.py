@@ -49,9 +49,18 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def pull_content(url):
+def pull_content(url, num=0):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        if num <= 5:
+            num += 1
+            log.info(f"Try to refresh for ({num}) times...")
+            time.sleep(2)
+            return pull_content(url, num)
+        else:
+            return False
     return soup
 
 
@@ -71,11 +80,10 @@ def fetch_data():
             % (lat, long, search.items_remaining())
         )
         page_url = LOCATION_URL.format(code=zipcode, latitude=lat, longitude=long)
-        try:
-            soup = pull_content(page_url)
-        except:
-            time.sleep(2)
-            soup = pull_content(page_url)
+        soup = pull_content(page_url)
+        if not soup:
+            log.info(f"Skipping invalid url => {page_url}")
+            continue
         store_content = soup.find_all(
             "div",
             {
@@ -95,13 +103,17 @@ def fetch_data():
             phone = MISSING
             store_number = MISSING
             location_type = MISSING
-            latlong = (
-                row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
-                .replace("https://www.google.com/maps/place/", "")
-                .split(",")
-            )
-            latitude = latlong[0]
-            longitude = latlong[1]
+            try:
+                latlong = (
+                    row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
+                    .replace("https://www.google.com/maps/place/", "")
+                    .split(",")
+                )
+                latitude = latlong[0]
+                longitude = latlong[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             hours_of_operation = row.find(
                 "div", {"class": "locations__results-hours"}
             ).get_text(strip=True, separator=",")

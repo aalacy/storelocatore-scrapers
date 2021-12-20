@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.aldi-sued.de/de/de/.get-stores-in-radius.json?_1630664498068=&latitude=52.33187999999999&longitude=10.4411716&radius=25000"
     domain = "aldi-sued.de"
@@ -22,6 +22,16 @@ def fetch_data():
             location_name = "ALDI SÜD"
         else:
             location_name = "ALDI NORD"
+        hoo = []
+        for e in poi["openUntilSorted"]["openingHours"]:
+            day = e["day"]
+            if e.get("closed"):
+                hoo.append(f"{day}: closed")
+            else:
+                closes = e["closeFormatted"]
+                opens = e["openFormatted"]
+                hoo.append(f"{day}: {opens} - {closes}")
+        hoo = ", ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
@@ -37,7 +47,7 @@ def fetch_data():
             location_type="",
             latitude=poi["latitude"],
             longitude=poi["longitude"],
-            hours_of_operation=poi["openingHours"],
+            hours_of_operation=hoo,
         )
 
         yield item
