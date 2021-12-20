@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -9,6 +10,12 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://samsclub.com.br/"
+    r = session.get("https://sejasocio.samsclub.com.br/#encontre-um-clube")
+    tree = html.fromstring(r.text)
+    nonce_state = "".join(tree.xpath("//section/@data-nonce-states"))
+    nonce_cities = "".join(tree.xpath("//section/@data-nonce-cities"))
+    nonce_clubs = "".join(tree.xpath("//section/@data-nonce-clubs"))
+
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "application/json, text/plain, */*",
@@ -21,20 +28,20 @@ def fetch_data(sgw: SgWriter):
         "Cache-Control": "max-age=0",
     }
     r = session.get(
-        "https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_states&nonce=d052372089",
+        f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_states&nonce={nonce_state}",
         headers=headers,
     )
     js = r.json()["data"]
     for j in js:
         state = j
         r = session.get(
-            f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_cities&state={state}&nonce=26481af5ff"
+            f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs_cities&state={state}&nonce={nonce_cities}"
         )
         js = r.json()
         for j in js["data"]:
             city = j
             r = session.get(
-                f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs&state={state}&city={city}&nonce=9755b3aba5",
+                f"https://sejasocio.samsclub.com.br/wp-admin/admin-ajax.php?action=get_clubs&state={state}&city={city}&nonce={nonce_clubs}",
                 headers=headers,
             )
             js = r.json()["data"]
@@ -59,6 +66,8 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = f"Weekdays {j.get('hours_week')} Saturday {j.get('hours_saturday')} Sunday {j.get('hours_sunday')}"
                 if hours_of_operation == "Weekdays   Saturday   Sunday  ":
                     hours_of_operation = "<MISSING>"
+                if hours_of_operation == "<MISSING>":
+                    hours_of_operation = j.get("hours_note") or "<MISSING>"
 
                 row = SgRecord(
                     locator_domain=locator_domain,
