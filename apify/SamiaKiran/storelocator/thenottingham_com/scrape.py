@@ -40,7 +40,7 @@ def fetch_data():
                     "</script>"
                 )[0]
             )["address"]
-            street_address = address["streetAddress"]
+            street_address = address["streetAddress"].split(",")[0]
             city = address["addressLocality"]
             state = address["addressRegion"]
             if not state:
