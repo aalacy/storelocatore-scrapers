@@ -42,7 +42,12 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "html.parser")
             if "Temporarily Closed" in soup.text or "opening" in soup.text.lower():
                 continue
-            title = soup.find("h1").text
+            try:
+                title = soup.findAll("div", {"class": "font-montserrat"})[
+                    0
+                ].text.strip()
+            except:
+                continue
             try:
                 phone = soup.find("address").find("strong", {"class", "tel"}).text
             except:

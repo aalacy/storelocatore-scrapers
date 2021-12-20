@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -49,10 +50,7 @@ def fetch_data():
             location_name = location_name[-1]
             raw_address = loc_dom.xpath('//div[@class="location-info"]/div/text()')
             street_address = raw_address[0]
-            city = ""
-            if len(raw_address) == 2:
-                street_address = raw_address[1]
-                city = raw_address[0]
+            addr = parse_address_intl(" ".join(raw_address))
             phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
             types = loc_dom.xpath('//div[@class="concession-services"]//text()')
@@ -73,7 +71,7 @@ def fetch_data():
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
-                city=city,
+                city=addr.city,
                 state="",
                 zip_postal="",
                 country_code=country_code,
