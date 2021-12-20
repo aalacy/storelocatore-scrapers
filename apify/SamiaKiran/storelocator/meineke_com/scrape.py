@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 
 DOMAIN = "https://www.meineke.com/"
-log = SgLogSetup().get_logger(logger_name="meineke_com")
+logger = SgLogSetup().get_logger(logger_name="meineke_com")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
@@ -56,7 +56,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             schema = schema.replace("\n", "")
             loc = json.loads(schema)
         except Exception as e:
-            log.info(f"Error: {e}")
+            logger.info(f"Error: {e}")
             continue
         location_name = loc["name"]
         phone = loc["telephone"]
