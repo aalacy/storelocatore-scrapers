@@ -11,7 +11,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://aws.servicehub.eurostep.it/api/storelocators/coord/{}/{}"
     domain = "moleskine.com"
