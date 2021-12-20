@@ -88,10 +88,6 @@ def fetch_data():
             hours = "Sun-Wed: 10AM - 10PM; Thur-Sat: 10AM - MIDNIGHT"
         if "-Sat:" in line:
             hours = line.split("<span>")[1].split("<")[0]
-        if "Williams" in add:
-            add = add.split("Williams")[0].strip()
-        if "WILLIAMS" in add:
-            add = add.split("WILLIAMS")[0].strip()
         if Found and "</div>" in line:
             if "The Exchange Building" in add:
                 city = "Bondi Junction"
@@ -150,6 +146,10 @@ def fetch_data():
                 phone = "+965 22283101"
             if '<a href="https://www.williams-sonoma.com/stores/' in line and Found:
                 loc = line.split('href="')[1].split('"')[0]
+            if "Williams" in add:
+                add = add.split("Williams")[0].strip()
+            if "WILLIAMS" in add:
+                add = add.split("WILLIAMS")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
