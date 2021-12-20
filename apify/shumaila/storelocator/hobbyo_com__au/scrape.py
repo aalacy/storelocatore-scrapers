@@ -33,8 +33,8 @@ def fetch_data():
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         divlist = soup.findAll("section")
-
         coordlist = soup.findAll("iframe")
+
         i = 0
         for div in divlist:
 
@@ -46,9 +46,11 @@ def fetch_data():
                 address = address.split("\n")
 
                 state = address[-1].split(" ")[-2]
-                pcode = state.split(" ")[-1]
+                pcode = address[-1].split(" ")[-1]
                 city = address[-1].split(state, 1)[0]
-                street = " ".join(address[0 : len(address) - 1])
+                street = (
+                    " ".join(address[0 : len(address) - 1]).replace("&amp;", "").strip()
+                )
                 content = re.sub(cleanr, "\n", str(div))
                 content = re.sub(pattern, "\n", str(content)).strip()
                 phone = content.split("PHONE", 1)[1].split("\n", 1)[1].split("\n", 1)[0]
@@ -81,7 +83,7 @@ def fetch_data():
                     location_type=SgRecord.MISSING,
                     latitude=str(lat),
                     longitude=str(longt),
-                    hours_of_operation=hours.replace("â€“", "-"),
+                    hours_of_operation=hours.encode("ascii", "ignore").decode("ascii"),
                 )
             except:
                 continue
