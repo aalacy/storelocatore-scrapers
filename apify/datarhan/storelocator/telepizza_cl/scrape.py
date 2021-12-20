@@ -1,4 +1,5 @@
 import re
+import ssl
 from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
@@ -8,14 +9,21 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
     start_url = "https://www.telepizza.cl/pizzerias"
     domain = "telepizza.cl"
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
         all_areas = dom.xpath('//ul[@class="areas"]/li/a/@href')
@@ -38,8 +46,9 @@ def fetch_data():
                     if not page_url:
                         page_url = poi_html.xpath("//@urltienda")
                     page_url = urljoin(area_url, page_url[0])
+                    page_url = page_url.replace("/pizzerias/", "/pizzeria/")
                     driver.get(page_url)
-                    sleep(uniform(3, 6))
+                    sleep(uniform(3, 8))
                     loc_dom = etree.HTML(driver.page_source)
                     location_name = poi_html.xpath(".//h2/text()")
                     if not location_name:
@@ -48,7 +57,7 @@ def fetch_data():
                         )
                     if not location_name:
                         continue
-                    location_name = location_name[0]
+                    location_name = location_name[0].replace("Telepizza ", "")
                     raw_address = poi_html.xpath('.//p[@class="prs"]/text()')
                     if not raw_address:
                         raw_address = loc_dom.xpath("//address/span/text()")
@@ -61,7 +70,9 @@ def fetch_data():
                     )
                     if not phone:
                         phone = loc_dom.xpath('//span[@class="phoneFooter"]/text()')
-                    phone = phone[0] if phone else ""
+                    phone = phone[0].strip() if phone else ""
+                    if phone == "0" or phone == "123":
+                        phone = ""
                     latitude = re.findall("lat = (.+?);", driver.page_source)[0]
                     longitude = re.findall("lng = (.+?);", driver.page_source)[0]
                     hoo = loc_dom.xpath(

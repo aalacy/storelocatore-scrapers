@@ -74,7 +74,10 @@ def fetch_data():
             lat = longt = "<MISSING>"
         city, state = city.strip().split(", ", 1)
         state, pcode = state.lstrip().split(" ", 1)
-
+        street = street.replace("Under New Management!!", "").strip()
+        if "Permanently Closed " in street:
+            title = title + " - Permanently Closed "
+            street = street.replace("Permanently Closed ", "")
         yield SgRecord(
             locator_domain="https://wingstogo.com/",
             page_url=link,

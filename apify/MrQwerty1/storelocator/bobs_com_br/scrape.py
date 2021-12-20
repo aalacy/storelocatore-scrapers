@@ -34,6 +34,9 @@ def fetch_data(sgw: SgWriter):
         if street_address.startswith(","):
             street_address = street_address[1:]
 
+        if len(street_address) < 3:
+            street_address = SgRecord.MISSING
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,

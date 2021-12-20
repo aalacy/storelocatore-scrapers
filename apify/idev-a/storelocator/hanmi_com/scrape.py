@@ -55,6 +55,15 @@ def fetch_data():
         }
         locations = session.post(json_url, headers=_headers, json=payload).json()
         for _ in locations["response"]["collection"]:
+            res = session.get(page_url, headers=_headers)
+            if res.status_code != 200:
+                continue
+
+            location_type = ""
+            if _["branch_type"]:
+                location_type = "branch"
+            elif _["atm_type"]:
+                location_type = "atm"
             street_address = _["address1"]
             if _["address2"]:
                 street_address += " " + _["address2"]
@@ -67,9 +76,9 @@ def fetch_data():
             hours.append(f"Sat: {_time(_['sat_open'], _['sat_close'])}")
             hours.append(f"Sun: {_time(_['sun_open'], _['sun_close'])}")
             page_url = f"https://locations.hanmi.com/{_['state'].lower()}/{'-'.join(_['city'].lower().strip().split(' '))}/{_['clientkey']}/"
-            res = session.get(page_url, headers=_headers)
-            if res.status_code != 200:
-                continue
+
+            if _["temp_closed"]:
+                hours = ["temporarily closed"]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["clientkey"],
@@ -81,6 +90,7 @@ def fetch_data():
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 country_code=_["country"],
+                location_type=location_type,
                 phone=_["phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
