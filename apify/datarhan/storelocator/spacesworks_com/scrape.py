@@ -40,21 +40,10 @@ def fetch_data():
         street_address = poi["addressLine1"]
         if poi.get("addressLine2"):
             street_address += " " + poi["addressLine2"]
-        street_address = street_address if street_address else "<MISSING>"
-        state = poi.get("state")
-        state = state if state else "<MISSING>"
-        zip_code = poi.get("postalCode")
-        zip_code = zip_code if zip_code else SgRecord.MISSING
-        phone = poi.get("phone")
-        phone = phone if phone else "<MISSING>"
         time = str(poi["openingDate"])
-        location_type = SgRecord.MISSING
+        location_type = ""
         if datetime.fromisoformat(time) > datetime.now(timezone.utc):
             location_type = "coming soon"
-        latitude = poi["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
         hoo = []
         days_dict = {
             0: "Sunday",
@@ -82,14 +71,14 @@ def fetch_data():
             location_name=poi["name"],
             street_address=street_address,
             city=poi["city"],
-            state=state,
-            zip_postal=zip_code,
-            country_code=poi["countryId"],
+            state=poi.get("state"),
+            zip_postal=poi.get("postalCode"),
+            country_code=poi.get("countryId"),
             store_number=poi["id"],
-            phone="",
+            phone=poi.get("phone"),
             location_type=location_type,
-            latitude="",
-            longitude="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
             hours_of_operation=hours_of_operation,
         )
 
