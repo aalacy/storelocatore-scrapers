@@ -82,7 +82,7 @@ def get_data():
                 ):
                     continue
                 if zipp is None or zipp == "None":
-                    hours = "<MISSING>"
+                    zipp = "<MISSING>"
                 yield {
                     "locator_domain": locator_domain,
                     "page_url": page_url,

@@ -1,116 +1,119 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
 import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-base_url = 'https://www.barreforte.com/locations/colorado-springs-colorado/'
+session = SgRequests()
+website = "barreforte_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\u2013', '-').strip()
 
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
+headers = {
+    "User-Agent": "Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
+}
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
+DOMAIN = "https://www.barreforte.com/"
+MISSING = SgRecord.MISSING
 
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    output_list = []
-    url = "https://www.barreforte.com/locations"
-    page_url = ''
-    session = requests.Session()
-    source = session.get(url).text    
-    response = etree.HTML(source)
-    store_list = response.xpath('//div[@class="tm_pb_toggle_content clearfix"]//a/@href')
-    for store_link in store_list:
-        output = []
-        output.append(base_url) # url
-        output.append(store_link) # page url
-        store = etree.HTML(session.get(store_link).text)        
-        location_name = validate(store.xpath('.//div[contains(@class, "tm_pb_text_0")]//h3//text()')).replace('NOW OPEN!', '')
-        if location_name == '':
-            location_name = validate(store.xpath('.//div[contains(@class, "tm_pb_text_0")]//h2//text()')).replace('NOW OPEN!', '')
-        output.append(location_name) #location name
-        details = validate(eliminate_space(store.xpath('.//div[contains(@class, "tm_pb_text_0")]//h4/text()')))
-        phone = validate(re.findall(r'[(]?[1-9][0-9 .\-\(\)]{8,}[0-9]', details))
-        phone_split = eliminate_space(phone.split('('))
-        if len(phone_split) > 1:
-            phone = phone_split[1]
-            address = validate(details.replace(phone, '').replace('|', ',')) + phone_split[0]
-        else:
-            address = validate(details.replace(phone, '').replace('|', ','))
-        address = parse_address(address)
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode  
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number        
-        output.append(get_value(phone)) #phone
-        output.append("Barre Studios and Fitness Classes | Barre Forte") #location type
-        geo_loc = validate(store.xpath('.//div[@class="mapDir"]//a/@href')).split('@')
-        if len(geo_loc) > 1:
-            geo_loc = eliminate_space(geo_loc[1].split('17z')[0].split(','))
-            output.append(get_value(geo_loc[0])) #latitude
-            output.append(get_value(geo_loc[1])) #longitude
-        else:
-            output.append("<MISSING>") #latitude
-            output.append("<MISSING>") #longitude
-        output.append("<MISSING>") #opening hours
-        output_list.append(output)
-    return output_list
+    if True:
+        url = "https://www.barreforte.com/locations"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        state_list = soup.findAll("div", {"class": "tm_pb_toggle_content clearfix"})
+        for state_url in state_list:
+            loclist = state_url.findAll("a")
+            for loc in loclist:
+                page_url = loc["href"]
+                log.info(page_url)
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                temp = r.text.split(
+                    '<div class="tm_pb_text tm_pb_module tm_pb_bg_layout_light tm_pb_text_align_left  tm_pb_text_0">'
+                )[1].split("</div>")[0]
+                temp = BeautifulSoup(temp, "html.parser")
+                try:
+                    longitude, latitude = (
+                        soup.select_one("iframe[src*=maps]")["src"]
+                        .split("!2d", 1)[1]
+                        .split("!2m", 1)[0]
+                        .split("!3d")
+                    )
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
+                try:
+                    location_name = temp.find("h3").text
+                except:
+                    location_name = temp.find("h2").text
+                address = temp.find("h4").text.split("P.")
+                phone = address[1].split("|")[0]
+                address = address[0].replace("|", "")
+                address = address.replace(",", " ")
+                address = usaddress.parse(address)
+                i = 0
+                street_address = ""
+                city = ""
+                state = ""
+                zip_postal = ""
+                while i < len(address):
+                    temp = address[i]
+                    if (
+                        temp[1].find("Address") != -1
+                        or temp[1].find("Street") != -1
+                        or temp[1].find("Recipient") != -1
+                        or temp[1].find("Occupancy") != -1
+                        or temp[1].find("BuildingName") != -1
+                        or temp[1].find("USPSBoxType") != -1
+                        or temp[1].find("USPSBoxID") != -1
+                    ):
+                        street_address = street_address + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        zip_postal = zip_postal + " " + temp[0]
+                    i += 1
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code="US",
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=MISSING,
+                )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

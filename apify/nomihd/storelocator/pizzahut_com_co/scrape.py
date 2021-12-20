@@ -8,7 +8,6 @@ from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-
 website = "pizzahut.com.co"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -77,6 +76,10 @@ def fetch_data():
                     )
 
                 city = formatted_addr.city
+                if city is None:
+                    city = street_address.rsplit(" ", 1)[-1].strip()
+                    street_address = street_address.rsplit(" ", 1)[0].strip()
+
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
 
@@ -89,21 +92,21 @@ def fetch_data():
 
                 location_type = "<MISSING>"
 
-                hours = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//*[@class="details"]//div[contains(./h4/text(),"A recoger")]//text()'
-                            )
-                        ],
-                    )
-                )
-                hours_of_operation = (
-                    "; ".join(hours).replace(":;", ":").replace("day;", "day:").strip()
+                hours = store_sel.xpath(
+                    '//div[@class="shopInfo col"]//div[contains(./h4/text(),"A domicilio")]//tr'
                 )
 
+                if len(hours) <= 0:
+                    hours = store_sel.xpath(
+                        '//div[@class="shopInfo col"]//div[contains(./h4/text(),"A recoger")]//tr'
+                    )
+                hours_list = []
+                for hour in hours:
+                    day = "".join(hour.xpath("td[1]/text()")).strip()
+                    time = "".join(hour.xpath("td[2]/text()")).strip()
+                    hours_list.append(day + ": " + time)
+
+                hours_of_operation = "; ".join(hours_list).strip()
                 latitude, longitude = (
                     store_res.text.split("lat =")[1].split(";")[0].strip(),
                     store_res.text.split("lng =")[1].split(";")[0].strip(),

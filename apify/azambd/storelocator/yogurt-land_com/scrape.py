@@ -13,7 +13,7 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 DOMAIN = "yogurt-land.com"
-website = "https://www.yogurt-land.com"
+website = "https://www.yogurt-land.com/locations"
 
 MISSING = SgRecord.MISSING
 
@@ -61,7 +61,7 @@ def fetch_data():
         log.info("initiating Driver")
         driver.get(website)
         start_url = "https://www.yogurt-land.com/api/1.1/locations/search.json?app_mode=1&include-html=1&location-selector-type=&zip-code-or-address-hidden=&page=1&lng=&lat=&favorite-location=0&search="
-        time.sleep(10)
+        time.sleep(15)
         log.info("Now crawling page#1")
         data = fetch_like_js(start_url, driver)
         locs = data["locations"]

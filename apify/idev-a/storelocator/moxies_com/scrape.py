@@ -60,6 +60,10 @@ def fetch_data():
         logger.info(page_url)
         ss = json.loads(soup1.find("script", type="application/ld+json").string)
         addr = ss["address"]
+        location_type = ""
+        src = soup1.select_one("div.intro-banner picture img")["srcset"]
+        if "TempClosure" in src:
+            location_type = "Temporarily Closed"
         yield SgRecord(
             page_url=page_url,
             location_name=ss["name"].replace("’", "'"),
@@ -72,6 +76,7 @@ def fetch_data():
             country_code=addr["addressCountry"],
             phone=ss["telephone"],
             locator_domain=locator_domain,
+            location_type=location_type,
             hours_of_operation="; ".join(ss["openingHours"]).replace("–", "-"),
         )
 
