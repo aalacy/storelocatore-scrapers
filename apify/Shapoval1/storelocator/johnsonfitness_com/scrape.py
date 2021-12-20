@@ -60,6 +60,11 @@ def get_data(zips, sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        street_address = " ".join(street_address.split())
+        if street_address.find("(") != -1:
+            street_address = street_address.split("(")[0].strip()
+        if street_address.find("Oklahoma City") != -1:
+            street_address = street_address.split(",")[0].strip()
         city = (
             "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
             .replace("\n", "")
@@ -137,8 +142,8 @@ def get_data(zips, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=30,
-        expected_search_radius_miles=30,
+        max_search_distance_miles=10,
+        expected_search_radius_miles=10,
         max_search_results=None,
     )
 

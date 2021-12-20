@@ -23,10 +23,18 @@ def fetch_data():
             .replace("locations(", "")[:-1]
         )["locations"]
         for _ in locations:
-            if "coming soon" in _["hours"].lower():
+            if (
+                "coming soon" in _["hours"].lower()
+                or "coming 2022" in _["hours"].lower()
+                or "coming winter" in _["hours"].lower()
+            ):
                 continue
 
-            hours = list(bs(_["hours"], "lxml").stripped_strings)
+            hours = []
+            for hh in bs(_["hours"], "lxml").stripped_strings:
+                if "Hour" in hh or "Please" in hh:
+                    break
+                hours.append(hh)
             if "coming" in _["hours"].lower():
                 hours = []
 

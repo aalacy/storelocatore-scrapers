@@ -1,5 +1,6 @@
 import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -35,7 +36,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["slug"],
+            page_url=urljoin(start_url, poi["slug"]),
             location_name=poi["name"],
             street_address=street_address,
             city=addr.city,
