@@ -2,6 +2,7 @@ from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -30,11 +31,23 @@ def fetch_data():
             log.info(location_name)
             location_type = loc["Type"]
             phone = loc["Telephone1"]
-            street_address = loc["Address1"]
-            log.info(street_address)
-            city = loc["Address2"]
-            state = loc["Address3"]
+            raw_address = (
+                loc["Address1"] + " " + loc["Address2"] + " " + loc["Address3"]
+            )
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+            if city == MISSING:
+                city = location_name
             zip_postal = loc["Postcode"]
+            raw_address = raw_address + " " + zip_postal
             country_code = "GB"
             latitude = loc["Lat"]
             longitude = loc["Lng"]
@@ -76,6 +89,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
