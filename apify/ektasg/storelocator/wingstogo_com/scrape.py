@@ -25,6 +25,11 @@ def fetch_data():
         r = session.get(link, headers=headers)
 
         soup = BeautifulSoup(r.text, "html.parser")
+        ltype = "<MISSING>"
+        if "Opening Soon!" in soup.text:
+            ltype = "Opening Soon"
+        elif "STORE CLOSED" in soup.text:
+            ltype = "STORE CLOSED"
         content = soup.find("div", {"class": "loc-details-full"})
         if "COMING SOON!" in content.text:
             continue
@@ -74,7 +79,10 @@ def fetch_data():
             lat = longt = "<MISSING>"
         city, state = city.strip().split(", ", 1)
         state, pcode = state.lstrip().split(" ", 1)
-
+        street = street.replace("Under New Management!!", "").strip()
+        if "Permanently Closed " in street:
+            ltype = "Permanently Closed"
+            street = street.replace("Permanently Closed ", "")
         yield SgRecord(
             locator_domain="https://wingstogo.com/",
             page_url=link,
@@ -86,7 +94,7 @@ def fetch_data():
             country_code="US",
             store_number=SgRecord.MISSING,
             phone=re.sub(pattern, " ", phone).strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=re.sub(pattern, " ", hours).strip(),

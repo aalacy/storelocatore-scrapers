@@ -1,119 +1,92 @@
-import csv
 import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sglogging import SgLogSetup
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("")
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+locator_domain = "https://www.eblens.com"
+base_url = "https://www.eblens.com/functions/storelocator.cfc?method=generateStoreLocatorResultsAJAX&random=69"
 
 
-def fetch_data():
-    base_url = "https://www.eblens.com"
-    zip_codes = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
-    data = []
-    store_ids = []
-    for zip_code in zip_codes:
+def _p(val):
+    if (
+        val
+        and val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
+
+
+def fetch_records(session, search):
+    for zip_code in search:
         payload = {"locationSearch": zip_code, "maxrows": 20}
-        res = session.post(
-            "https://www.eblens.com/functions/storelocator.cfc?method=generateStoreLocatorResultsAJAX&random=25",
-            data=payload,
-        )
-        if "No Stores Found" in res.text:
+        res = session.post(base_url, data=payload)
+        if res.status_code != 200:
             continue
-        content = json.loads(res.text)["STOREDISP"]
-        soup = bs(content, "lxml")
-        store_list = soup.select("div.mapAddress")
-        for store in store_list:
+        soup = bs(json.loads(res.text)["STOREDISP"], "lxml")
+        locations = soup.select("div.mapAddress")
+        logger.info(f"[{zip_code}] {len(locations)}")
+        for store in locations:
             page_url = store.select_one("span.store_detail a")["href"]
-            location_name = store.select_one("a.store_name").contents[0].string
-            if "Closed" in store.select_one("a.store_name").text:
+            location_name = store.select_one("a.store_name").text.strip()
+            if "Closed" in location_name:
                 location_name += " Closed"
-            address_content = store.select_one("span.store_addr").contents
-            address = []
-            for x in address_content:
-                if x.string is not None and x.string != "\n":
-                    address.append(x.string)
-            phone = address.pop()
-            address_detail = address.pop()
-            city = address_detail.split(", ")[0]
-            state = address_detail.split(", ")[1].split(" ")[0]
-            zip = address_detail.split(", ")[1].split(" ")[1]
-            street_address = " ".join(address).strip()
-            store_id = location_name + street_address
-            if store_id in store_ids:
-                continue
-            store_ids.append(store_id)
-            country_code = "US"
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
+            addr = list(store.select_one("span.store_addr").stripped_strings)
+            phone = ""
+            if _p(addr[-1]):
+                phone = addr[-1]
+                del addr[-1]
             geo = (
                 store.select_one("span.store_directions a")["href"]
                 .split("sll=")[1]
                 .split("&")[0]
+                .split(",")
             )
-            latitude = geo.split(",")[0]
-            longitude = geo.split(",")[1]
-            res1 = session.get(page_url)
-            detail = bs(res1.text, "lxml")
-            hours_of_operation = detail.select_one("ul.storeHours").text
-
-            data.append(
-                [
-                    base_url,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    '="' + phone + '"',
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            detail = bs(session.get(page_url).text, "lxml")
+            hours_of_operation = ""
+            if detail.select_one("ul.storeHours"):
+                hours_of_operation = detail.select_one("ul.storeHours").text.strip()
+            yield SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split()[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
+                country_code="US",
+                phone=phone,
+                latitude=geo[0],
+                longitude=geo[1],
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+                raw_address=" ".join(addr),
             )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgRequests() as http:
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        )
+        with SgWriter(
+            SgRecordDeduper(
+                RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+            )
+        ) as writer:
+            for rec in fetch_records(http, search):
+                writer.write_row(rec)
