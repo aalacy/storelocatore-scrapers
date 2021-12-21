@@ -21,10 +21,9 @@ def fetch_data(sgw: SgWriter):
 
     for d in div:
 
-        location_name = "".join(d.xpath(".//h3/text()")).strip()
+        location_name = "".join(d.xpath(".//h3/text()")).replace("hours", "").strip()
         if location_name.find("Aspen Wine & Spirits") != -1:
             continue
-
         location_type = "Crowfoot Wine & Spirits"
         street_address = " ".join(
             d.xpath('.//p[./a[contains(@href, "goo")]]/a/text()')
