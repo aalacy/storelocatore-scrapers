@@ -20,7 +20,7 @@ def fetch_data():
     states = []
     donelocs = []
     session = SgRequests()
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if 'style="width: 100%; margin-bottom: 10px;" href="' in line:
             states.append(line.split('href="')[1].split('"')[0])
