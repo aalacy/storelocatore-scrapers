@@ -68,8 +68,9 @@ def fetch_data(sgw: SgWriter):
             line = "".join(jj.get("formattedAddress"))
         except:
             continue
+        ad = line
         if line.find("DaVi") != -1:
-            line = line.split("\n")[1:]
+            line = ad.split("\n")[1:]
             line = " ".join(line)
         line = " ".join(line.split())
         a = parse_address(International_Parser(), line)
