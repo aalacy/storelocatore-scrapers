@@ -70,8 +70,7 @@ def fetch_data(sgw: SgWriter):
             continue
         ad = line
         if line.find("DaVi") != -1:
-            line = ad.split("\n")[1:]
-            line = " ".join(line)
+            line = " ".join(ad.split("\n")[1:])
         line = " ".join(line.split())
         a = parse_address(International_Parser(), line)
         street_address = (
