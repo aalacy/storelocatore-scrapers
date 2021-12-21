@@ -16,11 +16,12 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["locations"]
 
     for j in js:
+
         slug = j.get("llp_url")
         page_url = f"https://locations.buffalos.com{slug}"
         a = j.get("store_info")
         street_address = f"{a.get('address')} {a.get('address_extended')}".strip()
-        if street_address.find("EZdan") != -1:
+        if street_address.find("Ezdan") != -1:
             continue
         state = a.get("region") or "<MISSING>"
         postal = a.get("postcode")
@@ -47,6 +48,7 @@ def fetch_data(sgw: SgWriter):
             ("locality", f"{city}"),
             ("multi_account", "false"),
             ("pageSize", "30"),
+            ("region", f"{state}"),
         )
         r = session.get(
             "https://api.momentfeed.com/v1/analytics/api/llp.json",
@@ -55,6 +57,7 @@ def fetch_data(sgw: SgWriter):
         )
         js = r.json()
         for j in js:
+
             aa = j.get("store_info")
             latitude = aa.get("latitude") or "<MISSING>"
             longitude = aa.get("longitude") or "<MISSING>"
@@ -100,6 +103,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{street_address} {city}, {state} {postal}",
             )
 
             sgw.write_row(row)
