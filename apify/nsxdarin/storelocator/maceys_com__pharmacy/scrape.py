@@ -72,7 +72,7 @@ def fetch_data():
         state = ""
         zc = ""
         name = ""
-        hours = "<MISSING>"
+        hours = ""
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:

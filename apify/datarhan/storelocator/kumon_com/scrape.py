@@ -23,62 +23,72 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    all_coordinates = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        expected_search_radius_miles=200,
-    )
-    start_url = (
-        "https://www.kumon.com/Services/KumonWebService.asmx/GetCenterListByRadius"
-    )
+    countries = [SearchableCountries.USA, SearchableCountries.CANADA]
+    for country in countries:
+        all_coordinates = DynamicGeoSearch(
+            country_codes=[country],
+            expected_search_radius_miles=50,
+        )
+        start_url = (
+            "https://www.kumon.com/Services/KumonWebService.asmx/GetCenterListByRadius"
+        )
 
-    for coord in all_coordinates:
-        lat, lng = coord
-        frm = {
-            "countryCode": "USA",
-            "distanceUnit": "mi",
-            "latitude": lat,
-            "longitude": lng,
-            "radius": 200,
-        }
-        response = session.post(start_url, json=frm, headers=hdr)
-        data = json.loads(response.text)
+        for coord in all_coordinates:
+            lat, lng = coord
+            if country == SearchableCountries.USA:
+                country_code = "USA"
+            else:
+                country_code = "CANADA"
+            frm = {
+                "countryCode": country_code,
+                "distanceUnit": "mi",
+                "latitude": lat,
+                "longitude": lng,
+                "radius": 50,
+            }
+            response = session.post(start_url, json=frm, headers=hdr)
+            data = json.loads(response.text)
 
-        all_poi = data["d"]
-        for poi in all_poi:
-            page_url = "https://www.kumon.com/{}".format(poi["EpageUrl"])
-            location_name = poi["CenterName"]
-            street_address = poi["Address"]
-            if poi.get("Address2"):
-                street_address += ", " + poi["Address2"]
-            if poi.get("Address3"):
-                street_address += " " + poi["Address3"]
-            city = poi["City"]
-            state = poi["StateCode"]
-            zip_code = poi["ZipCode"]
-            country_code = poi["Country"]
-            store_number = poi["K2CenterID"]
-            phone = poi["Phone"]
-            latitude = poi["Lat"]
-            longitude = poi["Lng"]
+            all_poi = data["d"]
+            for poi in all_poi:
+                page_url = "https://www.kumon.com/{}".format(poi["EpageUrl"])
+                if page_url == "https://www.kumon.com/":
+                    continue
+                location_name = poi["CenterName"]
+                street_address = poi["Address"]
+                if poi.get("Address2"):
+                    street_address += ", " + poi["Address2"]
+                if poi.get("Address3"):
+                    street_address += " " + poi["Address3"]
+                city = poi["City"]
+                state = poi["StateCode"]
+                zip_code = poi["ZipCode"]
+                country_code = poi["Country"]
+                store_number = poi["K2CenterID"]
+                phone = poi["Phone"]
+                if phone and phone.startswith("-"):
+                    phone = phone[1:]
+                latitude = poi["Lat"]
+                longitude = poi["Lng"]
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=SgRecord.MISSING,
-            )
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=SgRecord.MISSING,
+                )
 
-            yield item
+                yield item
 
 
 def scrape():
