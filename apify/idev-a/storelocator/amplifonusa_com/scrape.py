@@ -7,7 +7,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import SgLogSetup
 import time
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 import ssl
 from tenacity import retry, stop_after_attempt
 
@@ -81,7 +81,9 @@ def fetch_data(search):
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        )
         results = fetch_data(search)
         for rec in results:
             writer.write_row(rec)
