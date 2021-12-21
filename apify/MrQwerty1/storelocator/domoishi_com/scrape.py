@@ -75,7 +75,8 @@ def fetch_data(sgw: SgWriter):
             ".//div[contains(@class, 'elementor-widget elementor-widget-text-editor')]//text()"
         )
         line = list(filter(None, [l.strip() for l in line]))
-        if "Coming Soon" in line or not line:
+        iscoming = d.xpath(".//span[contains(text(), 'Coming Soon')]")
+        if iscoming or not line:
             continue
 
         phone = line.pop().replace("Phone:", "").strip()

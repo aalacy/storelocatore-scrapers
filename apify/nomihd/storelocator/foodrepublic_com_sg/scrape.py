@@ -83,7 +83,13 @@ def fetch_data():
             )
 
             if len(hours_of_operation) > 0:
-                hours_of_operation = hours_of_operation[0]
+                hours_of_operation = (
+                    hours_of_operation[0]
+                    .split("*Selected stalls")[0]
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                )
 
             latitude, longitude = "<MISSING>", "<MISSING>"
 
