@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
 import json
@@ -61,7 +61,7 @@ def fetch_data():
                 state = region
                 zip = formatted_addr.postcode
                 country_code = "SG"
-                store_number = store["id"]
+                store_number = "<MISSING>"
                 phone = store["phone"]
 
                 location_type = "<MISSING>"
@@ -103,7 +103,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:
