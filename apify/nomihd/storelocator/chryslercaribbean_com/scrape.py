@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "chryslercaribbean.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -36,13 +37,17 @@ def fetch_data():
 
                 location_type = "<MISSING>"
 
-                raw_address = "<MISSING>"
+                raw_address = store["d_address"] + ", " + store["d_city"]
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-                street_address = store["d_address"]
-                city = store["d_city"]
-                state = "<MISSING>"
-                zip = "<MISSING>"
-
+                city = formatted_addr.city
+                state = formatted_addr.state
+                zip = formatted_addr.postcode
                 country_code = key
 
                 phone = store["d_phone"]

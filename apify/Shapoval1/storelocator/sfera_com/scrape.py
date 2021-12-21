@@ -21,12 +21,13 @@ def fetch_data(sgw: SgWriter):
         tree = html.fromstring(r.text)
         div = "".join(
             tree.xpath(
-                '//script[contains(text(), "location3 = new google.maps.LatLng(")]/text()'
+                '//script[contains(text(), "location3 = new woosmap.map.LatLng(")]/text()'
             )
-        ).split("location3 = new google.maps.LatLng(")[1:]
+        ).split("location3 = new woosmap.map.LatLng(")[1:]
         for d in div:
             latitude = d.split(",")[0].strip()
             longitude = d.split(",")[1].split(")")[0].strip()
+
             location_name = d.split("title:")[1].split(",")[0].replace("'", "").strip()
             data = {
                 "lat": f"{latitude}",
@@ -35,7 +36,6 @@ def fetch_data(sgw: SgWriter):
                 "entrada": "116",
                 "busca": f"{location_name}",
             }
-
             api_url_1 = "https://www.sfera.com/one/mod/tiendas_ajax.php"
 
             r = http.post(url=api_url_1, headers=headers, data=data)
