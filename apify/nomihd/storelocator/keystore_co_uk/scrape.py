@@ -64,7 +64,7 @@ def fetch_data():
                 .replace("England, GB", "")
                 .strip()
             )
-            formatted_addr = parser.parse_address_intl(raw_address)
+            formatted_addr = parser.parse_address_intl(temp_raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
