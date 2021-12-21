@@ -1,5 +1,5 @@
 import re
-import yaml
+from yaml import load, Loader
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -27,7 +27,7 @@ def fetch_data():
         poi = loc_dom.xpath(
             '//script[@type="application/ld+json" and contains(text(), "address")]/text()'
         )[0]
-        poi = yaml.load(poi)
+        poi = load(poi, Loader=Loader)
 
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
