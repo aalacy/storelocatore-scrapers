@@ -17,7 +17,11 @@ Please crawl juanvaldezcafe.com/en-us. (Note: unlike most crawls where we tell y
 ## Approach: 
 
 - Found an internal API Endpoint
-- Pull Data from API: https://storerocket.global.ssl.fastly.net/api/user/OdJEDYo4WE/locations
+- Pull Data from API: `https://storerocket.global.ssl.fastly.net/api/user/OdJEDYo4WE/locations`
+
+## R&D: 
+- previous internal API Endpoint was unavailable 
+- New API Enpoint: `https://api.storerocket.io/api/user/OdJEDYo4WE/locations`
 
 ### Results: 
-Total Locations:  374 as of May 13, 2021
+Total Locations:  374 as of August 11, 2021

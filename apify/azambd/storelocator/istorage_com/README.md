@@ -13,7 +13,10 @@ Please make sure that:
 
 
 
+
 ### Few Extra Notes:
+
+> some of the locations HOO are available on `https://www.securcareselfstorage.com/`  page so these are missing as it is outside of the main domian
 
 >It had to use '--ignore StreetAddressHasNumber' flag during validation process becase 'street_address': `5000 Farm to Market 2920 Spring` is correct with respect to source webiste page: https://www.istorage.com/storage/texas/storage-units-spring/5000-Farm-to-Market-2920-203
 

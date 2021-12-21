@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("duluthtrading_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,7 +22,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'store-details-link" href="/locations/?StoreID=' in line:
             locs.append(
                 "https://www.duluthtrading.com" + line.split('href="')[1].split("&")[0]
@@ -66,19 +41,20 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if '"address":{"' in line2:
                 name = line2.split('","name":"')[1].split('"')[0]
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
                 state = line2.split('"addressRegion":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
+                try:
+                    phone = line2.split('"telephone":"')[1].split('"')[0]
+                except:
+                    phone = "<MISSING>"
             if "day</div>" in line2:
                 day = line2.split(">")[1].split("<")[0]
                 next(lines)
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 day = (
                     day
                     + ": "
@@ -88,27 +64,29 @@ def fetch_data():
                     hours = day
                 else:
                     hours = hours + "; " + day
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

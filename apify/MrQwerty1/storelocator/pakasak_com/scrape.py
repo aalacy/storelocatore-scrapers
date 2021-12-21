@@ -1,91 +1,69 @@
-import csv
-
+import json5
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://www.pakasak.com/e107_plugins/stores/store_locator.php"
+    r = session.get(api)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.pakasak.com/"
-    page_url = "https://www.pakasak.com/flash_map/locations.html"
-
-    session = SgRequests()
-    r = session.get(page_url)
     tree = html.fromstring(r.text)
-    td = tree.xpath("//td[@class='normaltextleft']")[:-1]
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'var markersOnMap =')]/text()")
+    )
+    text = text.split("var markersOnMap =")[1].split("];")[0] + "]"
+    js = json5.loads(text)
 
-    for t in td:
-        line = t.xpath("./text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        location_name = line[0]
-        street_address = line[1]
-        phone = line[-1]
-        line = line[2]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[1]
+    for j in js:
+        try:
+            geo = j["LatLng"][0]
+        except:
+            geo = dict()
+
+        location_name = j.get("placeName") or ""
+        if "Change" in location_name:
+            continue
+
+        street_address = (
+            f"{j.get('storeStreet1')} {j.get('storeStreet2') or ''}".strip()
+        )
+        city = j.get("storeCity")
+        state = j.get("storeState")
+        postal = j.get("storeZip")
         country_code = "US"
-        store_number = location_name.split("#")[-1].strip()
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        phone = j.get("storeCity")
+        latitude = geo.get("lat")
+        longitude = geo.get("lng")
+        store_number = j.get("storeId")
+        page_url = (
+            f"https://www.pakasak.com/e107_plugins/stores/view_store.php?{store_number}"
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.pakasak.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

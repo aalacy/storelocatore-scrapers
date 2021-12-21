@@ -1,50 +1,32 @@
-import re
-import csv
+import ssl
 from lxml import etree
 from urllib.parse import urljoin
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgpostal import parse_address_intl
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
     # Your scraper here
-    items = []
-    scraped_items = []
-
-    DOMAIN = "americantiredepot.com"
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    domain = "americantiredepot.com"
     start_url = "https://americantiredepot.com/search/store/locations"
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
         all_locations = dom.xpath('//div[@class="stores-list"]')
@@ -59,27 +41,29 @@ def fetch_data():
             city = city[:-2]
         address_raw = poi_html.xpath('.//p[i[@class="fa fa-map-marker-alt"]]//text()')
         address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        street_address = address_raw[0]
-        street_address = " ".join(
-            [elem.capitalize() for elem in street_address.split()]
-        )
-        words = street_address.split()
-        street_address = " ".join(sorted(set(words), key=words.index))
-        if street_address.endswith(city):
-            street_address = street_address.replace(city, "")
-        state = address_raw[-1].split()[0]
-        zip_code = address_raw[-1].split()[-1]
-        country_code = "<MISSING>"
-        store_number = re.findall(r"storeid=(\d+)&", store_url)
-        store_number = store_number[0] if store_number else "<MISSING>"
+        addr = parse_address_intl(" ".join(address_raw))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        state = addr.state
+        zip_code = addr.postcode
         phone = poi_html.xpath('.//p[i[@class="fa fa-phone-alt"]]/text()')
         phone = phone[0].strip() if phone else "<MISSING>"
         location_type = "<MISSING>"
         if "Coming Soon" in city:
             city = city.split("-")[0].strip()
             location_type = "Coming Soon"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        geo = (
+            loc_dom.xpath(
+                '//div[@class="col-md-6 col-sm-6 store-map-box"]/iframe/@src'
+            )[0]
+            .split("!2d")[-1]
+            .split("!2m")[0]
+            .split("!3d")
+        )
         hours_of_operation = poi_html.xpath(
             './/table[@class="tbl-store-hours mt-2"]//text()'
         )
@@ -90,33 +74,36 @@ def fetch_data():
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = "{} {}".format(location_name, street_address)
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=SgRecord.MISSING,
+            store_number=store_url.split("=")[-1],
+            phone=phone,
+            location_type=location_type,
+            latitude=geo[-1],
+            longitude=geo[0],
+            hours_of_operation=hours_of_operation,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

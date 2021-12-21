@@ -2,12 +2,17 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("andiamoitalia")
+
+logger = SgLogSetup().get_logger("amplehills")
+
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
@@ -20,26 +25,30 @@ def fetch_data():
         for _ in locations["result"]:
             page_url = f"https://www.amplehills.com/location/{_['slug']}"
             hours = []
-            for day, hh in _["hours"].items():
-                hours.append(f"{day}: {hh}")
+            for day in days:
+                day = day.lower()
+                hours.append(f"{day}: {_.get('hours', {}).get(day)}")
+            street_address = _["address1"].strip()
+            if _.get("address2"):
+                street_address += " " + _["address1"].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
-                street_address=_["address1"],
-                city=_["city"],
-                state=_["state"],
-                zip_postal=_["zip"],
+                street_address=street_address,
+                city=_["city"].strip(),
+                state=_["state"].strip(),
+                zip_postal=_["zip"].strip(),
                 country_code="US",
-                phone=_["phone"],
+                phone=_["phone"].strip(),
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

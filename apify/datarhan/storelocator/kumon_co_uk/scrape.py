@@ -64,18 +64,19 @@ def fetch_data():
         street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[0]
         city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
         state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+        state = state[0] if state else SgRecord.MISSING
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
+        zip_code = zip_code[0] if zip_code else SgRecord.MISSING
         country_code = "UK"
         phone = loc_dom.xpath('//span[@class="number"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0] if phone else SgRecord.MISSING
         latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
-        latitude = latitude[0] if latitude else "<MISSING>"
+        latitude = latitude[0] if latitude else SgRecord.MISSING
         longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')
-        longitude = longitude[0] if longitude else "<MISSING>"
+        longitude = longitude[0] if longitude else SgRecord.MISSING
         hoo = loc_dom.xpath('//table[@class="centre-timings"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else SgRecord.MISSING
 
         item = SgRecord(
             locator_domain=domain,
