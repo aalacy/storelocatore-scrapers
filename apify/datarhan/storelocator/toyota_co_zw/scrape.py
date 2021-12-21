@@ -32,6 +32,10 @@ def fetch_data():
         geo = loc_dom.xpath('//script[contains(text(), "map_markers")]/text()')[
             0
         ].split(",")[1:3]
+        hoo = loc_dom.xpath(
+            '//div[@class="concession-schedules"]/div[@class="item"]//text()'
+        )
+        hoo = " ".join(" ".join([e.strip() for e in hoo if e.strip()]).split())
 
         item = SgRecord(
             locator_domain=domain,
@@ -47,7 +51,7 @@ def fetch_data():
             location_type=location_type,
             latitude=geo[0],
             longitude=geo[1],
-            hours_of_operation="",
+            hours_of_operation=hoo,
         )
 
         yield item
