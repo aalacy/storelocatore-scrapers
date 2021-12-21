@@ -118,7 +118,7 @@ def get_hoo(body):
 
 def get_store(driver, page_url, retry=1):
     body = get_response(driver, page_url)
-    if body == None:
+    if body is None:
         if retry == 4:
             return None
         log.error("Can't get response")
@@ -194,7 +194,7 @@ def fetch_data():
             count = count + 1
             log.debug(f"{count}. scrapping {page_url} ...")
             store = get_store(driver, page_url)
-            if store == None:
+            if store is None:
                 log.error("Can't get response")
                 continue
 
