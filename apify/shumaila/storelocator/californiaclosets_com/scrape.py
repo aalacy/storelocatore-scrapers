@@ -95,7 +95,6 @@ def fetch_data():
                     ccode = "CA"
                 else:
                     ccode = soup.find("span", {"itemprop": "addressCountry"}).text
-
         except:
             try:
                 ccode = (
@@ -110,8 +109,8 @@ def fetch_data():
         yield SgRecord(
             locator_domain="https://www.californiaclosets.com/",
             page_url=link,
-            location_name=title,
-            street_address=street.strip(),
+            location_name=title.replace("&#8211;", " - ").strip(),
+            street_address=street.replace("<br>", " ").strip(),
             city=city.strip(),
             state=state.strip(),
             zip_postal=pcode.strip(),

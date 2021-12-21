@@ -43,6 +43,10 @@ def fetch_data():
             phone = "<MISSING>"
         hours = "<MISSING>"
         cs = item["coming_soon"]
+        if "Upper East Side" in name:
+            loc = "https://www.rumbleboxinggym.com/location-training/upper-east-side-training"
+        if "Palo Alto" in name:
+            loc = "https://www.rumbleboxinggym.com/location-signature/palo-alto"
         if cs is False:
             yield SgRecord(
                 locator_domain=website,
