@@ -18,7 +18,6 @@ def fetch_data():
     urls = [
         "https://api.victoriassecret.com/stores/v1/search?countryCode=CA",
         "https://api.victoriassecret.com/stores/v1/search?countryCode=US",
-        "https://api.victoriassecret.com/stores/v1/search?countryCode=GB",
     ]
     for url in urls:
         logger.info(url)
@@ -123,23 +122,22 @@ def fetch_data():
                         add = name
                     if zc == "":
                         zc = "<MISSING>"
-                    if country != "GBR":
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=purl,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=purl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
