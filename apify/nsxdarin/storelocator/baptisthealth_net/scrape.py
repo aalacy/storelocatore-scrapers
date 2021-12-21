@@ -62,52 +62,55 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"name": "' in line2 and name == "":
-                name = line2.split('"name": "')[1].split('"')[0]
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if "day:" in line2 and "Hours Today" not in line2:
-                days = line2.split("<br/>")
-                for day in days:
-                    day = day.replace("\t", "").strip()
-                    if hours == "":
-                        hours = day
-                    else:
-                        hours = hours + "; " + day
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if add != "":
-            if "150 Smith Road" in add:
-                state = "<MISSING>"
-            add = add.replace(",", "")
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        try:
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                if '"name": "' in line2 and name == "":
+                    name = line2.split('"name": "')[1].split('"')[0]
+                if '"telephone": "' in line2:
+                    phone = line2.split('"telephone": "')[1].split('"')[0]
+                if '"streetAddress": "' in line2:
+                    add = line2.split('"streetAddress": "')[1].split('"')[0]
+                if '"addressLocality": "' in line2:
+                    city = line2.split('"addressLocality": "')[1].split('"')[0]
+                if '"addressRegion": "' in line2:
+                    state = line2.split('"addressRegion": "')[1].split('"')[0]
+                if '"postalCode": "' in line2:
+                    zc = line2.split('"postalCode": "')[1].split('"')[0]
+                if "day:" in line2 and "Hours Today" not in line2:
+                    days = line2.split("<br/>")
+                    for day in days:
+                        day = day.replace("\t", "").strip()
+                        if hours == "":
+                            hours = day
+                        else:
+                            hours = hours + "; " + day
+            if hours == "":
+                hours = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            if add != "":
+                if "150 Smith Road" in add:
+                    state = "<MISSING>"
+                add = add.replace(",", "")
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+        except:
+            pass
 
 
 def scrape():

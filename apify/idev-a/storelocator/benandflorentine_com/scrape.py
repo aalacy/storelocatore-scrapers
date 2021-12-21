@@ -59,7 +59,8 @@ def fetch_data():
                 if "take-out" in hh.lower() or "open" in hh.lower():
                     continue
                 hours.append(hh)
-            addr = parse_address_intl(" ".join(blocks[0]))
+            raw_address = " ".join(blocks[0]).replace(".", ". ")
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -87,6 +88,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 
