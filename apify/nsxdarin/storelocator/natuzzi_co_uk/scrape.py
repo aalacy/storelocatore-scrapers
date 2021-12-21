@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
+import time
 
 session = SgRequests()
 headers = {
@@ -47,6 +48,7 @@ def fetch_data():
             loc = "https://www.natuzzi.com/us/en/stores/" + store
             r2 = session.get(loc, headers=headers)
             logger.info(loc)
+            time.sleep(10)
             for line2 in r2.iter_lines():
                 if '"openingTimes":' in line2:
                     days = line2.split('"openingTimes":')[1].split('"key":"')
