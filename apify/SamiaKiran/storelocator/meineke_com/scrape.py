@@ -70,17 +70,20 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         country_code = address["addressCountry"]
         latitude = loc["geo"]["latitude"]
         longitude = loc["geo"]["longitude"]
-        hour_list = loc["openingHoursSpecification"]
-        hours_of_operation = ""
-        for hour in hour_list:
-            day = (
-                str(hour["dayOfWeek"])
-                .replace("', '", ", ")
-                .replace("['", "")
-                .replace("']", "")
-            )
-            time = hour["opens"] + "-" + hour["closes"]
-            hours_of_operation = hours_of_operation + " " + day + " " + time
+        try:
+            hour_list = loc["openingHoursSpecification"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                day = (
+                    str(hour["dayOfWeek"])
+                    .replace("', '", ", ")
+                    .replace("['", "")
+                    .replace("']", "")
+                )
+                time = hour["opens"] + "-" + hour["closes"]
+                hours_of_operation = hours_of_operation + " " + day + " " + time
+        except:
+            hours_of_operation = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
