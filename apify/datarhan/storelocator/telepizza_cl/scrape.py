@@ -46,6 +46,7 @@ def fetch_data():
                     if not page_url:
                         page_url = poi_html.xpath("//@urltienda")
                     page_url = urljoin(area_url, page_url[0])
+                    page_url = page_url.replace("/pizzerias/", "/pizzeria/")
                     driver.get(page_url)
                     sleep(uniform(3, 8))
                     loc_dom = etree.HTML(driver.page_source)
@@ -56,7 +57,7 @@ def fetch_data():
                         )
                     if not location_name:
                         continue
-                    location_name = location_name[0]
+                    location_name = location_name[0].replace("Telepizza ", "")
                     raw_address = poi_html.xpath('.//p[@class="prs"]/text()')
                     if not raw_address:
                         raw_address = loc_dom.xpath("//address/span/text()")
