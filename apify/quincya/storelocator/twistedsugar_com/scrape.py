@@ -1,8 +1,13 @@
 import ssl
+import time
 
 from bs4 import BeautifulSoup
 
 from sglogging import sglog
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -35,6 +40,11 @@ def fetch_data(sgw: SgWriter):
         link = locator_domain + i.a["href"]
         log.info(link)
         driver.get(link)
+        time.sleep(2)
+        WebDriverWait(driver, 50).until(
+            ec.presence_of_element_located((By.CLASS_NAME, "tableHeading"))
+        )
+        time.sleep(2)
         base = BeautifulSoup(driver.page_source, "lxml")
 
         items = base.find_all(class_="col-sm-6")
