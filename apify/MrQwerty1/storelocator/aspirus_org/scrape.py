@@ -111,6 +111,8 @@ def get_data(param, sgw: SgWriter):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
+    if " - " in location_name:
+        location_name = location_name.split(" - ")[0].strip()
     line = tree.xpath("//section[@class='rel-loc']//li/p/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
