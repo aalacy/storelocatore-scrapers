@@ -54,7 +54,7 @@ def fetch_data():
 
                 item = SgRecord(
                     locator_domain=domain,
-                    page_url=url,
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=raw_address[0],
                     city=city,
