@@ -81,21 +81,27 @@ def fetch_data():
         else:
             break
     for loc in loclist:
-        page_url = url+loc.find('a', string=re.compile('Voir le magasin'))['href']
+        page_url = url + loc.find("a", string=re.compile("Voir le magasin"))["href"]
         log.info(page_url)
-        location_name =  loc.find("div", {"class": "search-store-name"}).get_text(separator='|', strip=True).replace('|',"")
+        location_name = (
+            loc.find("div", {"class": "search-store-name"})
+            .get_text(separator="|", strip=True)
+            .replace("|", "")
+        )
         temp = loc.findAll("li")
         address = temp[0].findAll("p")
-        raw_address = " ".join(x.get_text(separator='|', strip=True).replace('|',"") for x in address)
+        raw_address = " ".join(
+            x.get_text(separator="|", strip=True).replace("|", "") for x in address
+        )
         if "Tél" not in raw_address:
             raw_address = raw_address.split("PARIS")
             phone = raw_address[1]
-            raw_address = raw_address[0]+" PARIS"
+            raw_address = raw_address[0] + " PARIS"
         else:
-            raw_address = raw_address.split('Tél :')
+            raw_address = raw_address.split("Tél :")
             phone = raw_address[1]
             raw_address = raw_address[0]
-        raw_address = raw_address.replace("Cedex 4","")
+        raw_address = raw_address.replace("Cedex 4", "")
         pa = parse_address_intl(raw_address)
 
         street_address = pa.street_address_1
@@ -109,7 +115,14 @@ def fetch_data():
 
         zip_postal = pa.postcode
         zip_postal = zip_postal.strip() if zip_postal else MISSING
-        hours_of_operation =temp[1].find("div", {"class": "search-store-info-value"}).get_text(separator='|', strip=True).replace('|'," ").replace("HORAIRES :",'').split("Le magasin ")[0]
+        hours_of_operation = (
+            temp[1]
+            .find("div", {"class": "search-store-info-value"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+            .replace("HORAIRES :", "")
+            .split("Le magasin ")[0]
+        )
         country_code = "FR"
 
         yield SgRecord(
@@ -127,7 +140,7 @@ def fetch_data():
             latitude=MISSING,
             longitude=MISSING,
             hours_of_operation=hours_of_operation,
-            raw_address= raw_address
+            raw_address=raw_address,
         )
 
 
