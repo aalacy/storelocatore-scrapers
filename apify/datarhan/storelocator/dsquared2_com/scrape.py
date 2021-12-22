@@ -29,7 +29,7 @@ def fetch_data():
         city = ""
         zip_code = poi.get("wpcf-yoox-store-zip")
         if poi.get("location"):
-            city = poi["location"]["city"]["name"]
+            city = poi["location"].get("city", {}).get("name")
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
