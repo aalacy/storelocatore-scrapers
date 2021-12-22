@@ -39,7 +39,7 @@ def fetch_data():
             try:
                 locations = session.get(url, headers=_headers).json()["Value"]
             except:
-                continue
+                locations = []
             logger.info(f"[{key}] {len(locations)} found")
             for store in locations:
                 _ = store["googleBusinessData"]
