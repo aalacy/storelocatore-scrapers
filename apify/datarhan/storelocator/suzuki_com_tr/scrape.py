@@ -37,6 +37,11 @@ def fetch_data():
         city = addr.city
         if city:
             city = city.split("/")[-1]
+        if not city:
+            if "/" in raw_address:
+                city = raw_address.split("/")[-1]
+            else:
+                city = raw_address.split(" - ")[-1]
 
         item = SgRecord(
             locator_domain=domain,
