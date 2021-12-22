@@ -62,6 +62,11 @@ def fetch_data():
                 in base.find_all(class_="home-contact-content")[-1].text.upper()
             ):
                 continue
+            try:
+                if "COMING SOON" in base.find(class_="banner-title").text.upper():
+                    continue
+            except:
+                pass
             hours_of_operation = " ".join(
                 list(base.find(class_="hours").stripped_strings)
             )
