@@ -50,7 +50,7 @@ def fetch_data():
                 country_code=_["country"] or "USA",
                 phone=_p(_["phone"]),
                 locator_domain=locator_domain,
-                hours_of_operation=_["hours"].replace(",", ";"),
+                hours_of_operation=_["hours"],
             )
 
 
