@@ -13,7 +13,6 @@ def fetch_data(sgw: SgWriter):
         "https://www.firstam.com/services-api/api/alta/search?take=100000&skip=0&officeDisplayFlag=true&officeZipCode=&officeStatus=active"
     )
     data = r.json()
-    return_main_object = []
     for i in range(len(data)):
         store_data = data[i]
         store = []
