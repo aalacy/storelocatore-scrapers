@@ -109,9 +109,17 @@ def fetch_data():
                         .split(")")[0]
                         .split(",")
                     )
+                name = _.strong.text.split("-")[0].strip()
+                location_name = ""
+                if name == "PG JR":
+                    location_name = "PureGold Jr"
+                elif name == "PG EXTRA":
+                    location_name = "PureGold Extra"
+                elif name == "PPCI":
+                    location_name = "PureGold"
                 yield SgRecord(
                     page_url=base_url,
-                    location_name=_.strong.text.strip(),
+                    location_name=location_name,
                     street_address=street_address,
                     city=city,
                     state=addr.state,

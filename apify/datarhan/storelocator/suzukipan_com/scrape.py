@@ -24,7 +24,6 @@ def fetch_data():
     all_locations = dom.xpath('//ul[@class="list listresults"]/li')
     for poi_html in all_locations:
         location_name = poi_html.xpath('.//p[@class="tit"]/text()')[0]
-        page_url = poi_html.xpath('.//p[@class="tit"]/text()')[0]
         raw_address = poi_html.xpath(".//p/span/text()")[0].strip()
         if raw_address.endswith("."):
             raw_address = raw_address[:-1]
@@ -40,11 +39,15 @@ def fetch_data():
         hoo = poi_html.xpath(
             './/p[contains(text(), "Horario de Ventas")]/following-sibling::p[1]//text()'
         )
+        if not hoo:
+            hoo = poi_html.xpath(
+                './/p[span[contains(text(), "Horario de Ventas")]]/following-sibling::p[1]//text()'
+            )
         hoo = " ".join([e.strip() for e in hoo])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=page_url,
+            page_url=start_url,
             location_name=location_name,
             street_address=street_address,
             city=addr.city,

@@ -24,8 +24,10 @@ def fetch_data():
         url = "https://duchessrestaurants.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "damax_item_inner"})
+        loclist = soup.findAll("div", {"class": "damax_item js-location-item"})
         for loc in loclist:
+            latitude = loc["data-lat"]
+            longitude = loc["data-lng"]
             location_name = loc.find("div", {"class": "damax_title"}).text
             log.info(location_name)
             address = loc.find("div", {"class": "damax_address"}).text
@@ -56,16 +58,11 @@ def fetch_data():
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
             phone = loc.find("div", {"class": "damax_tel"}).text
-            try:
-                latitude, longitude = (
-                    loc.find("div", {"class": "damax_map_direction"})
-                    .find("a")["href"]
-                    .split("!3d")[1]
-                    .split("!4d")
-                )
-            except:
-                latitude = MISSING
-                longitude = MISSING
+            if "Street" in city:
+                temp = location_name.split(",")
+                city = temp[0]
+                state = temp[1]
+                street_address = street_address + " Street"
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
