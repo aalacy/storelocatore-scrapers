@@ -22,9 +22,10 @@ def fetch_data():
             country_code = _["countryCode"]
             if country_code == "US":
                 zip_postal, city = city, zip_postal
-                c_s = city.split(",")
-                city = c_s[0].strip()
-                state = c_s[1].strip()
+                city = city.replace(",", "")
+                c_s = city.split()
+                city = " ".join(c_s[:-1])
+                state = c_s[-1].strip()
             temp = (_["houseNr"] + " " + _["street"]).strip().split(",")
             street_address = []
             for tt in temp:
