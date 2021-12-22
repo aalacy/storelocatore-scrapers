@@ -19,17 +19,17 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("table#tablepress-1 tbody tr")
         for _ in locations:
-            location_name=_.strong.text.strip()
-            if location_name == 'GB CIRACAS':
+            location_name = _.strong.text.strip()
+            if location_name == "GB CIRACAS":
                 continue
             raw_address = _.select("p")[1].text.strip()
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            city=addr.city
+            city = addr.city
             if city and city.isdigit():
-                city = ''
+                city = ""
             try:
                 coord = (
                     _.select("a")[-1]["href"]
@@ -53,7 +53,6 @@ def fetch_data():
                 raw_address=raw_address,
                 hours_of_operation=_.select("p")[-1].text.strip(),
             )
-
 
 
 if __name__ == "__main__":
