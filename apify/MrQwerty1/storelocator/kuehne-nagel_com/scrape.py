@@ -1,3 +1,4 @@
+import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -14,10 +15,21 @@ def get_international(line):
     ).strip()
     city = adr.city or ""
     state = adr.state
-    postal = adr.postcode
-    country = adr.country
+    postal = adr.postcode or SgRecord.MISSING
+    country = adr.country or ""
 
     return street_address, city, state, postal, country
+
+
+def clean_phone(text):
+    text = str(text).replace("?", "")
+    black_list = [",", ";", "/", "or", "|", "ext", "x"]
+    for b in black_list:
+        if b in text.lower():
+            text = text.lower().split(b)[0].strip()
+
+    text = text.replace("(imp", "")
+    return text
 
 
 def fetch_data(sgw: SgWriter):
@@ -33,11 +45,26 @@ def fetch_data(sgw: SgWriter):
                 d.xpath(".//p[@class='location__address text-14 mb-0']/text()")
             ).split()
         )
-        street_address, city, state, postal, country = get_international(raw_address)
+        if "canada" in raw_address.lower():
+            country = "Canada"
+            state = SgRecord.MISSING
+            postal = re.findall(r"[A-Z]\d[A-Z]\s\d[A-Z]\d", raw_address).pop(0)
+            city = raw_address.split(postal)[-1].replace("CANADA", "").strip()
+            street_address = raw_address.split(postal)[0].strip()
+        else:
+            street_address, city, state, postal, country = get_international(
+                raw_address
+            )
+
+        if street_address.isnumeric() or len(street_address) < 7:
+            separator = street_address
+            street_address = raw_address.split(separator)[0] + f" {separator}"
+
         phones = d.xpath(".//p[@class='location__phone text-14 mb-0']/text()")
         for p in phones:
             if "phone" in p.lower() and "contact" not in p.lower():
-                phone = p.strip()
+                phone = p.lower().replace("phone", "").replace("contact", "").strip()
+                phone = clean_phone(phone)
                 break
         else:
             phone = SgRecord.MISSING

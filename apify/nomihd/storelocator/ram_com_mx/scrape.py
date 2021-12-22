@@ -69,6 +69,8 @@ def fetch_data():
                     state = formatted_addr.state
 
                     zip = formatted_addr.postcode
+                    if zip:
+                        zip = zip.replace("C.P.", "").strip()
 
                     country_code = "MX"
 
@@ -101,6 +103,8 @@ def fetch_data():
                                 hours_of_operation = (
                                     "; ".join(hours).replace(".;", ":").strip()
                                 )
+                                if "Por favor contacta al" in hours_of_operation:
+                                    hours_of_operation = "<MISSING>"
                             except:
                                 pass
                     except SgRequestError as e:
@@ -152,6 +156,8 @@ def fetch_data():
                     state = formatted_addr.state
 
                     zip = formatted_addr.postcode
+                    if zip:
+                        zip = zip.replace("C.P.", "").strip()
 
                     country_code = "MX"
 
@@ -183,6 +189,9 @@ def fetch_data():
                             hours_of_operation = (
                                 "; ".join(hours).replace(".;", ":").strip()
                             )
+                            if "Por favor contacta al" in hours_of_operation:
+                                hours_of_operation = "<MISSING>"
+
                     except SgRequestError as e:
                         log.error(e.status_code)
 
