@@ -15,23 +15,24 @@ def fetch_data():
 
     url = "https://www.kingofdonair.ca/order-online-choose-a-location/"
     r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")    
-    divlist = soup.find("ul", {"id": "locations"}).findAll('li')
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.find("ul", {"id": "locations"}).findAll("li")
     for div in divlist:
-        title = div.find('h2').text
-        address = div.find('a').text
+        title = div.find("h2").text
+        address = div.find("a").text
         try:
-            lat,longt = div.find('a')['href'].split('@',1)[1].split('data',1)[0].split(',',1)
-            longt = longt.split(',',1)[0]
+            lat, longt = (
+                div.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
+            )
+            longt = longt.split(",", 1)[0]
         except:
-            lat = longt = '<MISSING>'
-        phone = div.find('a',{'class':'telNumber'}).text
+            lat = longt = "<MISSING>"
+        phone = div.find("a", {"class": "telNumber"}).text
         try:
-            street,city,state = address.split(', ')
+            street, city, state = address.split(", ")
         except:
-            street,temp,city,state = address.split(', ')
-            street = street + ' '+ temp
-        
+            street, temp, city, state = address.split(", ")
+            street = street + " " + temp
         yield SgRecord(
             locator_domain="https://www.kingofdonair.ca/",
             page_url=SgRecord.MISSING,
@@ -52,7 +53,9 @@ def fetch_data():
 
 def scrape():
 
-    with SgWriter( deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
 
         results = fetch_data()
         for rec in results:
