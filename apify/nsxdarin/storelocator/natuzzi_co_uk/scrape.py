@@ -6,22 +6,39 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 import time
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
 
-session = SgRequests()
+
+@retry(stop=stop_after_attempt(8), wait=tenacity.wait_fixed(8))
+def get_response(url):
+    with SgRequests(proxy_country="gb") as http:
+        response = http.get(url)
+        time.sleep(random.randint(10, 15))
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
+
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
 
 logger = SgLogSetup().get_logger("natuzzi_co_uk")
 
 
 def fetch_data():
+    session = SgRequests(proxy_country="gb")
     urls = [
         "https://api.natuzzi.com/api/storelocator/editions?language=en&store_code=gb",
         "https://api.natuzzi.com/api/storelocator/italia?language=en&store_code=gb",
     ]
     for url in urls:
-        r = session.get(url, headers=headers)
+        r = session.get(url)
+        logger.info(f"r: {r}")
         website = "natuzzi.co.uk"
         typ = "<MISSING>"
         loc = "<MISSING>"
@@ -46,8 +63,13 @@ def fetch_data():
             lng = item["lon"]
             hours = ""
             loc = "https://www.natuzzi.com/us/en/stores/" + store
-            r2 = session.get(loc, headers=headers)
             logger.info(loc)
+            r2 = session.get(loc)
+            st = r2.status_code
+            logger.info(f"r2: {st}")
+            if st != 200:
+                r2 = get_response(loc)
+
             time.sleep(10)
             for line2 in r2.iter_lines():
                 if '"openingTimes":' in line2:
