@@ -23,7 +23,11 @@ def fetch_data():
             .replace("locations(", "")[:-1]
         )["locations"]
         for _ in locations:
-            if "coming soon" in _["hours"].lower():
+            if (
+                "coming soon" in _["hours"].lower()
+                or "coming 2022" in _["hours"].lower()
+                or "coming winter" in _["hours"].lower()
+            ):
                 continue
 
             hours = []
