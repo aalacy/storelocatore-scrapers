@@ -17,6 +17,9 @@ def fetch_data():
         page = 0
         while True:
             try:
+                res = session.get(base_url.format(page), headers=_headers)
+                if res.status_code == 500:
+                    continue
                 locations = session.get(base_url.format(page), headers=_headers).json()[
                     "data"
                 ]
