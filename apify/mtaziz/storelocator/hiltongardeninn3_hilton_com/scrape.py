@@ -262,7 +262,6 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                         # Coming soon
                         # Get the local time based on the system the crawler is running on
                         local_time = datetime.now(datetime.now().astimezone().tzinfo)
-                        local_time_formatted = local_time.strftime("%Y-%m-%d")
 
                         # Hotel open or close status refers False or True
                         open_or_close = _["display"]["open"]
@@ -273,8 +272,7 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                         parsed_open_date = None
                         if open_date is not None and open_or_close is False:
                             parsed_open_date = dateutil.parser.parse(open_date)
-                            parsed_open_date = parsed_open_date.strftime("%Y-%m-%d")
-                            if parsed_open_date > local_time_formatted:
+                            if parsed_open_date.timestamp() > local_time.timestamp():
                                 location_type = "Coming Soon"
                         raw_address = a["addressFmt"]
                         raw_address = raw_address if raw_address else MISSING
