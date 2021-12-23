@@ -1,17 +1,19 @@
-import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("huntington_com")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    max_search_distance_miles=None,
     max_search_results=10,
 )
-
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
@@ -20,46 +22,18 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    ids = []
     for lat, lng in search:
         try:
             x = lat
             y = lng
             url = "https://www.huntington.com/post/GetLocations/GetLocationsList"
             payload = {
-                "longitude": lng,
-                "latitude": lat,
+                "longitude": y,
+                "latitude": x,
                 "typeFilter": "1",
                 "envelopeFreeDepositsFilter": False,
-                "timeZoneOffset": "420",
+                "timeZoneOffset": "300",
                 "scController": "GetLocations",
                 "scAction": "GetLocationsList",
             }
@@ -77,9 +51,8 @@ def fetch_data():
                 typ = "<MISSING>"
                 website = "huntington.com"
                 country = "US"
-                lat = item["geometry"]["coordinates"][0]
-                lng = item["geometry"]["coordinates"][1]
-                search.found_location_at(lng, lat)
+                flng = item["geometry"]["coordinates"][0]
+                flat = item["geometry"]["coordinates"][1]
                 try:
                     hours = "Sun: " + item["properties"]["SundayLobbyHours"]
                     hours = hours + "; Mon: " + item["properties"]["MondayLobbyHours"]
@@ -92,32 +65,37 @@ def fetch_data():
                     hours = hours + "; Sat: " + item["properties"]["SaturdayLobbyHours"]
                 except:
                     hours = "<MISSING>"
-                if store not in ids:
-                    ids.append(store)
-                    loc = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                loc = (
+                    "https://www.huntington.com/Community/branch-info?locationId="
+                    + store.replace("bko", "")
+                )
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=flat,
+                    longitude=flng,
+                    hours_of_operation=hours,
+                )
         except:
             pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

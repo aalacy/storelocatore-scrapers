@@ -1,0 +1,50 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 29 concerning rows. Examples:
+                    street_address              REASON  rowNumber
+4        2310 Trooper Dr Bldg 2310  ADDR_HAS_NO_NUMBER          4
+21             Rodman Ave Bldg 334  ADDR_HAS_NO_NUMBER         21
+190  Clear Creek Rd Bldg 50001 Ft.  ADDR_HAS_NO_NUMBER        190
+194               West Valley Ave.  ADDR_HAS_NO_NUMBER        194
+251                    Marietta Rd  ADDR_HAS_NO_NUMBER        251
+
+
+--ignore StreetAddressHasStateName (Confirmed scrape correctly)
+Found 2 concerning rows. Examples:
+                                       street_address                    REASON  rowNumber
+178  6205 Missile Dr Bldg 720 Francis E Warren Afb Wy  ADDR_CONTAINS_STATE_NAME        178
+519                               6119 White Horse Rs  ADDR_CONTAINS_STATE_NAME        519
+
+
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+Found 26 concerning rows. Examples:
+       zip state                REASON  rowNumber
+115  35209    TN  ZIPCODE_NOT_IN_STATE        115
+116  35209    TN  ZIPCODE_NOT_IN_STATE        116
+125  35216    TN  ZIPCODE_NOT_IN_STATE        125
+127  36116    TN  ZIPCODE_NOT_IN_STATE        127
+131  36116    TN  ZIPCODE_NOT_IN_STATE        131
+
+
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 154 concerning rows. Examples:
+    state        phone        zip            REASON  rowNumber
+146    TN  615-333-008      35124  INVALID_US_PHONE        146
+559    NC  704 426 715      28208  INVALID_US_PHONE        559
+570    NC    <MISSING>       2213    INVALID_US_ZIP        570
+669    NC  336-292-343      27407  INVALID_US_PHONE        669
+673    ON    <MISSING>  <MISSING>  INVALID_US_STATE        673
+
+
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)
+Found 32 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+       latitude   longitude                                    street_address  num_addrs
+286   33.896577  -84.211576       {6131 Norcross Tuckr, 6131 Norcross Tucker}          2
+313   33.910592  -84.379885  {215 Northwood Dr Unit Suite6, 215 Nort Wood Dr}          2
+1558  40.931232  -74.158872            {500 River St Unit 7513, 500 River St}          2
+1554   40.91883  -74.166864        {200 Broadway Ave Unit 7513, 200 Broadway}          2
+1553  40.916611  -74.155717        {494 Ellison St Unit 7513, 494 Ellison St}          2
+1548  40.902565  -74.142219          {946 Market St Unit 7513, 946 Market St}          2
+1391  40.686987  -74.206194    {1016 Sherman Ave, 1016 Sherman Ave Unit 7206}          2
+1389  40.685401   -74.09913     {2 Garfield Ave City 7305, 2-16 Garfield Ave}          2
+1362  40.660648  -74.215933          {25 S Broad St, 25 S Broad St Unit 7206}          2
+1360  40.658699  -74.200577       {701 Marshal St Unit 7206, 701 Marshall St}          2
