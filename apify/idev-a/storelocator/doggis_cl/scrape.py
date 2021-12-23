@@ -22,7 +22,7 @@ else:
 
 locator_domain = "https://www.doggis.cl"
 base_url = "https://www.doggis.cl/locales"
-graph_url = "https://api.getjusto.com/graphql?operationName=getPlaceDetails_cached"
+json_url = "operationName=getPlaceDetails_cached"
 
 
 def fetch_data():
@@ -36,7 +36,8 @@ def fetch_data():
                 )
             )
         )
-        time.sleep(10)
+        driver.wait_for_request(json_url)
+        time.sleep(20)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.ct-stores div.col-xs-12.col-sm-6.col-md-3")
         for loc in locations:
