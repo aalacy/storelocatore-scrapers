@@ -19,7 +19,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="accordion"]')
+    all_locations = dom.xpath('//div[@class="accordion"]/div[@class="card mt-2"]')
     for poi_html in all_locations:
         location_name = poi_html.xpath(
             './/div[contains(@class, "card-header")]/p/text()'
@@ -34,13 +34,21 @@ def fetch_data():
         phone = poi_html.xpath(
             './/div[i[@class="fa fa-phone font-24 fa-fw mr-1 text-darkgrey"]]/p/text()'
         )[0]
+        city = addr.city
+        if city:
+            city = city.split("/")[-1]
+        if not city:
+            if "/" in raw_address:
+                city = raw_address.split("/")[-1]
+            else:
+                city = raw_address.split(" - ")[-1]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
             zip_postal="",
             country_code="TR",

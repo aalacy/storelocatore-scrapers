@@ -79,7 +79,7 @@ def fetch_data():
         store_response = session.get(store_url, headers=hdr)
         store_dom = etree.HTML(store_response.text)
         hours_of_operation = store_dom.xpath(
-            '//div[@class="card__hours"]/table//text()'
+            '//div[contains(@class, "card__hours")]/table//text()'
         )
         hours_of_operation = " ".join(
             [elem.strip() for elem in hours_of_operation if elem.strip()][2:]
