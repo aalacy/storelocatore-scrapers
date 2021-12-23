@@ -23,7 +23,7 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    j = json.loads("".join(tree.xpath("//div[@data-block-json]/@data-block-json")))[
+    j = json.loads(tree.xpath("//div[@data-block-json]/@data-block-json")[0])[
         "location"
     ]
     location_name = tree.xpath("//title/text()")[0].strip()
@@ -58,17 +58,14 @@ def get_data(page_url, sgw: SgWriter):
     latitude = j.get("markerLat")
     longitude = j.get("markerLng")
 
-    hours_of_operation = (
-        " ".join(tree.xpath("//h2[./a]/following-sibling::h2[1]/text()"))
-        or SgRecord.MISSING
-    )
+    _tmp = []
+    lines = tree.xpath("//h2/text()")
+    for line in lines:
+        if "TRE" in line or not line.strip() or "(" in line:
+            continue
+        _tmp.append(line.strip())
 
-    if hours_of_operation == SgRecord.MISSING:
-        hours_of_operation = " ".join(
-            tree.xpath(
-                "//h2/a[contains(@href, 'tel')]/text()|//h2[./a[contains(@href, 'google.com')]]/text()"
-            )[1:]
-        )
+    hours_of_operation = " ".join(_tmp).replace("PM ", "PM;")
 
     row = SgRecord(
         page_url=page_url,
@@ -78,9 +75,7 @@ def get_data(page_url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code=country_code,
-        store_number=SgRecord.MISSING,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
