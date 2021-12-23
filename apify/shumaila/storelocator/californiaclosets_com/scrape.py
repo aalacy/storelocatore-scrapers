@@ -116,6 +116,10 @@ def fetch_data():
             pass
         if "22000 Willamette Dr" in street:
             street = street + " Suite 103"
+        try:
+            hours = hours.split("MORE", 1)[0]
+        except:
+            pass
         yield SgRecord(
             locator_domain="https://www.californiaclosets.com/",
             page_url=link,
