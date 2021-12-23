@@ -142,23 +142,6 @@ def fetch_data(sgw: SgWriter):
             else:
                 hours_of_operation = "<MISSING>"
 
-            store = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                page_url,
-            ]
-
             sgw.write_row(
                 SgRecord(
                     locator_domain=locator_domain,
