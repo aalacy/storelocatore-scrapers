@@ -69,17 +69,6 @@ def fetch_data():
 
                 location_type = "<MISSING>"
 
-                store_info = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                f'//div[@id="tab-{store_number}"]//div[h3 and h2]/h2//text()'
-                            )
-                        ],
-                    )
-                )
                 street_address = "<MISSING>"
                 city = "<MISSING>"
                 state = "<MISSING>"
