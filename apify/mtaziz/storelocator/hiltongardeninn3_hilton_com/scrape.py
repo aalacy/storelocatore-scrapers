@@ -259,7 +259,7 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                         lt = _["brandCode"]
                         location_type = lt if lt else MISSING
 
-                        # Coming soon
+                        # Coming Soon based on whether hotel is open or close
                         # Get the local time based on the system the crawler is running on
                         local_time = datetime.now(datetime.now().astimezone().tzinfo)
 
