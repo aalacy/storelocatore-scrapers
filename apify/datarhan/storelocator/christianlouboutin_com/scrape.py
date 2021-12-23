@@ -37,14 +37,17 @@ def fetch_data():
         poi = json.loads(poi[0])
 
         location_name = poi["name"]
-        street_address = (
-            loc_dom.xpath('//div[@class="details"]/text()')[0].split("|")[0].strip()
-        )
+        street_address = poi["address"]["streetAddress"]
         city = SgRecord.MISSING
         if poi["address"]["addressLocality"]:
             city = poi["address"]["addressLocality"].split(",")[0].strip()
+        state = SgRecord.MISSING
+        if "NY" in city:
+            city = city.replace("NY", "").strip()
+            state = "NY"
         zip_code = poi["address"].get("postalCode")
         zip_code = zip_code if zip_code else "<MISSING>"
+        street_address = street_address.replace(zip_code, "").strip()
         country_code = poi["address"]["addressCountry"]
         country_code = country_code if country_code else "<MISSING>"
         store_number = "<MISSING>"
@@ -70,7 +73,7 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=SgRecord.MISSING,
+            state=state,
             zip_postal=zip_code,
             country_code=country_code,
             store_number=store_number,

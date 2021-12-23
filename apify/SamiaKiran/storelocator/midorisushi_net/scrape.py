@@ -30,7 +30,7 @@ def fetch_data():
             location_name = loc.find("h3").text
             log.info(location_name)
             loc = loc.findAll("p")
-            street_address = loc[0].text
+            street_address = loc[0].text.replace(",", "")
             address = loc[1].text.split(",")
             city = address[0]
             address = address[1].split()

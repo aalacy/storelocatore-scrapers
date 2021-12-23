@@ -1,49 +1,16 @@
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_locations = []
-
-    DOMAIN = "dutchbros.com"
-
+    domain = "dutchbros.com"
     start_url = "https://files.dutchbros.com/api-cache/stands.json"
 
     response = session.get(start_url)
@@ -54,7 +21,7 @@ def fetch_data():
         store_url = (
             f'https://locations.dutchbros.com/dutch-bros-coffee-{poi["yext_url"]}'
             if store_url
-            else "<MISSING>"
+            else ""
         )
         location_name = poi["store_nickname"]
         location_name = location_name if location_name else "<MISSING>"
@@ -69,12 +36,13 @@ def fetch_data():
         country_code = "<MISSING>"
         store_number = poi["store_number"]
         store_number = store_number if store_number else "<MISSING>"
-        phone = "<MISSING>"
-        if store_url != "<MISSING>":
+        phone = ""
+        if store_url:
             loc_response = session.get(store_url)
-            loc_dom = etree.HTML(loc_response.text)
-            phone = loc_dom.xpath('//a[@data-pages-analytics="phonecall"]/text()')
-            phone = phone[0] if phone else "<MISSING>"
+            if loc_response.status_code == 200:
+                loc_dom = etree.HTML(loc_response.text)
+                phone = loc_dom.xpath('//a[@data-pages-analytics="phonecall"]/text()')
+                phone = phone[0] if phone else "<MISSING>"
         location_type = ""
         if poi["drivethru"] == "1":
             location_type = "drivethru"
@@ -87,33 +55,36 @@ def fetch_data():
         if not hours_of_operation:
             continue
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        if store_number not in scraped_locations:
-            scraped_locations.append(store_number)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

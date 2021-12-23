@@ -25,11 +25,13 @@ def fetch_data():
             street_address = _["data-address1"]
             if _["data-address2"]:
                 street_address += " " + _["data-address2"]
-            if street_address == "NA" or street_address.startswith("PO Box"):
+            if street_address == "NA":
                 street_address = ""
             location_type = "branch"
             if _.select_one("span.hasATM"):
                 location_type += ", atm"
+            if "ATM Only" in _["data-title"]:
+                location_type = "atm"
             page_url = ""
             if _.select_one("a.seeDetails"):
                 page_url = locator_domain + _.select_one("a.seeDetails")["href"]

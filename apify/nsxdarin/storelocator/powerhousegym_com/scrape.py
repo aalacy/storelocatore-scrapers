@@ -23,7 +23,7 @@ def fetch_data():
         line = str(line.decode("utf-8"))
         if '<h3><a href="https://powerhousegym.com/locations/' in line:
             lurl = line.split('<h3><a href="')[1].split('"')[0]
-            if "-japan" not in lurl and "locations/cambridge" in line:
+            if "-japan" not in lurl:
                 locs.append(lurl)
     for loc in locs:
         r2 = session.get(loc, headers=headers)

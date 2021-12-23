@@ -1,0 +1,1 @@
+--ignore CountryCodeFillRateChecker --ignore LatLngDuplicationValidator (Confirmed on website)

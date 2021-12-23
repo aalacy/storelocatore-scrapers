@@ -42,9 +42,14 @@ def fetch_data():
                 )
                 for _ in _info:
                     page_url = _["url"]
+                    if (
+                        page_url
+                        == "https://locations.peoplesbancorp.com/oh/pomeroy/31637-dead-mans-curve-rd.html"
+                    ):
+                        continue
                     street_address = _["address_1"]
                     if _["address_2"]:
-                        street_address += " " + _["address_1"]
+                        street_address += " " + _["address_2"]
                     hours = []
                     if _.get("hours_sets:primary"):
                         _hr = json.loads(_["hours_sets:primary"])
@@ -81,7 +86,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
