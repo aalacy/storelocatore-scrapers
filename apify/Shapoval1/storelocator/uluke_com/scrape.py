@@ -68,7 +68,7 @@ def fetch_data(sgw: SgWriter):
             phone = phone.split("OPEN")[0].strip()
         tmp = []
         for i in inf:
-            if "Monday" in i or "OPEN" in i:
+            if "Monday" in i or "OPEN" in i or "0pm" in i:
                 tmp.append(i)
         try:
             hours_of_operation = (
