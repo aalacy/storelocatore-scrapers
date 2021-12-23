@@ -37,9 +37,10 @@ def get_session(refresh):
 
 def fetch_locations(url, retry=0):
     try:
-        return get_session(retry > 0).get(url, headers=headers, timeout=30).json()
-    except:
-        if retry < 3:
+        time.sleep(random.randint(1, 3))
+        return get_session(retry > 0).get(url, headers=headers).json()
+    except Exception:
+        if retry < 10:
             return fetch_locations(url, retry + 1)
 
         log.error(f"Failure to fetch locations for: {url}")
@@ -199,25 +200,28 @@ def retry_refetch_hours_error_callback(retry_state):
 
 
 @retry(
-    stop=stop_after_attempt(3), retry_error_callback=retry_refetch_hours_error_callback
+    stop=stop_after_attempt(5), retry_error_callback=retry_refetch_hours_error_callback
 )
-def refetch_hours(location, driver):
-    id = location["externalId"]
-    page_url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
-    location["page_url"] = page_url
-    details = driver.execute_async_script(
-        f"""
-        var done = arguments[0]
-        fetch("{page_url}")
-            .then(res => res.json())
-            .then(done)
-    """
-    )
+def refetch_hours(location):
+    with get_session() as driver:
+        id = location["externalId"]
+        page_url = (
+            f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+        )
+        location["page_url"] = page_url
+        details = driver.execute_async_script(
+            f"""
+            var done = arguments[0]
+            fetch("{page_url}")
+                .then(res => res.json())
+                .then(done)
+        """
+        )
 
-    if details.get("httpStatusCode"):
-        raise Exception()
+        if details.get("httpStatusCode"):
+            raise Exception()
 
-    return details
+        return details
 
 
 def batch_get_hours(locations, driver):
@@ -261,7 +265,7 @@ def batch_get_hours(locations, driver):
             continue
 
         if details.get("httpStatusCode"):
-            refetched_details = refetch_hours(location, driver)
+            refetched_details = refetch_hours(location)
             if refetched_details:
                 details = refetched_details
             else:

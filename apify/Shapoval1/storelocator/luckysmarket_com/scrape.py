@@ -1,3 +1,5 @@
+import datetime
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -46,11 +48,22 @@ def fetch_data(sgw: SgWriter):
                 f'.//preceding::p[text()="STORES"]/following::a[contains(text(), "{slug}")][1]/@href'
             )
         )
-        api_url2 = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=10&token=355d3f4fb7329e1bc1767cefec756e85"
         session = SgRequests()
-        r = session.get(api_url2, headers=headers)
-        js = r.json()["items"]
-        for j in js:
+
+        api_url = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=100&token={}"
+        d = datetime.datetime.now()
+        unixtime = datetime.datetime.timestamp(d) * 1000
+        frm = {
+            "app_key": "luckys_market",
+            "referrer": "https://www.luckysmarket.com/",
+            "utc": str(unixtime).split(".")[0],
+        }
+        r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+        token = r["token"]
+
+        r = session.get(api_url.format(token))
+        js = json.loads(r.text)
+        for j in js["items"]:
             adr = "".join(j.get("address_1")).split()[0].strip()
             if street_address.find(f"{adr}") != -1:
                 latitude = j.get("latitude")

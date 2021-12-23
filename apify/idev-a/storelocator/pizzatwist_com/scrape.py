@@ -6,7 +6,9 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
 import re
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger("pizzatwist")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -16,36 +18,24 @@ locator_domain = "https://pizzatwist.com/"
 base_url = "https://pizzatwist.com/"
 
 
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
-
-
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.main_popular div.p_card div.col-lg-6.col-md-6")
+
         for _ in locations:
             if "Coming Soon" in _.select_one("a.card_btn").text:
                 continue
-            _addr = [aa.text.strip() for aa in _.select("p")]
+            _addr = [aa.text.strip() for aa in _.select("p.desc")]
             addr = parse_address_intl(" ".join(_addr))
             page_url = _.select_one("a.card_btn")["href"].strip()
             if page_url.endswith("pizzatwist.com/"):
                 page_url += "home"
+            logger.info(page_url)
             hours = []
             coord = ["", ""]
             phone = ""
-            street_address = ""
+            street_address = _addr[0]
             try:
                 accountId = page_url.split("accountId=")[1].split("&")[0]
             except:

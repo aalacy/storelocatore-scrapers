@@ -31,7 +31,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     r = http.get(url, headers=headers)
     logger.info("Pulling Store URLs")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+        line = str(line)
         if "<loc>https://www.yardhouse.com/locations/" in line:
             loc = line.split("<loc>")[1].split("<")[0]
             logger.info(loc)
@@ -40,7 +40,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 
 
 def get_hoo(url_store, http):
-    r_hoo = http.get(url_store, headers=headers, timeout=500)
+    r_hoo = http.get(url_store, headers=headers)
     data_raw = html.fromstring(r_hoo.text, "lxml")
     xpath_hoo = '//div[h2[contains(text(), "HOURS")]]/div/ul/li//text()'
     hoo_raw = data_raw.xpath(xpath_hoo)
@@ -66,54 +66,63 @@ def get_hoo(url_store, http):
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     idx = 0
     for next_r in state.request_stack_iter():
-        r = http.get(next_r.url, headers=headers, timeout=500)
+        r = http.get(next_r.url, headers=headers)
+        logger.info(f"Pulling the Data from: {idx} <<:>> {next_r.url}")
         time.sleep(3)
-        logger.info(f"Pulling store data from: {next_r.url}")
         data_raw = html.fromstring(r.text, "lxml")
         data_json = data_raw.xpath('//script[@type="application/ld+json"]/text()')[0]
         data_json1 = data_json.replace("\n", "")
         data = json.loads(data_json1)
-        if data:
-            logger.info(f"Pulling the Data from: {idx} <<:>> {next_r.url}")
+        got_data = False
+        for i in range(5):
+            if not got_data:
+                try:
+                    location_name = data["name"]
+                    if location_name:
+                        got_data = True
+                except:
+                    pass
+                if not got_data:
+                    logger.info("Retrying data pull ..")
+                    r = http.get(next_r.url, headers=headers)
+                    time.sleep(10)
+                    data_raw = html.fromstring(r.text, "lxml")
+                    data_json = data_raw.xpath(
+                        '//script[@type="application/ld+json"]/text()'
+                    )[0]
+                    data_json1 = data_json.replace("\n", "")
+                    data = json.loads(data_json1)
+            else:
+                break
+
+        if got_data:
 
             page_url = next_r.url if next_r.url else MISSING
 
-            location_name = data["name"] if data["name"] else MISSING
-            logger.info(f"[{idx}] location_name: {location_name}")
-
             sa = data["address"]["streetAddress"]
             street_address = sa if sa else MISSING
-            logger.info(f"[{idx}] Street Address: {street_address}")
 
             city = data["address"]["addressLocality"]
             city = city if city else MISSING
-            logger.info(f"[{idx}] City: {city}")
 
             state = data["address"]["addressRegion"]
             state = state if state else MISSING
-            logger.info(f"[{idx}] State: {state}")
 
             zipcode = data["address"]["postalCode"]
             zip_postal = zipcode if zipcode else MISSING
-            logger.info(f"[{idx}] Zip Code: {zip_postal}")
 
             store_number = data["branchCode"] if data["branchCode"] else MISSING
-            logger.info(f"[{idx}] store_number: {store_number}")
 
             location_type = data["@type"] if data["@type"] else MISSING
-            logger.info(f"[{idx}] location_type: {location_type}")
 
             cc = data["address"]["addressCountry"]
             country_code = cc if cc else MISSING
-            logger.info(f"[{idx}] country_code: {country_code}")
 
             lat = data["geo"]["latitude"]
             latitude = lat if lat else MISSING
-            logger.info(f"[{idx}] lat: {latitude}")
 
             lng = data["geo"]["longitude"]
             longitude = lng if lng else MISSING
-            logger.info(f"[{idx}] lng: {longitude}")
 
             try:
                 phone = data["telephone"]
@@ -122,13 +131,11 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
 
             if MISSING not in phone and phone == str(0):
                 phone = MISSING
-            logger.info(f"[{idx}] Phone: {phone}")
 
             if data["openingHours"]:
                 hours_of_operation = "; ".join(data["openingHours"])
             else:
                 hours_of_operation = get_hoo(next_r.url, http)
-            logger.info(f"[{idx}] hours_of_operation: {hours_of_operation}")
 
             raw_address = MISSING
             idx += 1

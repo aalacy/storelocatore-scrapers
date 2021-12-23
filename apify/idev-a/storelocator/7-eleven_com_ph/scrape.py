@@ -25,7 +25,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
             if _["address2"]:
                 street_address += " " + _["address2"]
             addr = parse_address_intl(street_address + ", Phillipines")
-            street_address = addr.street_address_1
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             if not street_address:
@@ -52,7 +52,7 @@ def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgReco
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, granularity=Grain_8()
+        country_codes=[SearchableCountries.PHILIPPINES], granularity=Grain_8()
     )
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
