@@ -74,7 +74,11 @@ def fetch_data():
                     if phone == "0" or phone == "123":
                         phone = ""
                     latitude = re.findall("lat = (.+?);", driver.page_source)[0]
+                    if latitude == "0":
+                        latitude = ""
                     longitude = re.findall("lng = (.+?);", driver.page_source)[0]
+                    if longitude == "0":
+                        longitude = ""
                     hoo = loc_dom.xpath(
                         '//h4[contains(text(), "A recoger")]/following-sibling::table//text()'
                     )
