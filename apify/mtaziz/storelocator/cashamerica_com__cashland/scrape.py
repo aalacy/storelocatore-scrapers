@@ -1,6 +1,5 @@
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
@@ -51,14 +50,12 @@ def fetch_records(key, idx, url_data, sgw: SgWriter):
         if r is None:
             return
         else:
-            print(f"Data JSON: {r.json()}")
             try:
                 data = r.json()
             except AttributeError as e:
                 logger.info(f"Fix AttributeError {e}")
                 return
             logger.info(f"[ Pulling the data from] {url_data}")
-            found = 0
             for i in range(len(data)):
                 store_data = data[i]
                 # Locator Domain
@@ -273,7 +270,6 @@ def get_api_endpoint_urls():
     start = 1
     total_page_number = 2800
     items_num_per_page = 1
-    total = 0
     for page in range(start, total_page_number):
         url_data = f"{url_store}{str(page)}&s={items_num_per_page}&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key={str(api_key)}"
         api_endpoint_urls.append(url_data)
