@@ -38,7 +38,7 @@ def fetch_data():
         wed = f'Wednesday: {poi["branch_wed_open"]} - {poi["branch_wed_close"]}'
         thu = f'Thursday: {poi["branch_thu_open"]} - {poi["branch_thu_close"]}'
         fri = f'Friday: {poi["branch_fri_open"]} - {poi["branch_fri_close"]}'
-        sat = f"Saturday: closed"
+        sat = "Saturday: closed"
         if poi["branch_sat_open"]:
             sat = f'Saturday: {poi["branch_sat_open"]} - {poi["branch_sat_close"]}'
         sun = "Sunday: closed"
