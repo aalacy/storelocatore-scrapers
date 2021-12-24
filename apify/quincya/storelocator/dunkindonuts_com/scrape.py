@@ -1,5 +1,3 @@
-import re
-
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
