@@ -27,7 +27,11 @@ def fetch_data():
         state = loc["address"]["addressRegion"]
         pcode = loc["address"]["postalCode"]
         ccode = loc["address"]["addressCountry"]
-
+        ltype = loc["image"]
+        if len(phone) < 3:
+            ltype = "Coming Soon"
+        else:
+            ltype = "<MISSING>"
         r = session.get(link, headers=headers)
         try:
             if len(pcode) < 3:
@@ -106,18 +110,31 @@ def fetch_data():
                 ccode = soup.find("span", {"itemprop": "addressCountry"}).text
         if "Canada" in ccode:
             ccode = "CA"
+        try:
+            phone = phone.split("<", 1)[0]
+        except:
+            pass
+        if "22000 Willamette Dr" in street:
+            street = street + " Suite 103"
+        try:
+            hours = hours.split("MORE", 1)[0]
+        except:
+            pass
         yield SgRecord(
             locator_domain="https://www.californiaclosets.com/",
             page_url=link,
-            location_name=title.replace("&#8211;", " - ").strip(),
-            street_address=street.replace("<br>", " ").strip(),
+            location_name=title.replace("&#8211;", "-").strip(),
+            street_address=street.replace(" </br>", "")
+            .replace("<br>", " ")
+            .replace("<br/>", " ")
+            .strip(),
             city=city.strip(),
             state=state.strip(),
             zip_postal=pcode.strip(),
             country_code=ccode,
             store_number=SgRecord.MISSING,
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,

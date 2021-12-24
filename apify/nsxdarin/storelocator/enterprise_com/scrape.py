@@ -65,34 +65,39 @@ def fetch_data():
                         "https://prd-west.webapi.enterprise.com/enterprise-ewt/location/"
                         + store
                     )
-                    r4 = get(surl)
-                    for line4 in r4.iter_lines():
-                        if '"hours":[{"type":"STANDARD","days":[{' in line4:
-                            days = (
-                                line4.split('"hours":[{"type":"STANDARD","days":[{')[1]
-                                .split("]}]},")[0]
-                                .split('"day":"')
-                            )
-                            for day in days:
-                                if '"date":"' in day:
-                                    if '"closed_all_day":true' in day:
-                                        hrs = day.split('"')[0] + ": Closed"
-                                    else:
-                                        hrs = (
-                                            day.split('"')[0]
-                                            + ": "
-                                            + day.split('{"open_time":"')[1].split('"')[
-                                                0
-                                            ]
-                                            + "-"
-                                            + day.split('"close_time":"')[1].split('"')[
-                                                0
-                                            ]
-                                        )
-                                    if hours == "":
-                                        hours = hrs
-                                    else:
-                                        hours = hours + "; " + hrs
+                    try:
+                        r4 = get(surl)
+                        for line4 in r4.iter_lines():
+                            if '"hours":[{"type":"STANDARD","days":[{' in line4:
+                                days = (
+                                    line4.split(
+                                        '"hours":[{"type":"STANDARD","days":[{'
+                                    )[1]
+                                    .split("]}]},")[0]
+                                    .split('"day":"')
+                                )
+                                for day in days:
+                                    if '"date":"' in day:
+                                        if '"closed_all_day":true' in day:
+                                            hrs = day.split('"')[0] + ": Closed"
+                                        else:
+                                            hrs = (
+                                                day.split('"')[0]
+                                                + ": "
+                                                + day.split('{"open_time":"')[1].split(
+                                                    '"'
+                                                )[0]
+                                                + "-"
+                                                + day.split('"close_time":"')[1].split(
+                                                    '"'
+                                                )[0]
+                                            )
+                                        if hours == "":
+                                            hours = hrs
+                                        else:
+                                            hours = hours + "; " + hrs
+                    except:
+                        hours = "<MISSING>"
                 if '"locationName": "' in line3:
                     name = line3.split('"locationName": "')[1].split('"')[0]
                 if '"streetAddress" : "' in line3:
