@@ -41,7 +41,6 @@ def fetch_data():
                 hours = []
                 day = ""
                 for hh in sp1.select("table.openingsuren tr"):
-                    td = hh.select("td")
                     if hh.select_one("td.day"):
                         day = list(hh.select_one("td.day").stripped_strings)[0]
 
