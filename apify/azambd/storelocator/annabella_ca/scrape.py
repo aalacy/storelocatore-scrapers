@@ -129,10 +129,15 @@ def get_lat_long_array(body):
 
 
 def get_lat_long_from_gmap(url):
+    log.info(f"Google page: {url}")
     response = session.get(url)
-    body = html.fromstring(response.text, "lxml")
-    data = get_lat_long_array(body)
-    return data[1], data[2]
+    log.info(f"Google page response: {response}")
+    if "goo" in url and response.status_code == 200:
+        body = html.fromstring(response.text, "lxml")
+        data = get_lat_long_array(body)
+        return data[1], data[2]
+    else:
+        return MISSING, MISSING
 
 
 def fetch_data():
@@ -173,7 +178,9 @@ def scrape():
     count = 0
     start = time.time()
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
             count = count + 1

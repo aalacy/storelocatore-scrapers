@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -54,9 +54,13 @@ def fetch_data():
             loc = loc.get_text(separator="|", strip=True).split("|")
             if "Sat (Seasonal)" in loc[-1]:
                 del loc[-1]
+            elif "Sat (Appointment Only)" in loc[-1]:
+                del loc[-1]
+            elif "Contact your Local Branch" in loc[-1]:
+                del loc[-1]
+            else:
+                hours_of_operation = loc[-1]
             hours_of_operation = loc[-1]
-            if "cta@citytire.com" in loc[-1]:
-                hours_of_operation = MISSING
             for coord in coord_list:
                 temp = coord.find("strong").text
                 if location_name == temp:
@@ -84,18 +88,15 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

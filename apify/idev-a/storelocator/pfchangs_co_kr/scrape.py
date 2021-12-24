@@ -45,7 +45,7 @@ def fetch_data():
                 country_code="Korea",
                 phone=_.select("dl")[1].dd.text.split(":")[-1],
                 locator_domain=locator_domain,
-                hours_of_operation=sp1.select("dl")[1].dd.text.strip(),
+                hours_of_operation=sp1.select("dl")[1].dd.text.split("(")[0].strip(),
                 raw_address=raw_address,
             )
 

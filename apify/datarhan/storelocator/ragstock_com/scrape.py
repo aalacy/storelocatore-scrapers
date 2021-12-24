@@ -1,46 +1,16 @@
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "ragstock.com"
+    domain = "ragstock.com"
     start_url = "https://ragstock.com/stores/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
@@ -48,57 +18,67 @@ def fetch_data():
 
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="stores-name"]')
-
-    for poi_html in all_locations:
-        store_url = poi_html.xpath(".//following-sibling::div[2]/a/@href")
-        store_url = store_url[0] if store_url else "<MISSING>"
-        location_name = poi_html.xpath("text()")
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
-        raw_data = poi_html.xpath(
-            './/following-sibling::div[@class="stores-info"][1]/text()'
+    all_locations = dom.xpath('//a[contains(text(), "View Store")]/@href')
+    for page_url in all_locations:
+        if "http" not in page_url:
+            page_url = "https://ragstock.com" + page_url
+        loc_response = session.get(page_url, headers=headers)
+        loc_dom = etree.HTML(loc_response.text)
+        location_type = ""
+        temp_closed = loc_dom.xpath('//span[contains(text(), "Temporarily closed")]')
+        if temp_closed:
+            location_type = "Temporarily closed"
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        raw_data = loc_dom.xpath("//div[h3[strong]]/p[1]/text()")
+        raw_address = ", ".join(
+            [e for e in raw_data if not e.startswith("(") and "am-" not in e]
         )
-        raw_data = [elem.strip() for elem in raw_data if elem.strip()]
-        if "Space" in raw_data[1]:
-            raw_data = [", ".join(raw_data[:2])] + raw_data[2:]
-        street_address = raw_data[0]
-        city = raw_data[1].split(", ")[0]
-        state = raw_data[1].split(", ")[-1].split()[0]
-        zip_code = raw_data[1].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = raw_data[2].strip()
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = raw_data[-1].strip()
+        phone = [e.strip() for e in raw_data if e.startswith("(")]
+        phone = phone[0] if phone else ""
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += ", " + addr.street_address_2
+        hoo = loc_dom.xpath('//p[strong[contains(text(), "Open:")]]/text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        if phone:
+            hoo = hoo.split(phone)[-1]
+        geo = loc_dom.xpath("//iframe/@data-src")
+        if not geo:
+            geo = loc_dom.xpath('//iframe[contains(@src, "google.com/maps")]/@src')
+        geo = geo[0].split("!2d")[-1].split("!3m")[0].split("!3d")
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type=location_type,
+            latitude=geo[1].split("!")[0],
+            longitude=geo[0],
+            hours_of_operation=hoo,
+            raw_address=raw_address,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

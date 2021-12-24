@@ -43,7 +43,7 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = ""
-            _hr = sp1.find("strong", string=re.compile(r"Hours"))
+            _hr = sp1.find("strong", string=re.compile(r"^Hours"))
             if _hr:
                 hours = _hr.find_parent("h6").find_next_sibling().text.strip()
             else:
@@ -51,9 +51,10 @@ def fetch_data():
                 if _hr:
                     hours = "; ".join(
                         [
-                            hh.text.strip()
+                            hh.text.strip().split("\n")[-1]
                             for hh in _hr.find_next_siblings()
                             if hh.text.strip()
+                            and hh.text.strip().split("\n")[-1] != "-"
                         ]
                     )
                 else:
@@ -71,6 +72,7 @@ def fetch_data():
                                 continue
                             temp.append("; ".join(hh.stripped_strings))
                         hours = "; ".join(temp)
+
             try:
                 coord = (
                     sp1.select("iframe")[-1]["src"]
@@ -88,7 +90,15 @@ def fetch_data():
                         .split("!3d")[::-1]
                     )
                 except:
-                    coord = ["", ""]
+                    try:
+                        coord = (
+                            sp1.select("iframe")[-1]["src"]
+                            .split("&ll=")[1]
+                            .split("&spn")[0]
+                            .split(",")
+                        )
+                    except:
+                        coord = ["", ""]
             phone = ""
             try:
                 street_address = sp1.select_one(".street-address").text.strip()
@@ -171,6 +181,20 @@ def fetch_data():
                         .split(" ")[-1]
                         .strip()
                     )
+                elif sp1.find("p", string=re.compile(r"Address")):
+                    addr = list(
+                        sp1.find("p", string=re.compile(r"Address"))
+                        .find_next_sibling("div")
+                        .p.stripped_strings
+                    )
+                    street_address = " ".join(addr[:-1])
+                    city = addr[-1].replace("\xa0", " ").split(",")[0]
+                    state = (
+                        addr[-1].replace("\xa0", " ").split(",")[-1].strip().split()[0]
+                    )
+                    zip_postal = (
+                        addr[-1].replace("\xa0", " ").split(",")[-1].strip().split()[-1]
+                    )
                 else:
                     sibling = (
                         sp1.find("", string=re.compile(r"^Address"))
@@ -224,9 +248,11 @@ def fetch_data():
                 latitude=coord[0],
                 longitude=coord[1],
                 location_type=location_type,
-                hours_of_operation=hours.split("Bulk")[0]
+                hours_of_operation=hours.split("Open")[0]
+                .split("Bulk")[0]
                 .replace("–", "-")
-                .replace("\xa0", " "),
+                .replace("\xa0", " ")
+                .replace("Normal Hours:", ""),
             )
 
 
