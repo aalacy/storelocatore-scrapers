@@ -66,7 +66,7 @@ def fetch_data(sgw: SgWriter):
             .split('"')[0]
             .strip()
         )
-        phone = ad.split("☎")[1].split("✉")[0].strip()
+        phone = ad.split("☎")[1].split("✉")[0].replace("=", "+").strip()
         hours_of_operation = (
             " ".join(d.xpath(".//table//tr/td[2]//text()")).replace("\n", "").strip()
         )
