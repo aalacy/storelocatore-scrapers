@@ -25,14 +25,17 @@ def fetch_data():
         if 'style="width: 100%; margin-bottom: 10px;" href="' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
-        logger.info("Pulling State %s..." % state)
-        r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<tr><td><a href="' in line2:
-                locs.append(
-                    "https://www.smartstyle.com"
-                    + line2.split('href="')[1].split('"')[0]
-                )
+        try:
+            logger.info("Pulling State %s..." % state)
+            r2 = session.get(state, headers=headers)
+            for line2 in r2.iter_lines():
+                if '<tr><td><a href="' in line2:
+                    locs.append(
+                        "https://www.smartstyle.com"
+                        + line2.split('href="')[1].split('"')[0]
+                    )
+        except:
+            pass
     logger.info("Found %s Locations." % str(len(locs)))
     for loc in locs:
         name = ""
