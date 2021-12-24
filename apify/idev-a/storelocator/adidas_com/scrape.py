@@ -27,9 +27,7 @@ def fetch_data():
             if "opening_soon" in _.get("operational_status", "").lower():
                 continue
             hours = []
-            for day in days:
-                if _.get(f"openinghours_{day}"):
-                    hours.append(f'{day}: {_.get(f"openinghours_{day}")}')
+
             zip_postal = _.get("postal_code")
             if zip_postal == "n/a":
                 zip_postal = ""
@@ -49,6 +47,9 @@ def fetch_data():
                 phone = ss.get("phone")
                 if phone:
                     phone = phone.replace("&#43;", "+")
+                for day in days:
+                    if ss.get(f"openinghours_{day}"):
+                        hours.append(f'{day}: {ss.get(f"openinghours_{day}")}')
             except:
                 page_url = "https://www.adidas.com/us/storefinder#/"
                 pass

@@ -54,7 +54,7 @@ if __name__ == "__main__":
     session = SgRequests()
     cookies = {
         "WC_ACTIVEPOINTER": "-3%2C14351",
-        "WC_USERACTIVITY_-1002": "-1002%2C14351%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C598282317%2CCLHKwgpEowLdvR2sOe0MtvaiQKkVS%2FTV1NlO6vusuPIVJe9lsDXIU1VelTtaCNoumXRAv814ZMlt%2ByPKhFsIiAskwP0p99GET2Tn43AGS%2BRx3tjNHhJspH2OzJ2paAIrXtFLJPVWTw0vl1mws4v2VvmBCYHc7u0a%2FwN4WpWjILxJJKPmgX2TyXmQby0m0V2nfubg5Lckl5fLhvgsOQcIwDSGeOP7RRSoENzXntxfPKHOUY7xRLSp6IFvWSvaO17U",
+        "WC_USERACTIVITY_-1002": "-1002%2C14351%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C925451795%2CnsuAATuCz8TV9jIEToBzMNsbQnHEEKqM97uF3kTctq5k1GX5NcHKGtQtEjoj1VeALlTTW9BRtxaOrVvmiClpJnSR8JMxAwofH%2BJpRhKEQMXMDo9NAeYAaW6XS8jrUhe1RMVEd9IueSUaaDtlBhNMddEqfQ39EUwYE77NaGHhEO344GvWo8txsqXoQGPtsIBqhxWo3Xx%2BfmYIfbOU%2FX%2BHmxvqv7fjCYXRkAO89x6kdFeZ%2BjcST6LMBlfzK1sqdrlr",
     }
     locator_domain = "https://www.sunglasshut.com/"
     with SgWriter(

@@ -1,24 +1,35 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgselenium import SgChrome
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+import ssl
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 locator_domain = "https://es.littlecaesars.com"
-base_url = "https://es.littlecaesars.com/component---src-pages-contacto-tsx-a45fa3198b198fa824af.js"
+base_url = "https://es.littlecaesars.com/es-es/contacto/"
+json_url = "https://es.littlecaesars.com/component---src-pages-contacto-tsx"
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
+    ) as driver:
+        driver.get(base_url)
+        rr = driver.wait_for_request(json_url)
         locations = json.loads(
-            session.get(base_url, headers=_headers)
-            .text.split("t.exports=JSON.parse('")[1]
+            rr.response.body.decode()
+            .split("t.exports=JSON.parse('")[1]
             .split("')},I6tc")[0]
         )["data"]["allDatoCmsFranchiseeLocationList"]["nodes"]
         for loc in locations:
@@ -33,7 +44,7 @@ def fetch_data():
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 yield SgRecord(
-                    page_url="",
+                    page_url=base_url,
                     location_name=_["name"],
                     street_address=street_address,
                     city=addr.city,

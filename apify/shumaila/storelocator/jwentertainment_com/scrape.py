@@ -40,10 +40,12 @@ def fetch_data():
                 temp[1].find("Address") != -1
                 or temp[1].find("Street") != -1
                 or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
                 or temp[1].find("BuildingName") != -1
                 or temp[1].find("USPSBoxType") != -1
                 or temp[1].find("USPSBoxID") != -1
             ):
+
                 street = street + " " + temp[0]
             if temp[1].find("PlaceName") != -1:
                 city = city + " " + temp[0]
@@ -77,7 +79,7 @@ def fetch_data():
             locator_domain="https://jwentertainment.com/",
             page_url=link,
             location_name=title,
-            street_address=street.strip(),
+            street_address=street.replace(",", "").strip(),
             city=city.strip(),
             state=state.strip(),
             zip_postal=pcode.strip(),
