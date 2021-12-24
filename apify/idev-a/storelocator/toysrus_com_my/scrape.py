@@ -40,7 +40,7 @@ def fetch_data():
                 + _["data-store-postalcode"]
             )
             raw_address = raw_address.strip()
-            if raw_address.endswith(','):
+            if raw_address.endswith(","):
                 raw_address = raw_address[:-1]
             addr = parse_address_intl(raw_address + ", Malaysia")
             street_address = addr.street_address_1
