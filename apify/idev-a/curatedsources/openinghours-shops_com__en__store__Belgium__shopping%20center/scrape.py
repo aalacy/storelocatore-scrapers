@@ -37,9 +37,7 @@ def fetch_data():
                     session.get(page_url.format(page), headers=_headers).text,
                     "lxml",
                 )
-                addr = list(
-                    _.select_one("div.vestiging-info-adres").stripped_strings
-                )
+                addr = list(_.select_one("div.vestiging-info-adres").stripped_strings)
                 hours = []
                 day = ""
                 for hh in sp1.select("table.openingsuren tr"):
@@ -50,9 +48,7 @@ def fetch_data():
                     hours.append(f"{day}: {hh.select_one('td.open').text.strip()}")
 
                 phone = ""
-                if sp1.select_one("table.details").find(
-                    "a", href=re.compile(r"tel:")
-                ):
+                if sp1.select_one("table.details").find("a", href=re.compile(r"tel:")):
                     phone = (
                         sp1.select_one("table.details")
                         .find("a", href=re.compile(r"tel:"))
