@@ -44,7 +44,6 @@ def fetch_data(sgw: SgWriter):
 
         for item in items:
             link = locator_domain + item.a["href"]
-            logger.info(link)
 
             location_name = item.a.text.strip()
 
