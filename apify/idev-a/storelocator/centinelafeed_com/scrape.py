@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgpostal.sgpostal import parse_address_intl
-import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -28,9 +27,10 @@ def fetch_data():
             hours = []
             for key, val in _["hours"].items():
                 hours.append(f"{key}: {val}")
-            hours_of_operation = "; ".join(hours)
             addr = parse_address_intl(_["address"])
+            page_url = f"https://centinelafeed.com/stores/{addr.state.lower()}/{_['name'].lower().replace(' ', '-')}/"
             yield SgRecord(
+                page_url=page_url,
                 store_number=_["_id"],
                 location_name=_["name"],
                 street_address=addr.street_address_1,
@@ -42,7 +42,7 @@ def fetch_data():
                 latitude=_["lat"],
                 longitude=_["lng"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours),
                 raw_address=_["address"],
             )
 
