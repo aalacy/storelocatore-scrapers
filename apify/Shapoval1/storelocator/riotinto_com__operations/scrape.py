@@ -18,6 +18,7 @@ def fetch_data(sgw: SgWriter):
         "https://www.riotinto.com/operations/mongolia",
         "https://www.riotinto.com/operations/new-zealand",
         "https://www.riotinto.com/operations/south-africa",
+        "https://www.riotinto.com/operations/us",
     ]
     for api_url in api_urls:
         slug = api_url.split(".com")[1].strip()
@@ -56,14 +57,23 @@ def fetch_data(sgw: SgWriter):
                     ad = ad.split("T:")[0].strip()
                 if ad.find("E:") != -1:
                     ad = ad.split("E:")[0].strip()
+                if ad.find("W:") != -1:
+                    ad = ad.split("W:")[0].strip()
                 a = parse_address(International_Parser(), ad)
                 street_address = f"{a.street_address_1} {a.street_address_2}".replace(
                     "None", ""
                 ).strip()
+                if street_address == "Hafnarfjordor":
+                    street_address = ad.split("Hafnarfjordor")[0].strip()
                 state = a.state or "<MISSING>"
                 postal = a.postcode or "<MISSING>"
                 country_code = api_url.split("/")[-1].strip()
                 city = a.city or "<MISSING>"
+                if street_address.find("Ulaanbaatar") != -1:
+                    street_address = street_address.replace("Ulaanbaatar", "").strip()
+                    city = "Ulaanbaatar"
+                if ad.find("Hafnarfjordor") != -1:
+                    city = "Hafnarfjordor"
 
                 phone = "".join(info).split("T:")[1].strip()
                 if phone.find("(") != -1:
