@@ -84,9 +84,7 @@ def fetch_data(sgw: SgWriter):
             latitude = (
                 "".join(
                     "".join(
-                        tree.xpath(
-                            f'//script[contains(text(), "var locations")]/text()'
-                        )
+                        tree.xpath('//script[contains(text(), "var locations")]/text()')
                     ).split(f'{slug.replace("/","")}')[1:]
                 )
                 .split('"lat":"')[1]
@@ -96,9 +94,7 @@ def fetch_data(sgw: SgWriter):
             longitude = (
                 "".join(
                     "".join(
-                        tree.xpath(
-                            f'//script[contains(text(), "var locations")]/text()'
-                        )
+                        tree.xpath('//script[contains(text(), "var locations")]/text()')
                     ).split(f'{slug.replace("/", "")}')[1:]
                 )
                 .split('"lng":"')[1]
