@@ -30,9 +30,12 @@ def fetch_data():
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
-        search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(
+            search_res.text.split("<h1>Distributeurs apr")[0].strip()
+        )
         stores = search_sel.xpath('//div[@class="grid-layout-col-4 grid-layout-col"]')
 
+        city = ""
         for store in stores:
 
             locator_domain = website
@@ -54,7 +57,10 @@ def fetch_data():
 
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
-            city = formatted_addr.city
+            temp_city = "".join(store.xpath('div[@class="grid-title"]/text()')).strip()
+            if len(temp_city) > 0:
+                city = temp_city
+
             state = formatted_addr.state
             zip = formatted_addr.postcode
 

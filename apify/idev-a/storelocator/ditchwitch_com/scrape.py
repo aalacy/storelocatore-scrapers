@@ -14,6 +14,7 @@ headers = {
 
 locator_domain = "http://ditchwitch.com/"
 base_url = "https://www.ditchwitch.com/find-a-dealer"
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def fetch_records(search):
@@ -31,28 +32,27 @@ def fetch_records(search):
             res = http.get(url, headers=headers)
             if res.status_code != 200:
                 continue
-            locations = res.json()
+            try:
+                locations = res.json()
+            except:
+                continue
             if "dealers" in locations:
                 if locations["dealers"]:
                     search.found_location_at(lat, lng)
 
                 total += len(locations["dealers"])
                 for loc in locations["dealers"]:
-                    try:
-                        mon = "Mon " + loc["mon_open"] + "-" + loc["mon_close"]
-                        tue = "; Tue " + loc["tue_open"] + "-" + loc["tue_close"]
-                        wed = "; Wed " + loc["wed_open"] + "-" + loc["wed_close"]
-                        thu = "; Thu " + loc["thur_open"] + "-" + loc["thur_close"]
-                        fri = "; Fri " + loc["fri_open"] + "-" + loc["fri_close"]
-                        sat = "; Sat " + loc["sat_open"] + "-" + loc["sat_close"]
-                        sun = "; Sun " + loc["sun_open"] + "-" + loc["sun_close"]
-                        hours_of_operation = mon + tue + wed + thu + fri + sat + sun
-                    except:
-                        hours_of_operation = "<MISSING>"
+                    hours = []
+                    for day in days:
+                        day = day.lower()
+                        if loc.get(f"{day}_open"):
+                            open = loc[f"{day}_open"]
+                            close = loc[f"{day}_open"]
+                            hours.append(f"{day}: {open} - {close}")
 
                     street_address = loc["address1"]
                     if loc["address2"]:
-                        street_address += " " + loc.get("address2", "")
+                        street_address += " " + loc["address2"]
                     yield SgRecord(
                         page_url=base_url,
                         store_number=loc["clientkey"],
@@ -63,7 +63,7 @@ def fetch_records(search):
                         zip_postal=loc["postalcode"],
                         country_code=loc["country"],
                         phone=loc["phone"],
-                        hours_of_operation=hours_of_operation,
+                        hours_of_operation="; ".join(hours),
                     )
 
                 logger.info(f"found: {len(locations['dealers'])} | total: {total}")
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     )
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
         for rec in fetch_records(search):

@@ -3,7 +3,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
@@ -93,6 +93,7 @@ class ExampleSearchIteration(SearchIteration):
             ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             locations = None
             try:
+                logzilla.info(f"{url} <- in do")
                 locations = SgRequests.raise_on_err(http.get(url, headers=headers)).text
                 locations = locations.split("(", 1)[1]
                 locations = locations.rsplit(")", 1)[0]
@@ -241,17 +242,199 @@ class ExampleSearchIteration(SearchIteration):
                     )
 
 
+def get_links(url, http):
+    try:
+        if url["count"] == "(1)":
+            return (False, [url])
+        urlB = "https://restaurants.subway.com/"
+        headers = {}
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        logzilla.info(f"{url} <- in get-links")
+        index = SgRequests.raise_on_err(
+            http.get(urlB + url["link"], headers=headers)
+        ).text
+        data = b4(index, "lxml")
+        data = data.find(
+            "ul", {"class": lambda x: x and "Directory-list" in x}
+        ).find_all("li")
+        index = []
+        for link in data:
+            z = link.find("a", {"href": True, "data-count": True})
+            if z:
+                index.append(
+                    {
+                        "link": link.find("a", {"href": True})["href"],
+                        "count": z["data-count"],
+                    }
+                )
+            else:
+                index.append(
+                    {"link": link.find("a", {"href": True})["href"], "count": "idk"}
+                )
+        if url["count"] != "idk":
+            return (False, index)
+        else:
+            return (True, index)
+    except Exception:
+        return (False, [])
+
+
+final = []
+
+
+def recu(index, http):
+    global final
+    for i in index:
+        data = get_links(i, http)
+        if data[0]:
+            recu(data[1], http)
+        else:
+            for j in data[1]:
+                if j["count"] != "idk" and j["count"] != "(1)":
+                    recu([j], http)
+                else:
+                    final.append(j)
+
+
+def grab_initial(http, state):
+    global final
+    index = get_links({"link": "", "count": "idk"}, http)
+    recu(index[1], http)
+    return final
+
+
+def parse_loc(soup, url):
+    try:
+        page_url = url
+    except Exception:
+        page_url = "<MISSING>"
+
+    try:
+        street_address = soup.find("meta", {"itemprop": "streetAddress"})["content"]
+    except Exception:
+        street_address = "<MISSING>"
+
+    try:
+        city = soup.find("meta", {"itemprop": "addressLocality"})["content"]
+    except Exception:
+        city = "<MISSING>"
+
+    try:
+        state = soup.find(
+            "abbr", {"class": lambda x: x and "state" in x, "itemprop": "addressRegion"}
+        ).text.strip()
+    except Exception:
+        state = "<MISSING>"
+
+    try:
+        country_code = soup.find(
+            "abbr",
+            {"class": lambda x: x and "country" in x, "itemprop": "addressCountry"},
+        ).text.strip()
+    except Exception:
+        country_code = "<MISSING>"
+
+    try:
+        zip_postal = soup.find(
+            "span", {"class": "c-address-postal-code", "itemprop": "postalCode"}
+        ).text.strip()
+    except Exception:
+        zip_postal = "<MISSING>"
+
+    try:
+        scripts = soup.find_all("script", {"type": "text/javascript"})
+        thescript = None
+        for i in scripts:
+            if "storeID" in i.text:
+                thescript = i.text
+        store_number = thescript.split('storeID"')[1]
+        store_number = store_number.split('"', 1)[1]
+        store_number = store_number.split('"', 1)[0]
+    except Exception:
+        store_number = "<MISSING>"
+
+    try:
+        longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
+    except Exception:
+        longitude = "<MISSING>"
+
+    try:
+        latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
+    except Exception:
+        latitude = "<MISSING>"
+
+    try:
+        hours = soup.find("table", {"class": "c-hours-details"}).find_all(
+            "tr", {"itemprop": "openingHours", "content": True}
+        )
+        li = []
+        for i in hours:
+            li.append(i["content"])
+        hours = "; ".join(li)
+    except Exception:
+        hours = "<MISSING>"
+
+    try:
+        phone = soup.find(
+            "div", {"class": lambda x: x and "hone" in x, "itemprop": "telephone"}
+        ).text.strip()
+    except Exception:
+        phone = "<MISSING>"
+
+    return SgRecord(
+        page_url=page_url,
+        location_name="<MISSING>",
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type="<MISSING>",
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain="https://restaurants.subway.com/",
+        hours_of_operation=hours,
+        raw_address="<MISSING>",
+    )
+
+
+def fetch_main(state, http):
+    urlB = "https://restaurants.subway.com/"
+    headers = {}
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
+    for next_r in state.request_stack_iter():
+        logzilla.info(f"{urlB + next_r.url} <- INDEX!")
+        try:
+            index = SgRequests.raise_on_err(
+                http.get(urlB + next_r.url, headers=headers)
+            ).text
+        except Exception as e:
+            if "404" in str(e):
+                continue
+            else:
+                raise str(e)
+        data = b4(index, "lxml")
+        yield parse_loc(data, str(urlB + next_r.url))
+
+
 if __name__ == "__main__":
+    state = CrawlStateSingleton.get_instance()
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_8(),
-        expected_search_radius_miles=50,
-        max_search_results=50,
+        expected_search_radius_miles=100,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumAndPageUrlId,
+            RecommendedRecordIds.StoreNumberId,
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
@@ -262,5 +445,15 @@ if __name__ == "__main__":
                 search_iteration=search_iter,
                 country_codes=SearchableCountries.ALL,
             )
+            init = state.get_misc_value(
+                "init", default_factory=lambda: grab_initial(http1, state)
+            )
+            for link in init:
+                state.push_request(
+                    SerializableRequest(url=link["link"].replace("../", ""))
+                )
+
+            for rec in fetch_main(state, http1):
+                writer.write_row(rec)
             for rec in par_search.run():
                 writer.write_row(rec)

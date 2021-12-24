@@ -80,6 +80,8 @@ def fetch_data():
             longt = loc["longitude"]
             try:
                 street = loc["address1"] + " " + str(loc["address2"])
+
+                street = street.replace("&#xa0;", " ").replace("&#x96;", " ").strip()
             except:
                 continue
             street = street.replace("None", "")

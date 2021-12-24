@@ -20,7 +20,9 @@ def fetch_data(coords, sgw: SgWriter):
         street_address = j.get("address")
         city = j.get("city")
         state = j.get("state")
-        postal = j.get("postcode")
+        postal = j.get("postcode") or ""
+        if "-" in postal:
+            postal = SgRecord.MISSING
         country = j.get("country_code")
         phone = j.get("telephone")
         latitude = j.get("lat")
@@ -66,7 +68,7 @@ if __name__ == "__main__":
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=40,
     )
     with SgWriter(
         SgRecordDeduper(

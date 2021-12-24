@@ -26,7 +26,7 @@ def fetch_data(sgw: SgWriter):
         if postal.find(" ") != -1:
             state = postal.split()[1].strip()
             postal = postal.split()[0].strip()
-        country_code = j.get("country")
+        country_code = "Netherlands"
         city = j.get("city")
         latitude = j.get("lat")
         longitude = j.get("lng")

@@ -100,6 +100,7 @@ def get_driver():
         executable_path=ChromeDriverManager().install(),
         user_agent=random.choice(user_agents),
         is_headless=True,
+        seleniumwire_auto_config=False,
     ).driver()
 
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -22,7 +22,7 @@ def fetch_data():
         "https://smashburger.com/locations/ca/",
     ]
 
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         for search_url in urls:
             search_res = session.get(search_url, headers=headers)
             search_sel = lxml.html.fromstring(search_res.text)
@@ -35,6 +35,9 @@ def fetch_data():
                 log.info(page_url)
 
                 store_res = session.get(page_url, headers=headers)
+                if isinstance(store_res, SgRequestError):
+                    continue
+
                 store_sel = lxml.html.fromstring(store_res.text)
 
                 locator_domain = website
