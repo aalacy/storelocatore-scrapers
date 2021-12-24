@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgpostal import sgpostal as parser
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -70,36 +69,10 @@ def fetch_data():
 
                 location_type = "<MISSING>"
 
-                store_info = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                f'//div[@id="tab-{store_number}"]//div[h3 and h2]/h2//text()'
-                            )
-                        ],
-                    )
-                )
-                raw_address = " ".join(store_info)
-
-                formatted_addr = parser.parse_address_intl(raw_address)
-                street_address = formatted_addr.street_address_1
-                if formatted_addr.street_address_2:
-                    if street_address is not None:
-                        street_address = (
-                            street_address + ", " + formatted_addr.street_address_2
-                        )
-                    else:
-                        street_address = formatted_addr.street_address_2
-
-                if street_address is not None:
-                    street_address = street_address.replace("Ste", "Suite")
-
-                city = formatted_addr.city
-
-                state = formatted_addr.state
-                zip = formatted_addr.postcode
+                street_address = "<MISSING>"
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zip = "<MISSING>"
 
                 country_code = "".join(country_sel.xpath(".//text()")).strip()
 
@@ -146,7 +119,6 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
                 )
 
 

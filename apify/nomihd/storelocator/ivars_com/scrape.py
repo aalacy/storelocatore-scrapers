@@ -22,9 +22,16 @@ def fetch_data():
     with SgRequests() as session:
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath(
-            '//div[@class="sqs-block-content"][./p/a[contains(text(),"Menu")]]/p/a[strong]/@href'
+        other_stores = stores_sel.xpath(
+            '//span[./a[contains(text(),"All Locations")]]/a[position()>1 and position()<=4]/@href'
         )
+        stores = (
+            stores_sel.xpath(
+                '//div[@class="sqs-block-content"][./p/a[contains(text(),"Menu")]]/p/a[strong]/@href'
+            )
+            + other_stores
+        )
+
         for store_url in stores:
             page_url = "https://www.ivars.com" + store_url
             log.info(page_url)
@@ -42,9 +49,15 @@ def fetch_data():
             locator_domain = website
             location_name = "".join(
                 store_sel.xpath(
-                    "//div[@class='sqs-block-content'][./p/a[contains(text(),'Menu')]]/p[1]/a//text()"
+                    "//div[@class='sqs-block-content'][./p/a[text()='Menu']]/p[1]/a//text()"
                 )
             ).strip()
+            if len(location_name) <= 0:
+                location_name = store_sel.xpath(
+                    '//div[@class="sqs-block-content"]/h1/text()'
+                )
+                if len(location_name) > 0:
+                    location_name = location_name[0]
 
             street_address = store_json["addressLine1"]
             city_state_zip = store_json["addressLine2"]
@@ -65,6 +78,15 @@ def fetch_data():
             if len(raw_data) > 0:
                 phone = raw_data[-1]
 
+            if phone == "<MISSING>" or phone == "Menus":
+                raw_info = store_sel.xpath(
+                    '//div[@class="sqs-block-content"][./p/strong[text()="ADDRESS:"]]/p[1]/text()'
+                )
+                for ph in raw_info:
+                    if "(" in ph and ")" in ph:
+                        phone = ph
+                        break
+
             location_type = "<MISSING>"
             latitude = store_json["markerLat"]
             longitude = store_json["markerLng"]
@@ -79,6 +101,15 @@ def fetch_data():
                 .replace("Daily;", "Daily:")
                 .strip()
             )
+
+            if len("".join(hours_of_operation)) <= 0 or hours_of_operation == "Menus":
+                hours = store_sel.xpath("//h3//text()")
+                try:
+                    hours_of_operation = (
+                        "; ".join(hours[1:]).strip().split("; Happy Hour:")[0].strip()
+                    )
+                except:
+                    pass
 
             yield SgRecord(
                 locator_domain=locator_domain,
