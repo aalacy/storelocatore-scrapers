@@ -9,8 +9,8 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 
 
-DOMAIN = ".cosmo-restaurants.co.uk"
-BASE_URL = "https://www..cosmo-restaurants.co.uk"
+DOMAIN = "cosmo-restaurants.co.uk"
+BASE_URL = "https://www.cosmo-restaurants.co.uk"
 LOCATION_URL = "https://www.cosmo-restaurants.co.uk/restaurants"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
