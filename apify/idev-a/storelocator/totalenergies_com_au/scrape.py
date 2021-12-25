@@ -71,14 +71,23 @@ def fetch_data():
                         if phone and ("contact" in phone.lower() or phone == "-"):
                             phone = ""
 
+                        if phone:
+                            phone = phone.split(",")[0]
+
+                        city = addr["city"]
+                        zip_postal = addr.get("zipcode")
+                        if "Excellium" in city:
+                            city = ""
+                        if city and city.isdigit():
+                            city = ""
+
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
                             location_name=_["name"],
                             street_address=" ".join(addr["lines"]),
-                            city=addr["city"],
-                            state=addr.get("State"),
-                            zip_postal=addr.get("zipcode"),
+                            city=city,
+                            zip_postal=zip_postal,
                             country_code=addr["country_code"],
                             phone=phone,
                             latitude=loc["geometry"]["coordinates"][0],
