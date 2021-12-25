@@ -37,10 +37,10 @@ def fetch_data():
             if city:
                 city = city.replace("Road44", "").replace("Road1315", "")
             latitude = _["MapLocation"]["Latitude"]
-            if latitude == "0":
+            if latitude == 0:
                 latitude = ""
             longitude = _["MapLocation"]["Longitude"]
-            if longitude == "0":
+            if longitude == 0:
                 longitude = ""
             yield SgRecord(
                 page_url=page_url,
