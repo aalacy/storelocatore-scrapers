@@ -52,7 +52,12 @@ def _v(val):
 
 def _c(val):
     return (
-        val.replace("&eacute;", "é").replace("&aacute;", "á").replace("&oacute;", "ó")
+        val.replace("&eacute;", "é")
+        .replace("&aacute;", "á")
+        .replace("&oacute;", "ó")
+        .replace("&iacute;", "í")
+        .replace("&uacute;", "ú")
+        .replace("&ntilde;", "ñ")
     )
 
 
