@@ -70,6 +70,8 @@ def fetch_data(sgw: SgWriter):
 
             if "open for delivery only" in page.text:
                 location_type = "Delivery Only"
+            if "pickup and delivery" in page.text:
+                location_type = "Pickup and Delivery"
 
             raw_hours = page.find(class_="addr-hours")
             raw_hours = raw_hours.find_all("p")
