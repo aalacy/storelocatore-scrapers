@@ -13,8 +13,19 @@ import tenacity
 import time
 import random
 import re
+import ssl
 
-logger = SgLogSetup().get_logger("costco_com")
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+logger = SgLogSetup().get_logger("costco_com__optical_html")
 MISSING = SgRecord.MISSING
 headers = {
     "accept": "application/json, text/plain, */*",
@@ -35,13 +46,20 @@ def fetch_loc(idx, url):
         raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
-@retry(stop=stop_after_attempt(5))
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def fetch_json_data(loc):
     with SgRequests() as http:
         r = http.get(loc, headers=headers)
-        if r.text:
-            data_json = json.loads(r.text)
-            return data_json
+        try:
+            if r.status_code == 200:
+                try:
+                    data_json = json.loads(r.text)
+                    return data_json
+                except Exception as e:
+                    raise Exception(f"{loc} >> Fix JSON <<{e}>> {r.status_code}")
+            raise Exception(f"{loc} >> HTTP Error Code: {r.status_code}")
+        except Exception as e:
+            logger.info(f"Please fix <<{e}>> {loc}")
 
 
 def get_us_ca_store_urls():
@@ -180,6 +198,25 @@ def fetch_data_us_ca(idx, loc, sgw: SgWriter):
     sgw.write_row(item)
 
 
+def get_hoo_global(gitem):
+    hours_of_operation = ""
+    hoo = []
+    if "openings" in gitem:
+        warehouse_hoo = gitem["openings"]
+        if warehouse_hoo:
+            for k, v in warehouse_hoo.items():
+                if "individual" in v:
+                    times = v["individual"]
+                    daytimes = k + " " + times
+                    hoo.append(daytimes)
+            hours_of_operation = "; ".join(hoo)
+        else:
+            hours_of_operation = MISSING
+    else:
+        hours_of_operation = MISSING
+    return hours_of_operation
+
+
 def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
 
     # The section scrapes the data for UK, MX, KR, TW, JP, AU, IS, FR, ES, and NZ
@@ -271,21 +308,7 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
             lng = gitem["longitude"]
             longitude = lng if lng else MISSING
             logger.info(f"[{idx1}] long: {longitude}")
-            hours_of_operation = ""
-            hoo = []
-            if "openings" in gitem:
-                warehouse_hoo = gitem["openings"]
-                if warehouse_hoo:
-                    for k, v in warehouse_hoo.items():
-                        if "individual" in v:
-                            times = v["individual"]
-                            daytimes = k + " " + times
-                            hoo.append(daytimes)
-                    hours_of_operation = "; ".join(hoo)
-                else:
-                    hours_of_operation = MISSING
-            else:
-                hours_of_operation = MISSING
+            hours_of_operation = get_hoo_global(gitem)
 
             # It is found that the city of AU data contains the state data
             # This extracts the state data from city and assign it back to the state
@@ -322,17 +345,19 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
                         as_opening_hours = as_["openingHours"]
                         if as_opening_hours:
                             sel_hoo = html.fromstring(as_opening_hours, "lxml")
-                            optical_global_hoo = sel_hoo.xpath("//ul/li/text()")
+                            optical_global_hoo = sel_hoo.xpath("//text()")
                             if optical_global_hoo:
                                 hours_of_operation = "; ".join(optical_global_hoo)
                             else:
                                 hours_of_operation = MISSING
                             if "JP" in country_code:
-                                optical_global_hoo_jp = sel_hoo.xpath("//ul/li//text()")
+                                optical_global_hoo_jp = sel_hoo.xpath("//text()")
                                 if optical_global_hoo_jp:
                                     hours_of_operation = " ".join(optical_global_hoo_jp)
                                 else:
                                     hours_of_operation = MISSING
+                            if "please see warehouse" in as_opening_hours.lower():
+                                hours_of_operation = get_hoo_global(gitem)
 
                     else:
                         continue
@@ -364,6 +389,7 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     global_url_wout_us_ca = get_global_urls()
+
     locs = get_us_ca_store_urls()
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
