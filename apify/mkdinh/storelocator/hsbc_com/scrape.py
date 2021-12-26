@@ -70,7 +70,6 @@ def scrape():
         deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
     ) as writer:
         for row in data:
-            print("hello")
             writer.write_row(row)
 
 
