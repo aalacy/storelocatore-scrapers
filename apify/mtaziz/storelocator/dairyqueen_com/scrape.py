@@ -32,6 +32,7 @@ def get_response_json(idx, url):
                 sel = html.fromstring(response.text, "lxml")
                 data_next = sel.xpath('//script[contains(@id, "__NEXT_DATA__")]/text()')
                 data_json = json.loads("".join(data_next))
+                logger.info(f"data json length: {len(data_json)}")
                 return response
             except Exception as e:
                 raise Exception(f"[{idx}] | {url} Fix <<{e}>>: {response.status_code}")
