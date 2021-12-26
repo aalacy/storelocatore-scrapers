@@ -34,6 +34,8 @@ def fetch_data(sgw: SgWriter):
         raw_address = list(item.p.stripped_strings)
         if raw_address[0] == "Houston, TX":
             continue
+        if "coming soon" in str(raw_address).lower():
+            continue
         street_address = " ".join(raw_address[:-2]).strip()
         try:
             city_line = raw_address[-2].strip().split(",")
@@ -46,6 +48,9 @@ def fetch_data(sgw: SgWriter):
         if "Las Vegas," in street_address:
             street_address = ""
             city_line = raw_address[0].strip().split(",")
+        if "Amherst" in str(city_line):
+            street_address = raw_address[-2].strip()
+            city_line = raw_address[-1].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
@@ -65,6 +70,8 @@ def fetch_data(sgw: SgWriter):
 
             if "open for delivery only" in page.text:
                 location_type = "Delivery Only"
+            if "pickup and delivery" in page.text:
+                location_type = "Pickup and Delivery"
 
             raw_hours = page.find(class_="addr-hours")
             raw_hours = raw_hours.find_all("p")

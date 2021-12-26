@@ -12,7 +12,7 @@ from typing import Iterable, Tuple, Callable
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sgpostal.sgpostal import parse_address_intl
 
-timeout = httpx.Timeout(5.0)
+timeout = httpx.Timeout(10.0)
 logger = SgLogSetup().get_logger("t2tea")
 
 _headers = {

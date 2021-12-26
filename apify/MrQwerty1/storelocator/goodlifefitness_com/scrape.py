@@ -83,7 +83,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
+            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=20
         )
         for la, ln in search:
             fetch_data(la, ln, writer)
