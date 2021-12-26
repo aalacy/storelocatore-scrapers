@@ -37,7 +37,7 @@ def fetch_data():
         lat = coord["lat"]
         lng = coord["lng"]
 
-        phone = item["phoneNumber"]['newCustomers']
+        phone = item["phoneNumber"]["newCustomers"]
 
         hours_of_operation = (
             ",".join(
@@ -66,7 +66,9 @@ def fetch_data():
 
 def scrape():
     data = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         for row in data:
             print("hello")
             writer.write_row(row)
