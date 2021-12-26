@@ -10,6 +10,7 @@ from sgscrape.sgpostal import parse_address_intl
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 from sgselenium import SgSelenium
 import ssl
 
@@ -46,7 +47,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -97,33 +97,91 @@ def fetch_data():
             "class": "ws-find-store-navigation__button ws-find-store-navigation__button--level-2"
         },
     )
-    driver.quit()
+    actions = ActionChains(driver)
     for row in content:
+        element = ""
+        child = ""
+        button = ""
         page_url = BASE_URL + row["href"]
         store = pull_content(page_url).find("div", {"class": "storepage"})
-        try:
+        if not store:
+            element = driver.find_element_by_xpath(
+                '//a[@href="'
+                + row["href"]
+                + '"]/ancestor::li[contains(concat(" ", @class, " "), "ws-find-store-navigation__list-item--level-0")]'
+            )
+            child = element.find_element_by_xpath(
+                '//a[@href="'
+                + row["href"]
+                + '"]/ancestor::li[contains(concat(" ", @class, " "), "ws-find-store-navigation__list-item--level-1")]'
+            )
+            button = child.find_element_by_class_name(
+                "ws-find-store-navigation__button--info"
+            )
+            actions.move_to_element(element)
+            actions.click(element)
+            actions.move_to_element(child)
+            actions.click(child)
+            actions.move_to_element(button)
+            actions.click(button)
+            actions.perform()
+            try:
+                WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.CLASS_NAME,
+                            "ngr-modal--store-info",
+                        )
+                    )
+                )
+            except:
+                button.click()
+            store_info = bs(
+                driver.find_element_by_class_name(
+                    "ngr-modal--store-info"
+                ).get_attribute("innerHTML"),
+                "lxml",
+            )
+            driver.find_element_by_class_name("ngr-modal__close").click()
+            location_name = store_info.find(
+                "a", {"class": "ws-store-info__store-link"}
+            ).text.strip()
+            raw_address = store_info.find("address").get_text(strip=True, separator=",")
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            phone = store_info.find(
+                "dd", {"class": "ws-store-info__list-value--phone"}
+            ).text.strip()
+            hours_of_operation = re.sub(
+                r"(\D),",
+                r"\1:",
+                store_info.find(
+                    "div", {"class": "ws-store-info__opening-hours"}
+                ).get_text(strip=True, separator=","),
+            )
+            latitude = MISSING
+            longitude = MISSING
+        else:
             location_name = store.find("h1", {"itemprop": "name"}).text.strip()
             raw_address = store.find("address").get_text(strip=True, separator=",")
-        except:
-            continue
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = store.find("a", {"itemprop": "telephone"}).text.strip()
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            phone = store.find("a", {"itemprop": "telephone"}).text.strip()
+            country_code = "NO"
+            latitude = store.find("meta", {"itemprop": "latitude"})["content"].replace(
+                ",", "."
+            )
+            longitude = store.find("meta", {"itemprop": "longitude"})[
+                "content"
+            ].replace(",", ".")
+            hours_of_operation = re.sub(
+                r"(\D),",
+                r"\1:",
+                store.find("dl", {"class": "openinghours"}).get_text(
+                    strip=True, separator=","
+                ),
+            )
         country_code = "NO"
         store_number = MISSING
         location_type = MISSING
-        latitude = store.find("meta", {"itemprop": "latitude"})["content"].replace(
-            ",", "."
-        )
-        longitude = store.find("meta", {"itemprop": "longitude"})["content"].replace(
-            ",", "."
-        )
-        hours_of_operation = re.sub(
-            r"(\D),",
-            r"\1:",
-            store.find("dl", {"class": "openinghours"}).get_text(
-                strip=True, separator=","
-            ),
-        )
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -142,6 +200,7 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
+    driver.quit()
 
 
 def scrape():
@@ -151,7 +210,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
                 }
             )
         )

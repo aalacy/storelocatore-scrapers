@@ -23,9 +23,7 @@ def fetch_data():
             lurl = "https://www.onemedical.com/api/locations/?code=" + code
             logger.info(("Pulling Region %s..." % code))
             r2 = session.get(lurl, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            for line2 in r2.iter_lines(decode_unicode=True):
+            for line2 in r2.iter_lines():
                 if '"latitude\\": ' in line2:
                     items = line2.split('"latitude\\": ')
                     for item in items:
@@ -87,7 +85,6 @@ def fetch_data():
                 zc = line2.split('<span itemprop="postalCode">')[1].split("<")[0]
             if "Office Hours:</h5>" in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 hours = (
                     g.split('<div class="rich-text">')[1]
                     .split("</div")[0]

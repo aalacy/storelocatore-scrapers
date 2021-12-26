@@ -29,6 +29,8 @@ def fetch_data():
             links = sp1.select("div.map-list-detail div.map_container")
             logger.info(f"[page {page}] {len(links)} found")
             for link in links:
+                if link.img and link.img["src"].endswith(".png"):
+                    continue
                 back_url = base_url.format(page).split(locator_domain)[-1]
                 idx = link["id"].split("_")[-1]
                 data = {

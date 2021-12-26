@@ -15,24 +15,31 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["storeList"]["store"]
 
     for j in js:
-        _type = j.get("Type")
-        if _type == "NON_OWNED":
+        _type = j.get("Channel")
+        if _type == "TravelRetail":
+            location_type = "Airport"
+        elif _type == "Spa":
+            location_type = "Spa"
+        elif _type == "Retail":
+            location_type = "Retail"
+        else:
             continue
 
         location_name = j.get("Name")
         slug = j.get("URL")
         page_url = f"https://uk.loccitane.com{slug}"
-        street_address = f'{j.get("Address1")} {j.get("Address2") or ""}'.strip()
-        city = j.get("City")
-        state = j.get("State")
-        postal = j.get("ZipCode")
+        street_address = j.get("Address1") or ""
+        city = j.get("City") or ""
+        state = j.get("State") or ""
+        postal = j.get("ZipCode") or ""
+        if postal in city:
+            city = city.replace(postal, "").strip()
         country_code = j.get("ISO2")
         phone = j.get("Phone")
         g = j.get("coord") or {}
         latitude = g.get("latitude")
         longitude = g.get("longitude")
         store_number = j.get("StoreCode")
-        location_type = j.get("Category")
 
         _tmp = []
         days = [
@@ -68,6 +75,7 @@ def fetch_data(sgw: SgWriter):
             longitude=longitude,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city} {state} {postal}".strip(),
         )
 
         sgw.write_row(row)

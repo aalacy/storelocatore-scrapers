@@ -77,8 +77,6 @@ def fetch_data():
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
 
-        if "This restaurant is temporarily closed" in store_req.text:
-            continue
         location_name = "".join(
             store_sel.xpath('//div[@class="title-body"]//h1/text()')
         ).strip()
@@ -86,11 +84,19 @@ def fetch_data():
         locator_domain = website
 
         raw_address = store_sel.xpath("//address/text()")
-
-        street_address = raw_address[0].strip()
-        city = raw_address[1].strip()
-        state = "<MISSING>"
-        zip = raw_address[-1].strip()
+        if "This restaurant is temporarily closed" in store_req.text:
+            location_type = "temporarily closed"
+            street_address = "<MISSING>"
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zip = "<MISSING>"
+        elif "permanently closed" in store_req.text:
+            continue
+        else:
+            street_address = raw_address[0].strip()
+            city = raw_address[1].strip()
+            state = "<MISSING>"
+            zip = raw_address[-1].strip()
 
         country_code = "GB"
 
@@ -169,10 +175,60 @@ def fetch_data():
                                 pass
 
         try:
-            hours_of_operation = BS(hours_of_operation, "html.parser").get_text()
+            hours_of_operation = (
+                BS(hours_of_operation, "html.parser")
+                .get_text()
+                .split("For our COVID-19 safety measures")[0]
+                .strip()
+                .replace("; ;", ";")
+                .strip()
+            )
         except:
             pass
-        log.info(hours_of_operation)
+
+        if len(hours_of_operation) <= 0:
+            try:
+                hours_of_operation = (
+                    store_req.text.split("hours are:")[1]
+                    .strip()
+                    .split("<h4")[0]
+                    .strip()
+                )
+            except:
+                pass
+
+        if len(hours_of_operation) <= 0:
+            try:
+                hours_of_operation = (
+                    store_req.text.split(
+                        "<p>Check out our dine-in opening times below:</p>"
+                    )[1]
+                    .strip()
+                    .split("<span></span></p>")[0]
+                    .strip()
+                )
+            except:
+                pass
+
+        try:
+            hours_of_operation = (
+                BS(hours_of_operation, "html.parser")
+                .get_text()
+                .split("For our COVID-19 safety measures")[0]
+                .strip()
+                .replace("; ;", ";")
+                .strip()
+                .replace("pmSunday:", "pm; Sunday:")
+                .strip()
+                .replace("\n", ";")
+                .strip()
+            )
+        except:
+            pass
+        if hours_of_operation:
+            if ";" == hours_of_operation[-1]:
+                hours_of_operation = "".join(hours_of_operation[:-1]).strip()
+
         map_link = "".join(
             store_sel.xpath('//a[contains(text(),"View map")]/@href')
         ).strip()
@@ -193,7 +249,7 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hours_of_operation.split(";Learn more")[0].strip(),
         )
 
 

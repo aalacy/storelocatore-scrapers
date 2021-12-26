@@ -25,18 +25,48 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         locator_domain = "buildabear.com.au"
-        location_name = item.find(class_="store-locator-branch-name").text.strip()
+        try:
+            location_name = item.find(class_="store-locator-branch-name").text.strip()
+        except:
+            continue
         raw_address = list(
             item.find(class_="store-locator-branch-address").stripped_strings
         )
-        if "moved " in raw_address[-4]:
-            raw_address.pop(-4)
+        try:
+            if "moved " in raw_address[-4]:
+                raw_address.pop(-4)
+        except:
+            pass
 
         street_address = " ".join(raw_address[:-4])
-        city_line = raw_address[-4].split(",")
-        if len(city_line) == 1:
-            ste = re.findall(r"[A-Z]{3}", str(raw_address[-4]))[0]
-            city_line = raw_address[-4].replace(ste, "," + ste).split(",")
+        if street_address:
+            city_line = raw_address[-4].replace("Centre SA", "Centre, SA").split(",")
+            if len(city_line) == 1:
+                ste = re.findall(r"[A-Z]{3}", str(raw_address[-4]))[0]
+                city_line = raw_address[-4].replace(ste, "," + ste).split(",")
+        else:
+            street_address = raw_address[0]
+            city_line = raw_address[1].split(",")
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+
+        if (
+            "Shop" in street_address[:10]
+            or "Kiosk" in street_address[:10]
+            or "Store" in street_address[:10]
+        ):
+            street_address = " ".join(street_address.split()[2:])
+        if street_address[:1] in [",", "-"]:
+            street_address = street_address[1:]
+
+        street_address = (
+            street_address.replace("Westfield Miranda,", "")
+            .replace(", Broadbeach", "")
+            .replace("Westfield Knox", "")
+            .replace("Lakeside Joondalup,", "")
+            .replace("Westfield Carousel,", "")
+            .strip()
+        )
         city = city_line[0].strip()
         state = city_line[1].split()[0].strip()
         zip_code = city_line[1].split()[-1].strip()

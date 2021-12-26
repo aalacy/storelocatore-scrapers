@@ -17,7 +17,7 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             yield SgRecord(
-                page_url=base_url,
+                page_url=_["nomnom"]["redirect"],
                 store_number=_["id"],
                 location_name=_["name"],
                 street_address=_["streetaddress"],

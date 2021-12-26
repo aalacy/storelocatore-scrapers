@@ -25,6 +25,7 @@ def fetch_data():
         for loc in locations:
             location_name = phone = ""
             _addr = []
+            country_code = loc.find_previous_sibling("div").text.strip()
             for x, _ in enumerate(loc.contents):
                 if not location_name and _.name == "strong":
                     location_name = _.text.replace("\n", " ").strip()
@@ -57,7 +58,7 @@ def fetch_data():
                         city=addr.city,
                         state=addr.state,
                         zip_postal=addr.postcode,
-                        country_code=addr.country,
+                        country_code=country_code,
                         phone=phone.replace("(Help Desk)", "").split("ext")[0].strip(),
                         locator_domain=locator_domain,
                         raw_address=" ".join(_addr),

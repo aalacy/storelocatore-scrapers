@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 import re
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import ssl
 
 try:
@@ -60,22 +60,35 @@ def fetch_data():
             "script", string=re.compile(r"new google.maps.Marker\(")
         ).string.split("new google.maps.Marker(")[1:]
         for _ in locations:
-            raw_address = " ".join(
-                [
-                    aa.text.strip()
-                    for aa in _.select_one("p.store-phone").find_previous_siblings("p")[
-                        ::-1
-                    ]
+            _addr = [
+                aa.text.strip()
+                for aa in _.select_one("p.store-phone").find_previous_siblings("p")[
+                    ::-1
                 ]
-            ).replace("Hotel Chocolat", "")
+            ]
+            if "Hotel Chocolat" in _addr[0]:
+                del _addr[0]
+            raw_address = " ".join(_addr)
             addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1 or ""
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            street_address = street_address.strip()
             ss = json.loads(_.select_one("a.get-dir-store-detail")["data-gtmdata"])
-            if street_address.isdigit() and ss["city"] in raw_address:
-                street_address = raw_address.split(ss["city"])[0].strip()
+            _city = ss["city"].replace(".", "")
+            if _city in raw_address:
+                idx = raw_address.rfind(_city)
+                street_address = raw_address[:idx]
+            else:
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+            if not street_address:
+                street_address = _addr[0]
+            if (
+                len(street_address.split()) == 2
+                and street_address.split()[0] == "Unit"
+                and ss.get("postalCode")
+                and ss.get("postalCode") in raw_address
+            ):
+                idx = raw_address.rfind(ss.get("postalCode"))
+                street_address = raw_address[:idx]
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in _.select("div.working-hours > p")
