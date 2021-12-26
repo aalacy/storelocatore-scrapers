@@ -68,8 +68,6 @@ def get_hoo_new(urlnum, i100, _):
         else:
             data_hours = _["data"]["hours"]
             days_hours_start_end = []
-            closed_list = []
-            closed_count = 0
             for i in l:
                 data_hours_days = data_hours[i]
                 if data_hours_days:
