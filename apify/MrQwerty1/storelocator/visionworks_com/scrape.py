@@ -1,42 +1,11 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://visionworks.com/"
-
-    session = SgRequests()
-
+def fetch_data(sgw: SgWriter):
     for i in range(1, 10000):
         api_url = f"https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=URTGGJIFYMDMAMXQ&multi_account=true&page={i}&pageSize=100"
         r = session.get(api_url)
@@ -45,23 +14,21 @@ def fetch_data():
         for j in js:
             page_url = "https://locations.visionworks.com" + j.get("llp_url")
             j = j["store_info"]
-            locator_domain = url
             street_address = (
                 f"{j.get('address')} {j.get('address_extended') or ''}".strip()
-                or "<MISSING>"
             )
-            location_name = j.get("name") or "<MISSING>"
-            city = j.get("locality") or "<MISSING>"
-            state = j.get("region") or "<MISSING>"
-            postal = j.get("postcode") or "<MISSING>"
+            location_name = j.get("name")
+            city = j.get("locality")
+            state = j.get("region")
+            postal = j.get("postcode")
             if len(postal) == 4:
                 postal = f"0{postal}"
-            country_code = j.get("country") or "<MISSING>"
-            store_number = j.get("corporate_id") or "<MISSING>"
-            phone = j.get("phone") or "<MISSING>"
-            latitude = j.get("latitude") or "<MISSING>"
-            longitude = j.get("longitude") or "<MISSING>"
-            location_type = j.get("Type", "<MISSING>")
+            country_code = j.get("country")
+            store_number = j.get("corporate_id")
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            location_type = j.get("Type")
             hours = j.get("hours")
 
             if hours:
@@ -93,36 +60,37 @@ def fetch_data():
 
                 hours_of_operation = ";".join(_tmp) or "<MISSING>"
             else:
-                hours_of_operation = "Closed"
+                status = j.get("status") or ""
+                if status == "coming soon":
+                    hours_of_operation = "Coming Soon"
+                else:
+                    hours_of_operation = status
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-            out.append(row)
+            sgw.write_row(row)
+
         if len(js) < 100:
             break
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://visionworks.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
