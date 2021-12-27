@@ -60,7 +60,7 @@ def fetch_data(sgw: SgWriter):
         if "Soon" in location_name:
             continue
 
-        page_url = "".join(d.xpath(".//h5/a/@href"))
+        page_url = "".join(d.xpath(".//a[contains(text(), 'Information')]/@href"))
         if page_url:
             store_number = get_id(page_url)
         else:
@@ -93,7 +93,6 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,

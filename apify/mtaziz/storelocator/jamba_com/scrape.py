@@ -31,9 +31,9 @@ PAGE_LIMIT = 50
 
 def build_api_endpoint_urls():
     urls = []
-    for offset in range(50, 850, 50):
+    for offset in range(0, 850, 50):
         query_id = "f773d534-29cd-4f85-b013-3077d946aec9"
-        part2 = f"&retrieveFacets=true&facetFilters=%7B%22c_jambaServices%22%3A%5B%5D%2C%22pickupAndDeliveryServices%22%3A%5B%5D%7D&sessionTrackingEnabled=true&sortBys=%5B%5D&referrerPageUrl=https%3A%2F%2Flocations.jamba.com%2Fsearch&source=STANDARD&queryId={query_id}&jsLibVersion=v1.9.2"
+        part2 = f"&referrerPageUrl=https%3A%2F%2Flocations.jamba.com%2Fsearch&source=STANDARD&queryId={query_id}&jsLibVersion=v1.9.2"
         api_endpoint_url = f"https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=jamba-answers&api_key=7425eae4ff5d283ef2a3542425aade29&v=20190101&version=PRODUCTION&locale=en&input=&verticalKey=restaurants&limit={PAGE_LIMIT}&offset={offset}{part2}"
         urls.append(api_endpoint_url)
     return urls
@@ -49,53 +49,39 @@ def get_response(http, urlnum, url):
     raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
-def get_hoo(i100, _):
-    l = [
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday",
-    ]
-
+def get_hoo_new(urlnum, i100, _):
     hours_of_operation = ""
-    data_hours = _["data"]["hours"]
-    days_hours_start_end = []
-    closed_list = []
-    closed_count = 0
-    for i in l:
-        data_hours_days = data_hours[i]
-        if data_hours_days:
-            if "openIntervals" in data_hours_days:
-                data_hours_days_openintervals = data_hours_days["openIntervals"]
-                mons = data_hours_days_openintervals[0]["start"]
-                mone = data_hours_days_openintervals[0]["end"]
-                daytime = f"{i.capitalize()} {mons} - {mone}"
-                days_hours_start_end.append(daytime)
-            else:
-                logger.info(f"{i100} | {data_hours_days}")
-                is_closed = data_hours_days["isClosed"]
-                if is_closed is True:
-                    closed = "Closed"
-                    closed_list.append(closed)
-                    logger.info(f"{i}: Closed")
+    try:
+        l = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+
+        c_store_notification_banner = _["data"].get("c_storeNotificationBanner")
+        if c_store_notification_banner is not None:
+            hours_of_operation = c_store_notification_banner
         else:
-            hours_of_operation = MISSING
-    for cl in closed_list:
-        if "Closed" in cl:
-            closed_count += 1
-    hours_of_operation = "; ".join(days_hours_start_end)
-    if closed_count == 7:
-        hours_of_operation = "Temporarily Closed"
-    logger.info(f"HOO: {hours_of_operation}")
-    tempclose_status = ""
-    if "c_storeNotificationBanner" in _["data"]:
-        tempclose_status = _["data"]["c_storeNotificationBanner"]
-        if "MISSING" in hours_of_operation:
-            hours_of_operation = tempclose_status
-    logger.info(f"[{i100}] {hours_of_operation}")
+            data_hours = _["data"]["hours"]
+            days_hours_start_end = []
+            for i in l:
+                data_hours_days = data_hours[i]
+                if data_hours_days:
+                    if "openIntervals" in data_hours_days:
+                        data_hours_days_openintervals = data_hours_days["openIntervals"]
+                        mons = data_hours_days_openintervals[0]["start"]
+                        mone = data_hours_days_openintervals[0]["end"]
+                        daytime = f"{i.capitalize()} {mons} - {mone}"
+                        days_hours_start_end.append(daytime)
+            hours_of_operation = "; ".join(days_hours_start_end)
+    except Exception as e:
+        logger.info(f"Fix {e} - {urlnum} ")
+        hours_of_operation = MISSING
+
     return hours_of_operation
 
 
@@ -133,7 +119,7 @@ def fetch_records(http: SgRequests):
                 latitude = ll["latitude"] or MISSING
                 longitude = ll["longitude"] or MISSING
                 try:
-                    hours_of_operation = get_hoo(idx1, _)
+                    hours_of_operation = get_hoo_new(urlnum, idx1, _)
                 except Exception as e:
                     logger.info(f" {idx1} | {e} | {page_url} | {_['data']}")
 
@@ -156,9 +142,7 @@ def fetch_records(http: SgRequests):
                     raw_address=raw_address,
                 )
     except Exception as e:
-        raise Exception(
-            f" [ {e} ] Please fix it at >>> [{urlnum}] | {url} | {page_url}"
-        )
+        raise Exception(f" Please fix {e}")
 
 
 def scrape():

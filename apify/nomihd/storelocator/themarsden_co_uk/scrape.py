@@ -46,7 +46,11 @@ def fetch_data():
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
             if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
+                street_address = (
+                    street_address.replace("Ste", "Suite")
+                    .replace("Barrowford", "")
+                    .strip()
+                )
 
             if street_address and street_address == "20":
                 street_address = "20 Teanlowe Shopping Centre"
@@ -71,7 +75,7 @@ def fetch_data():
                     ],
                 )
             )
-            hours_of_operation = "; ".join(hours)
+            hours_of_operation = "; ".join(hours).strip().replace(":;", ":").strip()
 
             store_number = "<MISSING>"
 
