@@ -1,10 +1,14 @@
-import csv
 import re
 import time
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
@@ -14,38 +18,11 @@ logger = SgLogSetup().get_logger("abbeycarpet_com")
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     adress = []
     adress2 = []
+    geos = []
     all_links = []
     all_zips = []
     links_data = []
@@ -181,7 +158,7 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(hours_of_operation)
                 store.append(page_url)
-                yield store
+                write_store(sgw, store)
 
     # Get data from page_url
     logger.info("Processing %s links.." % (len(all_links)))
@@ -249,13 +226,16 @@ def fetch_data():
                 continue
             adress2.append(street)
             logger.info(street)
-            yield store
+            write_store(sgw, store)
         else:
             data_style = ""
             page_soup = BeautifulSoup(home.text, "lxml")
             if page_soup.find(class_="home__showroom-information"):
                 data_style = "showroom"
                 show_data = page_soup.find_all(class_="home__showroom-information")
+                for i, show in enumerate(show_data):
+                    if "Take a 3D" in show.text:
+                        show_data.pop(i)
                 row_data = []
                 for i, show in enumerate(show_data):
                     if i % 2 == 0:
@@ -343,7 +323,7 @@ def fetch_data():
                                 class_="home__showroom-address-line"
                             ).text
                         except:
-                            name = address.strong.text.strip()
+                            name = address.strong.text.replace("(NOW OPEN)", "").strip()
                             street = (
                                 address.find(class_="home__showroom-address-line")
                                 .text.split("\n\n")[1]
@@ -352,6 +332,10 @@ def fetch_data():
                         city_line = address.find_all(
                             class_="home__showroom-address-line"
                         )[1].text
+                        if "," not in city_line:
+                            city_line = address.find_all(
+                                class_="home__showroom-address-line"
+                            )[2].text
                         city = city_line.split(",")[0]
                         state = city_line.split(",")[-1].split()[0]
                         zip_code = city_line.split(",")[-1].split()[-1]
@@ -375,8 +359,6 @@ def fetch_data():
                         except:
                             hours_of_operation = "<MISSING>"
 
-                    iframe = ""
-                    src = None
                     if i == 0:
                         if page_soup.find("div", {"class": "mapWrapper"}) is not None:
                             iframe = page_soup.find(
@@ -466,6 +448,11 @@ def fetch_data():
                             longitude = geo[1]
                         except:
                             pass
+                    if latitude + longitude in geos:
+                        latitude = ""
+                        longitude = ""
+                    else:
+                        geos.append(latitude + longitude)
 
                     if name == "font>":
                         name = "Southern Carpet & Interiors"
@@ -496,14 +483,31 @@ def fetch_data():
                     if street in adress2:
                         continue
                     adress2.append(street)
-                    yield store
+                    write_store(sgw, store)
             else:
                 raise
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def write_store(sgw, store):
+    sgw.write_row(
+        SgRecord(
+            locator_domain=store[0],
+            location_name=store[1],
+            street_address=store[2].replace("Floor & Home", "").strip(),
+            city=store[3],
+            state=store[4],
+            zip_postal=store[5],
+            country_code=store[6],
+            store_number=store[7],
+            phone=store[8],
+            location_type=store[9],
+            latitude=store[10],
+            longitude=store[11],
+            hours_of_operation=store[12].replace("SHOP AT HOME", "").strip(),
+            page_url=store[13],
+        )
+    )
 
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

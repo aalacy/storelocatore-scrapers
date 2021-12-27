@@ -2,6 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data():
@@ -30,30 +32,26 @@ def fetch_data():
         )["AllStores"]
         data = []
         for store in store_list:
-            country_code = store["CountryCode"]
-            if country_code not in ["GB", "CA", "US"]:
-                continue
             page_url = (
                 "https://www.mountainwarehouse.com/stores/"
                 + store["BranchCode"]
                 + "/"
                 + store["StoreName"].replace(" ", "-")
+                + "/"
             )
-            street_address = (store["Address1"] or "") + " " + (store["Address2"] or "")
-            street_address = street_address.strip()
-            hours_of_operation = ""
+            street_address = store["Address1"] or ""
+            if store.get("Address2"):
+                street_address += " " + store["Address2"]
+            hours = []
             for x in store["OpeningHours"]:
-                hours_of_operation += (
-                    x["DayName"]
-                    + ": "
-                    + (
-                        "Closed"
-                        if x["OpenTime"] == "Closed"
-                        else x["OpenTime"] + "-" + x["CloseTime"]
-                    )
-                    + " "
+                if "Christmas" in x["DayName"] or "Holiday" in x["DayName"]:
+                    break
+                times = (
+                    "Closed"
+                    if x["OpenTime"] == "Closed"
+                    else x["OpenTime"] + "-" + x["CloseTime"]
                 )
-            hours_of_operation = hours_of_operation.strip()
+                hours.append(f'{x["DayName"]}: {times}')
 
             yield SgRecord(
                 page_url=page_url,
@@ -64,15 +62,15 @@ def fetch_data():
                 latitude=store["Lat"],
                 longitude=store["Long"],
                 zip_postal=store["PostCode"],
-                country_code=country_code,
+                country_code=store["CountryCode"],
                 phone=store["Phone"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
