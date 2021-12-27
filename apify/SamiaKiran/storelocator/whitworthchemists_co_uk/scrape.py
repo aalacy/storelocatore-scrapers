@@ -46,11 +46,9 @@ def fetch_data():
             city = pa.city
             city = city.strip() if city else MISSING
 
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
+            state = MISSING
+            zip_postal = raw_address.split()
+            zip_postal = zip_postal[-2] + " " + zip_postal[-1]
             country_code = "UK"
             latitude = loc["latitude"]
             longitude = loc["longitude"]

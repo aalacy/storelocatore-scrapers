@@ -40,25 +40,25 @@ def fetch_data():
         location_name = temp["title"]
         hours = temp["hours"]["fields"]
         try:
-            mo = "Mon " + hours["mondayOpen"] + "-" + hours["mondayOpen"]
+            mo = "Mon " + hours["mondayOpen"] + "-" + hours["mondayClose"]
         except:
             mo = "Mon Closed"
         try:
-            tu = " Tue " + hours["tuesdayOpen"] + "-" + hours["tuesdayOpen"]
+            tu = " Tue " + hours["tuesdayOpen"] + "-" + hours["tuesdayClose"]
         except:
-            tu = "Tue Closed"
+            tu = " Tue Closed"
         try:
             we = " Wed " + hours["wednesdayOpen"] + "-" + hours["wednesdayClose"]
         except:
-            we = "Wed Closed"
+            we = " Wed Closed"
         try:
             th = " Thu " + hours["thursdayOpen"] + "-" + hours["thursdayOpen"]
         except:
-            th = "Thu Closed"
+            th = " Thu Closed"
         try:
             fr = " Fri " + hours["fridayOpen"] + "-" + hours["fridayOpen"]
         except:
-            fr = "Fri Closed"
+            fr = " Fri Closed"
         sa = " Sat " + hours["saturdayOpen"] + "-" + hours["saturdayOpen"]
         su = " Sun " + hours["sundayOpen"] + "-" + hours["sundayOpen"]
         hours_of_operation = mo + tu + we + th + fr + sa + su

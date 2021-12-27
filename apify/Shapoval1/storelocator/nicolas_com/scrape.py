@@ -9,16 +9,31 @@ from concurrent import futures
 
 
 def get_urls():
+
+    api_url = "https://www.nicolas.com/sitemap.xml"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(
-        "https://medias.nicolas.com/media/sys_master/h4d/h71/9389088571422.xml",
-        headers=headers,
-    )
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.content)
-    return tree.xpath("//url/loc/text()")
+    div = tree.xpath("//loc")
+    tmp = []
+    for d in div:
+
+        page_url = "".join(d.xpath(".//text()"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.content)
+        try:
+            block = tree.xpath("//url/loc")
+        except:
+            continue
+
+        for b in block:
+            pg_url = "".join(b.xpath(".//text()"))
+            if "/magasins/" in pg_url:
+                tmp.append(pg_url)
+    return tmp
 
 
 def get_data(url, sgw: SgWriter):
@@ -86,9 +101,6 @@ def get_data(url, sgw: SgWriter):
         _tmp.append(f"{d.strip()}: {t.strip()}")
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     hours_of_operation = " ".join(hours_of_operation.split())
-    tmpcls = "".join(tree.xpath('//span[contains(text(), "Currently closed")]/text()'))
-    if tmpcls:
-        hours_of_operation = "Currently closed"
 
     jss = (
         "".join(tree.xpath("//div/@data-stores"))
@@ -102,7 +114,15 @@ def get_data(url, sgw: SgWriter):
 
     for j in js.values():
 
-        street_address = j.get("address")
+        street_address = j.get("address") or "<MISSING>"
+        if street_address == "<MISSING>":
+            street_address = (
+                "".join(
+                    tree.xpath('//address[@class="ns-StoreDetails-address"]/text()[2]')
+                )
+                .replace("\n", "")
+                .strip()
+            )
         city = j.get("town")
         state = "<MISSING>"
         postal = j.get("postcode")
@@ -113,6 +133,8 @@ def get_data(url, sgw: SgWriter):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         store_number = j.get("name")
+        if store_number == "00000375":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
