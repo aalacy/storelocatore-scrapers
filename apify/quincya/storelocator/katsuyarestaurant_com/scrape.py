@@ -73,11 +73,15 @@ def fetch_data(sgw: SgWriter):
             longitude = ""
 
         if "sbe.com" in link:
+            location_name = base.title.text.split("|")[0].strip()
+            if "dining" in location_name.lower():
+                location_name = base.title.text.split("|")[1].strip()
             hours_of_operation = (
                 " ".join(list(base.find(class_="card__hours-details").stripped_strings))
                 .replace("Hours", "")
                 .split("We apol")[0]
                 .split("Dragon")[0]
+                .split("*")[0]
                 .strip()
             )
             latitude = (
@@ -90,6 +94,8 @@ def fetch_data(sgw: SgWriter):
                 .split(":")[1]
                 .split(",")[0]
             ).replace('"', "")
+        else:
+            location_name = base.h4.text.strip()
 
         sgw.write_row(
             SgRecord(

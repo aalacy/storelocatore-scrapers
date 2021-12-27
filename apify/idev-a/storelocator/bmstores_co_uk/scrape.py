@@ -29,35 +29,45 @@ def fetch_data():
             page_url = base_url + store["properties"]["link"]
             logger.info(page_url)
             soup = bs(session.get(page_url).text, "lxml")
-            hr = []
             street_address = soup.select_one("span[itemprop='streetAddress']").text
             city = soup.select_one("span[itemprop='addressLocality']").string
             state = soup.select_one("span[itemprop='addressRegion']").string
             zip = soup.select_one("span[itemprop='postalCode']").string
             phone = soup.select_one("span[itemprop='telephone']")
             phone = "" if phone is None else phone.string
-            if soup.find("h4", string=re.compile(r"Regular Opening Times")):
+
+            hr = []
+            if soup.find_all("h4", string=re.compile(r"Opening Times$")):
                 hr = (
-                    soup.find("h4", string=re.compile(r"Regular Opening Times"))
+                    soup.find_all("h4", string=re.compile(r"Opening Times$"))[-1]
                     .find_next_sibling()
                     .select("li")
                 )
-            street_address = street_address.replace("\n", " ").strip()
-            location_name = ""
-            if (
-                "markerBargainstore" in store["properties"]["svg"]
-                or "markerHomestore" in store["properties"]["svg"]
-            ):
-                location_name = "B&M Home Store"
-            elif "markerHomestoreGardenCentre" in store["properties"]["svg"]:
-                location_name = "B&M Home Store with Garden Centre"
-            elif "markerBargainstore" in store["properties"]["svg"]:
-                location_name = "B&M Store"
-
             hours = []
             for hh in hr:
                 div = hh.select("div")
                 hours.append(f"{div[0].text.strip()}: {div[1].text.strip()}")
+
+            if not hours:
+                note = (
+                    soup.find("h4", string=re.compile(r"Store Notes"))
+                    .find_next_sibling()
+                    .text
+                )
+                if "Unfortunately" in note and "CLOSED" in note:
+                    hours = ["closed"]
+
+            street_address = street_address.replace("\n", " ").strip()
+            location_name = ""
+            if "markerHomestoreGardenCentre" in store["properties"]["svg"]:
+                location_name = "B&M Home Store with Garden Centre"
+            elif "markerBargainstore" in store["properties"]["svg"]:
+                location_name = "B&M Store"
+            elif (
+                "markerBargainstore" in store["properties"]["svg"]
+                or "markerHomestore" in store["properties"]["svg"]
+            ):
+                location_name = "B&M Home Store"
 
             yield SgRecord(
                 page_url=page_url,
