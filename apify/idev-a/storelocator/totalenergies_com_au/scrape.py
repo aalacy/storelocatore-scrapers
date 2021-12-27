@@ -81,6 +81,9 @@ def fetch_data():
                         if city and city.isdigit():
                             city = ""
 
+                        if city:
+                            city = city.split(",")[0]
+
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
