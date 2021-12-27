@@ -112,6 +112,7 @@ def fetch_data():
                     hours = "<MISSING>"
                 if loc not in alllocs:
                     alllocs.append(loc)
+                    name = typ
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "suddenlink.com"
@@ -88,9 +90,7 @@ def fetch_data():
 
             store_number = "<MISSING>"
 
-            phone = "".join(
-                store_sel.xpath('//*[contains(@itemprop,"telephone")]//text()')
-            ).strip()
+            phone = "(844) 874-7558"
 
             location_type = "<MISSING>"
 
@@ -129,7 +129,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

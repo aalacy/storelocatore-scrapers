@@ -4,10 +4,10 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-
     locator_domain = "https://www.imocarwash.com"
     api_url = "https://www.imocarwash.com/gb/search-results/"
     session = SgRequests()
@@ -30,11 +30,24 @@ def fetch_data(sgw: SgWriter):
 
             page_url = f"https://www.imocarwash.com/{j.get('Url')}"
             location_name = j.get("Name") or "<MISSING>"
-            street_address = j.get("Address") or "<MISSING>"
-            if street_address == ",  ":
-                street_address = "<MISSING>"
-            postal = j.get("Postcode") or "<MISSING>"
+            ad = "".join(j.get("Address")) or "<MISSING>"
+            if ad == ",  ":
+                ad = "<MISSING>"
+            street_address = "<MISSING>"
+            if ad != "<MISSING>":
+                a = parse_address(International_Parser(), ad)
+                street_address = (
+                    f"{a.street_address_1} {a.street_address_2}".replace(
+                        "None", ""
+                    ).strip()
+                    or "<MISSING>"
+                )
+                if street_address == "<MISSING>":
+                    street_address = "".join(j.get("Address"))
+            postal = "".join(j.get("Postcode")) or "<MISSING>"
             country_code = j.get("Country") or "<MISSING>"
+            if country_code == "AU" and postal.find(" ") != -1:
+                postal = postal.split()[1].strip()
             city = j.get("City") or "<MISSING>"
             store_number = j.get("Id") or "<MISSING>"
             latitude = j.get("Latitude") or "<MISSING>"
@@ -74,5 +87,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
         fetch_data(writer)

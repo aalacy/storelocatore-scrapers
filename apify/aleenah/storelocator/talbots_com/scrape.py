@@ -1,51 +1,60 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('talbots_com')
-
+logger = SgLogSetup().get_logger("talbots_com")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
+
 
 session = SgRequests()
-all=[]
+
+
 def fetch_data():
     # Your scraper here
-    res=session.get("https://www.talbots.com/on/demandware.store/Sites-talbotsus-Site/default/Stores-GetNearestStores?latitude=37.090240&longitude=-95.712891&maxdistance=5000")
-    jso=res.json()["stores"]
+    res = session.get(
+        "https://www.talbots.com/on/demandware.store/Sites-talbotsus-Site/default/Stores-GetNearestStores?latitude=37.090240&longitude=-95.712891&maxdistance=5000"
+    )
+    jso = res.json()["stores"]
 
-    for id,js in jso.items():
-        #logger.info(id)
-        all.append([
-            "https://www.talbots.com",
-            js["name"],
-            js["address2"],
-            js["city"],
-            js["stateCode"],
-            js["postalCode"],
-            js["countryCode"],
-            id,  # store #
-            js["phone"],  # phone
-            "<MISSING>",  # type
-            js["latitude"],  # lat
-            js["longitude"],  # long
-            js["storeHours"].replace("<br>",", "),  # timing
-            "https://www.talbots.com/on/demandware.store/Sites-talbotsus-Site/default/Stores-GetNearestStores?latitude=37.090240&longitude=-95.712891&maxdistance=5000"])
-    return all
+    for id, js in jso.items():
+        name = js["name"]
+        if "OUTLET" in name:
+            name = "Talbots Outlet"
+        elif "CLEARANCE" in name:
+            name = "Talbots Clearance Store"
+        else:
+            name = "Talbots"
+
+        yield SgRecord(
+            locator_domain="https://www.talbots.com",
+            page_url="https://www.talbots.com/on/demandware.store/Sites-talbotsus-Site/default/Stores-GetNearestStores?latitude=37.090240&longitude=-95.712891&maxdistance=5000",
+            location_name=name,
+            street_address=js["address2"],
+            city=js["city"],
+            state=js["stateCode"],
+            zip_postal=js["postalCode"],
+            country_code=js["countryCode"],
+            store_number=id,
+            phone=js["phone"],
+            location_type="<MISSING>",
+            latitude=js["longitude"],
+            longitude="<MISSING>",
+            hours_of_operation=js["storeHours"].replace("<br>", ", ").strip(),
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    write_output(fetch_data())
+
 
 scrape()
