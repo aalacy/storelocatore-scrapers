@@ -189,11 +189,12 @@ def get_data():
 
                 # raise Exception
                 soup = bs(response_text, "html.parser")
-                div_tags = soup.find_all("div", attrs={"class": "col-xs-12"})
+
+                div_tags = soup.find_all("div", attrs={"class": "search-result"})
                 for div_tag in div_tags:
                     try:
                         location_url = div_tag.find(
-                            "a", attrs={"style": "font-weight:bold;font-size:28px"}
+                            "a", attrs={"class": "search-result-name"}
                         )["href"]
                     except Exception:
                         a_tags = div_tag.find_all("a")
