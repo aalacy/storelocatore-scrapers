@@ -151,34 +151,34 @@ def fetch_data():
         ]
 
     # France
-    # logger.info(" --- France ---")
-    # sp0 = get_bs(driver=driver, url=fr_base_url)
-    # urls = sp0.select("div.richtext-container table tbody tr a")
-    # for url in urls:
-    #     del driver.requests
-    #     _url = url["href"]
-    #     if not _url.startswith("http"):
-    #         _url = "https://www.amplifon.com" + _url
-    #     logger.info(_url)
-    #     sp2 = get_bs(driver=driver, url=_url)
-    #     locations += [
-    #         loc.a["href"] for loc in sp2.select("article.m-store-teaser-item")
-    #     ]
+    logger.info(" --- France ---")
+    sp0 = get_bs(driver=driver, url=fr_base_url)
+    urls = sp0.select("div.richtext-container table tbody tr a")
+    for url in urls:
+        del driver.requests
+        _url = url["href"]
+        if not _url.startswith("http"):
+            _url = "https://www.amplifon.com" + _url
+        logger.info(_url)
+        sp2 = get_bs(driver=driver, url=_url)
+        locations += [
+            loc.a["href"] for loc in sp2.select("article.m-store-teaser-item")
+        ]
 
     # Italy
-    # logger.info(" --- Italy ---")
-    # sp0 = get_bs(driver=driver, url=it_base_url)
-    # urls = sp0.select("div.richtext-container")[0].select("a")
-    # for url in urls:
-    #     del driver.requests
-    #     _url = url["href"]
-    #     if not _url.startswith("http"):
-    #         _url = "https://www.amplifon.com" + _url
-    #     logger.info(_url)
-    #     sp2 = get_bs(driver=driver, url=_url)
-    #     locations += [
-    #         loc.a["href"] for loc in sp2.select("div.richtext-container ul li")
-    #     ]
+    logger.info(" --- Italy ---")
+    sp0 = get_bs(driver=driver, url=it_base_url)
+    urls = sp0.select("div.richtext-container")[0].select("a")
+    for url in urls:
+        del driver.requests
+        _url = url["href"]
+        if not _url.startswith("http"):
+            _url = "https://www.amplifon.com" + _url
+        logger.info(_url)
+        sp2 = get_bs(driver=driver, url=_url)
+        locations += [
+            loc.a["href"] for loc in sp2.select("div.richtext-container ul li")
+        ]
 
     driver = get_driver()
     logger.info(f"{len(locations)} locations")
