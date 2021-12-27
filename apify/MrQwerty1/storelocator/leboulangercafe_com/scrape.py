@@ -1,4 +1,5 @@
 import ssl
+import time
 import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -51,6 +52,7 @@ def fetch_data(sgw: SgWriter):
     page_url = "https://www.leboulangercafe.com/locations"
     with SgChrome() as fox:
         fox.get(page_url)
+        time.sleep(3)
         source = fox.page_source
 
     tree = html.fromstring(source)
@@ -58,7 +60,9 @@ def fetch_data(sgw: SgWriter):
 
     for d in divs:
         location_name = "".join(d.xpath(".//h2/text()")).strip()
-        raw_address = "".join(d.xpath(".//div/p/text()")).replace("Call Us", "").strip()
+        line = d.xpath(".//div/p/text()")
+        raw_address = line.pop(0)
+        hours_of_operation = line.pop(0).replace("Hours:", "").strip()
         street_address, city, state, postal = get_address(raw_address)
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/@href")).replace(
             "tel:", ""
@@ -75,6 +79,7 @@ def fetch_data(sgw: SgWriter):
             phone=phone,
             locator_domain=locator_domain,
             raw_address=raw_address,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
