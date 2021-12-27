@@ -273,7 +273,7 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                         if open_date is not None and open_or_close is False:
                             parsed_open_date = dateutil.parser.parse(open_date)
                             if parsed_open_date.timestamp() > local_time.timestamp():
-                                location_type = "Coming Soon"
+                                hours_of_operation = "Coming Soon"
                         raw_address = a["addressFmt"]
                         raw_address = raw_address if raw_address else MISSING
 
