@@ -58,7 +58,7 @@ class ExampleSearchIteration(SearchIteration):
             for _ in locations:
                 street_address = _["address1"]
                 if _.get("address2"):
-                    street_address += " " + _["address2"]
+                    street_address += ", " + _["address2"]
                 page_url = (
                     f"https://www.t2tea.com/en/us/store-locations?storeID={_['ID']}"
                 )
@@ -67,16 +67,42 @@ class ExampleSearchIteration(SearchIteration):
                     hours = bs(_["storeHours"], "lxml").stripped_strings
 
                 city = _["city"]
+                raw_address = None
                 if not city:
+                    logger.info(page_url)
                     sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
                     raw_address = (
-                        sp1.select_one("address a.store-map").text.strip()
-                        + ", "
-                        + _["countryCode"]
+                        (
+                            ", ".join(
+                                sp1.select_one("address a.store-map").stripped_strings
+                            )
+                            + ", "
+                            + _["countryCode"]
+                        )
+                        .replace("\r", " ")
+                        .replace("\n", " ")
                     )
                     addr = parse_address_intl(raw_address)
+                    street_address = addr.street_address_1
+                    if addr.street_address_2:
+                        street_address += " " + addr.street_address_2
                     if addr.city:
                         city = addr.city
+                else:
+                    raw_address = f"{street_address}, {city}"
+                    if _.get("stateCode"):
+                        raw_address += ", " + _.get("stateCode")
+                    if _.get("postalCode"):
+                        raw_address += ", " + _.get("postalCode")
+
+                    if _["countryCode"]:
+                        raw_address += ", " + _["countryCode"]
+
+                    addr = parse_address_intl(raw_address)
+                    street_address = addr.street_address_1
+                    if addr.street_address_2:
+                        street_address += " " + addr.street_address_2
+
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
@@ -91,6 +117,7 @@ class ExampleSearchIteration(SearchIteration):
                     longitude=_["longitude"],
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
+                    raw_address=raw_address,
                 )
 
 
