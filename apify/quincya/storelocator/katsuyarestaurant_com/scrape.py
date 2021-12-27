@@ -31,12 +31,16 @@ def fetch_data(sgw: SgWriter):
         location_name = store["name"]
         street_address = store["address"]["streetAddress"]
         city = store["address"]["addressLocality"]
+        country_code = ""
         try:
             state = store["address"]["addressRegion"]
+            zip_code = store["address"]["postalCode"]
+            country_code = "US"
         except:
-            continue
-        zip_code = store["address"]["postalCode"]
-        country_code = "US"
+            state = ""
+            zip_code = ""
+            if "Baha" in street_address:
+                country_code = "Bahamas"
         store_number = ""
         location_type = ""
         try:
@@ -53,6 +57,8 @@ def fetch_data(sgw: SgWriter):
         ).lower().replace(" ", "-")
         if "miami" in link:
             link = "https://www.sbe.com/restaurants/katsuya/south-beach"
+        if "nassau" in link:
+            link = "https://www.sbe.com/restaurants/katsuya/baha-mar"
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -67,11 +73,15 @@ def fetch_data(sgw: SgWriter):
             longitude = ""
 
         if "sbe.com" in link:
+            location_name = base.title.text.split("|")[0].strip()
+            if "dining" in location_name.lower():
+                location_name = base.title.text.split("|")[1].strip()
             hours_of_operation = (
                 " ".join(list(base.find(class_="card__hours-details").stripped_strings))
                 .replace("Hours", "")
                 .split("We apol")[0]
                 .split("Dragon")[0]
+                .split("*")[0]
                 .strip()
             )
             latitude = (
@@ -84,6 +94,8 @@ def fetch_data(sgw: SgWriter):
                 .split(":")[1]
                 .split(",")[0]
             ).replace('"', "")
+        else:
+            location_name = base.h4.text.strip()
 
         sgw.write_row(
             SgRecord(
