@@ -1,6 +1,5 @@
 const Apify = require('apify');
 const cheerio = require('cheerio');
-const { utils } = Apify;
 
 const MISSING = '<MISSING>';
 function getOrDefault(value) {
@@ -21,12 +20,40 @@ function formatPhone(phone) {
   return phone ? phone.replace(/-|\(|\)|\s/g, '') : null;
 }
 
-function enqueueStoreLinks({ page, requestQueue }) {
-  return utils.enqueueLinks({
-    page,
-    requestQueue,
-    selector: 'a.brand-item-link',
-  });
+async function enqueueStoreLinks({ page, requestQueue, request }) {
+  const { locations, curPage } = request.userData;
+
+  const content = await page.content();
+  const $ = cheerio.load(content);
+  const serialized = $('pre').html();
+
+  const { num_store, storesjson } = JSON.parse(serialized.replace(/&quot;/g, '"'));
+
+  locations.push(...storesjson);
+
+  if (locations.length < num_store) {
+    const nextPage = curPage + 1;
+
+    await requestQueue.addRequest({
+      url: `https://www.shiekh.com/storelocator/index/loadstore?curPage=${nextPage}`,
+      userData: {
+        locations,
+        curPage: nextPage,
+        pageType: 'locations',
+      },
+    });
+  } else {
+    await Promise.all(
+      locations.map((loc) =>
+        requestQueue.addRequest({
+          url: `https://www.shiekhshoes.com/${loc.rewrite_request_path}`,
+          userData: {
+            location: loc,
+          },
+        })
+      )
+    );
+  }
 }
 
 function extractHoursOfOperation($) {
@@ -60,7 +87,7 @@ async function fetchData({ page, request }) {
   const phone = formatPhone(parser.getTextByItemProp('telephone'));
   const hours_of_operation = extractHoursOfOperation(parser.$);
 
-  // there are online stores or one that does not exsits
+  // there are online stores or one that does not exist
   if (location_name.match(/store\s\d|online/i)) {
     return null;
   }
@@ -86,9 +113,11 @@ async function fetchData({ page, request }) {
 Apify.main(async function () {
   const requestQueue = await Apify.openRequestQueue();
   await requestQueue.addRequest({
-    url: 'https://www.shiekh.com/store-list',
+    url: 'https://www.shiekh.com/storelocator/index/loadstore/',
     userData: {
+      curPage: 1,
       pageType: 'locations',
+      locations: [],
     },
   });
 
@@ -117,13 +146,13 @@ Apify.main(async function () {
     puppeteerPoolOptions,
     launchPuppeteerOptions,
     useSessionPool: true,
-    maxRequestRetries: 5,
+    maxRequestRetries: 10,
     maxConcurrency: 10,
     maxRequestsPerCrawl: 1000,
     async handlePageFunction({ page, request }) {
       switch (request.userData.pageType) {
         case 'locations': {
-          await enqueueStoreLinks({ page, requestQueue });
+          await enqueueStoreLinks({ page, requestQueue, request });
           break;
         }
         default: {

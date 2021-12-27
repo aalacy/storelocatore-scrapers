@@ -1,5 +1,7 @@
-sgscrape==0.0.23
-demjson==2.2.4
-sgrequests==0.1.8
-sgvalidator==0.0.71
-beautifulsoup4==4.9.3
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.2.4
+sglogging==0.0.4
+dirtyjson==1.0.7
+sgrequests==0.2.9
+sgpostal==0.1.0
+beautifulsoup4==4.10.0

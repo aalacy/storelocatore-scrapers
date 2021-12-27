@@ -10,7 +10,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 session = SgRequests()
 website = "oportun_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
@@ -25,21 +24,39 @@ def fetch_data():
         url = "https://oportun.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        divlist = soup.findAll("div", {"class": "related-store-list"})[1:]
-        for div in divlist:
-            loclist = div.findAll("a")
+        statelist = soup.findAll("section", {"class": "location-state"})
+        for state in statelist:
+            url = state.find("a")["href"]
+            r = session.get(url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            loclist = soup.findAll("div", {"class": "location-card"})
             for loc in loclist:
-                page_url = loc["href"]
+                location_name = loc.get_text(separator="|", strip=True).split("|")[0]
+                page_url = loc.findAll("a")[-1]["href"]
+                r = session.get(page_url, headers=headers)
+                page_url = r.url
                 log.info(page_url)
-                r = session.get(page_url, headers=headers, allow_redirects=True)
-                if r.status_code == 404:
-                    continue
-                if r.url == "https://oportun.com/locations/":
-                    continue
                 soup = BeautifulSoup(r.text, "html.parser")
-                address = soup.find("h3").text
-                address = address.replace(",", " ")
-                address = usaddress.parse(address)
+                temp = soup.find("div", {"class": "location-intro__content"})
+                if temp is None:
+                    address = loc.get_text(separator="|", strip=True).split("|")
+                    phone = address[4]
+                    address = address[1] + " " + address[2]
+                    hours_of_operation = MISSING
+                else:
+                    phone = temp.select_one("a[href*=tel]").text
+                    address = (
+                        temp.find("address")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                    hours_of_operation = (
+                        temp.find("p", {"class": "hours"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                raw_address = address.replace(",", " ")
+                address = usaddress.parse(raw_address)
                 i = 0
                 street_address = ""
                 city = ""
@@ -65,16 +82,10 @@ def fetch_data():
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
                 country_code = "US"
-                phone = soup.select_one("a[href*=tel]").text
-                hours_of_operation = (
-                    soup.find("div", {"class": "store-tab store-info"})
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
-                    location_name=MISSING,
+                    location_name=location_name,
                     street_address=street_address.strip(),
                     city=city.strip(),
                     state=state.strip(),
@@ -86,6 +97,7 @@ def fetch_data():
                     latitude=MISSING,
                     longitude=MISSING,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 

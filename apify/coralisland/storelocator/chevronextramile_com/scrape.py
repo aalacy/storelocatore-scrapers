@@ -1,132 +1,76 @@
-import csv
-
-from sglogging import sglog
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-log = sglog.SgLogSetup().get_logger(logger_name="chevronextramile.com")
-
-base_url = "https://www.chevronextramile.com"
+from concurrent import futures
 
 
-def validate(item):
-    if item is None:
-        item = ""
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = " ".join(item)
-    return item.replace("\u2013", "-").strip()
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.chevronwithtechron.com/"
+    api_url = f"https://www.chevronwithtechron.com/api/app/techron2go/ws_getChevronExtraMileNearMe_v1.aspx?radius=3500&lat={str(lat)}&lng={str(long)}&token=DC-A2FF22B238E6&search5=1"
 
-
-def get_value(item):
-    if item is None:
-        item = "<MISSING>"
-    item = validate(item)
-    if item == "":
-        item = "<MISSING>"
-    return item
-
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    }
 
     session = SgRequests()
 
-    history = []
+    r = session.get(api_url, headers=headers)
 
-    max_distance = 35
+    js = r.json()["stations"]
 
-    search = DynamicGeoSearch(
+    for j in js:
+        store_number = j.get("id")
+        location_name = j.get("name") or "<MISSING>"
+        street_address = j.get("address") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        page_url = f"https://www.chevronextramile.com/station-finder/{street_address.replace(' ','-').lower()}-{city.replace(' ','-').lower()}-{state.lower()}-{postal}-id{store_number}/"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        hours_of_operation = j.get("hours") or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=10,
+        expected_search_radius_miles=10,
+        max_search_results=None,
     )
 
-    for lat, lng in search:
-        log.info(
-            "Searching: %s, %s | Items remaining: %s"
-            % (lat, lng, search.items_remaining())
-        )
-
-        base_link = (
-            "https://www.chevronwithtechron.com/api/app/techron2go/ws_getChevronExtraMileNearMe_v1.aspx?radius=35&lat="
-            + str(lat)
-            + "&lng="
-            + str(lng)
-            + "&token=DC-A2FF22B238E6&search5=1"
-        )
-        store_list = session.get(base_link, headers=headers).json()["stations"]
-
-        for store in store_list:
-            search.found_location_at(store["lat"], store["lng"])
-            uni_id = validate(store["lat"]) + "-" + validate(store["lng"])
-            if uni_id not in history:
-                history.append(uni_id)
-                output = []
-                output.append(base_url)  # url
-                output.append(
-                    "https://www.chevronextramile.com/station-finder/"
-                )  # page url
-                output.append(get_value(store["name"]))  # location name
-                output.append(
-                    get_value(store["address"].replace("&amp;", "&"))
-                )  # address
-                output.append(get_value(store["city"]))  # city
-                output.append(get_value(store["state"]))  # state
-                output.append(get_value(store["zip"]))  # zipcode
-                output.append("US")  # country code
-                output.append(get_value(store["id"]))  # store_number
-                output.append(get_value(store["phone"]))  # phone
-                output.append("<MISSING>")  # location type
-                output.append(get_value(store["lat"]))  # latitude
-                output.append(get_value(store["lng"]))  # longitude
-                output.append(get_value(store["hours"]))  # opening hours
-                yield output
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

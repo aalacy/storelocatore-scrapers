@@ -1,123 +1,91 @@
-import csv
-import re
+import json
+import ssl
 import time
 
 from bs4 import BeautifulSoup
 
-from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgselenium import SgChrome
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
-    session = SgRequests()
-
-    base_link = "https://www.amigosunited.com/rs/StoreLocator"
+    base_link = (
+        base_link
+    ) = "https://www.amigosunited.com/RS.Relationshop/StoreLocation/GetAllStoresPosition?__RequestVerificationToken=ppJizUtmjqj_Mmnt_AYesvj-FCsVsSx1xRx6zQsoPycvZVLhrs8tvXdBQ8v1m3GMB-fxBmiqCawul5Qevc58GCYhQJs1"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
 
     driver = SgChrome(user_agent=user_agent).driver()
 
     driver.get(base_link)
-    time.sleep(6)
+    time.sleep(3)
 
     base = BeautifulSoup(driver.page_source, "lxml")
+    stores = json.loads(base.text)
 
-    data = []
+    driver.close()
+
     locator_domain = "amigosunited.com"
 
-    items = base.find(id="divSideBar").find_all("div", recursive=False)
+    for store in stores:
 
-    for item in items:
-
-        raw_address = list(item.find(class_="store-address").stripped_strings)
-        street_address = raw_address[0].strip()
-        city_line = raw_address[1].split(",")
-        city = city_line[0].strip()
-        state = city_line[1].strip().split()[0]
-        zip_code = city_line[1].strip().split()[1]
+        location_name = store["StoreName"]
+        if location_name != "Amigos":
+            continue
+        try:
+            street_address = (store["Address1"] + " " + store["Address2"]).strip()
+        except:
+            street_address = store["Address1"]
+        city = store["City"]
+        state = store["State"]
+        zip_code = store["Zipcode"]
         country_code = "US"
-        location_name = "Amigos " + city
-        phone = item.find(class_="store-phone").text.strip()
-        store_number = item["id"].split("-")[-1]
-        hours_of_operation = item.find(class_="store-hours").text.strip()
-        location_type = "<MISSING>"
-
-        link = (
-            "https://www.amigosunited.com"
-            + item.find("a", string="Store Details")["href"]
-        )
-
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        types = base.find_all(class_="col-xs-12 col-sm-6 col-md-3")
+        store_number = store["StoreID"]
+        phone = store["PhoneNumber"]
+        hours_of_operation = store["StoreHours"]
+        latitude = store["Latitude"]
+        longitude = store["Longitude"]
+        location_type = ""
+        types = store["ServiceStores"]
         for raw in types:
-            if "store features" in raw.text.lower():
-                location_type = (
-                    ", ".join(list(raw.stripped_strings)).split("eatures,")[1].strip()
-                )
-                break
-        latitude = re.findall(r":[0-9]{2}\.[0-9]+", str(base))[0][1:]
-        longitude = re.findall(r":-[0-9]{2,3}\.[0-9]+", str(base))[0][1:]
+            location_type = (location_type + ", " + raw["ServiceName"]).strip()
+        location_type = location_type[1:].strip()
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        link = "https://www.amigosunited.com/rs/StoreLocator?id=" + str(store_number)
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    driver.close()
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

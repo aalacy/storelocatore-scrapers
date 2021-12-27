@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,33 +13,6 @@ headers = {
 logger = SgLogSetup().get_logger("walmart_com__cp__care-clinics__1224932")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.walmart.com/cp/care-clinics/1224932"
     r = session.get(url, headers=headers)
@@ -44,45 +20,70 @@ def fetch_data():
     typ = "Care Clinic"
     country = "US"
     loc = "<MISSING>"
-    store = "<MISSING>"
     hours = ""
     lat = "<MISSING>"
     lng = "<MISSING>"
+    sid = 0
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = (
-            str(line.decode("utf-8"))
-            .replace("%20", " ")
+            line.replace("%20", " ")
             .replace("%3E", ">")
             .replace("%2F", "/")
             .replace("%2C", ",")
             .replace("%3C", "<")
             .replace("%3D", "=")
         )
-        if "'address" in line:
-            items = line.split("'address")
+        if "Illinois" in line:
+            items = line.split("'text'%3A'Health Center locations'")[1].split(
+                "%5Cn  <li>"
+            )
             for item in items:
-                if "hours" in item and 'egory" type="application/json"' not in item:
+                if "%26nbsp%3B%26nbsp%3B%26nbsp%" in item or "479-306-7484" in item:
+                    sid = sid + 1
                     name = "Walmart Care Clinic"
-                    addinfo = item.split(">")[1].split("<")[0]
-                    addinfo = addinfo.replace("AR, ", "AR ")
+                    if "479-306-7484" in item:
+                        addinfo = (
+                            item.split("479-306-7484")[0].strip().replace("\t", "")
+                        )
+                    else:
+                        addinfo = (
+                            item.split("%26nbsp%3B%26nbsp%3B%26nbsp%")[0]
+                            .strip()
+                            .replace("\t", "")
+                        )
+                    addinfo = addinfo.replace("AR, ", "AR ").replace("  ", " ")
+                    addinfo = (
+                        addinfo.replace("%23200", ",")
+                        .replace(" , ", ", ")
+                        .replace("%26nbsp%3B", " ")
+                        .strip()
+                    )
                     zc = addinfo.rsplit(" ", 1)[1]
-                    state = addinfo.rsplit(",", 1)[1].strip().split(" ")[0]
+                    state = addinfo.rsplit(" ", 2)[1]
+                    if "GA" in state:
+                        state = "GA"
                     add = addinfo.split(",")[0]
-                    city = addinfo.rsplit(",", 1)[0].strip().rsplit(" ", 1)[1]
-                    phone = (
-                        item.split(">Ph")[1]
-                        .split("<")[0]
-                        .replace(".", "")
-                        .replace("%3A", "")
-                    )
-                    hours = (
-                        item.split("class='td hours' aria-label='")[1]
-                        .split(">")[0]
-                        .replace("%3A", ":")
-                    )
+                    city = addinfo.rsplit(" ", 3)[1]
+                    if "479-306-7484" in item:
+                        phone = "479-306-7484"
+                    else:
+                        phone = item.rsplit("%3B%26nbsp%3B", 1)[1].split("<")[0]
+                    if state == "AR":
+                        hours = (
+                            "Monday-Saturday 7:30 am-7:30 pm and Sunday 10 am - 6 pm"
+                        )
+                    if state == "GA":
+                        hours = (
+                            "Monday-Saturday 7:30 am-7:30 pm and Sunday 10 am - 6 pm"
+                        )
+                    if state == "IL":
+                        hours = (
+                            "Monday-Saturday 7:30 am-6:00 pm and Sunday 10 am - 6 pm"
+                        )
+                    if state == "TX":
+                        hours = "M-F: 8am-8pm, Sat: 8am-5pm, Sun: 10am-6pm"
                     add = add.replace(city, "").strip()
-                    hours = hours.replace("'", "")
                     if "4870 Elm" in add:
                         add = add + " Suite B"
                     if "4221 Atlanta" in add:
@@ -92,27 +93,43 @@ def fetch_data():
                         zc = "30052"
                     if "494 W" in add:
                         city = "Royse City"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    if "6020 Harrison Rd" in add:
+                        phone = "478-703-0468"
+                        city = "Macon"
+                    if "5448 Whittlesey Blvd" in add:
+                        city = "Columbus"
+                    if "  GA" in add:
+                        add = add.split("  GA")[0]
+                    if "  IL" in add:
+                        add = add.split("  IL")[0]
+                    if "  TX" in add:
+                        add = add.split("  TX")[0]
+                    store = str(sid)
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
