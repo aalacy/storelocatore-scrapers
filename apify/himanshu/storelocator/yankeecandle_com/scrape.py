@@ -1,73 +1,76 @@
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-import csv
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
-    url = "https://storescontent.yankeecandle.com/searchQuery?radius=500000&lat=33.5973469&long=-112.1072528&storeType=2&origin=US"
-    json_data = SgRequests().get(url).json()
-    addresses = []
-    for val in json_data["stores"]:
-        store = []
-        location_domain = "https://www.yankeecandle.com/"
-        store.append(location_domain)
-        store.append(val["label"] if val["label"] else "<MISSING>")
-        store.append(val["address"] if val["address"] else "<MISSING>")
-        store.append(val["city"] if val["city"] else "<MISSING>")
-        store.append(val["state"]["abbr"] if val["state"]["abbr"] else "<MISSING>")
-        store.append(val["zip"] if val["zip"] else "<MISSING>")
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(val["phone"] if val["phone"] else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(val["lat"] if val["lat"] else "<MISSING>")
-        store.append(val["long"] if val["long"] else "<MISSING>")
-        hours_of_operation = " "
-        for i in val["regHours"]:
-            hours_of_operation = (
-                hours_of_operation + i["day"] + " " + i["open"] + "-" + i["close"] + " "
-            )
-        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-        store.append(location_domain + val["ctaUrl"])
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-        yield store
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = h.get("day")
+        opens = h.get("open")
+        closes = h.get("close")
+        line = f"{day} {opens} - {closes}"
+        tmp.append(line)
+    hours_of_operation = ";".join(tmp)
+    return hours_of_operation
 
 
-def load_data(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.yankeecandle.com/"
+    api_url = "https://storescontent.yankeecandle.com/searchQuery?radius=50000&lat=33.5973469&long=-112.1072528&storeType=2"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["stores"]
+    for j in js:
+        slug = j.get("ctaUrl")
+        page_url = f"https://www.yankeecandle.com{slug}"
+        location_name = j.get("label")
+        street_address = j.get("address")
+        state = j.get("state").get("abbr")
+        postal = "".join(j.get("zip"))
+        country_code = "US"
+        if not postal.isdigit():
+            country_code = "CA"
+        city = j.get("city")
+        store_number = j.get("storeNumber") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("long") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours = j.get("regHours") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def scrape():
-    data = fetch_data()
-    load_data(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

@@ -1,83 +1,40 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("johnnywas_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    base_link = "https://www.johnnywas.com/store_locator/location/updatemainpage"
+    base_link = "https://www.johnnywas.com/store_locator/location/searchLocations?&type=by_radius&current_page=cms_page_view&current_products=&search_text=&radius=0&autocomplete%5Blat%5D=&autocomplete%5Blng%5D=&autocomplete%5Bsmall_city%5D=&autocomplete%5Bcity%5D=&autocomplete%5Bregion%5D=&autocomplete%5Bpostcode%5D=&autocomplete%5Bcountry_id%5D="
 
-    headers = {
-        "authority": "www.johnnywas.com",
-        "method": "POST",
-        "origin": "https://www.johnnywas.com",
-        "accept": "application/json",
-        "accept-encoding": "gzip, deflate, br",
-        "referer": "https://www.johnnywas.com/store-locator",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "sec-fetch-user": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
-    }
-    response = session.post(base_link, headers=headers)
-    base = BeautifulSoup(response.text, "lxml")
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    raw_text = str(base).split("</script>")[1].split("var locations")[0]
-    base = BeautifulSoup(raw_text, "lxml")
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
     items = base.find_all("a", string="Store Page")
     locator_domain = "johnnywas.com"
-
-    session = SgRequests()
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    headers1 = {"User-Agent": user_agent}
 
     for item in items:
         link = item["href"]
 
         logger.info(link)
-        req = session.get(link, headers=headers1)
+        req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
         location_name = base.h2.text.strip()
@@ -132,27 +89,25 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-        yield [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -1,34 +1,9 @@
-import csv
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 URL = "https://api.pressedjuicery.com/stores?sort=name"
@@ -42,6 +17,8 @@ HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36",
 }
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def parse_hours(store):
@@ -84,58 +61,52 @@ def parse_hours(store):
     return ", ".join(ret)
 
 
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
-
-
 def fetch_data():
+    log.info("Fetching store_locator data")
     stores = session.get(URL, headers=HEADERS).json()["stores"]
-    locations = []
     for store in stores:
-        locator_domain = DOMAIN
-        page_url = "https://pressedjuicery.com/pages/juice-bar-locations"
-        location_name = handle_missing(store["name"])
-        street_address = handle_missing(store["streetAddress"])
-        city = handle_missing(store["locality"])
-        state = handle_missing(store["region"])
-        zip_code = handle_missing(store["postal"])
-        country_code = handle_missing(store["country"])
-        store_number = store["id"]
-        phone = handle_missing(store["phone"])
-        location_type = "<MISSING>"
-        latitude = handle_missing(store["geometry"]["coordinates"][1])
-        if latitude == 0.0:
-            latitude = "<MISSING>"
-        longitude = handle_missing(store["geometry"]["coordinates"][0])
-        if longitude == 0.0:
-            longitude = "<MISSING>"
-        hours_of_operation = handle_missing(parse_hours(store["storeHours"]))
-        locations.append(
-            [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        location_name = store["name"]
+        street_address = store["streetAddress"]
+        city = store["locality"]
+        state = store["region"]
+        zip_postal = store["postal"]
+        country_code = store["country"]
+        store_number = store["number"]
+        phone = store["phone"]
+        location_type = MISSING
+        latitude = store["geometry"]["coordinates"][1]
+        longitude = store["geometry"]["coordinates"][0]
+        hours_of_operation = parse_hours(store["storeHours"])
+        page_url = f"https://pressed.com/pages/location-details?id={store['id']}&coordinates={longitude}&coordinates={latitude}"
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-    return locations
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()
