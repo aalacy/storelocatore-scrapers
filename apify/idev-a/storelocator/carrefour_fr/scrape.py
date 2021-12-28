@@ -94,7 +94,7 @@ def fetch_data():
                     res = session.get(page_url, headers=_headers)
                     logger.info(f"Page Crawl Status: {res.status_code}")
                     time.sleep(1)
-                    if res.status_code == 404 or res.status_code == 403:
+                    if res.status_code == 404:
                         continue
                     if res.status_code == 200:
                         sp1 = bs(res.text, "lxml")
