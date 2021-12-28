@@ -156,6 +156,8 @@ def extract(name, data):
     page_url = pdf_url
     location_name = name
     street_address = parsed_address.street_address_1
+    if parsed_address.street_address_2:
+        street_address += f", {parsed_address.street_address_2}"
     city = parsed_address.city
     state = parsed_address.state
     postal = parsed_address.postcode

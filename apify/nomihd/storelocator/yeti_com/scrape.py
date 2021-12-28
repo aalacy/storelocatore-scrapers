@@ -100,6 +100,22 @@ def fetch_data():
             )
             full_address = store_info
 
+        if len(full_address) == 1:
+            store_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//div[@class="page-content page-with-banner"]/p[position()<=2]/text()'
+                        )
+                    ],
+                )
+            )
+            full_address = store_info
+
+        if len(phone) <= 0:
+            phone = "".join(store_sel.xpath('//a[contains(@href,"tel:")]/text()'))
         raw_address = " ".join(full_address).replace("\n", " ").split("(")[0]
 
         formatted_addr = parser.parse_address_usa(raw_address)
@@ -128,14 +144,31 @@ def fetch_data():
                 ],
             )
         )
-
+        if len(hours) <= 0:
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//p[contains(.//text(),"Hours")]/following-sibling::p/text()'
+                        )
+                    ],
+                )
+            )
         hours_of_operation = "; ".join(hours).strip()
         if "regular business hours:;" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("regular business hours:;")[
                 1
             ].strip()
 
-        hours_of_operation = hours_of_operation.split("; Bar Open Effective")[0].strip()
+        hours_of_operation = (
+            hours_of_operation.split("; Bar Open Effective")[0]
+            .strip()
+            .split("; Hey Scottsdale")[0]
+            .strip()
+        )
+
         map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
 
         latitude, longitude = get_latlng(map_link)

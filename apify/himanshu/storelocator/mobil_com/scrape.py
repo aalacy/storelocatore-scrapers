@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -12,17 +11,15 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.exxon.com/en/api/locator/Locations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country={}&Customsort=False"
+    start_url = "https://www.exxon.com/en/api/locator/Locations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country=US&Customsort=False"
     domain = "exxon.com"
 
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        country_codes=[SearchableCountries.USA],
         expected_search_radius_miles=5,
     )
     for lat, lng in all_coords:
-        url = start_url.format(
-            lat, lat + 0.3, lng, lng + 1.2, all_coords.current_country().upper()
-        )
+        url = start_url.format(lat, lat + 3.0, lng, lng + 5.0)
         try:
             all_locations = session.get(url).json()
         except Exception:
@@ -35,17 +32,22 @@ def fetch_data():
             if poi["WeeklyOperatingHours"]:
                 hoo = etree.HTML(poi["WeeklyOperatingHours"]).xpath("//text()")
             hoo = " ".join(hoo)
+            store_number = poi["LocationID"]
+            city = poi["City"]
+            state = poi["StateProvince"]
+            location_name = poi["LocationName"]
+            page_url = f'https://www.exxon.com/en/find-station/exxon-{city.replace(" ", "").lower()}-{state.lower()}-{location_name.lower().replace(" ", "")}-{store_number}'
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.exxon.com/en/find-station/",
-                location_name=poi["LocationName"],
+                page_url=page_url,
+                location_name=location_name,
                 street_address=street_address,
-                city=poi["City"],
-                state=poi["StateProvince"],
+                city=city,
+                state=state,
                 zip_postal=poi["PostalCode"],
                 country_code=poi["Country"],
-                store_number=poi["LocationID"],
+                store_number=store_number,
                 phone=poi["Telephone"],
                 location_type=poi["EntityType"],
                 latitude=poi["Latitude"],

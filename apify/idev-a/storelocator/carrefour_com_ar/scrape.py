@@ -22,7 +22,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = ""
+locator_domain = "https://carrefour.com.ar/"
 ar_base_url = "https://www.carrefour.com.ar/_v/public/graphql/v1?workspace=master&maxAge=short&appsEtag=remove&domain=store&locale=es-AR&operationName=getStoreLocations&variables=%7B%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22a84a4ca92ba8036fe76fd9e12c2809129881268d3a53a753212b6387a4297537%22%2C%22sender%22%3A%22lyracons.lyr-store-locator%400.x%22%2C%22provider%22%3A%22vtex.store-graphql%402.x%22%7D%2C%22variables%22%3A%22eyJhY2NvdW50IjoiY2FycmVmb3VyYXIifQ%3D%3D%22%7D"
 br_base_url = "https://www.carrefour.com.br/_v/public/graphql/v1?workspace=master&maxAge=short&appsEtag=remove&domain=store&locale=pt-BR&__bindingId=3bab9213-2811-4d32-856a-a4baa1b689b5&operationName=GET_STORES&variables=%7B%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%2218e07401147429d732eeffd9b3a526af814af3be84e09c6283f87a617f174939%22%2C%22sender%22%3A%22carrefourbr.carrefour-components%400.x%22%2C%22provider%22%3A%22vtex.store-graphql%402.x%22%7D%2C%22variables%22%3A%22eyJhY3JvbnltIjoiTE8iLCJmaWVsZHMiOlsiYmFpcnJvIiwiY2VwIiwiY2lkYWRlIiwiY29tcGxlbWVudG8iLCJpZCIsImxhdCIsImxuZyIsImxvZ3JhZG91cm8iLCJsb2phIiwibnVtZXJvIiwidGlwbyIsInVmIl0sImFjY291bnQiOiJjYXJyZWZvdXJiciIsIndoZXJlIjoiKHVmPSdTUCcgQU5EIGNpZGFkZT0nU8OjbyBQYXVsbycpIEFORCAodGlwbz1IaXBlcikiLCJwYWdlU2l6ZSI6MjAsInBhZ2UiOjF9%22%7D"
 days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]

@@ -2,10 +2,11 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import SgLogSetup
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = SgLogSetup().get_logger("massimodutti")
 
@@ -28,56 +29,67 @@ days = [
 ]
 
 
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+def _d(url):
+    with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as http:
+        res = http.get(url, headers=_headers)
+        if res.status_code != 200:
+            raise Exception
+        return res.json()["closerStores"]
+
+
 def fetch_records(search):
     for lat, lng in search:
-        with SgRequests(proxy_country="us") as http:
-            res = http.get(base_url.format(lat, lng), headers=_headers)
-            if res.status_code == 200:
-                locations = res.json()["closerStores"]
-                logger.info(f"{search.current_country(), len(locations)}")
-                if len(locations):
-                    search.found_location_at(lat, lng)
-                for store in locations:
-                    hours = []
-                    for hr in store.get("openingHours", {}).get("schedule", []):
-                        times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['endHour']}"
-                        if len(hr["weekdays"]) == 1:
-                            hh = hr["weekdays"][0]
-                            hours.append(f"{days[hh]}: {times}")
-                        else:
-                            day = f'{days[hr["weekdays"][0]]} to {days[hr["weekdays"][-1]]}'
-                            hours.append(f"{day}: {times}")
-                    phone = ""
-                    if store.get("phones"):
-                        phone = store["phones"][0]
-
-                    _streat = (
-                        "-".join(store["name"].split())
-                        .lower()
-                        .replace(".", "")
-                        .replace(",", "")
-                    )
-                    if store["state"]:
-                        _state = "-".join(store["state"].split()).lower()
+        try:
+            locations = _d(base_url.format(lat, lng))
+        except:
+            locations = []
+        if locations:
+            logger.info(f"{search.current_country(), len(locations)}")
+            for store in locations:
+                hours = []
+                for hr in store.get("openingHours", {}).get("schedule", []):
+                    times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['endHour']}"
+                    if len(hr["weekdays"]) == 1:
+                        hh = hr["weekdays"][0]
+                        hours.append(f"{days[hh]}: {times}")
                     else:
-                        _state = "-".join(store["city"].split()).lower()
+                        day = f'{days[hr["weekdays"][0]]} to {days[hr["weekdays"][-1]]}'
+                        hours.append(f"{day}: {times}")
+                phone = ""
+                if store.get("phones"):
+                    phone = store["phones"][0]
 
-                    page_url = f'https://www.massimodutti.com/us/store-locator/{_state}/{_streat}/{store["latitude"]},{store["longitude"]}/{store["id"]}'
-                    yield SgRecord(
-                        page_url=page_url,
-                        store_number=store["id"],
-                        location_name=store["name"],
-                        street_address=" ".join(store["addressLines"]),
-                        city=store["city"],
-                        state=store["state"],
-                        zip_postal=store["zipCode"],
-                        latitude=store["latitude"],
-                        longitude=store["longitude"],
-                        phone=phone,
-                        country_code=store["countryCode"],
-                        hours_of_operation="; ".join(hours),
-                        locator_domain=locator_domain,
-                    )
+                _streat = (
+                    "-".join(store["name"].split())
+                    .lower()
+                    .replace(".", "")
+                    .replace(",", "")
+                )
+                if store["state"]:
+                    _state = "-".join(store["state"].split()).lower()
+                else:
+                    _state = "-".join(store["city"].split()).lower()
+
+                page_url = f'https://www.massimodutti.com/us/store-locator/{_state}/{_streat}/{store["latitude"]},{store["longitude"]}/{store["id"]}'
+                yield SgRecord(
+                    page_url=page_url,
+                    store_number=store["id"],
+                    location_name=store["name"],
+                    street_address=" ".join(store["addressLines"]),
+                    city=store["city"],
+                    state=store["state"],
+                    zip_postal=store["zipCode"],
+                    latitude=store["latitude"],
+                    longitude=store["longitude"],
+                    phone=phone,
+                    country_code=store["countryCode"],
+                    hours_of_operation="; ".join(hours),
+                    locator_domain=locator_domain,
+                )
+
+        else:
+            logger.warning(base_url.format(lat, lng))
 
 
 if __name__ == "__main__":

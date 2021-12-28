@@ -26,13 +26,13 @@ headers = {
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
 def request_with_retries(url, retry=1):
     try:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="in") as http:
             return (http.get(url, headers=headers)).text, url
     except Exception:
-        if retry > 4:
+        if retry > 10:
             log.error(f"Error loading {url}")
             return None, url
         return request_with_retries(url, retry + 1)

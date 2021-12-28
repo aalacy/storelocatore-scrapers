@@ -42,9 +42,9 @@ def _d(store_number):
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(1000):
-            for b in range(1000):
-                for c in range(1000):
+        for a in range(10):
+            for b in range(50):
+                for c in range(100):
                     logger.info(f"{a, b, c}")
                     try:
                         data = http.get(
@@ -71,18 +71,30 @@ def fetch_data():
                         if phone and ("contact" in phone.lower() or phone == "-"):
                             phone = ""
 
+                        if phone:
+                            phone = phone.split(",")[0]
+
+                        city = addr["city"]
+                        zip_postal = addr.get("zipcode")
+                        if "Excellium" in city:
+                            city = ""
+                        if city and city.isdigit():
+                            city = ""
+
+                        if city:
+                            city = city.split(",")[0]
+
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
-                            location_name=addr["name"],
+                            location_name=_["name"],
                             street_address=" ".join(addr["lines"]),
-                            city=addr["city"],
-                            state=addr.get("State"),
-                            zip_postal=addr.get("zipcode"),
+                            city=city,
+                            zip_postal=zip_postal,
                             country_code=addr["country_code"],
                             phone=phone,
-                            latitude=_["geometry"]["coordinates"][0],
-                            longitude=_["geometry"]["coordinates"][1],
+                            latitude=loc["geometry"]["coordinates"][0],
+                            longitude=loc["geometry"]["coordinates"][1],
                             hours_of_operation="; ".join(hours),
                             location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,
