@@ -68,45 +68,36 @@ def fetch_data():
 
         for page_url, sp1 in fetchConcurrentList(urls):
             logger.info(page_url)
-            try:
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in sp1.select("div.reindex-openingtimes table tr")
-                ]
-                raw_address = " ".join(
-                    sp1.select_one("div#reindex-detail-adress").stripped_strings
-                )
-                coord = sp1.select_one('meta[name="geo.position"]')["content"].split(
-                    ";"
-                )
-                if coord == [0, 0]:
-                    coord = ["", ""]
-                phone = ""
-                _pp = sp1.find("td", string=re.compile(r"Telefon:"))
-                if _pp:
-                    phone = _pp.find_next_sibling().text.split("od.")[0].strip()
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=sp1.select_one('span[itemprop="name"]').text.strip(),
-                    street_address=sp1.select_one(
-                        'span[itemprop="street-address"]'
-                    ).text.strip(),
-                    city=sp1.select_one('span[itemprop="locality"]').text.strip(),
-                    zip_postal=sp1.select_one(
-                        'span[itemprop="postal-code"]'
-                    ).text.strip(),
-                    country_code="Germany",
-                    phone=phone,
-                    latitude=coord[0],
-                    longitude=coord[1],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
-                    raw_address=raw_address,
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in sp1.select("div.reindex-openingtimes table tr")
+            ]
+            raw_address = " ".join(
+                sp1.select_one("div#reindex-detail-adress").stripped_strings
+            )
+            coord = sp1.select_one('meta[name="geo.position"]')["content"].split(";")
+            if coord == [0, 0]:
+                coord = ["", ""]
+            phone = ""
+            _pp = sp1.find("td", string=re.compile(r"Telefon:"))
+            if _pp:
+                phone = _pp.find_next_sibling().text.split("od.")[0].strip()
+            yield SgRecord(
+                page_url=page_url,
+                location_name=sp1.select_one('span[itemprop="name"]').text.strip(),
+                street_address=sp1.select_one(
+                    'span[itemprop="street-address"]'
+                ).text.strip(),
+                city=sp1.select_one('span[itemprop="locality"]').text.strip(),
+                zip_postal=sp1.select_one('span[itemprop="postal-code"]').text.strip(),
+                country_code="Germany",
+                phone=phone,
+                latitude=coord[0],
+                longitude=coord[1],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
+            )
 
 
 if __name__ == "__main__":
