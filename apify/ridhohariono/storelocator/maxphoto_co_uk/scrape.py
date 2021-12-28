@@ -53,8 +53,6 @@ def fetch_data():
             ).group(1)
         )["initial_location"]
         location_name = store["name"]
-        if store["loc_type"] != "1":
-            continue
         if "street2" in store:
             street_address = (store["street1"] + " " + store["street2"]).strip()
         else:

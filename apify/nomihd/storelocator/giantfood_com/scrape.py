@@ -1,4 +1,4 @@
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 import json
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -69,6 +69,8 @@ def fetch_data():
 
             store_url = "https://stores.giantfood.com/" + store_number
             store_resp = session.get(store_url, headers=headers)
+            if isinstance(store_resp, SgRequestError):
+                continue
             store_sel = lxml.html.fromstring(store_resp.text)
             country_code = "".join(
                 store_sel.xpath(

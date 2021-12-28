@@ -64,7 +64,8 @@ def fetch_data():
         )
         location_name = info[0]
         raw_address = ",".join(info[1:-1])
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address, city, _, zip_postal = getAddress(raw_address)
+        state = MISSING
         phone = info[-1].replace("Tel:", "").replace(" .", "").strip() or MISSING
         country_code = "GB"
         hours_of_operation = MISSING
