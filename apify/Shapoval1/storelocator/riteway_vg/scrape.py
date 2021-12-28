@@ -66,7 +66,13 @@ def fetch_data(sgw: SgWriter):
             .split('"')[0]
             .strip()
         )
-        phone = ad.split("☎")[1].split("✉")[0].strip()
+        phone = (
+            ad.split("☎")[1]
+            .split("✉")[0]
+            .replace("=", "+")
+            .replace("+1284", "+1 284")
+            .strip()
+        )
         hours_of_operation = (
             " ".join(d.xpath(".//table//tr/td[2]//text()")).replace("\n", "").strip()
         )
@@ -95,6 +101,8 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LATITUDE})
+        )
     ) as writer:
         fetch_data(writer)

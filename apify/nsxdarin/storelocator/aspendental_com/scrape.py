@@ -14,35 +14,22 @@ logger = SgLogSetup().get_logger("aspendental_com")
 
 
 def fetch_data():
-    cities = []
     locs = []
-    url = "https://www.aspendental.com/dentist"
-    r = session.get(url, headers=headers)
-    Found = False
-    for line in r.iter_lines():
-        if "<h2>browse by city</h2>" in line:
-            Found = True
-        if Found and "dataLayer.push" in line:
-            Found = False
-        if Found and '<li><a href="/dentist/' in line:
-            lurl = "https://www.aspendental.com" + line.split('href="')[1].split('"')[0]
-            if "albany" in lurl:
-                cities.append(lurl)
-    for city in cities:
-        DFound = False
-        r = session.get(city, headers=headers)
-        logger.info(city)
+    for x in range(0, 1250, 50):
+        logger.info(str(x))
+        url = (
+            "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=aspen_dental_answers&api_key=5568aa1809f16997ec2ac0c1ed321f59&v=20190101&version=PRODUCTION&locale=en&input=dentist+near+me&verticalKey=locations&limit=50&offset="
+            + str(x)
+            + "&facetFilters=%7B%7D&session_id=203a4345-5104-4f2e-92d1-b0978f41dcd0&sessionTrackingEnabled=true&sortBys=%5B%5D&referrerPageUrl=https%3A%2F%2Fwww.aspendental.com%2F&source=STANDARD&jsLibVersion=v1.12.0"
+        )
+        r = session.get(url, headers=headers)
         for line in r.iter_lines():
-            if "<h2>Find Dentists" in line:
-                DFound = True
-            if DFound and "find what you are looking for in" in line:
-                DFound = False
-            if DFound and '<li><a href="' in line:
-                lurl = (
-                    "https://www.aspendental.com/"
-                    + line.split('<li><a href="')[1].split('"')[0]
-                )
-                locs.append(lurl)
+            if ',"c_profileURL":"' in line:
+                items = line.split(',"c_profileURL":"')
+                for item in items:
+                    if '{"meta":{"' not in item:
+                        lurl = item.split('"')[0]
+                        locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         website = "aspendental.com"
