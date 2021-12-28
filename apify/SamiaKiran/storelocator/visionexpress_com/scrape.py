@@ -64,8 +64,8 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         state = MISSING
         zip_postal = address["postalCode"]
         country_code = address["addressCountry"]
-        latitude = MISSING
-        longitude = MISSING
+        latitude = r.text.split('"lat":')[1].split(",")
+        longitude = r.text.split('"lon":')[1].split(",")
         hours_of_operation = (
             str(loc["openingHours"])
             .replace("[", "")
