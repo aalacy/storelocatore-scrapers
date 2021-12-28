@@ -12,23 +12,24 @@ _headers = {
 locator_domain = "https://retailmap.pl/pl/centra-handlowe"
 base_url = "https://retailmap.pl/pl/api/malls/?areaFrom=&areaTo=&name=&streetName=&status%5B%5D=existing"
 
+
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            addr = _['address']
-            street_address = addr['streetName']
-            if addr['streetNumber']:
-                street_address += ' ' + addr['streetNumber']
-            page_url = "https://retailmap.pl" + bs(_['html'], 'lxml').a['href']
+            addr = _["address"]
+            street_address = addr["streetName"]
+            if addr["streetNumber"]:
+                street_address += " " + addr["streetNumber"]
+            page_url = "https://retailmap.pl" + bs(_["html"], "lxml").a["href"]
             yield SgRecord(
                 page_url=page_url,
-                store_number=_['id'],
+                store_number=_["id"],
                 location_name=_["name"],
                 street_address=street_address,
-                city=addr['city'],
-                latitude=_['location']["lat"],
-                longitude=_['location']["lng"],
+                city=addr["city"],
+                latitude=_["location"]["lat"],
+                longitude=_["location"]["lng"],
                 country_code="Poland",
                 locator_domain=locator_domain,
             )
