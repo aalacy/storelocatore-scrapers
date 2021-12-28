@@ -51,9 +51,11 @@ def fetch_data():
                     break
                 hours_of_operation = hours_of_operation + " " + hour
             hours_of_operation = strip_accents(
-                hours_of_operation.replace(" Sommer (01.04. – 31.10.):", "")
+                hours_of_operation.replace("Sommer (01.04. – 31.10.):", "")
             )
             phone = temp[2].get_text(separator="|", strip=True).replace("|", "")
+            if "SB-WASC" in phone:
+                phone = temp[3].get_text(separator="|", strip=True).replace("|", "")
             coords = soup.find("div", {"class": "bt_bb_google_maps_location"})
             latitude = coords["data-lat"]
             longitude = coords["data-lng"]
