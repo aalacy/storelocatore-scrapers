@@ -31,6 +31,8 @@ def fetch_data():
                 hours = "closed"
             hoo.append(f"{day}: {hours}")
         hoo = ", ".join(hoo)
+        if poi["name"] == "Test dealer":
+            continue
 
         item = SgRecord(
             locator_domain=domain,
