@@ -43,7 +43,7 @@ def fetch_data():
             log.info(page_url)
             store_number = loc["id"]
             try:
-                temp = loc["address"]
+                street_address = loc["address"]
             except:
                 continue
             try:
