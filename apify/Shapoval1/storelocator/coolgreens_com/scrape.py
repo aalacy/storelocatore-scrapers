@@ -33,17 +33,7 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
-        info = (
-            "".join(d.xpath(".//preceding::p[2]/text()[2]")).replace("\n", "").strip()
-            or "<MISSING>"
-        )
-        if info == "<MISSING>":
-            info = (
-                "".join(d.xpath(".//preceding::p[1]/text()[2]"))
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
+
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         ad = (
@@ -114,9 +104,7 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
-
-        if info == "COMING SUMMER 2022":
-            hours_of_operation = "Coming Soon"
+        location_name = "".join(tree.xpath('//meta[@property="og:title"]/@content'))
 
         row = SgRecord(
             locator_domain=locator_domain,
