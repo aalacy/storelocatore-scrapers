@@ -103,7 +103,7 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
                 .replace("|", " ")
             )
         except Exception:
-            hours = "<MISSING>"
+            hours_of_operation = "<MISSING>"
         latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
         longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
         yield SgRecord(
