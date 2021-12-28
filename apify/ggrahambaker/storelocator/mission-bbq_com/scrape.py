@@ -12,17 +12,14 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://mission-bbq.com/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        "accept-encoding": "gzip, deflate, br",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
-    }
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    hdr = {"User-Agent": user_agent}
+
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@class="esg-entry-content eg-mission-content"]')
@@ -32,12 +29,12 @@ def fetch_data():
     frm = {
         "action": "Essential_Grid_Front_request_ajax",
         "client_action": "load_more_items",
-        "token": "327636e022",
+        "token": "0e229c4124",
         "data[]": all_ids,
         "gridid": "1",
     }
 
-    url = "https://mission-bbq.com/wp-admin/admin-ajax.php"
+    url = "https://mission-bbq.com/wp-admin/admin-ajax.php?action=Essential_Grid_Front_request_ajax&client_action=load_more_items&token=0e229c4124&data%5B%5D=5018&data%5B%5D=1597&data%5B%5D=1611&gridid=1"
     data = session.post(url, headers=hdr, data=frm).json()
     dom = etree.HTML(data["data"])
     all_locations += dom.xpath('//div[@class="esg-entry-content eg-mission-content"]')
@@ -51,6 +48,29 @@ def fetch_data():
         phone = [e for e in raw_data if "Restaurant" in e][0].split(":")[-1].strip()
         if "Coming Soon" in phone:
             continue
+        map_link = poi_html.xpath(".//a/@href")[0]
+        if "@" in map_link:
+            try:
+                geo = re.findall(
+                    r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(map_link)
+                )[0].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            except:
+                at_pos = map_link.rfind("@")
+                latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
+                longitude = (
+                    map_link[map_link.find(",", at_pos) + 1 :].replace(",", "").strip()
+                )
+            if longitude == "-":
+                latitude = SgRecord.MISSING
+                longitude = SgRecord.MISSING
+            if longitude[-1:] == ".":
+                longitude = longitude + "000"
+
+        else:
+            latitude = SgRecord.MISSING
+            longitude = SgRecord.MISSING
 
         item = SgRecord(
             locator_domain=domain,
@@ -60,14 +80,14 @@ def fetch_data():
             city=addr.city,
             state=addr.state,
             zip_postal=addr.postcode,
-            country_code=addr.country,
+            country_code="US",
             store_number=poi_html.xpath('.//*[contains(@class, "eg-post-")]/@class')[0]
             .split()[1]
             .split("-")[-1],
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
         )
 

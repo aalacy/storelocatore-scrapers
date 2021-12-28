@@ -32,9 +32,11 @@ def fetch_data():
         )
         poi = json.loads(poi)
 
-        street_address = poi["Address"]
+        street_address = poi["Address"].strip()
         if poi["Address2"]:
-            street_address += " " + poi["Address2"]
+            street_address += " " + poi["Address2"].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         hoo = loc_dom.xpath(
             '//div[contains(text(), "Hours of Operation")]/following-sibling::ul//text()'
         )

@@ -30,9 +30,17 @@ def fetch_data(sgw: SgWriter):
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        ad = "".join(tree.xpath("//p[./span/em]//em/text()"))
 
-        street_address = " ".join(ad.split(",")[0].split()[:-1]).strip()
+        street_address = "".join(
+            tree.xpath(
+                '////div[@class="fusion-column-wrapper fusion-flex-justify-content-center fusion-content-layout-column"]//h4[1]/span[1]/text()'
+            )
+        )
+        ad = "".join(
+            tree.xpath(
+                '////div[@class="fusion-column-wrapper fusion-flex-justify-content-center fusion-content-layout-column"]//h4[1]/span[2]/text()'
+            )
+        )
         phone = "".join(
             tree.xpath(
                 '//div[contains(@class, "fusion-text fusion-text-")]//h4[2]//text()'
@@ -69,6 +77,7 @@ def fetch_data(sgw: SgWriter):
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {ad}",
         )
 
         sgw.write_row(row)

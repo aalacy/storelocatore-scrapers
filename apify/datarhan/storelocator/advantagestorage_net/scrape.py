@@ -25,6 +25,10 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')[0]
         poi = json.loads(poi)
+        hoo = loc_dom.xpath(
+            '//div[strong[contains(text(), "Office Hours")]]/following-sibling::p[1]/text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
@@ -40,7 +44,7 @@ def fetch_data():
             location_type=poi["@type"],
             latitude=poi["geo"]["latitude"],
             longitude=poi["geo"]["longitude"],
-            hours_of_operation=" ".join(poi["openingHours"]),
+            hours_of_operation=hoo,
         )
 
         yield item

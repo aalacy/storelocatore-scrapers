@@ -1,179 +1,87 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+    for i in range(0, 100000, 50):
+        r = session.get(
+            f"https://stores.bang-olufsen.com/en/search?l=en&per=50&offset={i}",
+            headers=headers,
         )
+        js = r.json()["response"]["entities"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        for jj in js:
+            j = jj.get("profile")
+            a = j.get("address")
+            page_url = j.get("c_pagesURL")
+            street_address = a.get("line1") or ""
+            city = a.get("city") or ""
+            location_name = f"Bang & Olufsen {city}"
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = a.get("countryCode")
+            phone = j.get("mainPhone", {}).get("display")
+            latitude = j.get("yextDisplayCoordinate", {}).get("lat")
+            longitude = j.get("yextDisplayCoordinate", {}).get("long")
 
-        for row in data:
-            writer.writerow(row)
+            try:
+                hours = j["hours"]["normalHours"]
+            except KeyError:
+                hours = []
 
-
-def generate_links():
-    urls = []
-    session = SgRequests()
-    start_urls = [
-        "https://stores.bang-olufsen.com/en/united-states.json",
-        "https://stores.bang-olufsen.com/en/canada.json",
-        "https://stores.bang-olufsen.com/en/united-kingdom.json",
-    ]
-
-    for u in start_urls:
-        r = session.get(u)
-        js = r.json()
-        directory = js.get("directoryHierarchy")
-
-        if directory:
-            urls += list(get_urls(directory))
-        else:
-            keys = js["keys"]
-            for k in keys:
-                count = k.get("count")
-                if count == 1:
-                    url = k["entity"]["profile"]["c_pagesURL"] + ".json"
-                    urls.append(url)
+            _tmp = []
+            for h in hours:
+                day = h.get("day")
+                if not h.get("isClosed"):
+                    interval = h.get("intervals")
+                    start = str(interval[0].get("start"))
+                    if len(start) == 3:
+                        start = f"0{start}"
+                    if len(start) == 1:
+                        start = "1200"
+                    end = str(interval[0].get("end"))
+                    line = f"{day[:3].capitalize()}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
                 else:
-                    slug = k["url"]
-                    start_urls.append(f"https://stores.bang-olufsen.com/{slug}.json")
+                    line = f"{day[:3].capitalize()}: Closed"
+                _tmp.append(line)
 
-    return urls
+            hours_of_operation = ";".join(_tmp)
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
+            if "Coming Soon" in location_name or j.get("c_comingSoon"):
+                hours_of_operation = "Coming Soon"
 
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.replace("\n", ", "),
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-def get_urls(states):
-    for state in states.values():
-        children = state["children"]
-        if children is None:
-            yield f"https://stores.bang-olufsen.com/{state['url']}.json"
-        else:
-            yield from get_urls(children)
+            sgw.write_row(row)
 
-
-def get_data(url):
-    session = SgRequests()
-    r = session.get(url)
-    j = r.json()["profile"]
-
-    locator_domain = "https://www.bang-olufsen.com/"
-    page_url = url.replace(".json", "")
-    location_name = (
-        f"{j.get('name')} {j.get('c_localGeomodifier') or ''}".strip() or "<MISSING>"
-    )
-
-    a = j.get("address", {}) or {}
-    street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("region") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("countryCode") or "<MISSING>"
-    store_number = "<MISSING>"
-    phone = j.get("mainPhone").get("display") if j.get("mainPhone") else "<MISSING>"
-    loc = j.get("yextDisplayCoordinate", {}) or {}
-    latitude = loc.get("lat") or "<MISSING>"
-    longitude = loc.get("long") or "<MISSING>"
-    location_type = "<MISSING>"
-    days = j.get("hours", {}).get("normalHours") or []
-
-    _tmp = []
-    for d in days:
-        day = d.get("day")[:3].capitalize()
-        try:
-            interval = d.get("intervals")[0]
-            start = str(interval.get("start"))
-            if start == "0":
-                _tmp.append("24 hours")
-                break
-            end = str(interval.get("end"))
-
-            if len(start) == 3:
-                start = f"0{start}"
-
-            if len(end) == 3:
-                end = f"0{end}"
-
-            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-        except IndexError:
-            line = f"{day}  Closed"
-
-        _tmp.append(line)
-
-    holidays = j.get("hours", {}).get("holidayHours") or []
-    cnt = 0
-    for h in holidays:
-        if h.get("isClosed"):
-            cnt += 1
-
-    if cnt >= 6:
-        _tmp = ["Closed"]
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if (
-        hours_of_operation.count("Closed") == 7
-        or location_name.lower().find("closed") != -1
-    ):
-        hours_of_operation = "Closed"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    ids = generate_links()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 50:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.bang-olufsen.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

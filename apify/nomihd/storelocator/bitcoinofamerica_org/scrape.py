@@ -32,17 +32,25 @@ def fetch_data():
 
     search_url = "https://www.bitcoinofamerica.org/bitcoin-atm-locations/"
     stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//script[@type="application/ld+json"]/text()')
+    stores = eval(
+        stores_req.text.split("var LocationData = ")[1].strip().split("];")[0].strip()
+        + "]"
+    )
+    for store in stores:
+        page_url = "https://www.bitcoinofamerica.org/bitcoin-atm-locations/" + store[4]
+        log.info(page_url)
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
 
-    for store_text in stores:
-        store_json = json.loads(store_text)
-
-        page_url = store_json["url"]
-
-        location_name = store_json["name"]
+        location_name = store[2]
         location_type = "<MISSING>"
         locator_domain = website
+
+        store_json = json.loads(
+            "".join(
+                store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            ).strip()
+        )
 
         street_address = store_json["address"]["streetAddress"]
         city = store_json["address"]["addressLocality"]
@@ -54,8 +62,8 @@ def fetch_data():
         phone = store_json["telePhone"]
         hours_of_operation = store_json["openingHours"]
 
-        latitude = store_json["geo"]["latitude"]
-        longitude = store_json["geo"]["longitude"]
+        latitude = store[0]
+        longitude = store[1]
 
         yield SgRecord(
             locator_domain=locator_domain,

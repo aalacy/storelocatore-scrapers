@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("talbots_com")
+logger = SgLogSetup().get_logger("firstcommercialbk_com")
 
 
 def write_output(data):
@@ -45,11 +45,14 @@ def fetch_data():
     locs = div.text.split(" Address:")
 
     for loc in locs:
+        if " Office:" in loc:
+            appended = loc.split(" Office:")[-1]
+            locs.insert(locs.index(loc) + 1, appended)
         if locs.index(loc) == 0:
             continue
         prev = locs[locs.index(loc) - 1]
         if "Division" in prev:
-            name = prev.split("Division")[-1]
+            name = prev.split("Division")[-1].split(":")[0]
         else:
             name = prev.split("p.m.")[-1]
         cur = loc.split("p.m.")[-1]
@@ -81,7 +84,7 @@ def fetch_data():
         zip = addr["ZipCode"]
 
         phone = re.findall(r"Phone: ([\d\-]+)", loc)[0]
-        tim = re.findall(r"Business Hours (.*)", loc)[0]
+        tim = re.findall(r"(.*p.m.)", loc.split("Business Hours ")[1])[0]
 
         yield SgRecord(
             locator_domain="https://www.firstcommercialbk.com",
