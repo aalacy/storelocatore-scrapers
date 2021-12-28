@@ -132,7 +132,6 @@ def get_data():
                 }
 
             except Exception:
-                print(search_code)
                 raise Exception
 
 
