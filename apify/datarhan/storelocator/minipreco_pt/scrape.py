@@ -31,7 +31,6 @@ def fetch_data():
             continue
         all_locations = all_locations.json()
         for poi in all_locations:
-            print(poi)
             store_number = poi["codigo"]
             url = "https://lojas.minipreco.pt/buscadorTiendas.html?action=buscarInformacionTienda&codigo={}"
             data = session.get(url.format(store_number)).json()[0]
