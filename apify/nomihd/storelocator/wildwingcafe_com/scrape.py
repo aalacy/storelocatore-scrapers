@@ -121,10 +121,12 @@ def fetch_data():
                 or "Friday" in hour
                 or "Saturday" in hour
                 or "Everyday" in hour
+                or "Daily" in hour
+                or "Midnight" in hour
             ):
                 hours_list.append(hour)
 
-        hours_of_operation = "; ".join(hours_list)
+        hours_of_operation = "; ".join(hours_list).strip().replace("-;", "-").strip()
 
         if location_name == "Feast your eyes on our Menu and our Music":
             location_name = "CHARLOTTE UNIVERSITY CITY, NORTH CAROLINA"
