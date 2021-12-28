@@ -39,7 +39,7 @@ base_url = "https://www.carrefour.fr/magasin/"
 @retry(stop=stop_after_attempt(8), wait=tenacity.wait_fixed(8))
 def get_response(url):
     logger.info("Retrying with Tenacity")
-    with SgRequests(proxy_country="us") as http:
+    with SgRequests(proxy_country="fr") as http:
         try:
             response = http.get(url, headers=_headers)
             logger.info(f"{url} >> STATUS: {response.status_code}")
@@ -94,7 +94,7 @@ def fetch_data():
                     res = session.get(page_url, headers=_headers)
                     logger.info(f"Page Crawl Status: {res.status_code}")
                     time.sleep(1)
-                    if res.status_code == 404 or res.status_code == 403:
+                    if res.status_code == 404:
                         continue
                     if res.status_code == 200:
                         sp1 = bs(res.text, "lxml")
