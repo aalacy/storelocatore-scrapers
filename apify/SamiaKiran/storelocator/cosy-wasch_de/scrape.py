@@ -72,6 +72,12 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+            if street_address.isdigit():
+                street_address = (
+                    raw_address.replace(city, "")
+                    .replace(zip_postal, "")
+                    .replace("  ", " ")
+                )
             country_code = "DE"
             yield SgRecord(
                 locator_domain=DOMAIN,
