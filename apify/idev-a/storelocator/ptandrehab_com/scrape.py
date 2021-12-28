@@ -10,22 +10,30 @@ _headers = {
 }
 
 locator_domain = "https://ptandrehab.urpt.com"
-base_url = "https://ptandrehab.urpt.com/find-a-location/?state=MI&brand=&zip=&all-brands=0"
+base_url = (
+    "https://ptandrehab.urpt.com/find-a-location/?state=MI&brand=&zip=&all-brands=0"
+)
+
 
 def fetch_data():
     with SgRequests() as session:
-        locations = json.loads(session.get(base_url, headers=_headers).text.split('var locations =')[1].split('var')[0].strip()[:-1])
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("var locations =")[1]
+            .split("var")[0]
+            .strip()[:-1]
+        )
         for _ in locations:
-            if _['is_coming_soon'] != '0':
+            if _["is_coming_soon"] != "0":
                 continue
             yield SgRecord(
-                page_url=_['href'],
-                store_number=_['id'],
-                location_name=' '.join(_["name"]),
-                street_address=_['address'],
-                city=_['city'],
-                state=_['state'],
-                zip_postal=_['zip'],
+                page_url=_["href"],
+                store_number=_["id"],
+                location_name=" ".join(_["name"]),
+                street_address=_["address"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zip"],
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code="US",
