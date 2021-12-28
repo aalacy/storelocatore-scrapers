@@ -168,7 +168,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -241,7 +240,7 @@ def fetch_data():
                 city = "Crawley"
             country_code = "UK"
             store_number = "<MISSING>"
-            phone = soup.find(
+            phone = row.find(
                 "a", {"class": "store-no", "href": re.compile(r"tel\:\/\/.*")}
             )
             if not phone:
