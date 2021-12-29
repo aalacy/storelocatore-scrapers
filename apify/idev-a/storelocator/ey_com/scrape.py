@@ -67,10 +67,12 @@ def _d(_, data, state=""):
         for ss in _s:
             if ss.strip():
                 data.append(
-                    _c(_, page_url, ss.strip(), state, zip, country_code, phone)
+                    _c(_, page_url, ss.strip(), state, zip_postal, country_code, phone)
                 )
     else:
-        data.append(_c(_, page_url, street_address, state, zip, country_code, phone))
+        data.append(
+            _c(_, page_url, street_address, state, zip_postal, country_code, phone)
+        )
 
 
 def fetch_data():

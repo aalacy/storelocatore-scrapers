@@ -50,11 +50,16 @@ def fetch_data():
                     )
                 except:
                     coord = ["", ""]
+
+                city = addr.city
+                location_name = _.h4.text.strip()
+                if not city:
+                    city = location_name
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_.h4.text.strip(),
+                    location_name=location_name,
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code="Egypt",

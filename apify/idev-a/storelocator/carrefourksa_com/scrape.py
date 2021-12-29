@@ -4,7 +4,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
 
@@ -19,7 +19,6 @@ base_url = "{}/en/store-finder?q=&page={}&storeFormat=&latitude={}&longitude={}"
 
 country_map = {
     "kw": "https://www.carrefourkuwait.com/mafkwt",
-    "sa": "https://www.carrefourksa.com/mafsau",
     "ae": "https://www.carrefourksa.com/mafsau",
     "jo": "https://www.carrefourjordan.com/mafjor",
     "pk": "https://www.carrefour.pk/mafpak",
@@ -91,9 +90,7 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_8()
-    )
+    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
     with SgWriter(
         deduper=SgRecordDeduper(
             SgRecordID(
@@ -112,7 +109,6 @@ if __name__ == "__main__":
             search_maker=search_maker,
             search_iteration=search_iter,
             country_codes=[
-                SearchableCountries.SAUDI_ARABIA,
                 SearchableCountries.KUWAIT,
                 SearchableCountries.UNITED_ARAB_EMIRATES,
                 SearchableCountries.PAKISTAN,

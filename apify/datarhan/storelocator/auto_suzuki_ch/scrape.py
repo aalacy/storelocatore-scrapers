@@ -1,5 +1,5 @@
 import re
-import yaml
+from yaml import load, CLoader as Loader
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -21,7 +21,7 @@ def fetch_data():
         r"locations\[\d+\] = (.+?)google.maps.event", response.text.replace("\n", "")
     )
     for poi in all_locations:
-        poi = yaml.load(poi)
+        poi = load(poi, Loader=Loader)
 
         item = SgRecord(
             locator_domain=domain,

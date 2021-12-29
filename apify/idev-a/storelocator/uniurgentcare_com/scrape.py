@@ -31,7 +31,7 @@ def fetch_data():
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             map_a = sp1.find("a", href=re.compile(r"/maps"))
             addr = list(map_a.find_parent().stripped_strings)
-            hours = list(sp1.select("p")[-1].stripped_strings)[1:]
+            hours = list(sp1.select("div.entry-content p")[-1].stripped_strings)[1:]
             try:
                 coord = map_a["href"].split("&sll=")[1].split("&")[0].split(",")
             except:

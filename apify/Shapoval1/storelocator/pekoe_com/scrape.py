@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//footer//div[./p[contains(text(), "Monday")]]')
+    div = tree.xpath('//body//div[./p[contains(text(), "Monday")]]')
     for d in div:
 
         page_url = "https://www.pekoe.com/locations"
