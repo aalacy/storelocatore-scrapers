@@ -80,7 +80,7 @@ def fetch_data():
             poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
             poi = json.loads(poi)
 
-            location_name = loc_dom.xpath('//p[@class="hotel__title"]/text()')[0]
+            location_name = poi["hotelName"]
             street = poi["streetAddress"]
             city = poi["city"]
             state = SgRecord.MISSING
