@@ -11,9 +11,7 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgChrome
 
 try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )
+    _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
