@@ -279,7 +279,7 @@ def batch_get_hours(locations, driver):
 def scrape():
     log.info("start")
     locations = []
-    coords = search = DynamicZipSearch(
+    coords = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         expected_search_radius_miles=10,
     )
