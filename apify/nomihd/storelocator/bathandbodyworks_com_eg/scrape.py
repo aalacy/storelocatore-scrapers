@@ -22,7 +22,7 @@ def fetch_data():
         "https://www.bathandbodyworks.com/middle-east-and-africa/global-locations-egypt.html",
     ]
 
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
 
         for search_url in search_urls:
 
