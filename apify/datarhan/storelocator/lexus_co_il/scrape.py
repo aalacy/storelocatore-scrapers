@@ -36,8 +36,8 @@ def fetch_data():
         )
         raw_data = [e.strip() for e in raw_data if e.strip()]
         phone = [e.split(":")[-1].strip() for e in raw_data if "טלפון" in e][0]
-        hoo = raw_data[4:6]
-        hoo = " ".join([e.split(": ")[-1] for e in hoo]).split("04-")[0].strip()
+        hoo = [e for e in raw_data if "0 - " in e]
+        hoo = " ".join([e for e in hoo]).split("04-")[0].strip()
 
         item = SgRecord(
             locator_domain=domain,

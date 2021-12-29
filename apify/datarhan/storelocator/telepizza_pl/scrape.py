@@ -25,6 +25,8 @@ def fetch_data():
             driver.get(page_url)
             loc_dom = etree.HTML(driver.page_source)
             location_name = loc_dom.xpath("//section/h2/text()")[0].split(", ")[0]
+            if "Lokale" in location_name:
+                continue
             city = " ".join(location_name.split()[1:])
             street_address = loc_dom.xpath("//section/h2/text()")[0].split(", ")[-1]
             phone = loc_dom.xpath('//span[contains(@class, "phone")]/text()')[0]
@@ -41,14 +43,16 @@ def fetch_data():
                 .split(", UWAGA")[0]
                 .split(", Organizujemy")[0]
                 .split(", ,")[0]
-                .split(", niedziela: nieczynne")[0]
                 .split(", poniedziałek - czwartek:")[0]
                 .strip()
             )
             if "00, niedziela - czwartek" in hoo:
                 hoo = hoo.split("00, niedziela - czwartek")[0] + "00"
+            if ", niedziela: nieczynne" in hoo:
+                hoo = hoo.split(", niedziela: nieczynne")[0] + ", niedziela: nieczynne"
             if hoo.endswith(","):
                 hoo = hoo[:-1]
+            hoo = hoo.replace("LOKAL:, ", "")
 
             item = SgRecord(
                 locator_domain=domain,

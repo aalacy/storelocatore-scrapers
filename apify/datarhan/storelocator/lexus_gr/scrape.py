@@ -21,8 +21,12 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//ul[@class="l-section__content"]/li//a/@href')
-    for url in all_locations:
+    all_locations = dom.xpath('//ul[@class="l-section__content"]/li')
+    for poi_html in all_locations:
+        location_type = poi_html.xpath(".//p/strong/text()")[0].strip()
+        if location_type != "ΕΚΘΕΣΗ ΑΥΤΟΚΙΝΗΤΩΝ":
+            continue
+        url = poi_html.xpath(".//a/@href")[0]
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)

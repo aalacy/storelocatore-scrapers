@@ -13,8 +13,19 @@ import tenacity
 import time
 import random
 import re
+import ssl
 
-logger = SgLogSetup().get_logger("costco_com")
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+logger = SgLogSetup().get_logger("costco_com__optical_html")
 MISSING = SgRecord.MISSING
 headers = {
     "accept": "application/json, text/plain, */*",
@@ -35,13 +46,20 @@ def fetch_loc(idx, url):
         raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
-@retry(stop=stop_after_attempt(5))
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def fetch_json_data(loc):
     with SgRequests() as http:
         r = http.get(loc, headers=headers)
-        if r.text:
-            data_json = json.loads(r.text)
-            return data_json
+        try:
+            if r.status_code == 200:
+                try:
+                    data_json = json.loads(r.text)
+                    return data_json
+                except Exception as e:
+                    raise Exception(f"{loc} >> Fix JSON <<{e}>> {r.status_code}")
+            raise Exception(f"{loc} >> HTTP Error Code: {r.status_code}")
+        except Exception as e:
+            logger.info(f"Please fix <<{e}>> {loc}")
 
 
 def get_us_ca_store_urls():
@@ -79,105 +97,130 @@ def get_global_urls():
 
 
 def fetch_data_us_ca(idx, loc, sgw: SgWriter):
-    # This section scrapes the data for US and CA
-    warehouse_number = loc.split("-")[-1].replace(".html", "")
-    api_endpoint_url = f"https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=&hasGas=&hasTires=&hasFood=&hasHearing=&hasPharmacy=&hasOptical=&hasBusiness=&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&warehouseNumber={warehouse_number}&countryCode="
-    data = fetch_json_data(api_endpoint_url)
-    data = data[1]
+    try:
+        # This section scrapes the data for US and CA
+        warehouse_number = loc.split("-")[-1].replace(".html", "")
+        api_endpoint_url = f"https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=&hasGas=&hasTires=&hasFood=&hasHearing=&hasPharmacy=&hasOptical=&hasBusiness=&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&warehouseNumber={warehouse_number}&countryCode="
+        data = fetch_json_data(api_endpoint_url)
+        if len(data) < 2:
+            return
+        else:
+            data = data[1]
 
-    # locator_domain
-    locator_domain = "costco.com"
-    logger.info(f"[{idx}] domain: {locator_domain}")
+            # locator_domain
+            locator_domain = "costco.com"
+            logger.info(f"[{idx}] domain: {locator_domain}")
 
-    # Page URL
-    page_url = loc
-    logger.info(f"[{idx}] purl: {page_url}")
+            # Page URL
+            page_url = loc
+            logger.info(f"[{idx}] purl: {page_url}")
 
-    # Location Name
-    locname = data["locationName"]
-    location_name = locname if locname else MISSING
-    logger.info(f"[{idx}] Locname: {location_name}")
+            # Location Name
+            locname = data["locationName"]
+            location_name = locname if locname else MISSING
+            logger.info(f"[{idx}] Locname: {location_name}")
 
-    # Street Address
-    street_address = data["address1"]
-    street_address = street_address if street_address else MISSING
-    logger.info(f"[{idx}] st_add: {street_address}")
+            # Street Address
+            street_address = data["address1"]
+            street_address = street_address if street_address else MISSING
+            logger.info(f"[{idx}] st_add: {street_address}")
 
-    city = data["city"] if data["city"] else MISSING
-    logger.info(f"[{idx}] city: {city}")
+            city = data["city"] if data["city"] else MISSING
+            logger.info(f"[{idx}] city: {city}")
 
-    state = data["state"] if data["state"] else MISSING
-    logger.info(f"[{idx}] state: {state}")
+            state = data["state"] if data["state"] else MISSING
+            logger.info(f"[{idx}] state: {state}")
 
-    zip_postal = data["zipCode"] if data["zipCode"] else MISSING
-    logger.info(f"[{idx}] zip: {zip_postal}")
+            zip_postal = data["zipCode"] if data["zipCode"] else MISSING
+            logger.info(f"[{idx}] zip: {zip_postal}")
 
-    country_code = data["country"] if data["country"] else MISSING
-    logger.info(f"[{idx}] country_code: {country_code}")
+            country_code = data["country"] if data["country"] else MISSING
+            logger.info(f"[{idx}] country_code: {country_code}")
 
-    store_number = data["stlocID"] if data["stlocID"] else MISSING
-    logger.info(f"[{idx}] store_number: {store_number}")
+            store_number = data["stlocID"] if data["stlocID"] else MISSING
+            logger.info(f"[{idx}] store_number: {store_number}")
 
-    phone = " ".join(data["phone"].split())
-    phone = phone if phone else MISSING
-    logger.info(f"[{idx}] Phone: {phone}")
+            phone = " ".join(data["phone"].split())
+            phone = phone if phone else MISSING
+            logger.info(f"[{idx}] Phone: {phone}")
 
-    # Location Type
-    location_type = "Warehouse"
-    logger.info(f"[{idx}] location_type: {location_type}")
+            # Location Type
+            location_type = "Warehouse"
+            logger.info(f"[{idx}] location_type: {location_type}")
 
-    latitude = data["latitude"] if data["latitude"] else MISSING
-    logger.info(f"[{idx}] lat: {latitude}")
+            latitude = data["latitude"] if data["latitude"] else MISSING
+            logger.info(f"[{idx}] lat: {latitude}")
 
-    longitude = data["longitude"] if data["longitude"] else MISSING
-    logger.info(f"[{idx}] long: {longitude}")
+            longitude = data["longitude"] if data["longitude"] else MISSING
+            logger.info(f"[{idx}] long: {longitude}")
 
-    warehouse_hoo = data["warehouseHours"]
+            warehouse_hoo = data["warehouseHours"]
+            hours_of_operation = ""
+            if warehouse_hoo:
+                hours_of_operation = "; ".join(warehouse_hoo)
+            else:
+                hours_of_operation = MISSING
+            logger.info(f"[{idx}] hoo: {hours_of_operation}")
+
+            raw_address = MISSING
+            logger.info(f"[{idx}] raw_add: {raw_address}")
+
+            # Identifying those warehouse having Optical services
+
+            has_optical_department = data["hasOpticalDepartment"]
+            if has_optical_department is True:
+                location_type = "Optical"
+                hours_of_operation = MISSING
+                if "coreServices" in data:
+                    core_services = data["coreServices"]
+                    for cs in core_services:
+                        cs_name = cs["name"]
+                        if "Optical Department" in cs_name:
+                            phone = cs["phone"]
+                            phone = phone if phone else MISSING
+
+            else:
+                return
+
+            item = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            sgw.write_row(item)
+    except Exception as e:
+        logger.info(f"Please fix <<{e}>> {idx} {loc} ")
+
+
+def get_hoo_global(gitem):
     hours_of_operation = ""
-    if warehouse_hoo:
-        hours_of_operation = "; ".join(warehouse_hoo)
+    hoo = []
+    if "openings" in gitem:
+        warehouse_hoo = gitem["openings"]
+        if warehouse_hoo:
+            for k, v in warehouse_hoo.items():
+                if "individual" in v:
+                    times = v["individual"]
+                    daytimes = k + " " + times
+                    hoo.append(daytimes)
+            hours_of_operation = "; ".join(hoo)
+        else:
+            hours_of_operation = MISSING
     else:
         hours_of_operation = MISSING
-    logger.info(f"[{idx}] hoo: {hours_of_operation}")
-
-    raw_address = MISSING
-    logger.info(f"[{idx}] raw_add: {raw_address}")
-
-    # Identifying those warehouse having Optical services
-
-    has_optical_department = data["hasOpticalDepartment"]
-    if has_optical_department is True:
-        location_type = "Optical"
-        hours_of_operation = MISSING
-        if "coreServices" in data:
-            core_services = data["coreServices"]
-            for cs in core_services:
-                cs_name = cs["name"]
-                if "Optical Department" in cs_name:
-                    phone = cs["phone"]
-                    phone = phone if phone else MISSING
-
-    else:
-        return
-
-    item = SgRecord(
-        locator_domain=locator_domain,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=location_type,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hours_of_operation,
-        raw_address=raw_address,
-    )
-    sgw.write_row(item)
+    return hours_of_operation
 
 
 def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
@@ -271,21 +314,7 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
             lng = gitem["longitude"]
             longitude = lng if lng else MISSING
             logger.info(f"[{idx1}] long: {longitude}")
-            hours_of_operation = ""
-            hoo = []
-            if "openings" in gitem:
-                warehouse_hoo = gitem["openings"]
-                if warehouse_hoo:
-                    for k, v in warehouse_hoo.items():
-                        if "individual" in v:
-                            times = v["individual"]
-                            daytimes = k + " " + times
-                            hoo.append(daytimes)
-                    hours_of_operation = "; ".join(hoo)
-                else:
-                    hours_of_operation = MISSING
-            else:
-                hours_of_operation = MISSING
+            hours_of_operation = get_hoo_global(gitem)
 
             # It is found that the city of AU data contains the state data
             # This extracts the state data from city and assign it back to the state
@@ -322,17 +351,19 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
                         as_opening_hours = as_["openingHours"]
                         if as_opening_hours:
                             sel_hoo = html.fromstring(as_opening_hours, "lxml")
-                            optical_global_hoo = sel_hoo.xpath("//ul/li/text()")
+                            optical_global_hoo = sel_hoo.xpath("//text()")
                             if optical_global_hoo:
                                 hours_of_operation = "; ".join(optical_global_hoo)
                             else:
                                 hours_of_operation = MISSING
                             if "JP" in country_code:
-                                optical_global_hoo_jp = sel_hoo.xpath("//ul/li//text()")
+                                optical_global_hoo_jp = sel_hoo.xpath("//text()")
                                 if optical_global_hoo_jp:
                                     hours_of_operation = " ".join(optical_global_hoo_jp)
                                 else:
                                     hours_of_operation = MISSING
+                            if "please see warehouse" in as_opening_hours.lower():
+                                hours_of_operation = get_hoo_global(gitem)
 
                     else:
                         continue
@@ -364,6 +395,7 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     global_url_wout_us_ca = get_global_urls()
+
     locs = get_us_ca_store_urls()
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
