@@ -83,7 +83,7 @@ def fetch_data():
             state = "CA"
             zip_postal = "91210"
             phone = "(818) 409-9338"
-            hours = "Mon-Thurs: 11AM - 8PM; Fri-Sat: 10AM - 8PM; Sun: 11AM - 8PM"
+            hours_of_operation = "Mon-Thurs: 11AM - 8PM; Fri-Sat: 10AM - 8PM; Sun: 11AM - 8PM"
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
