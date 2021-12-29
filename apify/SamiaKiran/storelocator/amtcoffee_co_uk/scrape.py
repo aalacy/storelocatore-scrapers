@@ -30,25 +30,38 @@ def fetch_data():
             location_name = loc["title"]
             store_number = loc["id"]
             phone = MISSING
-            soup = BeautifulSoup(loc["tooltipContent"], "html.parser")
-            hours_of_operation = (
-                soup.get_text(separator="|", strip=True)
-                .split("|")[1]
-                .replace("\r\n", " ")
-                .replace("(closed this weekend due to Irish Rail track upgrades )", "")
-                .replace("Open First to Last flight", "")
-            )
-            if "(closed" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("(closed")[0]
+
             raw_address = location_name
             pa = parse_address_intl(raw_address)
-
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
             log.info(location_name)
             city = loc["city"]
             state = MISSING
             zip_postal = loc["zip"]
+            if zip_postal.isalpha():
+                zip_postal = MISSING
+            soup = BeautifulSoup(loc["tooltipContent"], "html.parser")
+            if len(soup.get_text(separator="|", strip=True).split("|")) == 1:
+                hours_of_operation = MISSING
+            else:
+                hours_of_operation = (
+                    soup.get_text(separator="|", strip=True)
+                    .split("|")[1]
+                    .replace("\r\n", " ")
+                    .replace(
+                        "(closed this weekend due to Irish Rail track upgrades )", ""
+                    )
+                    .replace("Open First to Last flight", "")
+                )
+                if "(closed" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("(closed")[0]
+                if zip_postal in hours_of_operation:
+                    hours_of_operation = (
+                        soup.get_text(separator="|", strip=True)
+                        .split("|")[2]
+                        .replace("\r\n", " ")
+                    )
             country_code = "UK"
             latitude, longitude = (
                 str(loc["latlng"]).replace("[", "").replace("]", "").split(",")

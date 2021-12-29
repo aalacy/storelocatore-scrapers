@@ -191,7 +191,7 @@ def fetch_data():
         if sp1.select_one("span.phone-list"):
             phone = sp1.select_one("span.phone-list").text.strip()
         hours = []
-        for hh in _["openingHoursSpecification"]:
+        for hh in _.get("openingHoursSpecification", []):
             day = hh["dayOfWeek"]
             hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
         addr = _["address"]
