@@ -26,7 +26,6 @@ def fetch_data():
     locs = {}
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if ".name='" in line and "//" not in line:
             name = line.split(".name='")[1].split("';")[0]
             rid = line.split(".name")[0].strip().replace("\t", "")
@@ -36,7 +35,7 @@ def fetch_data():
             state = ""
         if ".address='" in line and "//" not in line:
             add = line.split(".address='")[1].split("';")[0]
-        if ".openingtime.push('" in line and "//" not in line:
+        if ".openingtime.push('" in line:
             hrs = line.split(".openingtime.push('")[1].split("');")[0]
         if ".tel.push('" in line and "//" not in line:
             phone = line.split(".tel.push('")[1].split("');")[0]

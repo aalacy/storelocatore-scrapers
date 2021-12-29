@@ -23,6 +23,7 @@ def fetch_data(sgw: SgWriter):
             "".join(j.get("store"))
             .replace("&#8217;", "`")
             .replace("&#038;", "&")
+            .replace("&#8211;", "-")
             .strip()
         )
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
@@ -34,9 +35,15 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat")
         longitude = j.get("lng")
         phone = j.get("phone")
-        hours_of_operation = j.get("hours")
-        a = html.fromstring(hours_of_operation)
-        hours_of_operation = " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+        hours_of_operation = "<MISSING>"
+        hours = j.get("hours") or "<MISSING>"
+        if hours != "<MISSING>":
+            a = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+            )
+        if location_name.find("CLOSED") != -1:
+            hours_of_operation = "Closed"
 
         row = SgRecord(
             locator_domain=locator_domain,
