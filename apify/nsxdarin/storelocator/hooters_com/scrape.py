@@ -40,7 +40,8 @@ def fetch_data():
             and "<loc>https://www.hooters.com/locations/<" not in line
         ):
             lurl = line.split("<loc>")[1].split("<")[0]
-            locs.append(lurl)
+            if "3107-castleton" not in lurl:
+                locs.append(lurl)
     for loc in locs:
         time.sleep(3)
         TC = False

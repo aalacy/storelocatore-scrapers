@@ -24,8 +24,7 @@ def fetch_data():
 
         search_sel = lxml.html.fromstring(search_res.text)
         stores = search_sel.xpath('//form[@id="branchsearch"]//select/option')
-
-        for no, store in enumerate(stores[225:], 1):
+        for store in stores:
 
             locator_domain = website
 
