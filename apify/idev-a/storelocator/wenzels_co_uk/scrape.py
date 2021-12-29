@@ -46,10 +46,6 @@ def fetch_data():
             if not city and state:
                 city = state
                 state = ""
-            if _["name"] == "Crouch End":
-                import pdb
-
-                pdb.set_trace()
             yield SgRecord(
                 page_url=_["permalink"],
                 store_number=_["id"],
