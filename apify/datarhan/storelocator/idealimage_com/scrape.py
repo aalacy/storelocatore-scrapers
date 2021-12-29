@@ -26,7 +26,9 @@ def fetch_data():
             continue
         loc_dom = etree.HTML(loc_response.text)
         location_name = poi_html.xpath(".//location/text()")
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = (
+            location_name[0].replace("amp;", "") if location_name else "<MISSING>"
+        )
         addr = parse_address_intl(poi_html.xpath(".//address/text()")[0])
         street_address = addr.street_address_1
         if addr.street_address_2:
