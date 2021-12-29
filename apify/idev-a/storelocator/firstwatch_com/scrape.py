@@ -1,4 +1,3 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
