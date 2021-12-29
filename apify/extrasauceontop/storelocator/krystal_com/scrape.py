@@ -105,14 +105,24 @@ def get_data():
                 country_code = location["country"]
 
                 hours = ""
-                for hours_part in location["hours"]:
-                    day = hours_part["day"]
-                    start = hours_part["open"]
-                    end = hours_part["close"]
 
-                    hours = hours + day + " " + start + "-" + end + ", "
+                try:
+                    for hours_part in location["hours"]:
+                        day = hours_part["day"]
+                        start = hours_part["open"]
+                        end = hours_part["close"]
 
-                hours = hours[:-2]
+                        try:
+                            hours = hours + day + " " + start + "-" + end + ", "
+                        except Exception:
+                            continue
+
+                    hours = hours[:-2]
+
+                except Exception:
+                    print(search_code)
+                    print(location_name)
+                    raise Exception
 
                 yield {
                     "locator_domain": locator_domain,
@@ -132,6 +142,7 @@ def get_data():
                 }
 
             except Exception:
+                print(search_code)
                 raise Exception
 
 
