@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from pyjsparser import parse
 import re
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("dunkin")
 
