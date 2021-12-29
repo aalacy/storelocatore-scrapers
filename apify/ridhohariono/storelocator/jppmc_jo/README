@@ -1,0 +1,10 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+--ignore LatLngDuplicationValidator (Duplicate latlong with different location_name)
+Found 5 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+      latitude  longitude                                     street_address  num_addrs
+76     31.8578     36.021                    {عمان-سحاب, سحاب - شارع الستين}          2
+194    32.0524    35.7409  {نزول العارضه, مدخل السلط عمان نزول وادي الشجر...          2
+276  32.526009  35.999725                               {الرمثا 5, الرمثا 1}          2
+285    32.5517    36.0076                   {مدخل الرمثا طريق الشام, الرمثا}          2
+287  32.551773  36.009792                               {الرمثا 3, الرمثا 4}          2

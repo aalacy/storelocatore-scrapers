@@ -1,93 +1,55 @@
-import csv
-
+from lxml import html
 from concurrent import futures
 from datetime import datetime
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.beatone.co.uk/sitemap")
+    r = session.get("https://www.beatone.co.uk/bars")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//ul[@class='venue-list']/li/a/@href")
+    return tree.xpath("//a[@class='inner-item']/@href")
 
 
-def get_data(url):
-    locator_domain = "https://www.beatone.co.uk/"
-    page_url = f"https://www.beatone.co.uk{url}"
+def get_data(url, sgw):
+    page_url = f"https://www.beatone.co.uk/{url}"
 
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
     location_name = tree.xpath("//h1/text()")[1].strip()
-    line = tree.xpath("//ul[@class='menu vertical address']/li/text()")
-    street_address = line[0]
-    if line[1][0].isdigit():
-        street_address += f", {line[1]}"
-        line.remove(line[1])
+    line = " ".join(tree.xpath("//ul[@class='menu vertical address']/li/text()"))
+    adr = parse_address(International_Parser(), line)
 
-    city = line[1]
-    if len(line) == 3:
-        state = "<MISSING>"
-    else:
-        state = line[-2]
-
-    if city.find(",") != -1:
-        state = city.split(",")[-1].strip()
-        city = city.split(",")[0].strip()
-    postal = line[-1]
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city
+    state = adr.state
+    postal = adr.postcode or "<MISSING>"
+    if postal == "<MISSING>":
+        postal = " ".join(street_address.split()[-2:])
+        street_address = street_address.replace(postal, "").strip()
     country_code = "GB"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath("//ul[@class='menu vertical']//a[contains(@href, 'tel')]/text()")
-        ).strip()
-        or "<MISSING>"
-    )
+    phone = "".join(
+        tree.xpath("//ul[@class='menu vertical']//a[contains(@href, 'tel')]//text()")
+    ).strip()
 
     try:
         text = "".join(tree.xpath("//script[contains(text(), 'new H.Map(')]/text()"))
         text = text.split("center: ")[1].split("});")[0].strip()
         lat, lng = "lat", "lng"
         a = eval(text)
-        latitude = a.get(lat) or "<MISSING>"
-        longitude = a.get(lng) or "<MISSING>"
+        latitude = a.get(lat)
+        longitude = a.get(lng)
     except:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    location_type = "<MISSING>"
+        latitude = SgRecord.MISSING
+        longitude = SgRecord.MISSING
 
     _tmp = []
     divs = tree.xpath("//div[@class='opening-times']/div[./span]")
@@ -102,44 +64,35 @@ def get_data(url):
     if hours_of_operation.lower().count("closed") == 7:
         hours_of_operation = "Closed"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.beatone.co.uk/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

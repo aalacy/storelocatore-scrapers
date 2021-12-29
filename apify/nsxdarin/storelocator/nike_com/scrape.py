@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("nike_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -50,6 +26,10 @@ def fetch_data():
             for item in items:
                 if '"name":"' in item:
                     name = item.split('"name":"')[1].split('"')[0]
+                    try:
+                        typ = item.split('"type":"')[1].split('"')[0]
+                    except:
+                        typ = "<MISSING>"
                     loc = "https://www.nike.com/us/retail/s/" + item.split('"')[0]
                     try:
                         add = item.split('"address_1":"')[1].split('"')[0]
@@ -304,27 +284,47 @@ def fetch_data():
                         hours = "<INACCESSIBLE>"
                     if "Sun:" in hours and "Mon" not in hours:
                         hours = "<INACCESSIBLE>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    elif "clearance center" in name.lower():
+                        name = "Nike Clearance Center"
+                    elif "community store" in name.lower():
+                        name = "Nike Community Store"
+                    elif "factory store" in name.lower():
+                        name = "Nike Factory Store"
+                    elif "nikelab" in name.lower():
+                        name = "NikeLab"
+                    else:
+                        name = "Nike"
+                    if "factory" in name.lower():
+                        name = "Nike Factory Store"
+                    if "nike store" in name.lower():
+                        name = "Nike"
+                    if "nike by" in name.lower():
+                        name = "Nike"
+                    if "nike zlote" in name.lower():
+                        name = "Nike"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

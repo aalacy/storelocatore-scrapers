@@ -1,0 +1,24 @@
+--ignore CountryCodeFillRateChecker (Not us/ca)
+
+--ignore CentroidValidator (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+   latitude  longitude                       REASON  rowNumber
+95     18.2  -66.05549  EITHER_LAT_OR_LNG_IMPRECISE         95
+
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 6 concerning rows. Examples:
+                  street_address              REASON  rowNumber
+0  Ave. Ortegón Esq. Calle Ebano  ADDR_HAS_NO_NUMBER          0
+3            Plaza Del Atlántico  ADDR_HAS_NO_NUMBER          3
+4        Carr. # 2 Ponce By-Pass  ADDR_HAS_NO_NUMBER          4
+5            Carr. # 3 Km. 135.8  ADDR_HAS_NO_NUMBER          5
+7      La Rambla Shopping Center  ADDR_HAS_NO_NUMBER          7
+
+
+--ignore LatLngDuplicationValidator (Duplicate lat/lon with location_name)
+Found 3 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+    latitude  longitude                                     street_address  num_addrs
+9   18.02619  -66.60094  {Carr. # 2 Ponce By-Pass, La Rambla Shopping C...          2
+14  18.04356  -66.72054  {Plaza Peñuelas Shopping Center Carr. 385 Km. ...          2
+25  18.16818   -67.1529  {# 343 Carr. # 2 Km. 158.6 Y Carer., 114 Bo. G...          2

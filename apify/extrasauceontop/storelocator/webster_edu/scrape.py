@@ -1,89 +1,132 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import re
 from sgscrape import simple_scraper_pipeline as sp
+import json
+
+
+def cross_check(location_name, session):
+
+    response = session.get(
+        "https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query="
+        + location_name
+        + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster"
+    ).text
+    response = (
+        response.replace("\n", "")
+        .replace("\t", "")
+        .replace("ousearchresults(", "")[:-1]
+    )
+
+    final = json.loads(response)
+
+    page_url = ""
+    for result in final["results"]:
+        url_to_check = result["url"]
+
+        if "/locations/" in url_to_check and "/index.php" in url_to_check:
+            page_url = url_to_check
+            break
+
+    if page_url == "":
+        for result in final["results"]:
+            url_to_check = result["url"]
+
+            if "/locations/" in url_to_check:
+                page_url = url_to_check
+                break
+
+    if page_url == "":
+        response = session.get(
+            "https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query="
+            + location_name.split(" ")[0]
+            + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster"
+        ).text
+        response = (
+            response.replace("\n", "")
+            .replace("\t", "")
+            .replace("ousearchresults(", "")[:-1]
+        )
+
+        final = json.loads(response)
+        for result in final["results"]:
+            url_to_check = result["url"]
+
+            if "/locations/" in url_to_check:
+                page_url = url_to_check
+                break
+
+    return page_url
 
 
 def get_data():
     session = SgRequests()
 
-    response = session.get(
-        "https://webster.edu/catalog/current/graduate-catalog/campus-locations.html#.YRbMxIhKi3A"
-    ).text
-
-    response = response.split("Palais Wenkheim, 23 Praterstrasse")[0]
+    response = session.get("https://legacy.webster.edu/locations/index.xml").text
     soup = bs(response, "html.parser")
 
-    p_tags = soup.find_all("p")
+    placemarks = soup.find_all("placemark")
 
-    address_p_list = []
-    for tag in p_tags:
-        if "Ph:" in tag.text.strip() in tag.text.strip():
-            address_p_list.append(tag)
+    for placemark in placemarks:
+        testmark = str(placemark)
 
-    name_tags = soup.find_all("strong")
+        testmark = testmark[:-12]
+        testmark = testmark[11:]
 
-    name_s_list = []
-    for tag in name_tags:
-        if (
-            "^" in tag.text.strip()
-            or "*" in tag.text.strip()
-            or "Webster University at Southwestern Illinois College" in tag.text.strip()
-            or "University Center of Lake County" in tag.text.strip()
-        ):
-            tag_check = tag.text.strip().replace("^", "")
-            if tag_check == "*":
-                tag = name_tags[name_tags.index(tag) - 1]
-            name_s_list.append(tag)
+        if "placemark" in testmark.lower():
+            continue
 
-    x = 0
-    for tag in name_s_list:
-        locator_domain = "webster.edu"
-        page_url = "<MISSING>"
-        location_name = tag.text.strip()
+        locator_domain = "legacy.webster.edu"
+        location_name = placemark.find("name").text.strip().replace("\n", "")
+        latitude = placemark.find("coordinates").text.strip().split(",")[1]
+        longitude = placemark.find("coordinates").text.strip().split(",")[0]
 
-        address_parts = str(address_p_list[x]).split("<br/>")
-        address_pieces = []
-        begin = "False"
-        for part in address_parts:
-            if bool(re.search(r"\d", part)) is True:
-                begin = "True"
+        address_parts = placemark.find("description").text.strip()
+        phone = address_parts.split("Phone: ")[-1].strip()
+        if location_name == "San Antonio":
+            phone = phone.replace(" ", "")
+        if " " in phone or "+" in phone or location_name == address_parts:
+            continue
 
-            if begin == "True":
-                address_pieces.append(part)
+        address_pieces = address_parts.split("<br/>")
 
-        for piece in address_pieces:
-            if "Ph:" in piece:
-                phone_index = address_pieces.index(piece)
+        if len(address_pieces) > 2:
+            address_things = address_pieces[:-2]
+            address = ""
+            for piece in address_things:
+                address = address + piece + " "
 
-        address = ""
-        for y in range(phone_index + 1):
-            if y <= phone_index - 2:
-                address = address + address_pieces[y].replace("</strong>", "") + " "
+            address = address.strip()
 
-            elif y == phone_index - 1:
-                city_state = address_pieces[y]
+            city = address_pieces[-2].split(", ")[0].strip()
+            state = " " + address_pieces[-2].split(", ")[1].split(" ")[0].strip()
+            zipp = address_pieces[-2].split(", ")[1].split(" ")[-1].strip()
 
-            else:
-                phone = address_pieces[y]
+        else:
+            address = address_pieces[0].split(",")[0].strip()
+            city = address_pieces[0].split(",")[1].strip()
+            state = " " + address_pieces[0].split(",")[2].split(" ")[-2].strip()
+            zipp = address_pieces[0].split(",")[2].split(" ")[-1].strip()
 
-        address = address.strip()
-        phone = phone.replace("Ph: ", "").split(",")[0]
-        city = city_state.split(",")[0]
-        state = city_state.split(", ")[1].split(" ")[0]
-        zipp = city_state.split(", ")[1].split(" ")[1]
-
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        store_number = ""
-        location_type = ""
-        hours = ""
+        city = city.replace("Â ", "")
+        zipp = zipp.replace("Â ", "")
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        hours = "<MISSING>"
         country_code = "US"
+
+        page_url = cross_check(location_name, session)
+        page_response = session.get(page_url).text
+
+        if (
+            "permanently closed" in page_response.lower()
+            or "This Webster University location is no longer open" in page_response
+        ):
+            continue
 
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
-            "location_name": location_name.replace("*", "").replace("^", ""),
+            "location_name": location_name,
             "latitude": latitude,
             "longitude": longitude,
             "city": city,
@@ -96,8 +139,6 @@ def get_data():
             "hours": hours,
             "country_code": country_code,
         }
-
-        x = x + 1
 
 
 def scrape():
