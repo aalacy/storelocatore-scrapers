@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
+import time
 
 logger = SgLogSetup().get_logger("volkswagen_co_uk")
 
@@ -82,7 +83,26 @@ def fetch_data():
             add = item["address"]["street"]
             lat = item["coordinates"][0]
             lng = item["coordinates"][1]
-            hours = "<MISSING>"
+            hours = ""
+            OHFound = False
+            try:
+                r3 = session.get(lurl, headers=headers)
+                time.sleep(5)
+                for line3 in r3.iter_lines():
+                    if '"openingHours": [' in line3 and hours == "":
+                        OHFound = True
+                    if OHFound and "]," in line3:
+                        OHFound = False
+                    if OHFound and "-" in line3:
+                        hrs = line3.split('"')[1]
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+            except:
+                pass
+            if hours == "":
+                hours = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=lurl,
