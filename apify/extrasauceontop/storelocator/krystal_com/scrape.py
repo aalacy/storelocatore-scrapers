@@ -120,8 +120,6 @@ def get_data():
                     hours = hours[:-2]
 
                 except Exception:
-                    print(search_code)
-                    print(location_name)
                     raise Exception
 
                 yield {
@@ -142,7 +140,6 @@ def get_data():
                 }
 
             except Exception:
-                print(search_code)
                 raise Exception
 
 
