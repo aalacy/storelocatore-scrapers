@@ -85,47 +85,54 @@ def get_data():
         except Exception:
             raise Exception
         for location in data["locations"]:
-            locator_domain = "krystal.com"
-            page_url = "https://www.krystal.com/locations/" + location["path"]
-            location_name = location["address"]
-            latitude = location["lat"]
-            longitude = location["lng"]
-            search.found_location_at(latitude, longitude)
-            city = location["city"]
-            store_number = location["id"]
-            address = location["address"]
-            state = location["state"]
-            zipp = location["zip"]
-            phone = location["phone"]
-            location_type = location["name"]
-            country_code = location["country"]
+            try:
+                locator_domain = "krystal.com"
+                try:
+                    page_url = "https://www.krystal.com/locations/" + location["path"]
+                except Exception:
+                    page_url = "<MISSING>"
+                location_name = location["address"]
+                latitude = location["lat"]
+                longitude = location["lng"]
+                search.found_location_at(latitude, longitude)
+                city = location["city"]
+                store_number = location["id"]
+                address = location["address"]
+                state = location["state"]
+                zipp = location["zip"]
+                phone = location["phone"]
+                location_type = location["name"]
+                country_code = location["country"]
 
-            hours = ""
-            for hours_part in location["hours"]:
-                day = hours_part["day"]
-                start = hours_part["open"]
-                end = hours_part["close"]
+                hours = ""
+                for hours_part in location["hours"]:
+                    day = hours_part["day"]
+                    start = hours_part["open"]
+                    end = hours_part["close"]
 
-                hours = hours + day + " " + start + "-" + end + ", "
+                    hours = hours + day + " " + start + "-" + end + ", "
 
-            hours = hours[:-2]
+                hours = hours[:-2]
 
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+                yield {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                }
+
+            except Exception:
+                raise Exception
 
 
 def scrape():
