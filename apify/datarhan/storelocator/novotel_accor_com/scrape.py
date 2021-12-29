@@ -101,7 +101,7 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=poi_url.split("/")[-2],
             phone=phone,
             location_type=location_type,
             latitude=latitude,
