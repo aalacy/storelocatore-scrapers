@@ -77,11 +77,13 @@ def fetch_data():
         latitude = MISSING
         longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
-        if "glendale-store-details" in page_url:
-            street_address = "773 AMERICANA WAY, SUITE E15"
-            city = "GLENDALE"
+        if "glendale-store-details" in page_url or "Glendale" in location_name:
+            street_address = "773 Americana Way, Suite E15"
+            city = "Glendale"
             state = "CA"
             zip_postal = "91210"
+            phone = "(818) 409-9338"
+            hours = "Mon-Thurs: 11AM - 8PM; Fri-Sat: 10AM - 8PM; Sun: 11AM - 8PM"
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
