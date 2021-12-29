@@ -11,7 +11,7 @@ from sgselenium.sgselenium import SgChrome
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     start_url = "https://www.thebetterhealthstore.com/pointofsale/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
