@@ -66,16 +66,33 @@ def fetch_data(sgw: SgWriter):
             phone = info.split("Phone:")[1].replace("Directions", "").strip()
         if phone.find("OPEN") != -1:
             phone = phone.split("OPEN")[0].strip()
-        tmp = []
-        for i in inf:
-            if "Monday" in i or "OPEN" in i:
-                tmp.append(i)
-        try:
-            hours_of_operation = (
-                "".join(tmp[0]).replace("\xa0", "").replace("|", "").strip()
-            )
-        except:
-            hours_of_operation = "<MISSING>"
+        hours_of_operation = (
+            " ".join(d.xpath(".//*//text()")).replace("\n", "").strip() or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("Luke Gas Station Hours") != -1:
+            hours_of_operation = hours_of_operation.split("Luke Gas Station Hours")[
+                1
+            ].strip()
+        if hours_of_operation.find("Luke Car Wash Hours") != -1:
+            hours_of_operation = hours_of_operation.split("Luke Car Wash Hours")[
+                0
+            ].strip()
+        if hours_of_operation.find("Hours:") != -1:
+            hours_of_operation = hours_of_operation.split("Hours:")[1].strip()
+        if (
+            hours_of_operation.find("Phone") != -1
+            and hours_of_operation.find("OPEN") == -1
+        ):
+            hours_of_operation = hours_of_operation.split("Phone")[0].strip()
+        if hours_of_operation.find("OPEN 24 Hours") != -1:
+            hours_of_operation = "OPEN 24 Hours"
+        hours_of_operation = (
+            hours_of_operation.replace(" | ", " ")
+            .replace(":", "")
+            .replace("|", "")
+            .strip()
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
