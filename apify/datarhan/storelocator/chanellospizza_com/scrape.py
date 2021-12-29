@@ -38,7 +38,6 @@ def fetch_data():
 
         store_url = poi_html.xpath('.//div[@class="online-order"]/a/@href')[0]
         location_name = poi["title"].replace("&#8217;", "")
-        location_name = location_name if location_name else "<MISSING>"
         street_address = poi_html.xpath(".//address/text()")
         street_address = street_address[0] if street_address else "<MISSING>"
         city = city_dict[location_name]
@@ -54,6 +53,9 @@ def fetch_data():
                 sleep(5)
                 loc_dom = etree.HTML(driver.page_source)
 
+            check = loc_dom.xpath('.//div[@class="title"]/h1/text()')[0]
+            if "online ordering" in check.lower():
+                continue
             raw_data = loc_dom.xpath('//div[@class="sidebarSelectedLocation"]/p/text()')
             raw_data = [elem.strip() for elem in raw_data]
             if len(raw_data) == 4:
@@ -75,9 +77,13 @@ def fetch_data():
                 driver.get(store_url)
                 sleep(10)
                 loc_dom = etree.HTML(driver.page_source)
-                raw_data = loc_dom.xpath("//div[fts-store-phone]/span/text()")
+                raw_data = loc_dom.xpath(
+                    '//div[contains(@class, "store text-right")]/span/text()'
+                )
                 if raw_data:
                     raw_data = raw_data[0].split(", ")
+                    street_address = raw_data[0]
+                    city = raw_data[1]
                     state = raw_data[-1].split()[0]
                     zip_code = raw_data[-1].split()[-1]
         store_number = poi["id"]
@@ -92,6 +98,28 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
+        if "intouchposonline" in store_url:
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+
+            raw_data = (
+                loc_dom.xpath('//ul[@class="when"]/li[1]/span/text()')[1]
+                .split("/")[-1]
+                .strip()
+                .split(", ")
+            )
+            street_address = raw_data[0]
+            city = raw_data[1]
+            state = raw_data[-1].split()[0]
+            zip_code = raw_data[-1].split()[-1]
+            hours_of_operation = (
+                loc_dom.xpath('//span[contains(text(), "Hours:")]/text()')[-1]
+                .replace("Hours: ", "")
+                .replace("|", ",")
+            )
+        if "slicelife" in store_url:
+            state = store_url.split("/")[4]
+            zip_code = store_url.split("/")[6]
 
         item = SgRecord(
             locator_domain=domain,
