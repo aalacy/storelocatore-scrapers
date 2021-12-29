@@ -34,22 +34,22 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         ad = "".join(j.get("address"))
-        ad = html.fromstring(ad)
-        ad = ad.xpath("//*/text()")
-        if len(ad) == 5:
-            ad = list(ad)
-            del ad[0]
+        a = html.fromstring(ad)
 
-        street_address = "".join(ad[1]).replace("\n", "").replace(",", "").strip()
-        phone = "".join(ad[3]).replace("\n", "").strip()
-        adr = "".join(ad[2]).replace("\n", "").strip()
+        adr = a.xpath("//*/text()")
+        if len(adr) == 5:
+            del adr[0]
 
-        city = adr.split(",")[0].strip()
-        state = adr.split(",")[1].split()[0].strip()
-        postal = adr.split(",")[1].split()[-1].strip()
+        street_address = "".join(adr[1]).replace("\n", "").replace(",", "").strip()
+        phone = "".join(adr[3]).replace("\n", "").strip()
+        adrr = "".join(adr[2]).replace("\n", "").strip()
+
+        city = adrr.split(",")[0].strip()
+        state = adrr.split(",")[1].split()[0].strip()
+        postal = adrr.split(",")[1].split()[-1].strip()
 
         country_code = "US"
-        location_name = "".join(ad[0]).replace("\n", "").replace(",", "").strip()
+        location_name = "".join(adr[0]).replace("\n", "").replace(",", "").strip()
         latitude = j.get("latitude")
         longitude = j.get("longitude")
 
