@@ -1,75 +1,67 @@
-import csv
-import re
-import pdb
-import requests
+from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from lxml import etree
-import json
-import usaddress
+
+base_url = "https://midwoodsmokehouse.com"
 
 
-base_url = 'https://midwoodsmokehouse.com'
-
-def validate(item):    
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.strip()
-
-def get_value(item):
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-    output_list = []
+def fetch_data(sgw: SgWriter):
     url = "https://midwoodsmokehouse.com/locations/"
-    session = requests.Session()
+    session = SgRequests()
     request = session.get(url)
     response = etree.HTML(request.text)
-    store_list = response.xpath('//div[contains(@class, "locations-listing")]//div[@class="inside"]')
+    store_list = response.xpath(
+        '//div[contains(@class, "locations-listing")]//div[@class="inside"]'
+    )
     for store in store_list:
-        title = get_value(store.xpath('.//div[@class="address-info"]//h3[@class="name"]/text()'))
-        street_address = get_value(store.xpath('.//div[@class="address-info"]//div[contains(@class, "add1")]//text()'))
-        city = get_value(store.xpath('.//div[@class="address-info"]//div[contains(@class, "add2")]//text()')).split(',')[0]
-        state = get_value(store.xpath('.//div[@class="address-info"]//div[contains(@class, "add2")]//text()')).split(',')[1]
-        phone = get_value(store.xpath('.//div[@class="address-info"]//div[@class="phone"]//text()'))
-        hours = get_value(store.xpath('.//div[@class="hours"]//text()'))
-        store_hours = get_value(hours).replace('Hours', '').replace('\n', '')
-        
-        output = []
-        output.append(base_url) # url
-        output.append(title) #location name
-        output.append(street_address) #address
-        output.append(city) #city
-        output.append(state) #state
-        output.append('<MISSING>') #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(phone) #phone
-        output.append("Midwood Smokehouse - BBQ Restaurant & Bar") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(store_hours) #opening hours        
-        output_list.append(output)
-    return output_list
+        title = store.xpath('.//div[@class="address-info"]//h3[@class="name"]/text()')[
+            0
+        ]
+        street_address = store.xpath(
+            './/div[@class="address-info"]//div[contains(@class, "add1")]//text()'
+        )[0]
+        city = store.xpath(
+            './/div[@class="address-info"]//div[contains(@class, "add2")]//text()'
+        )[0].split(",")[0]
+        state = store.xpath(
+            './/div[@class="address-info"]//div[contains(@class, "add2")]//text()'
+        )[0].split(",")[1]
+        phone = store.xpath(
+            './/div[@class="address-info"]//div[@class="phone"]//text()'
+        )[0]
+        hours = " ".join(store.xpath('.//div[@class="hours"]//text()'))
+        store_hours = (
+            hours.replace("Hours", "")
+            .replace("\n", "")
+            .replace("\r \r", "")
+            .replace("\r", "")
+        )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if store_hours:
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=base_url,
+                    page_url=url,
+                    location_name=title,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal="",
+                    country_code="US",
+                    store_number="",
+                    phone=phone,
+                    location_type="",
+                    latitude="",
+                    longitude="",
+                    hours_of_operation=store_hours,
+                )
+            )
 
-scrape()
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

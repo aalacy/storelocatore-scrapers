@@ -4,6 +4,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "https://superdry.com/"
 domain = "https://stores.superdry.com/"
@@ -116,7 +118,16 @@ def fetch_data():
     # Your scraper here
     countries_sel = get_selector("https://stores.superdry.com/?view=storelocator")
     countries = countries_sel.xpath('//a[@class="Directory-listLink"]')
+    count = 0
     for country in countries:
+        count = count + int(
+            "".join(country.xpath("@data-count"))
+            .strip()
+            .replace("(", "")
+            .replace(")", "")
+            .strip()
+        )
+
         if "".join(country.xpath("@data-count")).strip() == "(1)":
             store_url = domain + "".join(country.xpath("@href")).strip()
             store_sel = get_selector(store_url)
@@ -169,11 +180,15 @@ def fetch_data():
                     store_sel = get_selector(page_url)
                     yield get_store_data(store_sel, page_url)
 
+    log.info(f"total count should be: {count}")
+
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
