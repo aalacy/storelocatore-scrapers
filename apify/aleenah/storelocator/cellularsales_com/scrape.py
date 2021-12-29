@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.pause_resume import CrawlStateSingleton
+
 
 logger = SgLogSetup().get_logger("cellularsales_com")
 
@@ -15,17 +17,9 @@ def write_output(data):
             writer.write_row(row)
 
 
-session = SgRequests()
-
-
-def fetch_data():
+def fetch_data(http: SgRequests, search: DynamicGeoSearch):
     # Your scraper here
 
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=500,
-        max_search_results=25,
-    )
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept-encoding": "gzip, deflate",
@@ -39,7 +33,12 @@ def fetch_data():
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
     }
+    state = CrawlStateSingleton.get_instance()
     for lati, longi in search:
+        rec_count = state.get_misc_value(
+            search.current_country(), default_factory=lambda: 0
+        )
+        state.set_misc_value(search.current_country(), rec_count + 1)
 
         url = (
             "https://www.cellularsales.com/wp-admin/admin-ajax.php?action=store_search&lat="
@@ -49,9 +48,9 @@ def fetch_data():
             + "&max_results=25&search_radius=500&autoload=1"
         )
         logger.info(url)
-        r = session.get(url, headers=headers)
+        r = http.get(url, headers=headers)
         allocs = r.json()
-        if allocs != []:
+        if allocs:
             search.found_location_at(lati, longi)
 
         for al in allocs:
@@ -94,8 +93,17 @@ def fetch_data():
 
 
 def scrape():
-    data = fetch_data()
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=500,
+        max_search_results=25,
+    )
+    with SgRequests() as http:
+        data = fetch_data(http, search)
     write_output(data)
+
+    state = CrawlStateSingleton.get_instance()
+    logger.info(state.get_misc_value("us", default_factory=lambda: 0))
 
 
 scrape()

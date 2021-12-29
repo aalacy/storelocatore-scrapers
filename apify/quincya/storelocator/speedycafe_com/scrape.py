@@ -1,116 +1,165 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 from sglogging import sglog
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 log = sglog.SgLogSetup().get_logger(logger_name="speedycafe.com")
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-def fetch_data():
-    
-    base_link = "https://locations.speedycafe.com/"
+    base_link = "https://www.speedway.com/locations/search"
+    locator_domain = "https://www.speedway.com"
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
+    headers = {
+        "authority": "www.speedway.com",
+        "method": "POST",
+        "path": "/locations/search",
+        "scheme": "https",
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "content-length": "191",
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "origin": "https://www.speedway.com",
+        "referer": "https://www.speedway.com/locations",
+        "sec-ch-ua": '"Chromium";v="93", " Not A;Brand";v="99", "Google Chrome";v="93"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "Linux",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
+    }
 
     session = SgRequests()
-    req = session.get(base_link, headers = HEADERS)
-    base = BeautifulSoup(req.text,"lxml")
 
-    main_links = []
-    final_links = []
+    max_distance = 200
+    max_results = 90
 
-    main_items = base.find_all(class_="Directory-listItem")
-    for main_item in main_items:
-        main_link = base_link + main_item.a['href']
-        count = main_item.find(class_="Directory-listLinkCount").text.replace("(","").replace(")","").strip()
-        if count == "1":
-            final_links.append(main_link)
-        else:
-            main_links.append(main_link)
-    
-    for main_link in main_links:
-        req = session.get(main_link, headers = HEADERS)
-        base = BeautifulSoup(req.text,"lxml")
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=max_distance,
+        granularity=Grain_4(),
+    )
 
-        next_items = base.find_all(class_="Directory-listItem")
-        if next_items:
-            for next_item in next_items:
-                next_link = base_link + next_item.a['href']
-                count = next_item.find(class_="Directory-listLinkCount").text.replace("(","").replace(")","").strip()
+    for lat, lng in search:
+        lat = "{:.7f}".format(lat)
+        lng = "{:.7f}".format(lng)
+        log.info(
+            "Searching: %s, %s | Items remaining: %s"
+            % (lat, lng, search.items_remaining())
+        )
 
-                if count == "1":
-                    final_links.append(next_link)
-                else:
-                    next_req = session.get(next_link, headers = HEADERS)
-                    next_base = BeautifulSoup(next_req.text,"lxml")
-                    final_items = next_base.find_all(class_="Teaser-titleLink")
-                    for final_item in final_items:
-                        final_link = (base_link + final_item['href']).replace("../","")
-                        final_links.append(final_link)
-        else:
-            final_items = base.find_all(class_="Teaser-titleLink")
-            for final_item in final_items:
-                final_link = (base_link + final_item['href']).replace("../","")
-                final_links.append(final_link)
-        
-    data = []
-    total_links = str(len(final_links))
-    log.info("Getting " + total_links + " locations ..")
-    for i, final_link in enumerate(final_links):
-        final_req = session.get(final_link, headers = HEADERS)
-        item = BeautifulSoup(final_req.text,"lxml")
-        locator_domain = "speedycafe.com"
+        payload = {
+            "SearchType": "search",
+            "SearchText": "US",
+            "StartIndex": "0",
+            "Limit": max_results,
+            "Latitude": lat,
+            "Longitude": lng,
+            "Radius": "20000",
+            "Filters[FuelType]": "Unleaded",
+            "Filters[OnlyFavorites]": "false",
+            "Filters[Text]": "",
+        }
 
-        location_name = item.find(id="location-name").text.encode("ascii", "replace").decode().replace("?","e").strip()
-        if "COMING SOON" in location_name.upper():
+        try:
+            req = session.post(base_link, headers=headers, data=payload)
+            base = BeautifulSoup(req.text, "lxml")
+        except:
             continue
 
-        street_address = item.find(class_='c-address-street-1').text.strip()
-        try:
-            street_address = street_address + " " + item.find(class_='c-address-street-2').text.strip()
-            street_address = street_address.strip()
-        except:
-            pass
-        
-        city = item.find(class_='c-address-city').text.strip()
-        state = item.find(class_='c-address-state').text.strip()
-        zip_code = item.find(class_='c-address-postal-code').text.strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        
-        location_type = "<MISSING>"
+        items = base.find_all(class_="c-location-card")
+        for item in items:
 
-        try:
-            phone = item.find(id="telephone").text.strip()
-            if not phone:
+            latitude = item["data-latitude"]
+            longitude = item["data-longitude"]
+            search.found_location_at(float(latitude), float(longitude))
+            link = locator_domain + item.a["href"]
+
+            location_name = ""
+            if "COMING SOON" in item.text.upper():
+                continue
+
+            street_address = item.find(class_="c-location-heading").text.strip()
+            city = item.find(
+                "li", attrs={"data-location-details": "address"}
+            ).text.split(",")[0]
+            state = item["data-state"]
+            zip_code = (
+                item.find("li", attrs={"data-location-details": "address"})
+                .text.split(",")[-1]
+                .split()[-1]
+            )
+            country_code = "US"
+            store_number = item["data-costcenter"]
+
+            try:
+                location_type = ", ".join(
+                    list(
+                        item.find(class_="c-location-options--fuel").ul.stripped_strings
+                    )
+                )
+            except:
+                try:
+                    location_type = (
+                        ", ".join(
+                            list(
+                                item.find(
+                                    class_="c-location-options--amenities"
+                                ).ul.stripped_strings
+                            )
+                        )
+                        .split(" mi,")[1]
+                        .strip()
+                    )
+                except:
+                    location_type = ""
+            hours_of_operation = ""
+            try:
+                if (
+                    "open 24"
+                    in item.find(class_="c-location-options--amenities").text.lower()
+                ):
+                    hours_of_operation = "Open 24 Hours"
+            except:
+                pass
+            try:
+                phone = item.find(
+                    "li", attrs={"data-location-details": "phone"}
+                ).text.strip()
+                if not phone:
+                    phone = "<MISSING>"
+            except:
                 phone = "<MISSING>"
-        except:
-            phone = "<MISSING>"
 
-        latitude = item.find('meta', attrs={'itemprop': 'latitude'})['content']
-        longitude = item.find('meta', attrs={'itemprop': 'longitude'})['content']
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
-        try:
-            hours_of_operation = " ".join(list(item.find(class_="c-location-hours-details").stripped_strings)).replace("Day of the Week Hours","").strip()
-        except:
-            hours_of_operation = "<MISSING>"
 
-        data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-    return data
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

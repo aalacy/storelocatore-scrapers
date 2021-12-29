@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("vince_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -47,7 +23,6 @@ def fetch_data():
     store = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '"name":"' in line:
             items = line.split('"name":"')
             for item in items:
@@ -56,6 +31,7 @@ def fetch_data():
                     if "Coming Soon" in item:
                         CS = True
                     loc = "<MISSING>"
+                    hours = ""
                     store = "<MISSING>"
                     name = item.split('"')[0]
                     add = item.split('"address1":"')[1].split('"')[0]
@@ -71,57 +47,61 @@ def fetch_data():
                         hrs = item.split(',"storeHours":"')[1].split(
                             '","storeEvents":'
                         )[0]
-                        hours = "Sun: " + hrs.split("Sunday")[1].split("<")[0]
-                        hours = hours + "; Mon: " + hrs.split("Monday")[1].split("<")[0]
-                        hours = (
-                            hours + "; Tue: " + hrs.split("Tuesday")[1].split("<")[0]
+                        days = hrs.split(
+                            'max-width: none; min-width: 0px; line-height: 12px;\\">'
                         )
-                        hours = (
-                            hours + "; Wed: " + hrs.split("Wednesday")[1].split("<")[0]
-                        )
-                        hours = (
-                            hours + "; Thu: " + hrs.split("Thursday")[1].split("<")[0]
-                        )
-                        hours = hours + "; Fri: " + hrs.split("Friday")[1].split("<")[0]
-                        hours = (
-                            hours + "; Sat: " + hrs.split("Saturday")[1].split("<")[0]
-                        )
+                        for day in days:
+                            if "pm<" in day:
+                                dayhrs = day.split("<")[0]
+                                if hours == "":
+                                    hours = dayhrs
+                                else:
+                                    hours = hours + "; " + dayhrs
                     except:
                         hours = "<MISSING>"
+                    hours = hours.replace("&:amp;", "&")
+                    if "Temporarily" in item:
+                        hours = "Temporarily Closed"
                     typ = item.split('"storeTypeDisplay":"')[1].split('"')[0]
                     if typ == "Retail" or typ == "Outlet":
                         if phone == "":
                             phone = "<MISSING>"
                         if zc == "":
                             zc = "<MISSING>"
+                        if "0" not in hours:
+                            hours = "<MISSING>"
                         add = add.replace("International Market Place", "").strip()
                         if "El Paseo Village" in add:
                             add = add.split("Paseo Village")[1].strip()
                         if "587 Newport" in add:
                             hours = "Sun: 12:00pm-6:00pm; Mon-Sat: 11:00am-7:00pm"
+                        if "; Friday 12/24" in hours:
+                            hours = hours.split("; Friday 12/24")[0]
                         if "Draycott Avenue" not in add:
                             if CS is False:
-                                yield [
-                                    website,
-                                    loc,
-                                    name,
-                                    add,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                                yield SgRecord(
+                                    locator_domain=website,
+                                    page_url=loc,
+                                    location_name=name,
+                                    street_address=add,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zc,
+                                    country_code=country,
+                                    phone=phone,
+                                    location_type=typ,
+                                    store_number=store,
+                                    latitude=lat,
+                                    longitude=lng,
+                                    hours_of_operation=hours,
+                                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

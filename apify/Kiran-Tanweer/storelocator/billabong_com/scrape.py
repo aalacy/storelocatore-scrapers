@@ -1,18 +1,26 @@
+import unicodedata
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "billabong_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
 DOMAIN = "https://billabong.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
+
+
+def strip_accents(text):
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+    return str(text)
 
 
 def fetch_data():
@@ -21,12 +29,14 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()["stores"]
         page_url = "https://www.billabong.com/stores/"
         for loc in loclist:
-            location_name = loc["name"]
+            location_name = strip_accents(loc["name"])
             store_number = loc["ID"]
             log.info(location_name)
             phone = loc["phone"]
-            street_address = loc["address"]
-            city = loc["city"]
+            street_address = strip_accents(loc["address"]).split("\n")[0]
+            if "., 16" in street_address:
+                street_address = MISSING
+            city = strip_accents(loc["city"])
             zip_postal = loc["postalCode"]
             country_code = loc["country"]
             latitude = loc["latitude"]
@@ -52,7 +62,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

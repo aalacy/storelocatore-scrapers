@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import ssl
+from selenium import webdriver  # noqa
 
 try:
     _create_unverified_https_context = (
@@ -51,10 +52,14 @@ def get_driver(url, class_name, driver=None):
     while True:
         x = x + 1
         try:
+            chromeOptions = webdriver.ChromeOptions()
+            chromeOptions.add_argument("--disable-gpu")
+            chromeOptions.add_argument("--headless")
+            chromeOptions.add_argument(f"user-agent={user_agent}")
+
             driver = SgChrome(
                 executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
+                chrome_options=chromeOptions,
             ).driver()
             driver.get(url)
 

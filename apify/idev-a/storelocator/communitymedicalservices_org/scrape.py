@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("communitymedicalservices")
 
@@ -25,8 +27,8 @@ def fetch_data():
         )["data_db"]["objects"]
         logger.info(f"{len(links)} found")
         for _ in links:
-            page_url = _["link"]
-            if not _["title"] or not page_url:
+            page_url = _["link"].strip()
+            if not _["title"] or not page_url or page_url == "#":
                 continue
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
@@ -47,12 +49,13 @@ def fetch_data():
                 "script",
                 src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
             )
+            hours = []
             if _hr:
-                hours = json.loads(
-                    session.get(_hr["src"], headers=_headers)
-                    .text.split("Yext._embed(")[1][:-1]
-                    .strip()
-                )["entities"][0]["attributes"]["hours"]
+                res = session.get(_hr["src"], headers=_headers).text
+                if "Entity not found" not in res:
+                    hours = json.loads(res.split("Yext._embed(")[1][:-1].strip())[
+                        "entities"
+                    ][0]["attributes"]["hours"]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
@@ -72,7 +75,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

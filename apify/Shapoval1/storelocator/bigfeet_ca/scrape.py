@@ -1,4 +1,3 @@
-from sgscrape.sgpostal import International_Parser, parse_address
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -9,6 +8,7 @@ from sgselenium.sgselenium import SgFirefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -30,7 +30,7 @@ def fetch_data(sgw: SgWriter):
         with SgFirefox() as driver:
 
             driver.get(page_url)
-
+            driver.implicitly_wait(10)
             driver.maximize_window()
             driver.switch_to.frame(0)
             try:
@@ -53,7 +53,7 @@ def fetch_data(sgw: SgWriter):
             ad = "".join(ad)
 
             driver.switch_to.default_content()
-            if ad == "<MISSING>" or ad.find("94129") != -1:
+            if ad.find("94129") != -1 or ad == "<MISSING>":
                 ad = driver.find_element_by_xpath("//h3").text
             a = parse_address(International_Parser(), ad)
             phone = driver.find_element_by_xpath('//a[contains(@href, "tel")]').text
