@@ -227,8 +227,8 @@ def fetch_data():
             if 'itemprop="name address">' in line2:
                 g = next(lines)
                 add = g.split(">")[1].split("<")[0]
-            if 'class="location-phone">' in line2:
-                phone = line2.split('"tel:')[1].split('"')[0]
+            if "class=location-phone>" in line2:
+                phone = line2.split("tel:")[1].split("class")[0].strip()
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("|")[0].strip()
         if phone == "":
