@@ -224,11 +224,20 @@ def get_data():
             response = s.get(location_url, headers=headers)
 
         except Exception:
-            new_sess = reset_sessions(location_url)
+            x = 0
+            while True:
+                x = x + 1
+                try:
+                    new_sess = reset_sessions(location_url)
 
-            s = new_sess[0]
-            headers = new_sess[1]
-            response_text = new_sess[2]
+                    s = new_sess[0]
+                    headers = new_sess[1]
+                    response_text = new_sess[2]
+                    break
+
+                except Exception:
+                    if x == 10:
+                        raise Exception
 
         response_text = response.text
         log.info("URL " + str(x) + "/" + str(num_urls))

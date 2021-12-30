@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import time
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 session = SgRequests()
 headers = {
@@ -12,6 +14,16 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("hooters_com")
+
+
+@retry(stop=stop_after_attempt(7), wait=tenacity.wait_fixed(7))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
 
 def fetch_data():
@@ -28,9 +40,10 @@ def fetch_data():
             and "<loc>https://www.hooters.com/locations/<" not in line
         ):
             lurl = line.split("<loc>")[1].split("<")[0]
-            locs.append(lurl)
+            if "3107-castleton" not in lurl:
+                locs.append(lurl)
     for loc in locs:
-        time.sleep(10)
+        time.sleep(3)
         TC = False
         logger.info(loc)
         name = ""
@@ -44,7 +57,7 @@ def fetch_data():
         hours = ""
         store = "<MISSING>"
         phone = ""
-        r2 = session.get(loc, headers=headers)
+        r2 = get_response(loc)
         for line2 in r2.iter_lines():
             if '"latitude":"' in line2:
                 lat = line2.split('"latitude":"')[1].split('"')[0]

@@ -59,7 +59,7 @@ def fetch_data():
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = poi_html.xpath("@data-lng")
         longitude = longitude[0] if longitude else "<MISSING>"
-        hoo = loc_dom.xpath('//div[@class="nmld-detail-item for-hours"]/text()')
+        hoo = poi_html.xpath('.//div[@class="nmld-detail-item for-hours"]//text()')
         hoo = [elem.strip() for elem in hoo]
         hours_of_operation = (
             " ".join(hoo).replace("Lunch Hours Vary", "") if hoo else "<MISSING>"

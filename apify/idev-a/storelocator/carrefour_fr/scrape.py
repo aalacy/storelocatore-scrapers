@@ -39,7 +39,7 @@ base_url = "https://www.carrefour.fr/magasin/"
 @retry(stop=stop_after_attempt(8), wait=tenacity.wait_fixed(8))
 def get_response(url):
     logger.info("Retrying with Tenacity")
-    with SgRequests(proxy_country="us") as http:
+    with SgRequests(proxy_country="fr") as http:
         try:
             response = http.get(url, headers=_headers)
             logger.info(f"{url} >> STATUS: {response.status_code}")
