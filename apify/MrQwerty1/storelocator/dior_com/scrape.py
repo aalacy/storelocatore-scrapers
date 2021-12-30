@@ -1,41 +1,13 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from concurrent import futures
 
 
 def get_ids():
     ids = []
-    session = SgRequests()
     r = session.get("https://www.dior.com/store/json/posG.json")
     js = r.json()["items"]
     for j in js:
@@ -50,7 +22,7 @@ def generate_urls(ids):
     _tmp = []
     cnt = 0
     for i in ids:
-        if cnt == 100:
+        if cnt == 50:
             urls.append(f'{u}{",".join(_tmp)}')
             _tmp = []
             cnt = 0
@@ -61,29 +33,30 @@ def generate_urls(ids):
     return urls
 
 
-def get_data(url):
-    rows = []
-    locator_domain = "https://www.dior.com/"
-
-    session = SgRequests()
+def get_data(url, sgw: SgWriter):
     r = session.get(url)
-    try:
-        js = r.json()["Items"]
-    except:
-        return []
+    js = r.json()["Items"]
 
     for j in js:
-        page_url = "<MISSING>"
-        location_name = j.get("defaultName").strip()
-        street_address = (
-            f"{j.get('defaultStreet1')} {j.get('defaultStreet2') or ''}".strip()
-            or "<MISSING>"
-        )
-        street_address = " ".join(street_address.split())
-        city = j.get("defaultCity") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("defaultZipCode", "").strip() or "<MISSING>"
-        country_code = j.get("countryCode") or "<MISSING>"
+        location_name = j.get("defaultName").replace("\n", " ").strip()
+        ad1 = j.get("defaultStreet1") or ""
+        ad2 = j.get("defaultStreet2") or ""
+        ad1, ad2 = ad1.strip(), ad2.strip()
+        if not ad2:
+            street_address = ad1
+        else:
+            if ad1[0].isdigit():
+                street_address = ad1
+            else:
+                street_address = f"{ad1} {ad2}".strip()
+
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+
+        city = j.get("defaultCity")
+        state = j.get("state")
+        postal = j.get("defaultZipCode", "").strip()
+        country_code = j.get("countryCode")
 
         if len(postal) > 5 and country_code == "US":
             state = postal.split()[0]
@@ -93,11 +66,9 @@ def get_data(url):
             state = postal.split()[0]
             postal = postal.replace(state, "").strip()
 
-        store_number = "<MISSING>"
-        phone = j.get("phoneNumber") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        phone = j.get("phoneNumber")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
 
         _tmp = []
         days = [
@@ -132,48 +103,44 @@ def get_data(url):
         if hours_of_operation.count("Closed") == 7:
             hours_of_operation = "Closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            page_url=SgRecord.MISSING,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        rows.append(row)
-
-    return rows
+        sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     ids = get_ids()
     urls = generate_urls(ids)
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                if row:
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.dior.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

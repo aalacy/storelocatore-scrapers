@@ -1,120 +1,97 @@
-import csv
-import json
-from sgselenium import SgSelenium
+from sgselenium.sgselenium import SgFirefox
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-DOMAIN = "worldwidegolfshops.com"
-BASE_URL = "https://www.worldwidegolfshops.com/uinta-golf"
-LOCATION_URL = "https://www.worldwidegolfshops.com/uinta-golf/"
+def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://www.worldwidegolfshops.com"
+    api_url = "https://www.worldwidegolfshops.com/sitemap/store-locator.xml"
+    session = SgRequests()
+    r = session.get(api_url)
+    tree = html.fromstring(r.content)
+    urls = tree.xpath("//url/loc")
+    for u in urls:
+        page_url = "".join(u.xpath(".//text()"))
+        if page_url.find("store/uinta-golf") == -1:
+            continue
+        with SgFirefox() as fox:
+            fox.get(page_url)
+            a = fox.page_source
+            tree = html.fromstring(a)
 
-def addy_ext(addy):
-    addy = addy.split(",")
-    city = addy[0]
-    state_zip = addy[1].strip().split(" ")
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    driver = SgSelenium().chrome()
-    driver.get(LOCATION_URL)
-
-    hrefs = driver.find_elements_by_xpath("//a[contains(@class, 'store-name-link')]")
-    link_list = []
-    for h in hrefs:
-        link_list.append(h.get_attribute("href"))
-    link_list = list(dict.fromkeys(link_list))
-
-    all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-
-        main = driver.find_element_by_css_selector(
-            "script[type='application/ld+json']"
-        ).get_attribute("innerHTML")
-        data = json.loads(main)
-        location_name = driver.find_element_by_css_selector(
-            "h1.vtex-yext-store-locator-0-x-storeTitle"
-        ).text.strip()
-
-        street_address = data["address"]["streetAddress"]
-        city = data["address"]["addressLocality"]
-        state = data["address"]["addressRegion"]
-        zip_code = data["address"]["postalCode"]
-        phone = data["telephone"]
-        hours_of_operation = (
-            driver.find_element_by_css_selector(
-                "div.vtex-yext-store-locator-0-x-normalHours"
+            location_name = "".join(tree.xpath("//h1//text()"))
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//div[@class="vtex-yext-store-locator-0-x-addressBlock t-body"]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
             )
-            .text.replace("\n", " ")
-            .replace("STORE HOURS ", "")
-        )
-        store_number = data["@id"]
-        location_type = "<MISSING>"
-        latitude = data["geo"]["latitude"]
-        longitude = data["geo"]["longitude"]
-        page_url = link
-        country_code = "US"
 
-        store_data = [
-            DOMAIN,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+            street_address = ad.split("  ")[0].strip()
+            city = ad.split("  ")[1].split(",")[0].strip()
+            state = ad.split(",")[1].strip()
+            postal = ad.split(",")[2].strip()
+            country_code = "US"
+            phone = "".join(
+                tree.xpath(
+                    '//div[@class="vtex-flex-layout-0-x-flexCol vtex-flex-layout-0-x-flexCol--store-contacts  ml0 mr0 pl0 pr0      flex flex-column h-100 w-100"]/div[1]/div/div[1]/text()'
+                )
+            )
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//div[@class="vtex-yext-store-locator-0-x-hoursRow mv2 flex justify-between"]/div/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            map_link = "".join(
+                tree.xpath(
+                    '//a[@class="vtex-yext-store-locator-0-x-addressDirectionsLink"]/@href'
+                )
+            )
+            session = SgRequests()
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+            }
+            r = session.get(map_link, headers=headers)
+            tree = html.fromstring(r.text)
+            ll = "".join(tree.xpath('//meta[@itemprop="image"]/@content'))
+            latitude = ll.split("markers=")[1].split("%2C")[0].strip()
+            longitude = ll.split("markers=")[1].split("%2C")[1].split("&")[0].strip()
 
-        all_store_data.append(store_data)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    driver.quit()
-    return all_store_data
+            sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

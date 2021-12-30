@@ -1,43 +1,16 @@
-import csv
 import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://gerritys.com"
     api_url = "https://gerritys.com/stores/"
-    location_type = "<MISSING>"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -51,13 +24,13 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     block = (
-        "".join(tree.xpath('//script[contains(text(), "var stores")]/text()'))
-        .replace("\n", "")
-        .split("var stores = ")[1]
-        .split(";    var postalJson")[0]
+        "".join(tree.xpath('//script[contains(text(), "var locations = ")]/text()'))
+        .split("var locations = ")[1]
+        .split("S.mapManager")[0]
+        .strip()
     )
+    block = "".join(block[:-1])
     js = json.loads(block)
-
     for j in js:
 
         street_address = j.get("address1")
@@ -66,56 +39,63 @@ def fetch_data():
         postal = j.get("zipCode")
         state = j.get("state")
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = j.get("storeNumber")
         page_url = "https://gerritys.com/stores/"
         location_name = j.get("name")
         latitude = j.get("latitude")
         longitude = j.get("longitude")
-
-        hours = "".join(j.get("hourInfo")).replace("\n", " ")
-        if hours.find("Temporary Hours") != -1:
-            hours = (
-                "".join(j.get("hourInfo"))
-                .replace("\n", " ")
-                .split("<!--")[1]
-                .split("-->")[0]
+        hours = j.get("hourInfo") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            a = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(a.xpath("//text()"))
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
             )
-            hours = html.fromstring(hours)
-            hours_of_operation = " ".join(hours.xpath("//*//text()")).strip()
-            if hours_of_operation.find("Pharmacy") != -1:
-                hours_of_operation = hours_of_operation.split("Pharmacy")[0]
-            if hours_of_operation.find("30") != -1:
-                hours_of_operation = hours_of_operation.split("30")[1].strip()
-            else:
+            hours_of_operation = (
+                " ".join(hours_of_operation.split()).replace("Store Hours", "").strip()
+            )
+            tmpt = "".join(a.xpath("//a/@href"))
+            if tmpt:
+                r = session.get(tmpt, headers=headers)
+                tree = html.fromstring(r.text)
                 hours_of_operation = (
-                    " ".join(hours.xpath("//*//text()")).split("Pharmacy")[0].strip()
+                    " ".join(
+                        tree.xpath(
+                            '//h2[text()="Regular Hours:"]/following-sibling::p[position() < 8]//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
                 )
+                hours_of_operation = " ".join(hours_of_operation.split())
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

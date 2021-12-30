@@ -1,3 +1,3 @@
 VALIDATOR_VERSION: 0.0.71
-COMMAND: validate.py data.csv
-PYTHON_VERSION: sys.version_info(major=3, minor=8, micro=9, releaselevel='final', serial=0)
+COMMAND: validate.py data.csv --ignore CentroidValidator
+PYTHON_VERSION: sys.version_info(major=3, minor=8, micro=10, releaselevel='final', serial=0)

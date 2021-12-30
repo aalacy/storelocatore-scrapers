@@ -1,93 +1,134 @@
-import csv
-from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-from sgselenium import SgChrome
 import json
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import cloudscraper
 
-logger = SgLogSetup().get_logger("trumphotels.com")
+DOMAIN = "trumphotels.com"
+BASE_URL = "https://www.trumphotels.com"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "accept-encoding": "gzip, deflate, br",
+}
+MISSING = "<MISSING>"
+
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+session = SgRequests()
+session = cloudscraper.create_scraper(sess=session)
 
 
-def write_output(data):
-    with open("data.csv", newline="", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
 
 
 def fetch_data():
-    driver = SgChrome().driver()
-    base_url = "https://www.trumphotels.com"
-    driver.get("https://www.trumphotels.com/")
-    soup = BeautifulSoup(driver.page_source, "lxml")
-
-    for country in soup.find("div", {"id": "ourhotels"}).find_all(
-        "div", {"class": "filterlist"}
-    ):
-        for location in country.find_all("a"):
-            logger.info(f" scraping: {location}")
-            driver.get(base_url + location["href"])
-            page_url = base_url + location["href"]
-            location_soup = BeautifulSoup(driver.page_source, "html.parser")
-            for script in location_soup.find_all(
-                "script", {"type": "application/ld+json"}
-            ):
-                store_data = json.loads(script.string)
+    if True:
+        stores_req = session.get(BASE_URL)
+        stores_sel = lxml.html.fromstring(stores_req.text)
+        stores = stores_sel.xpath('//div[@class="filterlist"]//a/@href')
+        for store_url in stores:
+            page_url = BASE_URL + store_url
+            log.info(page_url)
+            store_req = session.get(page_url)
+            store_sel = lxml.html.fromstring(store_req.text)
+            json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            for js in json_list:
+                store_data = json.loads(js)
                 if "address" in store_data:
-                    if store_data["address"]["addressCountry"] not in ("USA", "Canada"):
-                        continue
-                    name = location.text.strip()
+                    location_name = store_data["name"].replace("®", "")
                     address = store_data["address"]
-                    geo_location = location_soup.find("div", {"class": "map-outer-div"})
-                    store = []
-                    store.append("https://www.trumphotels.com")
-                    store.append(name.replace("®", ""))
-                    store.append(address["streetAddress"])
-                    store.append(address["addressLocality"].split(",")[0])
-                    store.append(
+                    if "streetAddress" not in address:
+                        street_address = MISSING
+                    else:
+                        street_address = address["streetAddress"]
+                    city = address["addressLocality"].split(",")[0]
+                    state = (
                         address["addressRegion"].strip()
                         if "addressRegion" in address
                         else address["addressLocality"].split(",")[1]
                     )
-                    store.append(address["postalCode"])
-                    store.append("US" if address["addressCountry"] == "USA" else "CA")
-                    store.append("<MISSING>")
-                    store.append(
+                    if "postalCode" not in address:
+                        street_address = MISSING
+                    else:
+                        zip = address["postalCode"]
+                    country_code = (
+                        "US"
+                        if address["addressCountry"] == "USA"
+                        else address["addressCountry"]
+                    )
+                    if "Aberdeenshire" in state:
+                        country_code = "Scotland"
+                    store_number = "<MISSING>"
+                    phone = (
                         store_data["telephone"]
                         if store_data["telephone"]
                         else "<MISSING>"
                     )
-                    store.append("<MISSING>")
-                    store.append(geo_location["data-latitude"])
-                    store.append(geo_location["data-longitude"])
-                    store.append("<MISSING>")
-                    store.append(page_url)
-                    yield store
-    driver.quit()
+                    location_type = "<MISSING>"
+                    hours_of_operation = "<MISSING>"
+                    map_link = store_sel.xpath(
+                        '//a[contains(@href,"/maps/place")]/@href'
+                    )
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+                    if len(map_link) > 0:
+                        map_link = map_link[0]
+
+                        latitude, longitude = get_latlng(map_link)
+                    log.info("Append {} => {}".format(location_name, street_address))
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

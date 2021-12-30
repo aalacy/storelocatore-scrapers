@@ -1,39 +1,14 @@
-import csv
 import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+def fetch_data(sgw: SgWriter):
 
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://www.jssb.com"
     api_url = "https://www.jssb.com/locations/"
     session = SgRequests()
@@ -44,31 +19,30 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "locations")]/text()'))
-        .split("locations:")[1]
-        .split("],")[0]
-        + "]"
+        "".join(tree.xpath('//script[contains(text(), "var oCenter")]/text()'))
+        .split("console.log(")[1]
+        .split(");")[0]
     )
+
     js = json.loads(jsblock)
 
     for j in js:
 
         page_url = "https://www.jssb.com/locations/"
-        location_name = "".join(j.get("customer_name"))
-        street_address = f"{j.get('address1')} {j.get('address2') or ''}".replace(
+        location_name = "".join(j.get("LocCustomerName"))
+        street_address = f"{j.get('LocAddress')} {j.get('LocAddress2') or ''}".replace(
             "<br>", " "
         ).strip()
-        city = j.get("city")
-        state = j.get("state")
-        country_code = j.get("country")
-        postal = j.get("zip")
-        store_number = "<MISSING>"
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        location_type = j.get("branch_or_atm")
+        city = j.get("LocCity")
+        state = j.get("LocState")
+        country_code = j.get("LocCountry")
+        postal = j.get("LocZip")
+        latitude = j.get("LocLatitude")
+        longitude = j.get("LocLongitude")
+        location_type = j.get("LocBranchOrAtm")
         if location_type == "atm":
             continue
-        hours = j.get("hours") or "<MISSING>"
+        hours = j.get("LocHours") or "<MISSING>"
         hours_of_operation = "<MISSING>"
         if hours != "<MISSING>":
             hours = html.fromstring(hours)
@@ -77,32 +51,31 @@ def fetch_data():
             )
         if hours_of_operation.find("(") != -1:
             hours_of_operation = hours_of_operation.split("(")[0].strip()
-        phone = j.get("phone_number") or "<MISSING>"
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        phone = j.get("LocPhoneNumber") or "<MISSING>"
 
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)

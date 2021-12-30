@@ -11,12 +11,20 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 DOMAIN = "anderinger.com"
-pdf_url = "https://www.anderinger.com/wp-content/uploads/2021/03/Deringer-locations-page-3-23-21.pdf"
+pdf_url = "https://www.anderinger.com/wp-content/uploads/2021/10/Deringer-locations-page-10-21.pdf"
 
 
 def write_output(data):
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         for row in data:
             writer.write_row(row)
@@ -76,11 +84,20 @@ def group_by_city(states):
     for state, lines in states.items():
         current_state = state
         for idx, line in enumerate(lines):
-            if "–" in line or idx == 0:
+            if (
+                re.search(r"–|warehous*|facility", line, flags=re.IGNORECASE)
+                or idx == 0
+            ):
                 if current_city_data:
                     cities[current_city] = current_city_data
 
-                current_city = line
+                current_city = (
+                    f"{current_state.capitalize()} {line}"
+                    if re.search(r"warehous*", line, flags=re.IGNORECASE)
+                    else line
+                )
+                current_city = re.sub(r"\:|\;", "", current_city)
+
                 current_city_data = []
                 current_city_data.append(current_state)
                 current_city_data.append(line)
@@ -103,7 +120,7 @@ def get_phone(data):
 def get_store_number(name):
     if "–" in name:
         parsed = name.split(" – ")
-        return parsed[1]
+        return parsed.pop()
 
     return MISSING
 
@@ -121,7 +138,7 @@ def get_address(data):
     if "PO BOX" in address:
         address = ",".join(data[4:6])
 
-    if re.search(r"tel\s*:\s*", address, flags=re.IGNORECASE):
+    if re.search(r"(tel|fax)\s*:\s*", address, flags=re.IGNORECASE):
         address = ""
 
     return address
@@ -132,8 +149,6 @@ MISSING = "<MISSING>"
 
 def extract(name, data):
     address = get_address(data)
-    if address is None:
-        return None
 
     parsed_address = parse_address(USA_Best_Parser(), address)
 
@@ -141,6 +156,8 @@ def extract(name, data):
     page_url = pdf_url
     location_name = name
     street_address = parsed_address.street_address_1
+    if parsed_address.street_address_2:
+        street_address += f", {parsed_address.street_address_2}"
     city = parsed_address.city
     state = parsed_address.state
     postal = parsed_address.postcode

@@ -38,7 +38,7 @@ def fetch_data(sgw: SgWriter):
         zip_code = "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = "Open"
 
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
@@ -50,8 +50,9 @@ def fetch_data(sgw: SgWriter):
         if location_name == "CHEBA HUT - ":
             location_name = "CHEBA HUT - " + city
 
-        if " TBD" in location_name.upper():
-            continue
+        if "Opening" in location_name:
+            location_type = "Open" + location_name.split("Open")[1]
+            location_name = location_name.split("Open")[0].strip()
 
         raw_data = list(base.find(class_="content-container").stripped_strings)
 

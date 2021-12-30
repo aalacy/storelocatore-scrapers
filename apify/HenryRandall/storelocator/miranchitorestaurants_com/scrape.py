@@ -58,18 +58,17 @@ def fetch_data(sgw: SgWriter):
         hoo = ", ".join(loc_data["openingHours"]).strip()
         loc = loc_data["address"]["addressLocality"]
         loc_url = url + loc.lower().replace(" ", "-")
-        lat, long = re.findall(
-            r'"lat":(-?[\d\.]+),"lng":(-?[\d\.]+),"menuLandingPageUrl":null,"name":"'
-            + loc.strip(),
-            str(soup),
-        )[0]
+        street_address = loc_data["address"]["streetAddress"]
+        regex = f'(?<={street_address}).*?(?="menuLandingPageUrl")'
+        coords = re.findall(regex, str(soup))
+        lat, long = re.findall(r'"lat":(-?[\d\.]+),"lng":(-?[\d\.]+)', str(coords))[0]
 
         sgw.write_row(
             SgRecord(
                 locator_domain=url,
                 page_url=loc_url,
                 location_name=loc,
-                street_address=loc_data["address"]["streetAddress"],
+                street_address=street_address,
                 city=loc,
                 state=loc_data["address"]["addressRegion"],
                 zip_postal=loc_data["address"]["postalCode"],
