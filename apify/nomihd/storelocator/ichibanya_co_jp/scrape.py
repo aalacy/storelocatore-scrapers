@@ -80,6 +80,10 @@ def fetch_data():
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
+                if zip:
+                    if not zip.isdigit():
+                        zip = "<MISSING>"
+
                 country_code = formatted_addr.country
 
                 phone = store.get("TEL", "<MISSING>")

@@ -184,6 +184,9 @@ def fetch_data():
     logger.info(f"{len(locations)} locations")
     for page_url in locations:
         logger.info(f"[***] {page_url}")
+        if "amplifon-blog" in page_url:
+            continue
+
         _, sp1 = get_json(driver, page_url)
         if not _ or not sp1:
             continue
@@ -191,7 +194,7 @@ def fetch_data():
         if sp1.select_one("span.phone-list"):
             phone = sp1.select_one("span.phone-list").text.strip()
         hours = []
-        for hh in _["openingHoursSpecification"]:
+        for hh in _.get("openingHoursSpecification", []):
             day = hh["dayOfWeek"]
             hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
         addr = _["address"]

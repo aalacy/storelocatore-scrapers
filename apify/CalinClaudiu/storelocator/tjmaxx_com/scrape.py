@@ -189,7 +189,6 @@ if __name__ == "__main__":
     tocrawl.append(SearchableCountries.CANADA)
     tocrawl.append(SearchableCountries.AUSTRALIA)
     tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
-    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
