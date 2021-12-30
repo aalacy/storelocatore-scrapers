@@ -70,6 +70,8 @@ def fetch_data():
     data = get_json(soup)
     for row in data:
         page_url = BASE_URL + row["url"]
+        if "indianaonline" in page_url or "columbusonline" in page_url:
+            continue
         content = pull_content(page_url)
         location_name = row["store_name"]
         street_address = row["address"]
