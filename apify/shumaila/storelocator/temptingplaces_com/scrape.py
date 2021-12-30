@@ -81,7 +81,6 @@ def fetch_data():
             longitude=str(longt),
             hours_of_operation=SgRecord.MISSING,
         )
-        break
 
 
 def scrape():
