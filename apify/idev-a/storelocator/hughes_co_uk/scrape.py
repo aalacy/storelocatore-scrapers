@@ -27,17 +27,17 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _addr = sp1.select_one("div.dig-pub--text h2").text.strip().split(",")
-            city = _addr[-1]
+            city = _addr[-1].strip()
             if city.endswith("Centre"):
                 city = sp1.select_one("div.dig-pub--text h1").text.strip()
             raw_address = sp1.select_one("div.address").text.strip()
             addr = raw_address.split(",")
             state = ""
             idx = -2
-            if addr[-2].strip() != city:
+            if addr[-2].replace(".", "").lower().strip() != city.lower():
                 state = addr[-2]
                 idx -= 1
-            street_address = ", ".join(addr[:idx])
+            street_address = ", ".join(addr[:idx]).replace("The Two Bears,", "").strip()
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("div.col-hours table tbody tr")
