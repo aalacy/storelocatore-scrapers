@@ -108,7 +108,7 @@ def fetch_stores():
                     if url not in page_urls:
                         page_urls.append(url)
             except Exception as e:
-                log.error(f"{count}. failed loading url {url}")
+                log.error(f"{count}. failed loading url {url}: {e}")
             if count % 1000 == 0:
                 log.debug(f"{count} page_urls {len(page_urls)}")
 
