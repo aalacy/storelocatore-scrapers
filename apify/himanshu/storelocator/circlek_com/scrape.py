@@ -103,18 +103,7 @@ def fetch_details(tup, retry=False):
     longitude = ""
     hours_of_operation = ""
     page_url = "https://www.circlek.com" + store["url"]
-    if store["country"].upper() not in ["US", "CA", "CANADA"]:  # for europe stores
-        page_url = page_url.replace("store-locator", "store-europe")
-        logger.info(page_url)
-        street_address = store["address"]
-        location_name = "Circle K at " + street_address
-        city = store["city"]
-        country_code = store["country"]
-
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-    else:
-
+    if store["country"].upper() in ["US", "CA", "CANADA"]:
         logger.info(page_url)
         try:
             store_req = SgRequests.raise_on_err(

@@ -1,3 +1,4 @@
+import re
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -5,9 +6,15 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_slug():
+    r = session.get("https://www.decathlon.sg/s/our-stores", headers=headers)
+    return re.findall(r'"buildId":"(.+?)"', r.text).pop(0)
+
+
 def get_pages():
     pages = dict()
-    api = "https://www.decathlon.sg/_next/data/jgAyKOI6s20C--lYmfyrm/s/our-stores.json"
+    slug = get_slug()
+    api = f"https://www.decathlon.sg/_next/data/{slug}/s/our-stores.json"
     r = session.get(api, headers=headers)
     js = r.json()["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"][0][
         "fields"
@@ -22,6 +29,7 @@ def get_pages():
 
 def fetch_data(sgw: SgWriter):
     api = "https://storesetting-prod.decathlon.sg/api/v1/stores"
+    black = ["water", "city", ", north", "esr", "the ", ", tiong", "west"]
     pages = get_pages()
     r = session.get(api, headers=headers)
     js = r.json()
@@ -37,7 +45,14 @@ def fetch_data(sgw: SgWriter):
             phone = SgRecord.MISSING
 
         a = j.get("address") or {}
-        street_address = a.get("street")
+        street_address = a.get("street") or ""
+        for b in black:
+            if b in street_address.lower():
+                street_address = street_address.lower().split(b)[0].title().strip()
+                break
+
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         city = a.get("city")
         state = a.get("region") or ""
         state = state.split()[-1]
