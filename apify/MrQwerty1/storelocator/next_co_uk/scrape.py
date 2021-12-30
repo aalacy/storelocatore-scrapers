@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def get_urls():
@@ -13,6 +14,25 @@ def get_urls():
     tree = html.fromstring(r.text)
 
     return tree.xpath("//select[@id='country-store']/option[@value!='']/@value")
+
+
+def get_raw(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    lines = tree.xpath("//td[@class='first']/text()")
+    lines = list(filter(None, [line.strip() for line in lines]))
+
+    return " ".join(lines)
+
+
+def get_street(page_url):
+    line = get_raw(page_url)
+    adr = parse_address(International_Parser(), line)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+
+    return street_address
 
 
 def get_data(country, sgw: SgWriter):
@@ -29,15 +49,15 @@ def get_data(country, sgw: SgWriter):
 
         t = t.split("window.lctr.results.push(")[1].split(");")[0]
         j = json.loads(t)
-        street_address = (
-            f"{j.get('AddressLine')} {j.get('street') or ''}".strip() or "<MISSING>"
-        )
+        store_number = j.get("location_id")
+        page_url = f"https://stores.next.co.uk/results/infowindow/{store_number}"
+        street_address = f"{j.get('AddressLine')} {j.get('street') or ''}".strip()
         street_address = " ".join(street_address.split())
+        if len(street_address) < 10:
+            street_address = get_street(page_url)
         city = j.get("city")
         state = j.get("county")
         postal = j.get("PostalCode")
-        store_number = j.get("location_id")
-        page_url = f"https://stores.next.co.uk/results/infowindow/{store_number}"
         location_name = j.get("branch_name")
         phone = j.get("telephone")
         latitude = j.get("Latitude")

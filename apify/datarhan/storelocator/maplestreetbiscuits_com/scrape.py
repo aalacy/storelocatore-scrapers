@@ -1,4 +1,5 @@
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -17,10 +18,9 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_states = dom.xpath(
-        '//div[div[@class="brz-css-cnqsr brz-wrapper state-name"]]//a/@href'
-    )
+    all_states = dom.xpath('//p/a[@data-brz-link-type="external"]/@href')
     for url in all_states:
+        url = urljoin(start_url, url)
         response = session.get(url)
         dom = etree.HTML(response.text)
         all_locations = dom.xpath(
@@ -38,12 +38,14 @@ def fetch_data():
                 "legal",
                 "page_id",
                 "careers",
+                "immerse-marketing",
             ]
             for e in exc:
                 if e in page_url:
                     passed = False
             if not passed:
                 continue
+
             loc_response = session.get(page_url, headers=hdr)
             loc_dom = etree.HTML(loc_response.text)
 

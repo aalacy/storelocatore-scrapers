@@ -20,6 +20,7 @@ def fetch_data(sgw: SgWriter):
         headers=hdr,
     )
     countries = re.findall(r"COUNTRY_LABEL\['(.+?)'\] =", response.text)
+    countries.append("JO")
     for country in countries:
         response = session.get(start_url.format(country), headers=hdr)
         data = re.findall(r'GeoResponse.execute\((.+),"",7\)', response.text)
@@ -27,7 +28,6 @@ def fetch_data(sgw: SgWriter):
             continue
         data = json.loads(json.loads(data[0]))["L"][0]["O"]
         for poi in data:
-
             store_url = "https://www.tods.com/us-en/store-locator.html"
             location_name = poi.get("U").get("name") or "<MISSING>"
             info = poi.get("U").get("timeTable") or "<MISSING>"
@@ -59,22 +59,21 @@ def fetch_data(sgw: SgWriter):
                 "7": "sunday",
             }
             hoo = []
-            if poi["U"]["G"].get("hours"):
-                for elem in poi["U"]["G"]["hours"]:
-                    day = days_dict[elem["day"]]
-                    if elem.get("From1"):
-                        opens = elem["From1"]
-                        closes = elem["To1"]
-                        hoo.append(f"{day} {opens} - {closes}")
-                    else:
-                        hoo.append(f"{day} closed")
+            if poi["U"].get("timeTable"):
+                hoo = poi["U"]["timeTable"]
+            else:
+                if poi["U"]["G"].get("hours"):
+                    for elem in poi["U"]["G"]["hours"]:
+                        day = days_dict[elem["day"]]
+                        if elem.get("From1"):
+                            opens = elem["From1"]
+                            closes = elem["To1"]
+                            hoo.append(f"{day} {opens} - {closes}")
+                        else:
+                            hoo.append(f"{day} closed")
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
             if "closed" in info:
                 hours_of_operation = "Closed"
-
-            if country_code == "PR":
-                state = "PR"
-                country_code = "US"
 
             row = SgRecord(
                 locator_domain=domain,

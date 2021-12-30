@@ -22,6 +22,16 @@ def fetch_data():
             location_name = "ALDI SÜD"
         else:
             location_name = "ALDI NORD"
+        hoo = []
+        for e in poi["openUntilSorted"]["openingHours"]:
+            day = e["day"]
+            if e.get("closed"):
+                hoo.append(f"{day}: closed")
+            else:
+                closes = e["closeFormatted"]
+                opens = e["openFormatted"]
+                hoo.append(f"{day}: {opens} - {closes}")
+        hoo = ", ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
@@ -37,7 +47,7 @@ def fetch_data():
             location_type="",
             latitude=poi["latitude"],
             longitude=poi["longitude"],
-            hours_of_operation=poi.get("openingHours"),
+            hours_of_operation=hoo,
         )
 
         yield item

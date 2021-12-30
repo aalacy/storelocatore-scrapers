@@ -23,7 +23,7 @@ def fetch_data():
             city=poi["city"],
             state=poi["province"],
             zip_postal=poi["postCode"],
-            country_code="ZA",
+            country_code="",
             store_number=poi["supplierId"],
             phone=poi["telephone"],
             location_type=poi["supplierType"],

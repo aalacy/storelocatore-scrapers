@@ -43,80 +43,90 @@ def fetch_data():
             typ = "Restaurant"
 
             for item in array["features"]:
-                store = item["properties"]["identifierValue"]
-                loc = "https://www.mcdonalds.com/gb/en-gb/location/" + store + ".html"
-                add = item["properties"]["addressLine1"]
-                add = add.strip()
-                city = item["properties"]["addressLine3"]
-                city = city if city else "<MISSING>"
-                state = "<MISSING>"
-                zc = item["properties"]["postcode"]
                 try:
-                    phone = item["properties"]["telephone"]
+                    store = item["properties"]["identifierValue"]
+                    loc = (
+                        "https://www.mcdonalds.com/gb/en-gb/location/" + store + ".html"
+                    )
+                    add = item["properties"]["addressLine1"]
+                    add = add.strip()
+                    city = item["properties"]["addressLine3"]
+                    city = city if city else "<MISSING>"
+                    state = "<MISSING>"
+                    zc = item["properties"]["postcode"]
+                    try:
+                        phone = item["properties"]["telephone"]
+                    except:
+                        phone = "<MISSING>"
+                    name = item["properties"]["name"]
+                    lat = item["geometry"]["coordinates"][1]
+                    lng = item["geometry"]["coordinates"][0]
+                    try:
+                        hours = (
+                            "Mon: "
+                            + item["properties"]["restauranthours"]["hoursMonday"]
+                        )
+                        hours = (
+                            hours
+                            + "; Tue: "
+                            + item["properties"]["restauranthours"]["hoursTuesday"]
+                        )
+                        hours = (
+                            hours
+                            + "; Wed: "
+                            + item["properties"]["restauranthours"]["hoursWednesday"]
+                        )
+                        hours = (
+                            hours
+                            + "; Thu: "
+                            + item["properties"]["restauranthours"]["hoursThursday"]
+                        )
+                        hours = (
+                            hours
+                            + "; Fri: "
+                            + item["properties"]["restauranthours"]["hoursFriday"]
+                        )
+                        hours = (
+                            hours
+                            + "; Sat: "
+                            + item["properties"]["restauranthours"]["hoursSaturday"]
+                        )
+                        hours = (
+                            hours
+                            + "; Sun: "
+                            + item["properties"]["restauranthours"]["hoursSunday"]
+                        )
+                    except:
+                        hours = "<MISSING>"
+                    if name.strip() == "":
+                        name = city.title()
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
                 except:
-                    phone = "<MISSING>"
-                name = item["properties"]["name"]
-                lat = item["geometry"]["coordinates"][1]
-                lng = item["geometry"]["coordinates"][0]
-                try:
-                    hours = (
-                        "Mon: " + item["properties"]["restauranthours"]["hoursMonday"]
-                    )
-                    hours = (
-                        hours
-                        + "; Tue: "
-                        + item["properties"]["restauranthours"]["hoursTuesday"]
-                    )
-                    hours = (
-                        hours
-                        + "; Wed: "
-                        + item["properties"]["restauranthours"]["hoursWednesday"]
-                    )
-                    hours = (
-                        hours
-                        + "; Thu: "
-                        + item["properties"]["restauranthours"]["hoursThursday"]
-                    )
-                    hours = (
-                        hours
-                        + "; Fri: "
-                        + item["properties"]["restauranthours"]["hoursFriday"]
-                    )
-                    hours = (
-                        hours
-                        + "; Sat: "
-                        + item["properties"]["restauranthours"]["hoursSaturday"]
-                    )
-                    hours = (
-                        hours
-                        + "; Sun: "
-                        + item["properties"]["restauranthours"]["hoursSunday"]
-                    )
-                except:
-                    hours = "<MISSING>"
-                if name.strip() == "":
-                    name = city.title()
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+                    pass
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

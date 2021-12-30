@@ -27,6 +27,7 @@ def fetch_data():
         location_type = poi["TypeName"]
         if location_type.endswith(","):
             location_type = location_type[:-1]
+        location_type = location_type.replace("0", "全部经销商").replace("1", "认证二手车经销商")
 
         item = SgRecord(
             locator_domain=domain,

@@ -88,7 +88,7 @@ def fetch_data():
                 break
             raw_address += " " + addr
         street_address, city, state, zip_postal = getAddress(raw_address.strip())
-        hours_of_operation = get_hoo(info)
+        hours_of_operation = get_hoo(info).rstrip(",")
         country_code = "US"
         store_number = MISSING
         location_type = "sohaliving"
