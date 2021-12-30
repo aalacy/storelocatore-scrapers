@@ -88,7 +88,10 @@ def fetch_data():
             try:
                 r3 = session.get(lurl, headers=headers)
                 time.sleep(5)
-                for line3 in r3.iter_lines():
+                lines = r3.iter_lines()
+                dc = -1
+                week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                for line3 in lines:
                     if '"openingHours": [' in line3 and hours == "":
                         OHFound = True
                     if OHFound and "]," in line3:
@@ -99,6 +102,14 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+                    if '<span class="retailer-direction__text">' in line3:
+                        if " - " in line3 or "losed" in line3 and dc <= 5:
+                            dc = dc + 1
+                            hrs = week[dc] + ": " + line3.split('">')[1].split("<")[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
             except:
                 pass
             if hours == "":
