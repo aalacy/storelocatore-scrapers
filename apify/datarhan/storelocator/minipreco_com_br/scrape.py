@@ -1,5 +1,3 @@
-import re
-import demjson
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -13,38 +11,27 @@ from sgpostal.sgpostal import parse_address_intl
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.dockyard.hu/uzleteink/"
-    domain = "dockyard.hu"
+    start_url = "https://site.minipreco.com.br/lojas/#sul"
+    domain = "minipreco.com.br"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="row shop-item"]')
-    for poi_html in all_locations:
-        location_name = poi_html.xpath('.//h2[@class="shop-name"]/a/text()')[0]
-        page_url = poi_html.xpath('.//h2[@class="shop-name"]/a/@href')[0]
+    all_locations = dom.xpath("//h5/a/@href")
+    for page_url in all_locations:
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        raw_address = poi_html.xpath(".//address/text()")[0]
+
+        location_name = loc_dom.xpath('//span[@itemprop="name"]/text()')[0]
+        raw_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[0]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
-        phone = poi_html.xpath('.//p[@class="shop-phone hidden-xs"]/text()')[0]
-        hoo = loc_dom.xpath(
-            '//div[@class="shop-data-openings shop-data-table"]/p//text()'
-        )
-        hoo = " ".join([e.strip() for e in hoo])
-        geo = (
-            re.findall(
-                r"points.push\((.+?)',name: '{}".format(location_name),
-                loc_response.text.replace("\n", ""),
-            )[0].split("points.push(")[-1]
-            + "'}"
-        )
-        geo = demjson.decode(geo)
+        phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
+        phone = phone[0].replace("SAC ", "") if phone else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -52,15 +39,15 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=addr.city,
-            state="",
+            state=addr.state,
             zip_postal=addr.postcode,
-            country_code="HU",
+            country_code=addr.country,
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo["x"],
-            longitude=geo["y"],
-            hours_of_operation=hoo,
+            latitude="",
+            longitude="",
+            hours_of_operation="",
             raw_address=raw_address,
         )
 
