@@ -41,6 +41,8 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Opening times ", "")
             )
+            if "*Bru" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("*Bru")[0]
             if "Christmas" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("Christmas")[0]
             pa = parse_address_intl(raw_address)
@@ -56,6 +58,8 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+            if street_address == MISSING:
+                street_address = raw_address.replace(city, "").replace(zip_postal, "")
             country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,

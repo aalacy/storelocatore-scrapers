@@ -78,6 +78,32 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        r = session.get("https://www.costuless.com/store-locator", headers=headers)
+        tree = html.fromstring(r.text)
+        try:
+            latitude = (
+                "".join(
+                    "".join(
+                        tree.xpath('//script[contains(text(), "var locations")]/text()')
+                    ).split(f'{slug.replace("/","")}')[1:]
+                )
+                .split('"lat":"')[1]
+                .split('"')[0]
+                .strip()
+            )
+            longitude = (
+                "".join(
+                    "".join(
+                        tree.xpath('//script[contains(text(), "var locations")]/text()')
+                    ).split(f'{slug.replace("/", "")}')[1:]
+                )
+                .split('"lng":"')[1]
+                .split('"')[0]
+                .strip()
+            )
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -91,8 +117,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
             raw_address=adr,
         )
