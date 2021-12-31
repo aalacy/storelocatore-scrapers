@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import re
+import json
 
 DOMAIN = "jimmyspizza.com"
 BASE_URL = "https://www.jimmyspizza.com/"
@@ -92,35 +93,24 @@ def fetch_data():
             phone = val_city["value"].split("++")[1]
             curr_link = str(req.url)
             if (
-                "/sterling/" in curr_link
-                or "/rice/" in curr_link
-                or "silverbay/" in curr_link
-                or "stcharles" in curr_link
-                or "winsted" in curr_link
-            ):
-                cont = store.select_one("div.header-text").text.split("\n")
-                hours = ""
-                take_more = False
-                for c in cont:
-                    if "HOURS" in c:
-                        take_more = True
-                    if take_more:
-                        hours += c + " "
-            elif (
                 "jimmyspizzaannandale" in curr_link
                 or "jimmyspizzacoldspring" in curr_link
                 or "jimmyspizzahawley" in curr_link
                 or "immyspizzalitchfield" in curr_link
             ):
-                days = store.select("div.p.af")
+                hoo_content = json.loads(
+                    store.find("script", {"type": "application/ld+json"}).string
+                )
                 hours = ""
-                for day in days:
-                    hours += day.text + " "
+                for hday in hoo_content["openingHoursSpecification"]:
+                    day = hday["dayOfWeek"] + ": "
+                    hour = hday["opens"] + " - " + hday["closes"]
+                    hours += day + hour + ","
+            elif "hawley" in curr_link:
+                hours = "Thursday: 04:00 PM - 08:00 PM, Friday: 11:30 AM - 09:00 PM, Saturday: 11:30 AM - 09:00 PM, Sunday: 04:00 PM - 08:00 PM, Monday: Closed, Tuesday: 04:00 PM - 08:00 PM, Wednesday: 04:00 PM - 08:00 PM"
             elif "jimmyspizzahutch" in curr_link:
                 hours = "Lunch Mon - Fri 11am-1:30pm Dinner Mon - Thurs 4pm-9pm Fri - Sat 4pm-10pm ​Closed Sunday"
-
             elif "jimmysaberdeen" in curr_link:
-
                 hours = "Monday – Sunday: 4pm – 9pm"
             else:
                 hours = store.find("div", {"class": "sub-text"})
@@ -141,16 +131,30 @@ def fetch_data():
                                 "Sunday-Thursday 4pm-10pm Friday & Saturday 4pm-11pm"
                             )
                 else:
-                    hours = MISSING
+                    hours = store.find("div", {"class": "header-text"})
+                    if hours:
+                        try:
+                            hours = re.sub(
+                                r",Stop Delivering.*",
+                                "",
+                                hours.get_text(strip=False, separator=",")
+                                .split("HOURS:")[1]
+                                .replace("\xa0", " ")
+                                .replace("\n", "")
+                                .strip(),
+                            ).strip(",")
+                        except:
+                            hours = MISSING
             hours_of_operation = (
                 re.sub(
-                    r"^:|OUR HOURS:|STORE HOURS|STOREHOURS:|\(Delivery available\s+\d{1,2}:\d{1,2}am-\d{1,2}:\d{1,2}pm\)|\(including buffet\)|\(\)|\n",
+                    r"(^:)|OUR HOURS:|STORE HOURS|STOREHOURS:|(,?)\(Delivery available\s+\d{1,2}:\d{1,2}am-\d{1,2}:\d{1,2}pm\)|\(including buffet\)|\(\)|\n|DELIVERY AVAILABLE.*",
                     "",
                     hours,
                 )
                 .replace("\n", " ")
                 .replace("\u00A0", "")
                 .replace("\u200b", "")
+                .strip(",")
                 .strip()
             )
             country_code = "US"
