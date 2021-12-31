@@ -94,8 +94,8 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             location_type = "Banking " + location_name.split("Banking")[1]
         elif "ATM" in location_name:
             location_type = "ATM"
-        elif "Mortage" in location_name:
-            location_type = "Mortage"
+        elif "Mortgage" in location_name:
+            location_type = "Mortgage"
         elif "Private Wealth" in location_name:
             location_type = "Private Wealth Management"
         else:
