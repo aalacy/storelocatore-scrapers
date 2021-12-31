@@ -32,8 +32,6 @@ data = '[{"id":14,"value":["Existant"]}]'
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.malls.com/ajax/GetMaps.php"
-
     with SgRequests() as session:
         search_res = session.post(
             "https://us-central1-sad-interactive.cloudfunctions.net/cncc_filter_poi_prod",
