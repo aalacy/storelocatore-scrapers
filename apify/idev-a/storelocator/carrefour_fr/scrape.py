@@ -8,6 +8,8 @@ import dirtyjson as json
 from sglogging import SgLogSetup
 import re
 import time
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 logger = SgLogSetup().get_logger("carrefour")
 
@@ -34,13 +36,32 @@ locator_domain = "https://www.carrefour.fr"
 base_url = "https://www.carrefour.fr/magasin/"
 
 
+@retry(stop=stop_after_attempt(8), wait=tenacity.wait_fixed(8))
+def get_response(url):
+    logger.info("Retrying with Tenacity")
+    with SgRequests(proxy_country="fr") as http:
+        try:
+            response = http.get(url, headers=_headers)
+            logger.info(f"{url} >> STATUS: {response.status_code}")
+            if response.status_code == 200:
+                logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+                return response
+        except Exception as e:
+            logger.info(f"{url} Not loading: {response.status_code} : {e}")
+            pass
+
+
 def fetch_data():
     with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=7) as session:
-        regions = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+        response = session.get(base_url, headers=_headers)
+        logger.info(f"BASE Res: {response.status_code}")
+
+        regions = bs(response.text, "lxml").select(
             "li.store-locator-footer-list__item a"
         )
         for region in regions:
             url = locator_domain + region["href"]
+            logger.info(f"Region: {url}")
             locations = json.loads(
                 session.get(url, headers=_headers)
                 .text.split(":context-stores=")[1]
@@ -62,7 +83,8 @@ def fetch_data():
                         start = hh["begTime"]["date"].split()[-1].split(".")[0]
                         end = hh["endTime"]["date"].split()[-1].split(".")[0]
                         hours.append(f"{day}: {start} - {end}")
-                except:
+                except Exception as e:
+                    logger.info(f" HOO Error: {e}")
                     pass
 
                 phone = ""
@@ -70,7 +92,10 @@ def fetch_data():
                 if page_url != base_url:
                     logger.info(page_url)
                     res = session.get(page_url, headers=_headers)
+                    logger.info(f"Page Crawl Status: {res.status_code}")
                     time.sleep(1)
+                    if res.status_code == 404:
+                        continue
                     if res.status_code == 200:
                         sp1 = bs(res.text, "lxml")
                         location_name = sp1.select_one(
@@ -96,6 +121,39 @@ def fetch_data():
                                 hh.select_one("div.store-meta__time").stripped_strings
                             )
                             hours.append(f"{day}: {times}")
+                    else:
+                        res = get_response(page_url)
+                        if res:
+                            sp1 = bs(res.text, "lxml")
+                            location_name = sp1.select_one(
+                                "h1.store-page__banner__heading"
+                            ).text.strip()
+                            location_type = json.loads(
+                                sp1.find(
+                                    "script",
+                                    string=re.compile(r"tc_vars = Object.assign"),
+                                )
+                                .string.split("tc_vars = Object.assign(tc_vars,")[1]
+                                .strip()[:-2]
+                            )["store_format"]
+                            if sp1.select_one("div.store-meta--telephone a"):
+                                phone = sp1.select_one(
+                                    "div.store-meta--telephone a"
+                                ).text.strip()
+                            hours = []
+                            for hh in sp1.select(
+                                "div.store-hours div.store-meta__opening-range"
+                            ):
+                                day = hh.select_one(
+                                    "div.store-meta__label"
+                                ).text.strip()
+                                times = ", ".join(
+                                    hh.select_one(
+                                        "div.store-meta__time"
+                                    ).stripped_strings
+                                )
+                                hours.append(f"{day}: {times}")
+
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],

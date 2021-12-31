@@ -14,7 +14,9 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("name")
         page_url = j.get("store_url")
-        street_address = f'{j.get("address")} {j.get("address_2") or ""}'.strip()
+        street_address = f'{j.get("address")} {j.get("address_2") or ""}'.replace(
+            "&amp;", "&"
+        ).strip()
         city = j.get("town")
         state = j.get("state")
         postal = j.get("zip")
