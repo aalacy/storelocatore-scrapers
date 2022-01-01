@@ -1,17 +1,26 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
+
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+import time
+from lxml import html
+from sgselenium.sgselenium import SgChrome
+
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 website = "bathandbodyworks.com.eg"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
-}
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
@@ -22,13 +31,13 @@ def fetch_data():
         "https://www.bathandbodyworks.com/middle-east-and-africa/global-locations-egypt.html",
     ]
 
-    with SgRequests() as session:
+    with SgChrome(user_agent=user_agent) as driver:
 
         for search_url in search_urls:
-
-            search_res = session.get(search_url, headers=headers)
-
-            search_sel = lxml.html.fromstring(search_res.text)
+            driver.get(search_url)
+            time.sleep(5)
+            htmlpage = driver.page_source
+            search_sel = html.fromstring(htmlpage, "lxml")
             stores = search_sel.xpath(
                 '//div[contains(@class,"store-location-container")]/div'
             )
