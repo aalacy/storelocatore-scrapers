@@ -66,7 +66,7 @@ def fetch_data():
                 street_address=street_address,
                 city=city,
                 state=state,
-                zip_postal=_["data-store-postalcode"],
+                zip_postal=_["data-store-postalcode"] or addr.postcode,
                 country_code="Malaysia",
                 latitude=coord["latitude"],
                 longitude=coord["longitude"],

@@ -23,14 +23,35 @@ def fetch_data(sgw: SgWriter):
             page_url = "".join(d.xpath(".//h4/a/@href"))
 
             _tmp = []
+            black = [
+                "licence",
+                "license",
+                "number",
+                "ahccs",
+                "airport",
+                "hcs",
+                "hha",
+                "ahca",
+                "registration",
+                "certification",
+                "personal",
+                "lic ",
+                "provider",
+                "#np",
+                "rsa",
+            ]
             lines = d.xpath(
                 ".//div[@class='para']/p/a/text()|.//div[@class='para']/p/a/p/text()"
             )
             for line in lines:
-                t = line.lower().strip()
-                if not t or "licence" in t or "license" in t or "number" in t:
+                iscontinue = False
+                t = line.replace("\xa0", " ").lower().strip()
+                for b in black:
+                    if b in t:
+                        iscontinue = True
+                if not t or iscontinue:
                     continue
-                _tmp.append(line.strip().replace("\n", " "))
+                _tmp.append(line.replace("\xa0", " ").strip().replace("\n", " "))
 
             street_address = ", ".join(_tmp[:-1])
             csz = _tmp.pop()
