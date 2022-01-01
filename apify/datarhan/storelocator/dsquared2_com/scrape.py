@@ -39,7 +39,7 @@ def fetch_data():
         if not zip_code:
             zip_code = addr.postcode
         state = addr.state
-        if state and 'M3' in state:
+        if state and "M3" in state:
             state = ""
         hoo = poi.get("wpcf-yoox-store-hours")
         if hoo:
@@ -69,9 +69,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS})
         )
     ) as writer:
         for item in fetch_data():
