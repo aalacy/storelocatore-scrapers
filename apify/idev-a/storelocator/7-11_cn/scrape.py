@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
 import dirtyjson as json
 import math
 from concurrent.futures import ThreadPoolExecutor
@@ -25,7 +24,6 @@ _headers = {
 
 locator_domain = "https://www.7-11.cn"
 base_url = "https://www.7-11.cn/ajax/ajax.aspx"
-session = SgRequests().requests_retry_session()
 max_workers = 8
 
 
@@ -54,7 +52,8 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(data):
-    return session.post(base_url, headers=_headers, data=data)
+    with SgRequests() as session:
+        return session.post(base_url, headers=_headers, data=data)
 
 
 def fetchConcurrentSingle1(city):
@@ -82,7 +81,8 @@ def fetchConcurrentList1(list, occurrence=max_workers):
 
 
 def request_with_retries1(data):
-    return session.post(base_url, headers=_headers, json=data)
+    with SgRequests() as session:
+        return session.post(base_url, headers=_headers, json=data)
 
 
 def fetch_data():
@@ -100,20 +100,24 @@ def fetch_data():
             locations = bs(json.loads(res1.text)["html"], "lxml").select("tr")
             for _ in locations:
                 bb = list(_.stripped_strings)
-                addr = parse_address_intl("中国" + bb[1])
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
+                raw_address = bb[1].replace("?", "")
+                _city = city["name"]
+                if _city == "水湾路212号商铺":
+                    _city = ""
+                if _city:
+                    street_address = raw_address.split(_city)[-1]
+                    state = raw_address.split(_city)[0]
+                else:
+                    street_address = raw_address
                 yield SgRecord(
-                    page_url=base_url,
+                    page_url="https://www.7-11.cn/ShopsNearby/",
                     location_name=bb[0],
                     street_address=street_address,
-                    city=city["name"],
-                    state=addr.state,
-                    zip_postal=addr.postcode,
+                    city=_city,
+                    state=state,
                     country_code="China",
                     locator_domain=locator_domain,
-                    raw_address=bb[1],
+                    raw_address=raw_address,
                 )
 
 

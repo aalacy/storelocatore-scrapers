@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.optumcare.com/bin/optumcare/findlocations"
     domain = "optumcare.com"
@@ -33,7 +33,6 @@ def fetch_data():
         state = poi["provider"]["locations"][0]["addressInfo"]["state"]
         zip_code = poi["provider"]["locations"][0]["addressInfo"]["zip"]
         geo = poi["provider"]["locations"][0]["addressInfo"]["lat_lon"].split(",")
-        page_url = f"{location_name.replace(' ', '-')}-{street_address.replace(' ', '-')}-{city.replace(' ', '-')}-ocut-{zip_code}/{poi['provider']['individualProviderId']}.html"
         phone = ""
         if poi["provider"]["locations"][0].get("telephoneNumbers"):
             phone = [
@@ -44,19 +43,19 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=page_url,
+            page_url="",
             location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=poi["provider"]["providerRole"],
+            location_type="",
             latitude=geo[0],
             longitude=geo[1],
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation="",
         )
 
         yield item

@@ -47,9 +47,15 @@ def fetch_data():
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
 
-        raw_address = ", ".join(
-            store_sel.xpath('//div[.//*[contains(text(),"Adress")]]/p/text()')
-        ).strip()
+        temp_address = store_sel.xpath(
+            '//div[.//*[contains(text(),"Adress")]]/p/text()'
+        )
+        add_list = []
+        for temp in temp_address:
+            if len("".join(temp).strip()) > 0:
+                add_list.append("".join(temp).strip())
+
+        raw_address = ", ".join(add_list).strip()
 
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
@@ -57,6 +63,8 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if not city:
+            city = raw_address.rsplit(" ", 1)[-1].strip()
         state = formatted_addr.state
         zip = formatted_addr.postcode
 
@@ -66,9 +74,29 @@ def fetch_data():
         store_number = "<MISSING>"
 
         location_type = "<MISSING>"
-        hours = store_sel.xpath('//div[./h3[contains(text(),"ppettider")]]')
-        if len(hours) > 0:
-            hours_of_operation = ", ".join(hours[0].xpath("p[1]/text()")).strip()
+        days = store_sel.xpath('//div[./*[contains(text(),"Varuhus")]]/dl[1]/dt/text()')
+        time = store_sel.xpath('//div[./*[contains(text(),"Varuhus")]]/dl[1]/dd/text()')
+        hours_list = []
+        for index in range(0, len(days)):
+            hours_list.append(days[index] + ":" + time[index])
+
+        if len(hours_list) <= 0:
+            hours = store_sel.xpath(
+                '//div[./*[contains(text(),"varuhuset")]]/p[1]//text()'
+            )
+            if len(hours) <= 0:
+                hours = store_sel.xpath('//div[./h2[contains(text(),"ppettider")]]')
+                if len(hours) <= 0:
+                    hours = store_sel.xpath('//div[./h3[contains(text(),"ppettider")]]')
+
+                if len(hours) > 0:
+                    hours = hours[0].xpath("p[1]//text()")
+
+            for hour in hours:
+                if len("".join(hour).strip()) > 0:
+                    hours_list.append("".join(hour).strip())
+
+        hours_of_operation = "; ".join(hours_list).strip().split("; Handla")[0].strip()
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"

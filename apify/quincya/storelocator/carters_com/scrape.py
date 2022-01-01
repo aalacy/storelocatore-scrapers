@@ -1,4 +1,3 @@
-import csv
 import json
 import re
 
@@ -6,42 +5,17 @@ from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("carters.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://locations.carters.com/"
 
@@ -76,6 +50,8 @@ def fetch_data():
         base = BeautifulSoup(req.text, "lxml")
 
         final_items = base.find_all(class_="location_name")
+        if not final_items:
+            final_links.append(next_link)
         for final_item in final_items:
             final_link = final_item.a["href"]
 
@@ -83,7 +59,6 @@ def fetch_data():
                 final_link = "https:" + final_link
                 final_links.append(final_link)
 
-    data = []
     total_links = len(final_links)
     logger.info("Processing %s links .." % (total_links))
     for i, final_link in enumerate(final_links):
@@ -100,6 +75,8 @@ def fetch_data():
         state = store["address"]["addressRegion"]
         zip_code = store["address"]["postalCode"]
         country_code = store["address"]["addressCountry"]
+        if not country_code:
+            country_code = "US"
 
         try:
             store_number = re.findall(r'storeid":"[0-9]+', str(item))[0].split(':"')[1]
@@ -112,44 +89,50 @@ def fetch_data():
 
         hours_of_operation = ""
         raw_hours = store["openingHoursSpecification"]
-        for hours in raw_hours:
-            day = hours["dayOfWeek"]
-            if len(day[0]) != 1:
-                day = " ".join(hours["dayOfWeek"])
-            opens = hours["opens"]
-            closes = hours["closes"]
-            if opens != "" and closes != "":
-                clean_hours = day + " " + opens + "-" + closes
-                hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
+        if raw_hours:
+            for hours in raw_hours:
+                day = hours["dayOfWeek"]
+                if len(day[0]) != 1:
+                    day = " ".join(hours["dayOfWeek"])
+                opens = hours["opens"]
+                closes = hours["closes"]
+                if opens != "" and closes != "":
+                    clean_hours = day + " " + opens + "-" + closes
+                    hours_of_operation = (
+                        hours_of_operation + " " + clean_hours
+                    ).strip()
+        else:
+            try:
+                hours_of_operation = " ".join(
+                    list(item.find(class_="ml_hours").stripped_strings)[2:]
+                )
+            except:
+                pass
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
         latitude = store["geo"]["latitude"]
         longitude = store["geo"]["longitude"]
 
-        data = [
-            locator_domain,
-            final_link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        yield data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

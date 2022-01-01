@@ -1,0 +1,21 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+
+--ignore GeoConsistencyValidator (Not US state)
+Found 5 concerning rows. Examples:
+       zip           state                REASON  rowNumber
+1    80119            Bali  ZIPCODE_NOT_IN_STATE          1
+44   16516      Jawa Barat  ZIPCODE_NOT_IN_STATE         44
+138  16810      Jawa Barat  ZIPCODE_NOT_IN_STATE        138
+148  57141     Jawa Tengah  ZIPCODE_NOT_IN_STATE        148
+161  20231  Sumatera Utara  ZIPCODE_NOT_IN_STATE        161
+
+--ignore CountryValidator (Not US state)
+Found 5 concerning rows. Examples:
+              state      phone    zip            REASON  rowNumber
+1              Bali  <MISSING>  80119  INVALID_US_STATE          1
+44       Jawa Barat  <MISSING>  16516  INVALID_US_STATE         44
+138      Jawa Barat  <MISSING>  16810  INVALID_US_STATE        138
+148     Jawa Tengah  <MISSING>  57141  INVALID_US_STATE        148
+161  Sumatera Utara  <MISSING>  20231  INVALID_US_STATE        161

@@ -1,119 +1,177 @@
-import json
-from lxml import etree
-
 from sgpostal.sgpostal import parse_address_intl
+import time
+import json
+from lxml import html
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgwriter import SgWriter
-import requests  # noqa
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import random
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+import ssl
 
-url = "https://www.unode50.com/us/stores"
-domain = "unode50.com"
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
-headers = {
-    "authority": "www.unode50.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '"Google Chrome";v="93", " Not;A Brand";v="99", "Chromium";v="93"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Linux"',
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "referer": "https://www.unode50.com/us/stores",
-    "accept-language": "en-US,en;q=0.9",
-    "cookie": "TvWhqLk3ZpjZqFRioIv7gr5vUZpcsmBd=668f111c445a94ba77d8cb54cd515cf2; ClsK7d1xOIBOgnEV3jdywfE11djIfGXh=dc73442c9d14c88f794251c25da742e1; _gcl_au=1.1.1931177535.1631710688; form_key=faqDWZfxvR835ic2; mage-cache-storage=%7B%7D; mage-cache-storage-section-invalidation=%7B%7D; mage-cache-sessid=true; _uetsid=934ec140162411eca711f579476138b2; _uetvid=934ed7e0162411ecb7d9d37758dc3e36; mage-messages=; product_data_storage=%7B%7D; _hjid=da7dbb3b-0f0d-41e6-97dd-6f3a7f37968a; _hjFirstSeen=1; _fbp=fb.1.1631710690060.2138396993; _hjAbsoluteSessionInProgress=0; _pin_unauth=dWlkPU9Ua3hZamt6WTJVdFlUYzJNUzAwTm1VM0xUZzBObUV0TUdNNE5tSXhOVFUxWldZeA; _ga=GA1.2.418090098.1631710693; _gid=GA1.2.8778045.1631710693",
-}
 
-response = requests.request("GET", url, headers=headers)
+website = "unode50.com"
+store_url1 = "https://www.unode50.com/us/stores#34.09510173134606,-118.3993182825743"
+store_url = "view-source:https://www.unode50.com/us/stores"
+MISSING = SgRecord.MISSING
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+
+def driver_sleep(driver, time=2):
+    try:
+        WebDriverWait(driver, time).until(
+            EC.presence_of_element_located((By.ID, MISSING))
+        )
+    except Exception:
+        pass
+
+
+def random_sleep(driver, start=5, limit=3):
+    driver_sleep(driver, random.randint(start, start + limit))
+
+
+def fetch_stores():
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
+
+        driver.maximize_window()
+        random_sleep(driver, 1)
+
+        driver.get("https://www.unode50.com")
+        random_sleep(driver, 10)
+
+        try:
+            lButton = driver.find_element_by_xpath(
+                "//button[contains(@id, 'btn-cookie-allow')]"
+            )
+            driver.execute_script("arguments[0].click();", lButton)
+            random_sleep(driver, 10)
+        except Exception as e:
+            log.info(e)
+            pass
+
+        tried = 0
+        while True:
+            tried = tried + 1
+
+            if tried == 10:
+                break
+
+            log.debug(f"Trying {tried} ...")
+            try:
+                driver.get(store_url1)
+                driver.forward()
+                driver.get(store_url)
+                driver.forward()
+                random_sleep(driver, 12)
+
+                body = html.fromstring(driver.page_source, "lxml")
+
+                data = body.xpath(
+                    "//td[contains(text(), 'store-locator-search') and contains(text(), 'Magento_Ui/js/core/app')]/text()"
+                )[0]
+                data = json.loads(data)
+                return data["*"]["Magento_Ui/js/core/app"]["components"][
+                    "store-locator-search"
+                ]["markers"]
+            except Exception as e:
+                log.info(f"Failed Locading redirected page: {e}")
+                pass
+    return []
+
+
+def get_address(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"Missing address: {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
 
 def fetch_data():
+    stores = fetch_stores()
+    log.info(f"Total stores = {len(stores)}")
+    for store in stores:
+        country_code = MISSING
+        phone = MISSING
+        location_type = MISSING
+        hours_of_operation = MISSING
 
-    dom = etree.HTML(response.text)
-    data = dom.xpath('//script[contains(text(), "calendar")]/text()')[0]
-    data = json.loads(data)
+        store_number = store["id"]
+        location_name = store["name"]
+        raw_address = store["address"].replace("\n", ", ").replace("\t", ", ")
+        raw_address = " ".join(raw_address.split())
+        raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+        if raw_address[len(raw_address) - 1] == ",":
+            raw_address = raw_address[:-1]
 
-    for poi in data["*"]["Magento_Ui/js/core/app"]["components"][
-        "store-locator-search"
-    ]["markers"]:
-        location_name = poi["name"]
-        if location_name == "g":
-            continue
-        if "., .," in poi["address"]:
-            continue
-        raw_address = poi["address"].replace("\n", ", ").replace("\t", ", ").split(", ")
-        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        addr = parse_address_intl(" ".join(raw_address))
-        city = addr.city
-        if not city:
-            city = raw_address[-2]
-        if city == "-":
-            city = SgRecord.MISSING
-        street_check = " ".join([e.capitalize() for e in poi["address"].split()]).split(
-            city
-        )
-        if len(street_check) == 2:
-            street_address = (
-                " ".join([e.capitalize() for e in poi["address"].split()])
-                .split(city)[0]
-                .strip()
-            )
-        else:
-            street_address = " ".join([e.capitalize() for e in raw_address[0].split()])
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        if street_address == "South Market":
-            street_address = "South Market, Bay 34"
-        if street_address.isdigit():
-            street_address = ", ".join(raw_address[:2])
-        if street_address in ["-", "."]:
-            street_address = SgRecord.MISSING
-        street_address = street_address.replace(">> ", "").strip()
-        if street_address == "12":
-            street_address = ", ".join(raw_address[:2])
-        state = addr.state
-        zip_code = addr.postcode
-        store_number = poi["id"]
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        store_url = f"https://www.unode50.com/en/int/stores#{latitude},{longitude}"
+        street_address, city, state, zip_postal = get_address(raw_address)
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        page_url = f"https://www.unode50.com/en/int/stores#{latitude},{longitude}"
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=store_url,
+        yield SgRecord(
+            locator_domain=website,
+            store_number=store_number,
+            page_url=page_url,
             location_name=location_name,
+            location_type=location_type,
             street_address=street_address,
             city=city,
+            zip_postal=zip_postal,
             state=state,
-            zip_postal=zip_code,
-            country_code=SgRecord.MISSING,
-            store_number=store_number,
-            phone=SgRecord.MISSING,
-            location_type=SgRecord.MISSING,
+            country_code=country_code,
+            phone=phone,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
-            raw_address=poi["address"].replace("\n", ", ").replace("\t", ", "),
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
-
-        yield item
+    return []
 
 
 def scrape():
+    log.info(f"Start scrapping {website} ...")
+    start = time.time()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        for rec in fetch_data():
+            writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":
