@@ -198,7 +198,7 @@ def fetch_data():
         driver.find_element_by_xpath(
             '//*[@id="header"]/div[2]/div/div[2]/form/button'
         ).click()
-        time.sleep(1)
+        time.sleep(2)
         driver.implicitly_wait(10)
         staleElement = True
         while staleElement:

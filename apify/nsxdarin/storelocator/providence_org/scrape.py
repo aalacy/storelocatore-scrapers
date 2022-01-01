@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("providence_org")
 
@@ -8,33 +11,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -81,9 +57,7 @@ def fetch_data():
             + str(x)
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        lines = r.iter_lines(decode_unicode=True)
+        lines = r.iter_lines()
         for line in lines:
             if '<ul  class="list-unstyled row">' in line:
                 Found = True
@@ -162,26 +136,25 @@ def fetch_data():
                     alllocs.append(infotext)
                     r2 = session.get(mloc, headers=headers)
                     for line2 in r2.iter_lines():
-                        line2 = str(line2.decode("utf-8"))
                         if '"latitude" content="' in line2:
                             lat = line2.split('"latitude" content="')[1].split('"')[0]
                             lng = line2.split('"longitude" content="')[1].split('"')[0]
-                    yield [
-                        website,
-                        mloc,
-                        name,
-                        newadd,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=mloc,
+                        location_name=name,
+                        street_address=newadd,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
         logger.info(("%s MT Locations Found" % str(len(mtlocs))))
     for x in range(1, 50):
         logger.info(("Pulling OR Page %s..." % str(x)))
@@ -195,9 +168,7 @@ def fetch_data():
                     + "&within=5000"
                 )
                 r = session.get(url, headers=headers)
-                if r.encoding is None:
-                    r.encoding = "utf-8"
-                lines = r.iter_lines(decode_unicode=True)
+                lines = r.iter_lines()
                 for line in lines:
                     if '<h4><a id="main_0_contentpanel' in line:
                         lurl = (
@@ -287,7 +258,6 @@ def fetch_data():
                                 alllocs.append(infotext)
                                 r2 = session.get(mloc, headers=headers)
                                 for line2 in r2.iter_lines():
-                                    line2 = str(line2.decode("utf-8"))
                                     if '"latitude" content="' in line2:
                                         lat = line2.split('"latitude" content="')[
                                             1
@@ -295,22 +265,22 @@ def fetch_data():
                                         lng = line2.split('"longitude" content="')[
                                             1
                                         ].split('"')[0]
-                                yield [
-                                    website,
-                                    mloc,
-                                    name,
-                                    newadd,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                                yield SgRecord(
+                                    locator_domain=website,
+                                    page_url=mloc,
+                                    location_name=name,
+                                    street_address=newadd,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zc,
+                                    country_code=country,
+                                    phone=phone,
+                                    location_type=typ,
+                                    store_number=store,
+                                    latitude=lat,
+                                    longitude=lng,
+                                    hours_of_operation=hours,
+                                )
                 logger.info(("%s OR Locations Found" % str(len(orlocs))))
             except:
                 PFound = True
@@ -321,9 +291,7 @@ def fetch_data():
             + str(x)
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        lines = r.iter_lines(decode_unicode=True)
+        lines = r.iter_lines()
         for line in lines:
             if '<ul  class="list-unstyled row">' in line:
                 Found = True
@@ -410,26 +378,25 @@ def fetch_data():
                     alllocs.append(infotext)
                     r2 = session.get(mloc, headers=headers)
                     for line2 in r2.iter_lines():
-                        line2 = str(line2.decode("utf-8"))
                         if '"latitude" content="' in line2:
                             lat = line2.split('"latitude" content="')[1].split('"')[0]
                             lng = line2.split('"longitude" content="')[1].split('"')[0]
-                    yield [
-                        website,
-                        mloc,
-                        name,
-                        newadd,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=mloc,
+                        location_name=name,
+                        street_address=newadd,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
         logger.info(("%s WA Locations Found" % str(len(mtlocs))))
     for x in range(1, 10):
         logger.info(("Pulling AK Page %s..." % str(x)))
@@ -439,9 +406,7 @@ def fetch_data():
             + "&within=5000"
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if '<h4><a id="main_0' in line:
                 lurl = (
                     "https://alaska.providence.org"
@@ -466,9 +431,7 @@ def fetch_data():
         lng = "<MISSING>"
         HFound = False
         r = session.get(loc, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        lines = r.iter_lines(decode_unicode=True)
+        lines = r.iter_lines()
         for line in lines:
             if 'pnlOfficeHours">' in line:
                 HFound = True
@@ -602,7 +565,6 @@ def fetch_data():
                 alllocs.append(infotext)
                 r2 = session.get(loc, headers=headers)
                 for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
                     if '"latitude" content="' in line2:
                         try:
                             lat = line2.split('"latitude" content="')[1].split('"')[0]
@@ -613,22 +575,22 @@ def fetch_data():
                             lng = line2.split('"longitude" content="')[1].split('"')[0]
                         except:
                             lng = "<MISSING>"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    newadd,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=newadd,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
     for x in range(1, 75):
         logger.info(("Pulling SCA Page %s..." % str(x)))
@@ -638,9 +600,7 @@ def fetch_data():
             + "&radius=5000&term=#"
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if '<h3><a href="' in line:
                 stub = line.split('a href="')[1].split('"')[0]
                 if "/location" in stub and ".providence.org" not in stub:
@@ -664,9 +624,7 @@ def fetch_data():
         lat = ""
         lng = ""
         r = session.get(loc, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if '"streetAddress":"' in line:
                 name = line.split('"name":"')[1].split('"')[0]
                 add = line.split('"streetAddress":"')[1].split('"')[0]
@@ -714,31 +672,28 @@ def fetch_data():
                 alllocs.append(infotext)
                 r2 = session.get(loc, headers=headers)
                 for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
                     if '"latitude" content="' in line2:
                         lat = line2.split('"latitude" content="')[1].split('"')[0]
                         lng = line2.split('"longitude" content="')[1].split('"')[0]
-                yield [
-                    website,
-                    loc,
-                    name,
-                    newadd,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=newadd,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
     r = session.get("https://www.stjosephhealth.org/our-locations/", headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    lines = r.iter_lines(decode_unicode=True)
+    lines = r.iter_lines()
     for line in lines:
         if '<div class="location">' in line:
             g = next(lines)
@@ -812,31 +767,32 @@ def fetch_data():
                 alllocs.append(infotext)
                 r2 = session.get(loc, headers=headers)
                 for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
                     if '"latitude" content="' in line2:
                         lat = line2.split('"latitude" content="')[1].split('"')[0]
                         lng = line2.split('"longitude" content="')[1].split('"')[0]
-                yield [
-                    website,
-                    loc,
-                    name,
-                    newadd,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=newadd,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
