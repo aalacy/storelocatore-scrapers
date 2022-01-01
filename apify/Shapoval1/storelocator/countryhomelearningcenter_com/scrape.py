@@ -52,6 +52,18 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(adr[0]).replace("\n", "").replace(",", "").strip()
         latitude = j.get("latitude")
         longitude = j.get("longitude")
+        hours_of_operation = (
+            " ".join(tree.xpath('//p[contains(text(), "open from ")]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = (
+            " ".join(hours_of_operation.split())
+            .split("open from")[1]
+            .split(",")[0]
+            .replace(" until ", " - ")
+            .strip()
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -67,7 +79,7 @@ def fetch_data(sgw: SgWriter):
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
             raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
