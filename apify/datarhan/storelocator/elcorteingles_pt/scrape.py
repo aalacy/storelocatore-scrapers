@@ -1,3 +1,4 @@
+import ssl
 from lxml import etree
 from time import sleep
 
@@ -7,6 +8,13 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgChrome
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
