@@ -12,9 +12,6 @@ def fetch_data():
 
     start_url = "https://www.dia.com.br/page-data/index/page-data.json"
     domain = "dia.com.br"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
     data = session.get(start_url).json()
 
     for poi in data["result"]["data"]["lojas"]["nodes"]:
