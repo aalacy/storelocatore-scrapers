@@ -36,6 +36,7 @@ def fetch_data():
             all_locations += dom.xpath(
                 '//div[@id="paginator-list-hotel"]//a[@class="Teaser-link"]/@href'
             )
+            all_locations += dom.xpath('//a[contains(@href, "/hotel/")]/@href')
             all_cities = dom.xpath(
                 '//div[@id="paginator-list-core"]//a[@class="Teaser-link"]/@href'
             )
@@ -45,6 +46,7 @@ def fetch_data():
                 all_locations += dom.xpath(
                     '//div[@id="paginator-list-hotel"]//a[@class="Teaser-link"]/@href'
                 )
+                all_locations += dom.xpath('//a[contains(@href, "/hotel/")]/@href')
                 all_subs = dom.xpath(
                     '//div[@id="paginator-list-core"]//a[@class="Teaser-link"]/@href'
                 )
@@ -89,6 +91,8 @@ def fetch_data():
             phone = phone[0].strip() if phone else SgRecord.MISSING
             location_type = SgRecord.MISSING
             country_code = poi["country"]
+        if "Novotel" not in location_name:
+            continue
         latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')[0]
         longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')[0]
 
