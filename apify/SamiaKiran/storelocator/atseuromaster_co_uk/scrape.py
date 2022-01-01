@@ -14,7 +14,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://www.atseuromaster.co.uk/consumer"
+DOMAIN = "https://www.atseuromaster.co.uk"
 MISSING = SgRecord.MISSING
 
 
@@ -42,7 +42,12 @@ def fetch_data():
             except:
                 page_list = 1
             for page in range(1, int(page_list) + 1):
-                url = "https://centre.atseuromaster.co.uk/gb/england?page=" + str(page)
+                url = (
+                    "https://centre.atseuromaster.co.uk/gb/"
+                    + state_url.lower()
+                    + "?page="
+                    + str(page)
+                )
                 r = session.get(url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 loclist = soup.findAll(
