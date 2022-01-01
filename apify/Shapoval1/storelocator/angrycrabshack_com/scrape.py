@@ -131,7 +131,7 @@ def fetch_data(sgw: SgWriter):
         phone = (
             " ".join(
                 tree.xpath(
-                    '//h3[contains(text(), "Address")]/following-sibling::p/a/text()'
+                    '//div[./h3[text()="Location Info"]]//a[contains(@href, "tel")]/text()'
                 )
             )
             or "<MISSING>"
