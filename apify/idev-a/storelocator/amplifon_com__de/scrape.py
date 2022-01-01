@@ -184,6 +184,9 @@ def fetch_data():
     logger.info(f"{len(locations)} locations")
     for page_url in locations:
         logger.info(f"[***] {page_url}")
+        if "amplifon-blog" in page_url:
+            continue
+
         _, sp1 = get_json(driver, page_url)
         if not _ or not sp1:
             continue

@@ -57,7 +57,7 @@ def get_data(coords, sgw: SgWriter):
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         hours_of_operation = j.get("businessHours") or "<MISSING>"
-        location_type = j.get("__typename")
+        location_type = "<MISSING>"
         store_number = j.get("branchId") or "<MISSING>"
         isPlumbing = j.get("isPlumbing")
         isWaterworks = j.get("isWaterworks")
