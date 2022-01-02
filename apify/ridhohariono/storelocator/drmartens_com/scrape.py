@@ -107,7 +107,7 @@ def fetch_data():
                 raw_address = ", ".join(address[:-1]).strip()
                 phone = (
                     re.sub(r"Tel|:|Phone", "", address[-1], flags=re.IGNORECASE)
-                    .replace("\u202c")
+                    .replace("\u202c", "")
                     .strip()
                 )
             street_address, city, state, zip_postal = getAddress(raw_address)
