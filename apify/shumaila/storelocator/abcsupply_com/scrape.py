@@ -95,7 +95,7 @@ def fetch_data():
                 "https://www.abcsupply.com"
                 + div.find("div", {"class": "location-name"}).find("a")["href"]
             )
-            # log.info(page_url)
+            log.info(page_url)
             address = (
                 div.find("div", {"class": "location-address"})
                 .get_text(separator="|", strip=True)
@@ -216,7 +216,6 @@ def fetch_data():
 
             except:
                 hours_of_operation = MISSING
-            print(hours_of_operation)
             latitude = longitude = MISSING
             for coord in maplist:
                 coord = coord.split(");", 1)[0]
