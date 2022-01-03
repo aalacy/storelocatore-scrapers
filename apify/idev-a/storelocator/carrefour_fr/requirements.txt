@@ -4,3 +4,4 @@ selenium==4.1.0
 sglogging==0.0.4
 sgscrape==0.2.6
 sgselenium==0.0.1
+webdriver_manager==3.5.2

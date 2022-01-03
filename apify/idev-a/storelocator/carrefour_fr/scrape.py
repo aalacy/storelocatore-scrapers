@@ -4,11 +4,14 @@ import os
 import ssl
 import time
 import json
-from selenium import webdriver
+from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import webdriver
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
