@@ -190,7 +190,9 @@ def fetch_data(driver):
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    with SgChrome(chrome_options=chrome_options) as driver:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), chrome_options=chrome_options
+    ) as driver:
         with SgWriter(
             deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
         ) as writer:
