@@ -30,6 +30,17 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()["stores"]
         page_url = "https://www.billabong.com/stores/"
         for loc in loclist:
+            hour_list = loc["storeHours"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                len_None = sum(x is None for x in hour)
+                if len_None == 4:
+                    continue
+                else:
+                    time = hour[0] + " " + hour[1] + "-" + hour[4]
+                    hours_of_operation = hours_of_operation + time + " "
+            if not hours_of_operation:
+                hours_of_operation = MISSING
             location_name = strip_accents(loc["name"])
             store_number = loc["ID"]
             log.info(location_name)
@@ -43,6 +54,7 @@ def fetch_data():
                 + " "
                 + loc["country"]
             )
+            raw_address = raw_address.replace("\n", " ")
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -69,7 +81,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
 
