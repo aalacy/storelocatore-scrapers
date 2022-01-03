@@ -18,7 +18,7 @@ def fetch_data():
     url = "https://www.onemedical.com/locations/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<a href="/locations/' in line and 'class="link-list' in line:
+        if 'href="/locations/' in line and "tabindex" not in line:
             code = line.split("/locations/")[1].split('"')[0]
             lurl = "https://www.onemedical.com/api/locations/?code=" + code
             logger.info(("Pulling Region %s..." % code))
