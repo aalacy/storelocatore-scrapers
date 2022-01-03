@@ -33,7 +33,6 @@ data = {"action": "get_store_location", "search": ",AU", "region_dr": "all"}
 
 def fetch_data():
     # Your scraper here
-    # base = "https://www.soulorigin.com.au"
     api_url = "https://www.soulorigin.com.au/wp-admin/admin-ajax.php"
 
     with SgRequests() as session:
