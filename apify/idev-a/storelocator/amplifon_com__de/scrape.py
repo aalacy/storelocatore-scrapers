@@ -145,10 +145,11 @@ def fetch_data():
             _url = "https://www.amplifon.com" + _url
         logger.info(_url)
         sp2 = get_bs(driver=driver, url=_url)
-        locations += [
-            loc["href"]
-            for loc in sp2.select("div.richtext-container.am-accordion-content a")
-        ]
+        for loc in sp2.select("div.richtext-container.am-accordion-content a"):
+            ll = loc.a["href"]
+            if not ll.startswith("http"):
+                ll = "https://www.amplifon.com" + ll
+            locations.append(ll)
 
     # France
     logger.info(" --- France ---")
@@ -161,9 +162,11 @@ def fetch_data():
             _url = "https://www.amplifon.com" + _url
         logger.info(_url)
         sp2 = get_bs(driver=driver, url=_url)
-        locations += [
-            loc.a["href"] for loc in sp2.select("article.m-store-teaser-item")
-        ]
+        for loc in sp2.select("article.m-store-teaser-item"):
+            ll = loc.a["href"]
+            if not ll.startswith("http"):
+                ll = "https://www.amplifon.com" + ll
+            locations.append(ll)
 
     # Italy
     logger.info(" --- Italy ---")
@@ -176,9 +179,11 @@ def fetch_data():
             _url = "https://www.amplifon.com" + _url
         logger.info(_url)
         sp2 = get_bs(driver=driver, url=_url)
-        locations += [
-            loc.a["href"] for loc in sp2.select("div.richtext-container ul li")
-        ]
+        for loc in sp2.select("div.richtext-container ul li"):
+            ll = loc.a["href"]
+            if not ll.startswith("http"):
+                ll = "https://www.amplifon.com" + ll
+            locations.append(ll)
 
     driver = get_driver()
     logger.info(f"{len(locations)} locations")
