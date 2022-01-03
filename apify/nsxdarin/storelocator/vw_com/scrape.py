@@ -9,7 +9,11 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for row in data:
             writer.write_row(row)
 
@@ -60,8 +64,7 @@ def fetch_locations(postal, session):
         regex = re.compile("sale", re.IGNORECASE)
         department_hours = dealer["hours"]
         department = next(
-            (x for x in department_hours if regex.match(x.get("departmentName"))),
-            None,
+            (x for x in department_hours if regex.match(x.get("departmentName"))), None
         )
 
         if not department:
