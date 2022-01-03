@@ -41,11 +41,12 @@ def request_with_retries(payload):
             continue
         store_numbers.append(store_number)
         location_name = store["LocationName"]
+        street_address = store["AddressLine1"]
         if store["AddressLine2"]:
             street_address += ", " + store["AddressLine2"]
 
         location_type = store["EntityType"]
-        street_address = store["AddressLine1"]
+
         city = store["City"]
         state = store["StateProvince"]
         zip_postal = store["PostalCode"]
