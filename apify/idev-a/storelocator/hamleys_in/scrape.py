@@ -25,6 +25,11 @@ def fetch_data():
             phone = _["phone"]
             if phone == "0":
                 phone = ""
+            zip_postal = addr.postcode
+            if zip_postal:
+                zip_postal = zip_postal.split("-")[-1]
+            else:
+                zip_postal = _["display_address"].replace("-", " ").split()[-1]
             yield SgRecord(
                 page_url="https://www.hamleys.in/storeLocator",
                 store_number=_["store_id"],
@@ -32,7 +37,7 @@ def fetch_data():
                 street_address=street_address,
                 city=_["city"],
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code="India",
