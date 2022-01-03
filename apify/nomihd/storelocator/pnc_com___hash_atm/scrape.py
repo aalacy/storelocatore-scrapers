@@ -86,7 +86,7 @@ def get_hours(data, details):
     store["hours_of_operation"] = MISSING
 
     for service in services:
-        if service["hours"]:
+        if service["service"]["serviceName"] == "Lobby Hours" and service["hours"]:
             hours = []
             for key, value in service["hours"].items():
                 if key == "twentyFourHours":
