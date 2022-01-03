@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-import time
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
