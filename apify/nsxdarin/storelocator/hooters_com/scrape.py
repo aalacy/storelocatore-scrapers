@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import time
 from tenacity import retry, stop_after_attempt
 import tenacity
 
@@ -16,7 +15,7 @@ headers = {
 logger = SgLogSetup().get_logger("hooters_com")
 
 
-@retry(stop=stop_after_attempt(7), wait=tenacity.wait_fixed(7))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
 def get_response(url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
@@ -42,7 +41,6 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
     for loc in locs:
-        time.sleep(3)
         TC = False
         logger.info(loc)
         name = ""
