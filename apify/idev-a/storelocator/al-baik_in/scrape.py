@@ -37,13 +37,17 @@ def fetch_data():
             hours = list(_.select("p")[1].stripped_strings)[1]
             if hours == "-":
                 hours = ""
+            zip_postal = addr.postcode
+            if zip_postal:
+                temp = [tt for tt in zip_postal if tt.isdigit()]
+                zip_postal = "".join(temp)
             yield SgRecord(
                 page_url=page_url,
                 location_name="",
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 country_code="India",
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
