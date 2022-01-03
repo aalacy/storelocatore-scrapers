@@ -9,7 +9,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1)) as writer:
         for row in data:
             writer.write_row(row)
 
