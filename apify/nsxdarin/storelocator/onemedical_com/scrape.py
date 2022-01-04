@@ -115,6 +115,8 @@ def fetch_data():
             hours = hours.split(" (")[0].strip()
         if "; Wednesday 3" in hours:
             hours = hours.split("; Wednesday 3")[0].strip()
+        if "Closed every" in hours:
+            hours = "Temporarily Closed"
         yield SgRecord(
             locator_domain=website,
             page_url=purl,
