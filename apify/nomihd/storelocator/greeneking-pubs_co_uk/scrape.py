@@ -37,6 +37,8 @@ def fetch_data():
             page_url = "https://www.greeneking-pubs.co.uk" + store_url
             log.info(page_url)
             store_req = session.get(page_url)
+            if "venueId: '" not in store_req.text:
+                continue
             venueId = (
                 store_req.text.split("venueId: '")[1].strip().split("',")[0].strip()
             )
