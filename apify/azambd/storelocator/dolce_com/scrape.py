@@ -2,7 +2,8 @@ import json
 import time
 from lxml import html
 from concurrent.futures import ThreadPoolExecutor
-
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -280,7 +281,9 @@ def scrape():
     count = 0
     start = time.time()
     results = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
             count = count + 1
