@@ -166,7 +166,15 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
