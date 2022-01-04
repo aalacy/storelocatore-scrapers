@@ -18,8 +18,8 @@ def write_output(data):
 
 
 def fetch_locations(postal, session):
-    url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
-    url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/62711.json"
+    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
+    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/62711.json"
     try:
         response = session.get(url)
         data = response.json()
@@ -66,7 +66,6 @@ def fetch_locations(postal, session):
                 if department
                 else "<MISSING>"
             )
-            print(hours_of_operation)
 
             if isinstance(hours_of_operation, list):
                 hours = []
@@ -82,7 +81,6 @@ def fetch_locations(postal, session):
 
                 hours_of_operation = ", ".join(hours)
 
-            print(hours_of_operation)
             pois.append(
                 SgRecord(
                     locator_domain="vw.com",
