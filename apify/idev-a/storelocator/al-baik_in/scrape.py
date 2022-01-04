@@ -41,6 +41,11 @@ def fetch_data():
             if zip_postal:
                 temp = [tt for tt in zip_postal if tt.isdigit()]
                 zip_postal = "".join(temp)
+            country_code = addr.country
+            if not country_code:
+                country_code = "India"
+            else:
+                country_code = "Nepal"
             yield SgRecord(
                 page_url=page_url,
                 location_name="",
@@ -48,7 +53,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=zip_postal,
-                country_code="India",
+                country_code=country_code,
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
                 raw_address=raw_address,
