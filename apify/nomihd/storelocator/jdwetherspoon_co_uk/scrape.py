@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import json
 from sgscrape.sgrecord import SgRecord
@@ -30,7 +30,7 @@ def fetch_data():
     # Your scraper here
     data = '{"region":null,"paging":{"UsePagination":false},"facilities":[],"searchType":0}'
     search_url = "https://www.jdwetherspoon.com/api/advancedsearch"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         stores_req = session.post(search_url, data=data, headers=headers)
         regions = json.loads(stores_req.text)["regions"]
         for region in regions:
@@ -72,6 +72,8 @@ def fetch_data():
                         else:
                             log.info(page_url)
                             store_req = session.get(page_url, headers=headers)
+                            if isinstance(store_req, SgRequestError):
+                                continue
                             store_sel = lxml.html.fromstring(store_req.text)
                             hours = store_sel.xpath(
                                 '//div[@id="opening-times"]//td[@itemprop="openingHours"]'
