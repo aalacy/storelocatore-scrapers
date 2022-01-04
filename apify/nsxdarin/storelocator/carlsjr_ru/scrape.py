@@ -29,7 +29,6 @@ def fetch_data():
         typ = "<MISSING>"
         country = "RU"
         phone = "<MISSING>"
-        locs = []
         lines = r.iter_lines()
         for line in lines:
             if "myGeoObjects.add(new ymaps.Placemark([" in line:
