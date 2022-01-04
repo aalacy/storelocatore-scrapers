@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from webdriver_manager.chrome import ChromeDriverManager
-import ssl
 from sglogging import SgLogSetup
+import ssl
 from tenacity import retry, wait_fixed, stop_after_attempt
 
 try:
