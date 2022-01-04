@@ -5,6 +5,17 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = h.get("day")
+        time = h.get("day_hours")
+        line = f"{day} {time}"
+        tmp.append(line)
+    hours_of_operation = "; ".join(tmp)
+    return hours_of_operation
+
+
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://foosacklys.net/"
@@ -35,15 +46,9 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("long") or "<MISSING>"
         phone = j.get("storeInfo").get("phone") or "<MISSING>"
         hours = j.get("hours")[1].get("hours_set") or "<MISSING>"
-        tmp = []
         hours_of_operation = "<MISSING>"
         if hours != "<MISSING>":
-            for h in hours:
-                day = h.get("day")
-                time = h.get("day_hours")
-                line = f"{day} {time}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+            hours_of_operation = get_hours(hours)
 
         row = SgRecord(
             locator_domain=locator_domain,
