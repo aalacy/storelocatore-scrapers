@@ -14,7 +14,7 @@ propertyUrl = "https://www.wyndhamhotels.com/BWSServices/services/search/propert
 propertListUrl = "https://www.wyndhamhotels.com/bin/propertyDataList.json"
 max_workers = 1
 
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
