@@ -39,10 +39,22 @@ def fetch_data():
                                     lurl = loc.split('{"custom":"')[1].split('"')[0]
                                 except:
                                     lurl = "<MISSING>"
-                                add = loc.split('"plain_street":"')[1].split('"')[0]
-                                state = loc.split('"state":"')[1].split('"')[0]
-                                zc = loc.split('"zip":"')[1].split('"')[0]
-                                name = loc.split('"name":"')[1].split('"')[0]
+                                try:
+                                    add = loc.split('"plain_street":"')[1].split('"')[0]
+                                except:
+                                    add = "<MISSING>"
+                                try:
+                                    state = loc.split('"state":"')[1].split('"')[0]
+                                except:
+                                    state = "<MISSING>"
+                                try:
+                                    zc = loc.split('"zip":"')[1].split('"')[0]
+                                except:
+                                    zc = "<MISSING>"
+                                try:
+                                    name = loc.split('"name":"')[1].split('"')[0]
+                                except:
+                                    name = "<MISSING>"
                                 try:
                                     phone = loc.split('phone":{"formatted":"')[1].split(
                                         '"'
@@ -50,8 +62,12 @@ def fetch_data():
                                 except:
                                     phone = "<MISSING>"
                                 hours = "<INACCESSIBLE>"
-                                lat = loc.split('"lat":')[1].split(",")[0]
-                                lng = loc.split('"lng":')[1].split("}")[0]
+                                try:
+                                    lat = loc.split('"lat":')[1].split(",")[0]
+                                    lng = loc.split('"lng":')[1].split("}")[0]
+                                except:
+                                    lat = "<MISSING>"
+                                    lng = "<MISSING>"
                                 yield SgRecord(
                                     locator_domain=website,
                                     page_url=lurl,

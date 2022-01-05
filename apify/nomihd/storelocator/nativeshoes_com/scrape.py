@@ -29,7 +29,7 @@ def fetch_data():
     # Your scraper here
     api_url = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/3839/stores.js"
 
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         api_res = session.get(api_url, headers=headers)
         stores = json.loads(api_res.text)["stores"]
 
