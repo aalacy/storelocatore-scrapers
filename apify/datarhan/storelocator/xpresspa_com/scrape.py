@@ -72,17 +72,39 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[h4[@class="location_state-city"]]')
     for poi_html in all_locations:
-        location_name = poi_html.xpath(".//h5/text()")[0].strip()
-        state = poi_html.xpath(".//h4/text()")[0].split(" - ")[0]
-        city = poi_html.xpath(".//h4/text()")[0].split(" - ")[-1]
-        street_address = poi_html.xpath('.//p[@class="location_airport"]/text()')[0]
+        location_name = poi_html.xpath(".//h5/text()")
+        if not location_name:
+            location_name = poi_html.xpath(".//text()")
+        location_name = location_name[0].strip()
+        state = poi_html.xpath(".//h4/text()")
+        state = state[0].split(" - ")[0] if state else ""
+        city = poi_html.xpath(".//h4/text()")
+        city = city[0].split(" - ")[-1] if city else ""
+        street_address = poi_html.xpath('.//p[@class="location_airport"]/text()')
+        if not street_address:
+            street_address = [poi_html.xpath(".//text()")[1]]
+        street_address = street_address[0].strip()
         street_address += ", " + location_name
         phone = poi_html.xpath(
             './/dt[contains(text(), "Telephone")]/following-sibling::dd/text()'
-        )[0]
+        )
+        phone = phone[0].strip() if phone else ""
+        if not phone:
+            phone = (
+                poi_html.xpath('.//div[@class="card card-body"]/text()')[1]
+                .split(":")[-1]
+                .strip()
+            )
         hoo = poi_html.xpath(
             './/dt[contains(text(), "Hours")]/following-sibling::dd/text()'
-        )[0]
+        )
+        if not hoo:
+            hoo = [
+                e.replace("Hours: ", "").strip()
+                for e in poi_html.xpath('.//div[@class="card card-body"]/text()')
+                if "Hours" in e
+            ]
+        hoo = hoo[0] if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,

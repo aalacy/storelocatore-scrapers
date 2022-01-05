@@ -88,7 +88,10 @@ def fetch_data():
             try:
                 r3 = session.get(lurl, headers=headers)
                 time.sleep(5)
-                for line3 in r3.iter_lines():
+                lines = r3.iter_lines()
+                dc = -1
+                week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                for line3 in lines:
                     if '"openingHours": [' in line3 and hours == "":
                         OHFound = True
                     if OHFound and "]," in line3:
@@ -99,10 +102,24 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+                    if '<span class="retailer-direction__text">' in line3:
+                        if " - " in line3 or "losed" in line3 and dc <= 5:
+                            dc = dc + 1
+                            hrs = week[dc] + ": " + line3.split('">')[1].split("<")[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
             except:
                 pass
             if hours == "":
                 hours = "<MISSING>"
+            if "Greenock" in city:
+                hours = "Mon 09:00 - 19:00; Tue 09:00 - 18:00; Wed 09:00 - 19:00; Thu 09:00 - 18:00; Fri 08:30 - 19:00; Sat 09:00 - 18:00; Sun 12:00 - 18:00"
+            if "Caffyn" in name:
+                hours = "Mon 08:30 - 18:00 Tue: 08:30 - 18:00; Wed 08:30 - 18:00; Thu 08:30 - 18:00; Fri 08:30 - 18:00; Sat 09:00 - 17:00; Sun 10:00 - 16:00"
+            if "Helston Garages" in name:
+                hours = "Mon 08:30 - 18:00 Tue: 08:30 - 18:00; Wed 08:30 - 18:00; Thu 08:30 - 18:00; Fri 08:30 - 18:00; Sat 08:30 - 17:00; Sun Closed"
             yield SgRecord(
                 locator_domain=website,
                 page_url=lurl,

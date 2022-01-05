@@ -1,0 +1,5 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 2 concerning rows. Examples:
+   street_address              REASON  rowNumber
+19      <MISSING>  ADDR_HAS_NO_NUMBER         19
+26      <MISSING>  ADDR_HAS_NO_NUMBER         26

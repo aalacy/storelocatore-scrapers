@@ -2,7 +2,8 @@ import json
 import time
 from lxml import html
 from concurrent.futures import ThreadPoolExecutor
-
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -14,7 +15,7 @@ propertyUrl = "https://www.wyndhamhotels.com/BWSServices/services/search/propert
 propertListUrl = "https://www.wyndhamhotels.com/bin/propertyDataList.json"
 max_workers = 1
 
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
@@ -187,18 +188,26 @@ def getRedirectUrl(store):
 
 
 def fetchSingleSore(store):
-    response = session.get(store["page_url"], headers=headers)
-    if response.text is None or response.text == "":
-        return getRedirectUrl(store)
+    pageurl = store["page_url"]
+    log.info(f"page url: {pageurl}")
+    try:
+        response = session.get(store["page_url"], headers=headers)
+        log.info(f"Page Response: {response}")
 
-    if "hotels were found that match your search" in response.text:
-        return getRedirectUrl(store)
+        if response.text is None or response.text == "":
+            return getRedirectUrl(store)
 
-    body = html.fromstring(response.text, "lxml")
-    geoJSON = getScriptWithGeo(body)
-    if geoJSON is None:
-        return getRedirectUrl(store)
-    return store, body, geoJSON
+        if "hotels were found that match your search" in response.text:
+            return getRedirectUrl(store)
+
+        body = html.fromstring(response.text, "lxml")
+        geoJSON = getScriptWithGeo(body)
+        if geoJSON is None:
+            return getRedirectUrl(store)
+        return store, body, geoJSON
+    except Exception as e:
+        log.info(f"fetchSingleSore():\n{e}")
+        return store, None, None
 
 
 def getScriptWithGeo(body):
@@ -224,11 +233,12 @@ def fetchData():
                 log.info(f"scrapped {count} pages ...")
 
             store_number = store["store_number"]
+            log.info(f"Store number: {store_number}")
 
             if body is None or geoJSON is None:
                 failed = failed + 1
                 log.error(f"{count}. #failed {failed}  {store['page_url']} ...")
-
+                store["ex_page_url"] = store["page_url"]
                 page_url = store["ex_page_url"]
                 urlParts = page_url.split("/")
                 location_type = urlParts[len(urlParts) - 4]
@@ -280,7 +290,9 @@ def scrape():
     count = 0
     start = time.time()
     results = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
             count = count + 1
