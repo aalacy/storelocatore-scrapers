@@ -28,8 +28,8 @@ def fetch_data(sgw: SgWriter):
     text = "".join(
         tree.xpath("//script[contains(text(), 'markersCoords.push(')]/text()")
     )
-    text = text.split("markersCoords.push(")
-    text.pop(0)
+    tex = text.split("markersCoords.push(")
+    tex.pop(0)
     for t in text:
         _id = t.split("id:")[1].split(",")[0].strip()
         if _id == "0":
