@@ -6,12 +6,12 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
-from sgselenium.sgselenium import SgChrome # noqa
+from sgselenium.sgselenium import SgChrome  # noqa
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from seleniumwire import webdriver # noqa
+from seleniumwire import webdriver  # noqa
 import ssl
 from undetected_chromedriver import ChromeOptions
 
@@ -42,6 +42,7 @@ headers = {
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
+
 def get_driver():
     user_agent = (
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
@@ -50,28 +51,34 @@ def get_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--headless")
     options.add_argument(f"user-agent={user_agent}")
-    options.add_argument("--no-sandbox")#
-    options.add_argument("--disable-dev-shm-usage")#
-    options.add_argument("--ignore-certificate-errors")#
+    options.add_argument("--no-sandbox")  #
+    options.add_argument("--disable-dev-shm-usage")  #
+    options.add_argument("--ignore-certificate-errors")  #
     options.add_argument(f"user-agent={user_agent}")
-    return webdriver.Chrome(options=options, executable_path=ChromeDriverManager().install())
+    return webdriver.Chrome(
+        options=options, executable_path=ChromeDriverManager().install()
+    )
 
-def check(url,class_name,driver):
+
+def check(url, class_name, driver):
     try:
         driver.get(url)
         WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.ID, class_name))
-            )
+            EC.presence_of_element_located((By.ID, class_name))
+        )
         return True
     except Exception:
         driver.quit()
         return False
-def Se(url,class_name):
+
+
+def Se(url, class_name):
     for c in range(10):
         time.sleep(1)
         driver = get_driver()
-        if check(url,class_name,driver):
+        if check(url, class_name, driver):
             return driver
+
 
 def fetch_data():
     # Your scraper here
