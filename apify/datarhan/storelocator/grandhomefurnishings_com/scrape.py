@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests(proxy_country='us')
+    session = SgRequests(proxy_country="us")
     start_url = "https://www.grandhf.com/store-locations"
     domain = "grandhomefurnishings.com"
     hdr = {
