@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("carlsjr_com")
 
@@ -25,6 +26,7 @@ def fetch_data():
         if "<loc>https://carlsjr.com/locations/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
+        time.sleep(3)
         logger.info(loc)
         country = "US"
         typ = "<MISSING>"

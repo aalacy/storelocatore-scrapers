@@ -44,6 +44,8 @@ def fetch_data(sgw: SgWriter):
         ).strip()
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
+        if postal == "ELM1F":
+            postal = "<MISSING>"
         country_code = "JP"
         city = a.city or "<MISSING>"
         map_link = j.get("store_link")
