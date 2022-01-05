@@ -15,13 +15,13 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr, proxies=proxies)
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//a[@class="read-more"]/@href')
     for page_url in all_locations:
         page_url = urljoin(start_url, page_url)
-        loc_response = session.get(page_url, headers=hdr, proxies=proxies)
+        loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath("//h1/text()")[0]
