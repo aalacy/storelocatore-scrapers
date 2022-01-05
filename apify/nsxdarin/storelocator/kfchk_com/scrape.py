@@ -19,7 +19,7 @@ def fetch_data():
     website = "kfchk.com"
     typ = "<MISSING>"
     country = "HK"
-    loc = "<MISSING>"
+    loc = "https://corp.kfchk.com/filemanager/system/en/js/restaurant.js"
     store = "<MISSING>"
     lat = "<MISSING>"
     lng = "<MISSING>"
@@ -73,6 +73,8 @@ def fetch_data():
                 add = add.replace("Macau", "").strip()
                 country = "MO"
             if hours == "":
+                hours = "<MISSING>"
+            if "0" not in hours:
                 hours = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
