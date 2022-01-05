@@ -86,6 +86,10 @@ def fetch_data():
                 zc = "<MISSING>"
             if state == "Texas":
                 state = "TX"
+            if "." not in lat or "." not in lng:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
+            name = name.replace("&amp;", "&").replace("&rsquo;", "'")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

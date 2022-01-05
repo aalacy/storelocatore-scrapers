@@ -131,6 +131,9 @@ def fetch_data():
                 latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
                 longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
+            if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+                hours_of_operation = "".join(hours_of_operation[:-1]).strip()
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -145,7 +148,10 @@ def fetch_data():
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation=hours_of_operation.replace("; ;", "")
+                .strip()
+                .replace("; 0", "0")
+                .strip(),
             )
 
 
