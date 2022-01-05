@@ -5,33 +5,32 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
-import json
+from sgscrape.sgpostal import parse_address_usa
+import re
 
-DOMAIN = "cap-it.com"
-BASE_URL = "https://cap-it.com"
-LOCATION_URL = "https://cap-it.com/locations/"
+DOMAIN = "sonobello.com"
+LOCATION_URL = "https://www.sonobello.com/locations/"
 HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
 }
-MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
+
+MISSING = "<MISSING>"
 
 
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -49,45 +48,41 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    req = session.get(url, headers=HEADERS)
-    if req.status_code == 404:
-        return False
-    soup = bs(req.content, "lxml")
+    HEADERS["Referer"] = url
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    content_json = (
-        soup.find("div", {"class": "locations-map-wrapper"})["ng-init"]
-        .replace("locations = ", "")
-        .strip()
-    )
-    data = json.loads(content_json)
-    for row in data:
-        page_url = LOCATION_URL + row["url"]
-        location_name = row["title"]
-        raw_address = row["map"]["address"]
-        street_address = row["street_address"]
-        city = row["city"]
-        state = row["province_state"]
-        zip_postal = row["postal_code"]
-        store_number = row["id"]
-        phone = row["phone"]
-        country_code = row["country"]
-        location_type = "cap-it"
-        latitude = row["map"]["lat"]
-        longitude = row["map"]["lng"]
-        hoo = ""
-        for list in row["hours"]:
-            for key, val in list.items():
-                hoo += val + ","
-            if list["days"] == "Holidays":
-                break
-        hours_of_operation = (
-            hoo.replace("day,", "day: ").replace("days,", "days: ").rstrip(",")
+    contents = soup.select("div.locations-list ul li a ")
+    for row in contents:
+        page_url = row["href"]
+        store = pull_content(page_url).find("section", {"class": "location-directions"})
+        info = store.find("div", {"class": "location-info primary-location-block"})
+        location_name = info.find("h3").text.strip()
+        raw_address = info.find("p", {"class": "location-address"}).get_text(
+            strip=True, separator=","
         )
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = info.find("div", {"class": "location-phone"}).text.strip()
+        country_code = "US"
+        store_number = MISSING
+        hours_of_operation = re.sub(
+            r"(MON|TUES|WED|THURS|FRI|SAT),",
+            r"\1: ",
+            info.find("div", {"class": "location-hours"})
+            .get_text(strip=True, separator=",")
+            .replace("–", "-")
+            .replace("â€“", "-")
+            .replace("Center Hours,", "")
+            .replace("DAY,", "DAY: "),
+        )
+        latlong = store.find("div", id="single-map")
+        latitude = latlong["data-lat"]
+        longitude = latlong["data-lng"]
+        location_type = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -116,7 +111,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
