@@ -1,10 +1,10 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, Grain_2
+from sgzip.dynamic import DynamicGeoSearch, Grain_4
 import dirtyjson as json
 from bs4 import BeautifulSoup as bs
 
@@ -23,13 +23,17 @@ json_url = "{}$select=*,__Distance&$filter=Adresstyp%20eq%201&key={}&$format=jso
 def fetch_records(http, search, country_sessions):
     for lat, lng in search:
         data = country_sessions.get(search.current_country())
-        locations = json.loads(
-            http.get(
-                json_url.format(data["url"], data["key"], lat, lng), headers=_headers
-            )
-            .text.split("Microsoft_Maps_Network_QueryAPI_2(")[1]
-            .strip()[:-1]
-        )["d"]["results"]
+        try:
+            locations = json.loads(
+                http.get(
+                    json_url.format(data["url"], data["key"], lat, lng),
+                    headers=_headers,
+                )
+                .text.split("Microsoft_Maps_Network_QueryAPI_2(")[1]
+                .strip()[:-1]
+            )["d"]["results"]
+        except:
+            continue
         logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
         if locations:
             search.found_location_at(lat, lng)
@@ -54,7 +58,6 @@ def fetch_records(http, search, country_sessions):
 
             yield SgRecord(
                 location_name=_["ShownStoreName"],
-                store_number=_["EntityID"],
                 street_address=_["AddressLine"],
                 city=city,
                 zip_postal=zip_postal,
@@ -67,7 +70,7 @@ def fetch_records(http, search, country_sessions):
 
 
 if __name__ == "__main__":
-    with SgRequests() as http:
+    with SgRequests(proxy_country="us") as http:
         countries = []
         country_sessions = {}
         json_data = json.loads(
@@ -81,7 +84,6 @@ if __name__ == "__main__":
                 or country == "ECI"
                 or country == "NIE"
                 or country == "test"
-                or country != "MT"
             ):
                 continue
             cc = country.lower()
@@ -96,12 +98,20 @@ if __name__ == "__main__":
                 )["sessionId"],
                 url=json_data["DATA_SOURCE_URL"][country],
             )
+
         search = DynamicGeoSearch(
-            country_codes=list(set(countries)), granularity=Grain_2()
+            country_codes=list(set(countries)), granularity=Grain_4()
         )
         with SgWriter(
             deduper=SgRecordDeduper(
-                RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+                SgRecordID(
+                    {
+                        SgRecord.Headers.LATITUDE,
+                        SgRecord.Headers.LONGITUDE,
+                        SgRecord.Headers.COUNTRY_CODE,
+                    }
+                ),
+                duplicate_streak_failure_factor=100,
             )
         ) as writer:
             for rec in fetch_records(http, search, country_sessions):
