@@ -44,7 +44,7 @@ def fetch(postal, driver, retry=0):
 
         return bs(html, "html.parser")
     except:
-        if retry < 3:
+        if retry < 5:
             return fetch(postal, driver, retry + 1)
 
         return None
