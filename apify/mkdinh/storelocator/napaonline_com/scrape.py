@@ -43,7 +43,8 @@ def fetch(postal, driver, retry=0):
         )
 
         return bs(html, "html.parser")
-    except:
+    except Exception as e:
+        logger.error(e)
         if retry < 2:
             return fetch(postal, driver, retry + 1)
 
@@ -136,8 +137,8 @@ def fetch_data():
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
-    ) as writer, ThreadPoolExecutor(max_workers=2) as executor, get_driver() as driver:
-        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=2)
+    ) as writer, ThreadPoolExecutor(max_workers=1) as executor, get_driver() as driver:
+        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=5)
         futures = [
             executor.submit(fetch_locations, postal, driver, writer)
             for postal in search
