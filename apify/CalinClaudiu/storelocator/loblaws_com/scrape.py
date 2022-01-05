@@ -24,6 +24,7 @@ import json  # noqa
 
 import time
 
+
 def return_last4(fullId):
     last4 = list(fullId[-4:])
     while last4[0] == "0":
@@ -460,7 +461,7 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    with SgFirefox(is_headless = False) as driver:
+    with SgFirefox(is_headless=False) as driver:
         driver.get(url)
         to_click = WebDriverWait(driver, 40).until(
             EC.visibility_of_element_located(
@@ -581,6 +582,7 @@ def fetch_data():
     # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
     url, headers = get_api_call(url)
+
     def retry_starting():
         try:
             return get_api_call(url)
