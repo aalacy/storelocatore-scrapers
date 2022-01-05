@@ -4,7 +4,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import time
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 session = SgRequests()
 headers = {
@@ -12,6 +13,16 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("hooters_com")
+
+
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
 
 def fetch_data():
@@ -30,7 +41,6 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             locs.append(lurl)
     for loc in locs:
-        time.sleep(10)
         TC = False
         logger.info(loc)
         name = ""
@@ -44,75 +54,82 @@ def fetch_data():
         hours = ""
         store = "<MISSING>"
         phone = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"latitude":"' in line2:
-                lat = line2.split('"latitude":"')[1].split('"')[0]
-                lng = line2.split('"longitude":"')[1].split('"')[0]
-            if "temporarily closed" in line2:
-                TC = True
-            if '"c-location-meta__address-line-1">' in line2:
-                add = line2.split('"c-location-meta__address-line-1">')[1].split("<")[0]
-            if '"c-location-meta__address-line-2">' in line2:
-                csz = line2.split('"c-location-meta__address-line-2">')[1].split("<")[0]
-                if csz.count(",") == 2:
-                    city = csz.split(",")[0]
-                    state = csz.split(",")[1].strip()
-                    zc = csz.split(",")[2].strip()
-                    country = "US"
-                elif csz.count(",") == 1:
-                    city = csz.split(",")[0]
-                    zc = "<MISSING>"
-                    country = csz.split(",")[1].strip()
-                else:
-                    city = csz.split(",")[0]
-                    state = csz.split(",")[1].strip()
-                    zc = csz.split(",")[2].strip()
-                    country = csz.split(",")[3].strip()
-                if "Canada" in csz:
-                    country = "CA"
-            if '"name":"' in line2:
-                name = line2.split('"name":"')[1].split('"')[0]
-            if '__phone-link">' in line2:
-                phone = line2.split('__phone-link">')[1].split("<")[0]
-            if 'c-location-hours__day">' in line2:
-                day = line2.split('c-location-hours__day">')[1].split("<")[0]
-            if '{"@type":"OpeningHoursSpecification",' in line2:
-                try:
-                    days = line2.split('{"@type":"OpeningHoursSpecification",')
-                    for day in days:
-                        if '"dayOfWeek":["' in day:
-                            hrs = (
-                                day.split('"dayOfWeek":["')[1].split('"')[0]
-                                + ": "
-                                + day.split('"opens":"')[1].split(':00"')[0]
-                                + "-"
-                                + day.split('"closes":"')[1].split(':00"')[0]
-                            )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
-                except:
-                    hours = "<MISSING>"
-        if TC:
-            hours = "Temporarily Closed"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        try:
+            r2 = get_response(loc)
+            for line2 in r2.iter_lines():
+                if '"latitude":"' in line2:
+                    lat = line2.split('"latitude":"')[1].split('"')[0]
+                    lng = line2.split('"longitude":"')[1].split('"')[0]
+                if "temporarily closed" in line2:
+                    TC = True
+                if '"c-location-meta__address-line-1">' in line2:
+                    add = line2.split('"c-location-meta__address-line-1">')[1].split(
+                        "<"
+                    )[0]
+                if '"c-location-meta__address-line-2">' in line2:
+                    csz = line2.split('"c-location-meta__address-line-2">')[1].split(
+                        "<"
+                    )[0]
+                    if csz.count(",") == 2:
+                        city = csz.split(",")[0]
+                        state = csz.split(",")[1].strip()
+                        zc = csz.split(",")[2].strip()
+                        country = "US"
+                    elif csz.count(",") == 1:
+                        city = csz.split(",")[0]
+                        zc = "<MISSING>"
+                        country = csz.split(",")[1].strip()
+                    else:
+                        city = csz.split(",")[0]
+                        state = csz.split(",")[1].strip()
+                        zc = csz.split(",")[2].strip()
+                        country = csz.split(",")[3].strip()
+                    if "Canada" in csz:
+                        country = "CA"
+                if '"name":"' in line2:
+                    name = line2.split('"name":"')[1].split('"')[0]
+                if '__phone-link">' in line2:
+                    phone = line2.split('__phone-link">')[1].split("<")[0]
+                if 'c-location-hours__day">' in line2:
+                    day = line2.split('c-location-hours__day">')[1].split("<")[0]
+                if '{"@type":"OpeningHoursSpecification",' in line2:
+                    try:
+                        days = line2.split('{"@type":"OpeningHoursSpecification",')
+                        for day in days:
+                            if '"dayOfWeek":["' in day:
+                                hrs = (
+                                    day.split('"dayOfWeek":["')[1].split('"')[0]
+                                    + ": "
+                                    + day.split('"opens":"')[1].split(':00"')[0]
+                                    + "-"
+                                    + day.split('"closes":"')[1].split(':00"')[0]
+                                )
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                    except:
+                        hours = "<MISSING>"
+            if TC:
+                hours = "Temporarily Closed"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        except:
+            pass
 
 
 def scrape():

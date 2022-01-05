@@ -16,8 +16,8 @@ def get_coords_from_text(text):
 
 
 def fetch_data(sgw: SgWriter):
-    page_url = "https://www.decathlon.ua/uk/c/28-contacts"
-    r = session.get(page_url)
+    api = "https://www.decathlon.ua/uk/c/28-contacts"
+    r = session.get(api)
     tree = html.fromstring(r.text)
 
     divs = tree.xpath("//div[@class='columns__item']")
@@ -42,6 +42,8 @@ def fetch_data(sgw: SgWriter):
 
         text = "".join(d.xpath(".//a[@class='info__footer-link fw-bold']/@href"))
         latitude, longitude = get_coords_from_text(text)
+        slug = "".join(d.xpath(".//a[contains(@class, 'yellow-btn')]/@href"))
+        page_url = f"https://www.decathlon.ua{slug}"
 
         _tmp = []
         hours = d.xpath(".//div[@class='schedule__content']/ul/li")
