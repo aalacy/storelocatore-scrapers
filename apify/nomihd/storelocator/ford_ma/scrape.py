@@ -8,6 +8,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 import json
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "ford.ma"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
