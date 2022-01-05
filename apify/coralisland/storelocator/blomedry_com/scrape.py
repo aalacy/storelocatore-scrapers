@@ -11,8 +11,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 log = sglog.SgLogSetup().get_logger(logger_name="blomedry.com")
 
-base_url = "https://blomedry.com"
-
 
 def validate(item):
     if type(item) == list:
@@ -26,7 +24,7 @@ def validate(item):
 
 
 def get_value(item):
-    if item == None:
+    if item is None:
         item = "<MISSING>"
     item = validate(item)
     if item == "":
