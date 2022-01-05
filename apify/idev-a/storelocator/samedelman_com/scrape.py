@@ -38,7 +38,7 @@ def fetch_data():
                     times = _.get(f"{day}hours")
                     hours.append(f"{day}: {times}")
             yield SgRecord(
-                page_url=_["uri"],
+                page_url=base_url,
                 store_number=_["storeid"],
                 location_name=_["title"],
                 street_address=street_address,
@@ -56,7 +56,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

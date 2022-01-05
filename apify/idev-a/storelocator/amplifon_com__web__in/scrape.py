@@ -46,7 +46,7 @@ def fetch_data():
                 .strip()[:-1]
             )
             for _ in locations:
-                page_url = f"{base_url}/-/store/amplifon-point/{_['shopNumber']}/{_['shopNameForUrl']}/{_['cityForUrl']}/{_['addressForUrl']}"
+                page_url = f"{base_url}/-/store/amplifon-point/{_['shopNumber']}/{_['shopNameForUrl'].lower()}/{_['cityForUrl'].lower()}/{_['addressForUrl'].lower()}"
                 if country == "country":
                     page_url = base_url
                 state = _["province"]
