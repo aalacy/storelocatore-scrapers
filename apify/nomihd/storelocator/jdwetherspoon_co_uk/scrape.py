@@ -84,14 +84,22 @@ def fetch_data():
                                     len(
                                         "".join(hour.xpath("@content"))
                                         .strip()
-                                        .split("-")[1]
-                                        .strip()
+                                        .split("-")
                                     )
-                                    > 0
+                                    > 1
                                 ):
-                                    hours_list.append(
-                                        "".join(hour.xpath("@content")).strip()
-                                    )
+                                    if (
+                                        len(
+                                            "".join(hour.xpath("@content"))
+                                            .strip()
+                                            .split("-")[1]
+                                            .strip()
+                                        )
+                                        > 0
+                                    ):
+                                        hours_list.append(
+                                            "".join(hour.xpath("@content")).strip()
+                                        )
 
                             hours_of_operation = "; ".join(hours_list).strip()
 
