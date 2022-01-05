@@ -14,34 +14,30 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    frm = {
-        "action": "get_all_stores",
-        "lat": "",
-        "lng": ""
-    }
+    frm = {"action": "get_all_stores", "lat": "", "lng": ""}
     data = session.post(start_url, headers=hdr, data=frm).json()
     for i, poi in data.items():
-        page_url = poi['gu']
+        page_url = poi["gu"]
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         hoo = loc_dom.xpath('//div[@class="store_locator_single_opening_hours"]/text()')
-        hoo = ', '.join([e.strip() for e in hoo if e.strip()])
+        hoo = ", ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi['na'],
-            street_address=poi['st'],
-            city=poi['ct'],
-            state=poi['rg'],
-            zip_postal=poi['zp'],
+            location_name=poi["na"],
+            street_address=poi["st"],
+            city=poi["ct"],
+            state=poi["rg"],
+            zip_postal=poi["zp"],
             country_code="",
-            store_number=poi['ID'],
-            phone=poi['te'],
+            store_number=poi["ID"],
+            phone=poi["te"],
             location_type="",
-            latitude=poi['lat'],
-            longitude=poi['lng'],
-            hours_of_operation=hoo
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hoo,
         )
 
         yield item
