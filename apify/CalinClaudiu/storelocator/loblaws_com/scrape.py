@@ -22,6 +22,8 @@ from fuzzywuzzy import process
 
 import json  # noqa
 
+import time
+
 
 def return_last4(fullId):
     last4 = list(fullId[-4:])
@@ -459,7 +461,7 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    with SgFirefox() as driver:
+    with SgFirefox(is_headless=False) as driver:
         driver.get(url)
         to_click = WebDriverWait(driver, 40).until(
             EC.visibility_of_element_located(
@@ -472,13 +474,13 @@ def get_api_call(url):
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
-                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[2]/form/div[1]/div[2]/input",
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
                 )
             )
         )
         input_field.send_keys("B3L 4T2")
         input_field.send_keys(Keys.RETURN)
-
+        time.sleep(10)
         wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
             EC.visibility_of_element_located(
                 (
@@ -491,7 +493,6 @@ def get_api_call(url):
             if "DoSearch2" in r.path:
                 url = r.url
                 headers = r.headers
-
     return url, headers
 
 
@@ -580,6 +581,7 @@ def fetch_data():
     url = "https://www.joefresh.com/ca/store-locator"
     # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
+    url, headers = get_api_call(url)
 
     def retry_starting():
         try:
