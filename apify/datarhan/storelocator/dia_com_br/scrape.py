@@ -26,6 +26,12 @@ def fetch_data():
             .split("atendimento é")[-1][:-1]
             .strip()
         )
+        latitude = poi["Endereco"]["Lat"]
+        if latitude == 0:
+            latitude = ""
+        longitude = poi["Endereco"]["Lng"]
+        if longitude == 0:
+            longitude = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -39,8 +45,8 @@ def fetch_data():
             store_number=poi["Numero"],
             phone=phone,
             location_type="",
-            latitude=poi["Endereco"]["Lat"],
-            longitude=poi["Endereco"]["Lng"],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 
