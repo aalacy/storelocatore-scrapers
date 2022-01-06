@@ -101,7 +101,7 @@ def get_data():
                 .replace("\t", "")
                 .replace("\r", "")
             )
-            hours = re.sub("\s+", " ", hours)
+            hours = re.sub("\s+", " ", hours)  # noqa
 
             if "ACCESSORIES" in location_name:
                 continue
