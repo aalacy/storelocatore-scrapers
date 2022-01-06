@@ -61,10 +61,12 @@ def get_hoo(url):
         hoo_content = soup.find("div", id=re.compile(r"curbside-\d"))
     if not hoo_content:
         hoo_content = soup.find("div", id="-0")
-    hours = (
+    hours = " ".join(
         hoo_content.find("table")
         .get_text(strip=True, separator=",")
         .replace("day,", "day: ")
+        .strip()
+        .split()
     ).strip()
     return hours
 
