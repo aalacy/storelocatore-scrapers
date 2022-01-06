@@ -45,7 +45,7 @@ def fetch(postal, driver, retry=0):
         return bs(html, "html.parser")
     except Exception as e:
         logger.error(e)
-        if retry < 2:
+        if retry < 5:
             return fetch(postal, driver, retry + 1)
 
         return None
