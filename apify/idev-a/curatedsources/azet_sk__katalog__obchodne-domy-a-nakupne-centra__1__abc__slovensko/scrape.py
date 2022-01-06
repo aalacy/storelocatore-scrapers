@@ -101,8 +101,14 @@ def fetch_data():
                     .split("&")[0]
                     .split(",")
                 )
+                location_name = link.h2.text.strip()
                 location_type = "Department store"
                 if "centrum" in link.select_one("div.description").text:
+                    location_type = "Shopping center"
+                if (
+                    "centrum" in location_name.lower()
+                    or "shopping" in location_name.lower()
+                ):
                     location_type = "Shopping center"
 
                 try:
@@ -111,13 +117,15 @@ def fetch_data():
                     phone = ""
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=link.h2.text.strip(),
+                    location_name=location_name,
                     street_address=sp1.select_one(
                         'span[itemprop="streetAddress"]'
                     ).text.strip(),
-                    city=sp1.select_one('span[itemprop="streetAddress"]').text.strip(),
+                    city=sp1.select_one(
+                        'span[itemprop="addressLocality"]'
+                    ).text.strip(),
                     zip_postal=sp1.select_one(
-                        'span[itemprop="streetAddress"]'
+                        'span[itemprop="postalCode"]'
                     ).text.strip(),
                     country_code="Slovakia",
                     phone=phone,
