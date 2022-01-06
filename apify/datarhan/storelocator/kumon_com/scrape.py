@@ -45,6 +45,8 @@ def fetch_data():
                 "latitude": lat,
                 "longitude": lng,
                 "radius": 50,
+                "searchAddress": "",
+                "showVirtualFlg": 0,
             }
             response = session.post(start_url, json=frm, headers=hdr)
             data = json.loads(response.text)
