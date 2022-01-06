@@ -461,7 +461,7 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    with SgFirefox(is_headless=False) as driver:
+    with SgFirefox() as driver:
         driver.get(url)
         to_click = WebDriverWait(driver, 40).until(
             EC.visibility_of_element_located(
