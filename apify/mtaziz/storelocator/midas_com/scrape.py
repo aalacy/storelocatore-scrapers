@@ -47,7 +47,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
         r2 = http.get(u, headers=headers)
         d2 = html.fromstring(r2.text, "lxml")
         store_url_list = d2.xpath(
-            '//li/a[contains(@class, "link") and contains(@href, "store.aspx")]/@href'
+            '//ul[@class="list"]/li/a[contains(@class, "link")]/@href'
         )
         store_url_list = [f"{DOMAIN}{sul}" for sul in store_url_list]
         logger.info(f"Found: {len(store_url_list)}")

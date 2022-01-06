@@ -30,7 +30,10 @@ def get_data(page_url, sgw: SgWriter):
     postal = a.get("postalCode")
     country_code = a.get("countryCode")
     store_number = j.get("corporateCode")
-    phone = j.get("mainPhone").get("display")
+    try:
+        phone = j["mainPhone"]["display"]
+    except:
+        phone = SgRecord.MISSING
     latitude = j["yextDisplayCoordinate"]["lat"]
     longitude = j["yextDisplayCoordinate"]["long"]
     try:

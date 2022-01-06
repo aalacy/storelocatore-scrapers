@@ -3,12 +3,23 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgChrome
+import lxml.html
+import ssl
 
-website = "www.bridgfords.co.uk"
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+website = "bridgfords.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
@@ -20,53 +31,67 @@ def fetch_data():
 
     search_url = "https://www.bridgfords.co.uk/branches/"
 
-    with SgRequests(dont_retry_status_codes=([404])) as session:
-        while True:
+    with SgChrome() as driver:
+        with SgRequests(dont_retry_status_codes=([404])) as session:
             search_res = session.get(search_url, headers=headers)
-            search_sel = lxml.html.fromstring(search_res.text)
+            stores = json.loads(
+                search_res.text.split("var branchData = ")[1]
+                .strip()
+                .split("}};")[0]
+                .strip()
+                + "}}"
+            )["branches"]
 
-            stores = search_sel.xpath('//div[@class="card card--branch"]')
+            for store in stores:
 
-            for _, store in enumerate(stores[:-1]):
-
-                page_url = "".join(store.xpath("./a/@href"))
-
+                page_url = "https://www.bridgfords.co.uk" + store["branchURL"]
                 log.info(page_url)
-                store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)
-
+                driver.get(page_url)
+                store_sel = lxml.html.fromstring(driver.page_source)
                 locator_domain = website
-                store_json = (
-                    store_res.text.split("data-location=")[1]
-                    .split('<script type="application/ld+json">')[1]
-                    .split("</script>")[0]
-                    .strip()
-                )
-                store_info = json.loads(store_json)
-                location_name = store_info["name"].strip()
+                location_name = store["name"].strip()
 
-                street_address = store_info["address"]["streetAddress"].strip()
+                raw_address = store["address"].replace("\n", ",").split(",")
+                street_address = ", ".join(raw_address[:-3]).strip()
 
-                city = store_info["address"]["addressLocality"].strip()
-                state = store_info["address"]["addressRegion"]
-                zip = store_info["address"]["postalCode"].strip()
+                city = raw_address[-3].strip()
+                state = raw_address[-2].strip()
+                zip = raw_address[-1].strip()
 
                 country_code = "GB"
 
-                store_number = page_url.split("/")[-2].strip()
+                store_number = store["branchID"]
 
-                phone = store_info["telephone"]
+                phone = store["salesContactNumber"]
 
-                location_type = "".join(
-                    store_sel.xpath('//input[@name="BranchType"]/@value')
-                )
-                hours = store_info["openingHoursSpecification"]
-                hours_of_operation = "; ".join(hours).replace(":;", ":").strip()
+                location_type = ""
+                if store["salesEnabled"] is True:
+                    if store["lettingsEnabled"] is True:
+                        location_type = "Sales, Lettings"
+                    else:
+                        location_type = "Sales"
+                else:
+                    if store["lettingsEnabled"] is True:
+                        location_type = "Lettings"
 
-                latitude, longitude = (
-                    store_res.text.split("lat:")[1].split(",")[0].strip(),
-                    store_res.text.split("lng:")[1].split("}")[0].strip(),
-                )
+                hours = store_sel.xpath('//div[@class="card card--office"]')
+                hours_list = []
+                if len(hours) > 0:
+                    hours = hours[0].xpath('.//li[@class="accordion__item-body-item"]')
+                    for hour in hours:
+                        time = "".join(
+                            hour.xpath(
+                                './/strong[@class="opening-times__text opening-times__text--time"]/text()'
+                            )
+                        ).strip()
+                        day = "".join(
+                            hour.xpath('.//span[@class="opening-times__text"]/text()')
+                        ).strip()
+                        hours_list.append(day + ": " + time)
+
+                hours_of_operation = "; ".join(hours_list).strip()
+
+                latitude, longitude = store["lat"], store["lng"]
 
                 yield SgRecord(
                     locator_domain=locator_domain,
@@ -84,14 +109,6 @@ def fetch_data():
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
-
-            next_page = "".join(
-                search_sel.xpath('//div[@class="load-more load-more--lower"]//a/@href')
-            ).strip()
-            if len(next_page) <= 0:
-                break
-            search_url = "https://www.bridgfords.co.uk" + next_page
-            log.info(search_url)
 
 
 def scrape():

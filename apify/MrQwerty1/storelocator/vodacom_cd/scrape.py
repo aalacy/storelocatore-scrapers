@@ -5,6 +5,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgChrome
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_states():
