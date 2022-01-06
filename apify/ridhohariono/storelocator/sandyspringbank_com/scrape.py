@@ -11,7 +11,6 @@ import re
 
 
 DOMAIN = "sandyspringbank.com"
-BASE_URL = "https://www.sandyspringbank.com"
 LOCATION_URL = "https://www.sandyspringbank.com/locations"
 API_URL = "https://sandyspringbankv2.locatorsearch.com/GetItems.aspx"
 HEADERS = {
@@ -65,10 +64,7 @@ def fetch_data():
         expected_search_radius_miles=15,
     )
     for lat, lng in search:
-        # payload = f"lat={lat}&lng={lng}&searchby=FCS%7C&SearchKey=&rnd=1568716953234"
         payload = {
-            # "lat": "39.152792",
-            # "lng": "-77.067397",
             "lat": lat,
             "lng": lng,
             "searchby": "FCS|",
