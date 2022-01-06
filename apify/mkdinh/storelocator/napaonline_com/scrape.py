@@ -25,7 +25,7 @@ base_url = "https://www.napaonline.com/stores"
 
 def get_driver():
     driver = SgChrome(
-        is_headless=False, seleniumwire_auto_config=False, user_agent=user_agent
+        is_headless=True, seleniumwire_auto_config=False, user_agent=user_agent
     ).driver()
     driver.set_script_timeout(600)
     load_initial_page(driver)
