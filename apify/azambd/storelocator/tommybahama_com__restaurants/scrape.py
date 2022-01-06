@@ -141,7 +141,7 @@ def get_hoo(hours_of_operation):
         for g in gg:
             if g in hs:
                 fo = True
-        if fo == False:
+        if fo is False:
             break
         hoo.append(h)
 
