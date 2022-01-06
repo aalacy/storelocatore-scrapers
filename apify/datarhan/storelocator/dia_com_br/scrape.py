@@ -27,10 +27,10 @@ def fetch_data():
             .strip()
         )
         latitude = poi["Endereco"]["Lat"]
-        if latitude == "0":
+        if latitude == 0:
             latitude = ""
         longitude = poi["Endereco"]["Lng"]
-        if longitude == "0":
+        if longitude == 0:
             longitude = ""
 
         item = SgRecord(
