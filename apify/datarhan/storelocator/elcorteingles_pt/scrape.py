@@ -18,7 +18,7 @@ else:
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     start_url = "https://www.elcorteingles.pt/info/centros/"
     domain = "elcorteingles.pt"
     hdr = {
