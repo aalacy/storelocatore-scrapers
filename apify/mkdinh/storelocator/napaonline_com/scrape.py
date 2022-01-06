@@ -1,5 +1,6 @@
 import re
 import json
+from random import randint
 from time import sleep
 from bs4 import BeautifulSoup as bs
 from datetime import datetime as dt
@@ -24,7 +25,7 @@ base_url = "https://www.napaonline.com/stores"
 
 def get_driver():
     driver = SgChrome(
-        is_headless=True, seleniumwire_auto_config=False, user_agent=user_agent
+        is_headless=False, seleniumwire_auto_config=False, user_agent=user_agent
     ).driver()
     driver.set_script_timeout(600)
     load_initial_page(driver)
@@ -34,6 +35,7 @@ def get_driver():
 
 def fetch(postal, driver, retry=0):
     try:
+        sleep(randint(2, 3))
         html = driver.execute_async_script(
             f"""
             fetch('https://www.napaonline.com/en/store-finder?q={postal}&sort=true&page=50')
