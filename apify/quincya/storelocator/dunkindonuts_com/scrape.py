@@ -1,75 +1,114 @@
+from bs4 import BeautifulSoup
+
+from sglogging import SgLogSetup
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+logger = SgLogSetup().get_logger("dunkindonuts.com")
+
 
 def fetch_data(sgw: SgWriter):
+    base_link = "https://locations.dunkindonuts.com/en"
 
-    base_link = "https://www.dunkindonuts.com/bin/servlet/dsl?service=DSL&origin=24.676506%2C-81.3179364&radius=5000&maxMatches=10000&pageSize=1&units=m&ambiguities=ignore"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    stores = session.post(base_link).json()["data"]["storeAttributes"]
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-    locator_domain = "https://www.dunkindonuts.com"
+    final_links = []
+    locator_domain = "dunkindonuts.com"
 
-    found = []
-    for store in stores:
-        location_name = store["name"]
-        if "DO NOT USE" in store["address2"].upper():
-            continue
-        street_address = store["address"]
-        if (
-            "suit" in store["address2"].lower()
-            or "unit" in store["address2"].lower()
-            or "blvd" in store["address2"].lower()
-            or "ste" in store["address2"].lower()
-            or " rd" in store["address2"].lower()
-            or " dr" in store["address2"].lower()
-        ):
-            street_address = street_address + " " + store["address2"]
+    state_links = []
+    states = base.find_all(class_="Directory-listLink")
+    for state in states:
+        state_link = "https://locations.dunkindonuts.com/" + state["href"]
+        count = state["data-count"].replace("(", "").replace(")", "").strip()
+        if count == "1":
+            final_links.append(state_link)
+        else:
+            state_links.append(state_link)
 
-        city = store["city"]
+    for state_link in state_links:
+        logger.info(state_link)
+        req = session.get(state_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-        if street_address + city in found:
-            continue
-        found.append(street_address + city)
+        cities = base.find_all(class_="Directory-listLink")
+        if len(cities) == 0:
+            final_items = base.find_all(class_="Teaser-name")
+            for final_item in final_items:
+                final_link = (
+                    "https://locations.dunkindonuts.com/" + final_item["href"]
+                ).replace("../", "")
+                final_links.append(final_link)
+        else:
+            for city in cities:
+                city_link = "https://locations.dunkindonuts.com/" + city[
+                    "href"
+                ].replace("../", "")
+                count = city["data-count"].replace("(", "").replace(")", "").strip()
 
-        state = store["state"]
-        zip_code = store["postal"]
-        country_code = store["country"]
-        store_number = store["recordId"]
-        location_type = ""
-        phone = store["phonenumber"].replace("813-443-232", "813-443-0232")
-        if "--" in phone:
-            phone = "<INACCESSIBLE>"
-        hours_of_operation = (
-            "Mon "
-            + store["mon_hours"].replace(" ", "Closed")
-            + " Tue "
-            + store["tue_hours"].replace(" ", "Closed")
-            + " Wed "
-            + store["wed_hours"].replace(" ", "Closed")
-            + " Thu "
-            + store["thu_hours"].replace(" ", "Closed")
-            + " Fri "
-            + store["fri_hours"].replace(" ", "Closed")
-            + " Sat "
-            + store["sat_hours"].replace(" ", "Closed")
-            + " Sun "
-            + store["sun_hours"].replace(" ", "Closed")
-        )
-        latitude = store["lat"]
-        longitude = store["lng"]
+                if count == "1":
+                    final_links.append(city_link)
+                else:
+                    next_req = session.get(city_link, headers=headers)
+                    next_base = BeautifulSoup(next_req.text, "lxml")
 
-        link = "https://locations.dunkindonuts.com/en/" + store_number
+                    final_items = next_base.find_all(class_="Teaser-name")
+                    for final_item in final_items:
+                        final_link = (
+                            "https://locations.dunkindonuts.com/" + final_item["href"]
+                        ).replace("../", "")
+                        final_links.append(final_link)
+
+    logger.info("Processing " + str(len(final_links)) + " links ..")
+    for final_link in final_links:
+        req = session.get(final_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        location_name = base.find(class_="Hero-titleRow").text.strip()
+        street_address = base.find(itemprop="streetAddress")["content"]
+        city = base.find(class_="c-address-city").text.strip()
+        state = base.find(itemprop="addressRegion").text.strip()
+        zip_code = base.find(itemprop="postalCode").text.strip()
+        country_code = "US"
+
+        try:
+            phone = base.find(id="phone-main").text.strip()
+            if not phone:
+                phone = ""
+        except:
+            phone = ""
+        store_number = final_link.split("/")[-1]
+        try:
+            location_type = ", ".join(
+                list(base.find(class_="Core-features").stripped_strings)[1:]
+            )
+        except:
+            location_type = ""
+
+        try:
+            hours_of_operation = (
+                " ".join(list(base.find(class_="c-hours-details").stripped_strings))
+                .replace("Day of the Week Hours", "")
+                .strip()
+            )
+        except:
+            hours_of_operation = ""
+
+        latitude = base.find(itemprop="latitude")["content"]
+        longitude = base.find(itemprop="longitude")["content"]
 
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=link,
+                page_url=final_link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -86,5 +125,14 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID(
+            {
+                SgRecord.Headers.LOCATION_NAME,
+                SgRecord.Headers.STREET_ADDRESS,
+            }
+        )
+    )
+) as writer:
     fetch_data(writer)

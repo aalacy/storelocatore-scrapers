@@ -83,7 +83,7 @@ def fetch_data():
     for row in data["response"]:
         page_url = BASE_URL + row["url"]
         location_name = row["name"]
-        raw_address = row["address"]
+        raw_address = " ".join(row["address"].split())
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = row["phone"]
         country_code = "MX"
