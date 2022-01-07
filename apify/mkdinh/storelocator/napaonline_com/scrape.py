@@ -1,5 +1,6 @@
 import re
 import json
+from random import randint
 from time import sleep
 from bs4 import BeautifulSoup as bs
 from datetime import datetime as dt
@@ -34,6 +35,7 @@ def get_driver():
 
 def fetch(postal, driver, retry=0):
     try:
+        sleep(randint(2, 3))
         html = driver.execute_async_script(
             f"""
             fetch('https://www.napaonline.com/en/store-finder?q={postal}&sort=true&page=50')
@@ -45,7 +47,7 @@ def fetch(postal, driver, retry=0):
         return bs(html, "html.parser")
     except Exception as e:
         logger.error(e)
-        if retry < 2:
+        if retry < 5:
             return fetch(postal, driver, retry + 1)
 
         return None
