@@ -41,10 +41,10 @@ def fetch_data(sgw: SgWriter):
         coords.append((lat, lng))
 
     text = "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
-    js = json.loads(text)["address"]
-    for j in js:
-        key = j.get("postalCode")
-        phones[key] = j.get("telephone")
+    js = json.loads(text)
+    for j in js["address"]:
+        key = j.get("postalCode") or ""
+        phones[key] = j.get("telephone") or ""
 
     divs = tree.xpath("//ul[@class='location-map-listing']/li")
     for d in divs:
