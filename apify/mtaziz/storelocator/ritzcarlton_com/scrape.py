@@ -26,9 +26,9 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 MISSING = SgRecord.MISSING
-DOMAIN = "marriott.com/renaissance-hotel"
+DOMAIN = "ritzcarlton.com"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
-logger = SgLogSetup().get_logger("marriott_com__renaissance-hotel")
+logger = SgLogSetup().get_logger("ritzcarlton_com")
 headers_api = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
