@@ -128,12 +128,8 @@ def scrape():
     count = 0
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         results = fetch_data()
