@@ -10,7 +10,7 @@ _headers = {
 }
 
 locator_domain = "https://burgerking.co.kr"
-base_url = "https://burgerking.co.kr/BKR0001.json?message=%7B%22header%22%3A%7B%22error_code%22%3A%22%22%2C%22error_text%22%3A%22%22%2C%22info_text%22%3A%22%22%2C%22login_session_id%22%3A%22%22%2C%22message_version%22%3A%22%22%2C%22result%22%3Atrue%2C%22trcode%22%3A%22BKR0001%22%2C%22ip_address%22%3A%22%22%2C%22platform%22%3A%2202%22%2C%22id_member%22%3A%22%22%2C%22auth_token%22%3A%22%22%7D%2C%22body%22%3A%7B%22addrSi%22%3A%22%22%2C%22addrGu%22%3A%22%22%2C%22dirveTh%22%3A%22%22%2C%22dlvyn%22%3A%22%22%2C%22kmonYn%22%3A%22%22%2C%22kordYn%22%3A%22%22%2C%22oper24Yn%22%3A%22%22%2C%22parkingYn%22%3A%22%22%2C%22distance%22%3A%223%22%2C%22sortType%22%3A%22DISTANCE%22%2C%22storCoordX%22%3A%22126.986667%22%2C%22storCoordY%22%3A%2237.5707198%22%2C%22storNm%22%3A%22%22%7D%7D"
+base_url = "https://burgerking.co.kr/store/selectStore.json?message=%7B%22header%22%3A%7B%22error_code%22%3A%22%22%2C%22error_text%22%3A%22%22%2C%22info_text%22%3A%22%22%2C%22login_session_id%22%3A%22%22%2C%22message_version%22%3A%22%22%2C%22result%22%3Atrue%2C%22trcode%22%3A%22store%2FselectStore%22%2C%22ip_address%22%3A%22%22%2C%22platform%22%3A%2202%22%2C%22id_member%22%3A%22%22%2C%22auth_token%22%3A%22%22%2C%22cd_membership%22%3A%22%22%7D%2C%22body%22%3A%7B%22addrSi%22%3A%22%22%2C%22addrGu%22%3A%22%22%2C%22dirveTh%22%3A%22%22%2C%22dlvyn%22%3A%22%22%2C%22kmonYn%22%3A%22%22%2C%22kordYn%22%3A%22%22%2C%22oper24Yn%22%3A%22%22%2C%22parkingYn%22%3A%22%22%2C%22distance%22%3A%223%22%2C%22sortType%22%3A%22DISTANCE%22%2C%22storCoordX%22%3A%22126.986667%22%2C%22storCoordY%22%3A%2237.5707198%22%2C%22storNm%22%3A%22%22%7D%7D"
 hr_obj = {
     "1": "Monday",
     "2": "Tuesday",

@@ -87,6 +87,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://nandos.com.my/"
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
