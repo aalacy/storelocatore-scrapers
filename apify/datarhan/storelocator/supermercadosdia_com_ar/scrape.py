@@ -19,7 +19,6 @@ def fetch_data():
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
-        print(poi)
         location_name = poi.get("name")
         if not location_name:
             location_name = poi["nombre"]
