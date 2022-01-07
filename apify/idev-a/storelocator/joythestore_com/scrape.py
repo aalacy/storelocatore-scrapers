@@ -4,10 +4,17 @@ from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 locator_domain = "https://www.joythestore.com"
 base_url = "https://www.joythestore.com/store-finder"
@@ -32,6 +39,11 @@ def fetch_data():
             street_address = " ".join(raw_address.split()[:-2]).strip()
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+
+            hours = list(p[2].stripped_strings)
+            if hours:
+                hours = hours[1:]
+            coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
             yield SgRecord(
                 page_url=base_url,
                 location_name=p[0].text.strip(),
@@ -42,8 +54,11 @@ def fetch_data():
                 .strip(),
                 zip_postal=" ".join(raw_address.split()[-2:]),
                 country_code="UK",
+                latitude=coord[0],
+                longitude=coord[1],
                 phone=phone,
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
             )
 
