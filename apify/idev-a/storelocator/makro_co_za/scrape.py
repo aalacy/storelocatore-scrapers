@@ -27,6 +27,8 @@ def fetch_data():
                 break
             page += 1
             for _ in locations:
+                if _["type"] in ["Makro Online Store", "Makro General Enquiries"]:
+                    continue
                 street_address = _["line1"]
                 if _["line2"]:
                     street_address += " " + _["line2"]
