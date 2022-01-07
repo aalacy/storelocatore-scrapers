@@ -1,6 +1,4 @@
 import json
-from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -10,52 +8,34 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
-    start_url = "https://www.r-wireless.com/locations/"
+    start_url = "https://r-wireless.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=b5c8166d3d&load_all=1&layout=1"
     domain = "r-wireless.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//div[@class="city-name"]/a/@href')
-    for url in all_locations:
-        page_url = urljoin(start_url, url)
-        loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text)
-        poi = (
-            loc_dom.xpath('//script[contains(text(), "page.location")]/text()')[0]
-            .split("page.location = ")[-1]
-            .strip()[:-1]
-        )
-        poi = json.loads(poi)
-
-        street_address = poi["Address"].strip()
-        if poi["Address2"]:
-            street_address += " " + poi["Address2"].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        hoo = loc_dom.xpath(
-            '//div[contains(text(), "Hours of Operation")]/following-sibling::ul//text()'
-        )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+    all_locations = session.get(start_url, headers=hdr).json()
+    for poi in all_locations:
+        hoo = []
+        for day, hours in json.loads(poi["open_hours"]).items():
+            hoo.append(f"{day}: {hours[0]}")
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=page_url,
-            location_name=poi["Name"],
-            street_address=street_address,
-            city=poi["City"],
-            state=poi["ProvinceAbbrev"],
-            zip_postal=poi["PostalCode"],
-            country_code=poi["CountryCode"],
-            store_number=poi["LocationId"],
-            phone=poi["Phone"],
+            page_url="https://r-wireless.com/locations/",
+            location_name=poi["title"],
+            street_address=poi["street"],
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["postal_code"],
+            country_code=poi["country"],
+            store_number=poi["id"],
+            phone=poi["phone"],
             location_type="",
-            latitude=poi["Google_Latitude"],
-            longitude=poi["Google_Longitude"],
+            latitude=poi["lat"],
+            longitude=poi["lng"],
             hours_of_operation=hoo,
         )
 
