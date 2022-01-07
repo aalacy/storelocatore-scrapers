@@ -111,7 +111,7 @@ def fetch_data_for_non_api_based_child_brands():
     ) as driver:
         driver.get("https://www.marriott.com/search/findHotels.mi")
         time.sleep(random.randint(20, 40))
-        for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:2]):
+        for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:]):
             page_number_second = 1
             url_base_findHotels = "https://www.marriott.com/search/findHotels.mi"
             logger.info(f"[{idx}] Pulling the data from >> : {url_base_city_state} ")
