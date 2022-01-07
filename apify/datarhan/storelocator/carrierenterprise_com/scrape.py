@@ -1,135 +1,81 @@
-import csv
-import json
-
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "carrierenterprise.com"
+    start_url = "https://www.carrierenterprise.com/graphql"
 
-    items = []
+    frm = {
+        "operationName": "getBranches",
+        "query": "query getBranches($all_regions: Boolean, $lat: Float!, $lng: Float!, $num: Int, $radius: Float!) {\n  storeLocator(all_regions: $all_regions, lat: $lat, lng: $lng, num: $num, radius: $radius) {\n    geocode_lat\n    geocode_lng\n    stores {\n      after_hours_phone_1\n      after_hours_phone_2\n      after_hours_phone_3\n      branch_add1\n      branch_add2\n      branch_city\n      branch_id\n      branch_info_url\n      branch_name\n      branch_phone\n      branch_state\n      branch_zip\n      branch_mon_close\n      branch_mon_open\n      branch_tue_close\n      branch_tue_open\n      branch_wed_close\n      branch_wed_open\n      branch_thu_close\n      branch_thu_open\n      branch_fri_close\n      branch_fri_open\n      branch_sat_close\n      branch_sat_open\n      branch_sun_close\n      branch_sun_open\n      distance\n      id\n      latitude\n      longitude\n      marker_label\n      units\n      __typename\n    }\n    __typename\n  }\n}\n",
+        "variables": {
+            "all_regions": True,
+            "lat": 37.09024,
+            "lng": -95.712891,
+            "num": 1000,
+            "radius": 25000,
+        },
+    }
+    data = session.post(start_url, json=frm).json()
 
-    DOMAIN = "carrierenterprise.com"
-    start_url = "https://www.carrierenterprise.com/storelocator/index/storeSearch/?lat=42.5629855&lng=-92.49999179999999&radius=10000"
-
-    response = session.get(start_url)
-    data = json.loads(response.text)
-
-    for poi in data["stores"]:
-        store_url = poi["branch_info_url"]
-        location_name = poi["branch_name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["branch_add2"]
-        if not street_address:
+    for poi in data["data"]["storeLocator"]["stores"]:
+        if poi["branch_add2"]:
+            street_address = poi["branch_add2"]
+            location_type = poi["branch_add1"]
+        else:
             street_address = poi["branch_add1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["branch_city"]
-        city = city if city else "<MISSING>"
-        state = poi["branch_state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["branch_zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = ""
-        country_code = country_code if country_code else "<MISSING>"
+            location_type = ""
         store_number = poi["branch_id"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["branch_phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["lattitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        hours_dict = {}
-        for key, value in poi.items():
-            if "open" in key:
-                day = key.split("_")[1]
-                open_hours = value
-                if not open_hours:
-                    open_hours = "closed"
-                if hours_dict.get(day):
-                    hours_dict[day]["opens"] = open_hours
-                else:
-                    hours_dict[day] = {}
-                    hours_dict[day]["opens"] = open_hours
-            if "close" in key:
-                day = key.split("_")[1]
-                close_hours = value
-                if not close_hours:
-                    close_hours = "closed"
-                if hours_dict.get(day):
-                    hours_dict[day]["closes"] = close_hours
-                else:
-                    hours_dict[day] = {}
-                    hours_dict[day]["closes"] = close_hours
-        for day, hours in hours_dict.items():
-            hours_of_operation.append(
-                "{} {} - {}".format(day, hours["opens"], hours["closes"])
-            )
-        hours_of_operation = (
-            ", ".join(hours_of_operation).replace("closed - closed", "closed")
-            if hours_of_operation
-            else "<MISSING>"
+        page_url = f"https://www.carrierenterprise.com/branches/{store_number}/{poi['branch_info_url'].split('/')[-1]}"
+
+        mon = f'Monday: {poi["branch_mon_open"]} - {poi["branch_mon_close"]}'
+        tue = f'Tuesday: {poi["branch_tue_open"]} - {poi["branch_tue_close"]}'
+        wed = f'Wednesday: {poi["branch_wed_open"]} - {poi["branch_wed_close"]}'
+        thu = f'Thursday: {poi["branch_thu_open"]} - {poi["branch_thu_close"]}'
+        fri = f'Friday: {poi["branch_fri_open"]} - {poi["branch_fri_close"]}'
+        sat = "Saturday: closed"
+        if poi["branch_sat_open"]:
+            sat = f'Saturday: {poi["branch_sat_open"]} - {poi["branch_sat_close"]}'
+        sun = "Sunday: closed"
+        if poi["branch_sun_open"]:
+            sun = f'Sunday: {poi["branch_sun_open"]} - {poi["branch_sun_close"]}'
+        hoo = ", ".join([mon, tue, wed, thu, fri, sat, sun])
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["branch_name"],
+            street_address=street_address,
+            city=poi["branch_city"],
+            state=poi["branch_state"],
+            zip_postal=poi["branch_zip"],
+            country_code="",
+            store_number=store_number,
+            phone=poi["branch_phone"],
+            location_type=location_type,
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation=hoo,
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
