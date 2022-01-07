@@ -94,6 +94,18 @@ def fetch_data():
                     state = "<MISSING>"
                     zc = city.rsplit(" ", 1)[1] + " " + zc
                     city = city.split(" ")[1]
+                if "-toronto-on" in loc:
+                    city = "Toronto"
+                if "glasgow-uk" in loc:
+                    city = "Glasgow"
+                if "10" in city:
+                    city = city.split("10")[0].strip()
+                if "edinburgh-uk" in loc:
+                    city = "Edinburgh"
+                if "manchester-uk" in loc:
+                    city = "Manchester"
+                if "-london-hotel-uk" in loc:
+                    city = "London"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

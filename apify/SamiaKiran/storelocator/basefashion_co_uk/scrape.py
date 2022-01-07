@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -20,26 +21,35 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
+        pattern = re.compile(r"\s\s+")
         url = "https://basefashion.co.uk/stores"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("div", {"class": "column main"}).findAll(
             "div", {"data-appearance": "full-width"}
-        )
+        )[1:]
         for loc in loclist:
             temp = loc.findAll("p")
             phone = loc.select_one("a[href*=tel]").text
             location_name = temp[0].find("strong").text
             log.info(location_name)
+            coords = loc.find("a", string=re.compile("Directions"))["href"]
+            if "@" in coords:
+                coords = coords.split("@")[1].split(",")
+                latitude = coords[0]
+                longitude = coords[1]
+            else:
+                latitude, longitude = coords.split("/")[-1].split(",")
             raw_address = " ".join(x.text for x in temp[1:])
+
+            hours_of_operation = loc.findAll("div", {"class": "opening-hours"})[
+                -1
+            ].get_text(separator="|", strip=True)
+            hours_of_operation = hours_of_operation.replace("|", " ").replace(
+                "OPENING HOURS", ""
+            )
             hours_of_operation = (
-                temp[-1]
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("Sunday             ", "Sunday ")
-                .replace("Saturday          ", "Saturday ")
-                .replace("Saturday          ", "Saturday ")
-                .replace("Weekdays        ", "Weekdays ")
+                re.sub(pattern, "\n", hours_of_operation).replace("\n", " ").strip()
             )
             raw_address = (
                 raw_address.split("Directions")[0].replace(phone, "").replace("T:", "")
@@ -70,8 +80,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
                 raw_address=raw_address,
             )
