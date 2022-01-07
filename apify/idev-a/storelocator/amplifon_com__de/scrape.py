@@ -145,10 +145,12 @@ def fetch_data():
             _url = "https://www.amplifon.com" + _url
         logger.info(_url)
         sp2 = get_bs(driver=driver, url=_url)
-        locations += [
-            loc["href"]
-            for loc in sp2.select("div.richtext-container.am-accordion-content a")
-        ]
+        for loc in sp2.select("div.richtext-container.am-accordion-content a"):
+            if loc.a:
+                ll = loc.a["href"]
+                if not ll.startswith("http"):
+                    ll = "https://www.amplifon.com" + ll
+                locations.append(ll)
 
     # France
     logger.info(" --- France ---")
@@ -161,9 +163,12 @@ def fetch_data():
             _url = "https://www.amplifon.com" + _url
         logger.info(_url)
         sp2 = get_bs(driver=driver, url=_url)
-        locations += [
-            loc.a["href"] for loc in sp2.select("article.m-store-teaser-item")
-        ]
+        for loc in sp2.select("article.m-store-teaser-item"):
+            if loc.a:
+                ll = loc.a["href"]
+                if not ll.startswith("http"):
+                    ll = "https://www.amplifon.com" + ll
+                locations.append(ll)
 
     # Italy
     logger.info(" --- Italy ---")
@@ -176,14 +181,20 @@ def fetch_data():
             _url = "https://www.amplifon.com" + _url
         logger.info(_url)
         sp2 = get_bs(driver=driver, url=_url)
-        locations += [
-            loc.a["href"] for loc in sp2.select("div.richtext-container ul li")
-        ]
+        for loc in sp2.select("div.richtext-container ul li"):
+            if loc.a:
+                ll = loc.a["href"]
+                if not ll.startswith("http"):
+                    ll = "https://www.amplifon.com" + ll
+                locations.append(ll)
 
     driver = get_driver()
     logger.info(f"{len(locations)} locations")
     for page_url in locations:
         logger.info(f"[***] {page_url}")
+        if "amplifon-blog" in page_url:
+            continue
+
         _, sp1 = get_json(driver, page_url)
         if not _ or not sp1:
             continue
@@ -191,7 +202,7 @@ def fetch_data():
         if sp1.select_one("span.phone-list"):
             phone = sp1.select_one("span.phone-list").text.strip()
         hours = []
-        for hh in _["openingHoursSpecification"]:
+        for hh in _.get("openingHoursSpecification", []):
             day = hh["dayOfWeek"]
             hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
         addr = _["address"]
