@@ -66,7 +66,14 @@ def fetch_data():
                 phone = line2.split('lass="phone-number">')[1].split("<")[0]
         if hours == "":
             hours = "<MISSING>"
-        if Closed or "00" not in hours:
+        if Closed:
+            hours = "Temporarily Closed"
+        if "Edinburgh Airport" in name:
+            hours = "Mo-Su: 4am-9pm"
+        hours = hours.replace("&#x3a;", ":")
+        if "am" not in hours and "pm" not in hours and "closed" in hours.lower():
+            hours = "Temporarily Closed"
+        if hours == "<MISSING>":
             hours = "Temporarily Closed"
         if add != "":
             yield SgRecord(

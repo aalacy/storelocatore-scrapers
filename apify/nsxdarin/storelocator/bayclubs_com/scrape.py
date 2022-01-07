@@ -132,6 +132,8 @@ def fetch_data():
             zc = "94104"
         if hours == "":
             hours = "<MISSING>"
+        if "Financial District" in name:
+            hours = hours + "; Sat: Closed; Sun: Closed"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
