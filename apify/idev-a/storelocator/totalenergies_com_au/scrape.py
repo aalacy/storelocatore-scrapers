@@ -59,6 +59,10 @@ def fetch_data():
                         loc = http.get(url, headers=_headers).json()
                         _ = loc["properties"]
                         addr = _["address"]
+                        raw_address = " ".join(addr["lines"])
+                        raw_address += " " + addr["city"]
+                        raw_address += " " + addr.get("zipcode")
+                        raw_address += " " + addr["country_code"]
                         hours = []
                         for key, hh in _["weekly_opening"].items():
                             if key.isdigit() and hh["hours"]:
@@ -81,6 +85,9 @@ def fetch_data():
                         if city and city.isdigit():
                             city = ""
 
+                        if city:
+                            city = city.split(",")[0]
+
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
@@ -95,6 +102,7 @@ def fetch_data():
                             hours_of_operation="; ".join(hours),
                             location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,
+                            raw_address=raw_address,
                         )
 
 

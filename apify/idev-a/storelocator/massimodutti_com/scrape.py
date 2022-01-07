@@ -5,8 +5,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.dynamic import DynamicGeoSearch
-from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt, wait_fixed
+from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("massimodutti")
 
@@ -15,7 +15,7 @@ _headers = {
 }
 
 locator_domain = "https://www.massimodutti.com/"
-base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009456/physical-store?appId=1&languageId=-1&latitude={}&longitude={}&favouriteStores=false&lastStores=false&closerStores=true&min=10&radioMax=100&receiveEcommerce=false&showBlockedMaxPackage=false"
+base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009527/physical-store?appId=1&languageId=-1&latitude={}&longitude={}"
 
 days = [
     "",
