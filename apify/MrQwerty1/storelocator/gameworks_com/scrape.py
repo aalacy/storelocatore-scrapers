@@ -40,8 +40,8 @@ def fetch_data(sgw: SgWriter):
         lng = t.split("lng:")[1].split("}")[0].strip()
         coords.append((lat, lng))
 
-    text = "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
-    js = json.loads(text)
+    js_text = "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
+    js = json.loads(js_text)
     for j in js["address"]:
         key = j.get("postalCode") or ""
         phones[key] = j.get("telephone") or ""
@@ -66,9 +66,7 @@ def fetch_data(sgw: SgWriter):
             "".join(d.xpath(".//div[contains(@class,'location-phone')]//text()"))
             .replace(" . ", " ")
             .strip()
-        )
-        if not phone:
-            phone = phones.get(postal)
+        ) or phones.get(postal)
         latitude, longitude = coords.pop(0)
         hours_of_operation = get_hours(page_url)
         if "SOON" in hours_of_operation:
