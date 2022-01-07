@@ -135,7 +135,7 @@ Apify.main(async function () {
   };
 
   const launchPuppeteerOptions = {
-    headless: false,
+    headless: true,
     stealth: true,
     useChrome: true,
     useApifyProxy: !!proxyPassword,
