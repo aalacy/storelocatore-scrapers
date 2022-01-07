@@ -84,7 +84,7 @@ def fetch_data(sgw: SgWriter):
             city = city.split()[-1]
 
         if "Hill 412" in street_address:
-            location_name = street_address + " Hill"
+            location_name = location_name + " Hill"
             street_address = street_address.replace("Hill", "").strip()
 
         if location_name == "Plaza Midwood1204 Central Avenue":

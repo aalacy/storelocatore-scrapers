@@ -7,7 +7,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+    "Content-Type": "application/json",
 }
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
@@ -156,7 +157,7 @@ def fetch_data():
                     longitude=lng,
                     hours_of_operation=hours,
                 )
-            if count >= 4:
+            if count >= 8:
                 PFound = True
 
 

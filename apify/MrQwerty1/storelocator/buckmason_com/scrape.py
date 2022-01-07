@@ -18,12 +18,14 @@ def fetch_data(sgw: SgWriter):
     api = "https://www.buckmason.com/pages/our-stores"
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='store']")
+    divs = tree.xpath("//div[@class='store ']")
 
     for d in divs:
-        page_url = "https://www.buckmason.com" + "".join(
-            d.xpath(".//div[@class='store-title']/a/@href")
-        )
+        slug = "".join(d.xpath(".//div[@class='store-title']/a/@href"))
+        page_url = api
+        if slug:
+            page_url = f"https://www.buckmason.com{slug}"
+
         location_name = "".join(
             d.xpath(
                 ".//div[@class='store-title']/a/text()|.//div[@class='store-title']/text()"
@@ -48,13 +50,23 @@ def fetch_data(sgw: SgWriter):
         try:
             latitude, longitude = get_coords(page_url)
         except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+        _tmp = []
+        black_list = ["dec", "christmas", "new", "/", "thanksgiving", "xmas"]
         hours = d.xpath(".//div[@class='store-hours']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours)
+        for h in hours:
+            if "holiday" in h.lower():
+                break
+            for b in black_list:
+                if b in h.lower():
+                    break
+            else:
+                _tmp.append(h)
 
-        if "Hours;" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("Hours;")[-1].strip()
+        hours_of_operation = ";".join(_tmp)
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,
@@ -66,8 +78,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=str(latitude),
+            longitude=str(longitude),
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
         )
@@ -81,5 +93,5 @@ if __name__ == "__main__":
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)

@@ -48,7 +48,7 @@ def fetch_data():
         street_address = "<MISSING>"
         city = "".join(store.xpath('span[@class="color-red"]/text()')).strip()
         if len(city) <= 0:
-            city = "Asunción y Gran Asunción"
+            city = "Asunción"
 
         state = "<MISSING>"
         zip = "<MISSING>"
