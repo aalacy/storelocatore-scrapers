@@ -68,7 +68,7 @@ if __name__ == "__main__":
     page_url = "https://www.bp.com/en_au/australia/home/who-we-are/find-your-nearest-bp/find-your-nearest-wild-bean-cafe.html"
     search = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=30,
     )
     with SgWriter(
         SgRecordDeduper(
