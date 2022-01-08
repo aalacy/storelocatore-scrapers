@@ -34,6 +34,7 @@ headers_csrf = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
     "referer": "https://linex.com/find-a-location",
     "content-type": "multipart/form-data",
+    "cookie": "_clck=1tuc36s|1|exj|0;",
 }
 
 
@@ -185,29 +186,105 @@ def fetch_records(
 
 
 def fetch_data(sgw: SgWriter):
+    SEARCH_RADIUS = 100
     all_codes_us = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=SEARCH_RADIUS,
     )
 
     all_codes_ca = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.CANADA],
+        expected_search_radius_miles=SEARCH_RADIUS,
     )
 
     cn_us = all_codes_us.current_country()
     cn_ca = all_codes_ca.current_country()
 
+    # It is noted that whether we use sgselenium or
+    # sgrequests followed by POST,
+    state_list_ca = [
+        "ontario",
+        "quebec",
+        "british columbia",
+        "alberta",
+        "manitoba",
+        "saskatchewan",
+        "nova scotia",
+        "new brunswick",
+        "newfoundland and labrador",
+        "prince edward island",
+        "northwest territories",
+        "nunavut",
+        "yukon",
+    ]
+    state_list_us = [
+        "alabama",
+        "alaska",
+        "arizona",
+        "arkansas",
+        "california",
+        "colorado",
+        "connecticut",
+        "delaware",
+        "florida",
+        "georgia",
+        "hawaii",
+        "idaho",
+        "illinois",
+        "indiana",
+        "iowa",
+        "kansas",
+        "kentucky",
+        "louisiana",
+        "maine",
+        "maryland",
+        "massachusetts",
+        "michigan",
+        "minnesota",
+        "mississippi",
+        "missouri",
+        "montana",
+        "nebraska",
+        "nevada",
+        "newhampshire",
+        "newjersey",
+        "newmexico",
+        "newyork",
+        "northcarolina",
+        "northdakota",
+        "ohio",
+        "oklahoma",
+        "oregon",
+        "pennsylvania",
+        "rhodeisland",
+        "southcarolina",
+        "southdakota",
+        "tennessee",
+        "texas",
+        "utah",
+        "vermont",
+        "virginia",
+        "washington",
+        "westvirginia",
+        "wisconsin",
+        "wyoming",
+        "District of Columbia",
+    ]
+    cn_us2 = "us"
+    cn_ca2 = "ca"
     # Get CSRF Token
     CSRF_TOKEN = get_csrf_token()
     headers_post = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
         "referer": "https://linex.com/find-a-location",
-        "content-type": "multipart/form-data",
+        "content-type": "multipart/form-data; boundary=----WebKitFormBoundaryV5hSBWKKKpSgeMjG",
     }
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
+
+        # Dynamic Zip Code-based search in the US
         task_us = [
             executor.submit(
                 fetch_records, postcode, cn_us, CSRF_TOKEN, headers_post, sgw
@@ -216,6 +293,7 @@ def fetch_data(sgw: SgWriter):
         ]
         tasks.extend(task_us)
 
+        # Dynamic Zip Code-based search in Canada
         task_ca = [
             executor.submit(
                 fetch_records, postcode, cn_ca, CSRF_TOKEN, headers_post, sgw
@@ -223,6 +301,24 @@ def fetch_data(sgw: SgWriter):
             for postcode in all_codes_ca
         ]
         tasks.extend(task_ca)
+
+        # States in the US
+        task_state_us = [
+            executor.submit(
+                fetch_records, postcode, cn_us2, CSRF_TOKEN, headers_post, sgw
+            )
+            for postcode in state_list_us
+        ]
+        tasks.extend(task_state_us)
+
+        # Province in Canada
+        task_state_ca = [
+            executor.submit(
+                fetch_records, postcode, cn_ca2, CSRF_TOKEN, headers_post, sgw
+            )
+            for postcode in state_list_ca
+        ]
+        tasks.extend(task_state_ca)
 
         for future in as_completed(tasks):
             if future.result() is not None:
@@ -238,7 +334,7 @@ def scrape():
             SgRecordID(
                 {
                     SgRecord.Headers.PAGE_URL,
-                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
                 }
