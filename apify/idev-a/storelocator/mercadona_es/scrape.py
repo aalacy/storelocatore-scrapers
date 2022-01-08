@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 from bs4 import BeautifulSoup as bs
-from datetime import date, time, timedelta
+from datetime import date, timedelta
 import calendar
 from sglogging import SgLogSetup
 import ssl
