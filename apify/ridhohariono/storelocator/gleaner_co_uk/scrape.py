@@ -55,7 +55,7 @@ def getAddress(raw_address):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get("https://www.google.com/maps/d/embed?mid=1MyMR7itOOLUAqV_XjISiG4G3mq0")
     WebDriverWait(driver, 30).until(
         EC.presence_of_element_located(
