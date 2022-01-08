@@ -100,7 +100,6 @@ def fetch_data_us_ca(idx, loc, sgw: SgWriter):
         warehouse_number = loc.split("-")[-1].replace(".html", "")
         api_endpoint_url = f"https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=&hasGas=&hasTires=&hasFood=&hasHearing=&hasPharmacy=&hasOptical=&hasBusiness=&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&warehouseNumber={warehouse_number}&countryCode="
         data = get_json_data_us_ca(api_endpoint_url)
-        # data = data[1]
 
         # locator_domain
         locator_domain = "costco.com"
