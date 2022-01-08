@@ -3,8 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicGeoSearch
+from sgzip.dynamic import DynamicGeoSearch, Grain_8, SearchableCountries
 from tenacity import retry, stop_after_attempt, wait_fixed
 from sglogging import SgLogSetup
 
@@ -93,7 +92,9 @@ def fetch_records(search):
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
+    search = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, granularity=Grain_8()
+    )
     with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
