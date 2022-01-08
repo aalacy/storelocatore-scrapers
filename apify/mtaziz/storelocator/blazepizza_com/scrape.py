@@ -165,14 +165,6 @@ def get_state_city_based_urls():
 def fetch_data(sgw: SgWriter):
     # Get the list of URLs based on state and city
     list_of_state_urls = get_state_city_based_urls()
-    # list_of_state_urls = [
-    #     "https://nomnom-prod-api.blazepizza.com/extras/restaurant/ab/calgary",
-    #     "https://nomnom-prod-api.blazepizza.com/extras/restaurant/ab/edmonton",
-    #     "https://nomnom-prod-api.blazepizza.com/extras/restaurant/ab/red-deer",
-    #     "https://nomnom-prod-api.blazepizza.com/extras/restaurant/ab/sherwood-park",
-    #     "https://nomnom-prod-api.blazepizza.com/extras/restaurant/al/birmingham",
-    # ]
-
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [
