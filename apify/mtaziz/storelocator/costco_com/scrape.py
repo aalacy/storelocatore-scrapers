@@ -44,7 +44,7 @@ def get_json_data_us_ca(loc):
             data_json = data_json[1]
             return data_json
         raise Exception(
-            f"HTTP Error Code: {response.status_code} > Please fix USCA RetryError for {loc}"
+            f"HTTP Error Code: {r.status_code} > Please fix USCA RetryError for {loc}"
         )
 
 
@@ -56,7 +56,7 @@ def get_json_data_global(loc):
             data_json = json.loads(r.text)
             return data_json
         raise Exception(
-            f"HTTP Error Code: {response.status_code} > Please fix Global RetryError for {loc}"
+            f"HTTP Error Code: {r.status_code} > Please fix Global RetryError for {loc}"
         )
 
 
