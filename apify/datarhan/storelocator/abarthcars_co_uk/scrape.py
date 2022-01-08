@@ -26,7 +26,7 @@ def fetch_data():
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=100
     )
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome() as driver:
         for code in all_codes:
             driver.get(start_url)
             sleep(5)
