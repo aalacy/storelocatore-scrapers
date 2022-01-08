@@ -28,25 +28,20 @@ def fetch_data(sgw: SgWriter):
         data = json.loads(json.loads(data[0]))
 
         for poi in data["L"][0]["O"]:
-
+            poi = poi["U"]
             store_url = "https://www.tods.com/us-en/store-locator.html"
-            location_name = poi.get("U").get("name") or "<MISSING>"
-            info = poi.get("U").get("timeTable") or "<MISSING>"
-            street_address = (
-                "".join(poi.get("U").get("address")).replace("\n", " ").strip()
-                or "<MISSING>"
-            )
-            city = poi.get("U").get("city") or "<MISSING>"
-            state = poi.get("U").get("region") or "<MISSING>"
+            location_name = poi["name"]
+            info = poi.get("timeTable")
+            street_address = poi["address"].replace("\n", " ").strip()
+            city = poi["city"]
+            state = poi.get("region")
             if state == "Other" or state == "x" or state == "13":
-                state = "<MISSING>"
-            zip_code = str(poi.get("U").get("zipCode")) or "<MISSING>"
-            if zip_code == "None":
-                zip_code = "<MISSING>"
-            phone = poi.get("U").get("phone") or "<MISSING>"
-            latitude = poi.get("U").get("latitiude") or "<MISSING>"
-            longitude = poi.get("U").get("longitude") or "<MISSING>"
-            country_code = poi.get("U").get("countryCode") or "<MISSING>"
+                state = ""
+            zip_code = poi.get("zipCode")
+            phone = poi.get("phone")
+            latitude = poi["latitiude"]
+            longitude = poi["longitude"]
+            country_code = poi["countryCode"]
             if country_code == "AU" and len(zip_code.split()) == 2:
                 state = zip_code.split()[0].strip()
                 zip_code = zip_code.split()[1].strip()
@@ -60,8 +55,8 @@ def fetch_data(sgw: SgWriter):
                 "7": "sunday",
             }
             hoo = []
-            if poi["U"]["G"].get("hours"):
-                for elem in poi["U"]["G"]["hours"]:
+            if poi["G"].get("hours"):
+                for elem in poi["G"]["hours"]:
                     day = days_dict[elem["day"]]
                     if elem.get("From1"):
                         opens = elem["From1"]
@@ -69,8 +64,8 @@ def fetch_data(sgw: SgWriter):
                         hoo.append(f"{day} {opens} - {closes}")
                     else:
                         hoo.append(f"{day} closed")
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-            if "closed" in info:
+            hours_of_operation = " ".join(hoo) if hoo else ""
+            if info and "closed" in info:
                 hours_of_operation = "Closed"
 
             if country_code == "PR":
@@ -86,9 +81,9 @@ def fetch_data(sgw: SgWriter):
                 state=state,
                 zip_postal=zip_code,
                 country_code=country_code,
-                store_number=SgRecord.MISSING,
+                store_number=poi["shopCode"],
                 phone=phone,
-                location_type=SgRecord.MISSING,
+                location_type="",
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
