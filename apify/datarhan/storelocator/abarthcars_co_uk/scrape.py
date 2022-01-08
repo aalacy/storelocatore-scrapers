@@ -12,9 +12,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
 
 try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )
+    _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
