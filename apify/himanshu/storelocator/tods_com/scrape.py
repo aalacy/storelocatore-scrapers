@@ -47,7 +47,7 @@ def fetch_data(sgw: SgWriter):
             latitude = poi.get("U").get("latitiude") or "<MISSING>"
             longitude = poi.get("U").get("longitude") or "<MISSING>"
             country_code = poi.get("U").get("countryCode") or "<MISSING>"
-            if country_code == "AU":
+            if country_code == "AU" and len(zip_code.split()) == 2:
                 state = zip_code.split()[0].strip()
                 zip_code = zip_code.split()[1].strip()
             days_dict = {
