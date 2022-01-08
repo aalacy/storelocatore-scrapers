@@ -1,4 +1,6 @@
+import ssl
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -6,7 +8,16 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
@@ -30,11 +41,14 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         phone = poi_html.xpath('.//div[@id="dealer-phone"]/text()')[0].strip()
         geo = poi_html.xpath('.//div[@id="dealer-map"]/text()')[0].strip().split(", ")
-        with SgFirefox() as driver:
+        with SgChrome() as driver:
             driver.get(start_url)
-            driver.find_element_by_xpath(
+            sleep(5)
+            elem = driver.find_element_by_xpath(
                 f'//dl/dt[contains(text(), "{location_name}")]'
-            ).click()
+            )
+            elem.location_once_scrolled_into_view
+            elem.click()
             loc_dom = etree.HTML(driver.page_source)
             hoo = loc_dom.xpath('//p[@class="mapTime"]/text()')
         hoo = " ".join(hoo)

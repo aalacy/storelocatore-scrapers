@@ -10,7 +10,7 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.wagamama.com"
-    api_url = "https://www.wagamama.com/_nuxt/static/1636984941/home/state.js"
+    api_url = "https://www.wagamama.com/_nuxt/static/1638873726/home/state.js"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",

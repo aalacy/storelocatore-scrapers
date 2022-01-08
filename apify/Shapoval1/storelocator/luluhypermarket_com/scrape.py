@@ -28,7 +28,7 @@ def fetch_data(sgw: SgWriter):
             city = "".join(d.xpath(".//text()"))
             city_slug = "".join(d.xpath(".//@value"))
             for i in range(0, 10):
-                api_url = f"https://www.luluhypermarket.com/en-ae/store-finder?q={city_slug}&page={i}"
+                api_url = f"https://www.luluhypermarket.com{slug_url}?q={city_slug}&page={i}&latitude=0&longitude=0"
                 r = session.get(api_url, headers=headers)
                 try:
                     js = r.json()["data"]
@@ -81,6 +81,8 @@ if __name__ == "__main__":
                     SgRecord.Headers.STORE_NUMBER,
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
                 }
             )
         )

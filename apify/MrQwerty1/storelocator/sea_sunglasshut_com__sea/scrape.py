@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
 
 
 def get_international(line):
@@ -25,12 +26,15 @@ def fetch_data(sgw: SgWriter):
     }
 
     r = session.get(api, headers=headers)
+    logger.info(f"Response: {r}")
     js = r.json()["contentlets"]
-
+    logger.info(f"Total Count: {len(js)}")
     for j in js:
         location_name = j.get("name")
         slug = j.get("URL_MAP_FOR_CONTENT") or "/"
+        slug = slug.replace("-details", "")
         page_url = f"https://sea.sunglasshut.com/sg{slug}"
+        store_number = j.get("identifier")
         raw_address = j.get("address") or ""
         street_address, postal = get_international(raw_address)
         if len(street_address) < 5:
@@ -64,7 +68,7 @@ def fetch_data(sgw: SgWriter):
             city=city,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
@@ -79,6 +83,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://sea.sunglasshut.com/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    locator_domain = "sea.sunglasshut.com"
+    logger = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)

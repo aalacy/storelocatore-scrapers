@@ -108,7 +108,7 @@ def fetch_data():
                     pcode = pcode[0:5]
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=url,
+                    page_url=link,
                     location_name=title,
                     street_address=street,
                     city=city.strip(),
@@ -144,7 +144,7 @@ def fetch_data():
             state, pcode = state.lstrip().split(" ", 1)
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=link,
                 location_name=title,
                 street_address=street,
                 city=city.strip(),

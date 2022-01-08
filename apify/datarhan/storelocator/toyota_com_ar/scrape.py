@@ -16,11 +16,28 @@ def fetch_data():
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
         location_type = " ".join([e["name"] for e in poi["services"]])
+        if location_type != "Venta y Accesorios":
+            continue
         hoo = " ".join(poi["open_hours"].split())
+        hoo = (
+            hoo.split("Venta Convencional ")[-1]
+            .split("Venta")[0]
+            .split("Posventa")[0]
+            .strip()
+        )
         page_url = poi["url"]
         if page_url and "http" not in page_url:
             page_url = "http://" + page_url
-        phones = poi["phone_numbers"].split("Turnos")[0].strip()
+        phones = (
+            poi["phone_numbers"]
+            .split("Turnos")[0]
+            .split("/")[0]
+            .replace("(líneas rotativas)", "")
+            .replace("(Ventas)", "")
+            .strip()
+        )
+        if phones.endswith("("):
+            phones = phones[:-1]
 
         item = SgRecord(
             locator_domain=domain,

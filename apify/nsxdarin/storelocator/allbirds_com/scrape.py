@@ -19,7 +19,7 @@ def fetch_data():
     lines = r.iter_lines()
     website = "allbirds.com"
     store = "<MISSING>"
-    purl = "<MISSING>"
+    purl = " https://www.allbirds.com/pages/stores"
     lat = "<MISSING>"
     lng = "<MISSING>"
     typ = "Store"

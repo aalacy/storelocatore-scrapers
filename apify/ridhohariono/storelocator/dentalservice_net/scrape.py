@@ -49,11 +49,11 @@ def getAddress(raw_address):
 def pull_content(url):
     log.info("Pull content => " + url)
     req = session.get(url, headers=HEADERS)
+    if req.status_code == 404:
+        return False
     if req.history:
         if DOMAIN not in str(req.url):
             return False
-    if req.status_code == 404:
-        return False
     soup = bs(req.content, "lxml")
     return soup
 

@@ -17,6 +17,9 @@ def fetch_data():
         page = 0
         while True:
             try:
+                res = session.get(base_url.format(page), headers=_headers)
+                if res.status_code == 500:
+                    continue
                 locations = session.get(base_url.format(page), headers=_headers).json()[
                     "data"
                 ]
@@ -24,6 +27,8 @@ def fetch_data():
                 break
             page += 1
             for _ in locations:
+                if _["type"] in ["Makro Online Store", "Makro General Enquiries"]:
+                    continue
                 street_address = _["line1"]
                 if _["line2"]:
                     street_address += " " + _["line2"]
