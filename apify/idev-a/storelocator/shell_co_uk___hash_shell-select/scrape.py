@@ -47,21 +47,27 @@ def fetch_boundings(boundings, writer):
                     zip_postal = _.get("postcode")
                     if zip_postal and zip_postal == "00000":
                         zip_postal = ""
-                    info = get_json(detail_url.format(_["id"], _["lat"], _["lng"]))
+
                     hours = []
-                    if info.get("open_status", "") == "twenty_four_hour":
-                        hours = ["Open 24 Hours"]
-                    else:
-                        for hh in info["opening_hours"]:
-                            times = []
-                            for hr in hh["hours"]:
-                                times.append(f"{' - '.join(hr)}")
-                            hours.append(
-                                f"{' - '.join(hh['days'])}: {', '.join(times)}"
-                            )
+                    page_url = ""
+                    try:
+                        info = get_json(detail_url.format(_["id"], _["lat"], _["lng"]))
+                        if info.get("open_status", "") == "twenty_four_hour":
+                            hours = ["Open 24 Hours"]
+                        else:
+                            for hh in info["opening_hours"]:
+                                times = []
+                                for hr in hh["hours"]:
+                                    times.append(f"{' - '.join(hr)}")
+                                hours.append(
+                                    f"{' - '.join(hh['days'])}: {', '.join(times)}"
+                                )
+                        page_url = info["website_url"]
+                    except:
+                        pass
                     writer.write_row(
                         SgRecord(
-                            page_url=info["website_url"],
+                            page_url=page_url,
                             store_number=_["id"],
                             location_name=_["name"],
                             street_address=street_address,
