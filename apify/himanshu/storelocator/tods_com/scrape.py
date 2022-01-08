@@ -7,8 +7,8 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data(sgw: SgWriter):
-
+def fetch_data():
+    session = SgRequests()
     start_url = "https://www.geocms.it/Server/servlet/S3JXServletCall?parameters=method_name%3DGetObject%26callback%3Dscube.geocms.GeoResponse.execute%26id%3D7%26query%3D%255BcountryCode%255D%2520%253D%2520%255B{}%255D%26clear%3Dtrue%26licenza%3Dgeo-todsgroupspa%26progetto%3DTods%26lang%3DALL&encoding=UTF-8"
     domain = "https://www.tods.com/"
     hdr = {
@@ -72,7 +72,7 @@ def fetch_data(sgw: SgWriter):
                 state = "PR"
                 country_code = "US"
 
-            row = SgRecord(
+            item = SgRecord(
                 locator_domain=domain,
                 page_url=store_url,
                 location_name=location_name,
@@ -89,16 +89,20 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation=hours_of_operation,
             )
 
-            sgw.write_row(row)
+            yield item
 
 
-if __name__ == "__main__":
-    session = SgRequests()
+def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
             )
         )
     ) as writer:
-        fetch_data(writer)
+        for item in fetch_data():
+            writer.write_row(item)
+
+
+if __name__ == "__main__":
+    scrape()
