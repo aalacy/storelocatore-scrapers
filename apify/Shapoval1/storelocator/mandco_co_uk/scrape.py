@@ -44,8 +44,8 @@ def fetch_data(sgw: SgWriter):
             data=data,
         )
         tree = html.fromstring(r.text)
-        div = tree.xpath(f'//div[./div[@data-storename="{location_name}"]]')
-        for b in div:
+        div_1 = tree.xpath(f'//div[./div[@data-storename="{location_name}"]]')
+        for b in div_1:
             info = b.xpath('.//div[@class="storelocation-store-details"]/text()')
             info = list(filter(None, [a.strip() for a in info]))
             ad = " ".join(info[:-1]).replace("\n", "").replace("\r", "").strip()
