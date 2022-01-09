@@ -45,8 +45,8 @@ def fetch_data(sgw: SgWriter):
         )
         tree = html.fromstring(r.text)
         div = tree.xpath(f'//div[./div[@data-storename="{location_name}"]]')
-        for d in div:
-            info = d.xpath('.//div[@class="storelocation-store-details"]/text()')
+        for b in div:
+            info = b.xpath('.//div[@class="storelocation-store-details"]/text()')
             info = list(filter(None, [a.strip() for a in info]))
             ad = " ".join(info[:-1]).replace("\n", "").replace("\r", "").strip()
             ad = " ".join(ad.split())
@@ -64,7 +64,7 @@ def fetch_data(sgw: SgWriter):
                 postal = "".join(info[-2]).strip()
             phone = "".join(info[-1]).strip()
             hours_of_operation = (
-                " ".join(d.xpath('.//div[@class="opening-times"]/p//text()'))
+                " ".join(b.xpath('.//div[@class="opening-times"]/p//text()'))
                 .replace("\n", "")
                 .strip()
             )
