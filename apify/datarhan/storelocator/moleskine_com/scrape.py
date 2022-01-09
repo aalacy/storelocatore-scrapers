@@ -1,124 +1,59 @@
-import csv
-import json
-
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
-    items = []
-    scraped_items = []
-
-    start_url = "https://aws.servicehub.eurostep.it/api/storelocators/coord/{}/{}"
+    start_url = "https://www.moleskine.com/on/demandware.store/Sites-Moleskine_NAM-Site/en_US/Stores-SearchResults"
     domain = "moleskine.com"
 
-    hdr = {
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "content-type": "application/json",
-        "Host": "aws.servicehub.eurostep.it",
-        "Origin": "https://es.moleskine.com",
-        "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
-    }
-    all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=10
+    all_coodes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
-    for lat, lng in all_coords:
-        response = session.get(start_url.format(lng, lat), headers=hdr)
-        if "No stores found" in response.text:
+    for code in all_coodes:
+        frm = {"dwfrm_storelocator_country": "US", "dwfrm_storelocator_query": code}
+        data = session.post(start_url.format(code), data=frm)
+        if data.status_code != 200:
             continue
-        data = json.loads(response.text)
+        data = data.json()
+        if not data.get("stores"):
+            continue
+        for poi in data["stores"]:
+            item = SgRecord(
+                locator_domain=domain,
+                page_url="https://us.moleskine.com/en/store-locator",
+                location_name=poi["name"],
+                street_address=", ".join(poi["address"]["lines"]),
+                city=poi["address"]["city"],
+                state="",
+                zip_postal=poi["address"]["zip"],
+                country_code="",
+                store_number="",
+                phone=poi["phone"],
+                location_type=poi["type"],
+                latitude=poi["coords"][0],
+                longitude=poi["coords"][-1],
+                hours_of_operation="",
+            )
 
-        for poi in data["storesList"]:
-            store_url = "https://us.moleskine.com/en/store-locator"
-            location_name = poi["store_name"]
-            location_name = location_name if location_name else "<MISSING>"
-            street_address = poi["address"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["city"]
-            city = city if city else "<MISSING>"
-            state = poi["province"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["zip_code"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            if state in zip_code:
-                zip_code = "-".join(zip_code.split("-")[1:])
-            country_code = poi["country"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = poi["id"]
-            phone = poi["phone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = str(poi["type_of_shop"])
-            if location_type == "1":
-                location_type = "Moleskin Store"
-            elif location_type == "3":
-                location_type = "Retailer"
-            latitude = poi["location"]["coordinates"][-1]
-            longitude = poi["location"]["coordinates"][0]
-            hours_of_operation = "<MISSING>"
-
-            item = [
-                domain,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            check = f"{store_number} {location_type}"
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

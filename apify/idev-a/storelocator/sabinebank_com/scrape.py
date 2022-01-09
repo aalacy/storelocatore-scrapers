@@ -2,6 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -15,10 +17,15 @@ def fetch_data():
         locations = (
             bs(session.get(base_url, headers=_headers).text, "lxml")
             .select("table.acctTable")[0]
-            .select("tr")[1:]
+            .select("tbody tr")
         )
         for _ in locations:
+            if not _.text.strip():
+                continue
             addr = list(_.select("td")[0].stripped_strings)
+            if not addr:
+                continue
+
             hours_of_operation = "; ".join(_.select("td")[1].stripped_strings)
             if (
                 "Drive-Thru" in hours_of_operation
@@ -45,7 +52,7 @@ def fetch_data():
         locations = (
             bs(session.get(base_url, headers=_headers).text, "lxml")
             .select("table.acctTable")[-1]
-            .select("tr td")[1:]
+            .select("tbody tr td")
         )
         for _ in locations:
             addr = list(_.stripped_strings)
@@ -68,7 +75,19 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

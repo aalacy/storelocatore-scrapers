@@ -1,133 +1,94 @@
-import csv
 import json
 
 from lxml import html
+from sgcrawler.sgcrawler_fun import SgCrawlerUsingHttpFun
+from sgcrawler.helper_definitions import (
+    DeclarativeTransformerAndFilter,
+    DeclarativePipeline,
+)
 from sgrequests import SgRequests
+from sgscrape.simple_scraper_pipeline import (
+    SSPFieldDefinitions,
+    ConstantField,
+    MappingField,
+    MissingField,
+)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://leon.co/"
-    api_url = "https://leon.co/all-restaurants/"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(_, http: SgRequests):
+    r = http.request(url="https://leon.co/all-restaurants/")
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[@id='__NEXT_DATA__']/text()"))
     js = json.loads(text)["props"]["initialReduxState"]["data"]["restaurants"]
-
     for j in js:
-        isclosed = j.get("closed")
-        iscoming = j.get("comingSoon")
-
-        location_name = j.get("name")
-        slug = j.get("slug")
-        page_url = f"https://leon.co/restaurants/{slug}"
-        location_type = j.get("type") or "<MISSING>"
-        line = j["locationDetails"]["fullAddress"]
-
-        try:
-            p = j["locationDetails"]["postCode"]
-            c = j["locationDetails"]["townOrCity"]
-            adr = parse_address(International_Parser(), line, postcode=p, city=c)
-        except KeyError:
-            adr = parse_address(International_Parser(), line)
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or "<MISSING>"
-        )
-        if len(street_address) < 5 and "," in line:
-            street_address = line.split(",")[0].strip()
-
-        city = adr.city or "<MISSING>"
-        state = adr.state or "<MISSING>"
-        postal = adr.postcode or "<MISSING>"
-        country_code = "GB"
-        store_number = "<MISSING>"
-        try:
-            phone = j["contactDetails"]["phoneNumber"]
-        except KeyError:
-            phone = "<MISSING>"
-        loc = j.get("geoLocation")
-        latitude = loc.get("lat") or "<MISSING>"
-        longitude = loc.get("lng") or "<MISSING>"
-
-        _tmp = []
-        try:
-            hours = j["restaurantOpeningTimes"]["openingTimes"]
-        except KeyError:
-            hours = []
-
-        for h in hours:
-            day = h.get("day")
-            start = h.get("opensAt")
-            end = h.get("closesAt")
-            _tmp.append(f"{day}: {start} - {end}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        if isclosed:
-            hours_of_operation = "Closed"
-        if iscoming:
-            hours_of_operation = "Coming Soon"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+        yield j
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def get_street(full_adr):
+    adr = parse_address(International_Parser(), full_adr)
+    street = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    if len(street) < 5:
+        street = full_adr.split(",")[0].strip()
+
+    return street
+
+
+def page_url_from_slug(slug: str):
+    return f"https://leon.co/restaurants/{slug}"
 
 
 if __name__ == "__main__":
-    scrape()
+    crawler_domain = "https://leon.co/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        SgCrawlerUsingHttpFun(
+            crawler_domain=crawler_domain,
+            transformer=DeclarativeTransformerAndFilter(
+                pipeline=DeclarativePipeline(
+                    crawler_domain=crawler_domain,
+                    field_definitions=SSPFieldDefinitions(
+                        locator_domain=ConstantField("https://leon.co/"),
+                        page_url=MappingField(
+                            mapping=["slug"],
+                            value_transform=page_url_from_slug,
+                            is_required=False,
+                        ),
+                        location_name=MappingField(mapping=["name"], is_required=False),
+                        street_address=MappingField(
+                            mapping=["locationDetails", "fullAddress"],
+                            value_transform=get_street,
+                        ),
+                        city=MappingField(mapping=["locationDetails", "townOrCity"]),
+                        state=MissingField(),
+                        zipcode=MappingField(
+                            mapping=["locationDetails", "postCode"], is_required=False
+                        ),
+                        country_code=ConstantField("GB"),
+                        store_number=MissingField(),
+                        phone=MappingField(
+                            mapping=["contactDetails", "phoneNumber"], is_required=False
+                        ),
+                        location_type=MappingField(mapping=["type"], is_required=False),
+                        latitude=MappingField(
+                            mapping=["geoLocation", "lat"], is_required=False
+                        ),
+                        longitude=MappingField(
+                            mapping=["geoLocation", "lng"], is_required=False
+                        ),
+                        hours_of_operation=MissingField(),
+                        raw_address=MappingField(
+                            mapping=["locationDetails", "fullAddress"]
+                        ),
+                    ),
+                    fail_on_outlier=False,
+                )
+            ),
+            fetch_raw_using=fetch_data,
+            make_http=lambda _: SgRequests(),
+            data_writer=writer,
+        ).run()

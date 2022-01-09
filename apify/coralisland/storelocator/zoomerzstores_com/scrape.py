@@ -1,7 +1,12 @@
-import csv
-from lxml import etree
 import usaddress
+from lxml import etree
+
 from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 base_url = "https://zoomerzstores.com"
@@ -58,36 +63,8 @@ def parse_address(address):
     }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    output_list = []
-    url = "https://zoomerzstores.com/locations?radius=-1&filter_catid=0&limit=0&filter_order=distance"
+def fetch_data(sgw: SgWriter):
+    url = "https://zoomerzstores.com/locations?radius=-1&filter_catid=0&limit=0&filter_order=distance&searchzip=Tennessee"
 
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -97,7 +74,7 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
     }
     formdata = {
-        "searchzip": "los angeles",
+        "searchzip": "You",
         "task": "search",
         "radius": "-1",
         "option": "com_mymaplocations",
@@ -106,10 +83,10 @@ def fetch_data():
         "Itemid": "223",
         "zoom": "9",
         "format": "json",
-        "geo": "",
+        "geo": "1",
         "limitstart": "0",
-        "latitude": "",
-        "longitude": "",
+        "latitude": "37.09024",
+        "longitude": "-95.712891",
     }
     store_list = session.post(url, headers=headers, data=formdata).json()["features"]
 
@@ -118,12 +95,12 @@ def fetch_data():
         output.append(base_url)
         output.append("https://zoomerzstores.com" + store["properties"]["url"])
         output.append(get_value(store["properties"]["name"]))
-        address = ", ".join(
+        addr = ", ".join(
             eliminate_space(
                 etree.HTML(store["properties"]["fulladdress"]).xpath(".//text()")
             )[:-2]
         ).replace("United States", "")
-        address = parse_address(address)
+        address = parse_address(addr)
         output.append(address["street"])
         if address["state"] != "<MISSING>":
             output.append(address["city"])
@@ -135,17 +112,30 @@ def fetch_data():
         output.append("US")
         output.append(get_value(store["id"]))
         output.append("<MISSING>")
-        output.append("Zoomerz Stores")
+        output.append("<MISSING>")
         output.append(get_value(store["geometry"]["coordinates"][0]))
         output.append(get_value(store["geometry"]["coordinates"][1]))
         output.append("<MISSING>")
-        output_list.append(output)
-    return output_list
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=output[0],
+                page_url=output[1],
+                location_name=output[2],
+                street_address=output[3],
+                city=output[4],
+                state=output[5],
+                zip_postal=output[6],
+                country_code=output[7],
+                store_number=output[8],
+                phone=output[9],
+                location_type=output[10],
+                latitude=output[12],
+                longitude=output[11],
+                hours_of_operation=output[13],
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

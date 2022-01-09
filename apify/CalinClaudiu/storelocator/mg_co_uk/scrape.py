@@ -109,7 +109,7 @@ def get_url(soup):
         k["region"] = "<MISSING>"
 
     try:
-        k["zip"] = addr[0]
+        k["zip"] = addr[0].replace(".", "")
         addr.pop(0)
     except Exception:
         k["zip"] = "<MISSING>"
@@ -123,12 +123,14 @@ def get_url(soup):
         else:
             raise Exception("something quite impossible happened")
 
-    try:
-        k["phone"] = soup.find(
-            "a", {"href": lambda x: x and x.startswith("tel:")}
-        ).text.strip()
-    except Exception:
-        k["phone"] = "<MISSING>"
+    if k["zip"] == "<MISSING>":
+        k["zip"] = k["region"]
+        k["region"] = "<MISSING>"
+
+    if k["address"][-1:] == ",":
+        k["address"] = k["address"][:-1]
+
+    k["phone"] = "<INACCESSIBLE>"
 
     try:
         k["id"] = moresoup.find("form", {"id": True}).find(
@@ -173,7 +175,9 @@ def fetch_data():
     }
 
     session = SgRequests()
-    search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
+    )
     identities = set()
     final_results = []
     tot = 0

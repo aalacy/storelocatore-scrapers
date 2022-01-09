@@ -1,40 +1,13 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.angrycrabshack.com"
 
@@ -97,7 +70,6 @@ def fetch_data():
             .strip()
         )
         a = usaddress.tag(adr, tag_mapping=tag)[0]
-        location_type = "<MISSING>"
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
@@ -108,50 +80,101 @@ def fetch_data():
         state = a.get("state")
         postal = a.get("ZipCode")
         city = a.get("city")
-        store_number = "<MISSING>"
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//h3[contains(text(), "Hours")]/following-sibling::p/text()'
+                    '//h3[contains(text(), "Hours")]/following-sibling::p//text() | //h3[contains(text(), "Hours")]/following-sibling::div/span/text()'
                 )
             )
             .replace("\n", "")
+            .strip()
+        ) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//p[./strong[text()="Regular Hours"]]/following-sibling::p/text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+        tmphours = (
+            " ".join(
+                tree.xpath(
+                    '//p[./em/strong[text()="TEMPORARY HOURS"]]/following-sibling::p//text()'
+                )
+            )
+            .replace("\n", "")
+            .split("Regular Hours")[0]
+            .strip()
+        )
+        if tmphours:
+            hours_of_operation = tmphours
+        if page_url == "https://www.angrycrabshack.com/litchfield-rd-goodyear-az/":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h3[contains(text(), "Hours")]/following-sibling::*//text()'
+                    )
+                )
+                .replace("\n", "")
+                .split("TEMPORARY HOURS")[1]
+                .split("REGULAR HOURS")[0]
+                .strip()
+            )
+        hours_of_operation = (
+            hours_of_operation.replace("(TEMPORARILY)", "")
+            .replace("\r\n", " ")
+            .replace("\n", " ")
             .strip()
         )
         phone = (
             " ".join(
                 tree.xpath(
-                    '//h3[contains(text(), "Address")]/following-sibling::p/a/text()'
+                    '//div[./h3[text()="Location Info"]]//a[contains(@href, "tel")]/text()'
                 )
             )
             or "<MISSING>"
         )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h3[./strong[text()="Hours"]]/following-sibling::p/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+        hours_of_operation = hours_of_operation.replace("Temporary Hours", "").strip()
+        if hours_of_operation.find("Open") != -1:
+            hours_of_operation = hours_of_operation.split("Open")[0].strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=adr,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

@@ -1,105 +1,106 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
+import dirtyjson as json
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+import re
+
+logger = SgLogSetup().get_logger("honestburgers")
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 locator_domain = "https://www.honestburgers.co.uk"
+base_url = "https://www.honestburgers.co.uk/locations/"
 
 
 def fetch_data():
     with SgRequests() as session:
-        res = session.get("https://www.honestburgers.co.uk/locations/")
+        res = session.get(base_url, headers=_headers)
         store_list = bs(res.text, "lxml").select("div.filterable-location")
         for store in store_list:
             page_url = store.select_one("a")["href"]
-            location_name = store.select("a")[1].string.replace("–", "-")
-            res = session.get(page_url)
-            soup = bs(res.text, "lxml")
+            if page_url == base_url:
+                continue
+            logger.info(page_url)
+            location_name = store.h3.text.replace("–", "-")
+            soup = bs(session.get(page_url, headers=_headers).text, "lxml")
+            hours = []
+            try:
+                if (
+                    "currently closed"
+                    in soup.select_one("div.hero-location div.sm-0 p").text.lower()
+                ):
+                    hours = ["Temporarily closed"]
+            except:
+                pass
+
+            zip_postal = city = latitude = street_address = phone = longitude = ""
             try:
                 detail = json.loads(
-                    res.text.split('<script type="application/ld+json">')[1]
-                    .split("</script>")[0]
-                    .replace("\r\n", "")
+                    soup.find_all("script", type="application/ld+json")[-1].string
                 )
-                zip = detail["address"]["postalCode"]
+                zip_postal = detail["address"]["postalCode"]
                 city = detail["address"]["addressRegion"]
                 street_address = detail["address"]["streetAddress"]
-                country_code = detail["address"]["addressCountry"]
                 phone = detail["telephone"]
                 latitude = detail["geo"]["latitude"]
                 longitude = detail["geo"]["longitude"]
-                location_type = detail["@type"]
-                if location_name == "St Albans":
-                    phone = soup.select_one(
-                        "div.hero-location > p a.cl-background"
-                    ).string
             except:
-                location_name = (
-                    soup.select_one("div.hero-halftone-header")
-                    .text.replace("\n", " ")
-                    .strip()
-                    .replace("–", "-")
-                )
+                addr = []
                 try:
-                    addr = soup.select_one("div.hero-location > p").contents
-                    addr = [x for x in addr if x.string is not None]
-                    zip_city = addr[1].split(" ")
-                    zip_city = [x for x in zip_city if x != ""]
-                    zip = " ".join(zip_city[-2:])
+                    addr = list(
+                        soup.select_one("div.hero-location > p").stripped_strings
+                    )
+                    zip_city = addr[1].split()
+                    zip_postal = " ".join(zip_city[-2:])
                     city = " ".join(zip_city[:-2])
-                    street_address = addr[0].replace("\n", " ").strip()
+                    street_address = addr[0]
                 except:
-                    zip = "<MISSING>"
-                    city = "<MISSING>"
-                    street_address = "<MISSING>"
-                if location_name == "Waterloo - Honest Chicken":
-                    addr = soup.select_one("div.hero-location > p").contents[0]
-                    street_address = addr.split(", ")[0].replace("\n", " ").strip()
-                    city = addr.split(", ")[1]
-                    zip = addr.split(", ")[2]
-                country_code = "<MISSING>"
+                    pass
                 try:
-                    phone = soup.select_one(
-                        "div.hero-location > p a.cl-background"
-                    ).string
+                    phone = soup.find("a", href=re.compile(r"tel:")).text.strip()
                 except:
-                    phone = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-                location_type = "<MISSING>"
+                    pass
             try:
-                hours_of_operation = (
-                    soup.select("dl")
-                    .pop()
-                    .text.replace("\n", " ")
-                    .replace("–", "-")
-                    .strip()
-                )
+                days = [
+                    day.text
+                    for day in soup.select("div.hero-location dl dt")
+                    if day.text.strip()
+                ]
+                if "Lunch & Dinner" in days[0]:
+                    del days[0]
+                times = [
+                    tt.text
+                    for tt in soup.select("div.hero-location dl dd")
+                    if tt.text.strip()
+                ]
+                for x in range(len(days)):
+                    hours.append(f"{days[x]}: {times[x]}")
             except:
-                hours_of_operation = "Temporarily Closed"
-            street_address = (
-                "<MISSING>" if "Delivery" in street_address else street_address
-            )
-            record = SgRecord(
+                pass
+
+            yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
-                zip_postal=zip,
+                zip_postal=zip_postal,
                 phone=phone,
                 locator_domain=locator_domain,
-                country_code=country_code,
-                location_type=location_type,
+                country_code="UK",
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours),
             )
-            yield record
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

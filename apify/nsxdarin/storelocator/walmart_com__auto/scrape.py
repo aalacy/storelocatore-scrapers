@@ -179,7 +179,8 @@ def scrape():
             is_required=False,
         ),
         location_type=sp.MappingField(
-            mapping=["storeType", "displayName"],
+            mapping=["featuredServices"],
+            value_transform=lambda x: "auto" if "TIRE_AND_LUBE" in x else "<MISSING>",
             part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),

@@ -1,4 +1,7 @@
-import csv
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -10,35 +13,8 @@ headers = {
 logger = SgLogSetup().get_logger("maceys_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    url = "https://maceys.com/all"
+    url = "https://maceys.com/"
     locs = []
     r = session.get(url, headers=headers)
     website = "maceys.com"
@@ -48,16 +24,15 @@ def fetch_data():
     lat = "<MISSING>"
     lng = "<MISSING>"
     logger.info("Pulling Stores")
-    Found = False
     hrlist = []
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "Grocery Locations</h4>" in line:
-            Found = True
-        if Found and "Show more</a></>" in line:
-            Found = False
-        if Found and 'href="' in line:
-            locs.append("https://maceys.com" + line.split('href="')[1].split('"')[0])
+        if '<a href="/locations/' in line:
+            items = line.split('<a href="/locations/')
+            for item in items:
+                if '<div class="v-snack__action"><' not in item:
+                    lurl = "https://www.maceys.com/locations/" + item.split('"')[0]
+                    locs.append(lurl)
     url = "https://afsshareportal.com/lookUpFeatures.php?callback=jsonpcallbackHours&action=storeInfo&website_url=maceys.com&expandedHours=true"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -84,7 +59,9 @@ def fetch_data():
                         shrs + "; Sat: " + item.split('"Saturday":"')[1].split('"')[0]
                     )
                     shrs = shrs.replace("Closed to Closed", "Closed")
-                    hrlist.append(sname + "|" + shrs)
+                    slat = item.split('"store_lat":"')[1].split('"')[0]
+                    slng = item.split('"store_lng":"')[1].split('"')[0]
+                    hrlist.append(sname + "|" + shrs + "|" + slat + "|" + slng)
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
@@ -99,47 +76,54 @@ def fetch_data():
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
-                name = line2.split("<title>")[1].split("<")[0]
-            if "<h5>Phone Number:</h5>" in line2:
-                next(lines)
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                phone = g.split('<a href="tel:')[1].split('"')[0]
-            if "Address:</h5>" in line2:
-                next(lines)
-                g = next(lines)
-                h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
-                add = g.split("<")[0].strip().replace("\t", "")
-                city = g.split(">")[1].split(",")[0].strip()
-                zc = h.split(";")[1].split("<")[0].strip().replace("\t", "")
-                state = h.split("&")[0].strip().replace("\t", "")
-        name = name.replace(" - ", " ")
+                name = line2.split("<title>")[1].split("<")[0].replace(" - Macey's", "")
+            if 'bold" href="tel:' in line2 and phone == "":
+                phone = line2.split('bold" href="tel:')[1].split('"')[0]
+            if "Address</h3>" in line2:
+                add = (
+                    line2.split('<p class="text-body-2 mb-1 font-weight-bold">')[1]
+                    .split("<")[0]
+                    .strip()
+                )
+                csz = (
+                    line2.split('<p class="text-body-2 mb-1 font-weight-bold">')[1]
+                    .split("<br>")[1]
+                    .split("</p>")[0]
+                )
+                csz = csz.replace("\t", "")
+                city = csz.split(",")[0]
+                state = csz.split(",")[1].strip().split(" ")[0]
+                zc = csz.strip().rsplit(" ", 1)[1]
         for item in hrlist:
             if item.split("|")[0] == name:
                 hours = item.split("|")[1]
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+                lat = item.split("|")[2]
+                lng = item.split("|")[3]
+        if "parleys-" in loc:
+            hours = "Mon-Sat: 6 AM to 11 PM; Sunday: 7 AM to 10 PM"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -1,54 +1,23 @@
 from bs4 import BeautifulSoup
-import csv
-import time
-import usaddress
 
 from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("northwest_bank")
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    data = []
-    titlelist = []
-    titlelist.append("none")
-    p = 0
+def fetch_data(sgw: SgWriter):
 
     states = [
         "AL",
@@ -103,163 +72,66 @@ def fetch_data():
         "WI",
         "WY",
     ]
+
+    url = "https://www.northwest.bank/branch-locations/"
+
     for statenow in states:
+        logger.info(statenow)
+        payload = {"searchText": statenow}
+        req = session.post(url, data=payload)
+        soup = BeautifulSoup(req.text, "html.parser")
 
-        gurl = (
-            "https://maps.googleapis.com/maps/api/geocode/json?address="
-            + statenow
-            + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS"
-        )
+        try:
+            loclist = soup.find_all(class_="card-body p-5")
+            if not loclist:
+                continue
+        except:
+            continue
 
-        r = session.get(gurl, headers=headers, verify=False).json()
-        if r["status"] == "REQUEST_DENIED":
-            pass
-        else:
-            coord = r["results"][0]["geometry"]["location"]
-            latnow = coord["lat"]
-            lngnow = coord["lng"]
-            link = (
-                "https://www.northwest.bank/locations?state="
-                + statenow
-                + "&latlng="
-                + str(latnow)
-                + ","
-                + str(lngnow)
-                + "&distance=1000&type=branch"
+        for loc in loclist:
+
+            title = "<MISSING>"
+            street = loc.h5.text
+            raw_data = list(loc.p.stripped_strings)
+            city_line = raw_data[0].strip().split(",")
+            city = city_line[0].strip()
+            state = city_line[-1].strip().split()[0].strip()
+            pcode = city_line[-1].strip().split()[1].strip().replace("v", "")
+            if len(loc.findAll("h2")) < 2:
+                temp = loc.find(
+                    "i", {"class": "icon icon-saving-bank-fill text-primary"}
+                )
+                if not temp:
+                    continue
+            try:
+                phone = raw_data[1].split("(")[0]
+            except:
+                phone = ""
+            try:
+                hours = " ".join(list(loc.table.stripped_strings))
+            except:
+                hours = ""
+            lat, longt = "", ""
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain="https://www.northwest.bank/",
+                    page_url="https://www.northwest.bank/branch-locations/",
+                    location_name=title,
+                    street_address=street,
+                    city=city,
+                    state=state,
+                    zip_postal=pcode,
+                    country_code="US",
+                    store_number="<MISSING>",
+                    phone=phone,
+                    location_type="<MISSING>",
+                    latitude=lat,
+                    longitude=longt,
+                    hours_of_operation=hours,
+                )
             )
 
-            logger.info(link)
-            r = session.get(link, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
-            try:
-                loclist = soup.find("div", {"class": "branches"}).findAll("li")
-            except:
-                continue
 
-            for loc in loclist:
-                title = loc.find("h4").text
-                address = (
-                    loc.find("p", {"class": "address"}).text.replace("\n", " ").lstrip()
-                    + ", "
-                    + loc.find("p", {"class": "address2"})
-                    .text.replace("\n", " ")
-                    .lstrip()
-                )
-                address = usaddress.parse(address)
-
-                i = 0
-                street = ""
-                city = ""
-                state = ""
-                pcode = ""
-                while i < len(address):
-                    temp = address[i]
-                    if (
-                        temp[1].find("Address") != -1
-                        or temp[1].find("Street") != -1
-                        or temp[1].find("Occupancy") != -1
-                        or temp[1].find("Recipient") != -1
-                        or temp[1].find("BuildingName") != -1
-                        or temp[1].find("USPSBoxType") != -1
-                        or temp[1].find("USPSBoxID") != -1
-                    ):
-                        street = street + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        pcode = pcode + " " + temp[0]
-                    i += 1
-
-                street = street.lstrip().replace(",", "")
-                city = city.lstrip().replace(",", "")
-                state = state.lstrip().replace(",", "")
-                pcode = pcode.lstrip().replace(",", "")
-                phone = loc.find("a", {"class": "phone"}).text
-                try:
-                    hours = (
-                        loc.find("div", {"class": "info"})
-                        .text.replace("Hours: Mon", "Hours: \nMon")
-                        .lstrip()
-                        .split("\n", 1)[1]
-                        .split("Drive", 1)[0]
-                        .replace("\n", " ")
-                        .strip()
-                    )
-
-                except:
-                    hours = (
-                        loc.find("div", {"class": "info"})
-                        .text.replace("Hours: Mon", "Hours: \nMon")
-                        .split("\n", 1)[1]
-                        .replace("\n", " ")
-                        .strip()
-                    )
-
-                try:
-                    hours = hours.split("Deposit")[0]
-                except:
-                    pass
-                try:
-                    hours = hours.split("Fax")[0]
-                except:
-                    pass
-                try:
-                    hours = hours.split("Coin")[0]
-                except:
-                    pass
-                if pcode.strip() == "466001":
-                    pcode = "46628"
-                hours = (
-                    hours.replace("\u200b", "")
-                    .replace("\xa0", "")
-                    .replace("Hours: ", "")
-                )
-                lat, longt = (
-                    loc.find("div", {"class": "info"})
-                    .find("a")["href"]
-                    .split("%40", 1)[1]
-                    .split("%2C", 1)
-                )
-                longt = longt.split("%2C", 1)[0]
-
-                if street in titlelist:
-                    continue
-
-                else:
-                    titlelist.append(street)
-                    data.append(
-                        [
-                            "https://www.northwest.bank/",
-                            link,
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            "US",
-                            "<MISSING>",
-                            phone,
-                            "Branch",
-                            lat,
-                            longt,
-                            hours,
-                        ]
-                    )
-
-                    p += 1
-
-        break
-
-    return data
-
-
-def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

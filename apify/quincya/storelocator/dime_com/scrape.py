@@ -1,43 +1,18 @@
-import csv
-
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    data = []
     locator_domain = "dime.com"
 
     for num in range(5):
@@ -54,13 +29,20 @@ def fetch_data():
                 location_name = store["geomodifier"].replace("\xa0", " ")
             except:
                 location_name = store["name"].replace("\xa0", " ")
+            if "- CLOSED" in location_name.upper():
+                continue
             street_address = store["address"]["line1"]
             city = store["address"]["city"]
             state = store["address"]["region"]
             zip_code = store["address"]["postalCode"]
             country_code = store["address"]["countryCode"]
             store_number = store["id"]
-            phone = store["mainPhone"]
+            if "-" in store_number or len(store_number) > 5:
+                store_number = ""
+            try:
+                phone = store["mainPhone"]
+            except:
+                phone = ""
             try:
                 location_type = ",".join(store["services"])
             except:
@@ -99,32 +81,29 @@ def fetch_data():
             except:
                 link = "https://answers.dime.com/locations.html?tabOrder=.%2Findex.html%2Cfaqs%2Clocations%2Cmerger_faqs%2Cppp_faqs%2Cproducts&referrerPageUrl=https%3A%2F%2Fwww.dime.com%2F"
 
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.PAGE_URL})
+    )
+) as writer:
+    fetch_data(writer)
