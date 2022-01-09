@@ -103,7 +103,7 @@ def _d(page_url, _, city):
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
     zip_postal = addr.postcode
-    if len(zip_postal.split(" ")) == 1:
+    if zip_postal and len(zip_postal.split(" ")) == 1:
         for aa in raw_address.split(","):
             if zip_postal.lower() in aa.lower():
                 zip_postal = aa.strip()

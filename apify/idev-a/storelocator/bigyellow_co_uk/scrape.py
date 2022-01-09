@@ -149,6 +149,9 @@ def fetch_data():
         city = get_JSON_object_variable(data, "address.addressLocality")
         zip_postal = get_JSON_object_variable(data, "address.postalCode")
         state = get_JSON_object_variable(data, "address.addressRegion")
+        if state == "Bristol" and not city:
+            state = ""
+            city = "Bristol"
         country_code = get_JSON_object_variable(data, "address.addressCountry")
         phone = get_JSON_object_variable(data, "telephone")
         latitude = get_JSON_object_variable(data, "latitude")

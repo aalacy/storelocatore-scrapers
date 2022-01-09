@@ -49,12 +49,18 @@ def fetch_data():
             loc_dom = etree.HTML(driver.page_source)
         poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
         poi = json.loads(poi)
-        location_name = loc_dom.xpath("//h1/text()")[0]
+        location_name = loc_dom.xpath("//h1/text()")
+        if not location_name:
+            continue
+        location_name = location_name[0]
         hoo = []
         for e in poi["openingHoursSpecification"]:
             if not e.get("dayOfWeek"):
                 continue
-            hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
+            if not e.get("opens"):
+                hoo.append(f'{e["dayOfWeek"]} closed')
+            else:
+                hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
         hours_of_operation = " ".join(hoo)
 
         item = SgRecord(

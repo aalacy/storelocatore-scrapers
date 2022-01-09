@@ -65,7 +65,7 @@ def fetch_data():
         else:
             page_url = BASE_URL + row["url"]
         location_name = row["store"].replace("&#8217;", "'")
-        street_address = f"{row['address']}, {row['address2']}".strip().lstrip(",")
+        street_address = f"{row['address']}, {row['address2']}".strip().rstrip(",")
         city = row["city"]
         state = row["state"]
         zip_postal = row["zip"]

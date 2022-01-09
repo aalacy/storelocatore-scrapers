@@ -20,7 +20,7 @@ def get_urls():
     ids = get_ids()
     batches = [ids[i : i + 20] for i in range(0, len(ids), 20)]
     for b in batches:
-        url = f'https://sls-api-service.sweetiq-sls-production-west.sweetiq.com/4JxwourSv9myM4JuR5Ayb7Wq4uKEHl/locations-details?locale=en_US&ids={",".join(b)}&cname=stores.telus.com'
+        url = f'https://sls-api-service.sweetiq-sls-production-east.sweetiq.com/4JxwourSv9myM4JuR5Ayb7Wq4uKEHl/locations-details?locale=en_US&ids={",".join(b)}&cname=stores.telus.com'
         urls.append(url)
 
     return urls
@@ -68,9 +68,7 @@ def get_data(url, sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,

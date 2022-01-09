@@ -40,6 +40,7 @@ def fetch_data():
     for loc in locs:
         logger.info(loc)
         name = ""
+        CS = False
         add = ""
         city = ""
         state = ""
@@ -52,6 +53,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if ">Opening soon<" in line2:
+                CS = True
             if '"og:title" content="' in line2 and name == "":
                 name = line2.split('"og:title" content="')[1].split('"')[0]
             if 'location:latitude"  content="' in line2:
@@ -78,6 +81,8 @@ def fetch_data():
                 )
         if phone == "":
             phone = "<MISSING>"
+        if CS:
+            name = name + " - Opening Soon"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

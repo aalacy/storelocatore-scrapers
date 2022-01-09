@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("cottonpatch_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,17 +22,14 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if (
-            '<a href="https://cottonpatch.com/locations/' in line
-            and '<div class="location-state-group"' in line
+            'href="https://cottonpatch.com/locations/' in line
+            and "cta-button" not in line
+            and 'class="title">' not in line
         ):
-            items = line.split('<a href="https://cottonpatch.com/locations/')
-            for item in items:
-                if "<span></span></a></div>" in item:
-                    locs.append(
-                        "https://cottonpatch.com/locations/" + item.split('"')[0]
-                    )
+            lurl = line.split('href="')[1].split('"')[0]
+            if lurl != "https://cottonpatch.com/locations/":
+                locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -73,56 +46,61 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("<")[0].replace("&#8211;", "-")
-            if add == "" and '<p class="distance">' in line2:
+            if add == "" and 'class="contact-group">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
-                add = g.split("<")[0].strip().replace("\t", "")
-                city = g.split(">")[1].split(",")[0]
-                state = g.split(">")[1].split(",")[1].strip().split(" ")[0]
-                zc = g.split(">")[1].split("<")[0].rsplit(" ", 1)[1]
-            if phone == "" and '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-            if lat == "" and 'class="row map" data-coords="' in line2:
-                lat = line2.split('class="row map" data-coords="')[1].split(",")[0]
-                lng = (
-                    line2.split('class="row map" data-coords="')[1]
-                    .split(",")[1]
-                    .split('"')[0]
+                add = g.split("<p>")[1].split("<")[0]
+                g = next(lines)
+                city = g.split(",")[0].strip().replace("\t", "")
+                state = g.split(",")[1].strip().split(" ")[0]
+                zc = g.split("<")[0].rsplit(" ", 1)[1]
+                g = next(lines)
+                phone = (
+                    g.split("<")[0]
+                    .strip()
+                    .replace("\t", "")
+                    .replace("\r", "")
+                    .replace("\n", "")
                 )
-            if "<p>Hours:<br/>" in line2 and hours == "":
+            if lat == "" and "other_coords=[{lat:" in line2:
+                lat = line2.split("other_coords=[{lat:")[1].split(",")[0]
+                lng = line2.split("lng:")[1].split("}")[0]
+            if '<div class="hours-group">' in line2 and hours == "":
                 HFound = True
-            if HFound and "Menu" in line2:
+            if HFound and ">Menu</a>" in line2:
                 HFound = False
             if HFound and "pm<" in line2:
-                hrs = line2.split("<")[0].strip()
+                hrs = line2.replace("<p>", "").split("<")[0].strip()
                 if hours == "":
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "locations/corsicana" in loc:
+            phone = "903-874-2020"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

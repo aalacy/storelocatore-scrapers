@@ -33,18 +33,17 @@ def get_data(slug, sgw: SgWriter):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
-    raw_address = "".join(
-        tree.xpath("//div[@class='gen-section'][1]/p[1]/text()")
-    ).strip()
+    raw_address = " ".join(
+        "".join(tree.xpath("//div[@class='gen-section'][1]/p[1]/text()")).split()
+    )
     street_address, city, state, postal = get_international(raw_address)
     postal = postal.replace("TK ", "")
 
-    text = "".join(
-        tree.xpath(
-            "//p[contains(text(), 'T:')]/text()|//span[contains(text(), 'T:')]/text()"
-        )
+    phone = (
+        "".join(tree.xpath("//div[@class='gen-section']/span/text()"))
+        .replace("F:", "")
+        .strip()
     )
-    phone = text.split("ή")[0].replace("T:", "").strip()
     text = "".join(
         tree.xpath("//a[@class='button iconBtn s icon-link right blue']/@href")
     )

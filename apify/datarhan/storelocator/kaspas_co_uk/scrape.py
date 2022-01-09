@@ -27,6 +27,9 @@ def fetch_data():
         if loc_dom.xpath('//p[contains(text(), "Coming Soon")]'):
             continue
         location_name = loc_dom.xpath("//h1/text()")[0]
+        country_code = ""
+        if location_name == "Pakistan":
+            country_code = "Pakistan"
         raw_address = loc_dom.xpath(
             '//h3[contains(text(), "Address")]/following-sibling::p/text()'
         )
@@ -59,6 +62,8 @@ def fetch_data():
         if city == "6 -8 0SMOSTON ROAD":
             city = location_name
         city = city.replace("Super Market", "").split("Postal")[0].strip()
+        if zip_code in ["St Helens.", "Cwmbran"]:
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -68,7 +73,7 @@ def fetch_data():
             city=city,
             state="",
             zip_postal=zip_code,
-            country_code="",
+            country_code=country_code,
             store_number="",
             phone=phone,
             location_type="",

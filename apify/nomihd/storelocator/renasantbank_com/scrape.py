@@ -33,6 +33,7 @@ def fetch_data():
                 country_codes=[SearchableCountries.USA],
                 expected_search_radius_miles=100,
                 max_search_results=50,
+                use_state=False,
                 granularity=Grain_8(),
             )
             for lat, lng in search:
@@ -87,12 +88,18 @@ def fetch_data():
                             if (
                                 "far fa-clock"
                                 == "".join(
-                                    sec.xpath('div[@class="info-icon"]/i/@class')
+                                    sec.xpath('div[@class="info-icon"]/*/@class')
                                 ).strip()
                             ):
-                                hours_of_operation = "; ".join(
-                                    sec.xpath('div[@class="info-info"]/p/text()')
-                                ).strip()
+                                hours_of_operation = (
+                                    "; ".join(
+                                        sec.xpath('div[@class="info-info"]/p/text()')
+                                    )
+                                    .strip()
+                                    .replace("\n", "")
+                                    .strip()
+                                )
+                                break
 
                         latitude = store["Latitude"]
                         longitude = store["Longitude"]

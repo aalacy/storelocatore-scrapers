@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import time
 
 logger = SgLogSetup().get_logger("smartstyle_com")
@@ -10,33 +13,6 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.smartstyle.com/en-us/salon-directory.html"
     locs = []
@@ -44,21 +20,22 @@ def fetch_data():
     states = []
     donelocs = []
     session = SgRequests()
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'style="width: 100%; margin-bottom: 10px;" href="' in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
-        logger.info("Pulling State %s..." % state)
-        r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '<tr><td><a href="' in line2:
-                locs.append(
-                    "https://www.smartstyle.com"
-                    + line2.split('href="')[1].split('"')[0]
-                )
+        try:
+            logger.info("Pulling State %s..." % state)
+            r2 = session.get(state, headers=headers)
+            for line2 in r2.iter_lines():
+                if '<tr><td><a href="' in line2:
+                    locs.append(
+                        "https://www.smartstyle.com"
+                        + line2.split('href="')[1].split('"')[0]
+                    )
+        except:
+            pass
     logger.info("Found %s Locations." % str(len(locs)))
     for loc in locs:
         name = ""
@@ -79,14 +56,13 @@ def fetch_data():
         retries = 0
         while PFound:
             try:
-                time.sleep(3)
+                time.sleep(10)
                 PFound = False
                 retries = retries + 1
                 session = SgRequests()
                 dcount = 0
                 r2 = session.get(loc, headers=headers, timeout=5)
                 for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
                     if '<meta itemprop="openingHours" content="' in line2:
                         dcount = dcount + 1
                         hrs = (
@@ -140,30 +116,32 @@ def fetch_data():
                         donelocs.append(loc)
                         if "0" not in hours and "3" not in hours and "1" not in hours:
                             hours = "Sun-Sat: Closed"
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
             except:
-                if retries <= 5:
+                if retries <= 10:
                     PFound = True
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -1,151 +1,126 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
+
+
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = h.get("dayOfTheWeek")
+        opens = "".join(h.get("hoursOfBusiness").get("opensAt")).split("T")[1].strip()
+        closes = "".join(h.get("hoursOfBusiness").get("closesAt")).split("T")[1].strip()
+        line = f"{day} {opens} - {closes}"
+        tmp.append(line)
+    hours_of_operation = "; ".join(tmp)
+    return hours_of_operation
 
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.burgerking.dk/"
-    for i in range(0, 100):
-        page_url = f"https://www.burgerking.dk/locations?field_geofield_distance%5Borigin%5D%5Blat%5D=55.675313&field_geofield_distance%5Borigin%5D%5Blon%5D=12.567017&page={i}&target=K%C3%B8benhavn%20V"
-        session = SgRequests()
+    locator_domain = "https://www.burgerking.dk"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "Origin": "https://www.burgerking.dk",
+        "Connection": "keep-alive",
+        "Referer": "https://www.burgerking.dk/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
+        "Cache-Control": "max-age=0",
+    }
+    data = '{"coordinates":{"latitude":55.6774425609295,"longitude":12.56875951826194},"radius":400000}'
+
+    r = session.put(
+        "https://bk-dk-ordering-api.azurewebsites.net/da/ordering/menu/restaurants/find",
+        headers=headers,
+        data=data,
+    )
+    js = r.json()["data"]["list"]
+    for j in js:
+        slug = j.get("slug")
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Origin": "https://www.burgerking.dk",
+            "Connection": "keep-alive",
+            "Referer": "https://www.burgerking.dk/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
         }
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        div = tree.xpath('//div[@class="bk-restaurants"]/ul/li')
-        if len(div) == 0:
-            return
-        for d in div:
+        r = session.get(
+            f"https://bk-dk-ordering-api.azurewebsites.net/cms/da/restaurants/{slug}",
+            headers=headers,
+        )
+        js = r.json()["data"]
 
-            location_name = "".join(d.xpath('.//div[@class="bk-title"]/text()'))
-            street_address = (
-                "".join(d.xpath('.//div[@class="bk-address1"]/text()'))
-                .replace(", TEGUCIGALPA", "")
-                .strip()
-            )
-            state = "".join(d.xpath('.//div[@class="bk-province-name"]/text()'))
-            postal = "".join(d.xpath('.//div[@class="bk-zip"]/text()'))
-            country_code = "".join(d.xpath('.//div[@class="bk-country"]/text()'))
-            city = "".join(d.xpath('.//div[@class="bk-city"]/text()'))
-            store_number = "".join(d.xpath('.//div[@class="bk-counter"]/text()'))
-            latitude = "".join(d.xpath('.//div[@class="bk-latitude"]/text()'))
-            longitude = "".join(d.xpath('.//div[@class="bk-longitude"]/text()'))
-            phone = "".join(d.xpath('.//div[@class="bk-phone"]/text()'))
-            if phone == "0":
-                phone = "<MISSING>"
-            sundayOpen = (
-                "".join(d.xpath('.//div[@class="bk-location_sun_dining"]/text()'))
-                .split(";")[0]
-                .split()[1]
-                .strip()
-            )
-            sundayClose = (
-                "".join(d.xpath('.//div[@class="bk-location_sun_dining"]/text()'))
-                .split(";")[1]
-                .split()[1]
-                .strip()
-            )
-            mondayOpen = (
-                "".join(d.xpath('.//div[@class="bk-location_mon_dining"]/text()'))
-                .split(";")[0]
-                .split()[1]
-                .strip()
-            )
-            mondayClose = (
-                "".join(d.xpath('.//div[@class="bk-location_mon_dining"]/text()'))
-                .split(";")[1]
-                .split()[1]
-                .strip()
-            )
-            tuesdayOpen = (
-                "".join(d.xpath('.//div[@class="bk-location_tue_dining"]/text()'))
-                .split(";")[0]
-                .split()[1]
-                .strip()
-            )
-            tuesdayClose = (
-                "".join(d.xpath('.//div[@class="bk-location_tue_dining"]/text()'))
-                .split(";")[1]
-                .split()[1]
-                .strip()
-            )
-            wednesdayOpen = (
-                "".join(d.xpath('.//div[@class="bk-location_wed_dining"]/text()'))
-                .split(";")[0]
-                .split()[1]
-                .strip()
-            )
-            wednesdayClose = (
-                "".join(d.xpath('.//div[@class="bk-location_wed_dining"]/text()'))
-                .split(";")[1]
-                .split()[1]
-                .strip()
-            )
-            thursdayOpen = (
-                "".join(d.xpath('.//div[@class="bk-location_thu_dining"]/text()'))
-                .split(";")[0]
-                .split()[1]
-                .strip()
-            )
-            thursdayClose = (
-                "".join(d.xpath('.//div[@class="bk-location_thu_dining"]/text()'))
-                .split(";")[1]
-                .split()[1]
-                .strip()
-            )
-            fridayOpen = (
-                "".join(d.xpath('.//div[@class="bk-location_fri_dining"]/text()'))
-                .split(";")[0]
-                .split()[1]
-                .strip()
-            )
-            fridayClose = (
-                "".join(d.xpath('.//div[@class="bk-location_fri_dining"]/text()'))
-                .split(";")[1]
-                .split()[1]
-                .strip()
-            )
-            saturdayOpen = (
-                "".join(d.xpath('.//div[@class="bk-location_sat_dining"]/text()'))
-                .split(";")[0]
-                .split()[1]
-                .strip()
-            )
-            saturdayClose = (
-                "".join(d.xpath('.//div[@class="bk-location_sat_dining"]/text()'))
-                .split(";")[1]
-                .split()[1]
-                .strip()
-            )
-            hours_of_operation = f"Sunday {sundayOpen} - {sundayClose} Monday {mondayOpen} - {mondayClose} Tuesday {tuesdayOpen} - {tuesdayClose} Wednesday {wednesdayOpen} - {wednesdayClose} Thursday {thursdayOpen} - {thursdayClose} Friday {fridayOpen} - {fridayClose} Saturday {saturdayOpen} - {saturdayClose}"
-            row = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        page_url = f"https://www.burgerking.dk/restaurants/{slug}"
+        location_name = js.get("storeName") or "<MISSING>"
+        a = js.get("storeLocation").get("address")
+        ad = (
+            "".join(js.get("storeAddress"))
+            .replace("\n", " ")
+            .replace("\t", " ")
+            .strip()
+        )
+        ad = " ".join(ad.split())
+        b = parse_address(International_Parser(), ad)
+        street_address = f"{b.street_address_1} {b.street_address_2}".replace(
+            "None", ""
+        ).strip()
 
-            sgw.write_row(row)
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
+        if street_address.find("Kbh V") != -1:
+            street_address = ad.split(f"{postal}")[0].strip()
+        if street_address.find(f"{postal}") != -1:
+            street_address = ad.split(f"{postal}")[0].strip()
+        country_code = "DK"
+        city = a.get("city") or "<MISSING>"
+        try:
+            store_number = "".join(js.get("storeSubHeader")).split("#:")[1].strip()
+        except:
+            store_number = "<MISSING>"
+        latitude = js.get("coordinates").get("latitude") or "<MISSING>"
+        longitude = js.get("coordinates").get("longitude") or "<MISSING>"
+        phone = js.get("storeContactNumber") or "<MISSING>"
+        hours = js.get("storeOpeningHours") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LATITUDE})
+        )
     ) as writer:
         fetch_data(writer)

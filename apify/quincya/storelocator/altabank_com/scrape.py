@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
 
     for location in locations:
 
-        location_name = location.find(class_="branch-name").h5.text
+        location_name = location.find(class_="branch-name").text
 
         raw_address = location.find(class_="branch-address").find_all("p")
         street_address = raw_address[0].text
