@@ -14,9 +14,9 @@ json_url = "https://api.woosmap.com/stores/search?key=woos-761853c3-bb35-3187-98
 MISSING = SgRecord.MISSING
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
-    'accept': '*/*',
-    'referer': 'https://www.alcampo.es/'
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+    "accept": "*/*",
+    "referer": "https://www.alcampo.es/",
 }
 
 session = SgRequests()
@@ -37,8 +37,8 @@ def fetch_stores():
         try:
             response = request_with_retries(url)
             response = json.loads(response.text)
-            if 'features' in response:
-                stores = stores+response['features']
+            if "features" in response:
+                stores = stores + response["features"]
             else:
                 break
         except Exception as e:
@@ -57,7 +57,7 @@ def get_var_name(value):
 
 def get_JSON_object(Object, varNames, noVal=MISSING):
     value = noVal
-    for varName in varNames.split('.'):
+    for varName in varNames.split("."):
         varName = get_var_name(varName)
         try:
             value = Object[varName]
@@ -70,10 +70,10 @@ def get_JSON_object(Object, varNames, noVal=MISSING):
 def get_phone(Source):
     phone = MISSING
 
-    if Source is None or Source == '':
+    if Source is None or Source == "":
         return phone
 
-    for match in re.findall(r'[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]', Source):
+    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
         phone = match
         return phone
     return phone
@@ -106,23 +106,23 @@ def get_address(raw_address):
 
 
 def get_type(properties):
-    isGAS = get_JSON_object(properties, 'isGAS', 0)
-    isCITY = get_JSON_object(properties, 'isCITY', 0)
-    isMIALC = get_JSON_object(properties, 'isMIALC', 0)
-    isSUPER = get_JSON_object(properties, 'isSUPER', 0)
-    isHIPER = get_JSON_object(properties, 'isHIPER', 0)
+    isGAS = get_JSON_object(properties, "isGAS", 0)
+    isCITY = get_JSON_object(properties, "isCITY", 0)
+    isMIALC = get_JSON_object(properties, "isMIALC", 0)
+    isSUPER = get_JSON_object(properties, "isSUPER", 0)
+    isHIPER = get_JSON_object(properties, "isHIPER", 0)
 
     lType = MISSING
     if isGAS == 1:
-        lType = 'Gasolinera'
+        lType = "Gasolinera"
     if isGAS == 0 and isSUPER == 0 and isMIALC == 0 and isCITY == 0:
-        lType = 'Hipermercado'
+        lType = "Hipermercado"
     if isGAS == 0 and isHIPER == 0 and isMIALC == 0 and isCITY == 0:
-        lType = 'Supermercado'
+        lType = "Supermercado"
     if isGAS == 0 and isSUPER == 0 and isHIPER == 0 and isCITY == 0:
-        lType = 'Mi Alcampo'
+        lType = "Mi Alcampo"
     if isGAS == 0 and isSUPER == 0 and isMIALC == 0 and isHIPER == 0:
-        lType = 'Alcampo City'
+        lType = "Alcampo City"
     return lType
 
 
@@ -130,34 +130,36 @@ def fetch_data():
     stores = fetch_stores()
     log.info(f"Total stores = {len(stores)}")
     for store in stores:
-        properties = get_JSON_object(store, 'properties')
-        geometry = get_JSON_object(store, 'geometry')
-        userProperties = get_JSON_object(properties, 'user_properties')
+        properties = get_JSON_object(store, "properties")
+        geometry = get_JSON_object(store, "geometry")
+        userProperties = get_JSON_object(properties, "user_properties")
 
-        store_number = get_JSON_object(properties, 'store_id')
+        store_number = get_JSON_object(properties, "store_id")
         page_url = f"{website}{get_JSON_object(properties, 'contact.website')}"
         location_type = get_type(userProperties)
-        location_name = get_JSON_object(properties, 'name')
-        if location_type == 'Hipermercado' or location_type == 'Supermercado':
+        location_name = get_JSON_object(properties, "name")
+        if location_type == "Hipermercado" or location_type == "Supermercado":
             location_name = location_name + " - " + location_type
-        if location_type == 'Gasolinera' and 'gasolinera' not in location_name.lower():
-            location_name = location_type + " "+location_name
+        if location_type == "Gasolinera" and "gasolinera" not in location_name.lower():
+            location_name = location_type + " " + location_name
 
-        address = get_JSON_object(properties, 'address.lines')[0]
+        address = get_JSON_object(properties, "address.lines")[0]
         street_address, city, state, zip_postal = get_address(address)
-        city = get_JSON_object(properties, 'address.city')
-        zip_postal = get_JSON_object(properties, 'address.zipcode')
+        city = get_JSON_object(properties, "address.city")
+        zip_postal = get_JSON_object(properties, "address.zipcode")
 
-        country_code = get_JSON_object(properties, 'address.country_code')
-        phone = get_phone(get_JSON_object(properties, 'contact.phone'))
-        latitude = get_JSON_object(geometry, 'coordinates')[0]
-        longitude = get_JSON_object(geometry, 'coordinates')[1]
-        hours_of_operation = get_JSON_object(userProperties, 'horario_apertura')
+        country_code = get_JSON_object(properties, "address.country_code")
+        phone = get_phone(get_JSON_object(properties, "contact.phone"))
+        latitude = get_JSON_object(geometry, "coordinates")[0]
+        longitude = get_JSON_object(geometry, "coordinates")[1]
+        hours_of_operation = get_JSON_object(userProperties, "horario_apertura")
 
-        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(MISSING, "")
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+            MISSING, ""
+        )
         raw_address = " ".join(raw_address.split())
         raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
-        if raw_address[len(raw_address)-1] == ',':
+        if raw_address[len(raw_address) - 1] == ",":
             raw_address = raw_address[:-1]
 
         yield SgRecord(
@@ -183,7 +185,9 @@ def fetch_data():
 def scrape():
     log.info(f"Start Crawling {website} ...")
     start = time.time()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()
