@@ -31,9 +31,15 @@ def fetch_data():
             '//h2[strong[contains(text(), "Store opening hours")]]/following-sibling::p//text()'
         )
         if not hoo:
-            hoo = loc_dom.xpath('//h2[contains(text(), "Store opening hours")]/following-sibling::p//text()')
+            hoo = loc_dom.xpath(
+                '//h2[contains(text(), "Store opening hours")]/following-sibling::p//text()'
+            )
         if not hoo:
-            hoo = dom.xpath('//div[div[h2[contains(text(), "{}")]]]/following-sibling::div[1]//h3[strong[contains(text(), "STORE OPENING HOURS")]]/following-sibling::p[1]//text()'.format(location_name))
+            hoo = dom.xpath(
+                '//div[div[h2[contains(text(), "{}")]]]/following-sibling::div[1]//h3[strong[contains(text(), "STORE OPENING HOURS")]]/following-sibling::p[1]//text()'.format(
+                    location_name
+                )
+            )
         hoo = " ".join(hoo)
         geo = loc_dom.xpath('//a[contains(text(), "View full map")]/@href')
         phone = ""
@@ -58,7 +64,7 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address = ", " + addr.street_address_2
-            if 'google.com' in street_address.lower():
+            if "google.com" in street_address.lower():
                 street_address = ""
             zip_code = addr.postcode
             city = addr.city
