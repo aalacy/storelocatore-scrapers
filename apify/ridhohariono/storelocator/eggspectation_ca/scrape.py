@@ -58,6 +58,8 @@ def fetch_data():
     contents = soup.select("footer#colophon ul li a")
     for row in contents:
         page_url = row["href"]
+        if "/corporate/" in page_url:
+            continue
         store = pull_content(page_url)
         info = (
             store.find("footer", id="colophon")
