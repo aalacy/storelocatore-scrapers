@@ -43,7 +43,6 @@ def fetch_data(sgw: SgWriter):
         if country == "COM":
             country = "MX"
 
-        print(api)
         r = session.get(api, headers=headers)
         for j in r.json()["theNearestLocations"]:
             slug = j.get("url")
