@@ -59,12 +59,12 @@ def fetch_data():
                 )
             )
             raw_address = " ".join(store_info[1:])
-            temp_raw_address = (
+            raw_address = (
                 raw_address.replace("Scotland, GB", "")
                 .replace("England, GB", "")
                 .strip()
             )
-            formatted_addr = parser.parse_address_intl(temp_raw_address)
+            formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
