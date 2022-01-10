@@ -38,7 +38,7 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            page_url = search_url
+            page_url = "https://www.sourcelondon.net/home/map?evseId=" + store["emi3"]
 
             raw_address = "<MISSING>"
 
