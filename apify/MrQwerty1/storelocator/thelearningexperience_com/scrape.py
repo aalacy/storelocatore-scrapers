@@ -58,6 +58,9 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
+    if tree.xpath("//p[contains(text(), 'Coming soon!')]"):
+        return
+
     location_name = "".join(
         tree.xpath("//div[@id='center-details-left']/h2/text()")
     ).strip()
