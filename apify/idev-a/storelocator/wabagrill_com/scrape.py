@@ -12,7 +12,7 @@ _headers = {
 }
 
 locator_domain = "https://wabagrill.com/"
-base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=KBAXTJEEPNAVUUJW&page={}&pageSize=1000"
+base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=KBAXTJEEPNAVUUJW&center=34.030532,-118.015502&coordinates=32.46870370507422,-116.39501860156292,35.56413211237127,-119.63598539843782&multi_account=false&page={}&pageSize=1000"
 
 
 def fetch_data():
@@ -21,6 +21,8 @@ def fetch_data():
         while True:
             locations = session.get(base_url.format(page), headers=_headers).json()
             if type(locations) != list:
+                break
+            if not locations:
                 break
             logger.info(f"[page {page}] {len(locations)}")
             page += 1
