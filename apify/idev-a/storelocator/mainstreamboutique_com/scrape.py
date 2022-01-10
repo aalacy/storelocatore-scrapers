@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import dirtyjson
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("mainstreamboutique")
@@ -47,14 +49,17 @@ def fetch_data():
         for _ in locations:
             store_number = _["onmouseover"].split("(")[1][:-1]
             city = _.select_one("span.city").text.strip()
-            page_url = _.select_one("div.store_website a")["href"]
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            page_url = (
+                "https://mainstreamboutique.com/pages/"
+                + _.select_one("div.store_website a")["href"].split("/")[-1]
+            )
             logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _addr = [
                 aa
                 for aa in sp1.select("div.shg-row > div")[0].stripped_strings
                 if aa.strip()
-            ][2].split(" ")
+            ][2].split()
             _addr = [aa for aa in _addr if aa.strip()]
             hours = []
             if "We are closed" in sp1.select("div.shg-row > div")[1].text:
@@ -98,7 +103,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

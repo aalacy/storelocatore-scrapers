@@ -3,7 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
 
@@ -46,9 +46,12 @@ def get_data(page_url, coords, sgw: SgWriter):
         tree.xpath("//div[@class='store-address contact-row']//text()")
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
-    phone = "".join(
-        tree.xpath("//div[@class='store-phone contact-row']//text()")
-    ).strip()
+    phone = (
+        "".join(tree.xpath("//div[@class='store-phone contact-row']//text()"))
+        .lower()
+        .replace("none", "")
+        .strip()
+    )
     latitude, longitude = coords.get(store_number) or (
         SgRecord.MISSING,
         SgRecord.MISSING,
@@ -92,5 +95,7 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.mcdonalds.co.th/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         fetch_data(writer)

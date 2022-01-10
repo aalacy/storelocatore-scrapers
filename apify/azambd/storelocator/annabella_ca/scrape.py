@@ -12,7 +12,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 DOMAIN = "annabella.ca"
 
 website = "https://annabella.ca"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 session = SgRequests()
@@ -27,7 +27,7 @@ def request_with_retries(url):
     return session.get(url, headers=headers)
 
 
-def getPhone(Source):
+def get_phone(Source):
     phone = MISSING
 
     if Source is None or Source == "":
@@ -39,7 +39,7 @@ def getPhone(Source):
     return phone
 
 
-def fetchStores():
+def fetch_stores():
     response = session.get(f"{website}/pages/store-location")
     body = html.fromstring(response.text, "lxml")
     mainDiv = body.xpath('//div[contains(@class, "PageContent")]')[0]
@@ -47,32 +47,68 @@ def fetchStores():
     location_names = mainDiv.xpath('//div[contains(@class, "PageContent")]/h4/text()')
     map_links = mainDiv.xpath('//div[contains(@class, "PageContent")]/p/a/@href')
     p1s = mainDiv.xpath(
-        '//div[contains(@class, "PageContent")]/p/text() | //div[contains(@class, "PageContent")]/p/span/text()'
+        '//div[contains(@class, "PageContent")]/h4/span/text() | //div[contains(@class, "PageContent")]/p/text() | //div[contains(@class, "PageContent")]/p/span/text() | //div[contains(@class, "PageContent")]/div/text()'
     )
 
+    status = ""
+    loc_status = []
     allPs = []
     ps = []
     for p in p1s:
         if len(p) == 1:
             allPs.append(ps)
             ps = []
+            loc_status.append(status)
+            status = ""
         else:
-            ps.append(p)
+            if "CLOSED" in p:
+                status = p
+            elif "relocate" not in p and "OPENING" not in p:
+                ps.append(p)
     allPs.append(ps)
+    loc_status.append(status)
 
     stores = []
     count = 0
     for ps in allPs:
-        cs = ps[1].split(",")
+        location_name = location_names[count].strip()
+        status = loc_status[count].strip()
+        street_address = ps[0]
+        phone = get_phone(" ".join(ps))
+
+        if len(ps) == 4:
+            raw_address = f"{ps[2]} {ps[0]} {ps[1]} {ps[3]}"
+            [city, state] = ps[1].split(", ")
+            zip_postal = ps[3]
+
+        elif len(ps) == 6:
+            raw_address = f"{ps[2]} {ps[3]} {ps[0]} {ps[1]} {ps[4]}"
+            [city, state] = ps[1].split(", ")
+            zip_postal = ps[4]
+
+        else:
+            raw_address = f"{ps[2]} {ps[0]} {ps[1]} {ps[3]}"
+            [city, state] = ps[1].split(", ")
+            zip_postal = ps[3]
+
+            if phone == MISSING:
+                zip_postal = ps[4]
+
+        location_type = "Clothing Stores"
+        if len(status) > 0:
+            location_type = status
+
         stores.append(
             {
-                "location_name": location_names[count].strip(),
+                "location_name": location_name.strip(),
                 "map_link": map_links[count].strip(),
-                "street_address": f"{ps[0]}, {ps[2]}".strip(),
-                "zip_postal": ps[3].strip(),
-                "phone": getPhone(" ".join(ps)),
-                "city": cs[0].strip(),
-                "state": cs[1].strip(),
+                "street_address": street_address.strip(),
+                "zip_postal": zip_postal.strip(),
+                "phone": phone.strip(),
+                "city": city.strip(),
+                "state": state.strip(),
+                "raw_address": raw_address.strip(),
+                "location_type": location_type,
             }
         )
         count = count + 1
@@ -80,7 +116,7 @@ def fetchStores():
     return stores
 
 
-def getLatLongArray(body):
+def get_lat_long_array(body):
     scripts = body.xpath("//script/text()")
     for script in scripts:
         if "window.APP_INITIALIZATION_STATE" in script:
@@ -92,31 +128,48 @@ def getLatLongArray(body):
             return data.split("]")[0].split(",")
 
 
-def getLatLongFromGMap(url):
+def get_lat_long_from_gmap(url):
+    log.info(f"Google page: {url}")
     response = session.get(url)
-    body = html.fromstring(response.text, "lxml")
-    data = getLatLongArray(body)
-    return data[1], data[2]
+    log.info(f"Google page response: {response}")
+    if "goo" in url and response.status_code == 200:
+        body = html.fromstring(response.text, "lxml")
+        data = get_lat_long_array(body)
+        return data[1], data[2]
+    else:
+        return MISSING, MISSING
 
 
-def fetchData():
-    stores = fetchStores()
+def fetch_data():
+    stores = fetch_stores()
     log.info(f"Total stores = {len(stores)}")
+
     for store in stores:
-        latitude, longitude = getLatLongFromGMap(store["map_link"])
+        country_code = "CA"
+        location_type = store["location_type"]
+        location_name = store["location_name"]
+        street_address = store["street_address"]
+        city = store["city"]
+        zip_postal = store["zip_postal"]
+        state = store["state"]
+        phone = store["phone"]
+
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}"
+        longitude, latitude = get_lat_long_from_gmap(store["map_link"])
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=website,
-            location_type="Clothing Stores",
-            location_name=store["location_name"],
-            street_address=store["street_address"],
-            city=store["city"],
-            zip_postal=store["zip_postal"],
-            state=store["state"],
-            phone=store["phone"],
-            country_code="CA",
+            location_type=location_type,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            phone=phone,
+            country_code=country_code,
             latitude=latitude,
             longitude=longitude,
+            raw_address=raw_address,
         )
 
 
@@ -124,9 +177,11 @@ def scrape():
     log.info("Started")
     count = 0
     start = time.time()
-    result = fetchData()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        for rec in result:
+
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        for rec in fetch_data():
             writer.write_row(rec)
             count = count + 1
 

@@ -10,6 +10,7 @@ _headers = {
 
 locator_domain = "https://www.7eleven.com.au"
 base_url = "https://www.7eleven.com.au/storelocator-retail/mulesoft/stores?lat=-33.8688197&long=151.2092955&dist=10000"
+days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 
 def fetch_data():
@@ -22,6 +23,11 @@ def fetch_data():
             hours = []
             if _["allHours"]:
                 hours = ["24 hours"]
+            else:
+                for hh in _["openingHours"]:
+                    hours.append(
+                        f"{days[hh['day_of_week']]}: {hh['start_time']} - {hh['end_time']}"
+                    )
             yield SgRecord(
                 page_url="https://www.7eleven.com.au/store-locator.html",
                 store_number=_["storeId"],

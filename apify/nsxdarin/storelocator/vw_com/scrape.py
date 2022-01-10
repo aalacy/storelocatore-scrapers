@@ -9,101 +9,98 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for row in data:
             writer.write_row(row)
 
 
 def fetch_locations(postal, session):
-    url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
+    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
+    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/62711.json"
+    try:
+        response = session.get(url)
+        data = response.json()
+        dealers = data.get("dealers", [])
 
-    response = session.get(url)
-    data = response.json()
-    dealers = data.get("dealers", [])
+        pois = []
+        for dealer in dealers:
+            page_url = dealer["url"]
 
-    pois = []
-    for dealer in dealers:
-        # Page Url
-        page_url = dealer["url"]
+            store_number = dealer["dealerid"]
 
-        # Store ID
-        store_number = dealer["dealerid"]
+            location_name = dealer["name"]
 
-        # Name
-        location_name = dealer["name"]
+            street_address = (dealer["address1"] + " " + dealer["address2"]).strip()
 
-        # Street
-        street_address = (dealer["address1"] + " " + dealer["address2"]).strip()
+            country = dealer["country"]
 
-        # Country
-        country = dealer["country"]
+            state = dealer["state"]
 
-        # State
-        state = dealer["state"]
+            city = dealer["city"]
 
-        # city
-        city = dealer["city"]
+            postal = dealer["postalcode"]
 
-        # zip
-        postal = dealer["postalcode"]
+            latitude = dealer["latlong"].split(",")[0]
 
-        # Lat
-        latitude = dealer["latlong"].split(",")[0]
+            longitude = dealer["latlong"].split(",")[1]
 
-        # Long
-        longitude = dealer["latlong"].split(",")[1]
+            phone = dealer["phone"]
 
-        # Phone
-        phone = dealer["phone"]
-
-        # hour
-        regex = re.compile("sale", re.IGNORECASE)
-        department_hours = dealer["hours"]
-        department = next(
-            (x for x in department_hours if regex.match(x.get("departmentName"))),
-            None,
-        )
-
-        if not department:
+            regex = re.compile("sale", re.IGNORECASE)
+            department_hours = dealer["hours"]
             department = next(
-                (x for x in department_hours if x["departmentHours"]), None
+                (x for x in department_hours if regex.match(x.get("departmentName"))),
+                None,
             )
 
-        hours_of_operation = (
-            department.get("departmentHours", "<MISSING>")
-            if department
-            else "<MISSING>"
-        )
+            if not department:
+                department = next(
+                    (x for x in department_hours if x["departmentHours"]), None
+                )
 
-        if isinstance(hours_of_operation, list):
-            hours = []
-            for day in hours_of_operation:
-                day_text = day["dayText"]
-
-                if day["isClosed"]:
-                    hours.append(f"{day_text}: Closed")
-                else:
-                    hours.append(f'{day_text}: {day["openHour"]}-{day["closeHour"]}')
-
-            hours_of_operation = ", ".join(hours)
-
-        pois.append(
-            SgRecord(
-                locator_domain="vw.com",
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country,
-                store_number=store_number,
-                phone=phone,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
+            hours_of_operation = (
+                department.get("departmentHours", "<MISSING>")
+                if department
+                else "<MISSING>"
             )
-        )
+
+            if isinstance(hours_of_operation, list):
+                hours = []
+                for day in hours_of_operation:
+                    day_text = day["dayText"]
+
+                    if day["isClosed"] == "Y":
+                        hours.append(f"{day_text}: Closed")
+                    else:
+                        hours.append(
+                            f'{day_text}: {day["openHour"]}-{day["closeHour"]}'
+                        )
+
+                hours_of_operation = ", ".join(hours)
+
+            pois.append(
+                SgRecord(
+                    locator_domain="vw.com",
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country,
+                    store_number=store_number,
+                    phone=phone,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
+    except:
+        pass
 
     return pois
 

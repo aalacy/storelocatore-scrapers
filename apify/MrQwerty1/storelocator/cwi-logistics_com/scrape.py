@@ -71,10 +71,8 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//div[@class='loc-name']/h5/text()")).strip()
         line = "".join(d.xpath(".//div[@class='address']/a/text()")).strip()
         street_address, city, state, postal = get_address(line)
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")).strip()
-            or "<MISSING>"
-        )
+        phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")).strip()
+
         _id = line.split()[0]
         latitude, longitude = coords[_id]
         row = SgRecord(
@@ -85,13 +83,10 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="US",
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
-            hours_of_operation=SgRecord.MISSING,
         )
 
         sgw.write_row(row)
@@ -104,5 +99,5 @@ if __name__ == "__main__":
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)

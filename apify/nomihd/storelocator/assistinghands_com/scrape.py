@@ -5,11 +5,12 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "assistinghands.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
@@ -18,29 +19,22 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.assistinghands.com/location-finder/"
-    search_res = session.get(search_url, headers=headers)
+    search_url = "https://assistinghands.com/wp-json/wpgmza/v1/features/?filter=%7B%22map_id%22%3A%222%22%2C%22mashupIDs%22%3A%5B%5D%2C%22customFields%22%3A%5B%5D%7D"
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-    stores_obj = json.loads(
-        search_res.text.split("var wpgmaps_localize_marker_data =")[1]
-        .strip()
-        .split("};")[0]
-        .strip()
-        + "}"
-    )
+        stores = json.loads(search_res.text)["markers"]
 
-    for parent_key in stores_obj.keys():
-        stores = stores_obj[parent_key]
-        for key in stores.keys():
-            store_sel = lxml.html.fromstring(stores[key]["desc"])
+        for store in stores:
+            store_sel = lxml.html.fromstring(store["description"])
             page_url = "".join(
                 store_sel.xpath('//a[contains(text(),"Visit Website")]/@href')
             ).strip()
             locator_domain = website
 
-            location_name = stores[key]["title"]
+            location_name = store["title"]
 
-            raw_address = stores[key]["address"]
+            raw_address = store["address"]
 
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
@@ -57,8 +51,13 @@ def fetch_data():
             zip = formatted_addr.postcode
 
             country_code = "US"
+            if zip and " " in zip:
+                country_code = "CA"
 
-            store_number = stores[key]["marker_id"]
+            if not zip:
+                zip = "32819"
+
+            store_number = store["id"]
 
             phone = "".join(
                 store_sel.xpath('//p/a[contains(@href,"tel:")]//text()')
@@ -72,8 +71,8 @@ def fetch_data():
 
             hours_of_operation = "<MISSING>"
 
-            latitude = stores[key]["lat"]
-            longitude = stores[key]["lng"]
+            latitude = store["lat"]
+            longitude = store["lng"]
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -97,7 +96,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
