@@ -46,7 +46,8 @@ def fetch_data(sgw: SgWriter):
         store_number = "<MISSING>"
 
         location_type = (
-            base.find_all(style="font-size: 16px; font-family: Poppins;")[1]
+            base.find(string="SERVICES")
+            .find_next("p")
             .text.replace("Services", "")
             .strip()
             .replace("\n\n\n", ",")
@@ -55,20 +56,13 @@ def fetch_data(sgw: SgWriter):
         )
         location_type = (re.sub(" +", " ", location_type)).strip()
         try:
-            phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(base))[-1]
+            phone = (
+                base.find(style="font-size: 16px; font-family: Poppins;")
+                .find_next("div")
+                .text.strip()
+            )
         except:
             phone = "<MISSING>"
-
-        if location_type == phone:
-            location_type = (
-                base.find_all(style="font-size: 16px; font-family: Poppins;")[2]
-                .text.replace("Services", "")
-                .strip()
-                .replace("\n\n\n", ",")
-                .replace("\n", "")
-                .replace(" •", ",")
-            )
-            location_type = (re.sub(" +", " ", location_type)).strip()
 
         hours_of_operation = (
             base.find_all(class_="shg-rich-text shg-theme-text-content")[-1]

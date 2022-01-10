@@ -52,6 +52,7 @@ def fetch_data():
             location_name = strip_accents(loc["name"])
             phone = loc["phone"]
             log.info(location_name)
+
             temp = loc["address"]
             raw_address = strip_accents(
                 temp["address"] + " " + temp["addressSecondary"]
@@ -59,10 +60,14 @@ def fetch_data():
             if not loc["humanSchedule"]:
                 hours_of_operation = MISSING
             else:
-                hours_of_operation = loc["humanSchedule"][0]
-                hours_of_operation = strip_accents(
-                    hours_of_operation["days"] + " " + hours_of_operation["schedule"]
-                )
+                hours_of_operation = ""
+                hour_list = loc["humanSchedule"]
+                for hour in hour_list:
+                    day = hour["days"]
+                    time = hour["schedule"]
+                    hours_of_operation = (
+                        hours_of_operation + " " + strip_accents(day) + " " + time
+                    )
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

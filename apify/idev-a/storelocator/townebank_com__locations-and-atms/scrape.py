@@ -24,6 +24,13 @@ def fetch_data(writer):
             .replace('\\"', '"')
         )
         for _ in locations:
+            location_type = ""
+            if "not available" in _["notes"]:
+                location_type = "branch"
+            elif "location only includes an ATM" in _["notes"]:
+                location_type = "atm"
+            else:
+                location_type = "branch, atm"
             page_url = locator_domain + _["url"]
             if _["notes"] and "coming soon" in _["notes"].lower():
                 continue
@@ -45,6 +52,7 @@ def fetch_data(writer):
                 longitude=_["longitude"],
                 country_code="US",
                 phone=_["phoneNumber"],
+                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours)
                 .replace("\\r", "")

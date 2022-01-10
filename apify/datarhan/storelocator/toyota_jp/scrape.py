@@ -38,7 +38,7 @@ def fetch_data():
             country_code="JP",
             store_number=poi["storeCd"],
             phone=poi_data["tel"],
-            location_type=poi_data["storeType"],
+            location_type="sshSales",
             latitude=poi["lat"],
             longitude=poi["lon"],
             hours_of_operation=hoo,

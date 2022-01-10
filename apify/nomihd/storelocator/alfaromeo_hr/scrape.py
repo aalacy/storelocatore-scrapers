@@ -30,7 +30,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_urls = [
-        "http://www.alfaromeo.hr/Usluge/Mreza",
+        "https://www.alfaromeo.hr/prodajno-servisna-mreza/",
         "https://www.alfaromeo.si/prodajno-servisna-mreza/",
     ]
     api_urls = [

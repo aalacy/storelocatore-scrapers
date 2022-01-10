@@ -53,8 +53,6 @@ def fetch_data():
             ).group(1)
         )["initial_location"]
         location_name = store["name"]
-        if store["loc_type"] != "1":
-            continue
         if "street2" in store:
             street_address = (store["street1"] + " " + store["street2"]).strip()
         else:
@@ -65,13 +63,21 @@ def fetch_data():
         else:
             state = store["state"]
         zip_postal = store["zip"]
-        country_code = store["country"]
+        country_code = "UK"
         phone = store["phone"]
         store_number = store["store_no"]
         hoo = ""
+        temp_hour = []
         for i in range(len(days)):
-            hoo += days[i] + ": " + store["opening_" + str(i + 1)] + ","
-        hours_of_operation = hoo.rstrip(",")
+            hour = store["opening_" + str(i + 1)]
+            if not hour:
+                hour = "CLOSED"
+            hoo += days[i] + ": " + hour + ","
+            temp_hour.append(hour)
+        if all(value == "CLOSED" for value in temp_hour):
+            hours_of_operation = MISSING
+        else:
+            hours_of_operation = hoo.rstrip(",")
         latitude = store["latitude"]
         longitude = store["longitude"]
         location_type = "Photo centre"
