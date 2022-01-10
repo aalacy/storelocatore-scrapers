@@ -368,12 +368,12 @@ def fetch_data(sgw: SgWriter):
         tasks = []
         task_global = [
             executor.submit(fetch_data_global, urlpartnum, urlpart, sgw)
-            for urlpartnum, urlpart in enumerate(global_url_wout_us_ca[0:10])
+            for urlpartnum, urlpart in enumerate(global_url_wout_us_ca[0:])
         ]
         tasks.extend(task_global)
         task_us_ca = [
             executor.submit(fetch_data_us_ca, idx, loc, sgw)
-            for idx, loc in enumerate(locs[0:10])
+            for idx, loc in enumerate(locs[0:])
         ]
         tasks.extend(task_us_ca)
         for future in as_completed(tasks):

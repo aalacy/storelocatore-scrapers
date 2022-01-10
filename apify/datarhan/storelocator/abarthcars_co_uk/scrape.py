@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import ssl
 from lxml import etree
 from time import sleep
 
@@ -6,9 +7,16 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
@@ -18,7 +26,7 @@ def fetch_data():
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=100
     )
-    with SgFirefox(is_headless=False) as driver:
+    with SgChrome() as driver:
         for code in all_codes:
             driver.get(start_url)
             sleep(5)
