@@ -32,6 +32,11 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
         phone = phone[0].replace("SAC ", "") if phone else ""
+        c_soon = loc_dom.xpath('//span[contains(text(), "EM BREVE!")]')
+        if c_soon:
+            continue
+        hoo = loc_dom.xpath('//p[contains(text(), "Segunda")]/text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
@@ -47,7 +52,7 @@ def fetch_data():
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation="",
+            hours_of_operation=hoo,
             raw_address=raw_address,
         )
 
