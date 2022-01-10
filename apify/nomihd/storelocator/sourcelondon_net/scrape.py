@@ -23,7 +23,6 @@ headers = {
 def fetch_data():
     # Your scraper here
     api_url = "https://www.sourcelondon.net/api/infra/location"
-    search_url = "https://www.sourcelondon.net/home/map"
 
     with SgRequests() as session:
         api_res = session.get(api_url, headers=headers)
