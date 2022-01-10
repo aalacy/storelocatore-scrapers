@@ -144,6 +144,8 @@ def fetch_data():
                     .replace("Thurs;", "Thurs:")
                     .replace(":;", ":")
                 )
+                if ["/sites/{siteId}/opening-info"]["alwaysOpen"] is True:
+                    hours_of_operation = "24 Hours"
 
                 store_number = no
 
