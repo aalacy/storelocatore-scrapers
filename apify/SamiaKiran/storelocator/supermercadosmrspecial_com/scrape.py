@@ -42,9 +42,16 @@ def fetch_data():
                 hours_of_operation = (
                     temp[2]
                     .get_text(separator="|", strip=True)
-                    .replace("|", " ")
+                    .replace("|", "")
                     .replace("Horario:", "")
-                    .replace("\n", " ")
+                    .split("\r\n")
+                )
+                if "Cafetería" in hours_of_operation[1]:
+                    del hours_of_operation[1]
+                if "Cafetería" in hours_of_operation[-1]:
+                    del hours_of_operation[-1]
+                hours_of_operation = " ".join(
+                    hour.strip() for hour in hours_of_operation
                 )
                 address = temp[3]
                 phone = temp[4]
@@ -88,7 +95,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
+                hours_of_operation=hours_of_operation,
             )
 
 
