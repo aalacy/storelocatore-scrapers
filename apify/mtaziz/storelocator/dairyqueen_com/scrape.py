@@ -173,7 +173,6 @@ def fetch_records_us(idx, url, sgw: SgWriter):
             raw_address=raw_address,
         )
         return rec
-        # sgw.write_row(rec)
     except Exception as e:
         logger.info(f"Please fix <<{e}>> for {idx} | {url}")
 
