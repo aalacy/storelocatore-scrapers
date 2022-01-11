@@ -5,7 +5,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
