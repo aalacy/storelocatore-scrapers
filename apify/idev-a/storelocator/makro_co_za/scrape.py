@@ -27,6 +27,8 @@ def fetch_data():
                 break
             page += 1
             for _ in locations:
+                if _["type"] in ["Makro Online Store", "Makro General Enquiries"]:
+                    continue
                 street_address = _["line1"]
                 if _["line2"]:
                     street_address += " " + _["line2"]
@@ -34,6 +36,13 @@ def fetch_data():
                 hours = []
                 for day, hh in _.get("openings", {}).items():
                     hours.append(f"{day}: {hh}")
+
+                if (
+                    "Online Store" in _["displayName"]
+                    or "General Enquiries" in _["displayName"]
+                ):
+                    continue
+
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["displayName"],
