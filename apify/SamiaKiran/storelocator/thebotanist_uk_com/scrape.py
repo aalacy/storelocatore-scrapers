@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -30,6 +31,14 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
+            coords = soup.find("a", string=re.compile("Google Maps"))["href"]
+            if "@" in coords:
+                coords = coords.split("@")[1].split(",")
+                latitude = coords[0]
+                longitude = coords[1]
+            else:
+                latitude = MISSING
+                longitude = MISSING
             address = soup.find("div", {"id": "find-us"}).findAll("div")
             phone = address[1].select_one("a[href*=tel]").text
             raw_address = (
@@ -41,6 +50,8 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Opening times ", "")
             )
+            if "*Bru" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("*Bru")[0]
             if "Christmas" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("Christmas")[0]
             pa = parse_address_intl(raw_address)
@@ -56,6 +67,9 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+            if street_address == MISSING:
+                street_address = raw_address.replace(city, "").replace(zip_postal, "")
+
             country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -69,8 +83,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )

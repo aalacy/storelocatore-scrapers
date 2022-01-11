@@ -51,8 +51,8 @@ def fetch_stores(co_ord, retry=1):
         dataJson = json.loads(singleData.xpath(".//@data-json")[0])
         store = {
             "store_number": dataJson["id"],
-            "latitude": dataJson["locX"],
-            "longitude": dataJson["locY"],
+            "latitude": dataJson["locY"],
+            "longitude": dataJson["locX"],
             "location_name": stringify_children(
                 singleData, './/div[contains(@class, "shopInfos")]'
             ),
