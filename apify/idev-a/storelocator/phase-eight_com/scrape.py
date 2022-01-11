@@ -4,7 +4,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch
-import json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 
