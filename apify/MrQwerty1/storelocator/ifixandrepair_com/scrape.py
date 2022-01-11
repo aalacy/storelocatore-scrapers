@@ -40,6 +40,8 @@ def get_address(line):
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".replace(
         "None", ""
     ).strip()
+    if street_address.startswith("Suite"):
+        street_address = line
 
     return street_address
 
@@ -56,7 +58,9 @@ def fetch_data(coords, sgw):
         page_url = j.get("permalink")
         line = j.get("address") or ""
         street_address = get_address(line)
-        city = j.get("city")
+        city = j.get("city") or ""
+        if city.endswith(","):
+            city = city[:-1]
         state = j.get("state")
         postal = j.get("zip")
         country_code = j.get("country")

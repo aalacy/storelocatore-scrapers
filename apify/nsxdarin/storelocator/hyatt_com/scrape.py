@@ -15,7 +15,7 @@ logger = SgLogSetup().get_logger("hyatt_com")
 
 def fetch_data():
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
-    r = session.get(url, headers=headers, stream=True)
+    r = session.get(url, headers=headers)
     website = "hyatt.com"
     hours = "<MISSING>"
     logger.info("Pulling Stores")
@@ -76,6 +76,8 @@ def fetch_data():
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
+                            if "Tel: <" in line2 and phone == "":
+                                phone = line2.split('">')[1].split("<")[0].strip()
                     except:
                         pass
                     if "Club Maui, " in name:

@@ -1,12 +1,16 @@
 import re
 from bs4 import BeautifulSoup
 
+from sglogging import sglog
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
+
+log = sglog.SgLogSetup().get_logger("titlecash.com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -45,9 +49,12 @@ def fetch_data(sgw: SgWriter):
 
     for i in all_links:
         link = locator_domain + i["href"]
-
+        log.info(link)
         req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        try:
+            base = BeautifulSoup(req.text, "lxml")
+        except:
+            continue
 
         location_name = ""
 

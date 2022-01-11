@@ -10,37 +10,45 @@ _headers = {
 }
 
 locator_domain = "https://carrefourtunisie.com"
-base_url = "https://carrefourtunisie.com/api/getAllStores"
-
-type_map = {"CE": "Carrefour Express", "CM": "Carrefour Market", "C": "Carrefour"}
+base_url = "https://www.carrefour.tn/rest/all/V1/carrefour/stores"
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            addr = parse_address_intl(_["adresse"] + ", Tunisia")
-            street_address = addr.street_address_1
+            addr = parse_address_intl(_["address"] + ", Tunisia")
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             if street_address and street_address.isdigit():
-                street_address = _["adresse"]
+                street_address = _["address"]
+            city = addr.city
+            if city and city.isdigit():
+                city = ""
+
+            hours = (
+                _["working_hours"]
+                + " de "
+                + _["starting_hour"]
+                + " à "
+                + _["closing_hour"]
+            )
             yield SgRecord(
-                page_url="https://carrefourtunisie.com/magasins-carrefour",
-                store_number=_["idReseau"],
-                location_name=_["magasin"],
+                page_url="https://www.carrefour.tn/default/nos-magasins",
+                store_number=_["our_store_id"],
+                location_name=_["name"],
                 street_address=street_address,
-                city=_["ville"],
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                latitude=_["latitude"],
-                longitude=_["longitude"],
+                latitude=_["lat"],
+                longitude=_["long"],
                 country_code="Tunisia",
-                phone=_["tel"],
-                location_type=type_map[_["enseigne"]],
+                location_type=_["format"],
                 locator_domain=locator_domain,
-                hours_of_operation=_["info"],
-                raw_address=_["adresse"],
+                hours_of_operation=hours,
+                raw_address=_["address"],
             )
 
 

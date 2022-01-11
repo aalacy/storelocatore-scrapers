@@ -14,6 +14,8 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+alllocs = []
+
 logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
@@ -121,23 +123,25 @@ def fetch_location(loc, driver):
                 phone = "<MISSING>"
             if phone != "<MISSING>":
                 PhoneFound = True
-                if "Find A R" not in name:
-                    return SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+                if loc not in alllocs:
+                    alllocs.append(loc)
+                    if "Find A R" not in name:
+                        return SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
         except:
             PhoneFound = False
 

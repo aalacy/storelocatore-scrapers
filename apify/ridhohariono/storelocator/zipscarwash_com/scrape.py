@@ -49,9 +49,18 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def pull_content(url):
+def pull_content(url, num=0):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        if num <= 5:
+            num += 1
+            log.info(f"Try to refresh for ({num}) times...")
+            time.sleep(2)
+            return pull_content(url, num)
+        else:
+            return False
     return soup
 
 
@@ -71,17 +80,24 @@ def fetch_data():
             % (lat, long, search.items_remaining())
         )
         page_url = LOCATION_URL.format(code=zipcode, latitude=lat, longitude=long)
-        try:
-            soup = pull_content(page_url)
-        except:
-            time.sleep(2)
-            soup = pull_content(page_url)
+        soup = pull_content(page_url)
+        if not soup:
+            log.info(f"Skipping invalid url => {page_url}")
+            continue
         store_content = soup.find_all(
             "div",
             {
                 "class": "locations__results-unit flex align-items-center justify-between"
             },
         )
+        latlong_content = soup.find(
+            "script", string=re.compile(r"initializeMap.*")
+        ).string
+        latlong = re.findall(
+            r"new_pin\.lat\s+=\s+'(-?[\d]*\.[\d]*)';\n\t+new_pin\.long\s+=\s+'(-?[\d]*\.[\d]*)';",
+            latlong_content,
+        )
+        num = 0
         for row in store_content:
             location_name = row.find(
                 "div", {"class": "locations__results-name"}
@@ -95,13 +111,8 @@ def fetch_data():
             phone = MISSING
             store_number = MISSING
             location_type = MISSING
-            latlong = (
-                row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
-                .replace("https://www.google.com/maps/place/", "")
-                .split(",")
-            )
-            latitude = latlong[0]
-            longitude = latlong[1]
+            latitude = latlong[num][0]
+            longitude = latlong[num][1]
             hours_of_operation = row.find(
                 "div", {"class": "locations__results-hours"}
             ).get_text(strip=True, separator=",")
@@ -123,6 +134,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
+            num += 1
 
 
 def scrape():
