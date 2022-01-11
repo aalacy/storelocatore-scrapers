@@ -79,6 +79,8 @@ def fetch_data():
                                 CS = True
                             if '"telephone":"' in line2 and phone == "":
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
+                            if "Tel: <" in line2 and phone == "":
+                                phone = line2.rsplit('">')[1].split("<")[0].strip()
                         time.sleep(5)
                     except:
                         pass
