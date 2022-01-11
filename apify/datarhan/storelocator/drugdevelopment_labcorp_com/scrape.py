@@ -31,10 +31,10 @@ def fetch_data():
         phone = poi_html.xpath('.//li[@class="phone"]/a/text()')
         phone = phone[0] if phone else ""
         zip_code = addr.postcode
-        if zip_code and zip_code.lower().startswith('u'):
+        if zip_code and zip_code.lower().startswith("u"):
             zip_code = ""
         if zip_code:
-            zip_code = zip_code.replace('MEXICO', '')
+            zip_code = zip_code.replace("MEXICO", "")
 
         item = SgRecord(
             locator_domain=domain,
