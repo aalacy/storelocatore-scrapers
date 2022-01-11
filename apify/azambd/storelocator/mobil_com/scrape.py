@@ -93,8 +93,8 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_1_KM(),
-        use_state=False,
+        max_search_distance_miles=300,
+        max_search_results=250,
     )
     count = 0
 
