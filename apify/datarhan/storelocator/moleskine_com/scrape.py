@@ -13,7 +13,7 @@ def fetch_data():
     domain = "moleskine.com"
 
     all_coodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
     )
     for code in all_coodes:
         frm = {"dwfrm_storelocator_country": "US", "dwfrm_storelocator_query": code}
@@ -32,7 +32,7 @@ def fetch_data():
                 city=poi["address"]["city"],
                 state="",
                 zip_postal=poi["address"]["zip"],
-                country_code="",
+                country_code="US",
                 store_number="",
                 phone=poi["phone"],
                 location_type=poi["type"],
