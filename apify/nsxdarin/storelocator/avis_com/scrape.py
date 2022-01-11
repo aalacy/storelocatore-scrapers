@@ -16,15 +16,17 @@ headers = {
 def fetch_data():
     locs = []
     states = []
-    urls = [
-        "https://www.avis.com/en/locations/us",
-        "https://www.avis.com/en/locations/ca",
-    ]
+    sm = "https://www.avis.com/content/dam/avis/na/us/common/seo/all-non-us-locations.xml"
+    r = session.get(sm, headers=headers)
+    for line in r.iter_lines():
+        if "<loc>https://www.avis.com/en/locations/" in line:
+            lurl = line.split("<loc>")[1].split("<")[0]
+            if lurl.count("/") == 7:
+                locs.append(lurl)
+    urls = ["https://www.avis.com/en/locations/us"]
     for url in urls:
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if (
                 '<a href="/en/locations/us/' in line
                 or '<a href="/en/locations/ca/' in line
@@ -34,10 +36,8 @@ def fetch_data():
     for state in states:
         logger.info(("Pulling State %s..." % state))
         r2 = session.get(state, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
         RFound = False
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if "<h1>" in line2:
                 RFound = True
             if RFound and '<a href="/en/locations/' in line2:
@@ -45,6 +45,7 @@ def fetch_data():
                 if lurl.count("/") == 8 and "uber-only" not in lurl:
                     locs.append(lurl)
     for loc in locs:
+        LocFound = True
         logger.info("Pulling Location %s..." % loc)
         website = "avis.com"
         typ = "<MISSING>"
@@ -60,15 +61,11 @@ def fetch_data():
         lat = ""
         lng = ""
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
+            if "&amp; Nearby Locations" in line2:
+                LocFound = False
             if '"addressCountry": "' in line2:
                 country = line2.split('"addressCountry": "')[1].split('"')[0]
-                if "C" in country:
-                    country = "CA"
-                else:
-                    country = "US"
             if '"addressLocality": "' in line2:
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if '"addressRegion": "' in line2:
@@ -136,22 +133,23 @@ def fetch_data():
         phone = phone.replace("&amp;", "&")
         hours = hours.replace("&amp;", "&")
         loc = loc.replace("&amp;", "&")
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if LocFound:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
