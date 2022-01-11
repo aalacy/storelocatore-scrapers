@@ -36,7 +36,7 @@ def fetch_data():
         phone = loc_dom.xpath('.//span[@class="phone"]/text()')[0].strip()
         hoo = loc_dom.xpath('.//span[@class="hours"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("**")[0].strip()
-        geo = re.findall(f"(lat.+?), id:%s," % store_number, response.text)[0].split(
+        geo = re.findall(r"(lat.+?), id:%s," % store_number, response.text)[0].split(
             "push({"
         )[-1]
         geo = demjson.decode("{" + geo + "}")
