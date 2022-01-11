@@ -22,10 +22,25 @@ def fetch_data(sgw: SgWriter):
             location_type = "Spa"
         elif _type == "Retail":
             location_type = "Retail"
+        elif _type == "Wholesale":
+            location_type = "Wholesale"
         else:
             continue
 
+        _category = j.get("Category")
+
+        if _category == "Outlet" and _type == "Retail":
+            location_type = "Outlet"
+
         location_name = j.get("Name")
+        location_name = location_name.replace("L´", "L'")
+        if "L'OCCITANE" in location_name.upper() and location_type == "Spa":
+            location_type = "L'OCCITANE, Spa"
+        elif "L'OCCITANE" in location_name.upper() and location_type == "Airport":
+            location_type = "L'OCCITANE, Airport"
+        elif "L'OCCITANE" in location_name.upper():
+            location_type = "L'OCCITANE"
+
         slug = j.get("URL")
         page_url = f"https://uk.loccitane.com{slug}"
         street_address = j.get("Address1") or ""

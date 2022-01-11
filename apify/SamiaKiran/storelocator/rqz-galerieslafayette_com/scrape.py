@@ -43,7 +43,7 @@ def fetch_data():
         loclist = soup.findAll("script")
         for loc in loclist[:-1]:
             try:
-                schema = loc.text.split("] = ", 1)[1].split(";", 1)[0]
+                schema = (loc.contents[0]).split("=", 1)[1].split(";", 1)[0]
                 schema = schema.replace("\n", "")
                 loc = json.loads(schema)
             except Exception as e:
