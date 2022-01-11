@@ -108,6 +108,8 @@ def scrape():
             SgRecordID(
                 {
                     SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.PHONE,
                 }
             )
         )

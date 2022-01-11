@@ -6,4 +6,3 @@ sgscrape==0.2.6
 sgvalidator==0.0.71
 sgzip==0.10.9
 urllib3==1.26.2
-httpx==0.19.0

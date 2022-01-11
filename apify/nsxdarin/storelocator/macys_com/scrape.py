@@ -50,7 +50,7 @@ def fetch_data():
                 try:
                     add = add + " " + line2.split('"line2":"')[1].split('"')[0]
                 except:
-                    add = "<MISSING>"
+                    pass
                 city = line2.split('"city":"')[1].split('"')[0]
                 state = line2.split('"region":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
@@ -67,13 +67,17 @@ def fetch_data():
                         if 'isClosed":true' in day:
                             hrs = day.split('"')[0] + ": Closed"
                         else:
-                            hrs = (
-                                day.split('"')[0]
-                                + ": "
-                                + day.split('"start":')[1].split("}")[0]
-                                + "-"
-                                + day.split('"end":')[1].split(",")[0]
-                            )
+                            dstart = day.split('"start":')[1].split("}")[0]
+                            dend = day.split('"end":')[1].split("}")[0]
+                            if len(dstart) == 3:
+                                dstart = dstart[:1] + ":" + dstart[-2:]
+                            else:
+                                dstart = dstart[:2] + ":" + dstart[-2:]
+                            if len(dend) == 3:
+                                dend = dend[:1] + ":" + dend[-2:]
+                            else:
+                                dend = dend[:2] + ":" + dend[-2:]
+                            hrs = day.split('"')[0] + ": " + dstart + "-" + dend
                         if hours == "":
                             hours = hrs
                         else:
@@ -92,6 +96,8 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

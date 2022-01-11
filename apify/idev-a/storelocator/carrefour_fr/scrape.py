@@ -1,95 +1,206 @@
-from sgscrape.sgrecord import SgRecord
+from lxml import html
+import random
+import os
+import ssl
+import time
+import json
+from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import webdriver
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+
+from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from bs4 import BeautifulSoup as bs
-import dirtyjson as json
-from sglogging import SgLogSetup
-import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-logger = SgLogSetup().get_logger("carrefour")
-
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
-locator_domain = "https://www.carrefour.fr"
-base_url = "https://www.carrefour.fr/magasin/"
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def fetch_data():
-    with SgRequests() as session:
-        regions = bs(session.get(base_url, headers=_headers).text, "lxml").select(
-            "li.store-locator-footer-list__item a"
+website = "https://www.carrefour.fr"
+store_url = f"{website}/magasin/"
+MISSING = SgRecord.MISSING
+
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("start-maximized")
+chrome_options.add_argument("--disable-notifications")
+chrome_options.add_argument("--mute-audio")
+chrome_options.add_argument(
+    "user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1"
+)
+
+
+def request_with_retries(driver, url):
+    driver.get(url)
+    random_sleep(driver)
+
+
+def driver_sleep(driver, time=2):
+    try:
+        WebDriverWait(driver, time).until(
+            EC.presence_of_element_located((By.ID, MISSING))
         )
-        for region in regions:
-            url = locator_domain + region["href"]
-            locations = json.loads(
-                session.get(url, headers=_headers)
-                .text.split(":context-stores=")[1]
-                .split(":context-filters")[0]
-                .replace("&quot;", '"')
-                .strip()[1:-1]
-            )
-            for _ in locations:
-                addr = _["address"]
-                street_address = addr["address1"]
-                if addr["address2"]:
-                    street_address += " " + addr["address2"]
-                hours = []
-                try:
-                    for day, hh in (
-                        _.get("openingWeekPattern", {}).get("timeRanges", {}).items()
-                    ):
-                        start = hh["begTime"]["date"].split()[-1].split(".")[0]
-                        end = hh["endTime"]["date"].split()[-1].split(".")[0]
-                        hours.append(f"{day}: {start} - {end}")
-                except:
-                    pass
+    except Exception:
+        pass
 
-                page_url = locator_domain + _["storePageUrl"]
-                phone = ""
-                location_name = _["name"].replace("&#039;", "'")
-                if page_url != base_url:
-                    logger.info(page_url)
-                    res = session.get(page_url, headers=_headers)
-                    if res.status_code == 200:
-                        sp1 = bs(res.text, "lxml")
-                        location_name = sp1.select_one(
-                            "h1.store-page__banner__heading"
-                        ).text.strip()
-                        location_type = json.loads(
-                            sp1.find(
-                                "script", string=re.compile(r"tc_vars = Object.assign")
-                            )
-                            .string.split("tc_vars = Object.assign(tc_vars,")[1]
-                            .strip()[:-2]
-                        )["store_format"]
-                        if sp1.select_one("div.store-meta--telephone a"):
-                            phone = sp1.select_one(
-                                "div.store-meta--telephone a"
-                            ).text.strip()
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=_["id"],
-                    location_name=location_name,
-                    street_address=street_address.replace("&#039;", "'"),
-                    city=addr["city"].replace("&#039;", "'"),
-                    state=addr["region"],
-                    zip_postal=addr["postalCode"],
-                    latitude=addr["geoCoordinates"]["latitude"],
-                    longitude=addr["geoCoordinates"]["longitude"],
-                    country_code="FR",
-                    phone=phone,
-                    location_type=location_type,
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
-                )
+
+def random_sleep(driver, start=5, limit=3):
+    driver_sleep(driver, random.randint(start, start + limit))
+
+
+def fetch_regions(driver):
+    request_with_retries(driver, store_url)
+    driver_sleep(driver, 30)
+    body = html.fromstring(driver.page_source, "lxml")
+    return body.xpath(
+        '//li[contains(@class, "store-locator-footer-list__item")]/a/@href'
+    )
+
+
+def get_var_name(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
+
+
+def get_JSON_object_variable(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    if value is None:
+        return MISSING
+    value = f"{value}"
+    if len(value) == 0:
+        return MISSING
+    return value
+
+
+def get_hoo(timeRange={}):
+    try:
+        keys = timeRange.keys()
+        if len(keys) == 0:
+            return MISSING
+        hoo = []
+        for key in keys:
+            val = timeRange[key]
+            begTime = val["begTime"]["date"].split()[1].split(":00.00")[0]
+            endTime = val["endTime"]["date"].split()[1].split(":00.00")[0]
+            hoo.append(f"{key}: {begTime}-{endTime}")
+        return "; ".join(hoo)
+    except Exception:
+        return MISSING
+
+
+def fetch_data(driver):
+    regions = fetch_regions(driver)
+    log.info(f"Total regions = {len(regions)}")
+    count = 0
+
+    for region in regions:
+        count = count + 1
+        url = website + region
+        log.info(f"{count}: scrapping {url} ...")
+        request_with_retries(driver, url)
+        data = (
+            driver.page_source.split("window.ONECF_INITIAL_STATE =")[1]
+            .split("window.ONECF")[0]
+            .replace("&quot;", '"')
+            .strip()[0:-1]
+        )
+
+        stores = json.loads(data)["search"]["data"]["stores"]
+        log.debug(f"stores found {len(stores)}")
+
+        for store in stores:
+            store_number = store["id"]
+            page_url = f"{website}{store['storePageUrl']}"
+            location_name = store["name"]
+            location_type = get_JSON_object_variable(store, "format")
+
+            address = store["address"]
+            geo = address["geoCoordinates"]
+            street_address = (
+                get_JSON_object_variable(address, "address1")
+                + " "
+                + get_JSON_object_variable(address, "address2")
+                + " "
+                + get_JSON_object_variable(address, "address3")
+            )
+            street_address = street_address.replace(MISSING, "").strip()
+            city = get_JSON_object_variable(address, "city")
+            zip_postal = get_JSON_object_variable(address, "postalCode")
+            state = get_JSON_object_variable(address, "region")
+            country_code = "FR"
+            phone = get_JSON_object_variable(store, "phoneNumber")
+            latitude = get_JSON_object_variable(geo, "latitude")
+            longitude = get_JSON_object_variable(geo, "longitude")
+            hours_of_operation = get_hoo(store["openingWeekPattern"]["timeRanges"])
+            raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+                MISSING, ""
+            )
+            raw_address = " ".join(raw_address.split())
+            raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+            if raw_address[len(raw_address) - 1] == ",":
+                raw_address = raw_address[:-1]
+
+            if page_url == store_url:
+                continue
+
+            if latitude == MISSING or longitude == MISSING:
+                log.info(f"{page_url, location_type, store}")
+                location_type = "Fermé temporairement"
+            yield SgRecord(
+                locator_domain="carrefour.fr",
+                store_number=store_number,
+                page_url=page_url,
+                location_name=location_name,
+                location_type=location_type,
+                street_address=street_address,
+                city=city,
+                zip_postal=zip_postal,
+                state=state,
+                country_code=country_code,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+    return []
+
+
+def scrape():
+    log.info(f"Start scrapping {website} ...")
+    start = time.time()
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), chrome_options=chrome_options
+    ) as driver:
+        with SgWriter(
+            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
+        ) as writer:
+            for rec in fetch_data(driver):
+                writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    scrape()

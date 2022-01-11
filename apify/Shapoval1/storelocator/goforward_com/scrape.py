@@ -74,15 +74,19 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = "<MISSING>"
 
         s_js = json.loads(jsblock3)
-        cms = s_js.get("TrialsHFFUnlockMyProgramVariant").get("components")
-        for c in cms:
-            name = c.get("name")
-            if name != "ForwardLocations":
-                continue
-            cms = c.get("data").get("comingSoonLocations").get("locations")
-            slug_cms = str(location_name).split("|")[1].strip()
-            if slug_cms in cms:
-                hours_of_operation = "Coming Soon"
+        try:
+            cms = s_js.get("TrialsHFFUnlockMyProgramVariant").get("components")
+        except:
+            cms = "<MISSING>"
+        if cms != "<MISSING>":
+            for c in cms:
+                name = c.get("name")
+                if name != "ForwardLocations":
+                    continue
+                cms = c.get("data").get("comingSoonLocations").get("locations")
+                slug_cms = str(location_name).split("|")[1].strip()
+                if slug_cms in cms:
+                    hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

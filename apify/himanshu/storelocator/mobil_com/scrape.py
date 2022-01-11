@@ -19,7 +19,7 @@ def fetch_data():
         expected_search_radius_miles=5,
     )
     for lat, lng in all_coords:
-        url = start_url.format(lat, lat + 1.0, lng, lng + 1.0)
+        url = start_url.format(lat, lat + 3.0, lng, lng + 5.0)
         try:
             all_locations = session.get(url).json()
         except Exception:

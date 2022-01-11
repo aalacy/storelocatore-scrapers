@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from webdriver_manager.chrome import ChromeDriverManager
-import ssl
 from sglogging import SgLogSetup
+import ssl
 from tenacity import retry, wait_fixed, stop_after_attempt
 
 try:
@@ -19,7 +19,7 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-logger = SgLogSetup().get_logger("")
+logger = SgLogSetup().get_logger("family")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -45,7 +45,7 @@ def get_data(driver, url):
     locations = []
     try:
         locations = bs(driver.page_source, "lxml").select(
-            "div#DispListArticle div.cz_articlelist_box"
+            "div#DispListArticle div.cz_articlelist_box dl.cz_accordion"
         )
     except:
         driver.close()
@@ -73,7 +73,7 @@ def fetch_data():
             locations = get_data(driver, pref_url.format(pref["value"]))
             logger.info(f"{pref['value']} {len(locations)}")
             for _ in locations:
-                tr = _.select("table tr")
+                tr = _.select("table tbody tr")
                 page_url = "https://as.chizumaru.com" + tr[0].a["href"]
                 raw_address = tr[1].td.text.strip()
                 street_address = city = state = ""
@@ -103,7 +103,7 @@ def fetch_data():
                     country_code="JP",
                     phone=tr[2].td.text.strip(),
                     locator_domain=locator_domain,
-                    hours_of_operation=tr[3].td.text.strip(),
+                    hours_of_operation=tr[3].td.text.split("祝は")[0].strip(),
                     raw_address=raw_address,
                 )
 

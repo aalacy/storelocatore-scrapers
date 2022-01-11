@@ -21,13 +21,28 @@ def fetch_data():
 
     all_locations = dom.xpath('//article[@class="item-content"]/div/div[p[strong]]')
     all_locations += dom.xpath(
-        '//article[@class="item-content"]/div[@data-icon="gpicon-accordion"]/div[@data-icon="gpicon-textblock"]'
+        '//article[@class="item-content"]/div[@data-icon="gpicon-textblock"]/div[p[b]]'
+    )
+    all_locations += dom.xpath(
+        '//article[@class="item-content"]/div[@data-icon="gpicon-textblock"]/div[p[span[@style="font-weight: 700; letter-spacing: 0.3px;"]]]'
+    )
+    all_locations += dom.xpath(
+        '//article[@class="item-content"]/div[@data-icon="gpicon-textblock"]/div[p[span[strong]]]'
     )
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//strong/text()")
+        if not location_name:
+            location_name = poi_html.xpath(".//b/text()")
+        if not location_name:
+            location_name = poi_html.xpath(".//p/span/strong/text()")
         location_name = " ".join([e.strip() for e in location_name if e.strip()])
         raw_address = poi_html.xpath(".//p/span/text()")
+        if not raw_address:
+            raw_address = poi_html.xpath(".//div/p/b/text()")[1:-1]
         raw_address += poi_html.xpath(".//p/text()")
+        if not raw_address and "C.C. PLAZA MADERO CARR. A EL SALVADOR" in location_name:
+            raw_address = location_name.split(" A EL SALVADOR")[-1].split("Tel.")[:1]
+            location_name = "C.C. PLAZA MADERO CARR. A EL SALVADOR"
         raw_address = [e.strip() for e in raw_address if e.strip() and "Tel." not in e]
         raw_address = " ".join(raw_address)
         addr = parse_address_intl(raw_address)
@@ -36,6 +51,10 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         phone = poi_html.xpath('.//*[contains(text(), "Tel.")]/text()')
         phone = phone[0].replace("Tel.", "").split("/")[0] if phone else ""
+        if phone == "Pendiente":
+            phone = ""
+        if not location_name and "conchas" in raw_address.lower():
+            location_name = "LAS CONCHAS"
 
         item = SgRecord(
             locator_domain=domain,
@@ -43,7 +62,7 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=addr.city,
-            state=addr.state,
+            state="",
             zip_postal=addr.postcode,
             country_code="",
             store_number="",
