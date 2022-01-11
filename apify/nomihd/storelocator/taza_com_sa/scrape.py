@@ -42,7 +42,7 @@ def get_latlng(map_link):
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.taza.com.sa/pages/branches"
+    search_url = "https://www.taza.com.sa/en/pages/branches"
 
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
@@ -125,13 +125,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS
-                }
-            )
-        )
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:
