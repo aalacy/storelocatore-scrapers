@@ -47,7 +47,7 @@ def fetch_data():
             pa = parse_address_intl(raw_address)
 
             street = pa.street_address_1
-            street = street_address if street_address else MISSING
+            street = street if street else MISSING
 
             state = pa.state
             state = state.strip() if state else MISSING
@@ -65,7 +65,7 @@ def fetch_data():
                 zip_postal=pcode.strip(),
                 country_code=ccode,
                 store_number=SgRecord.MISSING,
-                phone=SgRecord.MISSING,
+                phone=phone,
                 location_type=SgRecord.MISSING,
                 latitude=str(lat),
                 longitude=str(longt),
