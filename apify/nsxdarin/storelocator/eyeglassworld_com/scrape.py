@@ -57,6 +57,8 @@ def fetch_data():
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
+                if "Closed</span>" in line2:
+                    hours = "Temporarily Closed"
             if phone == "":
                 phone = "<MISSING>"
             if hours == "":
