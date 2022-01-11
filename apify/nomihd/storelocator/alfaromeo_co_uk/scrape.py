@@ -5,7 +5,7 @@ from sglogging import sglog
 import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
@@ -103,7 +103,7 @@ class _SearchIteration(SearchIteration):
 
                     zip = store["ZIPCODE"]
                     country_code = self.__country_name
-                    store_number = store["MAINCODE"]
+                    store_number = "<MISSING>"
                     phone = store["TEL_1"]
                     location_type = store["BUSINESS_CENTER"]
                     if location_type == 1:
@@ -212,7 +212,16 @@ def scrape():
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
+                }
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for country in country_list:

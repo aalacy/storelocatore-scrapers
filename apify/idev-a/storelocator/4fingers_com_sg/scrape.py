@@ -28,9 +28,14 @@ def fetch_data():
 
             raw_address = " ".join(_addr)
             _hr = _.find("span", string=re.compile(r"Operation Hours"))
-            hours = ""
+            hours = []
             if _hr:
-                hours = _hr.find_parent("tr").select("td")[-1].stripped_strings
+                for hh in _hr.find_parent("tr").select("td")[-1].select("div span"):
+                    if hh.span:
+                        continue
+                    if "line-through" in hh["style"]:
+                        continue
+                    hours.append(hh.text.strip())
 
             _pp = _.find("span", string=re.compile(r"Telephone"))
             phone = ""

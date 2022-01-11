@@ -79,6 +79,8 @@ def fetch_data():
                     .strip()
                     .replace("\n", ", ")
                     .strip()
+                    .replace("\r\n", "")
+                    .strip()
                 )
 
                 formatted_addr = parser.parse_address_intl(raw_address)
@@ -118,6 +120,11 @@ def fetch_data():
                     phone = "<MISSING>"
 
                 page_url = search_url
+                dealer_website = "".join(
+                    store.xpath('.//a[@class="dealer-website"]/@href')
+                ).strip()
+                if len(dealer_website) > 0:
+                    page_url = dealer_website
 
                 temp_hours = store.xpath(
                     'div[@class="dealer-details"]/div[@class="dealer-contact-options"]//div[@class="grilla-horas"]'

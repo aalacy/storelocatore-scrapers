@@ -36,6 +36,13 @@ def fetch_data():
                 hours = []
                 for day, hh in _.get("openings", {}).items():
                     hours.append(f"{day}: {hh}")
+
+                if (
+                    "Online Store" in _["displayName"]
+                    or "General Enquiries" in _["displayName"]
+                ):
+                    continue
+
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["displayName"],
