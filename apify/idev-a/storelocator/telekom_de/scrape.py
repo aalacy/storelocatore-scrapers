@@ -4,6 +4,10 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
+from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "accept": "application/json, text/javascript, */*; q=0.01",
@@ -19,6 +23,10 @@ _headers = {
 locator_domain = "https://www.telekom.de"
 base_url = "https://shopsuche.telekom.de/"
 
+types = {
+    "tsg": "Nur Telekom Shops",
+}
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -27,12 +35,25 @@ def fetch_data():
         )["config"]["api"]["shopsUrl"]
         locations = session.get(shop_url, headers=_headers).json()
         for _ in locations:
+
             hours = []
             if _["opens_at"]:
                 start = ":".join(_["opens_at"].split(":")[:-1])
                 end = ":".join(_["closes_at"].split(":")[:-1])
                 hours.append(f"Montag - Freitag: {start} - {end}")
                 hours.append("Samstag - Sonntag: Geschlossen")
+            if _["yext_url"]:
+                hours = []
+                logger.info(_["yext_url"])
+                res = session.get(_["yext_url"], headers=_headers)
+                if res.status_code == 200:
+                    sp1 = bs(res.text, "lxml")
+                    for tr in sp1.select("table.c-location-hours-details tbody tr"):
+                        td = tr.select("td")
+                        hours.append(
+                            f"{td[0].text.strip()}: {' '.join(td[1].stripped_strings)}"
+                        )
+
             phone = ""
             if _["phone_code"]:
                 phone = _["phone_code"] + _["phone_number"]
