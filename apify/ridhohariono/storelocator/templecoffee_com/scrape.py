@@ -4,14 +4,13 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_intl
 import re
-import json
 
-DOMAIN = "gertrudehawkchocolates.com"
-BASE_URL = "https://gertrudehawkchocolates.com"
-LOCATION_URL = "https://gertrudehawkchocolates.com/find_a_store"
+DOMAIN = "templecoffee.com"
+BASE_URL = "https://templecoffee.com"
+LOCATION_URL = "https://templecoffee.com/pages/locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -25,7 +24,7 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
+            data = parse_address_intl(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -56,37 +55,26 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    stores = soup.find_all("div", {"name": "leftLocation"})
-    jso = json.loads(re.findall(r'"items":(\[[^]]+\])', str(soup))[0])
-    for store in stores:
-        info = (
-            store.find("div", {"class": "amlocator-store-information"})
-            .get_text(strip=True, separator="@@")
-            .replace("@@Distance", "")
-            .split("@@")
-        )
+    contents = soup.select(
+        "main div.shopify-section div.feature-row__item.feature-row__text"
+    )
+    for row in contents:
+        info = re.sub(
+            r"@@Get directions",
+            "",
+            row.get_text(strip=True, separator="@@"),
+            flags=re.IGNORECASE,
+        ).split("@@")
         location_name = info[0].strip()
-        raw_address = ", ".join(info[1:-1])
+        raw_address = ", ".join(info[1:-2]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        if len(zip_postal) < 5:
-            zip_postal = "0" + zip_postal
-        phone = re.sub(r"Back Room.*", "", info[-1].replace(":", "")).strip()
+        phone = info[-2].replace(" ", "")
         country_code = "US"
-        store_number = store["data-amid"]
+        store_number = MISSING
         location_type = MISSING
-        try:
-            hours_of_operation = (
-                store.select_one(
-                    "div.amlocator-schedule-container div.amlocator-week div.amlocator-schedule-table"
-                )
-                .get_text(strip=True, separator=",")
-                .replace("day,", "day: ")
-                .strip()
-            )
-        except:
-            hours_of_operation = MISSING
-        latitude = jso[stores.index(store)]["lat"]
-        longitude = jso[stores.index(store)]["lng"]
+        hours_of_operation = info[-1]
+        latitude = MISSING
+        longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -103,13 +91,22 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
