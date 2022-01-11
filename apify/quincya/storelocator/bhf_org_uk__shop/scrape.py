@@ -26,6 +26,7 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
+    found = []
     locator_domain = "https://www.bhf.org.uk"
 
     last_page = int(base.find(class_="pagination-last").a["href"].split("=")[-1]) + 1
@@ -44,6 +45,9 @@ def fetch_data(sgw: SgWriter):
 
         for item in items:
             link = locator_domain + item.a["href"]
+            if link in found:
+                continue
+            found.append(link)
 
             location_name = item.a.text.strip()
 

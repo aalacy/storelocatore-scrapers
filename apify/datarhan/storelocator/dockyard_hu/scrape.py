@@ -58,8 +58,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo["x"],
-            longitude=geo["y"],
+            latitude=geo["y"],
+            longitude=geo["x"],
             hours_of_operation=hoo,
             raw_address=raw_address,
         )

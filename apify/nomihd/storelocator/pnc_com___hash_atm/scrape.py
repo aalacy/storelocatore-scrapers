@@ -13,7 +13,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgselenium import SgChrome
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -86,7 +86,7 @@ def get_hours(data, details):
     store["hours_of_operation"] = MISSING
 
     for service in services:
-        if service["hours"]:
+        if service["service"]["serviceName"] == "Lobby Hours" and service["hours"]:
             hours = []
             for key, value in service["hours"].items():
                 if key == "twentyFourHours":
@@ -279,7 +279,7 @@ def batch_get_hours(locations, driver):
 def scrape():
     log.info("start")
     locations = []
-    coords = DynamicZipSearch(
+    coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
         expected_search_radius_miles=10,
     )

@@ -108,8 +108,8 @@ def scrape():
     count = 0
     with SgWriter(
         deduper=SgRecordDeduper(
-            record_id=RecommendedRecordIds.GeoSpatialId,
-            duplicate_streak_failure_factor=150,
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         results = fetch_data()

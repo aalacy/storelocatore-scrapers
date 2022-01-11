@@ -101,6 +101,7 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
                 soup.find("table", {"class": "c-location-hours-details"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Day of the Week Hours ", "")
             )
         except Exception:
             hours_of_operation = "<MISSING>"
