@@ -19,49 +19,60 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//section[div[div[h2[contains(text(), "IKEA")]]]]')[1:]
-    for poi_html in all_locations:
-        location_name = poi_html.xpath(".//h2/text()")[0]
-        raw_data = poi_html.xpath(
-            './/following-sibling::section[1]//a[contains(@href, "daddr=")]/@href'
+    all_locations = dom.xpath(
+        '//a[@class="pub__btn pub__btn--small pub__btn--primary"]/@href'
+    )
+    for page_url in all_locations:
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        hoo = loc_dom.xpath(
+            '//h2[strong[contains(text(), "Store opening hours")]]/following-sibling::p//text()'
         )
-        street_address = location_name.replace("IKEA ", "")
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h2[contains(text(), "Store opening hours")]/following-sibling::p//text()'
+            )
+        if not hoo:
+            hoo = dom.xpath(
+                '//div[div[h2[contains(text(), "{}")]]]/following-sibling::div[1]//h3[strong[contains(text(), "STORE OPENING HOURS")]]/following-sibling::p[1]//text()'.format(
+                    location_name
+                )
+            )
+        hoo = " ".join(hoo)
+        geo = loc_dom.xpath('//a[contains(text(), "View full map")]/@href')
+        phone = ""
+        street_address = ""
+        city = ""
+        zip_code = ""
         latitude = ""
         longitude = ""
-        if raw_data:
-            geo = (
-                poi_html.xpath(".//following-sibling::section[1]//a/@href")[0]
-                .split("@")[-1]
-                .split(",")
-            )
-            raw_data = (
-                poi_html.xpath(
-                    './/following-sibling::section[1]//a[contains(@href, "daddr=")]/@href'
-                )[0]
-                .split("addr=")[-1]
-                .split("@")[0]
-                .split("+")
-            )
-            addr = parse_address_intl(" ".join(raw_data[2:]))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+        if geo:
+            geo = geo[0].split("@")[-1].split(",")
             latitude = geo[0]
             longitude = geo[1]
-            city = addr.city
+            raw_address = (
+                loc_dom.xpath('//a[contains(text(), "View full map")]/@href')[0]
+                .split("daddr=")[-1]
+                .split("@")[0]
+                .replace("+", " ")
+                .replace(location_name, "")
+                .strip()
+            )
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address = ", " + addr.street_address_2
+            if "google.com" in street_address.lower():
+                street_address = ""
             zip_code = addr.postcode
-        phone = poi_html.xpath(
-            './/following-sibling::section[1]//a[contains(@href, "tel")]/text()'
-        )
-        phone = phone[0] if phone else ""
-        hoo = poi_html.xpath(
-            './/h3[strong[contains(text(), "STORE OPENING HOURS")]]/following-sibling::p[1]//text()'
-        )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            city = addr.city
+            phone = dom.xpath('//a[contains(@href, "tel")]/text()')[0]
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

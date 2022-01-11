@@ -22,7 +22,7 @@ def get_international(line):
 
 def fetch_data(sgw: SgWriter):
     r = session.get(
-        "https://aratiendas.com/wp-content/litespeed/js/9e684628c51d3e6e6359287786f76455.js",
+        "https://aratiendas.com/wp-content/litespeed/js/c64ec378fdbc256766d19e5a5c04f9a6.js",
         headers=headers,
     )
     text = r.text
@@ -31,8 +31,10 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         location_name = j.get("name")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
+        latitude = j.get("latitude") or ""
+        longitude = j.get("longitude") or ""
+        if str(latitude) == "0" or str(longitude) == "0":
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
         phone = j.get("phone")
         store_number = j.get("ID")
         street_address = j.get("address") or ""
