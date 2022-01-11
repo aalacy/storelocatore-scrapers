@@ -16,16 +16,34 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["results"]
         for _ in locations:
+            city = _["city"]
+            state = _.get("state")
+            zip_postal = _.get("zipCode")
+            country_code = _["countryCode"]
+            if country_code == "US":
+                zip_postal, city = city, zip_postal
+                city = city.replace(",", "")
+                c_s = city.split()
+                city = " ".join(c_s[:-1])
+                state = c_s[-1].strip()
+            temp = (_["houseNr"] + " " + _["street"]).strip().split(",")
+            street_address = []
+            for tt in temp:
+                if "Company" in tt:
+                    break
+                if not tt.strip():
+                    continue
+                street_address.append(tt)
             yield SgRecord(
                 page_url=_.get("url"),
                 location_name=_["title"],
-                street_address=(_["houseNr"] + " " + _["street"]).strip(),
-                city=_["city"],
-                state=_.get("state"),
-                zip_postal=_.get("zipCode"),
+                street_address=", ".join(street_address),
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 latitude=_["latLong"].split(",")[0].strip(),
                 longitude=_["latLong"].split(",")[1].strip(),
-                country_code=_["countryCode"],
+                country_code=country_code,
                 phone=_.get("telephone"),
                 locator_domain=locator_domain,
             )
