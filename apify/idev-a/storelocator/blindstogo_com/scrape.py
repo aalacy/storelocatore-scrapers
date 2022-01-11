@@ -213,9 +213,12 @@ def fetch_data():
                         hours.append(f"{day} {' '.join(times)}")
             elif sp1.find("", string=re.compile(r"Opening Hours")):
                 _hr = sp1.find("", string=re.compile(r"Opening Hours"))
-                temp = list(_hr.find_parent("p").find_next_sibling().stripped_strings)
-                for x in range(0, len(temp), 2):
-                    hours.append(f"{temp[x]} {temp[x+1]}")
+                if _hr.find_parent("p"):
+                    temp = list(
+                        _hr.find_parent("p").find_next_sibling().stripped_strings
+                    )
+                    for x in range(0, len(temp), 2):
+                        hours.append(f"{temp[x]} {temp[x+1]}")
 
             yield SgRecord(
                 page_url=page_url,
