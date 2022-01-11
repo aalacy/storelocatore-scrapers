@@ -76,6 +76,11 @@ def fetch_data():
                         hours = "Sun: 12:00pm-6:00pm; Mon-Sat: 11:00am-7:00pm"
                     if "; Friday 12/24" in hours:
                         hours = hours.split("; Friday 12/24")[0]
+                    if "," in add:
+                        add = add.rsplit(",", 1)[0].strip()
+                    add = add.replace("RUSSIA", "").strip()
+                    if "(" in add:
+                        add = add.rsplit("(", 1)[0].strip()
                     if "Draycott Avenue" not in add:
                         if CS is False:
                             yield SgRecord(
