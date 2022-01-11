@@ -159,7 +159,7 @@ def fetch_data():
         for link in links:
             page_url = link.storeurl.text
             logger.info(page_url)
-            sp1 = get_data(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             if (
                 sp1.select_one("h1.sppb-title-heading")
                 and "Coming Soon!" in sp1.select_one("h1.sppb-title-heading").text
@@ -172,7 +172,7 @@ def fetch_data():
                         "div.sppb-addon-content a.sppb-btn-success.sppb-btn-lg"
                     )["href"]
                 )
-                sp1 = get_data(page_url)
+                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             location_type = ""
             _banner = sp1.select_one("a.sppb-btn-block.sppb-btn-square")
             if _banner and "temporarily closed" in _banner.text.lower():
@@ -191,8 +191,12 @@ def fetch_data():
             if not zip_postal.replace("-", "").isdigit() and len(zip_postal) > 5:
                 country_code = "CA"
             hours = []
-            _hr = sp1.find("strong", string=re.compile(r"Opening Hours"))
-            if _hr:
+            _hr = sp1.find("", string=re.compile(r"Opening Hours"))
+            if _hr and not (
+                _hr.find_parent().find_parent().find_parent()
+                and _hr.find_parent().find_parent().find_parent().find_next_sibling()
+            ):
+                _hr = _hr.find_parent("strong")
                 temp = [
                     hh.replace("\xa0", " ")
                     for hh in _hr.find_parent().find_parent().stripped_strings
