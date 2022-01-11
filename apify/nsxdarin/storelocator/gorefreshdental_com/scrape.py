@@ -13,6 +13,7 @@ headers = {
 
 logger = SgLogSetup().get_logger("gorefreshdental_com")
 
+
 def fetch_data():
     url = "https://www.gorefreshdental.com/wp-admin/admin-ajax.php?action=store_search&lat=40.440625&lng=-79.995886&max_results=25&search_radius=200&autoload=1"
     r = session.get(url, headers=headers)
@@ -21,27 +22,34 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for item in json.loads(r.content):
-        add = item['address']
-        name = item['store']
-        store = item['id']
-        loc = item['permalink'].replace('\\','')
-        city = item['city']
-        state = item['state']
-        zc = item['zip']
-        lat = item['lat']
-        lng = item['lng']
-        phone = item['phone']
+        add = item["address"]
+        name = item["store"]
+        store = item["id"]
+        loc = item["permalink"].replace("\\", "")
+        city = item["city"]
+        state = item["state"]
+        zc = item["zip"]
+        lat = item["lat"]
+        lng = item["lng"]
+        phone = item["phone"]
         try:
-            hours = item['hours']
+            hours = item["hours"]
         except:
-            hours = ''
+            hours = ""
         if hours is None:
-            hours = '<MISSING>'
-        hours = hours.replace('</td><td><time>',': ').replace('</time></td></tr><tr><td>','; ').replace('<table role=\\"presentation\\" class=\\"wpsl-opening-hours\\"><tr><td>','')
-        hours = hours.replace('</td></tr></table>','')
-        hours = hours.replace('</td></tr><tr><td>','; ').replace('</td><td>',': ')
-        if '<td>' in hours:
-            hours = hours.rsplit('<td>',1)[1]
+            hours = "<MISSING>"
+        hours = (
+            hours.replace("</td><td><time>", ": ")
+            .replace("</time></td></tr><tr><td>", "; ")
+            .replace(
+                '<table role=\\"presentation\\" class=\\"wpsl-opening-hours\\"><tr><td>',
+                "",
+            )
+        )
+        hours = hours.replace("</td></tr></table>", "")
+        hours = hours.replace("</td></tr><tr><td>", "; ").replace("</td><td>", ": ")
+        if "<td>" in hours:
+            hours = hours.rsplit("<td>", 1)[1]
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
@@ -59,9 +67,12 @@ def fetch_data():
             hours_of_operation=hours,
         )
 
+
 def scrape():
     results = fetch_data()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
+
+
 scrape()
