@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 base_url = "https://arthurmurray.com/assets/data/locations.json"
 domain = "arthurmurray.com"
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
@@ -16,6 +17,24 @@ def fetch_data():
             if poi["address2"]:
                 street_address += ", " + poi["address2"]
 
+            hours_of_operation = poi["hours1"].replace("&#44;", " ")
+            if hours_of_operation and poi["name"] == "Arthur Murray Zurich":
+                times = []
+                dd = []
+                for hh in hours_of_operation.split("  "):
+                    if not hh.strip():
+                        continue
+                    if hh.startswith("-"):
+                        dd[-1] += hh
+                    elif hh.split()[-1] in days:
+                        dd.append(hh)
+                    else:
+                        times.append(hh.replace("clock", "").strip())
+
+                hours = []
+                for x in range(len(dd)):
+                    hours.append(f"{dd[x]}: {times[x]}")
+                hours_of_operation = "; ".join(hours)
             yield SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
@@ -30,7 +49,7 @@ def fetch_data():
                 location_type="",
                 latitude=poi["lat"],
                 longitude=poi["lng"],
-                hours_of_operation=poi["hours1"],
+                hours_of_operation=hours_of_operation,
             )
 
 

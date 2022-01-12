@@ -178,13 +178,9 @@ def fetch_data():
             if _banner and "temporarily closed" in _banner.text.lower():
                 location_type = "Temporarily Closed"
             address = sp1.select("address")
-            try:
-                if not address[-1].text.strip():
-                    del address[-1]
-            except:
-                import pdb
+            if not address[-1].text.strip():
+                del address[-1]
 
-                pdb.set_trace()
             addr = [aa.replace("\xa0", " ") for aa in address[-1].stripped_strings][1:]
             if addr[-1] == "Get Directions":
                 del addr[-1]
@@ -195,8 +191,12 @@ def fetch_data():
             if not zip_postal.replace("-", "").isdigit() and len(zip_postal) > 5:
                 country_code = "CA"
             hours = []
-            _hr = sp1.find("strong", string=re.compile(r"Opening Hours"))
-            if _hr:
+            _hr = sp1.find("", string=re.compile(r"Opening Hours"))
+            if _hr and not (
+                _hr.find_parent().find_parent().find_parent()
+                and _hr.find_parent().find_parent().find_parent().find_next_sibling()
+            ):
+                _hr = _hr.find_parent("strong")
                 temp = [
                     hh.replace("\xa0", " ")
                     for hh in _hr.find_parent().find_parent().stripped_strings
@@ -215,6 +215,15 @@ def fetch_data():
                         times.append(hh)
                     if x == len(temp) - 1:
                         hours.append(f"{day} {' '.join(times)}")
+            elif sp1.find("", string=re.compile(r"Opening Hours")):
+                _hr = sp1.find("", string=re.compile(r"Opening Hours"))
+                if _hr.find_parent("p"):
+                    temp = list(
+                        _hr.find_parent("p").find_next_sibling().stripped_strings
+                    )
+                    for x in range(0, len(temp), 2):
+                        hours.append(f"{temp[x]} {temp[x+1]}")
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=link.number.text,
