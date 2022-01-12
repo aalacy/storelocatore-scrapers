@@ -38,7 +38,9 @@ def get_urls():
 
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://nicolas.com/"
-    page_url = url
+    page_url = "".join(url)
+    if page_url.find("/fr/") != -1:
+        return
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
