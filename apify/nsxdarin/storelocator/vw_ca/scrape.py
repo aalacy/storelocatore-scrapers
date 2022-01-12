@@ -11,7 +11,6 @@ headers = {
 
 
 def fetch_data():
-    locs = []
     url = "https://www.vw.ca/app/dccsearch/vw-ca/en/Volkswagen%20Dealer%20Search/+/49.87951181643615/-97.1759382/12/+/+/+/+"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
