@@ -109,6 +109,7 @@ async function fetchData({ page, request }) {
     store_number: getOrDefault(store_number),
     hours_of_operation: getOrDefault(hours_of_operation),
     location_type: MISSING,
+    record_id: 'store_number'
   };
 }
 
@@ -135,7 +136,7 @@ Apify.main(async function () {
   };
 
   const launchPuppeteerOptions = {
-    headless: true,
+    headless: false,
     stealth: true,
     useChrome: true,
     useApifyProxy: !!proxyPassword,
