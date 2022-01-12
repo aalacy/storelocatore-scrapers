@@ -90,6 +90,14 @@ def fetch_data():
                 "class": "locations__results-unit flex align-items-center justify-between"
             },
         )
+        latlong_content = soup.find(
+            "script", string=re.compile(r"initializeMap.*")
+        ).string
+        latlong = re.findall(
+            r"new_pin\.lat\s+=\s+'(-?[\d]*\.[\d]*)';\n\t+new_pin\.long\s+=\s+'(-?[\d]*\.[\d]*)';",
+            latlong_content,
+        )
+        num = 0
         for row in store_content:
             location_name = row.find(
                 "div", {"class": "locations__results-name"}
@@ -103,17 +111,8 @@ def fetch_data():
             phone = MISSING
             store_number = MISSING
             location_type = MISSING
-            try:
-                latlong = (
-                    row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
-                    .replace("https://www.google.com/maps/place/", "")
-                    .split(",")
-                )
-                latitude = latlong[0]
-                longitude = latlong[1]
-            except:
-                latitude = MISSING
-                longitude = MISSING
+            latitude = latlong[num][0]
+            longitude = latlong[num][1]
             hours_of_operation = row.find(
                 "div", {"class": "locations__results-hours"}
             ).get_text(strip=True, separator=",")
@@ -135,6 +134,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
+            num += 1
 
 
 def scrape():
