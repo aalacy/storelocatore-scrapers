@@ -29,17 +29,21 @@ def pull_content(url):
 
 
 def get_hoo(url, id):
-    payload = {
-        "_m_": "HoursPopup",
-        "HoursPopup$_edit_": id,
-        "HoursPopup$_command_": "",
-    }
-    soup = bs(session.post(url, headers=HEADERS, data=payload).content, "lxml")
-    hoo = (
-        soup.find("table", {"class": "ui-repeater"})
-        .get_text(strip=True, separator=",")
-        .replace("day,", "day: ")
-    )
+    log.info(f"Get hours of operation for => {url}")
+    try:
+        payload = {
+            "_m_": "HoursPopup",
+            "HoursPopup$_edit_": id,
+            "HoursPopup$_command_": "",
+        }
+        soup = bs(session.post(url, headers=HEADERS, data=payload).content, "lxml")
+        hoo = (
+            soup.find("table", {"class": "ui-repeater"})
+            .get_text(strip=True, separator=",")
+            .replace("day,", "day: ")
+        )
+    except:
+        return MISSING
     return hoo.strip()
 
 
