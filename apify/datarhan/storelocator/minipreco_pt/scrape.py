@@ -23,7 +23,7 @@ def fetch_data():
     for lat, lng in all_coords:
         all_locations = session.get(
             start_url.format(
-                lat - 0.15, lat + 0.15, lng + 0.035, lng - 0.035, lat, lng
+                lat - 0.25, lat + 0.25, lng + 0.055, lng - 0.055, lat, lng
             ),
             headers=hdr,
         )
