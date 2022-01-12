@@ -5,7 +5,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
@@ -13,10 +13,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 website = "exxon.com"
-json_url = "https://www.exxon.com/en/api/locator/Locations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country=US&Customsort=False"
+json_url = "https://www.exxon.com/en/api/RetailLocator/GetRetailLocations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country=US&ResultLimit=250"
 MISSING = SgRecord.MISSING
 store_numbers = []
-max_workers = 10
+max_workers = 4
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -93,8 +93,9 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_1_KM(),
-        use_state=False,
+        max_search_distance_miles=100,
+        expected_search_radius_miles=50,
+        max_search_results=250,
     )
     count = 0
 
