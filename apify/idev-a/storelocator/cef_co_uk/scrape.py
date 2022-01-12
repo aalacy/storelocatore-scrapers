@@ -79,10 +79,14 @@ def fetch_data():
                 hours = _["openingHours"]
                 if hours[-1].startswith("Ba"):
                     del hours[-1]
+                street_address = addr["streetAddress"].replace("&amp", "&")
+                if street_address.endswith(","):
+                    street_address = street_address[:-1]
+
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
-                    street_address=addr["streetAddress"],
+                    street_address=street_address,
                     city=addr["addressLocality"],
                     state=addr["addressRegion"],
                     zip_postal=addr["postalCode"],
