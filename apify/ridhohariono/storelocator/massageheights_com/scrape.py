@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 DOMAIN = "massageheights.com"
 BASE_URL = "https://www.massageheights.com"
@@ -29,11 +30,9 @@ def pull_content(url):
     return soup
 
 
-def get_hoo(url):
-    log.info(f"Get hours of operation for => {url}")
+def get_hoo(soup):
     hoo = ""
     try:
-        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
         hoo_content = soup.find(
             "div", {"class": "hero-hours half flex ui-repeater"}
         ).find_all("span", {"data-item": "i"})
@@ -49,7 +48,15 @@ def fetch_data():
     log.info("Fetching store_locator data")
     data = session.get(API_URL, headers=HEADERS).json()
     for row in data:
+        if row["ComingSoon"] == 1:
+            continue
         page_url = BASE_URL + row["Path"]
+        store = pull_content(page_url)
+        is_coming_soon = store.find(
+            "em", text=re.compile(r"Coming Soon", flags=re.IGNORECASE)
+        )
+        if is_coming_soon:
+            continue
         location_name = row["FranchiseLocationName"]
         street_address = (row["Address1"] + " " + row["Address2"]).strip()
         city = row["City"]
@@ -58,7 +65,8 @@ def fetch_data():
         phone = row["Phone"]
         country_code = "US" if row["Country"] == "USA" else row["Country"]
         store_number = row["FranchiseLocationID"]
-        hours_of_operation = get_hoo(page_url)
+        hours_of_operation = MISSING
+        hours_of_operation = get_hoo(store)
         latitude = row["Latitude"]
         longitude = row["Longitude"]
         location_type = MISSING
