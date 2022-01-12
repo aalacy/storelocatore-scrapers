@@ -97,6 +97,7 @@ def get_data():
             location_type = location["type"]
 
             if page_url != "<MISSING>":
+                page_url = page_url.lower()
                 if page_url in page_urls or "-atm-" in page_url:
                     continue
 
