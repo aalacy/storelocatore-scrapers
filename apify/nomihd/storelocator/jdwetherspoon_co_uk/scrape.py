@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-import csv
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "jdwetherspoon.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "Connection": "keep-alive",
     "sec-ch-ua": '"Google Chrome";v="87", " Not;A Brand";v="99", "Chromium";v="87"',
@@ -24,162 +26,116 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
     # Your scraper here
     data = '{"region":null,"paging":{"UsePagination":false},"facilities":[],"searchType":0}'
     search_url = "https://www.jdwetherspoon.com/api/advancedsearch"
-    stores_req = session.post(search_url, data=data, headers=headers)
-    regions = json.loads(stores_req.text)["regions"]
-    for region in regions:
-        subRegions = region["subRegions"]
-        for sub in subRegions:
-            stores = sub["items"]
-            for store in stores:
-                if store["pubIsClosed"] is False:
-                    page_url = "https://www.jdwetherspoon.com" + store["url"]
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        stores_req = session.post(search_url, data=data, headers=headers)
+        regions = json.loads(stores_req.text)["regions"]
+        for region in regions:
+            subRegions = region["subRegions"]
+            for sub in subRegions:
+                stores = sub["items"]
+                for store in stores:
+                    if store["pubIsClosed"] is False:
+                        page_url = "https://www.jdwetherspoon.com" + store["url"]
 
-                    locator_domain = website
-                    location_name = store["name"]
-                    if location_name == "":
-                        location_name = "<MISSING>"
+                        locator_domain = website
+                        location_name = store["name"]
 
-                    street_address = (
-                        store["address1"]
-                        .strip()
-                        .encode("ascii", "replace")
-                        .decode("utf-8")
-                        .replace("?", "-")
-                        .strip()
-                    )
-                    city = store["city"].strip()
-                    state = store["county"].strip()
-                    zip = store["postcode"].strip()
-                    country_code = region["region"]
+                        street_address = (
+                            store["address1"]
+                            .strip()
+                            .encode("ascii", "replace")
+                            .decode("utf-8")
+                            .replace("?", "-")
+                            .strip()
+                        )
+                        city = store["city"].strip()
+                        state = store["county"].strip()
+                        zip = store["postcode"].strip()
+                        country_code = region["region"]
 
-                    if country_code == "":
-                        country_code = "<MISSING>"
+                        store_number = store["pubNumber"]
+                        phone = store["telephone"]
 
-                    if street_address == "" or street_address is None:
-                        street_address = "<MISSING>"
+                        location_type = "<MISSING>"
+                        if "/pubs/" in page_url:
+                            location_type = "pub"
+                        elif "/hotels/" in page_url:
+                            location_type = "hotel"
 
-                    if city == "" or city is None:
-                        city = "<MISSING>"
-
-                    if state == "" or state is None:
-                        state = "<MISSING>"
-
-                    if zip == "" or zip is None:
-                        zip = "<MISSING>"
-
-                    if country_code == "" or country_code is None:
-                        country_code = "<MISSING>"
-
-                    store_number = store["pubNumber"]
-                    if store_number == "" or store_number is None:
-                        store_number = "<MISSING>"
-
-                    phone = store["telephone"]
-
-                    location_type = "<MISSING>"
-                    if "/pubs/" in page_url:
-                        location_type = "pub"
-                    elif "/hotels/" in page_url:
-                        location_type = "hotel"
-
-                    hours_of_operation = ""
-                    if store["pubIsTemporaryClosed"] is True:
-                        hours_of_operation = "Temporary Closed"
-                    else:
-                        log.info(page_url)
-                        store_req = session.get(page_url, headers=headers)
-                        store_sel = lxml.html.fromstring(store_req.text)
-                        hours_of_operation = "; ".join(
-                            store_sel.xpath(
-                                '//div[@id="opening-times"]/div[1]/table/tr/td[@itemprop="openingHours"]/@content'
+                        hours_of_operation = ""
+                        if store["pubIsTemporaryClosed"] is True:
+                            hours_of_operation = "Temporary Closed"
+                        else:
+                            log.info(page_url)
+                            store_req = session.get(page_url, headers=headers)
+                            if isinstance(store_req, SgRequestError):
+                                continue
+                            store_sel = lxml.html.fromstring(store_req.text)
+                            hours = store_sel.xpath(
+                                '//div[@id="opening-times"]//td[@itemprop="openingHours"]'
                             )
-                        ).strip()
+                            hours_list = []
+                            for hour in hours:
+                                if (
+                                    len(
+                                        "".join(hour.xpath("@content"))
+                                        .strip()
+                                        .split("-")
+                                    )
+                                    > 1
+                                ):
+                                    if (
+                                        len(
+                                            "".join(hour.xpath("@content"))
+                                            .strip()
+                                            .split("-")[1]
+                                            .strip()
+                                        )
+                                        > 0
+                                    ):
+                                        hours_list.append(
+                                            "".join(hour.xpath("@content")).strip()
+                                        )
 
-                    latitude = store["lat"]
-                    longitude = store["lng"]
+                            hours_of_operation = "; ".join(hours_list).strip()
 
-                    if latitude == "" or latitude is None:
-                        latitude = "<MISSING>"
-                    if longitude == "" or longitude is None:
-                        longitude = "<MISSING>"
+                        latitude = store["lat"]
+                        longitude = store["lng"]
 
-                    if hours_of_operation == "":
-                        hours_of_operation = "<MISSING>"
-
-                    if phone == "" or phone is None:
-                        phone = "<MISSING>"
-
-                    curr_list = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                    yield curr_list
+                        yield SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
