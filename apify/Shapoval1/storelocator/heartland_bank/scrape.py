@@ -18,12 +18,14 @@ def get_urls():
         headers=headers,
     )
     tree = html.fromstring(r.text)
-    return tree.xpath('//h1[@class="articleTitle"]/following::ul[1]/li//a/@href')
+    return tree.xpath('//div[@class="EDN_article_content"]//ul/li/p/a[1]/@href')
 
 
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://www.heartland.bank/"
-    page_url = url
+    page_url = "".join(url)
+    if page_url.find("/Florida") != -1:
+        return
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
@@ -148,7 +150,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
