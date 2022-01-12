@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="us")
 
     start_url = "https://intersport.com.au/wp-admin/admin-ajax.php?action=store_search&lat=-25.2744&lng=133.77514&max_results=25&search_radius=100&autoload=1"
     domain = "intersport.com.au"
@@ -17,11 +17,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:95.0) Gecko/20100101 Firefox/95.0",
         "Upgrade-Insecure-Requests": "1",
     }
-    import requests
-
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
-    session = requests.Session()
-    all_locations = session.get(start_url, headers=hdr, proxies=proxies).json()
+    all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
         hoo = etree.HTML(poi["hours"]).xpath("//text()")
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
