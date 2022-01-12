@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 website = "exxon.com"
-json_url = "https://www.exxon.com/en/api/RetailLocator/GetRetailLocations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country=US&ResultLimit=250"
+json_url = "https://www.exxon.com/en/api/locator/Locations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country=US&Customsort=False"
 MISSING = SgRecord.MISSING
 store_numbers = []
 max_workers = 4
@@ -28,8 +28,10 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def request_with_retries(payload):
     lat, lng = payload
-    url = json_url.format(lat, lat + 3.0, lng, lng + 5.0)
+    url = json_url.format(lat, lat + 20.0, lng, lng - 22.0)
+    log.info(f"URL: {url}")
     response = session.get(url, headers=headers)
+    log.info(f"Response: {response}")
     stores = []
     try:
         data = json.loads(response.text)
@@ -93,9 +95,7 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=50,
-        max_search_results=250,
+        expected_search_radius_miles=10,
     )
     count = 0
 
