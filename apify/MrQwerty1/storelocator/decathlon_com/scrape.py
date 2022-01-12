@@ -1,125 +1,85 @@
-import csv
-import time
-
 from lxml import html
-from sgselenium import SgFirefox
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_urls():
+    r = session.get("https://www.decathlon.com/sitemap_pages_1.xml")
+    tree = html.fromstring(r.content)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return tree.xpath("//loc/text()")
 
 
-def get_data(source):
-    locator_domain = "https://www.decathlon.com/"
-    tree = html.fromstring(source)
+def get_data(page_url, sgw: SgWriter):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    if not tree.xpath("//h4[contains(text(), 'Location')]"):
+        return
 
-    location_name = "".join(tree.xpath("//title/text()")).split("|")[0].strip()
-    page_url = "".join(tree.xpath("//link[@rel='alternate']/@href"))
+    location_name = "".join(tree.xpath("//div[@class='shg-row']//h2/text()")).strip()
     line = tree.xpath(
         "//div[./div/h4[contains(text(), 'Location')]]/following-sibling::div[1]//text()"
     )
     line = list(filter(None, [l.strip() for l in line]))
+    street_address = line.pop(0)
+    csz = line.pop(0)
+    city = csz.split(",")[0].strip()
+    csz = csz.split(",")[1].strip()
+    state, postal = csz.split()
 
-    street_address = ", ".join(line[:-1])
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath(
-                "//div[./div/h4[contains(text(), 'Contact')]]/following-sibling::div[1]//text()"
-            )
-        ).strip()
-        or "<MISSING>"
+    phones = tree.xpath(
+        "//div[./div/h4[contains(text(), 'Contact')]]/following-sibling::div[1]//text()"
     )
-    latitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-latitude")) or "<MISSING>"
-    )
-    longitude = (
-        "".join(tree.xpath("//div[@data-longitude]/@data-longitude")) or "<MISSING>"
-    )
-    location_type = "<MISSING>"
+    phones = list(filter(None, [p.strip() for p in phones]))
+    phone = phones.pop(0)
 
+    latitude = "".join(tree.xpath("//div[@data-latitude]/@data-latitude"))
+    longitude = "".join(tree.xpath("//div[@data-longitude]/@data-longitude"))
+
+    _tmp = []
     hours = tree.xpath(
         "//div[./div/h4[contains(text(), 'Hours')]]/following-sibling::div[1]//text()"
     )
-    hours = list(filter(None, [h.strip() for h in hours]))
-    hours_of_operation = ";".join(hours) or "<MISSING>"
+    for h in hours:
+        if not h.strip():
+            continue
+        _tmp.append(h.strip())
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    hours_of_operation = ";".join(_tmp)
 
-    return row
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-
-def fetch_data():
-    out = []
-    with SgFirefox() as fox:
-        fox.get("https://www.decathlon.com/pages/store-finder")
-        time.sleep(10)
-        for i in range(100):
-            divs = fox.find_elements_by_xpath("//span[text()='Info']")
-            d = divs[i]
-            d.click()
-            time.sleep(10)
-            source = fox.page_source
-            row = get_data(source)
-            out.append(row)
-            if i == len(divs) - 1:
-                break
-            fox.back()
-            time.sleep(10)
-
-    return out
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.decathlon.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

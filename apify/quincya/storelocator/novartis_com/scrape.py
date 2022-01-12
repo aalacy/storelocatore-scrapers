@@ -8,7 +8,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 log = sglog.SgLogSetup().get_logger("novartis.com")
@@ -170,5 +170,9 @@ def fetch_data(sgw: SgWriter):
                 )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_TYPE})
+    )
+) as writer:
     fetch_data(writer)
