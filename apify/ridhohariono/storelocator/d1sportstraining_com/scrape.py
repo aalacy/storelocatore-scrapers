@@ -11,6 +11,7 @@ BASE_URL = "https://www.d1training.com"
 API_URL = "https://www.d1training.com/locations/?CallAjax=GetLocations"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
