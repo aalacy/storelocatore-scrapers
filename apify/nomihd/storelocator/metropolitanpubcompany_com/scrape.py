@@ -101,11 +101,13 @@ def fetch_data():
 
                 country_code = "GB"
 
-                phone = "".join(
-                    store_sel.xpath(
-                        '//div[@class="LocationInfo-telephone"]/div[@class="LocationInfo-value"]/text()'
-                    )
+                phone = store_sel.xpath(
+                    '//div[@class="LocationInfo-telephone"]/div[@class="LocationInfo-value"]/text()'
                 )
+                if len(phone) > 0:
+                    phone = phone[0]
+                else:
+                    phone = "<MISSING>"
 
                 hours = list(
                     filter(
@@ -125,6 +127,12 @@ def fetch_data():
                 map_link = "".join(store_sel.xpath('//a[contains(@href,"maps")]/@href'))
 
                 latitude, longitude = get_latlng(map_link)
+
+                if (
+                    "https://www.metropolitanpubcompany.com/best-pubs-for-rugby"
+                    in page_url
+                ):
+                    continue
 
                 yield SgRecord(
                     locator_domain=locator_domain,

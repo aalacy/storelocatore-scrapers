@@ -58,7 +58,7 @@ def fetch_data():
                 street_address=raw_address[0],
                 city=city,
                 state="",
-                zip_postal=raw_address[1].split()[-1],
+                zip_postal=raw_address[1].split()[0],
                 country_code=raw_address[-1],
                 store_number="",
                 phone="",
