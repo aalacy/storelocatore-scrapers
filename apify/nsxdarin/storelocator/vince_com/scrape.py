@@ -82,7 +82,7 @@ def fetch_data():
                     if "," in city:
                         city = city.split(",")[1].strip()
                     if country == "IT" and " " in city:
-                        if len(city).rsplit(" ", 1)[1] == 2:
+                        if len(city.rsplit(" ", 1)[1]) == 2:
                             city = city.rsplit(" ", 1)[0].strip()
                     if "Stockholm" in city:
                         city = "Stockholm"
