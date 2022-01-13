@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -16,11 +19,17 @@ def fetch_data():
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
+        page_url = poi["url"]
+        with SgFirefox() as driver:
+            driver.get(page_url)
+            loc_dom = etree.HTML(driver.page_source)
+        hoo = loc_dom.xpath('//div[@class="hours"]/div/text()')
+        hoo = ", ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
             page_url=poi["url"],
-            location_name=poi["name"],
+            location_name=poi["name"].replace("&#8217;", "'"),
             street_address=poi["address"],
             city=poi["city"],
             state=poi["state"],
@@ -31,7 +40,7 @@ def fetch_data():
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
-            hours_of_operation=poi["taxes"]["hours"],
+            hours_of_operation=hoo,
         )
 
         yield item

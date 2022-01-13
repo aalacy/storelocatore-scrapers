@@ -46,7 +46,7 @@ def fetch(loc, driver):
 def fetch_location(loc, driver):
     PhoneFound = False
     count = 1
-    while PhoneFound is False and count <= 10:
+    while PhoneFound is False and count <= 15:
         count = count + 1
         try:
             logger.info("Pulling Location %s..." % loc)
