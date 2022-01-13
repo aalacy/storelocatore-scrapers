@@ -17,14 +17,15 @@ def fetch_data():
         "Accept-Encoding": "gzip, deflate, br",
         "X-Requested-With": "XMLHttpRequest",
     }
+    loc_hdr = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:95.0) Gecko/20100101 Firefox/95.0"
+    }
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.PORTUGAL], expected_search_radius_miles=5
     )
     for lat, lng in all_coords:
         all_locations = session.get(
-            start_url.format(
-                lat - 0.25, lat + 0.25, lng + 0.055, lng - 0.055, lat, lng
-            ),
+            start_url.format(lat - 0.55, lat + 0.55, lng + 0.45, lng - 0.45, lat, lng),
             headers=hdr,
         )
         if all_locations.status_code != 200:
@@ -33,7 +34,10 @@ def fetch_data():
         for poi in all_locations:
             store_number = poi["codigo"]
             url = "https://lojas.minipreco.pt/buscadorTiendas.html?action=buscarInformacionTienda&codigo={}"
-            data = session.get(url.format(store_number)).json()[0]
+            data = session.get(url.format(store_number), headers=loc_hdr)
+            if data.status_code != 200:
+                continue
+            data = data.json()[0]
             hoo = []
             days = {
                 "1": "Segunda-feira",
@@ -71,9 +75,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():
