@@ -21,7 +21,6 @@ def fetch_data():
     for loc in loclist:
 
         link = "https://" + loc["Host"] + "/en-us/"
-        print(link)
 
         if "locale_" in loc["Name"]:
             pass
