@@ -26,7 +26,7 @@ def fetch_data():
         if "<loc>https://carlsjr.com/locations/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
-        time.sleep(3)
+        time.sleep(6)
         logger.info(loc)
         country = "US"
         typ = "<MISSING>"
