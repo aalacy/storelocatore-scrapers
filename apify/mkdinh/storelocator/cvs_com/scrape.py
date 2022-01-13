@@ -19,7 +19,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("cvs_com")
-http.client._MAXHEADERS = 1000
+http.client._MAXHEADERS = 1000 # type: ignore
 
 
 start_time = datetime.now()
