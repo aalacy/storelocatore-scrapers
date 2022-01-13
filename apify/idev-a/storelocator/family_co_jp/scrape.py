@@ -19,7 +19,6 @@ prefecture_url = "https://en.wikipedia.org/wiki/Prefectures_of_Japan"
 
 
 def fetch_data():
-    # driver = get_driver()
     with SgRequests(verify_ssl=False) as session:
         prefectures = []
         for pref in bs(
