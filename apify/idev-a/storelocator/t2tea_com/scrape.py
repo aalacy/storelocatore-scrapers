@@ -10,7 +10,7 @@ from fuzzywuzzy import process
 import httpx
 from typing import Iterable, Tuple, Callable
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from sgzip.dynamic import Grain_2
+from sgzip.dynamic import Grain_1_KM
 from sgpostal.sgpostal import parse_address_intl
 
 timeout = httpx.Timeout(10.0)
@@ -54,6 +54,8 @@ class ExampleSearchIteration(SearchIteration):
             res = http.get(url, headers=_headers)
             locations = res.json()["stores"]
             logger.info(f"{len(locations)} found")
+            if locations:
+                found_location_at(lat, lng)
             for _ in locations:
                 street_address = _["address1"]
                 if _.get("address2"):
@@ -102,7 +104,6 @@ class ExampleSearchIteration(SearchIteration):
                     if addr.street_address_2:
                         street_address += " " + addr.street_address_2
 
-                found_location_at(_["latitude"], _["longitude"])
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
@@ -127,7 +128,7 @@ if __name__ == "__main__":
         country_map = {}
         logger.info("... read countries")
         search_maker = DynamicSearchMaker(
-            search_type="DynamicGeoSearch", granularity=Grain_2()
+            search_type="DynamicGeoSearch", granularity=Grain_1_KM()
         )
         for country in bs(http.get(base_url, headers=_headers).text, "lxml").select(
             "ul.location__list-contries li a"
