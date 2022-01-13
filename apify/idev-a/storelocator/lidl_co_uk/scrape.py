@@ -99,6 +99,14 @@ if __name__ == "__main__":
                 url=json_data["DATA_SOURCE_URL"][country],
             )
 
+        # addition
+        # lv
+        country_sessions["lv"] = dict(
+            key="AhE9Cgo9H723GaeyGVq65glk_Myd-CORB8xN0JJEkSt1qcXP7qy4HhcPZJZwp6jf",
+            url="https://spatial.virtualearth.net/REST/v1/data/b2565f2cd7f64c759e2b5707b969e8dd/Filialdaten-LV/Filialdaten-lv?",
+        )
+        countries.append("lv")
+
         search = DynamicGeoSearch(
             country_codes=list(set(countries)), granularity=Grain_4()
         )
@@ -106,9 +114,9 @@ if __name__ == "__main__":
             deduper=SgRecordDeduper(
                 SgRecordID(
                     {
-                        SgRecord.Headers.LATITUDE,
-                        SgRecord.Headers.LONGITUDE,
-                        SgRecord.Headers.COUNTRY_CODE,
+                        SgRecord.Headers.STREET_ADDRESS,
+                        SgRecord.Headers.CITY,
+                        SgRecord.Headers.ZIP,
                     }
                 ),
                 duplicate_streak_failure_factor=100,

@@ -20,6 +20,7 @@ def fetch_data(sgw: SgWriter):
             street_address = a.get("line1") or ""
             city = a.get("city") or ""
             location_name = f"Bang & Olufsen {city}"
+            location_type = j.get("c_storeType")
             state = a.get("region")
             postal = a.get("postalCode")
             country_code = a.get("countryCode")
@@ -62,6 +63,7 @@ def fetch_data(sgw: SgWriter):
                 state=state,
                 zip_postal=postal,
                 country_code=country_code,
+                location_type=location_type,
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,

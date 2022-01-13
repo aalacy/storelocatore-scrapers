@@ -1,86 +1,125 @@
-import csv
-import os
-from sgselenium import SgSelenium
+import re
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_usa
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+DOMAIN = "cruisincoffee.com"
+BASE_URL = "https://www.cruisincoffee.com"
+LOCATION_URL = "https://www.cruisincoffee.com/locations"
+HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    req = session.get(url, headers=HEADERS)
+    if req.status_code == 404:
+        return False
+    soup = bs(req.content, "lxml")
+    return soup
+
 
 def fetch_data():
-    locator_domain = 'http://www.cruisincoffee.com/'
-    ext = 'locations/'
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select_one("div.entry.clearfix").prettify().split("<hr/>")[1:]
+    for row in contents:
+        store = bs(row, "lxml")
+        info = store.get_text(strip=True, separator="@@").split("@@")
+        location_name = info[0].strip()
+        raw_address = ", ".join(info[1:3]).strip()
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = info[3].replace("Phone", "").replace(":", "").strip()
+        country_code = "US"
+        store_number = MISSING
+        location_type = MISSING
+        hoo = ", ".join(info[-2:]).strip().split(",")
+        if re.search(r"\d{1,2}(am|pm)", hoo[0]):
+            hours_of_operation = ", ".join(hoo).strip()
+        else:
+            hours_of_operation = hoo[1].replace(" ", " ").strip()
+        latlong = (
+            store.find("a", title="Get Directions")["href"]
+            .split("ll=")[1]
+            .split("&sspn")[0]
+            .split("&spn=")[0]
+            .split(",")
+        )
+        latitude, longitude = latlong
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-    div = driver.find_element_by_css_selector('div.entry.clearfix')
-    ps = div.find_elements_by_css_selector('p')
-    all_store_data = []
-    count = 0
-    for i, p in enumerate(ps[2:]):
-        if p.text == '':
-            if count != 0:
-                country_code = 'US'
-                store_number = '<MISSING>'
-                location_type = '<MISSING>'
-                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                              store_number, phone_number, location_type, lat, longit, hours]
-                all_store_data.append(store_data)
-            count = 0
-            continue
-        if (count % 6) == 0:
-            location_name = p.text.strip()
-        elif (count % 6) == 1:
-            ##address & phonenumber & coords
-            address = p.text.split('\n')
-            street_address = address[0]
-            city, state, zip_code = addy_ext(address[1])
-            phone_number = address[2].replace('Phone:', '').strip()
-
-            href = p.find_element_by_css_selector('a').get_attribute('href')
-            start_idx = href.find('&sll=')
-            end_idx = href.find('&ssp')
-
-            coords = href[start_idx + 5: end_idx].split(',')
-            lat = coords[0]
-            longit = coords[1]
-        elif (count % 6) == 3:
-            ##address & phonenumber
-            hours = ''
-            hours_arr = p.text.split('\n')
-            for h in hours_arr:
-                if 'Cruisin Coffee is open' in h:
-                    continue
-                else:
-                    hours += h + ' '
-
-            if '111 E. Washington St' in street_address:
-                country_code = 'US'
-                store_number = '<MISSING>'
-                location_type = '<MISSING>'
-                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                              store_number, phone_number, location_type, lat, longit, hours]
-                all_store_data.append(store_data)
-        count += 1
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()
