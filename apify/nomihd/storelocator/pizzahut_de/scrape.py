@@ -6,101 +6,119 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+from sgzip.dynamic import DynamicGeoSearch
 
 website = "pizzahut.de"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
-    "Connection": "keep-alive",
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "X-Requested-With": "XMLHttpRequest",
+    "authority": "fb-eu.tictuk.com",
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+    "accept": "application/json, text/plain, */*",
+    "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
     "sec-ch-ua-mobile": "?0",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "origin": "https://pizzahut.de",
+    "sec-fetch-site": "cross-site",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://pizzahut.de/restaurants/getRestaurants"
-    stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(stores_req.text)
-    for store in stores:
+    search = DynamicGeoSearch(
+        country_codes=["DE"],
+        expected_search_radius_miles=5,
+    )
 
-        page_url = "https://pizzahut.de/restaurants/" + store["url"]
-        location_name = store["name"]
-        location_type = "<MISSING>"
-        locator_domain = website
+    with SgRequests() as session:
+        for lat, long in search:
+            log.info(
+                f"Coordinates remaining: {search.items_remaining()} For country: {search.current_country()}"
+            )
 
-        street_address = store["addressStreet"]
-        if store["addressStreetNo"]:
-            street_address = street_address + " " + store["addressStreetNo"]
+            data = {
+                "isPickup": True,
+                "chainId": "4b3b194b-e135-a529-bd39-4d7b192b79e2",
+                "type": "getBranchByAddress",
+                "addr": {"lat": lat, "lng": long},
+                "cust": "openRest",
+                "lang": "de",
+            }
+            stores_req = session.post(
+                "https://fb-eu.tictuk.com/webFlowAddress",
+                headers=headers,
+                data=json.dumps(data),
+            )
 
-        city = store["addressCity"]
-        state = store["addressProvince"]
-        zip = store["addressPostalCode"]
+            stores_json = json.loads(stores_req.text)
+            if stores_json["error"] is False:
+                stores = stores_json["msg"]
+                for store in stores:
+                    page_url = "<MISSING>"
+                    location_name = store["title"]["de_DE"]
+                    log.info(location_name)
+                    location_type = "<MISSING>"
+                    locator_domain = website
 
-        country_code = "DE"
-        store_number = store["id"]
-        phone = store["phoneNo"]
-        hours_list = []
-        for key in store.keys():
-            if key == "openMonTo":
-                day = "Mon"
-                time = store["openMonFrom"] + " - " + store["openMonTo"]
-                hours_list.append(day + ": " + time)
-            if key == "openTueTo":
-                day = "Tue"
-                time = store["openTueFrom"] + " - " + store["openTueTo"]
-                hours_list.append(day + ": " + time)
-            if key == "openWedTo":
-                day = "Wed"
-                time = store["openWedFrom"] + " - " + store["openWedTo"]
-                hours_list.append(day + ": " + time)
-            if key == "openThuTo":
-                day = "Thu"
-                time = store["openThuFrom"] + " - " + store["openThuTo"]
-                hours_list.append(day + ": " + time)
-            if key == "openFriTo":
-                day = "Fri"
-                time = store["openFriFrom"] + " - " + store["openFriTo"]
-                hours_list.append(day + ": " + time)
-            if key == "openSatTo":
-                day = "Sat"
-                time = store["openSatFrom"] + " - " + store["openSatTo"]
-                hours_list.append(day + ": " + time)
-            if key == "openSunTo":
-                day = "Sun"
-                time = store["openSunFrom"] + " - " + store["openSunTo"]
-                hours_list.append(day + ": " + time)
+                    raw_address = store["address"]["formatted"]
+                    street_address = raw_address.split(",")[0].strip()
+                    city = store["address"]["city"]
+                    state = "<MISSING>"
+                    zip = raw_address.split(",")[1].strip().split(" ")[0].strip()
 
-        hours_of_operation = "; ".join(hours_list).strip()
+                    country_code = store["address"]["countryCode"]
+                    store_number = store["id"]
+                    phone = store["contact"]["phone"]
+                    hours_list = []
+                    try:
+                        hours = store["openingHours"][0]["en"]
+                        for index in range(0, len(hours)):
+                            if index == 0:
+                                day = "Sun"
+                            if index == 1:
+                                day = "Mon"
+                            if index == 2:
+                                day = "Tue"
+                            if index == 3:
+                                day = "Wed"
+                            if index == 4:
+                                day = "Thu"
+                            if index == 5:
+                                day = "Fri"
+                            if index == 6:
+                                day = "Sat"
 
-        latitude = store["geoLat"]
-        longitude = store["geoLng"]
+                            tim = hours[index][0]
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+                            hours_list.append(day + ": " + tim)
+                    except:
+                        pass
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    latitude = store["address"]["latLng"]["lat"]
+                    longitude = store["address"]["latLng"]["lng"]
+                    search.found_location_at(latitude, longitude)
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
 
 
 def scrape():

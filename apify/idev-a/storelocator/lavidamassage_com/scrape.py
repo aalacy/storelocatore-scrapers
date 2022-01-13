@@ -2,6 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 locator_domain = "https://lavidamassage.com/"
 base_url = "https://lavidamassage.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=80d9aea29c&load_all=1&layout=1/"
@@ -16,10 +18,11 @@ _headers = {
 
 def fetch_data():
     with SgRequests() as session:
-        res = session.get(base_url, headers=_headers)
-        locations = json.loads(res.text)
+        locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             hours = []
+            if _["description"] and "coming soon" in _["description"].lower():
+                continue
             try:
                 for key, value in json.loads(_["open_hours"]).items():
                     times = "Closed"
@@ -27,10 +30,10 @@ def fetch_data():
                         times = value[0]
                     hours.append(f"{key}: {times}")
             except:
-                import pdb
+                pass
 
-                pdb.set_trace()
             yield SgRecord(
+                page_url="https://lavidamassage.com/locations",
                 store_number=_["id"],
                 location_name=_["title"],
                 street_address=_["street"],
@@ -47,7 +50,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

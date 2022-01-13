@@ -3,8 +3,7 @@ from sglogging import sglog
 
 
 from sgscrape import simple_utils as utils
-
-from sgrequests import SgRequests
+from sgrequests.sgrequests import SgRequests
 from requests.packages.urllib3.util.retry import Retry
 
 from sgselenium import SgFirefox
@@ -22,6 +21,8 @@ from fuzzywuzzy import process
 # no need for python-Levenshtein, we're processing only 30 records
 
 import json  # noqa
+
+import time
 
 
 def return_last4(fullId):
@@ -373,10 +374,14 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
                 try:
                     if result["api"]:
                         test_url = result["api"]
-                        test = session.get(test_url, headers=result["headers"]).json()
+                        test = SgRequests.raise_on_err(
+                            session.get(test_url, headers=result["headers"])
+                        ).json()
                     elif result["url"]:
                         test_url = result["url"]
-                        test = session.get(test_url, headers=result["headers"]).json()
+                        test = SgRequests.raise_on_err(
+                            session.get(test_url, headers=result["headers"])
+                        ).json()
                     else:
                         test = None
                     if test:
@@ -469,13 +474,13 @@ def get_api_call(url):
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
-                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[2]/form/div[1]/div[2]/input",
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
                 )
             )
         )
         input_field.send_keys("B3L 4T2")
         input_field.send_keys(Keys.RETURN)
-
+        time.sleep(10)
         wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
             EC.visibility_of_element_located(
                 (
@@ -488,7 +493,6 @@ def get_api_call(url):
             if "DoSearch2" in r.path:
                 url = r.url
                 headers = r.headers
-
     return url, headers
 
 
@@ -577,6 +581,7 @@ def fetch_data():
     url = "https://www.joefresh.com/ca/store-locator"
     # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
+    url, headers = get_api_call(url)
 
     def retry_starting():
         try:
@@ -596,7 +601,7 @@ def fetch_data():
     logzilla.info(f"New URL:\n{url}\n\n")
 
     session = SgRequests()
-    bullsEyeData = session.get(url, headers=headers).json()
+    bullsEyeData = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
     session.close()
 
     lize = utils.parallelize(
@@ -680,6 +685,7 @@ def scrape():
                 "None", "<MISSING>"
             ),
             is_required=False,
+            part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
             mapping=["Name"],
@@ -688,10 +694,12 @@ def scrape():
         latitude=sp.MappingField(
             mapping=["Latitude"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["Longitude"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         street_address=sp.MultiMappingField(
             mapping=[["Address1"], ["Address2"], ["Address3"], ["Address4"]],
@@ -710,6 +718,7 @@ def scrape():
         zipcode=sp.MappingField(
             mapping=["PostCode"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=sp.MappingField(
             mapping=["CountryCode"],
@@ -721,18 +730,22 @@ def scrape():
                 "None", "<MISSING>"
             ),
             is_required=False,
+            part_of_record_identity=True,
         ),
         store_number=sp.MappingField(
             mapping=["ThirdPartyId"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(
             mapping=["BusinessHours"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         location_type=sp.MappingField(
             mapping=["type"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),
     )
