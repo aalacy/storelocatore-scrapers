@@ -36,7 +36,9 @@ def get_hoo(url, id):
             "HoursPopup$_edit_": id,
             "HoursPopup$_command_": "",
         }
-        soup = bs(session.post(url, headers=HEADERS, data=payload).content, "lxml")
+        soup = bs(
+            session.post(url + "?L=true", headers=HEADERS, data=payload).content, "lxml"
+        )
         hoo = (
             soup.find("table", {"class": "ui-repeater"})
             .get_text(strip=True, separator=",")
