@@ -159,7 +159,7 @@ def fetch_data():
         for link in links:
             page_url = link.storeurl.text
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            sp1 = get_data(page_url)
             if (
                 sp1.select_one("h1.sppb-title-heading")
                 and "Coming Soon!" in sp1.select_one("h1.sppb-title-heading").text
@@ -172,7 +172,7 @@ def fetch_data():
                         "div.sppb-addon-content a.sppb-btn-success.sppb-btn-lg"
                     )["href"]
                 )
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                sp1 = get_data(page_url)
             location_type = ""
             _banner = sp1.select_one("a.sppb-btn-block.sppb-btn-square")
             if _banner and "temporarily closed" in _banner.text.lower():

@@ -44,7 +44,6 @@ def get_data():
         country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
     )
 
-    x = 0
     for search_code in search:
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
@@ -157,8 +156,6 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
-
-        x = x + 1
 
 
 def scrape():
