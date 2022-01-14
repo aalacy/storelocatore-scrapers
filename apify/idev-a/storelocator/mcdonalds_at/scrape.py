@@ -35,8 +35,8 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 street_address=addr[0].replace("\n", " "),
-                city=addr[1].split()[0],
-                zip_postal=addr[1].split()[-1],
+                zip_postal=addr[1].split()[0],
+                city=addr[1].split()[-1],
                 country_code="Austria",
                 locator_domain=locator_domain,
                 latitude=coord[0],
