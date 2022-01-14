@@ -60,10 +60,16 @@ def fetch_data():
                 continue
 
             location_type = ""
-            if _["branch_type"]:
+            if _["branch_type"] == "1":
                 location_type = "branch"
+            elif _["branch_type"] == "2":
+                location_type = "Loan Center"
+            elif _["branch_type"] == "3":
+                location_type = "Corporate Banking Center"
             elif _["atm_type"]:
                 location_type = "atm"
+            else:
+                location_type = _["branch_type"]
             street_address = _["address1"]
             if _["address2"]:
                 street_address += " " + _["address2"]
