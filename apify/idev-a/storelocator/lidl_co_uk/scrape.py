@@ -114,9 +114,9 @@ if __name__ == "__main__":
             deduper=SgRecordDeduper(
                 SgRecordID(
                     {
-                        SgRecord.Headers.LATITUDE,
-                        SgRecord.Headers.LONGITUDE,
-                        SgRecord.Headers.COUNTRY_CODE,
+                        SgRecord.Headers.STREET_ADDRESS,
+                        SgRecord.Headers.CITY,
+                        SgRecord.Headers.ZIP,
                     }
                 ),
                 duplicate_streak_failure_factor=100,
