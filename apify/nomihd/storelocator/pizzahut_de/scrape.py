@@ -63,7 +63,11 @@ def fetch_data():
             phone = store["contact"]["phone"]
             hours_list = []
             try:
-                hours = store["openingHours"][0]["de"]
+                hours = store["openingHours"][0]
+                if "de" in hours:
+                    hours = hours["de"]
+                elif "en" in hours:
+                    hours = hours["en"]
                 for index in range(0, len(hours)):
                     if index == 0:
                         day = "Sun"
