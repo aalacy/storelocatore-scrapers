@@ -1,12 +1,3 @@
-sgvalidator
-certifi==2020.11.8
-cffi==1.14.3
-chardet==3.0.4
-cryptography==3.2.1
-idna==2.10
-pycparser==2.20
-pyOpenSSL==19.1.0
-requests==2.24.0
-sgrequests==0.0.15
-six==1.15.0
-urllib3==1.25.11
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.2.6
+sgrequests==0.2.9
