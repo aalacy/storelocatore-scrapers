@@ -54,13 +54,12 @@ def fetch_data():
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="card remove-blank location-card"]')
     for store in stores:
-
-        page_url = (
-            "https://www.wilsonbank.com"
-            + "".join(
-                store.xpath('.//a[contains(text(),"See Location Details")]/@href')
-            ).strip()
-        )
+        temp_url = "".join(
+            store.xpath('.//a[contains(text(),"See Location Details")]/@href')
+        ).strip()
+        page_url = "https://www.wilsonbank.com" + temp_url
+        if len(temp_url) <= 0:
+            continue
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         if isinstance(
