@@ -40,8 +40,6 @@ def fetch_data(sgw: SgWriter):
             _tmp = []
             days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
             for d, line in zip(days, hours.split(";")):
-                if not line:
-                    print(j)
                 start_time = f'{line.split(",")[1][:2]}:{line.split(",")[1][2:]}'
                 end_time = f'{line.split(",")[2][:2]}:{line.split(",")[2][2:]}'
                 _tmp.append(f"{d}: {start_time} - {end_time}")
