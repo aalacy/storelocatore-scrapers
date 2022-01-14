@@ -184,7 +184,7 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    tocrawl = SearchableCountries.CANADA
+    tocrawl = [SearchableCountries.CANADA]
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
