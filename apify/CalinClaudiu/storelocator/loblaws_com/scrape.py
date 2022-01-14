@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-
+import ssl
 from sgscrape import simple_utils as utils
 from sgrequests.sgrequests import SgRequests
 from requests.packages.urllib3.util.retry import Retry
@@ -23,6 +23,13 @@ from fuzzywuzzy import process
 import json  # noqa
 
 import time
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def return_last4(fullId):
