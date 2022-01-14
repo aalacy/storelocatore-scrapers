@@ -25,12 +25,11 @@ country_code = "UK"
 locator_domain = "scrivens.com"
 
 
-@tenacity.retry(wait=tenacity.wait_fixed(5))
+@tenacity.retry(stop=tenacity.stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def get_with_retry(url):
     with SgChrome(user_agent=user_agent) as driver:
         log.info(f"Crawling: {url}")
         driver.get(url)
-        time.sleep(30)
         htmlmaps = driver.page_source
         return htmlmaps
 
@@ -139,7 +138,7 @@ def scrape():
         scraper_name="Crawler",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=15,
+        log_stats_interval=5,
     )
     pipeline.run()
 
