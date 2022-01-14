@@ -3,14 +3,14 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import SearchableCountries
+from sgzip.dynamic import SearchableCountries, Grain_2
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import dirtyjson as json
 import re
-from tenacity import retry, stop_after_attempt
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = SgLogSetup().get_logger("golftec")
 headers = {
@@ -116,7 +116,7 @@ def fetch_jp(http, url):
         )
 
 
-@retry(stop=stop_after_attempt(2))
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(2))
 def get_locs(http, url):
     res = http.get(url, headers=headers)
     return res.json()
@@ -196,8 +196,7 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        expected_search_radius_miles=500,
+        search_type="DynamicGeoSearch", granularity=Grain_2()
     )
     with SgWriter(
         SgRecordDeduper(
@@ -218,7 +217,6 @@ if __name__ == "__main__":
                 country_codes=[
                     SearchableCountries.USA,
                     SearchableCountries.CANADA,
-                    SearchableCountries.CHINA,
                     SearchableCountries.SINGAPORE,
                 ],
             )
