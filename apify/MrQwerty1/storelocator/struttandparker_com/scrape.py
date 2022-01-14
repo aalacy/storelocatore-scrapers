@@ -59,7 +59,7 @@ def get_data(page_url, sgw: SgWriter):
         street_address=street_address,
         city=city,
         zip_postal=postal,
-        country_code="US",
+        country_code="GB",
         latitude=latitude,
         longitude=longitude,
         store_number=store_number,
