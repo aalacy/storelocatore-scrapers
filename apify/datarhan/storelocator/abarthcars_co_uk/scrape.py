@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import ssl
-from zipfile import _ReadWriteMode
 from lxml import etree
 from time import sleep
 
