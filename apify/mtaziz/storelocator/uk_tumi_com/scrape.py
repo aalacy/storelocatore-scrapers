@@ -4,17 +4,13 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import SearchableCountries
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
-from datetime import datetime
 from lxml import html
 import time
 import ssl
 import random
-import json
-from sgzip.dynamic import SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
 
 
@@ -100,7 +96,6 @@ def parse_add2(raw_add2):
     cc = ""
     zp_cc = raw_add2[-1].split("-")
     zp_cc = [i.strip() for i in zp_cc]
-    print(zp_cc)
     if zp_cc[0]:
         zp = zp_cc[0]
     else:
@@ -162,7 +157,6 @@ def get_parsed_address(tsta, tcity, tstate, tzp):
     parsed_city = None
     parsed_state = None
     parsed_zp = None
-    parsed_cc = None
     pai = parse_address_intl(tsta)
 
     # Parsing street address
