@@ -42,7 +42,7 @@ def fetch_data():
                 .find_next_sibling("div")
                 .stripped_strings
             )
-            raw_address = " ".join(_addr)
+            raw_address = " ".join(_addr).replace("\n", " ").replace("\r", " ")
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:

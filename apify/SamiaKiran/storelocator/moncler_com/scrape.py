@@ -36,7 +36,10 @@ def fetch_data():
             try:
                 street_address = loc["address1"] + " " + loc["address2"]
             except:
-                street_address = loc["address1"]
+                try:
+                    street_address = loc["address1"]
+                except:
+                    street_address == loc["address2"]
             city = loc["city"]
             try:
                 state = loc["stateCode"]
