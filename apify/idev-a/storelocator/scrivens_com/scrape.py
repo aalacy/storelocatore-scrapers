@@ -2,7 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgselenium.sgselenium import SgChrome
 from sgpostal.sgpostal import parse_address_intl
 from sglogging import sglog
-import time
 import json
 from bs4 import BeautifulSoup
 import tenacity
