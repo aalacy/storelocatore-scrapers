@@ -1,5 +1,3 @@
-import re
-import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -7,10 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
 
-DOMAIN = "lowes.com"
-SITE_MAP = "https://www.lowes.com/content/lowes/desktop/en_us/stores.xml"
+DOMAIN = "peterpiperpizza.com"
+SITE_MAP = "https://locations.peterpiperpizza.com/sitemap.xml"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
@@ -21,31 +18,6 @@ session = SgRequests(verify_ssl=False)
 
 
 MISSING = "<MISSING>"
-
-
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
 
 
 def pull_content(url):
@@ -64,32 +36,31 @@ def fetch_data():
     page_urls = pull_content(SITE_MAP).find_all("loc")
     for row in page_urls:
         page_url = row.text.strip()
+        check_url = page_url.replace("https://", "").replace("/es/", "").split("/")
+        if len(check_url) < 4:
+            continue
         store = pull_content(page_url)
-        info = json.loads(
-            re.search(
-                r"window\['__PRELOADED_STATE__'\]\s+=\s+(.*)",
-                store.find(
-                    "script", string=re.compile(r"window\['__PRELOADED_STATE__'\].*")
-                ).string,
-            ).group(1)
-        )["storeDetails"]
-        location_name = store.find("h1", id="storeHeader").text.strip()
-        raw_address = store.find("div", {"class": "location"}).get_text(
-            strip=True, separator=","
+        location_name = (
+            store.find("h1", id="location-name").text.replace("\n", " ").strip()
         )
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = store.find("span", {"data-id": "sc-main-phone"}).text.strip()
-        country_code = info["country"]
-        store_number = page_url.split("/")[-1]
+        addr = store.find("address", id="address")
+        street_address = addr.find("meta", {"itemprop": "streetAddress"})[
+            "content"
+        ].strip()
+        city = addr.find("meta", {"itemprop": "addressLocality"})["content"].strip()
+        state = addr.find("abbr", {"itemprop": "addressRegion"}).text.strip()
+        zip_postal = addr.find("span", {"itemprop": "postalCode"}).text.strip()
+        country_code = addr.find("abbr", {"itemprop": "addressCountry"}).text.strip()
+        phone = store.find("div", id="phone-main").text.strip()
+        store_number = store.find("div", id="js-ceccookie")["data-storeid"]
         hours_of_operation = (
-            store.find("div", id="hours-content")
-            .get_text(strip=True, separator=",")
-            .replace("day,", "day: ")
-            .replace(",-,", " - ")
+            store.find("table", {"class": "c-hours-details"})
+            .find("tbody")
+            .get_text(strip=True, separator=" ")
             .strip()
         )
-        latitude = info["lat"]
-        longitude = info["long"]
+        latitude = store.find("meta", {"itemprop": "latitude"})["content"]
+        longitude = store.find("meta", {"itemprop": "longitude"})["content"]
         location_type = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
@@ -107,7 +78,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
