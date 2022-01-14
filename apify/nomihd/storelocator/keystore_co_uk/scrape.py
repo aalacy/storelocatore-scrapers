@@ -58,7 +58,7 @@ def fetch_data():
                     [x.strip() for x in store_sel.xpath('//div[h2="Address"]//text()')],
                 )
             )
-            raw_address = " ".join(store_info[1:])
+            raw_address = ", ".join(store_info[1:])
             raw_address = (
                 raw_address.replace("Scotland, GB", "")
                 .replace("England, GB", "")
@@ -69,10 +69,23 @@ def fetch_data():
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
-
             city = formatted_addr.city
+
+            if street_address is not None:
+                street_address = (
+                    street_address.replace("Ste", "Suite")
+                    .replace("G75 8Rq", "")
+                    .strip()
+                    .replace("Pa16", "")
+                    .replace("Fk2 0Xf", "")
+                    .replace("Pa21 2Ad", "")
+                    .replace("Fk20 8Ry", "")
+                    .replace("Td13 5Yp", "")
+                    .replace("Ph36 4Hz", "")
+                )
+                if "Knottingly" in street_address:
+                    street_address = street_address.replace("Knottingly", "").strip()
+                    city = "Knottingly"
 
             state = "<MISSING>"
 
