@@ -22,7 +22,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "gleaner.co.uk"
-BASE_URL = "https://www.gleaner.co.uk/"
+LOCATION_URL = "https://www.gleaner.co.uk/services/service-stations/"
 
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 MISSING = "<MISSING>"
@@ -55,7 +55,7 @@ def getAddress(raw_address):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get("https://www.google.com/maps/d/embed?mid=1MyMR7itOOLUAqV_XjISiG4G3mq0")
     WebDriverWait(driver, 30).until(
         EC.presence_of_element_located(
@@ -99,11 +99,13 @@ def fetch_data():
             r"Diesel.*", "", addr[0].replace(location_name + ",", "").strip(",").strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = addr[1].rstrip(",").strip()
+        phone = re.sub(
+            r",?Diesel.*", "", addr[1].split(",")[0].replace(".", " ").strip()
+        )
         try:
             hours_of_operation = (
                 re.sub(
-                    r",Diesel.*|,24-Hour.*|\(Winter:\s+\d{1,2}am\s+–\s+\d{1,2}pm\)|,Winter Opening Hours.*",
+                    r"\(May-Sept\),|,?Diesel.*|,24-Hour.*|\(Winter:\s+\d{1,2}am\s+–\s+\d{1,2}pm\)|,Winter Opening Hours.*",
                     "",
                     info[1],
                 )
@@ -117,7 +119,7 @@ def fetch_data():
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=BASE_URL,
+            page_url=LOCATION_URL,
             location_name=location_name,
             street_address=street_address,
             city=city,
