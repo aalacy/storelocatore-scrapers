@@ -61,10 +61,14 @@ def fetch_data():
 
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
+                if street_address:
+                    if formatted_addr.street_address_2:
+                        street_address = (
+                            street_address + ", " + formatted_addr.street_address_2
+                        )
+                else:
+                    if formatted_addr.street_address_2:
+                        street_address = formatted_addr.street_address_2
 
                 city = temp_city
                 state = formatted_addr.state
