@@ -42,16 +42,18 @@ def fetch_data(search):
                     hours.append(f"{day}: {open} - {close}")
 
                 yield SgRecord(
-                    page_url=_["order_url"],
+                    page_url=_["order_url"] or "https://restaurants.quiznos.com/",
                     store_number=_["number"],
                     location_name=_["name"],
-                    street_address=street_address,
+                    street_address=street_address.replace("Gaetz Avenue Crossing", "")
+                    .replace("HMS Host, Honolulu International Airport", "")
+                    .replace("T. Turck Plaza - Swifties Food Mart", ""),
                     city=_["city"],
                     state=_["province"],
                     zip_postal=_["postal_code"],
                     latitude=_["latitude"],
                     longitude=_["longitude"],
-                    country_code=_["country"],
+                    country_code="USA",
                     phone=phone,
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
