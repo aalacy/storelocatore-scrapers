@@ -64,7 +64,7 @@ def fetch_data():
                     if len("".join(add).strip()) > 0:
                         add_list.append("".join(add).strip())
 
-                raw_address = ", ".join(add_list).strip()
+                raw_address = ", ".join(add_list).strip().replace(",,", ",").strip()
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if street_address and formatted_addr.street_address_2:
@@ -75,6 +75,24 @@ def fetch_data():
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zipp = formatted_addr.postcode
+                if state and state == "K67":
+                    state = "<MISSING>"
+                    zipp = "K67 " + zipp
+
+                if zipp:
+                    zipp = (
+                        zipp.replace("CEP", "")
+                        .strip()
+                        .replace("CP ", "")
+                        .strip()
+                        .replace("C. P.", "")
+                        .strip()
+                    )
+
+                if city and city == "Bandar Seri Begawan Bs8811":
+                    city = "Bandar Seri Begawan"
+                    zipp = "BS8811"
+
                 phone = "".join(
                     store.xpath(".//div[@class='card__body spacing']/p[2]//text()")
                 ).strip()

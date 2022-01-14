@@ -94,9 +94,16 @@ def fetch_data():
             location_name = row["title"].replace("&#039;", "'")
             if "Coming Soon" in location_name:
                 continue
-            street_address = row["street_address"].replace(
-                "(Mailing address:  Ft. Benning Exchange - Harmony Church Charley's, P.O. Box 52328, zip 31995)",
-                "",
+            street_address = (
+                row["street_address"]
+                .replace(
+                    "(Mailing address:  Ft. Benning Exchange - Harmony Church Charley's, P.O. Box 52328, zip 31995)",
+                    "",
+                )
+                .replace(
+                    "(Promotional Kits:  AAFES Europe EIA, GRS Bakery Plt Sply Whse {Dry}, Kircheimerstr 104, 67269 Gruenstadt, Germany   Contact: Brigitte Chrysler, phone 06359-808103)",
+                    "",
+                )
             )
             city = row["city"]
             state = row["state"]
@@ -109,6 +116,11 @@ def fetch_data():
             country_code = MISSING
             store_number = row["store_num"]
             hours_of_operation = get_hoo(page_url)
+            if (
+                "Monday: -,Tuesday: -,Wednesday: -,Thursday: -,Friday: -,Saturday: -,Sunday: -"
+                in hours_of_operation
+            ):
+                hours_of_operation = MISSING
             latitude = row["lat"]
             longitude = "-97.2478" if row["lng"] == "-972478" else row["lng"]
             location_type = MISSING
