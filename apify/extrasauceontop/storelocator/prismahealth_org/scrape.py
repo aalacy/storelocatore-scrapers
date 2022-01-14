@@ -5,7 +5,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles =100,
+    max_radius_miles=100,
     max_search_results=100,
 )
 
@@ -77,16 +77,14 @@ base_url = "https://prismahealth.org"
 s = SgRequests()
 
 driver = SgChrome().driver()
-driver.get("https://www.joefresh.com/ca/store-locator")
+driver.get(base_url)
 
 incap_str = "/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3"
-incap_url = "https://www.joefresh.com/ca/store-locator"
+incap_url = base_url + incap_str
 
-#s.get(incap_url)
+s.get(incap_url)
 
 for request in driver.requests:
-    print("gothere")
-    print(driver.requests)
     initial_search_url = "https://prismahealth.org/api/search/search?pageSize=100&pageNumber=1&searchType=location"
 
     headers = request.headers
