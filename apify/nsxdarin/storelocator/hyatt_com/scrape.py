@@ -54,6 +54,12 @@ def fetch_data():
                     except:
                         state = "<MISSING>"
                     zc = item.split('"zipcode":"')[1].split('"')[0]
+                    raw_address = add + " " + city
+                    if state != "<MISSING>":
+                        raw_address = raw_address + ", " + state
+                    if zc != "":
+                        raw_address = raw_address + " " + zc
+                    raw_address = raw_address.strip()
                     if loc == "":
                         loc = "<MISSING>"
                     if zc == "":
@@ -84,6 +90,14 @@ def fetch_data():
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         name = name + " - Coming Soon"
+                    add = add.replace("\\t", "").replace("\t", "")
+                    zc = zc.replace("\\t", "").replace("\t", "")
+                    city = city.replace("\\t", "").replace("\t", "")
+                    phone = phone.replace("\\t", "").replace("\t", "")
+                    if ", P.O" in add:
+                        add = add.split(", P.O")[0].strip()
+                    if "(" in add:
+                        add = add.split("(")[0].strip()
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -98,6 +112,7 @@ def fetch_data():
                         store_number=store,
                         latitude=lat,
                         longitude=lng,
+                        raw_address=raw_address,
                         hours_of_operation=hours,
                     )
 
