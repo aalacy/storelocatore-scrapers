@@ -11,44 +11,44 @@ headers = {
 
 
 def fetch_data():
-    url = "https://marathon.shotgunflat.com/data.txt"
+    url = (
+        "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
+    )
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        items = line.split("Marathon Gas - ")
-        for item in items:
-            if "|" in item:
-                name = item.split("|")[0]
-                add = item.split("|")[1]
-                lat = item.split("|")[2]
-                lng = item.split("|")[3]
-                store = "<MISSING>"
-                hours = "<MISSING>"
-                website = "marathonabrand.com"
-                typ = "<MISSING>"
-                city = item.split("|")[5]
-                state = item.split("|")[6]
-                country = "US"
-                phone = item.split("|")[8]
-                zc = item.split("|")[7]
-                loc = "<MISSING>"
-                if phone == "":
-                    phone = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+        if "StoreName" not in line:
+            name = line.split(",")[0]
+            add = line.split(",")[2]
+            city = line.split(",")[3]
+            state = line.split(",")[4]
+            store = line.split(",")[1]
+            hours = "<MISSING>"
+            website = "marathonabrand.com"
+            typ = "<MISSING>"
+            lat = line.split(",")[7]
+            lng = line.split(",")[8]
+            country = "US"
+            phone = line.split(",")[6]
+            zc = line.split(",")[5]
+            loc = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
+import time
 
 session = SgRequests()
 
@@ -21,73 +22,80 @@ def fetch_data():
         "MOROCCO|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=MA&g=1&latitude=33.589886&longitude=-7.6038690000000315",
         "NIGERIA|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=NG&g=1&latitude=9.0324906&longitude=6.4337695",
     ]
-    for url in urls:
-        headers = {
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-            "DPZ-Market": url.split("|")[0],
-        }
-        r = session.get(url.split("|")[1], headers=headers)
-        logger.info(url.split("|")[0])
-        website = "dominos.com/#storelist"
-        typ = "<MISSING>"
-        country = url.split("regionCode=")[1].split("&")[0]
-        loc = "<MISSING>"
-        logger.info("Pulling Stores")
-        for item in json.loads(r.content)["Stores"]:
-            store = country + "-" + item["StoreID"]
-            try:
-                name = item["StoreName"]
-            except:
-                name = "<MISSING>"
-            try:
-                phone = item["Phone"]
-            except:
-                phone = "<MISSING>"
-            state = "<MISSING>"
-            try:
-                add = (
-                    item["StreetName"]
-                    .replace("\r", "")
-                    .replace("\n", "")
-                    .replace("\t", "")
+    Found = True
+    while Found:
+        count = 0
+        for url in urls:
+            time.sleep(1)
+            headers = {
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+                "DPZ-Market": url.split("|")[0],
+            }
+            r = session.get(url.split("|")[1], headers=headers)
+            logger.info(url.split("|")[0])
+            website = "dominos.com/#storelist"
+            typ = "<MISSING>"
+            country = url.split("regionCode=")[1].split("&")[0]
+            loc = "<MISSING>"
+            logger.info("Pulling Stores")
+            for item in json.loads(r.content)["Stores"]:
+                store = country + "-" + item["StoreID"]
+                try:
+                    name = item["StoreName"]
+                except:
+                    name = "<MISSING>"
+                try:
+                    phone = item["Phone"]
+                except:
+                    phone = "<MISSING>"
+                state = "<MISSING>"
+                try:
+                    add = (
+                        item["StreetName"]
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .replace("\t", "")
+                    )
+                except:
+                    add = "<MISSING>"
+                try:
+                    zc = item["PostalCode"]
+                except:
+                    zc = "<MISSING>"
+                try:
+                    city = item["City"].replace("\r", "").replace("\n", "")
+                except:
+                    city = "<MISSING>"
+                try:
+                    hours = (
+                        item["HoursDescription"]
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .replace("\t", "")
+                    )
+                except:
+                    hours = "<MISSING>"
+                lat = item["Latitude"]
+                lng = item["Longitude"]
+                count = count + 1
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
                 )
-            except:
-                add = "<MISSING>"
-            try:
-                zc = item["PostalCode"]
-            except:
-                zc = "<MISSING>"
-            try:
-                city = item["City"].replace("\r", "").replace("\n", "")
-            except:
-                city = "<MISSING>"
-            try:
-                hours = (
-                    item["HoursDescription"]
-                    .replace("\r", "")
-                    .replace("\n", "")
-                    .replace("\t", "")
-                )
-            except:
-                hours = "<MISSING>"
-            lat = item["Latitude"]
-            lng = item["Longitude"]
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        if count >= 430:
+            Found = False
 
 
 def scrape():

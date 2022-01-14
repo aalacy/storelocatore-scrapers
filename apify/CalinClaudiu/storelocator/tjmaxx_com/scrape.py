@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries, Grain_2
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 
@@ -80,7 +80,17 @@ class ExampleSearchIteration(SearchIteration):
             # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
             lat, lng = coord
             # just some clever accounting of locations/country:
-            numbers = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99"
+            numbers = "21%2C20"
+            nCA = "93%2C91%2C90"
+            nUS = "8%2C10%2C28%2C29%2C50"
+            nAU = "20"
+            if current_country == "ca":
+                numbers = nCA
+            elif current_country == "us":
+                numbers = nUS
+            elif current_country == "au":
+                numbers = nAU
+
             url = str(
                 f"https://marketingsl.tjx.com/storelocator/GetSearchResults?geolat={lat}&geolong={lng}&chain={numbers}&maxstores=9999&radius=1000"
             )
@@ -174,16 +184,12 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    tocrawl = []
-    tocrawl.append(SearchableCountries.USA)
-    tocrawl.append(SearchableCountries.CANADA)
-    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    tocrawl = SearchableCountries.CANADA
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        granularity=Grain_8(),
-        expected_search_radius_miles=100,
+        granularity=Grain_2(),
+        expected_search_radius_miles=2,
     )
-
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
     ) as writer:
@@ -194,6 +200,5 @@ if __name__ == "__main__":
                 search_iteration=search_iter,
                 country_codes=tocrawl,
             )
-
             for rec in par_search.run():
                 writer.write_row(rec)

@@ -18,6 +18,7 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     div = "".join(tree.xpath("//div/@data-stores"))
     js = json.loads(div)
+
     for j in js.values():
 
         location_name = j.get("displayName")
@@ -39,7 +40,11 @@ def fetch_data(sgw: SgWriter):
         phone = j.get("phone")
 
         hours_of_operation = (
-            "".join(j.get("hours")).replace("[", "").replace("]", "").strip()
+            "".join(j.get("hours"))
+            .replace("[", "")
+            .replace("]", "")
+            .replace("true", "Closed")
+            .strip()
         )
         ad = "".join(j.get("formatedAddress")).replace("<br/>", "").strip()
 

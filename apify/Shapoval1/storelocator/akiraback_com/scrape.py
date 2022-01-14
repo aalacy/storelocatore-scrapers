@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -83,7 +83,7 @@ def fetch_data(sgw: SgWriter):
             ad = (
                 " ".join(
                     tree.xpath(
-                        '//h2[./span[text()="LOCATION"]]/following-sibling::p[1]//text()'
+                        '//h2[./mark[text()="LOCATION"]]/following-sibling::p[1]//text()'
                     )
                 )
                 .replace("\n", "")
@@ -97,7 +97,7 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 " ".join(
                     tree.xpath(
-                        '//h2[./span[text()="HOURS OF OPERATION"]]/following-sibling::p//text()'
+                        '//h2[./mark[text()="HOURS OF OPERATION"]]/following-sibling::p//text()'
                     )
                 )
                 .replace("\n", "")
@@ -403,6 +403,8 @@ def fetch_data(sgw: SgWriter):
             street_address = "PO Box 1176"
         if city.find("Los Angeles") != -1:
             country_code = "US"
+        if page_url.find("voxcinemas") != -1 or location_name == "DOSA":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -427,7 +429,5 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.akiraback.com"
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

@@ -49,31 +49,31 @@ def fetch_data():
                 if state == "Wisconsin":
                     state = "WI"
 
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=link,
-                location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode,
-                country_code="US",
-                store_number=storeid,
-                phone=phone,
-                location_type=MISSING,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation="<INACCESSIBLE>",
-            )
+            if link != "https://www.festfoods.com/stores/weston":
+
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode,
+                    country_code="US",
+                    store_number=storeid,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation="<INACCESSIBLE>",
+                )
 
 
 def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

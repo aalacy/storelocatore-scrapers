@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -22,7 +22,7 @@ def fetch_data():
         "https://smashburger.com/locations/ca/",
     ]
 
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         for search_url in urls:
             search_res = session.get(search_url, headers=headers)
             search_sel = lxml.html.fromstring(search_res.text)
@@ -35,6 +35,9 @@ def fetch_data():
                 log.info(page_url)
 
                 store_res = session.get(page_url, headers=headers)
+                if isinstance(store_res, SgRequestError):
+                    continue
+
                 store_sel = lxml.html.fromstring(store_res.text)
 
                 locator_domain = website
@@ -43,19 +46,12 @@ def fetch_data():
 
                 raw_address = "<MISSING>"
 
-                street_address = " ".join(
-                    store_sel.xpath('//span[@itemprop="streetAddress"]//text()')
-                ).strip()
+                add_list = store_sel.xpath("//div[@data-lat]/div/span/text()")
+                street_address = ", ".join(add_list[:-3]).strip()
 
-                city = "".join(
-                    store_sel.xpath('//span[@itemprop="addressLocality"]//text()')
-                ).strip()
-                state = "".join(
-                    store_sel.xpath('//span[@itemprop="addressRegion"]//text()')
-                ).strip()
-                zip = "".join(
-                    store_sel.xpath('//span[@itemprop="postalCode"]//text()')
-                ).strip()
+                city = add_list[-3].strip()
+                state = add_list[-2].strip()
+                zip = add_list[-1].strip()
 
                 country_code = page_url.split("locations/")[1].split("/")[0].upper()
 

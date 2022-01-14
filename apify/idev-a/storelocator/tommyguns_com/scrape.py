@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -13,12 +13,11 @@ _headers = {
 
 logger = SgLogSetup().get_logger("tommyguns.com")
 
-days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+locator_domain = "https://www.tommyguns.com"
+base_url = "https://ca.tommyguns.com/blogs/locations?view=json"
 
 
 def fetch_data():
-    locator_domain = "https://www.tommyguns.com"
-    base_url = "https://ca.tommyguns.com/blogs/locations?view=json"
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["locations"]
         logger.info(f"{len(locations)} found!")
@@ -28,27 +27,17 @@ def fetch_data():
             page_url = "https://ca.tommyguns.com" + _["url"]
             logger.info(page_url)
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            hr_text = soup1.select_one("div.store-details__wait-time").text.lower()
+            if "coming soon" in hr_text or "hours will be posted" in hr_text:
+                continue
             hours = []
-            if soup1.select_one("div.store-details__content"):
-                temp = list(
-                    soup1.select_one("div.store-details__content").stripped_strings
-                )[1:]
-                if "Coming Soon" in "".join(temp) or "hours will be posted" in "".join(
-                    temp
-                ):
-                    continue
-                for hh in temp:
-                    if "re-open" in hh.lower():
-                        continue
-                    if "open" in hh.lower():
-                        continue
-                    if (
-                        hh != "TEMPORARILY CLOSED"
-                        and hh.split("-")[0].split(" ")[0].split(":")[0].strip()
-                        not in days
-                    ):
-                        break
-                    hours.append(hh)
+            json_url = f"https://gft.tommyguns.com/api/v1/kiosk/GetShopStatus/{soup1.select_one('div.store-details__wait-time')['data-id']}"
+            res = session.get(json_url, headers=_headers)
+            if res.status_code == 200:
+                status_data = res.json()["hours"]["openHours"]
+                for day, hh in status_data.items():
+                    hours.append(f"{day}: {hh['open_time']} - {hh['close_time']}")
+
             addr = parse_address_intl(_["address"] + ", Canada")
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -76,6 +65,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=_["address"],
             )
 
 
