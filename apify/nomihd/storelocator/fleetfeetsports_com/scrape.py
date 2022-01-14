@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
@@ -18,7 +18,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         stores_req = session.get("https://www.fleetfeet.com/locations", headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath(
@@ -69,30 +69,95 @@ def fetch_data():
             page_url = "".join(
                 store.xpath('p/a[contains(text(),"website")]/@href')
             ).strip()
-            if "http" not in page_url:
-                page_url = "https://www.fleetfeet.com" + page_url
+            if len(page_url) > 0:
+                if "http" not in page_url:
+                    page_url = "https://www.fleetfeet.com" + page_url
+
+            log.info(page_url)
+            store_req = session.get(page_url, headers=headers)
+            hours_list = []
+            if not isinstance(store_req, SgRequestError):
+                store_sel = lxml.html.fromstring(store_req.text)
+                sections = store_sel.xpath('//div[@class="location-partial"]')
+                for sec in sections:
+                    if len(sections) == 1:
+                        if len(phone) <= 0:
+                            phone = "".join(
+                                sec.xpath('.//p[@class="phone"]//text()')
+                            ).strip()
+                        days = sec.xpath('.//p[@class="hours"]/strong/text()')
+                        tim = sec.xpath('.//p[@class="hours"]/text()')
+                        tim_list = []
+                        for t in tim:
+                            if len("".join(t).strip()) > 0:
+                                tim_list.append("".join(t).strip())
+
+                        for index in range(0, len(days)):
+                            day = "".join(days[index]).strip()
+                            time = "".join(tim_list[index]).strip()
+                            hours_list.append(day + time)
+
+                    else:
+                        if (
+                            city
+                            in "".join(
+                                sec.xpath(".//p[@class='address']/text()")
+                            ).strip()
+                            or zip
+                            in "".join(
+                                sec.xpath(".//p[@class='address']/text()")
+                            ).strip()
+                        ):
+                            days = sec.xpath('.//p[@class="hours"]/strong/text()')
+                            tim = sec.xpath('.//p[@class="hours"]/text()')
+                            tim_list = []
+                            for t in tim:
+                                if len("".join(t).strip()) > 0:
+                                    tim_list.append("".join(t).strip())
+                            for index in range(0, len(days)):
+                                day = "".join(days[index]).strip()
+                                time = "".join(tim_list[index]).strip()
+                                hours_list.append(day + time)
+
+                            if len(phone) <= 0:
+                                phone = "".join(
+                                    sec.xpath('.//p[@class="phone"]//text()')
+                                ).strip()
+
+                            page_url = "".join(
+                                sec.xpath('.//a[contains(text(),"View Store")]/@href')
+                            ).strip()
+                            if "http" not in page_url:
+                                page_url = "https://www.fleetfeet.com" + page_url
+
+                            break
 
             locator_domain = website
             location_name = "".join(store.xpath("h3/text()")).strip()
-
+            if "Coming Soon!" in location_name:
+                continue
             country_code = "US"
             store_number = "<MISSING>"
             location_type = "<MISSING>"
             latitude = "".join(store.xpath("@data-lat")).strip()
             longitude = "".join(store.xpath("@data-lng")).strip()
 
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = "; ".join(hours_list).strip()
+            if len(page_url) <= 0:
+                page_url = "https://www.fleetfeet.com/locations"
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
-                street_address=street_address,
+                street_address=street_address.replace(
+                    ", Preston Towne Crossing", ""
+                ).strip(),
                 city=city,
                 state=state,
                 zip_postal=zip,
                 country_code=country_code,
                 store_number=store_number,
-                phone=phone,
+                phone=phone.split(",")[0].strip(),
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
