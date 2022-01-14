@@ -21,10 +21,19 @@ def fetch_data(sgw: SgWriter):
 
         page_url = f"https://www.eggfreecake.co.uk/storelocator/{j.get('link')}"
         location_name = "".join(j.get("name"))
-        street_address = "".join(j.get("address")).strip()
+        street_address = (
+            "".join(j.get("address"))
+            .replace(",", "")
+            .replace("Slough", "")
+            .replace("Cardiff", "")
+            .strip()
+        )
         postal = j.get("postcode")
         country_code = "UK"
-        city = str(j.get("city")).replace("None", "").strip() or "<MISSING>"
+        city = (
+            str(j.get("city")).replace("None", "").replace(",", "").strip()
+            or "<MISSING>"
+        )
         if city == "<MISSING>":
             city = location_name
         if city.find("(") != -1:
