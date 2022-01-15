@@ -10,7 +10,6 @@ import re
 
 
 DOMAIN = "golocalstores.co.uk"
-BASE_URL = "https://golocalstores.co.uk"
 LOCATION_URL = "https://golocalstores.co.uk/store-finder"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
