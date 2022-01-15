@@ -7,6 +7,10 @@ from bs4 import BeautifulSoup
 import tenacity
 import os
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 os.environ[
     "PROXY_URL"
 ] = "http://groups-RESIDENTIAL,country-gb:{}@proxy.apify.com:8000/"
