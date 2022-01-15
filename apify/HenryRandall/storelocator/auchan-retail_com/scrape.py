@@ -61,15 +61,15 @@ def fetch_data(sgw: SgWriter):
             address = SgRecord.MISSING
         else:
             address = address.text
-            
-        try:    
+
+        try:
             class_name = "site"
             driver = get_driver(loc_url, class_name)
             soup = bs(driver.page_source, "html.parser")
             info = soup.find("script", {"id": "single_location_script-js-extra"})
             info = str(info).split('latitude":"')[-1]
-            [lat,info] = info.split('","longitude":"')
-            [long,info] = info.split('","country":"')
+            [lat, info] = info.split('","longitude":"')
+            [long, info] = info.split('","country":"')
             country = info.split('"')[0]
         except:
             lat = SgRecord.MISSING
@@ -87,6 +87,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=long,
             )
         )
+
 
 def scrape():
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
