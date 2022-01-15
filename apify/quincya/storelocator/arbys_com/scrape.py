@@ -1,50 +1,24 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("arbys.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    base_link = "https://locations.arbys.com/"
 
-
-def fetch_data():
-
-    base_link = "https://locations.arbys.com/?_ga=2.162119932.1183880869.1626249434-1748791237.1623814424"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -69,8 +43,8 @@ def fetch_data():
 
             other_links = next_base.find_all(class_="location-name ga-link")
             for other_link in other_links:
-                link = other_link["href"]
-                final_links.append(link)
+                new_link = other_link["href"]
+                final_links.append(new_link)
                 state_count.append(state_count)
         logger.info(len(state_count))
 
@@ -121,27 +95,25 @@ def fetch_data():
         except:
             hours_of_operation = "<MISSING>"
 
-        yield [
-            locator_domain,
-            final_link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
