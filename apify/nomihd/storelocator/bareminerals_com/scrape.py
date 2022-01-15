@@ -169,7 +169,7 @@ def fetch_records_for(tup):
 def process_record(raw_results_from_one_coordinate):
     stores, current_country = raw_results_from_one_coordinate
     for store in stores:
-        page_url = "<MISSING>"
+        page_url = "https://www.bareminerals.com/find-a-store/"
         locator_domain = website
         location_name = store["name"]
         street_address = store["address1"]
@@ -183,7 +183,7 @@ def process_record(raw_results_from_one_coordinate):
         if country_code is None or country_code == "":
             country_code = current_country
 
-        store_number = store["uid"]
+        store_number = "<MISSING>"
         phone = store.get("phone", "<MISSING>")
 
         location_type = "<MISSING>"
@@ -291,7 +291,7 @@ def scrape():
             if country != "US":
                 try:
                     search = DynamicGeoSearch(
-                        expected_search_radius_miles=20, country_codes=[country]
+                        expected_search_radius_miles=5, country_codes=[country]
                     )
                     results = parallelize(
                         search_space=[

@@ -27,7 +27,7 @@ logger = SgLogSetup().get_logger("linex_com")
 DOMAIN = "linex.com"
 MISSING = SgRecord.MISSING
 LOCATOR_URL = "https://linex.com/find-a-location"
-MAX_WORKERS = 10
+MAX_WORKERS = 5
 
 headers_csrf = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",

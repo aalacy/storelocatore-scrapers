@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-
+import ssl
 from sgscrape import simple_utils as utils
 from sgrequests.sgrequests import SgRequests
 from requests.packages.urllib3.util.retry import Retry
@@ -23,6 +23,13 @@ from fuzzywuzzy import process
 import json  # noqa
 
 import time
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def return_last4(fullId):
@@ -586,17 +593,22 @@ def fetch_data():
     # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
 
-    def retry_starting():
-        try:
-            return get_api_call(url)
-        except Exception as e:
-            logzilla.info(f"Handling this:\n{str(e)}")
-            retry_starting()
-            # shouldn't be to worried,
-            # worst case if their API changes crawl will timeout
-            # rather than just pull from the other (worse) data source
+    def rRetry(retry):
+        def retry_starting():
+            try:
+                return get_api_call(url)
+            except Exception as e:
+                logzilla.info(f"Handling this:\n{str(e)}")
+                retry_starting()
+                # shouldn't be to worried,
+                # worst case if their API changes crawl will timeout
+                # rather than just pull from the other (worse) data source
 
-    url, headers = retry_starting()
+        if retry:
+            retry_starting()
+        return get_api_call(url)
+
+    url, headers = rRetry(False)
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
     logzilla.info(f"Fixing up URL,")  # noqa
