@@ -150,7 +150,7 @@ def fetch_records(key, idx, url_data, sgw: SgWriter):
                 # Country Code
                 country_code = None
                 if "#" in location_name:
-                    country_code = "MX"
+                    country_code = "<INACCESSIBLE>"
                 else:
                     country_code = "US"
 
