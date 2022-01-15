@@ -56,7 +56,11 @@ def fetch_data():
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
             if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
+                street_address = (
+                    street_address.replace("Ste", "Suite")
+                    .replace("West Point Travel Plaza", "")
+                    .strip()
+                )
 
             city = formatted_addr.city
 
@@ -84,6 +88,10 @@ def fetch_data():
                 .replace("OPEN FOR BUSINESS!", "")
                 .replace("NOW OPEN!", "")
                 .strip(";! ")
+                .split("; CLOSED Thanksgiving")[0]
+                .strip()
+                .split("; Closing early")[0]
+                .strip()
             )
 
             latitude, longitude = "<MISSING>", "<MISSING>"
