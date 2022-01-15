@@ -122,6 +122,7 @@ class _SearchIteration(SearchIteration):
                         )
 
                 except:
+                    log.error(stores_req.text)
                     pass
 
                 page_no = page_no + 1
