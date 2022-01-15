@@ -39,9 +39,10 @@ def fetch_data():
         phone = div.select_one("a[href*=tel]").text
 
         r = session.get(link, headers=headers)
+
         soup = BeautifulSoup(r.text, "html.parser")
-        lat = r.text.split('"latitude": "', 1)[1].split('"', 1)[0]
-        longt = r.text.split('"longitude": "', 1)[1].split('"', 1)[0]
+        lat = r.text.split('"latitude": "')[-1].split('"', 1)[0]
+        longt = r.text.split('"longitude": "')[-1].split('"', 1)[0]
 
         hours = soup.find("div", {"class": "hours"}).text
         hours = (

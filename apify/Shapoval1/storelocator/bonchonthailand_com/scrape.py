@@ -27,6 +27,8 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         location_name = "".join(j.get("name")).replace("_", " ").capitalize().strip()
+        if location_name != "Bangkok":
+            location_name = "<MISSING>"
         street_address = f"{j.get('address')} {j.get('comment')}".replace(
             "@ ", ""
         ).strip()
