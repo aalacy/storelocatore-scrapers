@@ -3,7 +3,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import (
+    DynamicZipSearch,
+    Grain_1_KM,
+    SearchableCountries,
+)
 
 
 def fetch_data():
@@ -13,7 +17,9 @@ def fetch_data():
     domain = "moleskine.com"
 
     all_coodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=1,
+        granularity=Grain_1_KM(),
     )
     for code in all_coodes:
         frm = {"dwfrm_storelocator_country": "US", "dwfrm_storelocator_query": code}
