@@ -184,7 +184,11 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    tocrawl = [SearchableCountries.CANADA]
+    tocrawl = []
+    tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.CANADA)
+    tocrawl.append(SearchableCountries.AUSTRALIA)
+    tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
