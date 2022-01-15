@@ -195,7 +195,16 @@ if __name__ == "__main__":
         expected_search_radius_miles=2,
     )
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE, SgRecord.Headers.PHONE}, fail_on_empty_id=True))
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                },
+                fail_on_empty_id=True,
+            )
+        )
     ) as writer:
         with SgRequests() as http1:
             search_iter = ExampleSearchIteration()
