@@ -77,12 +77,15 @@ def fetch_data():
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
 
+            if street_address and street_address[-1] == ",":
+                street_address = "".join(street_address[:-1]).strip()
+
             city = store["city"]
 
             state = store["state"]
             zip = store["zipcode"]
 
-            country_code = "AU"
+            country_code = "US"
 
             phone = store_info[-1]
 

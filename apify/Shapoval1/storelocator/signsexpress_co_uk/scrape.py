@@ -43,6 +43,8 @@ def get_data(url, sgw: SgWriter):
     city = b.city or "<MISSING>"
     if "Manchester" in ad:
         city = "Manchester"
+    if city == "Dublin":
+        country_code = "IE"
     state = a.get("region")
     location_name = j.get("name")
     phone = a.get("phone") or "<MISSING>"

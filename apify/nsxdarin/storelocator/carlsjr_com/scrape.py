@@ -108,6 +108,8 @@ def fetch_data():
         if "singapore" in state.lower():
             country = "SG"
             state = "<MISSING>"
+        if phone.strip() == "0" or len(phone) <= 1:
+            phone = "<MISSING>"
         if RB is False:
             if add != "":
                 yield SgRecord(
