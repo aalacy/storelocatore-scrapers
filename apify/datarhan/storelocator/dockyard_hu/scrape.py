@@ -1,5 +1,5 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import re
+import demjson
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -37,8 +37,14 @@ def fetch_data():
             '//div[@class="shop-data-openings shop-data-table"]/p//text()'
         )
         hoo = " ".join([e.strip() for e in hoo])
-        latitude = re.findall(r"x: '(.+?)',", loc_response.text)[0]
-        longitude = re.findall(r"y: '(.+?)',", loc_response.text)[0]
+        geo = (
+            re.findall(
+                r"points.push\((.+?)',name: '{}".format(location_name),
+                loc_response.text.replace("\n", ""),
+            )[0].split("points.push(")[-1]
+            + "'}"
+        )
+        geo = demjson.decode(geo)
 
         item = SgRecord(
             locator_domain=domain,
@@ -52,9 +58,10 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=latitude,
-            longitude=longitude,
+            latitude=geo["y"],
+            longitude=geo["x"],
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item
