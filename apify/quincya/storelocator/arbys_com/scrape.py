@@ -31,7 +31,6 @@ def fetch_data(sgw: SgWriter):
     for main_item in main_items:
         main_link = main_item["href"]
 
-        state_count = []
         logger.info("Processing: " + main_link)
         req = session.get(main_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
@@ -45,8 +44,6 @@ def fetch_data(sgw: SgWriter):
             for other_link in other_links:
                 new_link = other_link["href"]
                 final_links.append(new_link)
-                state_count.append(state_count)
-        logger.info(len(state_count))
 
     logger.info("Processing %s links ..." % (len(final_links)))
     for final_link in final_links:
