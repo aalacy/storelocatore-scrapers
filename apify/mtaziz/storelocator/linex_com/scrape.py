@@ -1,11 +1,9 @@
 from lxml import etree
 from time import sleep
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
