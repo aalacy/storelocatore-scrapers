@@ -11,7 +11,6 @@ from lxml import html
 
 
 logger = SgLogSetup().get_logger("mbusa_com__en__smart")
-# LOCATION_DEALER_URL = "https://www.mercedes-benz.co.uk/passengercars/mercedes-benz-cars/dealer-locator.html"
 LOCATION_DEALER_URL = "https://www.mercedes-amg.com/en/vehicles/dealer.html"
 COUNTRY_LOCATION_URL = "https://www.mercedes-amg.com/en/vehicles/dealer.html"
 MISSING = SgRecord.MISSING
