@@ -12,7 +12,7 @@ import re
 
 DOMAIN = "zipscarwash.com"
 BASE_URL = "https://www.zipscarwash.com/"
-LOCATION_URL = "https://www.zipscarwash.com/drive-through-car-wash-locations?code={code}&latitude={latitude}&longitude={longitude}&distance=50"
+LOCATION_URL = "https://www.zipscarwash.com/drive-through-car-wash-locations?code={code}&latitude={latitude}&longitude={longitude}&distance={distance}"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -66,8 +66,8 @@ def pull_content(url, num=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    max_results = 10
-    max_distance = 50
+    max_distance = 750
+    max_results = 200
     search = DynamicZipAndGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_search_distance_miles=max_distance,
@@ -79,7 +79,9 @@ def fetch_data():
             "Searching: %s, %s | Items remaining: %s"
             % (lat, long, search.items_remaining())
         )
-        page_url = LOCATION_URL.format(code=zipcode, latitude=lat, longitude=long)
+        page_url = LOCATION_URL.format(
+            code=zipcode, latitude=lat, longitude=long, distance=max_distance
+        )
         soup = pull_content(page_url)
         if not soup:
             log.info(f"Skipping invalid url => {page_url}")
@@ -147,7 +149,7 @@ def scrape():
                     SgRecord.Headers.RAW_ADDRESS,
                 }
             ),
-            duplicate_streak_failure_factor=250000,
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         results = fetch_data()
