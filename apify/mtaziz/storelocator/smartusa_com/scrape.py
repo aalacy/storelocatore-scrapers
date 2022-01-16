@@ -8,8 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
 from lxml import html
-import re
-import json
 
 
 logger = SgLogSetup().get_logger("mbusa_com__en__smart")
@@ -183,98 +181,6 @@ def get_country_code_list():
             en_country_list.append(j)
         en_country_list = [i.replace("[", "").replace("]", "") for i in en_country_list]
         en_country_list_1 = [i.split("_")[-1] for i in en_country_list]
-        en_country_list_1_test = None
-        en_country_list_1_test = [
-            "AE",
-            "AL",
-            "AQ",
-            "AR",
-            "AT",
-            "AU",
-            "BA",
-            "BE",
-            "BG",
-            "BH",
-            "BN",
-            "BO",
-            "BR",
-            "BY",
-            "CA",
-            "CH",
-            "CL",
-            "CN",
-            "CO",
-            "CY",
-            "CZ",
-            "DE",
-            "DK",
-            "DS",
-            "EC",
-            "EE",
-            "EG",
-            "ES",
-            "FI",
-            "FR",
-            "GB",
-            "GR",
-            "HA",
-            "HB",
-            "HC",
-            "HK",
-            "HR",
-            "HU",
-            "ID",
-            "IE",
-            "IN",
-            "IQ",
-            "IR",
-            "IS",
-            "IT",
-            "JP",
-            "KR",
-            "LB",
-            "LI",
-            "LK",
-            "LT",
-            "LU",
-            "LV",
-            "MA",
-            "MK",
-            "MO",
-            "MT",
-            "MX",
-            "MY",
-            "NL",
-            "NO",
-            "NZ",
-            "PE",
-            "PH",
-            "PL",
-            "PT",
-            "PY",
-            "RO",
-            "RS",
-            "RU",
-            "SA",
-            "SE",
-            "SG",
-            "SI",
-            "SK",
-            "TH",
-            "TN",
-            "TR",
-            "TW",
-            "UA",
-            "US",
-            "UY",
-            "VE",
-            "VN",
-            "XA",
-            "XD",
-            "XH",
-            "ZA",
-            "ZY",
-        ]
         en_country_list_1_deduped = list(set(en_country_list_1))
         en_country_list_1_deduped_sorted = sorted(en_country_list_1_deduped)
 
@@ -290,8 +196,6 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
         logger.info(f"[{idx}] Pulling the data from {api_endpoint_url}")
         data_per_dealer_json = r_data_per_dealer.json()
         for d in data_per_dealer_json["results"]:
-            locator_domain = "smart.com/gb/en"
-            page_url_slug = d["baseInfo"]["externalId"]
             location_name = None
             try:
                 brands = d["brands"]
