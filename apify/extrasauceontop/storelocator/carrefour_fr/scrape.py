@@ -110,6 +110,7 @@ def get_data():
                 hours = "<MISSING>"
 
             else:
+                hours = ""
                 keys = location["openingWeekPattern"]["timeRanges"].keys()
                 for day in keys:
                     start = (
@@ -126,6 +127,10 @@ def get_data():
                         .split(" ")[1]
                         .split(".")[0]
                     )
+
+                    hours = hours + day + " " + start + "-" + end + ", "
+
+                hours = hours[:-2]
 
             yield {
                 "locator_domain": locator_domain,
