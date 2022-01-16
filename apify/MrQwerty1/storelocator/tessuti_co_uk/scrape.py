@@ -9,7 +9,9 @@ from concurrent import futures
 
 
 def get_urls():
-    r = session.get("https://www.tessuti.co.uk/store-locator/all-stores/")
+    r = session.get(
+        "https://www.tessuti.co.uk/store-locator/all-stores/", headers=headers
+    )
     tree = html.fromstring(r.text)
 
     return tree.xpath("//a[@class='storeCard guest']/@href")
@@ -17,7 +19,7 @@ def get_urls():
 
 def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.tessuti.co.uk{slug}"
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(), 'openingHoursSpecification')]/text()")
@@ -84,6 +86,20 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.tessuti.co.uk/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+        "TE": "trailers",
+    }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
