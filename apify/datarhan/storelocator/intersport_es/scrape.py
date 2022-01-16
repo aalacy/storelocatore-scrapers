@@ -36,7 +36,12 @@ def fetch_data():
 
         all_locations = json.loads(data)
         for poi in all_locations:
-            page_url = f'https://{start_url.split("/")[2]}/storedetail?storeID={poi["storeID"]}'
+            if ".ch" in start_url:
+                page_url = (
+                    f'https://www.intersport.ch/de/storedetail?storeID={poi["storeID"]}'
+                )
+            else:
+                page_url = f'https://{start_url.split("/")[2]}/storedetail?storeID={poi["storeID"]}'
             loc_response = session.get(page_url)
             if loc_response.status_code != 200:
                 continue

@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgpostal import sgpostal as parser
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -76,7 +75,7 @@ def fetch_data():
 
                     locator_domain = website
 
-                    page_url = "".join(store.xpath("./div[1]/a/@href"))
+                    page_url = "".join(store.xpath("div[1]/a/@href"))
 
                     log.info(page_url)
                     store_res = session.get(page_url, headers=headers)
@@ -89,32 +88,29 @@ def fetch_data():
                     )
                     location_type = "<MISSING>"
 
-                    store_info = list(
-                        filter(
-                            str,
-                            [
-                                x.strip()
-                                for x in store_sel.xpath(
-                                    '//div[@class="locator"]//div[@class="map-list"]//p[@class="address"]//text()'
-                                )
-                            ],
-                        )
+                    store_info = store_sel.xpath(
+                        '//div[@class="locator"]//div[@class="map-list"]//p[@class="address"]/span[not(@data-hide-empty)]/text()'
                     )
+                    log.info(store_info)
+                    street_address = store_info[0]
+                    city = store_info[-1].strip().split(",")[0].strip()
 
-                    raw_address = " ".join(store_info)
-                    formatted_addr = parser.parse_address_intl(raw_address)
-                    street_address = formatted_addr.street_address_1
-                    if formatted_addr.street_address_2:
-                        street_address = (
-                            street_address + ", " + formatted_addr.street_address_2
-                        )
-
-                    if street_address is not None:
-                        street_address = street_address.replace("Ste", "Suite")
-                    city = formatted_addr.city
-
-                    state = formatted_addr.state
-                    zip = formatted_addr.postcode
+                    state = (
+                        store_info[-1]
+                        .strip()
+                        .split(",")[-1]
+                        .strip()
+                        .split(" ", 1)[0]
+                        .strip()
+                    )
+                    zip = (
+                        store_info[-1]
+                        .strip()
+                        .split(",")[-1]
+                        .strip()
+                        .split(" ", 1)[-1]
+                        .strip()
+                    )
 
                     country_code = "CA"
 
@@ -165,7 +161,6 @@ def fetch_data():
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
-                        raw_address=raw_address,
                     )
 
 
