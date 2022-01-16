@@ -194,7 +194,7 @@ def get_lat_lng(response):
     try:
         parts = response.split("LatLng(")[1].split(");")[0].split(",")
         if len(parts[0].strip()) > 0 and len(parts[1].strip()) > 0:
-            log.debug(f"found geo from init script")
+            log.debug("found geo from init script")
             return parts[0].strip(), parts[1].strip()
     except Exception as e:
         log.info(f"Lat-Lng: {e}")
