@@ -29,16 +29,28 @@ def fetch_data():
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            if not city:
+                city = _.h2.text.replace("Menkind", "").strip()
+            if street_address.strip() == "29A" or street_address.strip() == "Unit 87":
+                street_address = ""
+                for aa in raw_address.split(","):
+                    if not aa.strip():
+                        continue
+                    if aa == city:
+                        break
+                    street_address += " " + aa
             phone = ""
             if _.select_one("div.storefinder-search-store-telephone-number"):
                 phone = _.select_one(
                     "div.storefinder-search-store-telephone-number"
                 ).text.strip()
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h2.text.strip(),
-                street_address=street_address,
-                city=addr.city,
+                street_address=street_address.strip(),
+                city=city.replace("Street", ""),
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="UK",

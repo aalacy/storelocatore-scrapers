@@ -49,7 +49,7 @@ def fetch_data():
         store = ""
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
-            if "officeCode" in line2:
+            if "officeCode" in line2 and '"active":"true"' in line2:
                 store = line2.split('"officeCode":"')[1].split('"')[0]
                 name = line2.split('"label":"')[1].split('"')[0]
                 add = line2.split('"street":"')[1].split('"')[0]
@@ -79,22 +79,23 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if store != "":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
