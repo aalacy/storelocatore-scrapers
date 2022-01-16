@@ -23,7 +23,11 @@ def get_data(slug, sgw: SgWriter):
     line = list(filter(None, [l.replace(",", "").strip() for l in line]))
     location_name = line.pop(0)
     raw_address = " ".join(line)
-    street_address = line.pop(0)
+    if line[0][0].isalpha() and line[1][0].isdigit():
+        street_address = line[1]
+        line = line[2:]
+    else:
+        street_address = line.pop(0)
     postal = line.pop()
     city = line.pop()
     phone = "".join(
