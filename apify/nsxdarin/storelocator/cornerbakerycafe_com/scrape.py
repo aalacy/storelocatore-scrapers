@@ -1,3 +1,5 @@
+from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
@@ -20,7 +22,6 @@ def fetch_data(sgw: SgWriter):
     url = "https://cornerbakerycafe.com/locations/all"
     r = session.get(url, headers=headers)
     website = "cornerbakerycafe.com"
-    typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
@@ -36,6 +37,7 @@ def fetch_data(sgw: SgWriter):
         city = ""
         state = ""
         zc = ""
+        typ = ""
         phone = ""
         lat = ""
         lng = ""
@@ -47,12 +49,6 @@ def fetch_data(sgw: SgWriter):
             line2 = str(line2)
             if '"name": "' in line2 and name == "":
                 name = line2.split('"name": "')[1].split('"')[0]
-            if '"openingHours": [ "' in line2:
-                hours = (
-                    line2.split('"openingHours": [ "')[1]
-                    .split(" ]")[0]
-                    .replace('"', "")
-                )
             if '"telephone": "' in line2 and phone == "":
                 phone = line2.split('"telephone": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
@@ -73,11 +69,26 @@ def fetch_data(sgw: SgWriter):
                     .replace("\t", "")
                     .strip()
                 )
-        hours = hours.replace(", ", "; ")
-        if ":" not in hours:
-            hours = "<MISSING>"
+
         if not phone:
             continue
+
+        base = BeautifulSoup(r2.text, "lxml")
+        if "Temporarily Closed" in base.find(id="main-content").text:
+            hours = "Temporarily Closed"
+        else:
+            hours = " ".join(list(base.find(class_="dl-hours").stripped_strings))
+
+        try:
+            add = (
+                base.find(class_="loc-icon-home")
+                .get_text(" ")
+                .replace("\r\n", "")
+                .replace("Temporarily Closed", "")
+            )
+            add = add[: add.rfind(city)].split("ENTRANCE")[0].strip()
+        except:
+            pass
 
         sgw.write_row(
             SgRecord(

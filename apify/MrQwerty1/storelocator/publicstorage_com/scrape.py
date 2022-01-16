@@ -36,6 +36,8 @@ def get_data(page_url, sgw: SgWriter):
     g = j.get("geo") or {}
     latitude = g.get("latitude")
     longitude = g.get("longitude")
+    if str(latitude) == "0":
+        return
 
     _tmp = []
     hours = j.get("openingHoursSpecification") or []

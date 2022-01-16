@@ -1,59 +1,29 @@
-import csv
+import re
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "berkotfoods.com"
+    domain = "berkotfoods.com"
     start_url = "https://www.berkotfoods.com/StoreLocator/"
 
     all_locations = []
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     states_urls = dom.xpath(
-        '//h3[contains(text(), "Our stores are in the following states:")]/following-sibling::div[1]/ul/li/a/@href'
+        '//*[contains(text(), "Our stores are in the following states:")]/following-sibling::div[1]/ul/li/a/@href'
     )
     for url in states_urls:
         response = session.get(urljoin(start_url, url))
         dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//a[contains(@href, "Store_Detail")]/@href')
+        all_locations += dom.xpath('//a[@class="StoreViewLink"]/@href')
 
     for store_url in all_locations:
         loc_response = session.get(store_url)
@@ -73,38 +43,46 @@ def fetch_data():
         phone = loc_dom.xpath('//p[@class="PhoneNumber"]/a/text()')
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        geo = re.findall(r"initializeMap\((.+?)\);", loc_response.text)[0][1:-1].split(
+            ","
+        )
+        latitude = geo[0][:-1]
+        longitude = geo[1][1:]
         hours_of_operation = loc_dom.xpath('//table[@id="hours_info-BS"]//dd/text()')
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

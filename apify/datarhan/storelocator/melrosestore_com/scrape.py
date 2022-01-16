@@ -10,10 +10,13 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="us")
     domain = "melrosestore.com"
-    start_url = "https://melrosestore.com/storelocator/"
+    start_url = "https://melrosestore.com/store-locator/"
     response = session.get(start_url)
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[contains(text(), "amLocator")]/text()')[0]
     data = re.findall(r"amLocator\((.+)\);", data.replace("\n", ""))[0]
@@ -22,7 +25,7 @@ def fetch_data():
     for poi in data["jsonLocations"]["items"]:
         poi_html = etree.HTML(poi["popup_html"])
         store_url = poi_html.xpath('//a[@class="amlocator-link"]/@href')[0]
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         raw_data = poi_html.xpath("//div/text()")

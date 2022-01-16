@@ -225,6 +225,10 @@ def fetch_data():
             city = city.split("_")[0]
         if "stores/Cork" in loc:
             country = "IE"
+            add = "The Capitol 14-23 Grand Parade"
+            state = "<MISSING>"
+            name = "Cork"
+            zc = "T12 RF85"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

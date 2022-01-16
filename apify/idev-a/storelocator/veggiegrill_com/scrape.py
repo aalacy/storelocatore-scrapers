@@ -1,12 +1,22 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-import re
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import ssl
+import re
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("veggiegrill")
 
@@ -35,7 +45,7 @@ def fetch_data():
         driver.get(base_url)
         with SgRequests() as session:
             session.get(locator_domain, headers=_headers())
-            locations = bs(driver.page_source, "html.parser").select(
+            locations = bs(driver.page_source, "lxml").select(
                 "div.accordions .location-sm"
             )
             for location in locations:
@@ -44,30 +54,46 @@ def fetch_data():
                 page_url = location.select("a.btn")[-1]["href"]
                 logger.info(page_url)
                 soup1 = bs(session.get(page_url, headers=_headers()).text, "lxml")
+                try:
+                    coord = (
+                        soup1.address.find_next_sibling("a")["href"]
+                        .split("/@")[1]
+                        .split("/data")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["<INACCESIBLE>", "<INACCESIBLE>"]
+
                 labels = [_.text for _ in soup1.select("dl.hours dt")]
                 values = [_.text.strip() for _ in soup1.select("dl.hours dd")]
                 hours = []
                 for x in range(len(labels)):
                     hours.append(f"{labels[x]}: {values[x]}")
-
+                street_address = (
+                    " ".join(addr[:-1]).replace("Ackerman Student Union", "").strip()
+                )
+                if street_address.endswith(","):
+                    street_address = street_address[:-1]
                 yield SgRecord(
                     page_url=page_url,
                     store_number=location["id"],
                     location_name=location.b.text.strip(),
-                    street_address=" ".join(addr[:-1]),
+                    street_address=street_address,
                     city=addr[-1].split(",")[0].strip(),
                     state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                     zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                     country_code="US",
                     phone=phone,
+                    latitude=coord[0],
+                    longitude=coord[1],
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
-                    raw_address=" ".join(addr),
+                    raw_address=" ".join(addr).replace("Ackerman Student Union", ""),
                 )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

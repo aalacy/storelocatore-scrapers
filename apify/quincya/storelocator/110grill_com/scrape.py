@@ -32,7 +32,7 @@ def fetch_data(sgw: SgWriter):
 
     for i, item in enumerate(items):
         link = locator_domain + item.find("a", class_="pagebutton")["href"]
-        if "pages" not in link:
+        if "-" not in link:
             continue
         location_name = item.h4.text
         street_address = item.p.span.text.replace("\xa0", " ").strip()
@@ -46,9 +46,14 @@ def fetch_data(sgw: SgWriter):
         try:
             phone = item.find_all("a", {"href": re.compile(r"tel:.+")})[0].text.strip()
         except:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            phone = base.find_all("a", {"href": re.compile(r"tel:.+")})[0].text.strip()
+            try:
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                phone = base.find_all("a", {"href": re.compile(r"tel:.+")})[
+                    0
+                ].text.strip()
+            except:
+                phone = ""
 
         store_number = ""
         latitude = ""

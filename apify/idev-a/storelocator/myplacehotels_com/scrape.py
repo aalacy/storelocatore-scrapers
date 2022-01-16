@@ -23,9 +23,6 @@ def fetch_data():
             .string.split("propertiesList =")[1]
             .strip()[:-1]
         )
-        import pdb
-
-        pdb.set_trace()
         for key, _ in locations.items():
             page_url = locator_domain + _["slug"]
             yield SgRecord(

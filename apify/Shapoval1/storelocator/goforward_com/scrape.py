@@ -28,6 +28,11 @@ def fetch_data(sgw: SgWriter):
         .split("window.Pages=")[1]
         .strip()
     )
+    jsblock3 = (
+        "".join(tree.xpath('//script[contains(text(), "window.Contentful=")]/text()'))
+        .split("window.Contentful=")[1]
+        .strip()
+    )
     js1 = json.loads(jsblock2)
     for j in js["resources"]:
         a = j.get("clinic")
@@ -67,6 +72,21 @@ def fetch_data(sgw: SgWriter):
         if phone == "<MISSING>" and location_name == "Forward | Long Island":
             phone = "(833) 334-6393"
         hours_of_operation = "<MISSING>"
+
+        s_js = json.loads(jsblock3)
+        try:
+            cms = s_js.get("TrialsHFFUnlockMyProgramVariant").get("components")
+        except:
+            cms = "<MISSING>"
+        if cms != "<MISSING>":
+            for c in cms:
+                name = c.get("name")
+                if name != "ForwardLocations":
+                    continue
+                cms = c.get("data").get("comingSoonLocations").get("locations")
+                slug_cms = str(location_name).split("|")[1].strip()
+                if slug_cms in cms:
+                    hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

@@ -156,6 +156,7 @@ def fetch_data():
                     state = "PR"
                 if state == "PR":
                     country = "US"
+                name = "Advance Auto Parts #" + store
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

@@ -1,40 +1,13 @@
-import csv
-
-from sgrequests import SgRequests
 from lxml import html
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def generate_ids():
-    session = SgRequests()
     r = session.get("https://www.quicklane.com/en-us/service-centers")
     tree = html.fromstring(r.text)
     out = []
@@ -44,84 +17,77 @@ def generate_ids():
     return out
 
 
-def fetch_data():
-    out = []
-    url = "https://www.quicklane.com/en-us/service-centers"
+def get_data(store_number, sgw: SgWriter):
+    r = session.get(
+        f"https://www.digitalservices.ford.com/ql/api/v2/dealer?dealer={store_number}",
+        headers=headers,
+    )
+    js = r.json()["qlDealer"]
 
-    session = SgRequests()
+    j = js.get("dealer") or {}
+    try:
+        s = js["seo"]["quickLaneInfo"]
+    except:
+        s = {}
+
+    if not j and not s:
+        return
+    street_address = s.get("streetAddress") or j.get("streetAddress")
+    city = s.get("city") or j.get("city")
+    location_name = j.get("dealerName")
+    state = s.get("state") or j.get("state")
+    postal = s.get("zipCode") or j.get("zip")
+    country_code = j.get("country")
+    page_url = f"https://www.quicklane.com/en-us/oil-change-tire-auto-repair-store/{state}/{city}/{postal}/-/{store_number}"
+    phone = s.get("phone") or ""
+    if phone.strip() == ".":
+        phone = SgRecord.MISSING
+    latitude = j.get("latitude")
+    longitude = j.get("longitude")
+
+    _tmp = []
+    for cnt in range(1, 5):
+        key = f"hours{cnt}"
+        val = s.get(key)
+        if val:
+            _tmp.append(val)
+
+    hours_of_operation = ";".join(_tmp)
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        store_number=store_number,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    ids = generate_ids()
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    locator_domain = "https://www.quicklane.com/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
         "Origin": "https://www.quicklane.com",
     }
-    ids = generate_ids()
-
-    for i in ids:
-        r = session.get(
-            f"https://www.digitalservices.ford.com/ql/api/v2/dealer?dealer={i}",
-            headers=headers,
-        )
-        js = r.json()["qlDealer"]
-        if not js.get("dealer"):
-            continue
-        s = js.get("seo", {}).get("quickLaneInfo") if js.get("seo") else {}
-        if not s:
-            s = {}
-        j = js.get("dealer")
-        locator_domain = url
-        street_address = j.get("streetAddress") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        location_name = j.get("dealerName") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = j.get("country", "").replace("USA", "US") or "<MISSING>"
-        store_number = i
-        page_url = (
-            f"https://www.quicklane.com/en-us/oil-change-tire-auto-repair-store/"
-            f"{state}/{city}/{postal}/-/{i}"
-            or "<MISSING> "
-        )
-
-        phone = j.get("phone") or "<MISSING>"
-        if phone.strip() == ".":
-            phone = "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-
-        _tmp = []
-        for cnt in range(1, 5):
-            key = f"hours{cnt}"
-            val = s.get(key, "")
-            if val:
-                _tmp.append(val)
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

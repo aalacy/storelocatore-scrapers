@@ -48,11 +48,13 @@ def fetch_data():
                 street_address += " " + data.select_one(".address2").text.strip()
             if street_address.endswith(","):
                 street_address = street_address[:-1]
-            if city in street_address:
+            if city in street_address or (state and state in street_address):
                 addr = parse_address_intl(street_address)
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
+            if street_address:
+                street_address = street_address.replace("# ", "#")
             if "NULL" in hours:
                 hours = []
             country_code = ""
@@ -64,7 +66,7 @@ def fetch_data():
                 page_url="https://www.stevemadden.com/apps/store-locator",
                 store_number=loc["store_id"],
                 location_name=loc["name"],
-                street_address=street_address.replace("# ", "#"),
+                street_address=street_address,
                 city=city,
                 state=state,
                 zip_postal=zip_postal,

@@ -44,7 +44,10 @@ def get_data(url, sgw: SgWriter):
 
     latitude = j["yextDisplayCoordinate"]["lat"]
     longitude = j["yextDisplayCoordinate"]["long"]
-    days = j["hours"]["normalHours"]
+    try:
+        days = j["hours"]["normalHours"]
+    except KeyError:
+        days = []
 
     _tmp = []
     for d in days:
@@ -69,7 +72,7 @@ def get_data(url, sgw: SgWriter):
 
         _tmp.append(line)
 
-    hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
+    hours_of_operation = ";".join(_tmp)
     if (
         hours_of_operation.count("Closed") == 7
         or location_name.lower().find("closed") != -1
@@ -86,7 +89,6 @@ def get_data(url, sgw: SgWriter):
         country_code=country_code,
         store_number=store_number,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
@@ -99,7 +101,7 @@ def get_data(url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = generate_links()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

@@ -22,9 +22,17 @@ def fetch_data():
         '//div[h2[strong[contains(text(), "Nuestras Tiendas")]]]/following-sibling::div[@data-element="main"][1]/div//text()'
     )
     all_data = [e.strip() for e in all_data if e.strip()]
-    all_data = [e.replace("Servicio disponible:", "-----") for e in all_data]
+    all_data = [e.replace("Horario Consultorio:", "-----") for e in all_data]
     all_data = [
-        e.replace("Envío a domicilio", "").replace("Pick&Go", "") for e in all_data
+        e.replace("Servicio disponible:", "")
+        .replace("Envío a domicilio", "")
+        .replace("Pick&Go", "")
+        .replace("Lunes a Viernes de 10 a.m. a 2 p.m. y 4 p.m. a 8p.m.", "")
+        .replace("Sábado y Domingo de 10 a.m. a 2 p.m.", "")
+        .replace("Lunes a Viernes de 10am a 2pm y 4pm a 8pm", "")
+        .replace("Sábado de 10am a 2pm", "")
+        .replace("Lunes a Sábado de 11am a 8pm", "")
+        for e in all_data
     ]
     all_data = [e.strip() for e in all_data if e.strip()]
     all_data = " ;".join(all_data)
@@ -36,8 +44,8 @@ def fetch_data():
             raw_data = [raw_data[0]] + [", ".join(raw_data[1:3])] + raw_data[3:]
         raw_address = ", ".join(raw_data[1:]).split("Tel")[0].split("Horario")[0]
         addr = parse_address_intl(raw_address)
-        phone = [e.replace("Tel: ", "") for e in raw_data if "Tel" in e]
-        phone = phone[0] if phone else ""
+        phone = [e for e in raw_data if "Tel" in e]
+        phone = phone[0].replace("Tel: ", "").replace("Tel. ", "") if phone else ""
         hoo = [
             e.replace("Horario de tienda:", "")
             for e in raw_data

@@ -4,9 +4,10 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import json
+import re
 
 DOMAIN = "cap-it.com"
 BASE_URL = "https://cap-it.com"
@@ -31,7 +32,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -85,9 +85,11 @@ def fetch_data():
                 hoo += val + ","
             if list["days"] == "Holidays":
                 break
-        hours_of_operation = (
-            hoo.replace("day,", "day: ").replace("days,", "days: ").rstrip(",")
-        )
+        hours_of_operation = re.sub(
+            r",Holiday.*",
+            "",
+            hoo.replace("day,", "day: ").replace("days,", "days: ").rstrip(","),
+        ).strip()
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -111,15 +113,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

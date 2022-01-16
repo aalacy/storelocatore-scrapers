@@ -1,0 +1,11 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+--ignore LatLngDuplicationValidator (Duplicate latlong with different location_name)
+Found 6 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+     latitude  longitude                                     street_address  num_addrs
+1    12.97912    77.5913  {381, 7th Cross Road BTM 2nd Stage Micro Layou...          2
+30  28.466590  77.033310  {Shop No- KG- 27-30 B-Block, Infinity Tower DL...          2
+36  28.498870  77.024450  {Shop No. 21, GF, Ansal Plaza, Palam Vihar, Sh...          2
+44   28.54568   77.10913  {LA-20, Terminal-3 , IGI Airport New Delhi, IN...          2
+51  28.566130  77.321760  {Plot No M-03, First Floor, (2 K 10A), Mall of...          2
+53  28.570900  77.372060  {Shop No 7, Arun Vihar, Block -E, Sector 37,, ...          2

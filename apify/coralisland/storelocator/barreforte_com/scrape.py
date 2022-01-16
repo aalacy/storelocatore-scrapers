@@ -34,11 +34,21 @@ def fetch_data():
                 page_url = loc["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
-
+                soup = BeautifulSoup(r.text, "html.parser")
                 temp = r.text.split(
                     '<div class="tm_pb_text tm_pb_module tm_pb_bg_layout_light tm_pb_text_align_left  tm_pb_text_0">'
                 )[1].split("</div>")[0]
                 temp = BeautifulSoup(temp, "html.parser")
+                try:
+                    longitude, latitude = (
+                        soup.select_one("iframe[src*=maps]")["src"]
+                        .split("!2d", 1)[1]
+                        .split("!2m", 1)[0]
+                        .split("!3d")
+                    )
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
                 try:
                     location_name = temp.find("h3").text
                 except:
@@ -72,17 +82,6 @@ def fetch_data():
                     if temp[1].find("ZipCode") != -1:
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
-                try:
-                    latitude, longitude = (
-                        soup.find("div", {"class": "mapDir"})
-                        .find("a")["href"]
-                        .split("@")[1]
-                        .split(",17z")[0]
-                        .split(",")
-                    )
-                except:
-                    latitude = MISSING
-                    longitude = MISSING
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,

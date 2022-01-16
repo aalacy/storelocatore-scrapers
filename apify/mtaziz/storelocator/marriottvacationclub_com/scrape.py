@@ -1,12 +1,12 @@
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import tenacity
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import ssl
 import time
@@ -24,6 +24,7 @@ else:
 DOMAIN = "marriottvacationclub.com"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
 logger = SgLogSetup().get_logger("marriottvacationclub_com")
+
 
 MAX_WORKERS = 4
 MISSING = SgRecord.MISSING
@@ -65,27 +66,28 @@ url_api_endpoints_23_brands = {
 }
 
 
-def fetch_json_data(url, http: SgRequests):
-    try:
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(3))
+def get_response(idx, url):
+    with SgRequests() as http:
+        logger.info(f"Pulling the data from {url}")
         response = http.get(url, headers=headers_api)
-        time.sleep(random.randint(7, 15))
-        logger.info("JSON data being loaded...")
-        response_text = response.text
-        store_list = json.loads(response_text)
-        data_regions = store_list["regions"]
-        return data_regions
-    except Exception as exception:
-        logger.info(f"request {url} failed | {exception}")
-        raise exception
+        time.sleep(random.randint(5, 15))
+        if response.status_code == 200:
+            logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(
+            f"[{idx}] | {url} >> HTTP Error Code: {response.status_code} >> Please fix this!"
+        )
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(2))
-def fetch_data_for_23_child_brands_from_api_endpoints(
-    url, http: SgRequests, sgw: SgWriter
-):
+def fetch_data_for_23_child_brands_from_api_endpoints(idx, url, sgw: SgWriter):
     # This scrapes the data for 23 child brands
     brands_and_total_count_per_brand = []
-    data_8 = fetch_json_data(url, http)
+    response = get_response(idx, url)
+    logger.info("JSON data being loaded...")
+    response_text = response.text
+    store_list = json.loads(response_text)
+    data_8 = store_list["regions"]
     found = 0
     for i in data_8:
         for j in i["region_countries"]:
@@ -95,6 +97,7 @@ def fetch_data_for_23_child_brands_from_api_endpoints(
                         found += 1
                         locator_domain = DOMAIN
                         key = g["marsha_code"]
+                        page_url = ""
                         if key:
                             page_url = (
                                 f"{'https://www.marriott.com/hotels/travel/'}{str(key)}"
@@ -183,7 +186,7 @@ def fetch_data_for_23_child_brands_from_api_endpoints(
     logger.info(f"Counts for all brands: {brands_and_total_count_per_brand}")
 
 
-def fetch_data(sgw: SgWriter, http: SgRequests):
+def fetch_data(sgw: SgWriter):
     urls = []
     for k, v in url_api_endpoints_23_brands.items():
         urls.append(v)
@@ -191,9 +194,9 @@ def fetch_data(sgw: SgWriter, http: SgRequests):
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(
-                fetch_data_for_23_child_brands_from_api_endpoints, url, http, sgw
+                fetch_data_for_23_child_brands_from_api_endpoints, idx, url, sgw
             )
-            for url in urls
+            for idx, url in enumerate(urls)
         ]
         for future in as_completed(futures):
             future.result()
@@ -201,9 +204,20 @@ def fetch_data(sgw: SgWriter, http: SgRequests):
 
 def scrape():
     logger.info("Started")
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests() as http:
-            fetch_data(writer, http)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
     logger.info("Scraping Finished")
 
 

@@ -34,6 +34,7 @@ def fetch_data():
         countries_req = session.get(search_url, headers=headers)
         countries_sel = lxml.html.fromstring(countries_req.text)
         countries = countries_sel.xpath('//a[@class="active_country"]/@data-country')
+        countries.append("AE")
         for country in countries:
             log.info(country)
             data = {"c": country, "action": "active_country"}

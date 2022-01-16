@@ -228,6 +228,9 @@ def fetch_data(sgw: SgWriter):
         if "Columbia, South Carolina" in location_name:
             city = "Columbia"
             state = "South Carolina"
+        if "Rock Hill" in location_name:
+            city = "Rock Hill"
+            state = "SC"
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
