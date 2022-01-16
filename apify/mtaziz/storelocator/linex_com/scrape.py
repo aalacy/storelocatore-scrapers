@@ -6,8 +6,9 @@ from sgselenium import SgChrome
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from webdriver_manager.chrome import ChromeDriverManager
+from sgscrape.sgrecord_id import SgRecordID
 
 import ssl
 
@@ -28,7 +29,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://linex.com/find-a-location"
 
@@ -39,7 +40,9 @@ def fetch_data():
         max_search_results=None,
     )
 
-    with SgChrome(is_headless=True) as driver:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
         driver.get(start_url)
         sleep(5)
         driver.find_element_by_xpath(
@@ -58,7 +61,7 @@ def fetch_data():
             logger.info("zipcode - send_keys executed")
             driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
             sleep(20)
-            logger.info(" Search Button Clicked")
+            logger.info("Search Button Clicked")
             driver.find_element_by_xpath('//input[@name="location"]').clear()
 
             code_dom = etree.HTML(driver.page_source)
@@ -164,7 +167,17 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -45,11 +45,20 @@ def fetch_data():
                     if "Hour" in hh:
                         break
                     hours.append(hh)
+            raw_address = (
+                sp1.select_one("h5.address")
+                .text.replace("\n", " ")
+                .replace("\r", " ")
+                .strip()
+            )
+            addr = raw_address.split(",")
+            if not street_address:
+                street_address = addr[0]
             yield SgRecord(
                 page_url=page_url,
                 location_name=street_address,
                 street_address=street_address,
-                city=province.split("-")[-1].strip(),
+                city=city,
                 state=province.split("-")[0].strip(),
                 latitude=sp1.select_one("div#gmap-wrap")["data-lat"],
                 longitude=sp1.select_one("div#gmap-wrap")["data-lng"],
@@ -57,6 +66,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 

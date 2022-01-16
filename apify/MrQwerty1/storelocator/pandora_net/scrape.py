@@ -5,6 +5,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 
 
 def override(js):
@@ -42,19 +43,21 @@ def override(js):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = [
-        "https://maps.pandora.net/api/getAsyncLocations?search=75022&level=domain&template=domain&limit=5000&radius=5000",
-        "https://maps.pandora.net/api/getAsyncLocations?search=Berlin&level=domain&template=domain&limit=5000&radius=5000",
-    ]
-
-    for api in urls:
-        r = session.get(api)
+    search = DynamicZipSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=1000
+    )
+    for _z in search:
+        api = f"https://maps.pandora.net/api/getAsyncLocations?search={_z}&level=domain&template=domain&limit=1000&radius=1000"
+        r = session.get(api, headers=headers)
         js_init = r.json()["maplist"]
-        line = (
-            "["
-            + js_init.split('<div class="tlsmap_list">')[1].split(",</div>")[0]
-            + "]"
-        )
+        try:
+            line = (
+                "["
+                + js_init.split('<div class="tlsmap_list">')[1].split(",</div>")[0]
+                + "]"
+            )
+        except:
+            continue
         js = json.loads(line)
 
         for j in js:
@@ -113,6 +116,22 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+    }
     locator_domain = "https://pandora.net/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
