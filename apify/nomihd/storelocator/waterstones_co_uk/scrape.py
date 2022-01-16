@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -7,39 +6,42 @@ import lxml.html
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import cloudscraper
+import time
+from sgselenium.sgselenium import SgChrome
+import ssl
 
-website = "waterstones.co.uk"
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+website = "waterstones.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "Connection": "keep-alive",
-    "sec-ch-ua": '"Google Chrome";v="93", " Not;A Brand";v="99", "Chromium";v="93"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-User": "?1",
-    "Sec-Fetch-Dest": "document",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
-}
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
     # Your scraper here
-    with SgRequests(dont_retry_status_codes=set([404])) as session:
-        scraper = cloudscraper.create_scraper(sess=session)
-        scraper.get("https://waterstones.com/", headers=headers)
-
+    with SgChrome(is_headless=True, user_agent=user_agent) as driver:
         search_url = "https://www.waterstones.com/bookshops/findall"
-        stores_req = scraper.get(search_url)
-
-        stores = json.loads(stores_req.text)["data"]
+        driver.get(search_url)
+        time.sleep(15)
+        stores = json.loads(driver.find_element_by_css_selector("body").text)["data"]
         for store in stores:
             locator_domain = website
             location_name = store["name"]
+            if (
+                location_name == "Online Events"
+                or location_name == "Jersey - St Helier"
+                or store["country_id"] != "235"
+            ):
+                continue
             page_url = "https://www.waterstones.com" + store["url"]
             latitude = store["latitude"]
             longitude = store["longitude"]
@@ -53,25 +55,30 @@ def fetch_data():
             country_code = "GB"
             state = "<MISSING>"
             phone = store["telephone"]
-            location_type = store["closed_message"]
-            hours_of_operation = "<MISSING>"
+            location_type = ""
+            if store["open_status"] == "0":
+                location_type = store["closed_message"]
+                if not location_type:
+                    if "We are currently closed" in store["intro"]:
+                        location_type = "Closed"
 
-            country_code = "GB"
+            hours_of_operation = "<MISSING>"
 
             if location_type == "":
                 location_type = "<MISSING>"
                 log.info(page_url)
-                store_req = scraper.get(page_url)
-                store_sel = lxml.html.fromstring(store_req.text)
+                driver.get(page_url)
+                driver.implicitly_wait(30)
+                store_sel = lxml.html.fromstring(driver.page_source)
                 hours = store_sel.xpath('//div[@class="opening-times"]/div')
                 hours_list = []
                 for hour in hours:
                     day = "".join(hour.xpath('.//div[@class="day"]/text()')).strip()
-                    time = "".join(hour.xpath('.//div[@class="times"]/text()')).strip()
+                    _time = "".join(hour.xpath('.//div[@class="times"]/text()')).strip()
 
-                    if len(time) > 0:
+                    if len(_time) > 0:
                         day = day.split(" ")[0].strip()
-                        hours_list.append(day + ":" + time)
+                        hours_list.append(day + ":" + _time)
 
                 hours_of_operation = "; ".join(hours_list).strip()
 

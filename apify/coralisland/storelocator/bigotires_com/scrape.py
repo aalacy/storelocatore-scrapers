@@ -1,154 +1,158 @@
-import csv
-
+import time
+import json
 from sgrequests import SgRequests
-
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-base_url = "https://www.bigotires.com"
+website = "https://www.bigotires.com"
+store_url = f"{website}/restApi/dp/v1/store/storesByAddress"
+MISSING = SgRecord.MISSING
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+    "Content-Type": "application/json;charset=utf-8",
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Requested-By": "123",
+    "Origin": "https://www.bigotires.com",
+    "Connection": "keep-alive",
+    "Referer": "https://www.bigotires.com/store-locator",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "TE": "trailers",
+}
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def validate(item):
-    if type(item) == list:
-        item = " ".join(item)
-    return item.strip()
+def request_with_retries(zip_code):
+    try:
+        payload = {"address": zip_code, "distanceInMiles": 100}
+        response = session.post(store_url, headers=headers, data=json.dumps(payload))
+        data = json.loads(response.text)
+        if "stores" in data["storesType"]:
+            return data["storesType"]["stores"]
+        return []
+    except Exception:
+        log.error(f"Can't load from {zip_code}")
+        return []
 
 
-def get_value(item):
-    if item is None:
-        item = "<MISSING>"
-    item = validate(item)
-    if item == "":
-        item = "<MISSING>"
-    return item
+def get_var_name(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
 
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
+def get_JSON_object_variable(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    if value is None:
+        return MISSING
+    return value
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def get_hoo(data=None):
+    if data is None:
+        data = []
+    hoo = []
+
+    for hour in data:
+        days = hour["day"]
+        opens = hour["openingHour"]
+        closes = hour["closingHour"]
+        line = f"{days} {opens} - {closes}"
+        hoo.append(line)
+
+    hoo = "; ".join(hoo)
+    return hoo
 
 
 def fetch_data():
-    output_list = []
-    store_ids = []
-
-    headers = {
-        "authority": "www.bigotires.com",
-        "method": "POST",
-        "path": "/restApi/dp/v1/store/storesByAddress",
-        "scheme": "https",
-        "accept": "application/json, text/plain, */*",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "en-US,en;q=0.9",
-        "content-length": "41",
-        "content-type": "application/json;charset=UTF-8",
-        "x-requested-with": "XMLHttpRequest",
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-        "x-requested-by": "123",
-        "x-requested-with": "XMLHttpRequest",
-    }
-
-    session = SgRequests()
-    url = "https://www.bigotires.com/restApi/dp/v1/store/storesByAddress"
-
-    max_distance = 200
-
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
+        expected_search_radius_miles=100,
     )
 
-    for postcode in search:
-        # query the store locator using zip
+    count = 0
+    for zip_code in search:
+        count = count + 1
+        stores = request_with_retries(zip_code)
+        log.info(f"{count}. {zip_code} stores = {len(stores)}")
 
-        data = {"address": postcode, "distanceInMiles": max_distance}
+        for store in stores:
+            location_name = MISSING
+            location_type = MISSING
 
-        source = session.post(url, headers=headers, json=data).json()
+            address = get_JSON_object_variable(store, "address")
 
-        if "storesType" not in list(source.keys()):
-            continue
+            store_number = get_JSON_object_variable(store, "storeNumber")
+            page_url = f"https://www.bigotires.com{get_JSON_object_variable(store, 'storeDetailsUrl')}"
+            street_address = get_JSON_object_variable(address, "address1")
+            city = get_JSON_object_variable(address, "city")
+            zip_postal = get_JSON_object_variable(address, "zipcode")
+            state = get_JSON_object_variable(address, "state")
+            country_code = "US"
+            phone = f"{get_JSON_object_variable(address, 'phoneNumber.areaCode')} {get_JSON_object_variable(address, 'phoneNumber.firstThree')} {get_JSON_object_variable(address, 'phoneNumber.lastFour')}"
+            latitude = get_JSON_object_variable(store, "mapCenter.latitude")
+            longitude = get_JSON_object_variable(store, "mapCenter.longitude")
+            hours_of_operation = get_hoo(
+                get_JSON_object_variable(store, "workingHours")
+            )
 
-        store_list = source["storesType"]
+            raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+                MISSING, ""
+            )
+            raw_address = " ".join(raw_address.split())
+            raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+            if raw_address[len(raw_address) - 1] == ",":
+                raw_address = raw_address[:-1]
 
-        if "stores" not in list(store_list.keys()):
-            continue
-
-        store_list = store_list["stores"]
-        for store in store_list:
-            store_id = validate(store["storeId"])
-            if store_id in store_ids:
-                continue
-            store_ids.append(store_id)
-            store_hours = store["workingHours"]
-            hours = ""
-            for x in store_hours:
-                if validate(x["openingHour"]) == "Closed ":
-                    hours += x["day"] + " " + x["openingHour"] + " "
-                else:
-                    hours += (
-                        x["day"] + " " + x["openingHour"] + "-" + x["closingHour"] + " "
-                    )
-            store_closed_hours = store["storeClosedHours"]
-            for x in store_closed_hours:
-                hours += validate(x["date"] + ": " + x["workingHours"] + " ")
-            hours = hours.replace("Closed-Closed", "Closed").strip()
-            output = []
-            output.append(base_url)  # url
-            output.append(base_url + store["storeDetailsUrl"])
-            output.append(validate(store["address"]["address1"]))  # location name
-            output.append(validate(store["address"]["address1"]))  # address
-            output.append(validate(store["address"]["city"]))  # city
-            output.append(validate(store["address"]["state"]))  # state
-            output.append(validate(store["address"]["zipcode"]))  # zipcode
-            output.append("US")  # country code
-            output.append(store_id)  # store_number
-            output.append(validate(store["phoneNumbers"][0]))  # phone
-            output.append("<MISSING>")  # location type
-            latitude = store["mapCenter"]["latitude"]
-            longitude = store["mapCenter"]["longitude"]
-            output.append(latitude)  # latitude
-            output.append(longitude)  # longitude
-            search.found_location_at(latitude, longitude)
-
-            output.append(get_value(hours))  # opening hours
-            output_list.append(output)
-
-    return output_list
+            yield SgRecord(
+                locator_domain=website,
+                store_number=store_number,
+                page_url=page_url,
+                location_name=location_name,
+                location_type=location_type,
+                street_address=street_address,
+                city=city,
+                zip_postal=zip_postal,
+                state=state,
+                country_code=country_code,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+    return []
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info(f"Start scrapping {website} ...")
+    start = time.time()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

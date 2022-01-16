@@ -65,13 +65,23 @@ def fetch_data():
             street_address = store_json["address"]["streetAddress"]
 
             city = store_json["address"]["addressLocality"]
-            state = store_json["address"]["addressRegion"]
+            raw_address = store_sel.xpath('//p[@class="amlocator-text -bold"]/text()')
+            state = (
+                raw_address[-1]
+                .split(",")[-1]
+                .strip()
+                .encode("ascii", "replace")
+                .decode("utf-8")
+                .replace("?", " ")
+                .strip()
+                .split(" ")[0]
+                .strip()
+            )
+            store_number = store_json["address"]["addressRegion"]
             zip = store_json["address"]["postalCode"]
             country_code = "US"
 
             phone = store_json["telephone"]
-
-            store_number = "<MISSING>"
 
             location_type = "<MISSING>"
             hours = store_json["openingHoursSpecification"]

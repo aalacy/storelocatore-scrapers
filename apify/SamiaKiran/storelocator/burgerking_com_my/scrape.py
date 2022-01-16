@@ -24,7 +24,7 @@ def fetch_data():
         for link in range(1, 50):
             url = "https://burgerking.com.my/Locator?page=" + str(link)
             log.info(f"Page No {link}")
-            main_r = session.get(url, headers=headers, timeout=180)
+            main_r = session.get(url, headers=headers)
             soup = BeautifulSoup(main_r.text, "html.parser")
             loclist = soup.find("div", {"id": "locationsList"}).findAll(
                 "div", {"class": "location"}
@@ -37,8 +37,22 @@ def fetch_data():
                 store_number = loc["data-restaurant-id"]
                 location_name = loc.find("dt", {"class": "mainAddress"}).text
                 hours_of_operation = (
-                    loc.find("dd", {"class": "store-hours"}).find("td").text.strip()
+                    loc.find("dd", {"class": "store-hours"})
+                    .find("td")
+                    .get_text(separator="|", strip=True)
+                    .replace("Hours", "")
+                    .replace(":", "")
+                    .replace("|", " ")
+                    .replace("Operations", "")
+                    .replace("Operation", "")
+                    .replace("hours", "")
+                    .replace("Opertions Hour", "")
+                    .replace("Opening", "")
                 )
+                if "Special Business" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split(
+                        "Special Business Hours"
+                    )[0]
                 try:
                     latitude, longitude = (
                         loc.find("dd", {"class": "links"})

@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://api.smashburger.com/mobilem8-web-service/rest/storeinfo/distance?_=1631577365113&attributes=&disposition=PICKUP&latitude=34.6132869&longitude=-118.1405671&maxResults=500&radius=1000&radiusUnit=mi&statuses=ACTIVE,TEMP-INACTIVE&tenant=sb-us"
+    start_url = "https://api.smashburger.com/mobilem8-web-service/rest/storeinfo/distance?_=1631577365113&attributes=&disposition=PICKUP&latitude=39.41116&longitude=-104.87308&maxResults=500&radius=20000&radiusUnit=mi&statuses=ACTIVE,TEMP-INACTIVE&tenant=sb-us"
     domain = "smashburger.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -17,6 +17,9 @@ def fetch_data():
 
     all_locations = data["getStoresResult"]["stores"]
     for poi in all_locations:
+        if poi["city"] == "NO WHERE":
+            continue
+
         hoo = []
         days = [
             "monday",

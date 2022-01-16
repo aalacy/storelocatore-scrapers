@@ -1,77 +1,101 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-base_url = 'https://www.ngpg.org'
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
-    return
+website = "ngpg_org"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://www.ngpg.org/"
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
-    output_list = []
-    url = "https://www.ngpg.org/fm/index/practice-map-data"
-    headers={
-        "Accept": "application/xml, text/xml, */*; q=0.01",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-        "Cookie": "PHPSESSID=n61uqj715ge4tdt4ftn2eupm61; calltrk_referrer=direct; calltrk_landing=https%3A//www.ngpg.org/; calltrk_session_id=1cec532f-1a2c-46d5-b794-1552cde2aaad; _ga=GA1.2.960686148.1565205054; _gid=GA1.2.142616363.1565205054; calltrk_fcid=f761d4f7-7d8c-4800-8f6b-9fc13f88ba2c; crFormCapture=form%255Bbh_sl_address%255D%3D30597%26metadata%255Bbh_sl_address%255D%3Da%26metadata%255Bcategory%255D%3Da%26form_metadata%255Bid%255D%3Dbh-sl-user-location%26form_metadata%255Bmethod%255D%3Dget%26form_metadata%255Baction%255D%3D%252Fpractice-map%252F%26session_uuid%3D1cec532f-1a2c-46d5-b794-1552cde2aaad%26fcid%3Df761d4f7-7d8c-4800-8f6b-9fc13f88ba2c%26uuid%3Dac30ad4b-fa5c-4748-b2b2-1540b1d39de8%26timestamp%3D1565205605240%26url%3Dhttps%253A%252F%252Fwww.ngpg.org%252Fpractice-map%252F%26landing%3Dhttps%253A%252F%252Fwww.ngpg.org%252F%26referrer_url%3Ddirect%26referrer%3Ddirect; _gali=bh-sl-address",
-        "Host": "www.ngpg.org",
-        "Referer": "https://www.ngpg.org/practice-map/",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest"
-        }
-    request = requests.get(url, headers=headers)
-    response = etree.HTML(request.text.encode('utf-8'))
-    store_list = response.xpath('//marker')
-    index = 0
-    for store in store_list:
-        index += 1
-        output = []
-        detailurl = store.xpath('./@web')[0]
-        detailrequest = requests.get('https://www.ngpg.org' + detailurl)
-        detailresponse = etree.HTML(detailrequest.text)
-        details = detailresponse.xpath('//div[contains(@class, "cleft-subleft")]//text()')
-        details = ''.join(details).split('Hours:').pop().strip().replace('\r\n', '')
-        store_hours = details.replace('\xe2\x80\x93', '').replace('\xc2\xa0', '').split('Insurance:')[0]
-        if 'p.m' not in store_hours and 'pm' not in store_hours:
-            store_hours = "available 24 hours a day, seven days a week"
-        if not store_hours.endswith('p.m.') and not store_hours.endswith('pm'):
-            store_hours = store_hours.split('Get general information')[0].split("Saturday morning injury clinics")[0].split('This clinic ')[0]
-        zipcode = store.xpath('./@postal')[0]
-        if zipcode == None or zipcode == "":
-            zipcode = "<MISSING>"
-        phone = store.xpath('./@phone')[0].replace('\r\n', '')
-        if phone == "" or phone == None:
-            phone = "<MISSING>"
-        output.append(base_url)
-        output.append(store.xpath('./@name')[0])
-        output.append(store.xpath('./@address')[0])
-        output.append(store.xpath('./@city')[0])
-        output.append(store.xpath('./@state')[0])
-        output.append(zipcode)
-        output.append('US')
-        output.append(index)
-        output.append(phone)
-        output.append(store.xpath('./@category')[0])
-        output.append(store.xpath('./@lat')[0])
-        output.append(store.xpath('./@lng')[0])
-        output.append(store_hours)
-        output_list.append(output)
-    return output_list
-    
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    if True:
+        url = "https://www.ngpg.org/fm/index/practice-map-data"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("marker")
+        for loc in loclist:
+            location_type = loc["category"]
+            street_address = loc["address"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["postal"]
+            country_code = "US"
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            phone = loc["phone"]
+            location_name = loc["name"]
+            page_url = "https://www.ngpg.org" + loc["web"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                hours_of_operation = (
+                    soup.find("table", {"class": "hours-table"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Open Close", "")
+                )
+            except:
+                try:
+                    hours_of_operation = (
+                        soup.find("div", {"class": "location-hours"})
+                        .findAll("p")[1]
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                except:
+                    try:
+                        hours_of_operation = (
+                            soup.find("div", {"class": "location-hours"})
+                            .find("p")
+                            .get_text(separator="|", strip=True)
+                            .replace("|", " ")
+                        )
+                    except:
+                        hours_of_operation = MISSING
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
-scrape()
+
+def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
