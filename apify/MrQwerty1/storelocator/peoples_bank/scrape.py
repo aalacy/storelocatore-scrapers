@@ -44,7 +44,7 @@ def fetch_data(sgw: SgWriter):
         tables = d.xpath(".//table")
         for table in tables:
             _tmp = []
-            tr = table.xpath(f"./tbody/tr")
+            tr = table.xpath("./tbody/tr")
             for t in tr:
                 day = "".join(t.xpath("./th/text()")).strip()
                 inter = "".join(t.xpath("./td[1]/text()")).strip()
