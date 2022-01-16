@@ -33,10 +33,11 @@ def fetch_data(sgw: SgWriter):
         for _t in line:
             if "hours" in _t or "Bakery" in _t:
                 continue
-            if "Restaurant" in _t:
-                break
             _tmp.append(_t)
+
         hours_of_operation = ";".join(_tmp)
+        if "Restaurant" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Restaurant;")[-1].strip()
 
         row = SgRecord(
             page_url=page_url,
