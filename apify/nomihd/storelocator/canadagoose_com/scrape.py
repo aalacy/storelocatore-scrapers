@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from operator import is_
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -6,9 +7,7 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
-
-from sgrequests import SgRequests
-
+from sgselenium import SgChrome
 
 website = "canadagoose.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -17,9 +16,9 @@ cookies = {
     "cqcid": "bcnik6hrim0a2QsVSYgoEz8eAR",
     "cquid": "||",
     "sid": "1E8J2BU68uM7MlzPcXysavEVvtjty8yRz2w",
-    "dwanonymous_4b678b2f3ddcd887e7cd4635d93160c7": "bcnik6hrim0a2QsVSYgoEz8eAR",
-    "dwsid": "uro6FzHDEUacQacI2W-a7Z_gjRfJMi80aB8d_uj4LhqHwLjbBcO3SbMn9e633HlDWAaCyioI5PHo3xpp_pm30Q==",
-    "language": "en",
+    "dwanonymous_4b678b2f3ddcd887e7cd4635d93160c7": "bshould becnik6hrim0a2QsVSYgoEz8eAR",
+    "dwsid": "UNcLmxlzu67CTw9L24EOaPKW3gS6w_Tu9p0bRXrN1mvQHoomoxclvfeJ10CFUJB0WemOKarPtKXt6f_ok3dLqQ==",
+    "language": "en_CA",
     "__cq_dnt": "0",
     "dw_dnt": "0",
     "zarget_visitor_info": "%7B%7D",
@@ -93,21 +92,21 @@ def get_latlng(map_link):
 def fetch_data():
     # Your scraper here
     search_url = (
-        "https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
+        "http://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
     )
 
-    with SgRequests() as session:
-        response = session.get(search_url, headers=headers, cookies=cookies)
-        search_sel = lxml.html.fromstring(response.text, "lxml")
+    with SgChrome(is_headless=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36") as session:
+        session.get(search_url)
+        search_sel = lxml.html.fromstring(session.page_source, "lxml")
         store_list = search_sel.xpath('//div[@class="store"]')
         log.info(f"Total Locations to crawl: {len(store_list)}")
         for store in store_list:
 
             page_url = store.xpath("./a/@href")[0].strip()
             log.info(f"Now crawling: {page_url}")
-            response2 = session.get(page_url, headers=headers)
+            session.get(page_url)
             time.sleep(3)
-            store_sel = lxml.html.fromstring(response2.text, "lxml")
+            store_sel = lxml.html.fromstring(session.page_source, "lxml")
 
             locator_domain = website
 
