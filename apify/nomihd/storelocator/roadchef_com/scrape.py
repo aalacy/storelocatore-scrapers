@@ -26,10 +26,11 @@ def fetch_data():
 
         json_str = (
             search_res.text.split(":template=")[1]
-            .split("><")[0]
+            .split("]}}'")[0]
             .strip()
             .strip("' ")
             .strip()
+            + "]}}"
         )
 
         json_res = json.loads(json_str)
@@ -48,7 +49,6 @@ def fetch_data():
             store_info = json.loads(json_info)
 
             full_address = store_info[0]["value"]["address"].split("<br>")
-            log.info(full_address)
             raw_address = ", ".join(full_address[1:])
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1

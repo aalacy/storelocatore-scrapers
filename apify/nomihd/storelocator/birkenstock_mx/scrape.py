@@ -3,27 +3,15 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
+import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "birkenstock.mx"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "authority": "www.birkenstock.mx",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
 
@@ -42,12 +30,6 @@ def get_latlng(map_link):
     elif "/@" in map_link:
         latitude = map_link.split("/@")[1].split(",")[0].strip()
         longitude = map_link.split("/@")[1].split(",")[1].strip()
-    elif "&q=" in map_link:
-        latitude = map_link.split("&q=")[1].split(",")[0].strip()
-        longitude = map_link.split("&q=")[1].split(",")[1].strip()
-    elif "?q=" in map_link:
-        latitude = map_link.split("?q=")[1].split(",")[0].strip()
-        longitude = map_link.split("?q=")[1].split(",")[1].strip()
     else:
         latitude = "<MISSING>"
         longitude = "<MISSING>"
@@ -56,67 +38,77 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
+
     search_url = "https://www.birkenstock.mx/servicios/puntos-de-venta"
 
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
+
         search_sel = lxml.html.fromstring(search_res.text)
+        stores = search_sel.xpath('//ul[@class="list"]/li')
 
-        stores = search_sel.xpath('//div[@class="info-punto-venta"]')
+        for no, store in enumerate(stores, 1):
 
-        for store in stores:
-
-            page_url = search_url
             locator_domain = website
 
-            location_name = " ".join(
-                "".join(store.xpath("./h2/text()")).strip().split("\n")
+            location_type = "<MISSING>"
+
+            page_url = "".join(store.xpath("./a//@href"))
+
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
+
+            location_name = "".join(
+                store_sel.xpath(
+                    '//div[@class="address"]//*[@class="font-title"]//text()'
+                )
             ).strip()
 
-            temp_address = store.xpath("./p/text()")
-            raw_address = []
-            phone = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-            for temp in temp_address:
-                if len("".join(temp).strip()) > 0:
-                    if (
-                        "TEL:" in "".join(temp).strip()
-                        or "Tel:" in "".join(temp).strip()
-                    ):
-                        phone = (
-                            "".join(temp)
-                            .strip()
-                            .replace("TEL:", "")
-                            .strip()
-                            .replace("Tel:", "")
-                            .strip()
+            store_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//div[@class="address"]//div[not(a)]//text()'
                         )
-                    elif "Horario:" in "".join(temp).strip():
-                        hours_of_operation = (
-                            "".join(temp).strip().replace("Horario:", "").strip()
-                        )
-                    else:
-                        raw_address.append("".join(temp).strip())
-
-            raw_address = ", ".join(raw_address).strip()
+                    ],
+                )
+            )
+            raw_address = " ".join(store_info)
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
+            if street_address is not None:
+                street_address = street_address.replace("Ste", "Suite")
+
             city = formatted_addr.city
+
             state = formatted_addr.state
             zip = formatted_addr.postcode
 
             country_code = "MX"
 
-            store_number = "<MISSING>"
-
-            location_type = "<MISSING>"
-            map_link = "".join(
-                store.xpath('.//iframe[contains(@src,"maps/embed?")]/@src')
+            phone = (
+                "".join(
+                    store_sel.xpath(
+                        '//div[@class="address"]//a[contains(@href,"tel:")]//text()'
+                    )
+                )
+                .replace("Call", "")
+                .strip()
             )
+
+            hours_of_operation = "<MISSING>"
+
+            store_number = page_url.split("/")[-1]
+
+            map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
+
             latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(
@@ -142,7 +134,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:

@@ -1,4 +1,5 @@
 import re
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -11,7 +12,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+from sgselenium.sgselenium import SgChrome
+
 logger = SgLogSetup().get_logger("baystatept.com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
@@ -27,11 +32,17 @@ def fetch_data(sgw: SgWriter):
 
     items = base.find(class_="footer-loc-list").find_all("h4")
 
+    d_user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+
+    driver = SgChrome(user_agent=d_user_agent).driver()
+
     for item in items:
 
         location_name = item.text
         final_link = item.a["href"]
-        if "ocpn.com" in final_link:
+        if "ocpn" in location_name.lower():
             continue
         if location_name == "Springfield - Cypress PT":
             final_link = "https://cypress-pt.com/location/springfield-ma/"
@@ -71,10 +82,24 @@ def fetch_data(sgw: SgWriter):
 
         hours_of_operation = (
             " ".join(list(base.find(class_="business-hours").stripped_strings))
-            .replace(",", " -")
             .replace("Hours of Operation:", "")
+            .replace("Hours of Operation", "")
             .strip()
         )
+
+        if not hours_of_operation:
+            if "physical-therapy-boston" in final_link:
+                driver.get(
+                    "https://knowledgetags.yextpages.net/embed?key=Kx4hae1nknsnY6CyWaguQZgdII_PmU48tFNmS2I7AIM0D8O5inYhCudcfI96yx4o&account_id=4978249222002047427&entity_id=0045&locale=en"
+                )
+                base = BeautifulSoup(driver.page_source, "lxml")
+
+                try:
+                    hours_of_operation = (
+                        base.text.split('"hours":[')[1].split("],")[0].replace('"', "")
+                    )
+                except:
+                    hours_of_operation = "<INACCESSIBLE>"
 
         sgw.write_row(
             SgRecord(
@@ -94,6 +119,8 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation=hours_of_operation,
             )
         )
+
+    driver.close()
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:

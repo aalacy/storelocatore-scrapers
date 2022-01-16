@@ -32,7 +32,7 @@ def fetch_data():
             "div.page-content div.swiper-slide"
         )
         for _ in store_list:
-            block = _.p.text.strip().split("\n")[1:]
+            block = _.p.text.strip().split("\n")
             phone = ""
             addr = hours = []
             for x, bb in enumerate(block):
