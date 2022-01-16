@@ -7,6 +7,14 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_phone(source):
+    tree = html.fromstring(source)
+    phone = "".join(tree.xpath("//p[contains(text(), 'TEL:')]/text()"))
+    phone = phone.replace("TEL:", "").strip()
+
+    return phone
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.easyhotel.com/hotels"
     r = session.get(api, headers=headers)
@@ -20,14 +28,14 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("name")
         slug = j.get("url")
-        page_url = f"https://www.easyhotel.com{slug}"
+        page_url = f"https://www.easyhotel.com/hotels{slug}"
         street_address = j.get("street") or ""
         street_address = street_address.replace("\n", "").replace("\r", "")
         city = j.get("city")
         postal = j.get("postcode")
         country = j.get("country")
 
-        phone = j.get("phone")
+        phone = j.get("phone") or get_phone(j["sections"]["contactDetails"])
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         store_number = j.get("hotelCode")
