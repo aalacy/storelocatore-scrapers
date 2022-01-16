@@ -16,7 +16,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger(logger_name="tumi_com")
 locator_domain_url = "tumi.com"
-MAX_WORKERS = 6
+MAX_WORKERS = 4
 MISSING = SgRecord.MISSING
 INTL_TUMI_COM_URL = "https://intl.tumi.com"
 
