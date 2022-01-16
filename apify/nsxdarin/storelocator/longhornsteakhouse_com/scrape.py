@@ -121,6 +121,8 @@ def fetch_location(loc, driver):
                 hours = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
+            if hours == "<MISSING>":
+                hours = "<INACCESSIBLE>"
             if phone != "<MISSING>":
                 PhoneFound = True
                 if loc not in alllocs:
