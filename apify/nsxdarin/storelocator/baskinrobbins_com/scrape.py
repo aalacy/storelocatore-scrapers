@@ -16,7 +16,6 @@ headers = {
 
 def fetch_data():
     coords = ["35,-110", "45,-95", "35,-85", "45,-75", "21,-155", "60,-150"]
-    coords = ["35,-85"]
     for coord in coords:
         latc = coord.split(",")[0]
         lngc = coord.split(",")[1]
@@ -34,7 +33,7 @@ def fetch_data():
         for item in items:
             name = "Baskin Robbins"
             typ = "Store"
-            store = item["storeId"]
+            store = item["storeName"]
             city = item["city"]
             add = item["street"]
             state = item["state"]
@@ -42,7 +41,7 @@ def fetch_data():
             zc = item["zipCode"]
             lat = item["latitude"]
             lng = item["longitude"]
-            loc = "<MISSING>"
+            loc = "https://order.baskinrobbins.com/store-selection"
             website = "baskinrobbins.com"
             status = item["status"]
             if "INACTIVE" in status:
