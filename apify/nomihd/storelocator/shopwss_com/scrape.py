@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "shopwss.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -13,140 +16,66 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
-    search_url = "https://www.shopwss.com/store-locator/stores/ajax.json"
+    search_url = "https://cdn.shopify.com/s/files/1/0069/3442/9751/t/7/assets/sca.storelocatordata.json"
     stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(stores_req.text)["payload"]["United States"]
+    stores = json.loads(stores_req.text)
     for store in stores:
-        if "DEFAULT_WEB_STORE" != store["name"]:
-            page_url = "https://www.shopwss.com/store-locator/stores/" + str(
-                store["id"]
-            )
-            locator_domain = website
-            location_name = store["name"].split("-")[1].strip()
-            store_number = store["name"].split("-")[0].replace("Store", "").strip()
+        if "description" in store and "opening" in store["description"].lower():
+            continue
+        page_url = "<MISSING>"
+        locator_domain = website
+        location_name = store["name"]
+        store_number = store["name"].split("-")[0].replace("Store", "").strip()
 
-            if location_name == "":
-                location_name = "<MISSING>"
+        street_address = store["address"]
+        city = store["city"]
+        state = store["state"]
+        zip = store["postal"]
+        if zip and zip.isalpha():
+            zip = "<MISSING>"
+        country_code = store["country"]
 
-            street_address = store["address1"]
-            city = store["city"]
-            state = store["countryRegions"][0]
-            zip = store["postcode"]
-            country_code = store["countryIso2"]["value"]
+        phone = store["phone"]
 
-            if street_address == "":
-                street_address = "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = store["lat"]
+        longitude = store["lng"]
+        hours_of_operation = "<MISSING>"
+        if "schedule" in store:
+            hours_of_operation = "; ".join(store["schedule"].split("\r<br>")).strip()
 
-            if city == "":
-                city = "<MISSING>"
-
-            if state == "":
-                state = "<MISSING>"
-
-            if zip == "":
-                zip = "<MISSING>"
-
-            phone = store["phone"]
-
-            location_type = "<MISSING>"
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-
-            if latitude == "" or latitude is None:
-                latitude = "<MISSING>"
-            if longitude == "" or longitude is None:
-                longitude = "<MISSING>"
-
-            if phone == "" or phone is None:
-                phone = "<MISSING>"
-
-            hours_of_operation = (
-                "Mon:" + store["monOpenTimes"] + " "
-                "Tue:" + store["tueOpenTimes"] + " "
-                "Wed:" + store["wedOpenTimes"] + " "
-                "Thu:" + store["thuOpenTimes"] + " "
-                "Fri:" + store["friOpenTimes"] + " "
-                "Sat:" + store["satOpenTimes"] + " "
-                "Sun:" + store["sunOpenTimes"]
-            )
-
-            if hours_of_operation == "" or hours_of_operation is None:
-                hours_of_operation = "<MISSING>"
-
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            loc_list.append(curr_list)
-
-        # break
-    return loc_list
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

@@ -1,154 +1,56 @@
-import csv
-import json
-
-from bs4 import BeautifulSoup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-import usaddress
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_link = "https://www.subzeroicecream.com/find-location/c/0"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
+    base_link = "https://subzeroicecream.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=3c4a2341ca&load_all=1&layout=1"
+
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    stores = session.get(base_link, headers=headers).json()
 
-    js = str(base.find(id="gb-app-state").contents[0]).replace("&q;", '"')
-    stores = json.loads(js)[
-        "https://api.goodbarber.net/front/get_items/1829070/27785536/?category_index=0&a;geoloc=1&a;per_page=48"
-    ]["body"]["items"]
-
-    data = []
-
-    locator_domain = "subzeroicecream.com"
+    locator_domain = "https://subzeroicecream.com"
 
     for store in stores:
         location_name = store["title"]
-        if "Coming Soon" in location_name:
-            continue
-        street_address = (
-            store["address"].replace("a;", "").replace(", TX, USA", "").strip()
-        )
-
-        if "-" in location_name:
-            raw_address = (
-                location_name.replace("Square Worc", "Square, Worc")
-                .replace("UT, Tra", "UT - Trav")
-                .replace("Caney TX", "Caney, TX")
-                .replace("(Henderson)", "Henderson")
-                .split("-")[-2]
-            )
-        else:
-            raw_address = (
-                location_name.replace("Square Worc", "Square, Worc")
-                .replace("UT, Tra", "UT - Trav")
-                .replace("Caney TX", "Caney, TX")
-            )
-
-        address = usaddress.parse(raw_address)
-        city = ""
-        state = ""
-        for addr in address:
-            if addr[1] == "PlaceName":
-                city += addr[0].replace(",", "") + " "
-            elif addr[1] == "StateName":
-                state = addr[0]
-
-        if "Sarasota" in location_name:
-            city = "Sarasota"
-            state = "FL"
-        if not city:
-            city = location_name.split(",")[0].strip()
-        if not state:
-            state = location_name.split(",")[1].strip()
-
-        city = (
-            city.replace("Atlanta Park", "Atlanta")
-            .replace("Rimrock Mall", "Billings")
-            .replace("(Flagler)", "")
-            .replace("Square", "")
-            .replace("Mass", "")
-            .replace("(Shadyside)", "")
-            .strip()
-        )
-        street_address = (
-            street_address.replace(city, "").replace("Shadyside", "").strip()
-        )
-        state = state.split("-")[0]
-        zip_code = "<MISSING>"
-        country_code = "US"
+        street_address = store["street"]
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["postal_code"]
+        country_code = store["country"]
         store_number = store["id"]
         location_type = "<MISSING>"
-        phone = store["phoneNumber"]
-        if not phone:
-            phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-        link = store["url"]
+        phone = store["phone"]
+        hours_of_operation = ""
+        latitude = store["lat"]
+        longitude = store["lng"]
 
-        # Store data
-        data.append(
-            [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                link,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url="https://subzeroicecream.com/location-maps/",
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

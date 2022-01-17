@@ -1,10 +1,13 @@
-import csv
-from sgrequests import SgRequests
 import time
 import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("minuteclinic_com")
 
@@ -18,30 +21,9 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
 
 
 def random_sleep():
@@ -59,7 +41,7 @@ def get_state_urls():
     session = get_session()
     url = "https://www.cvs.com/minuteclinic/clinic-locator/"
     r = session.get(url, headers=headers)
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'title="Locations in' in line:
             lurl = line.split('href="')[1].split('"')[0]
             state_urls.append(lurl)
@@ -83,7 +65,7 @@ def get_cities_in_state(state_url):
     random_sleep()
     r = session.get(state_url, headers=headers)
     logger.info(state_url)
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'title="Locations in' in line:
             lurl = line.split('href="')[1].split('"')[0]
             cities.append(lurl)
@@ -109,7 +91,7 @@ def get_locations_in_city(city_url):
     random_sleep()
     r = session.get(city_url, headers=headers)
 
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'class="covid-standalone-details">' in line:
             locs.append(line.split('href="')[1].split('"')[0])
 
@@ -155,7 +137,7 @@ def get_location(url):
         if response.url != url and "cvs-pharmacy-address" in response.url:
             return None
 
-        for line2 in response.iter_lines(decode_unicode=True):
+        for line2 in response.iter_lines():
             if '"streetAddress": "' in line2:
                 add = line2.split('"streetAddress": "')[1].split('"')[0]
             if '"addressLocality": "' in line2:
@@ -189,22 +171,22 @@ def get_location(url):
                 lng = "<MISSING>"
                 phone = "<MISSING>"
                 hours = "<MISSING>"
-            return [
-                website,
-                url,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            return SgRecord(
+                locator_domain=website,
+                page_url=url,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                store_number=store,
+                phone=phone,
+                location_type=typ,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
     except:
         pass
 

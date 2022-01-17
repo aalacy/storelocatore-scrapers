@@ -5,15 +5,17 @@ from lxml import html
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sglogging import sglog
 
-# F
-MISSING = "<MISSING>"
+
+MISSING = SgRecord.MISSING
 DOMAIN = "ferrari.com"
 website = "https://www.ferrari.com/"
-session = SgRequests().requests_retry_session()
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
@@ -85,11 +87,19 @@ def fetchData():
             except:
                 state = MISSING
         try:
-            longitude = i["G"][0]["P"][0]["x"]  # -ve
+            longitude = i["G"][0]["P"][0]["x"]
+            log.info(f"Longitude: {longitude}")
+            if longitude == "0.0":
+                longitude = MISSING
+                log.info(f"==>Longitude: {longitude}")
         except:
             longitude = MISSING
         try:
-            latitude = i["G"][0]["P"][0]["y"]  # -ve
+            latitude = i["G"][0]["P"][0]["y"].strip()
+            log.info(f"Latitude: {latitude}")
+            if latitude == str(0.0):
+                latitude = MISSING
+                log.info(f"==>Latitude: {latitude}")
         except:
             latitude = MISSING
 
@@ -117,7 +127,9 @@ def scrape():
     count = 0
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1

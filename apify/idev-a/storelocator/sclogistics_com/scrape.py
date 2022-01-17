@@ -4,6 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("sclogistics")
 
@@ -20,9 +23,10 @@ def fetch_data():
         links = soup.select("div.marker")
         logger.info(f"{len(links)} found")
         for link in links:
-            addr = list(link.p.stripped_strings)
-            if len(addr) == 1:
-                addr = addr[0].split("\r\n")
+            addr = parse_address_intl(" ".join(link.p.stripped_strings))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             phone = ""
             if link.find("p", string=re.compile(r"phone", re.IGNORECASE)):
                 phone = (
@@ -31,16 +35,13 @@ def fetch_data():
                     .replace("Phone", "")
                     .strip()
                 )
-            zip_postal = addr[-1].split(",")[1].strip().split(" ")[-1].strip()
-            if not zip_postal.replace("-", "").strip().isdigit():
-                zip_postal = ""
             yield SgRecord(
                 page_url=link.a["href"],
                 location_name=link.h4.text.strip(),
-                street_address=" ".join(addr[:-1]),
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=zip_postal,
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
@@ -50,7 +51,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

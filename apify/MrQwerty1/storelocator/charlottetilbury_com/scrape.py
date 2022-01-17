@@ -1,40 +1,12 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def generate_links():
-    session = SgRequests()
     r = session.get("https://stores.charlottetilbury.com/index.json")
     js = r.json()["directoryHierarchy"]
     urls = list(get_urls(js))
@@ -53,27 +25,24 @@ def get_urls(states):
             yield from get_urls(children)
 
 
-def get_data(url):
-    session = SgRequests()
+def get_data(url, sgw: SgWriter):
     r = session.get(url)
     j = r.json()
 
-    locator_domain = "https://charlottetilbury.com/"
     page_url = url.replace(".json", ".html")
-    location_name = j.get("name") or "<MISSING>"
+    location_name = j.get("name") or SgRecord.MISSING
 
     street_address = (
-        f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
+        f"{j.get('address1')} {j.get('address2') or ''}".strip() or SgRecord.MISSING
     )
-    city = j.get("city") or "<MISSING>"
-    state = j.get("state") or "<MISSING>"
-    postal = j.get("postalCode") or "<MISSING>"
-    country_code = j.get("country") or "<MISSING>"
-    store_number = j.get("corporateCode") or "<MISSING>"
-    phone = j.get("phone") or "<MISSING>"
-    latitude = j.get("latitude") or "<MISSING>"
-    longitude = j.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
+    city = j.get("city") or SgRecord.MISSING
+    state = j.get("state") or SgRecord.MISSING
+    postal = j.get("postalCode") or SgRecord.MISSING
+    country_code = j.get("country") or SgRecord.MISSING
+    store_number = j.get("corporateCode") or SgRecord.MISSING
+    phone = j.get("phone") or SgRecord.MISSING
+    latitude = j.get("latitude") or SgRecord.MISSING
+    longitude = j.get("longitude") or SgRecord.MISSING
     days = j.get("hours", {}).get("days") or []
 
     _tmp = []
@@ -84,7 +53,6 @@ def get_data(url):
             start = str(interval.get("start"))
             end = str(interval.get("end"))
 
-            # normalize 9:30 -> 09:30
             if len(start) == 3:
                 start = f"0{start}"
 
@@ -97,55 +65,44 @@ def get_data(url):
 
         _tmp.append(line)
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
     if (
         hours_of_operation.count("Closed") == 7
         or location_name.lower().find("closed") != -1
     ):
         hours_of_operation = "Closed"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    s = set()
-    ids = generate_links()
+def fetch_data(sgw: SgWriter):
+    urls = generate_links()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                check = tuple(row[2:6])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://charlottetilbury.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

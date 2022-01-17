@@ -20,7 +20,7 @@ _headers = {
 base_url = "https://www.tapi.co.uk/stores/search"
 locator_domain = "https://www.tapi.co.uk"
 session = SgRequests().requests_retry_session()
-max_workers = 8
+max_workers = 1
 
 
 def fetchConcurrentSingle(link):

@@ -1,81 +1,59 @@
-import csv
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
-    return_main_object = []
-    base_url = "https://www.thehickorytavern.com/"
-    loacation_url = base_url+'locations/'
-    r = session.get(loacation_url,headers = header)
-    soup = BeautifulSoup(r.text,"lxml")
+    session = SgRequests()
 
-    get_link  = soup.find_all('li',{'class':'u-red'})
-   
-    for target_list in get_link:
-        a = target_list.find('a')['href']
-        
-    
+    start_url = "https://thehickorytavern.com/wp-admin/admin-ajax.php?action=store_search&lat=35.02378686839386&lng=-89.72070559755325&max_results=25&search_radius=50&autoload=1"
+    domain = "thehickorytavern.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    all_locations = session.get(start_url, headers=hdr).json()
+    for poi in all_locations:
+        street_address = poi["address"]
+        if poi["address2"]:
+            street_address += ", " + poi["address2"]
+        hoo = etree.HTML(poi["hours"]).xpath("//text()")
+        hoo = " ".join(hoo)
 
-        r = session.get(a,headers = header)
-        soup = BeautifulSoup(r.text,"lxml")
-        da  = soup.find('div',{'class':'Callout-address'}).find('p').text.split(',')
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=poi["permalink"],
+            location_name=poi["store"],
+            street_address=street_address,
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["zip"],
+            country_code=poi["country"],
+            store_number=poi["id"],
+            phone=poi["phone"],
+            location_type="",
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hoo,
+        )
 
-        locator_domain = base_url
-        location_name = soup.find('div',{'class':'Callout-header'}).find('h2').text
-        city = da[0].split(' ')[-1]
-        gk = da[1].strip().split(' ')
-        state = gk[0]
-        zip = gk[1]
-        kb = da[0].split(' ')
-        kb.pop(-1)
-        street_address = ' '.join(kb)
-        phone = soup.find('div',{'class':'Callout-number'}).find('span').text
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = 'thehickorytavern'
-        latitude =  '<MISSING>'
-        longitude =  '<MISSING>'
-        kb =  list(soup.find('div',{'class':'Callout-times'}).stripped_strings)
-        kb.pop(0)
-        hours_of_operation = ' '.join(kb)
-       
-        store=[]
-        store.append(locator_domain if locator_domain else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zip if zip else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type if location_type else '<MISSING>')
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        return_main_object.append(store)  
-    return return_main_object    
-       
-        
-   
-        
+        yield item
+
+
 def scrape():
-    data = fetch_data()    
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

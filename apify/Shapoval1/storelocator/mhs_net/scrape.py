@@ -1,42 +1,14 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.mhs.net"
     api_url = "https://www.mhs.net/locations"
     session = SgRequests()
     headers = {
@@ -103,7 +75,7 @@ def fetch_data():
                 location_name = (
                     "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
                 )
-                location_type = "<MISSING>"
+
                 ad = (
                     " ".join(tree.xpath('//div[@class="module-lc-address"]/div/text()'))
                     .replace("\n", "")
@@ -121,6 +93,7 @@ def fetch_data():
                     .replace("Outpatient Pharmacy", "")
                     .replace("Memorial Healthcare System", "")
                     .replace("Memorial Regional Hospital", "")
+                    .replace("Medical Office Building", "")
                 )
                 ad = (
                     ad.replace("Hollywood Beach Cultural and Community Center", "")
@@ -131,14 +104,18 @@ def fetch_data():
                 ad = ad.strip()
                 a = usaddress.tag(ad, tag_mapping=tag)[0]
 
-                street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-                    "None", ""
-                ).strip()
+                street_address = (
+                    f"{a.get('address1')} {a.get('address2')}".replace("None", "")
+                    .replace("954-987-2000", "")
+                    .strip()
+                    or "<MISSING>"
+                )
 
-                phone = tree.xpath('//div[contains(text(), "Phone:")]/text()')
-                phone = list(filter(None, [a.strip() for a in phone]))
                 phone = (
-                    "".join(phone).replace("\r\n", "").replace("Phone:", "").strip()
+                    "".join(tree.xpath('//div[contains(text(), "Phone:")]/text()'))
+                    .replace("\r\n", "")
+                    .replace("Phone:", "")
+                    .strip()
                     or "<MISSING>"
                 )
                 if phone.find("A") != -1:
@@ -150,7 +127,7 @@ def fetch_data():
                         ).replace("Telehealth Services", "")
                         or "<MISSING>"
                     )
-
+                phone = phone or "<MISSING>"
                 state = a.get("state") or "<MISSING>"
                 postal = a.get("ZipCode") or "<MISSING>"
                 country_code = "US"
@@ -158,9 +135,7 @@ def fetch_data():
                 if city.find("Lobby") != -1:
                     city = city.replace("Lobby", "").strip()
                     street_address = street_address + " " + "Lobby"
-                store_number = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+
                 hours_of_operation = (
                     " ".join(
                         tree.xpath(
@@ -224,32 +199,33 @@ def fetch_data():
                     )
                 if hours_of_operation.find("Email") != -1:
                     hours_of_operation = hours_of_operation.split("Email")[0].strip()
+                if hours_of_operation.find("Varies") != -1:
+                    hours_of_operation = "<MISSING>"
+                if hours_of_operation.find("Phone:") != -1:
+                    hours_of_operation = hours_of_operation.split("Phone:")[0].strip()
 
-                row = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    postal,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                out.append(row)
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=SgRecord.MISSING,
+                    longitude=SgRecord.MISSING,
+                    hours_of_operation=hours_of_operation,
+                )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.mhs.net"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
