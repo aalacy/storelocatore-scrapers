@@ -5,7 +5,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
@@ -28,8 +28,10 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def request_with_retries(payload):
     lat, lng = payload
-    url = json_url.format(lat, lat + 3.0, lng, lng + 5.0)
+    url = json_url.format(lat, lat + 2.0, lng, lng + 2.0)
+    log.info(f"URL: {url}")
     response = session.get(url, headers=headers)
+    log.info(f"Response: {response}")
     stores = []
     try:
         data = json.loads(response.text)
@@ -93,8 +95,7 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_1_KM(),
-        use_state=False,
+        expected_search_radius_miles=1,
     )
     count = 0
 
