@@ -26,7 +26,7 @@ def fetch_data():
                 zip_postal=_["postalCode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
-                country_code="Belgium",
+                country_code="Netherlands",
                 phone=_["phone"],
                 locator_domain=locator_domain,
                 hours_of_operation=_["hours"],
