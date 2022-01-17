@@ -89,7 +89,6 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
             phone = "<MISSING>"
             raw_address = "<MISSING>"
-            add_list = []
             for index, raw in enumerate(raw_info, 0):
                 if "Opening Hours:" in raw:
                     hours_of_operation = raw_info[index + 1]
