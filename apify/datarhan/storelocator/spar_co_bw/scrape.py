@@ -37,8 +37,8 @@ def fetch_data():
         hoo = loc_dom.xpath('//ul[@class="si-hours"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
         country_code = ""
-        if 'Botswana' in page_url:
-            country_code = 'Botswana'
+        if "Botswana" in page_url:
+            country_code = "Botswana"
 
         item = SgRecord(
             locator_domain=domain,
