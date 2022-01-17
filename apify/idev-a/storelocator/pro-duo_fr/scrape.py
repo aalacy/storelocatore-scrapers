@@ -3,6 +3,10 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -17,6 +21,12 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             page_url = f"https://www.pro-duo.fr/storeinfo?StoreID={_['ID']}"
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in sp1.select("table.store-information_time_table tr")[1:]
+            ]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["ID"],
@@ -29,7 +39,7 @@ def fetch_data():
                 country_code="France",
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation=_["hours"],
+                hours_of_operation="; ".join(hours),
                 raw_address=_["formattedAddress"],
             )
 
