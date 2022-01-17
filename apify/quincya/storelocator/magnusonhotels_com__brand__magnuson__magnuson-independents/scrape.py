@@ -1,5 +1,6 @@
 import time
 import json
+import ssl
 
 from bs4 import BeautifulSoup
 from random import randint
@@ -18,6 +19,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 logger = SgLogSetup().get_logger(
     "magnusonhotels_com__brand__magnuson__magnuson-independents"
 )
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):

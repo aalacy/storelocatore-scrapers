@@ -5,8 +5,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+
 DOMAIN = "muchoburrito.com"
-API_URL = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=GTKDWXDZMLHWYIKP&pageSize=10000"
+BASE_URL = "https://locations.muchoburrito.com"
+SITE_MAP_API = "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token=GTKDWXDZMLHWYIKP&multi_account=false"
+SINGLE_STORE = "https://api.momentfeed.com/v1/analytics/api/llp.json?address={address}&locality={city}&multi_account=false&pageSize=30&region={state}"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
@@ -47,37 +50,48 @@ def format_hours(hours):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    data = session.get(API_URL, headers=HEADERS).json()
-    for row in data:
-        if row["store_info"]["status"] == "coming soon":
+    store_info = session.get(SITE_MAP_API, headers=HEADERS).json()
+    HEADERS["authorization"] = "GTKDWXDZMLHWYIKP"
+    for info in store_info["locations"]:
+        url = SINGLE_STORE.format(
+            address=info["store_info"]["address"].replace(" ", "+"),
+            city=info["store_info"]["locality"].replace(" ", "+"),
+            state=info["store_info"]["region"].replace(" ", "+"),
+        )
+        data = session.get(url, headers=HEADERS).json()[0]
+        if data["store_info"]["status"] == "coming soon":
             continue
-        elif row["store_info"]["status"] == "closed":
+        elif data["store_info"]["status"] == "closed":
             location_type = "TEMP_CLOSED"
         else:
             location_type = MISSING
-        page_url = row["store_info"]["website"]
-        location_name = row["store_info"]["name"]
+        page_url = BASE_URL + info["llp_url"]
+        if not page_url:
+            page_url = data["store_info"]["website"]
+        location_name = data["store_info"]["name"]
         street_address = (
             (
-                row["store_info"]["address"]
+                data["store_info"]["address"]
                 + ", "
-                + row["store_info"]["address_extended"]
+                + data["store_info"]["address_extended"]
             )
             .strip()
             .rstrip(",")
         )
-        city = row["store_info"]["locality"]
-        state = row["store_info"]["region"]
-        zip_postal = row["store_info"]["postcode"]
-        country_code = row["store_info"]["country"]
-        phone = row["store_info"]["phone"]
-        store_number = row["store_info"]["corporate_id"]
-        if not row["store_info"]["store_hours"]:
+        city = data["store_info"]["locality"]
+        state = data["store_info"]["region"]
+        zip_postal = data["store_info"]["postcode"]
+        country_code = data["store_info"]["country"]
+        if country_code == "US" and len(zip_postal.split(" ")) > 1:
+            country_code = "CA"
+        phone = data["store_info"]["phone"]
+        store_number = data["store_info"]["corporate_id"]
+        if not data["store_info"]["store_hours"]:
             hours_of_operation = MISSING
         else:
-            hours_of_operation = format_hours(row["store_info"]["store_hours"])
-        latitude = row["store_info"]["latitude"]
-        longitude = row["store_info"]["longitude"]
+            hours_of_operation = format_hours(data["store_info"]["store_hours"])
+        latitude = data["store_info"]["latitude"]
+        longitude = data["store_info"]["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

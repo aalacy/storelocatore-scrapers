@@ -51,24 +51,27 @@ def fetch_data():
             for location in locations:
                 addr = list(location.select_one("address").stripped_strings)
                 phone = location.find("a", href=re.compile("tel:")).text.strip()
-                page_url = location.select("a.btn")[-1]["href"]
-                logger.info(page_url)
-                soup1 = bs(session.get(page_url, headers=_headers()).text, "lxml")
-                try:
-                    coord = (
-                        soup1.address.find_next_sibling("a")["href"]
-                        .split("/@")[1]
-                        .split("/data")[0]
-                        .split(",")
-                    )
-                except:
-                    coord = ["<INACCESIBLE>", "<INACCESIBLE>"]
-
-                labels = [_.text for _ in soup1.select("dl.hours dt")]
-                values = [_.text.strip() for _ in soup1.select("dl.hours dd")]
+                page_url = base_url
                 hours = []
-                for x in range(len(labels)):
-                    hours.append(f"{labels[x]}: {values[x]}")
+                coord = ["<INACCESIBLE>", "<INACCESIBLE>"]
+                if location.select("a.btn"):
+                    page_url = location.select("a.btn")[-1]["href"]
+                    logger.info(page_url)
+                    soup1 = bs(session.get(page_url, headers=_headers()).text, "lxml")
+                    try:
+                        coord = (
+                            soup1.address.find_next_sibling("a")["href"]
+                            .split("/@")[1]
+                            .split("/data")[0]
+                            .split(",")
+                        )
+                    except:
+                        coord = ["<INACCESIBLE>", "<INACCESIBLE>"]
+
+                    labels = [_.text for _ in soup1.select("dl.hours dt")]
+                    values = [_.text.strip() for _ in soup1.select("dl.hours dd")]
+                    for x in range(len(labels)):
+                        hours.append(f"{labels[x]}: {values[x]}")
                 street_address = (
                     " ".join(addr[:-1]).replace("Ackerman Student Union", "").strip()
                 )

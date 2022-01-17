@@ -31,7 +31,9 @@ def fetch_data():
             locator_domain = website
             store_number = "<MISSING>"
 
-            page_url = base + "".join(store.xpath(".//a[not(@class)]/@href"))
+            page_url = base + "".join(
+                store.xpath(".//a[contains(text(),'More')]/@href")
+            )
             log.info(page_url)
 
             store_res = session.get(page_url, headers=headers)
