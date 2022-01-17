@@ -67,7 +67,7 @@ def fetch_data():
             "div",
             {"class": re.compile(r"u_(.*) dmRespRow fullBleedChanged fullBleedMode")},
         )
-        location_name = info.find("h1").text.replace("|", "")
+        location_name = row.text.strip()
         addr_info = info.find("div", {"data-type": "inlineMap"})
         raw_address = addr_info["data-address"].strip()
         if "boise---state" in page_url:

@@ -51,8 +51,19 @@ def fetch_data():
         geo = (
             loc_dom.xpath("//iframe/@src")[0].split("sll=")[-1].split("&")[0].split(",")
         )
-        hoo = loc_dom.xpath('//p[contains(text(), "Monday to")]/text()')
-        hoo = " ".join([e.strip() for e in hoo])
+        hoo = loc_dom.xpath('//p[contains(text(), "Monday ")]/text()')
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h2[contains(text(), "Hours:")]/following-sibling::table//text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath('//p[contains(text(), "Weekdays:")]/text()')
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split("*")[0]
+            .replace("Day Opening Closing ", "")
+            .strip()
+        )
         temp_closed = loc_dom.xpath('//img[contains(@src, "EMPORARILYCLOSED")]')
         location_type = ""
         if temp_closed:

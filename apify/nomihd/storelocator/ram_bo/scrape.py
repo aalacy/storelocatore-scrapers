@@ -77,6 +77,8 @@ def fetch_data():
                         )
                     )
                     .strip()
+                    .replace("\r\n", "")
+                    .strip()
                     .replace("\n", ", ")
                     .strip()
                 )
@@ -118,6 +120,11 @@ def fetch_data():
                     phone = "<MISSING>"
 
                 page_url = search_url
+                dealer_website = "".join(
+                    store.xpath('.//a[@class="dealer-website"]/@href')
+                ).strip()
+                if len(dealer_website) > 0:
+                    page_url = dealer_website
 
                 temp_hours = store.xpath(
                     'div[@class="dealer-details"]/div[@class="dealer-contact-options"]//div[@class="grilla-horas"]'
@@ -166,7 +173,15 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
