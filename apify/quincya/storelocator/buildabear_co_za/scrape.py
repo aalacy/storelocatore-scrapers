@@ -28,8 +28,12 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         link = locator_domain + item["href"]
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+
+        try:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+        except:
+            continue
 
         stores = base.find_all(class_="panel")
         for store in stores:

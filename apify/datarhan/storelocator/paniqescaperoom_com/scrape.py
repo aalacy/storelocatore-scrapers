@@ -78,7 +78,14 @@ def fetch_data():
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
         hoo = loc_dom.xpath('//div[@class="openhours"]/table//text()')
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split(" Mon,")[0]
+            .replace(
+                " Tue, Wed, Thu, Fri, Sat, Sun 10:00 AM - 11:30 PM Mon 2:00 PM - 11:30 PM",
+                "",
+            )
+        )
         if loc_dom.xpath('//div[contains(text(), "temporarily closed")]'):
             location_type = "temporarily closed"
 
