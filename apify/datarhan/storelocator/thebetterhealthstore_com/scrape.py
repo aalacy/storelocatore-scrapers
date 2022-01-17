@@ -1,4 +1,5 @@
 import re
+import ssl
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -9,9 +10,16 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgChrome
 
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     start_url = "https://www.thebetterhealthstore.com/pointofsale/"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
