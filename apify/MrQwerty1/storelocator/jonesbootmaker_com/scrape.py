@@ -1,99 +1,91 @@
-from sgcrawler.sgcrawler_fun import SgCrawlerUsingHttpFun
-from sgcrawler.helper_definitions import (
-    DeclarativeTransformerAndFilter,
-    DeclarativePipeline,
-)
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgscrape.simple_scraper_pipeline import (
-    SSPFieldDefinitions,
-    ConstantField,
-    MappingField,
-    MissingField,
-)
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def fetch_data(_, http: SgRequests):
-    res = http.request(
-        url="https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=answers-jonesbootmaker&api_key=9d200ab7c8620cc20297f7dbfd870b45&v=20190101&version=PRODUCTION&locale=en_GB&input=&verticalKey=location&limit=50&offset=0&facetFilters={}&queryTrigger=initialize&sessionTrackingEnabled=true&sortBys=[]&referrerPageUrl=&source=STANDARD&jsLibVersion=v1.8.6",
-        headers={
-            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        },
-    ).json()["response"]["results"]
-    for x in res:
-        yield x
+def fetch_data(sgw: SgWriter):
+    for i in range(0, 10000, 50):
+        params = (
+            ("experienceKey", "answers-jonesbootmaker"),
+            ("api_key", "9d200ab7c8620cc20297f7dbfd870b45"),
+            ("v", "20190101"),
+            ("version", "PRODUCTION"),
+            ("locale", "en_GB"),
+            ("input", ""),
+            ("verticalKey", "location"),
+            ("limit", "50"),
+            ("offset", i),
+            ("facetFilters", "{}"),
+            ("queryTrigger", "initialize"),
+            ("sessionTrackingEnabled", "true"),
+            ("sortBys", "[]"),
+            ("referrerPageUrl", "https://www.jonesbootmaker.com/"),
+            ("source", "STANDARD"),
+            ("jsLibVersion", "v1.8.6"),
+        )
+        api = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query"
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["response"]["results"]
 
+        for j in js:
+            j = j["data"]
+            location_name = j.get("c_answersName")
+            page_url = j.get("website")
+            phone = j.get("mainPhone")
 
-def get_hours(intervals):
-    _tmp = []
-    for day, interval in intervals.items():
-        if interval.get("isClosed"):
-            _tmp.append(f"{day.capitalize()}: Closed")
-            continue
+            a = j.get("address") or {}
+            street_address = f'{a.get("line1")} {a.get("line2") or ""}'.strip()
+            city = a.get("city")
+            postal = a.get("postalCode")
+            country = a.get("countryCode")
 
-        start = interval["openIntervals"][0]["start"]
-        end = interval["openIntervals"][0]["end"]
-        _tmp.append(f"{day.capitalize()}: {start} - {end}")
+            g = j.get("yextDisplayCoordinate") or {}
+            latitude = g.get("latitude")
+            longitude = g.get("longitude")
+            store_number = j.get("id")
 
-    return ";".join(_tmp)
+            _tmp = []
+            intervals = j.get("hours") or {}
+            for day, interval in intervals.items():
+                if interval.get("isClosed"):
+                    _tmp.append(f"{day.capitalize()}: Closed")
+                    continue
+
+                start = interval["openIntervals"][0]["start"]
+                end = interval["openIntervals"][0]["end"]
+                _tmp.append(f"{day.capitalize()}: {start} - {end}")
+
+            hours_of_operation = ";".join(_tmp)
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=postal,
+                country_code=country,
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+        if len(js) < 50:
+            break
 
 
 if __name__ == "__main__":
-    crawler_domain = "jonesbootmaker.com"
+    locator_domain = "https://jonesbootmaker.com"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+    }
+    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        SgCrawlerUsingHttpFun(
-            crawler_domain=crawler_domain,
-            transformer=DeclarativeTransformerAndFilter(
-                pipeline=DeclarativePipeline(
-                    crawler_domain=crawler_domain,
-                    field_definitions=SSPFieldDefinitions(
-                        locator_domain=ConstantField("https://jonesbootmaker.com"),
-                        page_url=MappingField(mapping=["data", "website"]),
-                        location_name=MappingField(
-                            mapping=["data", "name"], is_required=False
-                        ),
-                        street_address=MappingField(
-                            mapping=["data", "address", "line1"]
-                        ),
-                        city=MappingField(mapping=["data", "address", "city"]),
-                        state=MissingField(),
-                        zipcode=MappingField(
-                            mapping=["data", "address", "postalCode"], is_required=False
-                        ),
-                        country_code=MappingField(
-                            mapping=["data", "address", "countryCode"],
-                            is_required=False,
-                        ),
-                        store_number=MappingField(
-                            mapping=["data", "id"], part_of_record_identity=True
-                        ),
-                        phone=MappingField(
-                            mapping=["data", "mainPhone"], is_required=False
-                        ),
-                        location_type=MissingField(),
-                        latitude=MappingField(
-                            mapping=["data", "yextDisplayCoordinate", "latitude"],
-                            is_required=False,
-                        ),
-                        longitude=MappingField(
-                            mapping=["data", "yextDisplayCoordinate", "longitude"],
-                            is_required=False,
-                        ),
-                        hours_of_operation=MappingField(
-                            mapping=["data", "hours"], raw_value_transform=get_hours
-                        ),
-                        raw_address=MissingField(),
-                    ),
-                    fail_on_outlier=False,
-                )
-            ),
-            fetch_raw_using=fetch_data,
-            make_http=lambda _: SgRequests(),
-            data_writer=writer,
-        ).run()
+        fetch_data(writer)

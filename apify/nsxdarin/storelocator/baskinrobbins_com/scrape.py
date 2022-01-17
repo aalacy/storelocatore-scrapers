@@ -33,7 +33,7 @@ def fetch_data():
         for item in items:
             name = "Baskin Robbins"
             typ = "Store"
-            store = item["storeId"]
+            store = item["storeName"]
             city = item["city"]
             add = item["street"]
             state = item["state"]
