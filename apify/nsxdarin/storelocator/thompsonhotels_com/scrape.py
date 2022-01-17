@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 session = SgRequests()
 headers = {
@@ -64,6 +65,8 @@ def fetch_data():
                     try:
                         r2 = session.get(loc, headers=headers)
                         for line2 in r2.iter_lines():
+                            if '<a href="tel:' in line2 and "Tel:" in line2:
+                                phone = line2.split('">')[1].split("<")[0]
                             if (
                                 '<span class="opening-date' in line2
                                 and "Opening 20" in line2
@@ -74,14 +77,23 @@ def fetch_data():
                                 and "Now accepting reservations" in line2
                             ):
                                 CS = True
-                            if '"telephone":"' in line2:
+                            if '"telephone":"' in line2 and phone == "":
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
+                            if "Tel: <" in line2 and phone == "":
+                                phone = line2.rsplit('">')[1].split("<")[0].strip()
+                            if '"hotelPhone" href="tel:' in line2 and phone == "":
+                                phone = line2.split('"hotelPhone" href="tel:')[1].split(
+                                    '"'
+                                )[0]
+                        time.sleep(5)
                     except:
                         pass
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         name = name + " - Coming Soon"
+                    if "hnlrw" in loc:
+                        phone = "+1 808 923 1234"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
