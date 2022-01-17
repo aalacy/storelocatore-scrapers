@@ -9,7 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com/be/fr/stores/"
     domain = "ikea.com/be"
@@ -23,9 +23,15 @@ def fetch_data():
         '//a[contains(@href, "/stores/") and contains(text(), "IKEA")]/@href'
     )
     for page_url in all_locations:
+        if "/restaurant/" in page_url:
+            continue
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        location_name = loc_dom.xpath("//h1/text()")[0]
+        location_name = (
+            loc_dom.xpath("//h1/text()")[0]
+            .replace(": Bienvenue !", "")
+            .replace(" - Bienvenue!", "")
+        )
         raw_adr = loc_dom.xpath(
             '//h3[strong[contains(text(), "En route pour")]]/following-sibling::p[1]/text()'
         )

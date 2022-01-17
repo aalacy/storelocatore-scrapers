@@ -51,7 +51,11 @@ def getAddress(raw_address):
 def pull_content(url):
     log.info("Pull content => " + url)
     HEADERS["Referer"] = url
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        log.info("[RETRY] Pull content => " + url)
+        pull_content(url)
     return soup
 
 
