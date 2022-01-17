@@ -26,7 +26,7 @@ def fetch_data():
             )["wsl_store_details_json"].replace('\\\\"', "'")
         )
         for _ in locations:
-            raw_address = _["wsl_street"].replace("\/", "/")
+            raw_address = _["wsl_street"].replace("\\/", "/")
             addr = parse_address_intl(_["wsl_street"] + ", United Kingdom")
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
@@ -39,7 +39,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["wsl_id"],
-                location_name=_["wsl_name"].replace("\/", "/"),
+                location_name=_["wsl_name"].replace("\\/", "/"),
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
