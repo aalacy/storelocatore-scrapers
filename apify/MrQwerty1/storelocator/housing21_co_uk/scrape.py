@@ -14,6 +14,9 @@ def get_international(line):
         "None", ""
     ).strip()
     city = adr.city or ""
+    if not city:
+        print(line)
+        city = line.split(",")[-2].strip()
     postal = adr.postcode
 
     return street_address, city, postal
@@ -90,11 +93,13 @@ def fetch_data(sgw: SgWriter):
             slug = "".join(tree.xpath("//a[@class='e-btn']/@href"))
             page_url = f"https://www.housing21.org.uk{slug}"
 
-            raw_address = "".join(
-                tree.xpath(
-                    "//span[@class='m-map_content__heading']/following-sibling::p[1]/text()"
-                )
-            ).strip()
+            raw_address = " ".join(
+                "".join(
+                    tree.xpath(
+                        "//span[@class='m-map_content__heading']/following-sibling::p[1]/text()"
+                    )
+                ).split()
+            )
             street_address, city, postal = get_international(raw_address)
             try:
                 phone = get_phone(page_url)
