@@ -35,84 +35,123 @@ def fetch_data():
         )
         params = (("key", API_KEY),)
 
-        stores_req = session.get(
-            "https://api.woosmap.com/tiles/0-0-0.grid.json",
-            headers=headers,
-            params=params,
-        )
-        stores = json.loads(stores_req.text)["data"]
-        for store_ID in stores.keys():
-            store_number = stores[store_ID]["store_id"]
-            page_url = "<MISSING>"
-            log.info(f"fetching data for record having ID: {store_number}")
-            store_req = session.get(
-                "https://api.woosmap.com/stores/" + store_number,
+        val_list = [
+            "1-0-1",
+            "1-0-0",
+            "1-1-1",
+            "1-1-0",
+            "1-2-1",
+            "1-2-0",
+            "0-0-1",
+            "0-0-0",
+            "0-1-1",
+            "0-1-0",
+        ]
+        id_list = []
+        for val in val_list:
+            stores_req = session.get(
+                f"https://api.woosmap.com/tiles/{val}.grid.json",
                 headers=headers,
                 params=params,
             )
-            store_json = json.loads(store_req.text)
-            locator_domain = website
-            prop = store_json["properties"]
-            location_name = prop["name"]
-            street_address = ", ".join(prop["address"]["lines"]).strip()
-            city = prop["address"]["city"]
-            state = "<MISSING>"
-            zip = prop["address"]["zipcode"]
+            if "data" in stores_req.text:
+                stores = json.loads(stores_req.text)["data"]
+                for store_ID in stores.keys():
+                    store_number = stores[store_ID]["store_id"]
+                    if store_number in id_list:
+                        continue
 
-            country_code = prop["address"]["country_code"]
+                    id_list.append(store_number)
 
-            phone = prop["contact"]["phone"]
-            location_type = "<MISSING>"
+                    page_url = "<MISSING>"
+                    log.info(f"fetching data for record having ID: {store_number}")
+                    store_req = session.get(
+                        "https://api.woosmap.com/stores/" + store_number,
+                        headers=headers,
+                        params=params,
+                    )
+                    store_json = json.loads(store_req.text)
+                    locator_domain = website
+                    prop = store_json["properties"]
+                    location_name = prop["name"]
+                    raw_address = ""
+                    street_address = ", ".join(prop["address"]["lines"]).strip()
+                    if street_address:
+                        raw_address = street_address
 
-            latitude = store_json["geometry"]["coordinates"][1]
-            longitude = store_json["geometry"]["coordinates"][0]
+                    city = prop["address"]["city"]
+                    if city:
+                        raw_address = raw_address + ", " + city
 
-            hours_of_operation = "<MISSING>"
-            hours_list = []
-            try:
-                hours = prop["opening_hours"]["usual"]  # mon-sun
-                for day_val in hours.keys():
-                    day = ""
-                    if day_val == "1":
-                        day = "Monday:"
-                    if day_val == "2":
-                        day = "Tuesday:"
-                    if day_val == "3":
-                        day = "Wednesday:"
-                    if day_val == "4":
-                        day = "Thursday:"
-                    if day_val == "5":
-                        day = "Friday:"
-                    if day_val == "6":
-                        day = "Saturday:"
-                    if day_val == "7":
-                        day = "Sunday:"
+                    state = "<MISSING>"
+                    zip = prop["address"]["zipcode"]
+                    if zip:
+                        if zip == "." or zip == "-":
+                            zip = "<MISSING>"
+                        else:
+                            raw_address = raw_address + ", " + zip
 
-                    start = hours[day_val][0]["start"]
-                    end = hours[day_val][0]["end"]
-                    time = start + " - " + end
-                    hours_list.append(day + time)
-            except:
-                pass
+                    country_code = prop["address"]["country_code"]
 
-            hours_of_operation = "; ".join(hours_list).strip()
+                    phone = prop["contact"]["phone"]
+                    if not phone:
+                        phone = "<MISSING>"
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                    if phone and phone == "null":
+                        phone = "<MISSING>"
+
+                    location_type = "<MISSING>"
+
+                    latitude = store_json["geometry"]["coordinates"][1]
+                    longitude = store_json["geometry"]["coordinates"][0]
+
+                    hours_of_operation = "<MISSING>"
+                    hours_list = []
+                    try:
+                        hours = prop["opening_hours"]["usual"]  # mon-sun
+                        for day_val in hours.keys():
+                            day = ""
+                            if day_val == "1":
+                                day = "Monday:"
+                            if day_val == "2":
+                                day = "Tuesday:"
+                            if day_val == "3":
+                                day = "Wednesday:"
+                            if day_val == "4":
+                                day = "Thursday:"
+                            if day_val == "5":
+                                day = "Friday:"
+                            if day_val == "6":
+                                day = "Saturday:"
+                            if day_val == "7":
+                                day = "Sunday:"
+
+                            start = hours[day_val][0]["start"]
+                            end = hours[day_val][0]["end"]
+                            time = start + " - " + end
+                            hours_list.append(day + time)
+                    except:
+                        pass
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
 
 
 def scrape():

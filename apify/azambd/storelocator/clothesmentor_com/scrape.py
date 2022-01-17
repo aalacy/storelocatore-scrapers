@@ -7,18 +7,13 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sglogging import sglog
 
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 DOMAIN = "clothesmentor.com"
@@ -69,7 +64,7 @@ def getJsonObj(html_string):
     return html_string
 
 
-def fetchData():
+def fetch_data():
     driver = get_driver(api_url)
     response = driver.page_source
 
@@ -120,15 +115,15 @@ def fetchData():
 
 
 def scrape():
-    log.info("Started")
+    log.info(f"Start Crawl {website} ...")
     count = 0
     start = time.time()
-    result = fetchData()
-    with SgWriter() as writer:
+    result = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
-            count = count + 1
-
     end = time.time()
     log.info(f"Total Locations added = {count}")
     log.info(f"It took {end-start} seconds to complete the crawl.")
