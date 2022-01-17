@@ -38,9 +38,6 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    base = "https://shrimphouse.com"
-    search_url = "https://shrimphouse.com/locations/"
-
     with SgRequests() as session:
         search_res = session.get(
             "https://www.shrimphouse.com/page-sitemap.xml", headers=headers
