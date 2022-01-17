@@ -69,6 +69,8 @@ def fetch_data():
                 if not location_name:
                     continue
 
+                if country_code == "RS" and "-" in location_name:
+                    location_type = location_name.split("-")[-1].strip()
                 store_info = list(
                     filter(
                         str,
