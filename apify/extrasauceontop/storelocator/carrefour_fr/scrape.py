@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup as bs
 import json
 from sgscrape import simple_scraper_pipeline as sp
 import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def extract_json(html_string):
