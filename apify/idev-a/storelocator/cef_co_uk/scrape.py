@@ -20,6 +20,7 @@ base_url = "https://www.cef.co.uk/stores/directory?page={}"
 locator_domain = "https://www.cef.co.uk"
 
 max_workers = 8
+days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
 
 def fetchConcurrentSingle(link):
@@ -76,13 +77,28 @@ def fetch_data():
                     .split("&query=")[1]
                     .split(",")
                 )
-                hours = _["openingHours"]
-                if hours[-1].startswith("Ba"):
-                    del hours[-1]
+                hours = []
+                temp = {}
+                for hh in _["openingHours"]:
+                    if hh.startswith("Ba"):
+                        continue
+                    hr = hh.split()
+                    temp[hr[0]] = hr[1]
+
+                for dd in days:
+                    if dd in temp.keys():
+                        hours.append(f"{dd}: {temp[dd]}")
+                    else:
+                        hours.append(f"{dd}: closed")
+
+                street_address = addr["streetAddress"].replace("&amp", "&").strip()
+                if street_address.endswith(","):
+                    street_address = street_address[:-1]
+
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
-                    street_address=addr["streetAddress"],
+                    street_address=street_address,
                     city=addr["addressLocality"],
                     state=addr["addressRegion"],
                     zip_postal=addr["postalCode"],

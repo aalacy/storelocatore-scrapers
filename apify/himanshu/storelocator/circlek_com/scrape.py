@@ -120,7 +120,7 @@ def fetch_details(tup, retry=False):
             store_sel = lxml.html.fromstring(store_req.text)
             json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
             for js in json_list:
-                if '"address"' in js:
+                if "address" in js:
                     try:
                         store_json = json.loads(js)
                     except:

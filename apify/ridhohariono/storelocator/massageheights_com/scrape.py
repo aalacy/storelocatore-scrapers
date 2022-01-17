@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 DOMAIN = "massageheights.com"
 BASE_URL = "https://www.massageheights.com"
@@ -12,6 +13,7 @@ API_URL = "https://www.massageheights.com/locations/?CallAjax=GetLocations"
 HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
@@ -28,11 +30,9 @@ def pull_content(url):
     return soup
 
 
-def get_hoo(url):
-    log.info(f"Get hours of operation for => {url}")
+def get_hoo(soup):
     hoo = ""
     try:
-        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
         hoo_content = soup.find(
             "div", {"class": "hero-hours half flex ui-repeater"}
         ).find_all("span", {"data-item": "i"})
@@ -48,7 +48,15 @@ def fetch_data():
     log.info("Fetching store_locator data")
     data = session.get(API_URL, headers=HEADERS).json()
     for row in data:
+        if row["ComingSoon"] == 1:
+            continue
         page_url = BASE_URL + row["Path"]
+        store = pull_content(page_url)
+        is_coming_soon = store.find(
+            "em", text=re.compile(r"Coming Soon", flags=re.IGNORECASE)
+        )
+        if is_coming_soon:
+            continue
         location_name = row["FranchiseLocationName"]
         street_address = (row["Address1"] + " " + row["Address2"]).strip()
         city = row["City"]
@@ -57,7 +65,8 @@ def fetch_data():
         phone = row["Phone"]
         country_code = "US" if row["Country"] == "USA" else row["Country"]
         store_number = row["FranchiseLocationID"]
-        hours_of_operation = get_hoo(page_url)
+        hours_of_operation = MISSING
+        hours_of_operation = get_hoo(store)
         latitude = row["Latitude"]
         longitude = row["Longitude"]
         location_type = MISSING
