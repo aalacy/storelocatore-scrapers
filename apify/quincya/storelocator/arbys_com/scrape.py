@@ -61,7 +61,7 @@ def fetch_data(sgw: SgWriter):
             location_name = item.find(class_="h2").text.strip()
         except:
             location_name = store["name"]
-        street_address = store["address"]["streetAddress"].strip()
+        street_address = store["address"]["streetAddress"].split("Eatonton,")[0].strip()
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
         zip_code = store["address"]["postalCode"]
