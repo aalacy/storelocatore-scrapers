@@ -15,7 +15,6 @@ def get_international(line):
     ).strip()
     city = adr.city or ""
     if not city:
-        print(line)
         city = line.split(",")[-2].strip()
     postal = adr.postcode
 
