@@ -76,7 +76,7 @@ def fetch_data():
                     names.append(_["address"])
                     page_url = locator_domain + _["link-store-hours-title"]
                     yield SgRecord(
-                        page_url=page_url,
+                        page_url=base_url,
                         location_name=_["address"],
                         street_address=street_address,
                         city=_["city"],
