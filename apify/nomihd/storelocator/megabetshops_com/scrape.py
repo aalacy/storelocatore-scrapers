@@ -8,62 +8,75 @@ from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "mariasitaliankitchen.com"
+website = "megabetshops.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
 
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    elif "Current+Location/" in map_link:
+        latitude = map_link.split("Current+Location/")[1].split(",")[0].strip()
+        longitude = map_link.split("Current+Location/")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
+
+
 def fetch_data():
     # Your scraper here
-    search_url = "https://mariasitaliankitchen.com/locations/"
+
+    search_url = "http://www.megabetshops.com/p/shop-locator/"
 
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath("//section//div[h3]")
-
-        for no, store in enumerate(stores, 1):
+        stores = search_sel.xpath("//table//tr")
+        for no, store in enumerate(stores[1:], 1):
 
             locator_domain = website
             store_number = "<MISSING>"
 
             page_url = search_url
 
-            location_name = "".join(store.xpath("./h3//text()")).strip()
-            if location_name == "Catering":
-                continue
+            location_name = "".join(
+                store.xpath('./td[@class="shopName"]//text()')
+            ).strip()
 
             location_type = "<MISSING>"
 
             store_info = list(
                 filter(
                     str,
-                    [x.strip() for x in store.xpath(".//p//text()")],
+                    [
+                        x.strip()
+                        for x in store.xpath('./td[@class="shopAddress"]//text()')
+                    ],
                 )
             )
 
-            for gm_idx, x in enumerate(store_info):
-                if "GM:" in x:
-                    break
+            phone = "<MISSING>"
+            raw_address = " ".join(store_info)
 
-            if "GM:" in store_info[gm_idx]:
-                phone = store_info[gm_idx].split("GM:")[1].split("\n")[1].strip()
-            else:
-                phone = "<MISSING>"
-
-            raw_address = (
-                ", ".join(store_info)
-                .split("GM:")[0]
-                .strip()
-                .replace("\n", ", ")
-                .strip()
-            )
-
-            formatted_addr = parser.parse_address_usa(raw_address)
+            formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
@@ -74,31 +87,15 @@ def fetch_data():
             city = formatted_addr.city
 
             state = formatted_addr.state
-            zip = formatted_addr.postcode
+            zip = "".join(store.xpath('./td[@class="shopPostcode"]//text()'))
 
-            country_code = "US"
+            country_code = "GB"
 
-            for hour_idx, x in enumerate(store_info):
-                if "Hours:" in x:
-                    break
+            hours_of_operation = "<MISSING>"
 
-            if "Hours:" in store_info[hour_idx]:
+            map_link = "".join(store.xpath('.//a[contains(@href,"maps")]/@href'))
 
-                hours_of_operation = (
-                    "; ".join(store_info[hour_idx + 1 :])
-                    .replace("day; ", "day: ")
-                    .replace("day:;", "day:")
-                    .replace("OPEN FOR BUSINESS!", "")
-                    .replace("NOW OPEN!", "")
-                    .replace("\n", "")
-                    .strip()
-                    .strip(";! ")
-                )
-                hours_of_operation = hours_of_operation.split("Will be")[0].strip(" ;")
-            else:
-                hours_of_operation = "<MISSING>"
-
-            latitude, longitude = "<MISSING>", "<MISSING>"
+            latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(
                 locator_domain=locator_domain,

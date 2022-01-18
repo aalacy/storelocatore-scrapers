@@ -8,7 +8,7 @@ from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "mariasitaliankitchen.com"
+website = "kingsbarberclub.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
@@ -17,15 +17,15 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://mariasitaliankitchen.com/locations/"
+    search_url = "https://kingsbarberclub.co.uk/locations/"
 
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath("//section//div[h3]")
-
+        stores = search_sel.xpath('//div[@class="tab-content"]//div[h3]')
+        store_hours = search_sel.xpath('//div[@class="kbc-times--col"]')
         for no, store in enumerate(stores, 1):
 
             locator_domain = website
@@ -34,8 +34,6 @@ def fetch_data():
             page_url = search_url
 
             location_name = "".join(store.xpath("./h3//text()")).strip()
-            if location_name == "Catering":
-                continue
 
             location_type = "<MISSING>"
 
@@ -46,24 +44,11 @@ def fetch_data():
                 )
             )
 
-            for gm_idx, x in enumerate(store_info):
-                if "GM:" in x:
-                    break
+            phone = " ".join(store.xpath('.//a[contains(@href,"tel:")]/text()')).strip()
 
-            if "GM:" in store_info[gm_idx]:
-                phone = store_info[gm_idx].split("GM:")[1].split("\n")[1].strip()
-            else:
-                phone = "<MISSING>"
+            raw_address = " ".join(store_info[1:])
 
-            raw_address = (
-                ", ".join(store_info)
-                .split("GM:")[0]
-                .strip()
-                .replace("\n", ", ")
-                .strip()
-            )
-
-            formatted_addr = parser.parse_address_usa(raw_address)
+            formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
@@ -76,27 +61,18 @@ def fetch_data():
             state = formatted_addr.state
             zip = formatted_addr.postcode
 
-            country_code = "US"
+            country_code = "GB"
 
-            for hour_idx, x in enumerate(store_info):
-                if "Hours:" in x:
-                    break
+            hours = store_hours[no - 1].xpath(".//li//text()")
 
-            if "Hours:" in store_info[hour_idx]:
-
-                hours_of_operation = (
-                    "; ".join(store_info[hour_idx + 1 :])
-                    .replace("day; ", "day: ")
-                    .replace("day:;", "day:")
-                    .replace("OPEN FOR BUSINESS!", "")
-                    .replace("NOW OPEN!", "")
-                    .replace("\n", "")
-                    .strip()
-                    .strip(";! ")
-                )
-                hours_of_operation = hours_of_operation.split("Will be")[0].strip(" ;")
-            else:
-                hours_of_operation = "<MISSING>"
+            hours_of_operation = (
+                "; ".join(hours)
+                .replace("day ; ", "day: ")
+                .replace("day:;", "day:")
+                .replace("OPEN FOR BUSINESS!", "")
+                .replace("NOW OPEN!", "")
+                .strip(";! ")
+            )
 
             latitude, longitude = "<MISSING>", "<MISSING>"
 
