@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 import json
-import pandas as pd
+from sgscrape import simple_scraper_pipeline as sp
 
 
 def extract_json(html_string):
@@ -35,194 +34,179 @@ def extract_json(html_string):
     return json_objects
 
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+def get_data():
+    session = SgRequests()
 
-session = SgRequests()
+    url = "https://www.habitburger.com/locations/all/"
+    all_stores = session.get(url).text
 
-headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
-}
+    url_parts = all_stores.split("latlng: {")
 
-url = "https://www.habitburger.com/locations/all/"
-all_stores = session.get(url).text
+    page_urls_to_iterate = []
+    coords = []
+    for part in url_parts[1:]:
+        url_part = part.split("post_name: '")[1].split("'")[0]
+        lat_part = part.split("lat: ")[1].split(",")[0]
+        lng_part = part.split("lng: ")[1].split("}")[0]
+        coords.append([lat_part, lng_part])
+        page_urls_to_iterate.append("https://www.habitburger.com/locations/" + url_part)
 
-soup = bs(all_stores, "html.parser")
-all_pages = soup.find_all("div", attrs={"class": "locbtn"})
+    x = 0
+    for url in page_urls_to_iterate:
+        x = x + 1
+        locator_domain = "habitburger.com"
 
-page_urls_to_iterate = [
-    "https://www.habitburger.com" + location.find("a")["href"]
-    for location in all_pages
-    if location.find("a")["href"][0] == "/"
-]
+        response = session.get(url).text.replace(
+            "https://habitburger.fbmta.com/shared/images/275/275_2021012818164353.jpg",
+            "",
+        )
+        if "Coming Soon!" in response:
+            continue
+        json_objects = extract_json(response)
+        location = json_objects[-1]
 
-for url in page_urls_to_iterate:
-    locator_domain = "habitburger.com"
+        location_name = location["address"]["addressLocality"]
+        city = location_name
+        state = location["address"]["addressRegion"]
+        country_code = location["address"]["addressCountry"]
+        zipp = location["address"]["postalCode"]
 
-    response = session.get(url).text.replace(
-        "https://habitburger.fbmta.com/shared/images/275/275_2021012818164353.jpg", ""
-    )
+        if zipp == "":
+            continue
 
-    json_objects = extract_json(response)
-    location = json_objects[-1]
+        address = (
+            location["address"]["streetAddress"]
+            .replace(city + " " + state + " " + zipp, "")
+            .strip()
+        )
 
-    location_name = location["address"]["addressLocality"]
-    city = location_name
-    state = location["address"]["addressRegion"]
-    country_code = location["address"]["addressCountry"]
-    zipp = location["address"]["postalCode"]
+        address = address.replace("BlvdTerminal", "Blvd Terminal")
+        store_number = "<MISSING>"
 
-    if zipp == "":
-        continue
+        try:
+            phone = location["telephone"]
+        except Exception:
+            "<MISSING>"
+        location_type = location["@type"]
 
-    address = (
-        location["address"]["streetAddress"]
-        .replace(city + " " + state + " " + zipp, "")
-        .strip()
-    )
+        latitude = coords[x - 1][0]
+        longitude = coords[x - 1][1]
 
-    address = address.replace("BlvdTerminal", "Blvd Terminal")
-    store_number = "<MISSING>"
+        hours = location["openingHours"][0]
+        if hours == "":
+            check = response.split("Hours")[1].split("div")[0]
 
-    try:
-        phone = location["telephone"]
-    except Exception:
-        "<MISSING>"
-    location_type = location["@type"]
+            if "Temporarily Closed" in response:
+                hours = "Temporarily Closed"
 
-    lat_lon_text = extract_json(
-        response.split("google.maps.Marker({")[1]
-        .replace("lat", '"lat"')
-        .replace("lng", '"lng"')
-    )[0]
-    latitude = lat_lon_text["lat"]
-    longitude = lat_lon_text["lng"]
+            elif "Coming Soon" in response:
+                hours = "Opening Soon"
 
-    hours = location["openingHours"][0]
-    if hours == "":
-        check = response.split("Hours")[1].split("div")[0]
+            elif "Dining Room & Drive-Thru" in response:
+                check = check.split("<br>")
+                check = check[:-1]
+                x = 0
+                for section in check:
+                    if x == 0:
+                        x = 1
+                        continue
+                    hours = hours + section + ", "
 
-        if "Temporarily Closed" in response:
+            elif "Dining Room" in check:
+                check = check.split("<br>")
+                check = check[:-1]
+                x = 0
+                for section in check:
+                    if x == 0:
+                        x = 1
+                        continue
+                    if "h2" in section:
+                        break
+                    hours = hours + section + ", "
+
+            elif len(check.split("\n")) == 2:
+                check = check.split("\n")[1].split("<br>")
+
+                for item in check:
+                    hours = hours + item.rstrip() + " "
+
+                hours = hours.replace("</", "").strip()
+                hours = hours.strip()
+
+            elif location_name == "Reno":
+                check = check.split("\n")[1:]
+                for item in check:
+                    item = item.replace("\r", "")
+                    item = (
+                        item.replace('<h2 class="hdr">', "")
+                        .replace('</h2 class="hdr"><br>', "")
+                        .replace("<br>", "")
+                        .replace("                        </", "")
+                    )
+                    hours = hours + item + " "
+
+                hours = hours.strip()
+
+            elif location_name == "Phoenix":
+                hours = check.split("\n")[1].replace("<br>", "").strip()
+
+        if "www.habitburger.com" in hours:
             hours = "Temporarily Closed"
 
-        elif "Coming Soon" in response:
-            hours = "Opening Soon"
+        elif "Thru" in hours:
+            hours = hours.split("Thru:")[1].strip()
 
-        elif "Dining Room & Drive-Thru" in response:
-            check = check.split("<br>")
-            check = check[:-1]
-            x = 0
-            for section in check:
-                if x == 0:
-                    x = 1
-                    continue
-                hours = hours + section + ", "
-
-        elif "Dining Room" in check:
-            check = check.split("<br>")
-            check = check[:-1]
-            x = 0
-            for section in check:
-                if x == 0:
-                    x = 1
-                    continue
-                if "h2" in section:
-                    break
-                hours = hours + section + ", "
-
-        elif len(check.split("\n")) == 2:
-            check = check.split("\n")[1].split("<br>")
-
-            for item in check:
-                hours = hours + item.rstrip() + " "
-
-            hours = hours.replace("</", "").strip()
-            hours = hours.strip()
-
-        elif location_name == "Reno":
-            check = check.split("\n")[1:]
-            for item in check:
-                item = item.replace("\r", "")
-                item = (
-                    item.replace('<h2 class="hdr">', "")
-                    .replace('</h2 class="hdr"><br>', "")
-                    .replace("<br>", "")
-                    .replace("                        </", "")
-                )
-                hours = hours + item + " "
-
-            hours = hours.strip()
-
-        elif location_name == "Phoenix":
-            hours = check.split("\n")[1].replace("<br>", "").strip()
-
-    if "www.habitburger.com" in hours:
-        hours = "Temporarily Closed"
-
-    elif "Thru" in hours:
-        hours = hours.split("Thru:")[1].strip()
-
-    locator_domains.append(locator_domain)
-    page_urls.append(url)
-    location_names.append(location_name)
-    street_addresses.append(address)
-    citys.append(city)
-    states.append(state)
-    zips.append(zipp)
-    country_codes.append(country_code)
-    store_numbers.append(store_number)
-    phones.append(phone)
-    location_types.append(location_type)
-    latitudes.append(latitude)
-    longitudes.append(longitude)
-    hours_of_operations.append(hours)
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
-    }
-)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
-
-df.to_csv("data.csv", index=False)
+scrape()

@@ -1,7 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from tenacity import retry, stop_after_attempt
 import tenacity
 from sgrequests import SgRequests
@@ -72,6 +71,7 @@ def get_response(url):
         r = http.get(url, headers=headers_c)
         try:
             if r.status_code == 200:
+                logger.info(f"HTTP status code: {r.status_code} for {url}")
                 return r
             raise Exception(f"Please fix {url}")
         except Exception as e:
@@ -104,25 +104,114 @@ def get_response_custom(url):
 
 def gen_main_cat_urls():
     main_cat_urls = []
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.SPAIN], expected_search_radius_miles=100
-    )
+    postcodes_madrid_list = [
+        "28000",
+        "28001",
+        "28002",
+        "28003",
+        "28004",
+        "28005",
+        "28006",
+        "28007",
+        "28008",
+        "28009",
+        "28010",
+        "28011",
+        "28012",
+        "28013",
+        "28014",
+        "28015",
+        "28016",
+        "28017",
+        "28018",
+        "28019",
+        "28020",
+        "28021",
+        "28022",
+        "28023",
+        "28024",
+        "28025",
+        "28026",
+        "28027",
+        "28028",
+        "28029",
+        "28030",
+        "28031",
+        "28032",
+        "28033",
+        "28034",
+        "28035",
+        "28036",
+        "28037",
+        "28038",
+        "28039",
+        "28040",
+        "28041",
+        "28042",
+        "28043",
+        "28044",
+        "28045",
+        "28046",
+        "28047",
+        "28048",
+        "28049",
+        "28050",
+        "28051",
+        "28052",
+        "28053",
+        "28054",
+        "28055",
+        "28070",
+        "28071",
+        "28082",
+        "28083",
+        "28085",
+        "28086",
+        "28087",
+        "28119",
+        "28149",
+        "28339",
+        "28391",
+        "28419",
+        "28499",
+        "28513",
+        "28520",
+        "28660",
+        "28668",
+        "28669",
+        "28679",
+        "28790",
+        "28798",
+        "28819",
+        "28851",
+        "28925",
+    ]
     for k, v in MAIN_CATEGORY_KEYWORDS.items():
-        for dzip in search:
+        for zidx, dzip in enumerate(postcodes_madrid_list[0:]):
             cat_url = f"https://www.yelp.com/search?cflt={v}&find_loc={dzip}%2C%20{COUNTRY_TO_BE_CRAWLED}"
             main_cat_urls.append(cat_url)
+    logger.info(f"Total Search URLs: {len(main_cat_urls)}")
     return main_cat_urls
 
 
 def get_paginated_urls(catnum, caturl):
-    r = get_response(caturl)
-    sel = html.fromstring(r.text)
-    total_pages = sel.xpath(
-        '//span[contains(@class, "css-1e4fdj9") and contains(text(), "of")]/text()'
-    )
-    total_pages = "".join(total_pages).replace("1 of ", "")
-    page_nums_urls = [f"{caturl}&start={i*10}" for i in range(0, int(total_pages))]
-    return page_nums_urls
+    try:
+        r = get_response(caturl)
+        sel = html.fromstring(r.text)
+        total_pages = sel.xpath(
+            '//span[contains(@class, "css-1e4fdj9") and contains(text(), "of")]/text()'
+        )
+        total_pages = "".join(total_pages).replace("1 of ", "")
+        logger.info(f"[{catnum}] total_pages: {total_pages}")
+        if not total_pages:
+            return
+        else:
+            page_nums_urls = [
+                f"{caturl}&start={i*10}" for i in range(0, int(total_pages))
+            ]
+            return page_nums_urls
+    except Exception as e:
+        logger.info(f"Please fix {e} at {caturl}")
 
 
 def get_paginated_urls_for_all_main_cats(mcurls):
@@ -140,14 +229,17 @@ def get_paginated_urls_for_all_main_cats(mcurls):
 
 
 def get_store_urls_from_paginated_pages(mnum, paginated_url):
-    r1 = get_response(paginated_url)
-    logger.info(f"[{mnum}] Pulling store URLs from paginated URLs {paginated_url}")
-    text1 = r1.text
-    sel1 = html.fromstring(text1)
-    store_urls = sel1.xpath('//a[contains(@class, "css-1422juy")]/@href')
-    store_urls = [i for i in store_urls if "/biz/" in i]
-    store_urls = [f"https://www.yelp.com{i}" for i in store_urls]
-    return store_urls
+    try:
+        r1 = get_response(paginated_url)
+        logger.info(f"[{mnum}] Pulling store URLs from paginated URLs {paginated_url}")
+        text1 = r1.text
+        sel1 = html.fromstring(text1)
+        store_urls = sel1.xpath('//a[contains(@class, "css-1422juy")]/@href')
+        store_urls = [i for i in store_urls if "/biz/" in i]
+        store_urls = [f"https://www.yelp.com{i}" for i in store_urls]
+        return store_urls
+    except Exception as e:
+        logger.info(f"Please fix paginated url {e} at {paginated_url}")
 
 
 def get_store_urls(mcp_urls):
@@ -198,13 +290,16 @@ def fetch_records(sunum, surl):
             )
         )
         local_business_data = json.loads(local_business_data)
-        logger.info(f"JSON Data {local_business_data}")
         site_id = "".join(sel_store.xpath('//meta[@name="yelp-biz-id"]/@content'))
         name = local_business_data["name"]
+        name = name if name else MISSING
         street = local_business_data["address"]["streetAddress"]
-        try:
-            street = ", ".join(street.split("\n"))
-        except:
+        if street:
+            try:
+                street = ", ".join(street.split("\n"))
+            except:
+                street = MISSING
+        else:
             street = MISSING
 
         street_two = ""
@@ -224,7 +319,7 @@ def fetch_records(sunum, surl):
 
         telephone = local_business_data["telephone"]
         telephone = telephone if telephone else MISSING
-        logger.info(f"[{sunum} Tel: {telephone}]")
+        logger.info(f"[{sunum}] Tel: {telephone}]")
 
         # Review Count ( Total Reviews )
         review_count_xpath = (
@@ -232,7 +327,6 @@ def fetch_records(sunum, surl):
         )
         try:
             rc = "".join(sel_store.xpath(review_count_xpath))
-            logger.info(f"rc: {rc}")
             if rc:
                 listed_review_count = (
                     rc.replace("reviews", "").replace("review", "").strip()
@@ -321,16 +415,40 @@ def fetch_records(sunum, surl):
                 gmap_url_list.append(gmap_url)
         try:
             gmap = gmap_url_list[0]
-            lat = gmap.split("center=")[-1].split("&amp;markers")[0].split("%2C")[0]
-            lon = gmap.split("center=")[-1].split("&amp;markers")[0].split("%2C")[1]
+            lat = gmap.split("png%7C")[-1].split("&amp;")[0].split("%2C")[0]
+            lon = gmap.split("png%7C")[-1].split("&amp;")[0].split("%2C")[1]
+            if lat == "0":
+                lat = "<MISSING>"
+            if lon == "0":
+                lon = "<MISSING>"
             if "&amp" in lon:
                 lon = lon.split("&amp")[0]
-
             if "&amp" in lat:
                 lat = lat.split("&amp")[0]
+            if not lat:
+                lat = MISSING
+            if not lon:
+                lon = MISSING
         except:
-            lat = MISSING
-            lon = MISSING
+            try:
+                gmap = gmap_url_list[0]
+                lat = gmap.split("center=")[-1].split("&amp;markers")[0].split("%2C")[0]
+                lon = gmap.split("center=")[-1].split("&amp;markers")[0].split("%2C")[1]
+                if "&amp" in lon:
+                    lon = lon.split("&amp")[0]
+
+                if "&amp" in lat:
+                    lat = lat.split("&amp")[0]
+                if not lat:
+                    lat = MISSING
+                if not lon:
+                    lon = MISSING
+                if "%7C" in lon:
+                    lat = lon.split("%7C")[0]
+                    lon = lon.split("%7C")[1]
+            except:
+                lat = MISSING
+                lon = MISSING
 
         if is_claimed_biz is True:
             is_claimed_business = "1"
@@ -346,6 +464,11 @@ def fetch_records(sunum, surl):
             matched_category = ", ".join(matched_categories_list)
         else:
             matched_category = MISSING
+        cat = " ".join(category.split())
+        if cat:
+            category = category
+        else:
+            category = MISSING
         row = [
             vk_id,
             category,
@@ -369,8 +492,6 @@ def fetch_records(sunum, surl):
             hours_of_operation,
             matched_category,
         ]
-
-        logger.info(row)
         return row
     except Exception as e:
         logger.info(f"Please fix Expath or JSON {e} | {surl}")
@@ -380,12 +501,14 @@ def fetch_data():
 
     # Step 1 - generate main category based URLs based on Country and main category
     main_caturls = gen_main_cat_urls()
+    logger.info("main categories urls crawlering done!")
 
     # Step 2 - get category based paginated URLs
-    paginated_urls = get_paginated_urls_for_all_main_cats(main_caturls)
+    paginated_urls = get_paginated_urls_for_all_main_cats(main_caturls[0:])
 
     # Step 3 - get store urls
     store_urls = get_store_urls(paginated_urls)
+
     logger.info(f"Total Store Count: {len(store_urls)}")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []

@@ -1,13 +1,15 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sglogging import sglog
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="walgreens")
     session = SgRequests()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+        country_codes=[SearchableCountries.USA], granularity=Grain_8()
     )
 
     for search_code in search:
@@ -65,6 +67,8 @@ def get_data():
                     continue
 
                 else:
+                    log.info(search_code)
+                    log.info(location_name)
                     raise Exception
 
             yield {

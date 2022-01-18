@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "caprabo_com"
+website = "https://caprabo.com/"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 

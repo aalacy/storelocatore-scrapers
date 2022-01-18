@@ -64,8 +64,6 @@ def fetch_data():
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
             city = formatted_addr.city
-            if city and city == "Singapore":
-                city = "<MISSING>"
 
             state = formatted_addr.state
             zip = formatted_addr.postcode

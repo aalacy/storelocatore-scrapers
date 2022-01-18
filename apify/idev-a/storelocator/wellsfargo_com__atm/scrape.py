@@ -91,7 +91,11 @@ def scrape_loc_urls_two(location_urls):
 def parallel_run_two(link):
     logger.info(f"[2] {link}")
     res = session.get(link, headers=_headers)
-    if "error.html" in str(res.url) or "PageNotFound.html" in str(res.url):
+    if (
+        "error.html" in str(res.url)
+        or "PageNotFound.html" in str(res.url)
+        or "The transaction failed" in res.text
+    ):
         return None
     sp1 = bs(res.text, "lxml")
     if sp1.find("", string=re.compile(r"could not find")):
@@ -158,6 +162,15 @@ def fetch_data():
         for item in result:
             yield item
 
+    # sitemap1
+    links = bs(session.get(sitemap1).text, "lxml").text.strip().split("\n")
+    logger.info(f"{len(links)} sitemap1")
+    results = scrape_loc_urls(links)
+
+    for result in results:
+        for item in result:
+            yield item
+
 
 if __name__ == "__main__":
     with SgWriter(
@@ -166,8 +179,7 @@ if __name__ == "__main__":
                 {
                     SgRecord.Headers.PHONE,
                     SgRecord.Headers.CITY,
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
                 }
             ),
             duplicate_streak_failure_factor=150,

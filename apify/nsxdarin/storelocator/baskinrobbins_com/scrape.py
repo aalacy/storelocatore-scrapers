@@ -33,7 +33,7 @@ def fetch_data():
         for item in items:
             name = "Baskin Robbins"
             typ = "Store"
-            store = item["storeId"]
+            store = item["storeName"]
             city = item["city"]
             add = item["street"]
             state = item["state"]
@@ -41,8 +41,11 @@ def fetch_data():
             zc = item["zipCode"]
             lat = item["latitude"]
             lng = item["longitude"]
-            loc = "<MISSING>"
+            loc = "https://order.baskinrobbins.com/store-selection"
             website = "baskinrobbins.com"
+            status = item["status"]
+            if "INACTIVE" in status:
+                name = name + " - Temporarily Closed"
             try:
                 phone = item["phoneNumber"]
             except:
@@ -126,7 +129,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if add != "":
+            if add != "" and "INACTIVE" not in status:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
