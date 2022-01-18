@@ -19,7 +19,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.find("div", {"class": "et_pb_blurb_description"}).findAll("p")
-    address = city = street = pcode = ""
+    address = city = street = pcode = state = phone = ""
     hours = ""
     for div in divlist:
         content = re.sub(cleanr, "\n", str(div))
