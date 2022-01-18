@@ -48,6 +48,12 @@ def fetch_data(sgw: SgWriter):
         )
         for b in div:
             page_url = "".join(b.xpath(".//text()")).replace("https://", "https://www.")
+            if (
+                page_url.find("/en/") != -1
+                or page_url.find("/fr/") != -1
+                or page_url.find("/de_nl/") != -1
+            ):
+                continue
             try:
                 r = session.get(page_url, headers=headers)
                 tree = html.fromstring(r.text)

@@ -77,9 +77,9 @@ def fetch_data():
                         )
                     )
                     .strip()
-                    .replace("\n", ", ")
-                    .strip()
                     .replace("\r\n", "")
+                    .strip()
+                    .replace("\n", ", ")
                     .strip()
                 )
 
