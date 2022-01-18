@@ -67,34 +67,31 @@ def fetch_data():
                     if typ == "":
                         typ = "<MISSING>"
                     logger.info(loc)
-                    if "anaxa" in loc:
-                        try:
-                            r2 = session.get(loc, headers=headers)
-                            for line2 in r2.iter_lines():
-                                if (
-                                    '<span class="opening-date' in line2
-                                    and "Opening 20" in line2
-                                ):
-                                    CS = True
-                                if (
-                                    "and beyond" in line2
-                                    and "Now accepting reservations" in line2
-                                ):
-                                    CS = True
-                                if '"telephone":"' in line2:
-                                    phone = line2.split('"telephone":"')[1].split('"')[
-                                        0
-                                    ]
-                                if "Tel: <" in line2 and phone == "":
-                                    phone = line2.split('">')[1].split("<")[0].strip()
-                        except:
-                            pass
+                    try:
+                        r2 = session.get(loc, headers=headers)
+                        for line2 in r2.iter_lines():
+                            if (
+                                '<span class="opening-date' in line2
+                                and "Opening 20" in line2
+                            ):
+                                CS = True
+                            if (
+                                "and beyond" in line2
+                                and "Now accepting reservations" in line2
+                            ):
+                                CS = True
+                            if '"telephone":"' in line2:
+                                phone = line2.split('"telephone":"')[1].split('"')[0]
+                            if "Tel: <" in line2 and phone == "":
+                                phone = line2.split('">')[1].split("<")[0].strip()
+                    except:
+                        pass
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         name = name + " - Coming Soon"
                     add = add.replace("\\t", "").replace("\t", "")
-                    rawadd = rawadd.replace("\\t", "").replace("\t", "")
+                    raw_address = raw_address.replace("\\t", "").replace("\t", "")
                     zc = zc.replace("\\t", "").replace("\t", "")
                     city = city.replace("\\t", "").replace("\t", "")
                     phone = phone.replace("\\t", "").replace("\t", "")
