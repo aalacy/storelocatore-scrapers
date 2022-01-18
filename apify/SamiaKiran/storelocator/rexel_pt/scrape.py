@@ -54,7 +54,9 @@ def fetch_data():
             state = state.strip() if state else MISSING
 
             city = loc.split("city: ")[1].split("',")[0].replace("'", "")
-            zip_postal = loc.split("zipcode: ")[1].split("',")[0].replace("'", "")
+            zip_postal = (
+                loc.split("zipcode: ")[1].split("',")[0].replace("'", "").split()[0]
+            )
             latitude = loc.split("latitude: ")[1].split(",")[0]
             longitude = loc.split("longitude: ")[1].split(",")[0]
             country_code = "PT"

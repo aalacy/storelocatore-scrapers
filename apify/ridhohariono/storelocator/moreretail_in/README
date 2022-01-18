@@ -1,0 +1,15 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+--ignore LatLngDuplicationValidator (Confirmed Scrape Correctly)
+Found 15 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+               latitude          longitude                                     street_address  num_addrs
+222          14.4226256         79.9531645  {Plot No.488B 488C & 488D K.Interior Towers Op...          3
+208          13.6308099         79.3944813  {H.No 18-1-45/B K. T Road Tirupathi., 19-1-488...          2
+218          13.9447651         75.5657008  {Ambaji Arcade Near Police Chowki Vinoba Nagar...          2
+220          14.2227453         76.3814236                         {Afzalpur Takke, Chickpet}          2
+221   14.41447308992125  78.22372421483809  {More Super Market D No.6/944 Noonevaripalli O...          2
+255  15.461920389258566  74.99482251485074  {Sangameshwara Hight Building Opp Dho Haliyal ...          2
+258          15.5005313         80.0372955  {34-1-2 Flr-G Aishwarya Residency Opp District...          2
+284  16.493941688619753  78.30806021486411  {Plot No 5 Opp J P Nagar Colony Madinaguda Miy...          2
+297   16.84912268840332  75.70907931486889  {Shanthi Nagar College Rd, Subhashree Solapur ...          2
+313          17.2465263         80.1320552       {Mamatha Hospital Road, Vvc Complex Wyra Rd}          2

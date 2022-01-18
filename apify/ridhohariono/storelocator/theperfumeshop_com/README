@@ -1,0 +1,3 @@
+--ignore CountryCodeFillRateChecker (International)
+
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)

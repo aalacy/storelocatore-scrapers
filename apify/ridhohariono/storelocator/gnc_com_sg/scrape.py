@@ -74,9 +74,9 @@ def fetch_data():
         )
         location_name = info[0]
         raw_address = " ".join(info[1:])
-        street_address, city, _, zip_postal = getAddress(raw_address)
-        if "Singapore" in raw_address:
-            city = "Singapore"
+        street_address = info[1].rstrip(",")
+        city = "Singapore"
+        zip_postal = re.sub(r"\D+", "", info[2])
         state = MISSING
         try:
             phone = row.find("div", {"class": "mt-3"}).find("a").text.strip()
