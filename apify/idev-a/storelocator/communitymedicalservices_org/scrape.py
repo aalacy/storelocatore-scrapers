@@ -49,12 +49,13 @@ def fetch_data():
                 "script",
                 src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
             )
+            hours = []
             if _hr:
-                hours = json.loads(
-                    session.get(_hr["src"], headers=_headers)
-                    .text.split("Yext._embed(")[1][:-1]
-                    .strip()
-                )["entities"][0]["attributes"]["hours"]
+                res = session.get(_hr["src"], headers=_headers).text
+                if "Entity not found" not in res:
+                    hours = json.loads(res.split("Yext._embed(")[1][:-1].strip())[
+                        "entities"
+                    ][0]["attributes"]["hours"]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],

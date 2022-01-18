@@ -6,6 +6,17 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def get_street(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+
+    return "".join(
+        tree.xpath(
+            "//h2[contains(text(), 'Call')]/following-sibling::p[1]/strong[1]/text()"
+        )
+    ).strip()
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://cellaxs.com/wp-admin/admin-ajax.php?action=store_search&autoload=1"
 
@@ -18,11 +29,17 @@ def fetch_data(sgw: SgWriter):
             .replace("&#8217;", "'")
         )
         street = f'{j.get("address")} {j.get("address2") or ""}'.strip()
+        if "52 US" in street:
+            street = get_street(j.get("url"))
+        if street.endswith(","):
+            street = street[:-1]
         source = j.get("hours") or "<html></html>"
         tree = html.fromstring(source)
         hours = tree.xpath("//text()")
         hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours)
+        hours_of_operation = (
+            " ".join(hours).strip().replace("PM ", "PM;").replace("Closed ", "Closed;")
+        )
 
         row = SgRecord(
             page_url=j.get("url"),

@@ -7,11 +7,27 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def get_phone(page_url):
+def get_additional(page_url):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
+    phone = (
+        "".join(tree.xpath("//a[@class='brand-phone']/text()"))
+        .replace("phone-number", "")
+        .strip()
+    )
+    if not phone:
+        phone = "".join(
+            tree.xpath("//a[contains(text(), 'Call Now at')]/@href")
+        ).replace("tel:", "")
 
-    return "".join(tree.xpath("//a[@class='brand-phone']/text()")).strip()
+    _tmp = []
+    hours = tree.xpath("//div[@class='working-hours']/div")
+    for h in hours:
+        day = "".join(h.xpath("./div[1]//text()")).strip()
+        inter = "".join(h.xpath("./div[2]//text()")).strip()
+        _tmp.append(f"{day}: {inter}")
+
+    return phone, ";".join(_tmp)
 
 
 def fetch_data(coords, country_code, sgw):
@@ -41,26 +57,15 @@ def fetch_data(coords, country_code, sgw):
         postal = j.get("zip") or ""
         if "NULL" in postal:
             postal = SgRecord.MISSING
-        country_code = j.get("country")
         store_number = j.get("id")
-        try:
-            phone = get_phone(page_url)
-        except:
-            phone = SgRecord.MISSING
         latitude = j.get("lat")
         longitude = j.get("lng")
         location_name = f"NOVUS GLASS OF {city}"
 
-        _tmp = []
-        source = j.get("hours") or "<html></html>"
-        tree = html.fromstring(source)
-        tr = tree.xpath("//tr")
-        for t in tr:
-            day = "".join(t.xpath("./td[1]//text()")).strip()
-            inter = "".join(t.xpath("./td[2]//text()")).strip()
-            _tmp.append(f"{day}: {inter}")
-
-        hours_of_operation = ";".join(_tmp)
+        try:
+            phone, hours_of_operation = get_additional(page_url)
+        except:
+            phone, hours_of_operation = SgRecord.MISSING, SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
@@ -87,6 +92,7 @@ if __name__ == "__main__":
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0",
     }
+
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1

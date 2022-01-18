@@ -15,7 +15,7 @@ def get_international(line):
     ).strip()
     city = adr.city
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or ""
 
     return street, city, state, postal
 
@@ -68,7 +68,10 @@ def get_urls():
 
     for state in states:
         slug = state.lower().replace(" ", "-")
-        url = f"https://cbdrx4u.com/find-us/{slug}"
+        if "alabama" in slug:
+            url = f"https://truecbd4u.com/find-us/{slug}/"
+        else:
+            url = f"https://cbdrx4u.com/find-us/{slug}"
         r = session.get(url)
         tree = html.fromstring(r.text)
         links = tree.xpath("//a[text()='Show Details']/@href")
@@ -82,7 +85,10 @@ def get_urls():
 
 
 def get_data(slug, sgw: SgWriter):
-    page_url = f"https://cbdrx4u.com{slug}"
+    if "alabama" in slug:
+        page_url = f"https://truecbd4u.com{slug}"
+    else:
+        page_url = f"https://cbdrx4u.com{slug}"
     r = session.get(page_url)
     if r.status_code == 404:
         return

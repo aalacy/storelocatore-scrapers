@@ -144,7 +144,12 @@ def fetch_data():
                 if "<br />" in g:
                     rawadd = rawadd + " " + g.split("<br />")[1].split("<")[0]
             if '<span class="type">' in line2:
-                typ = typ + ", " + line2.split('<span class="type">')[1].split("<")[0]
+                if typ == "":
+                    typ = line2.split('<span class="type">')[1].split("<")[0]
+                else:
+                    typ = (
+                        typ + ", " + line2.split('<span class="type">')[1].split("<")[0]
+                    )
                 if phone == "":
                     phone = line2.split('<span class="value">')[1].split("<")[0]
             if '<a href="https://maps.google.com/maps?daddr=' in line2:

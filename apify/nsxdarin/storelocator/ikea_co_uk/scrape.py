@@ -73,27 +73,30 @@ def fetch_data():
                     hours = "<MISSING>"
                 if phone == "":
                     phone = "<MISSING>"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if "Address</strong>" in line2:
-                g = next(lines)
-                addinfo = g.split(">")[1].split("<")[0]
+                if "</p>" in line2:
+                    addinfo = line2.split("Address</strong><br>")[1].split("<")[0]
+                else:
+                    g = next(lines)
+                    addinfo = g.split("<p>")[1].split("</p>")[0]
                 if addinfo.count(",") == 2:
                     add = addinfo.split(",")[0].strip()
                     city = addinfo.split(",")[1].strip()
@@ -106,13 +109,21 @@ def fetch_data():
                     )
                     city = addinfo.split(",")[2].strip()
                     zc = addinfo.split(",")[3].strip()
-            if ":00</strong>" in line2 and "planning-studios" not in loc:
-                hrs = line2.split("<p>")[1].split("</p>")[0].replace("</strong>", "")
-                hrs = hrs.replace("<strong>", "").replace("&nbsp;", " ")
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+            if "Store</strong></h3>" in line2:
+                g = next(lines)
+                hours = (
+                    g.replace("<strong>", "")
+                    .replace("<p>", "")
+                    .replace("</strong>", " ")
+                    .replace("</p>", "")
+                    .replace("<br>", " ")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
+                )
+                hours = hours.replace("&ndash;", "-")
+                hours = hours.replace("  ", " ")
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
@@ -125,12 +136,25 @@ def fetch_data():
             city = "Glasgow"
             add = "99 Kings Inch Drive"
             zc = "G51 4FB"
+            hours = "Mon-Fri: 09:30 AM - 21:00 PM; Sat-Sun: 09:30 AM - 20:00 PM"
+        if "order-collection-points/aberdeen" in loc:
+            hours = "Mon-Sun: 10:00-18:30"
         if "/stores/nottingham" in loc:
             zc = "NG16 2RP"
         if "stores/gateshead" in loc:
             zc = "NE11 9XS"
         if "stores/milton-keynes" in loc:
             zc = "MK1 1QB"
+        if "/stores/croydon" in loc:
+            city = "Croydon"
+            add = "Access via Hesterman Way"
+            zc = "CR0 4YA"
+        if "<span" in hours:
+            hours = hours.split("<span")[0].strip()
+        if "stores/exeter" in loc:
+            city = "Exeter"
+            add = "1 IKEA WAY, off Newcourt Way"
+            zc = "EX2 7RX"
         if "planning-studios" not in loc:
             yield SgRecord(
                 locator_domain=website,
