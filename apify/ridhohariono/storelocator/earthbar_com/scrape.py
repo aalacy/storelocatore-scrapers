@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "earthbar.com"
-LOCATION_URL = "https://www.earthbar.com/support-us/sense-charity-shops/wheres-my-nearest-sense-shop/"
+LOCATION_URL = "https://earthbar.com/pages/store-locator"
 API_URL = "https://cdn.shopify.com/s/files/1/0593/4730/4643/t/1/assets/sca.storelocatordata.json?v=1641931269&_=1642448173816"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
