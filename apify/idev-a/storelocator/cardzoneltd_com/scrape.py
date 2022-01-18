@@ -1,4 +1,3 @@
-from curses import raw
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
