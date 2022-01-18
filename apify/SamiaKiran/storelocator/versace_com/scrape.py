@@ -37,9 +37,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     for country in country_list:
         count = country["data-count"]
         count = int(count.replace(")", "").replace("(", ""))
-        country_url = country["href"].replace(
-            "../../", "https://boutiques.versace.com/"
-        )
+        country_url = country["href"].replace("../", "https://boutiques.versace.com/")
         if count > 1:
             log.info(f"Fetching data from Country {country.text}")
             r = session.get(country_url, headers=headers)
@@ -49,9 +47,9 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
                     "a", {"class": "Directory-listLink"}
                 )
                 for link in linklist:
-                    loc_link = link["href"]
-                    loc_link = loc_link.split("en-us/")[1]
-                    loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
+                    loc_link = link["href"].replace(
+                        "../", "https://boutiques.versace.com/"
+                    )
                     count = link["data-count"]
                     count = int(count.replace(")", "").replace("(", ""))
                     if count > 1:
@@ -61,11 +59,9 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
                             "ul", {"class": "Directory-listTeasers Directory-row"}
                         ).findAll("li")
                         for loc in loclist:
-                            loc_link = loc.find("a", {"class": "Teaser-link"})["href"]
-                            loc_link = loc_link.split("en-us/")[1]
-                            loc_link = (
-                                "https://boutiques.versace.com/us/en-us/" + loc_link
-                            )
+                            loc_link = loc.find("a", {"class": "Teaser-link"})[
+                                "href"
+                            ].replace("../../", "https://boutiques.versace.com/")
                             store_url_list.append(loc_link)
                             log.info(loc_link)
                             state.push_request(SerializableRequest(url=loc_link))
@@ -76,9 +72,9 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             except:
                 linklist = soup.findAll("a", {"class": "Teaser-link"})
                 for link in linklist:
-                    loc_link = link["href"]
-                    loc_link = loc_link.split("en-us/")[1]
-                    loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
+                    loc_link = link["href"].replace(
+                        "../../", "https://boutiques.versace.com/"
+                    )
                     store_url_list.append(loc_link)
                     log.info(loc_link)
                     state.push_request(SerializableRequest(url=loc_link))
