@@ -24,7 +24,6 @@ def fetch_data():
                 if ">View Location</a>" in item:
                     locs.append("https://www.drinkbambu.com" + item.split("'")[0])
     for loc in locs:
-        print(loc)
         CS = False
         name = ""
         add = ""
