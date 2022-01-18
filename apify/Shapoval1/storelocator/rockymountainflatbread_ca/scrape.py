@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -27,34 +27,11 @@ def fetch_data(sgw: SgWriter):
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        ad = (
-            "".join(
-                tree.xpath(
-                    '//div[@class="wpb_gmaps_widget wpb_content_element vc_map_responsive"]/following-sibling::div//p[1]/text()'
-                )
+        ad = "".join(
+            tree.xpath(
+                f'//p[contains(text(), "{location_name}")]/following-sibling::*[1]/text()'
             )
-            or "<MISSING>"
         )
-
-        if ad == "<MISSING>":
-            ad = (
-                "".join(
-                    tree.xpath(
-                        '//*[@style="font-size: 54px;color: #ffffff;text-align: center;font-family:Josefin Sans;font-weight:700;font-style:normal"]/following-sibling::*[1]/text()'
-                    )
-                )
-                or "<MISSING>"
-            )
-        if ad == "<MISSING>":
-            ad = (
-                "".join(
-                    tree.xpath(
-                        '//*[@style="font-size: 52px;color: #ffffff;text-align: center;font-family:Josefin Sans;font-weight:700;font-style:normal"]/following-sibling::*[1]/text()'
-                    )
-                )
-                or "<MISSING>"
-            )
-
         a = parse_address(USA_Best_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -98,6 +75,10 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
+        if hours_of_operation.find("A very delicious ") != -1:
+            hours_of_operation = hours_of_operation.split("A very delicious ")[
+                0
+            ].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -114,6 +95,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)

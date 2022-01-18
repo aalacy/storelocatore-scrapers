@@ -61,6 +61,8 @@ def fetch_data():
                     hours = hours + day + " " + hourslist[day] + " "
         except:
             hours = "<MISSING>"
+            if "Opening" in loc["location_alert_message"]:
+                hours = "Coming Soon"
         yield SgRecord(
             locator_domain="https://www.batteriesplus.com/",
             page_url=link,

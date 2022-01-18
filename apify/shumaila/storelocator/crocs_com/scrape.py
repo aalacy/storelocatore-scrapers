@@ -78,7 +78,12 @@ def fetch_data():
             pcode = loc["postalcode"]
             lat = loc["latitude"]
             longt = loc["longitude"]
-            street = loc["address1"] + " " + str(loc["address2"])
+            try:
+                street = loc["address1"] + " " + str(loc["address2"])
+
+                street = street.replace("&#xa0;", " ").replace("&#x96;", " ").strip()
+            except:
+                continue
             street = street.replace("None", "")
             ccode = loc["country"]
             ltype = "Outlet"

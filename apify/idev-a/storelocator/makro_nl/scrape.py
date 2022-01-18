@@ -14,8 +14,8 @@ _headers = {
 
 locator_domain = "https://www.makro.nl/"
 urls = {
-    "Netherlands": "https://www.makro.nl/sxa/search/results?s={0F3B38A3-7330-4544-B95B-81FC80A6BB6F}&sig=store-locator&o=Title%2CAscending&p=10&v=%7BBECE07BD-19B3-4E41-9C8F-E9D9EC85574F%7D&itemid=752b4b0d-8883-42d9-b50a-71c53db9b093&q=&g=",
-    "Spain": "https://www.makro.es/sxa/search/results?s={0F3B38A3-7330-4544-B95B-81FC80A6BB6F}&sig=store-locator&o=Title%2CAscending&p=10&v=%7BBECE07BD-19B3-4E41-9C8F-E9D9EC85574F%7D&itemid=fe9e4172-0717-4da3-aa16-e516843fb14b&q=&g=",
+    "Netherlands": "https://www.makro.nl//sxa/search/results/?l=nl-NL&s={0F3B38A3-7330-4544-B95B-81FC80A6BB6F}&itemid={8C6E428A-ECF3-4108-8A37-65D16E891E77}&sig=store-locator&g=&p=20&o=StoreName%2CAscending&v=%7BA0897F25-35F9-47F8-A28F-94814E5A0A78%7D",
+    "Spain": "https://www.makro.es//sxa/search/results/?l=es-ES&itemid={6C3F44FA-FD60-4712-9094-141795AFFA2B}&sig=store-locator&g=&p=999&v=%7BA0897F25-35F9-47F8-A28F-94814E5A0A78%7D",
 }
 
 
@@ -27,15 +27,9 @@ def fetch_data():
                 info = bs(_["Html"], "lxml")
                 raw_address = info.select_one("div.field-address").text.strip()
                 street_address = city = state = zip_postal = ""
-                addr = raw_address.split(",")
+                addr = [aa.strip() for aa in raw_address.split(",")]
                 zip_postal = addr[-1]
 
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in info.select("div.hours-details > div")[0].select(
-                        "div.day"
-                    )
-                ]
                 page_url = _["Url"].split("/")[-1]
                 if country == "Spain":
                     page_url = f"https://www.makro.es/tiendas/{page_url}"
@@ -43,15 +37,33 @@ def fetch_data():
                     street_address = ", ".join(addr[:-2])
                 else:
                     page_url = f"https://www.makro.nl/vestigingen/{page_url}"
-                    state = addr[-2]
-                    city = addr[-3]
-                    street_address = ", ".join(addr[:-3])
+                    c_idx = -3
+                    if len(addr) > 3 and addr[-2] not in ["Utrecht", "Groningen"]:
+                        state = addr[-2]
+                    else:
+                        c_idx += 1
+                    city = addr[c_idx]
+                    street_address = ", ".join(addr[:c_idx])
 
                 logger.info(page_url)
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                hours = []
+                if sp1.select("div.store-opening-container > div"):
+                    days = list(
+                        sp1.select_one(
+                            "div.store-opening-container div.days-container"
+                        ).stripped_strings
+                    )
+                    times = list(
+                        sp1.select_one(
+                            "div.store-opening-container div.time-container"
+                        ).stripped_strings
+                    )
+                    for x in range(len(days)):
+                        hours.append(f"{days[x]}: {times[x]}")
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=info.select_one("span.field-store-name").text.strip(),
+                    location_name=info.select_one("div.field-store-name").text.strip(),
                     street_address=street_address,
                     city=city,
                     state=state,

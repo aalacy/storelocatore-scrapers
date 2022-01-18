@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -20,23 +20,17 @@ def _headers():
     }
 
 
-def _d(locs, name):
-    raw_address = ""
-    hours = []
-    _nn = name.lower().split("hut")[1].strip().split()[0]
+def _d(locs, name, sa):
+    latitude = longitude = ""
     for loc in locs:
-        if loc.figure or not loc.h4:
-            continue
-        sa = list(loc.p.stripped_strings)
-        if loc.h4.text.lower().strip() == name.lower() or _nn in sa[0].lower():
-            raw_address = sa
-            for hh in list(loc.select("p")[1].stripped_strings)[1:]:
-                if "Holidays" in hh:
-                    continue
-                hours.append(hh)
+        location_name = loc[5][0][1][0].replace("\\n", "").lower().strip()
+        _nn = location_name.lower().split("hut")[1].strip().split()[0]
+        if location_name == name.lower() or _nn in sa[0].lower():
+            latitude = loc[1][0][0][0]
+            longitude = loc[1][0][0][1]
             break
 
-    return raw_address, hours
+    return latitude, longitude
 
 
 def fetch_data():
@@ -62,14 +56,23 @@ def fetch_data():
         locations = json.loads(
             cleaned.split('var _pageData = "')[1].split('";</script>')[0]
         )
-        for _ in locations[1][6][0][12][0][13][0]:
-            location_name = _[5][0][1][0].replace("\\n", "").strip()
-            latitude = _[1][0][0][0]
-            longitude = _[1][0][0][1]
-            raw_address, hours = _d(locs, location_name)
+        for loc in locs:
+            if loc.figure or not loc.h4:
+                continue
+            hours = []
+            raw_address = list(loc.p.stripped_strings)
             addr = parse_address_intl(" ".join(raw_address) + ", Mauritius")
+            for hh in list(loc.select("p")[1].stripped_strings)[1:]:
+                if "Holidays" in hh:
+                    continue
+                hours.append(hh)
 
+            location_name = loc.h4.text.strip()
+            latitude, longitude = _d(
+                locations[1][6][0][12][0][13][0], location_name, raw_address
+            )
             yield SgRecord(
+                page_url=contact_us_url,
                 location_name=location_name,
                 street_address=raw_address[0].replace(",", ""),
                 city=addr.city,
