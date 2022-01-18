@@ -70,7 +70,7 @@ def fetch_data():
         longitude = loc["store_info"]["longitude"]
         hour_list = loc["store_info"]["store_hours"]
         if not hour_list:
-            hour_list = MISSING
+            hours_of_operation = MISSING
         else:
             hour_list = hour_list.split(";")
             hour_list = hour_list[:-1]
@@ -88,6 +88,7 @@ def fetch_data():
                 hours_of_operation = (
                     hours_of_operation + day + " " + open_time + "-" + close_time + " "
                 )
+        hours_of_operation = hours_of_operation.replace("Closed-", "Closed")
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=url,
@@ -97,7 +98,7 @@ def fetch_data():
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
+            store_number=store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,
