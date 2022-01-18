@@ -20,7 +20,6 @@ def write_output(data):
 
 def fetch_locations(postal, session):
     url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
-    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/62711.json"
     try:
         response = session.get(url)
         data = response.json()
