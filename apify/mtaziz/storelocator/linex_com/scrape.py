@@ -78,12 +78,15 @@ def fetch_data(all_locs):
     for idx, loc_html in enumerate(all_locations_list[0:]):
         page_url = loc_html.xpath('.//a[contains(text(), "Visit Website")]/@href')
         page_url = "".join(page_url).replace(" ", "").replace("http://https", "https")
+
         if page_url in s:
             continue
         else:
             s.add(page_url)
             page_url = "".join(page_url.split())
             page_url = page_url if page_url else MISSING
+            if "https://linex.com/us/line-x-of-venice-F1379" in page_url:
+                continue
             logger.info(f"[{idx}] Page URL: {page_url}")
 
             # Location Name
@@ -112,7 +115,12 @@ def fetch_data(all_locs):
             country_code = "US"
             if len(zip_code.split()) == 2:
                 country_code = "CA"
-            store_number = MISSING
+
+            store_number = None
+            if "-" in page_url:
+                store_number = page_url.split("-")[-1]
+            else:
+                store_number = MISSING
             phone = loc_html.xpath(
                 './/h5[contains(text(), "Contact:")]/following-sibling::p/text()'
             )
