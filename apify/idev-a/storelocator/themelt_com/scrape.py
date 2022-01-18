@@ -74,7 +74,6 @@ def fetch_data():
                     if street_address.endswith(","):
                         street_address = street_address[:-1]
                     names.append(_["address"])
-                    page_url = locator_domain + _["link-store-hours-title"]
                     yield SgRecord(
                         page_url=base_url,
                         location_name=_["address"],
