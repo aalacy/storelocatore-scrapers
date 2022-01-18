@@ -168,7 +168,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -199,7 +198,7 @@ def fetch_data():
         driver.find_element_by_xpath(
             '//*[@id="header"]/div[2]/div/div[2]/form/button'
         ).click()
-        time.sleep(1)
+        time.sleep(2)
         driver.implicitly_wait(10)
         staleElement = True
         while staleElement:
@@ -241,7 +240,7 @@ def fetch_data():
                 city = "Crawley"
             country_code = "UK"
             store_number = "<MISSING>"
-            phone = soup.find(
+            phone = row.find(
                 "a", {"class": "store-no", "href": re.compile(r"tel\:\/\/.*")}
             )
             if not phone:
