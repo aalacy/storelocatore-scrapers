@@ -58,6 +58,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         except Exception as e:
             logger.info(f"Error: {e}")
             continue
+        store_number = r.text.split('data-storeId="')[1].split('"')[0]
         location_name = loc["name"]
         phone = loc["telephone"]
         if phone == 0:
@@ -70,17 +71,20 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         country_code = address["addressCountry"]
         latitude = loc["geo"]["latitude"]
         longitude = loc["geo"]["longitude"]
-        hour_list = loc["openingHoursSpecification"]
-        hours_of_operation = ""
-        for hour in hour_list:
-            day = (
-                str(hour["dayOfWeek"])
-                .replace("', '", ", ")
-                .replace("['", "")
-                .replace("']", "")
-            )
-            time = hour["opens"] + "-" + hour["closes"]
-            hours_of_operation = hours_of_operation + " " + day + " " + time
+        try:
+            hour_list = loc["openingHoursSpecification"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                day = (
+                    str(hour["dayOfWeek"])
+                    .replace("', '", ", ")
+                    .replace("['", "")
+                    .replace("']", "")
+                )
+                time = hour["opens"] + "-" + hour["closes"]
+                hours_of_operation = hours_of_operation + " " + day + " " + time
+        except:
+            hours_of_operation = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
@@ -90,7 +94,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
+            store_number=store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,

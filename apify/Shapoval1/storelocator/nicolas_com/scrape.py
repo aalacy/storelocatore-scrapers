@@ -38,7 +38,9 @@ def get_urls():
 
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://nicolas.com/"
-    page_url = url
+    page_url = "".join(url)
+    if page_url.find("/fr/") != -1:
+        return
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
@@ -50,8 +52,11 @@ def get_data(url, sgw: SgWriter):
     phone = (
         "".join(tree.xpath('//address/a[contains(@href, "tel")]/text()')) or "<MISSING>"
     )
+    location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
+    if location_name == "<MISSING>":
+        return
     hours = tree.xpath('//div[@class="ns-StoreDetails-openingsTimesDetail"]')
-    days = tree.xpath('//div[@class="ns-StoreDetails-openingsDay"]//text()')
+    days = tree.xpath('//div[contains(@class, "ns-StoreDetails-openingsDay")]//text()')
     days = list(filter(None, [a.strip() for a in days]))
     tmp = []
     _tmp = []
@@ -72,6 +77,7 @@ def get_data(url, sgw: SgWriter):
             .replace("\t", "")
             .strip()
         )
+
         line = f"{open}-{close}"
         tmp.append(line)
     closed = (
@@ -84,6 +90,7 @@ def get_data(url, sgw: SgWriter):
         .replace("\t", "")
         .strip()
     )
+
     if (
         "".join(
             tree.xpath(
@@ -101,6 +108,11 @@ def get_data(url, sgw: SgWriter):
         _tmp.append(f"{d.strip()}: {t.strip()}")
     hours_of_operation = ";".join(_tmp) or "<MISSING>"
     hours_of_operation = " ".join(hours_of_operation.split())
+    if closed.count("Closed") == 7:
+        hours_of_operation = "Closed"
+    if page_url == "https://www.nicolas.com/en/magasins/RENNES-NEMOURS/s/00008633.html":
+        hours_of_operation = " ".join(days).replace("\n", "").strip()
+        hours_of_operation = " ".join(hours_of_operation.split())
 
     jss = (
         "".join(tree.xpath("//div/@data-stores"))
@@ -127,14 +139,9 @@ def get_data(url, sgw: SgWriter):
         state = "<MISSING>"
         postal = j.get("postcode")
         country_code = j.get("country")
-        location_name = j.get("displayName")
-        if location_name == "ARCHIVES":
-            continue
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         store_number = j.get("name")
-        if store_number == "00000375":
-            continue
 
         row = SgRecord(
             locator_domain=locator_domain,

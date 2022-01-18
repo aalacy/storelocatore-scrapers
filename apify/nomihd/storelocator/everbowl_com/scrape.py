@@ -40,7 +40,12 @@ def fetch_data():
             continue
 
         address_info = list(filter(str, store.xpath(".//h3//text()")))
-        raw_address = " ".join(address_info[:2])
+        if address_info[-1] == "—":
+            raw_address = ", ".join(address_info[:-2]).strip()
+            phone = address_info[-2]
+        else:
+            raw_address = ", ".join(address_info[:-1]).strip()
+            phone = address_info[-1]
 
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
@@ -55,7 +60,6 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
-        phone = "".join(address_info[2:]).strip()
         if "(" not in phone and "-" not in phone:
             phone = "<MISSING>"
 
