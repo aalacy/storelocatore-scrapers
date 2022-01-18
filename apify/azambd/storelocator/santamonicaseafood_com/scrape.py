@@ -7,13 +7,15 @@ import ssl
 
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 import os
@@ -160,8 +162,7 @@ def fetch_data(driver):
     hours_of_operation = MISSING
     page_url = contact_page
     for container in containers:
-        print(container)
-        continue
+
         location_name = stringify_nodes(container, ".//a")
 
         street_address, city, state, zip_postal = get_address(address)
