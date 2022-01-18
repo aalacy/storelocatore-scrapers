@@ -73,16 +73,22 @@ def fetch_data():
                     for x in range(len(labels)):
                         hours.append(f"{labels[x]}: {values[x]}")
                 street_address = (
-                    " ".join(addr[:-1]).replace("Ackerman Student Union", "").strip()
+                    " ".join(addr[:-1])
+                    .replace("Ackerman Student Union", "")
+                    .replace("New York, NY 10007", "")
+                    .strip()
                 )
                 if street_address.endswith(","):
                     street_address = street_address[:-1]
+                city = addr[-1].split(",")[0].strip()
+                if city == "New Yor":
+                    city = "New York"
                 yield SgRecord(
                     page_url=page_url,
                     store_number=location["id"],
                     location_name=location.b.text.strip(),
                     street_address=street_address,
-                    city=addr[-1].split(",")[0].strip(),
+                    city=city,
                     state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                     zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                     country_code="US",
