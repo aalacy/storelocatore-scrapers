@@ -79,7 +79,8 @@ def fetch_data():
         latitude = d["latitude"]
         longitude = d["longitude"]
         street_address = d["address"]
-        hours_of_operation = d["custom_field_1"]
+        hours = d["custom_field_1"]
+        hours_of_operation = hours.replace("&amp;", ",")
         location_name = d["name"]
         addrs = parse_address_intl(
             location_name.split("#")[0].replace("Store", "").strip()
