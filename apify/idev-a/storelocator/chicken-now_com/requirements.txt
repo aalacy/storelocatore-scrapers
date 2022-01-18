@@ -6,3 +6,4 @@ sgscrape==0.2.6
 sgselenium==0.1.4
 tenacity==7.0.0
 webdriver_manager==3.5.2
+sgpostal==0.1.0
