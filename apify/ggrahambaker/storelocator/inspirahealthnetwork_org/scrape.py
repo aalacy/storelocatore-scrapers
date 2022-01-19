@@ -61,7 +61,6 @@ def fetch_data():
                 ).strip()
             except:
                 phone = MISSING
-            print(phone)
             store_number = MISSING
             try:
                 hours_of_operation = info["openingHours"].strip()
