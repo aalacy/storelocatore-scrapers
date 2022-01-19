@@ -197,14 +197,20 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
         for d in data_per_dealer_json["results"]:
             location_name = None
             try:
-                brands = d["brands"]
-                for b in brands:
-                    if "businessName" in b:
-                        location_name = b["businessName"]
-                    else:
-                        location_name = d["baseInfo"]["name1"]
+                if "brands" in d:
+                    brands = d["brands"]
+                    for b in brands:
+                        if "businessName" in b:
+                            location_name = b["businessName"]
+                        else:
+                            location_name = d["baseInfo"]["name1"]
+                else:
+                    location_name = d["baseInfo"]["name1"]
             except:
                 location_name = MISSING
+
+            if "00015" == location_name:
+                location_name = "Home Office Test Center"
 
             logger.info(f"Location Name: {location_name}")
 
