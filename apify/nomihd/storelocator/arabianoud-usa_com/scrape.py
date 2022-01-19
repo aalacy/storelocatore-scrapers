@@ -120,7 +120,16 @@ def fetch_data():
                 )
             )
 
-            hours_of_operation = "; ".join(hours)
+            hours_of_operation = (
+                "; ".join(hours)
+                .strip()
+                .replace("Opening hours", "")
+                .strip()
+                .replace("Opening hours :", "")
+                .strip()
+                .replace("Opening hours :;", "")
+                .strip()
+            )
 
             store_number = store["id"]
 
