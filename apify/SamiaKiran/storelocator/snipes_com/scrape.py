@@ -48,21 +48,43 @@ def fetch_data():
                 continue
             linklist.append(country)
         for link in linklist:
+            if "www.snipes.at" in link:
+                country_code = "Austria"
+            elif "www.snipes.nl" in link:
+                country_code = "Netherlands"
+            elif "www.snipes.fr" in link:
+                country_code = "France"
+            elif "www.snipes.ch" in link:
+                country_code = "Switzerland"
+            elif "www.snipes.it" in link:
+                country_code = "Italy"
+            elif "www.snipes.es" in link:
+                country_code = "Spain"
+            elif "www.snipes.be" in link:
+                country_code = "Belgium"
+            elif "www.snipes.pl" in link:
+                country_code = "Poland"
+            elif "www.snipes.com" in link:
+                country_code = "Germany"
             r = session.get(link, headers=headers)
-            country_code = r.text.split("countryName&quot;:&quot;")[-1].split(
-                "&quot;,&quot;"
-            )[0]
-            log.info(f"Fetching {country_code} Stores from {link}")
-            loclist = (
-                r.text.split('data-locations="')[1]
-                .split("data-icon=")[0]
-                .replace('}]"', "}]")
-            )
+            log.info(f"Fetching Stores from {link}")
+            try:
+                loclist = (
+                    r.text.split('data-locations="')[1]
+                    .split("data-icon=")[0]
+                    .replace('}]"', "}]")
+                )
+            except:
+                continue
             loclist = BeautifulSoup(loclist, "html.parser")
-            loclist = json.loads(str(loclist))
+            try:
+                loclist = json.loads(str(loclist))
+            except:
+                continue
             for loc in loclist:
                 store_number = loc["id"]
                 page_url = "https://www.snipes.com/storedetails?sid=" + store_number
+                log.info(page_url)
                 location_name = loc["name"] + " Store"
                 latitude = loc["latitude"]
                 longitude = loc["longitude"]
@@ -95,7 +117,6 @@ def fetch_data():
                 )
                 zip_postal = formatted_addr.postcode
                 zip_postal = zip_postal.strip() if zip_postal else SgRecord.MISSING
-                log.info(f"{address}")
                 try:
                     phone = soup.select_one("a[href*=tel]")["href"].replace("tel:", "")
                 except:
