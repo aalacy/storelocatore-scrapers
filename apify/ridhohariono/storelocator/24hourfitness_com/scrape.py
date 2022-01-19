@@ -41,7 +41,7 @@ def fetch_data():
         hours_of_operation = MISSING
         location_type = row["type"]
         country_code = "US"
-        store_number = MISSING
+        store_number = row["clubNumber"]
         latitude = row["coordinate"]["latitude"]
         longitude = row["coordinate"]["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
