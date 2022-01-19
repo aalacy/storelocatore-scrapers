@@ -48,7 +48,8 @@ def fetch_data():
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = [e for e in raw_data if "+" in e][0].replace("Tel: ", "").strip()
+        phone = [e for e in raw_data if "+" in e]
+        phone = phone[0].replace("Tel: ", "").strip() if phone else ""
         location_type = "<MISSING>"
         geo = (
             loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]

@@ -18,12 +18,11 @@ def fetch_data():
     website = "drinkbambu.com"
     country = "US"
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '<a class="view-loc" href="' in line:
-            items = line.split('<a class="view-loc" href="')
+        if "<a class='view-loc' href='" in line:
+            items = line.split("<a class='view-loc' href='")
             for item in items:
                 if ">View Location</a>" in item:
-                    locs.append("https://www.drinkbambu.com" + item.split('"')[0])
+                    locs.append("https://www.drinkbambu.com" + item.split("'")[0])
     for loc in locs:
         CS = False
         name = ""
@@ -39,7 +38,6 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if "Coming Soon" in line2:
                 CS = True
             if '<h1 itemprop="name">' in line2:
@@ -68,6 +66,7 @@ def fetch_data():
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
+        hours = hours.replace("|", ";").replace("  ", " ")
         name = name.replace("&#8217;", "'")
         if state in canada:
             country = "CA"
