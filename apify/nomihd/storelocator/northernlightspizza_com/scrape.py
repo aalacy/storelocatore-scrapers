@@ -93,6 +93,9 @@ def fetch_data():
                 .split("; Closing early")[0]
                 .strip()
             )
+            if "Closed Temporarily" in hours_of_operation:
+                location_type = "Closed Temporarily"
+                hours_of_operation = "<MISSING>"
 
             latitude, longitude = "<MISSING>", "<MISSING>"
 
