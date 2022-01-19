@@ -6,7 +6,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
@@ -45,6 +44,7 @@ def fetch_data():
     r = r.text.split(":", 1)[1].split(',"is_last_page')[0]
 
     r = json.loads(r)
+
     for store in r:
 
         try:
@@ -67,7 +67,8 @@ def fetch_data():
         except:
             state = "<MISSING>"
         street = store["address"][0]
-        street = street.split(city)[0].replace(",", "")
+        if "Beaver Creek Plaza" not in street:
+            street = street.split(city)[0].replace(",", "")
         link = store["additional_attributes"]["url_key"]
         lat = store["latitude"]
         longt = store["longitude"]
