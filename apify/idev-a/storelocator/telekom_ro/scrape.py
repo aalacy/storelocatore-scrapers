@@ -121,7 +121,7 @@ cc = [
 proxy_country = "us"
 
 
-@retry(stop=stop_after_attempt(7), wait=wait_random(min=100, max=160))
+@retry(stop=stop_after_attempt(7), wait=wait_random(min=140, max=160))
 def get_json(city):
     global proxy_country
     while True:
@@ -176,7 +176,7 @@ def fetch_data():
                     raw_address=_["address"],
                 )
 
-            time.sleep(random.randint(60, 90))
+            time.sleep(random.randint(110, 150))
 
 
 if __name__ == "__main__":

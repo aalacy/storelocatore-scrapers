@@ -139,6 +139,11 @@ def fetch_data():
                     store_sel.xpath('.//strong/a[contains(@href,"maps")]/@href')[0]
                 )
                 latitude, longitude = get_latlng(map_link)
+                if latitude == "<MISSING>":
+                    map_link = "".join(
+                        store_sel.xpath('.//strong/a[contains(@href,"maps")]/@href')[-1]
+                    )
+                    latitude, longitude = get_latlng(map_link)
 
                 yield SgRecord(
                     locator_domain=locator_domain,
