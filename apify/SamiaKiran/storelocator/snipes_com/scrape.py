@@ -48,9 +48,26 @@ def fetch_data():
                 continue
             linklist.append(country)
         for link in linklist:
+            if "www.snipes.at" in link:
+                country_code = "Austria"
+            elif "www.snipes.nl" in link:
+                country_code = "Netherlands"
+            elif "www.snipes.fr" in link:
+                country_code = "France"
+            elif "www.snipes.ch" in link:
+                country_code = "Switzerland"
+            elif "www.snipes.it" in link:
+                country_code = "Italy"
+            elif "www.snipes.es" in link:
+                country_code = "Spain"
+            elif "www.snipes.be" in link:
+                country_code = "Belgium"
+            elif "www.snipes.pl" in link:
+                country_code = "Poland"
+            elif "www.snipes.com" in link:
+                country_code = "Germany"
             r = session.get(link, headers=headers)
-            country_code = country
-            log.info(f"Fetching  Stores from {link}")
+            log.info(f"Fetching Stores from {link}")
             try:
                 loclist = (
                     r.text.split('data-locations="')[1]
