@@ -55,104 +55,101 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://www.paulsmith.com/uk/shop-locator"
+    log.info(f"Crawling {search_url}")
+    driver = get_driver(search_url)
+    search_sel = lxml.html.fromstring(driver.page_source)
+    countries = search_sel.xpath('//select[@id="country-shops"]/option/@value')
+    for country in countries:
+        log.info(f"fetching stores for country:{country}")
 
-    with SgChrome() as driver:
-        driver.get(search_url)
-        search_sel = lxml.html.fromstring(driver.page_source)
-        countries = search_sel.xpath('//select[@id="country-shops"]/option/@value')
-        for country in countries:
-            log.info(f"fetching stores for country:{country}")
+        driver.get(f"https://www.paulsmith.com/uk/shop-locator/{country}")
+        stores_sel = lxml.html.fromstring(driver.page_source)
+        stores = stores_sel.xpath(
+            '//li[@class="card pl-0"]/a[@class="card-image-wrapper"]/@href'
+        )
+        for store_url in stores:
 
-            driver.get(f"https://www.paulsmith.com/uk/shop-locator/{country}")
-            stores_sel = lxml.html.fromstring(driver.page_source)
-            stores = stores_sel.xpath(
-                '//li[@class="card pl-0"]/a[@class="card-image-wrapper"]/@href'
-            )
-            for store_url in stores:
+            locator_domain = website
+            page_url = store_url
+            log.info(page_url)
+            driver = get_driver(page_url)
+            store_sel = lxml.html.fromstring(driver.page_source)
+            temp_city = "".join(
+                store_sel.xpath('//span[@class="text-block-badge"]/text()')
+            ).strip()
 
-                locator_domain = website
-                page_url = store_url
-                log.info(page_url)
-                driver = get_driver(page_url)
-                store_sel = lxml.html.fromstring(driver.page_source)
-                temp_city = "".join(
-                    store_sel.xpath('//span[@class="text-block-badge"]/text()')
-                ).strip()
+            location_name = "".join(
+                store_sel.xpath('//h1[@class="text-block-heading"]/text()')
+            ).strip()
+            location_type = "<MISSING>"
 
-                location_name = "".join(
-                    store_sel.xpath('//h1[@class="text-block-heading"]/text()')
-                ).strip()
-                location_type = "<MISSING>"
+            raw_address = ", ".join(
+                store_sel.xpath('//address[@class="mb-0"]/p/text()')
+            ).strip()
 
-                raw_address = ", ".join(
-                    store_sel.xpath('//address[@class="mb-0"]/p/text()')
-                ).strip()
-
-                formatted_addr = parser.parse_address_intl(raw_address)
-                street_address = formatted_addr.street_address_1
-                if street_address:
-                    if formatted_addr.street_address_2:
-                        street_address = (
-                            street_address + ", " + formatted_addr.street_address_2
-                        )
-                else:
-                    if formatted_addr.street_address_2:
-                        street_address = formatted_addr.street_address_2
-
-                city = temp_city
-                state = formatted_addr.state
-                zip = formatted_addr.postcode
-
-                country_code = country
-
-                phone = (
-                    "".join(
-                        store_sel.xpath('//address//a[contains(@href,"tel:")]/text()')
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
                     )
-                    .strip()
-                    .replace("Tel:", "")
-                    .strip()
-                )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
 
-                hours = store_sel.xpath(
-                    '//div[./h2[contains(text(),"Opening Hours")]]//li[@class="info-block-list-item"]'
-                )
-                hours_list = []
-                for hour in hours:
-                    day = "".join(hour.xpath("text()")).strip()
-                    time = "".join(hour.xpath("span/text()")).strip()
-                    hours_list.append(day + time)
+            city = temp_city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
-                hours_of_operation = "; ".join(hours_list).strip()
+            country_code = country
 
-                store_number = "<MISSING>"
-                map_link = "".join(
-                    store_sel.xpath('//a[contains(text(),"Get Directions")]/@href')
-                ).strip()
+            phone = (
+                "".join(store_sel.xpath('//address//a[contains(@href,"tel:")]/text()'))
+                .strip()
+                .replace("Tel:", "")
+                .strip()
+            )
 
-                latitude, longitude = "<MISSING>", "<MISSING>"
+            hours = store_sel.xpath(
+                '//div[./h2[contains(text(),"Opening Hours")]]//li[@class="info-block-list-item"]'
+            )
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath("text()")).strip()
+                time = "".join(hour.xpath("span/text()")).strip()
+                hours_list.append(day + time)
 
-                if "/dir/" in map_link:
-                    latlng = map_link.split("/dir/")[1].strip().split("?")[0].strip()
-                    latitude = latlng.split(",")[0].strip()
-                    longitude = latlng.split(",")[1].strip()
+            hours_of_operation = "; ".join(hours_list).strip()
 
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+            store_number = "<MISSING>"
+            map_link = "".join(
+                store_sel.xpath('//a[contains(text(),"Get Directions")]/@href')
+            ).strip()
+
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
+            if "/dir/" in map_link:
+                latlng = map_link.split("/dir/")[1].strip().split("?")[0].strip()
+                latitude = latlng.split(",")[0].strip()
+                longitude = latlng.split(",")[1].strip()
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
