@@ -143,6 +143,8 @@ def fetch_data(sgw: SgWriter):
                     phone = (
                         item.find(class_="off-phone").text.replace("Phone:", "").strip()
                     )
+                    if "N" in phone.upper():
+                        phone = ""
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
                     hours_of_operation = "<MISSING>"

@@ -5,6 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+import dirtyjson as json
 
 logger = SgLogSetup().get_logger("")
 
@@ -27,6 +28,16 @@ def fetch_data():
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("table.store-information_time_table tr")[1:]
             ]
+            if _["name"] in ["Troyes", "Poitiers"]:
+                temp = hours
+                hours = []
+                for hh in json.loads(
+                    temp[0].replace('30""', '30"').replace('}"}', "}")
+                )["periods"]:
+                    hours.append(
+                        f"{hh['openDay']}: {hh['openTime']} - {hh['closeTime']}"
+                    )
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["ID"],
