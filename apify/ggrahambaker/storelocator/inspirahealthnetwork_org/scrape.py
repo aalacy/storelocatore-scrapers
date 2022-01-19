@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
+import re
 
 DOMAIN = "inspirahealthnetwork.com"
 BASE_URL = "https://www.inspirahealthnetwork.org"
@@ -49,15 +50,18 @@ def fetch_data():
             zip_postal = info["address"]["postalCode"]
             country_code = "US"
             try:
-                phone = (
+                phone = re.sub(
+                    r"ext.*|Get.*",
+                    "",
                     store.find(
                         "span", {"class": "paragraph--type--phone-number--label"}
                     )
                     .find_next("a")
-                    .text.strip()
-                )
+                    .text.strip(),
+                ).strip()
             except:
                 phone = MISSING
+            print(phone)
             store_number = MISSING
             try:
                 hours_of_operation = info["openingHours"].strip()
