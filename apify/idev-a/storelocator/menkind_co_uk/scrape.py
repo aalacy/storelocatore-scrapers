@@ -52,9 +52,14 @@ def fetch_data():
             page_url = _.select_one("a.storefinder-search-store-link")["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = list(
+            hours = []
+            for hh in list(
                 sp1.select_one("div.storefinder-data-opening-times").stripped_strings
-            )[1:]
+            )[1:]:
+                if "We are" in hh or "For more" in hh:
+                    break
+                hours.append(hh)
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h2.text.strip(),
