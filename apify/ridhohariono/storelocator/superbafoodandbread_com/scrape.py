@@ -73,10 +73,15 @@ def fetch_data():
         country_code = "US"
         phone = info.find("a", {"data-bb-track-category": "Phone Number"}).text.strip()
         store_number = MISSING
+        hoo = ""
+        for hours in info.find_all("p")[1:]:
+            hoo += (
+                hours.get_text(strip=True, separator=",").replace("day,", "day: ")
+                + ", ".strip()
+            )
         hours_of_operation = (
-            info.find_all("p")[-1]
-            .get_text(strip=True, separator=",")
-            .replace("day,", "day: ")
+            hoo.replace("** Modified Hours Until Further Notice**,", "")
+            .rstrip(",")
             .strip()
         )
         latlong = store.find("div", {"class": "gmaps"})

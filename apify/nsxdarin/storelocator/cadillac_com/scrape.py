@@ -63,10 +63,10 @@ def fetch_data():
                             purl = "<MISSING>"
                         website = "cadillac.com"
                         hours = ""
-                        if '"generalOpeningHour":[' in item:
-                            hrs = item.split('"generalOpeningHour":[')[1].split(
-                                '}],"serviceOpeningHour"'
-                            )[0]
+                        if '{"code":"1","departmentHours":[' in item:
+                            hrs = item.split('{"code":"1","departmentHours":[')[
+                                1
+                            ].split('],"name":"Sales"')[0]
                             days = hrs.split('"dayOfWeek":[')
                             for day in days:
                                 if '"openTo":"' in day:
@@ -81,7 +81,7 @@ def fetch_data():
                                             .replace("6", "Sat")
                                             .replace("7", "Sun")
                                             + ": "
-                                            + day.split('"openFrom":"')[0].split('"')[0]
+                                            + day.split('"openFrom":"')[1].split('"')[0]
                                             + "-"
                                             + day.split('"openTo":"')[1].split('"')[0]
                                         )

@@ -23,13 +23,15 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     j = json.loads(text)
 
-    location_name = j.get("name")
+    location_name = "".join(tree.xpath("//h1[@class='lochero__title']/text()")).strip()
     a = j.get("address")
     street_address = a.get("streetAddress") or ""
     street_address = street_address.replace("Open ", "")
     if "weather" in street_address:
         street_address = street_address.split(".")[-1].strip()
-    city = a.get("addressLocality")
+
+    text = "".join(tree.xpath("//small[not(contains(text(), 'Jump'))]/text()")).strip()
+    city = text.split(",")[-2].strip()
     state = a.get("addressRegion")
     postal = a.get("postalCode")
     country_code = a.get("addressCountry")

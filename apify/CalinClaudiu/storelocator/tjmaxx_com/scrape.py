@@ -1,5 +1,5 @@
 from typing import Iterable, Tuple, Callable
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -184,14 +184,27 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    tocrawl = [SearchableCountries.CANADA]
+    tocrawl = []
+    tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.CANADA)
+    tocrawl.append(SearchableCountries.AUSTRALIA)
+    tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
         expected_search_radius_miles=2,
     )
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                },
+                fail_on_empty_id=True,
+            )
+        )
     ) as writer:
         with SgRequests() as http1:
             search_iter = ExampleSearchIteration()
