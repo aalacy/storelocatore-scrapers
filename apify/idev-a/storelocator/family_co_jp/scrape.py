@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import re
 
 logger = SgLogSetup().get_logger("family")
 
@@ -68,6 +69,9 @@ def fetch_data():
                         city = state
                         state = ""
 
+                    phone = ""
+                    if _.find("a", href=re.compile(r"tel:")):
+                        phone = _.find("a", href=re.compile(r"tel:")).text.strip()
                     yield SgRecord(
                         page_url=page_url,
                         location_name=tr[0].td.text.strip(),
@@ -75,7 +79,7 @@ def fetch_data():
                         city=city,
                         state=state,
                         country_code="JP",
-                        phone=tr[2].td.text.strip(),
+                        phone=phone,
                         locator_domain=locator_domain,
                         hours_of_operation=tr[3].td.text.split("祝は")[0].strip(),
                         raw_address=raw_address,
