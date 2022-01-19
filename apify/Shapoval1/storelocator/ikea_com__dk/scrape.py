@@ -29,7 +29,9 @@ def fetch_data(sgw: SgWriter):
         store_number = "<MISSING>"
 
         hours_of_operation = (
-            " ".join(tree.xpath('//h2[text()="Store"]/following-sibling::*[1]//text()'))
+            " ".join(
+                tree.xpath('//h2[text()="Varehus"]/following-sibling::*[1]//text()')
+            )
             .replace("\n", "")
             .strip()
         )
@@ -44,9 +46,9 @@ def fetch_data(sgw: SgWriter):
         location_type = "<MISSING>"
         street_address = "".join(ad[1]).strip()
         state = "<MISSING>"
-        postal = "".join(ad[3]).strip()
+        postal = "".join(ad[2]).split()[0]
         phone = "<MISSING>"
-        city = "".join(ad[2]).strip()
+        city = " ".join("".join(ad[2]).split()[1:])
 
         row = SgRecord(
             locator_domain=locator_domain,
