@@ -91,7 +91,7 @@ def fetch_data():
         location_type = "Store"
         country_code = "US"
         zip_postal = MISSING
-   
+
         yield {
             "locator_domain": DOMAIN,
             "page_url": page_url,
@@ -130,9 +130,7 @@ def scrape():
         street_address=sp.MultiMappingField(
             mapping=["street_address"], is_required=False
         ),
-        city=sp.MappingField(
-            mapping=["city"],is_required=False
-        ),
+        city=sp.MappingField(mapping=["city"], is_required=False),
         state=sp.MappingField(mapping=["state"], is_required=False),
         zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"]),
