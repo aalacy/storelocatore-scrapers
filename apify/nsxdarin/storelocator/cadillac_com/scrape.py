@@ -12,6 +12,7 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "locale": "en_US",
+    "clientapplicationid": "quantum",
 }
 
 search = DynamicGeoSearch(
@@ -24,112 +25,103 @@ search = DynamicGeoSearch(
 def fetch_data():
     for clat, clng in search:
         url = (
-            "https://www.cadillac.com/OCRestServices/dealer/latlong/v1/Cadillac/"
+            "https://www.cadillac.com/bypass/pcf/quantum-dealer-locator/v1/getDealers?desiredCount=25&distance=50&makeCodes=006&serviceCodes=&latitude="
             + str(clat)
-            + "/"
+            + "&longitude="
             + str(clng)
-            + "/?distance=500&maxResults=500"
+            + "&searchType=latLongSearch"
         )
         logger.info("Pulling Lat-Long %s,%s..." % (str(clat), str(clng)))
-        try:
-            r = session.get(url, headers=headers)
-            for line in r.iter_lines():
-                if '"id":' in line:
-                    items = line.split('"id":')
-                    for item in items:
-                        if '"dealerName":"' in item:
-                            name = item.split('"dealerName":"')[1].split('"')[0]
-                            store = item.split(",")[0]
-                            lat = item.split('"latitude":')[1].split(",")[0]
-                            lng = item.split('"longitude":')[1].split("}")[0]
-                            add = item.split('"addressLine1":"')[1].split('"')[0]
-                            if "addressLine2" in item:
-                                add = (
-                                    add
-                                    + " "
-                                    + item.split('"addressLine2":"')[1].split('"')[0]
-                                )
-                            city = item.split('"cityName":"')[1].split('"')[0]
-                            zc = item.split('"postalCode":"')[1].split('"')[0]
-                            state = item.split('"countrySubdivisionCode":"')[1].split(
-                                '"'
-                            )[0]
-                            country = item.split('"countryIso":"')[1].split('"')[0]
-                            phone = item.split('{"phone1":"')[1].split('"')[0]
-                            typ = "Dealer"
-                            try:
-                                purl = item.split('"dealerUrl":"')[1].split('"')[0]
-                            except:
-                                purl = "<MISSING>"
-                            website = "cadillac.com"
-                            hours = ""
-                            if '"generalOpeningHour":[' in item:
-                                hrs = item.split('"generalOpeningHour":[')[1].split(
-                                    '}],"serviceOpeningHour"'
-                                )[0]
-                                days = hrs.split('"openFrom":"')
-                                for day in days:
-                                    if '"openTo":"' in day:
-                                        if hours == "":
-                                            hours = (
-                                                day.split('"dayOfWeek":[')[1]
-                                                .split("]")[0]
-                                                .replace("1", "Mon")
-                                                .replace("2", "Tue")
-                                                .replace("3", "Wed")
-                                                .replace("4", "Thu")
-                                                .replace("5", "Fri")
-                                                .replace("6", "Sat")
-                                                .replace("7", "Sun")
-                                                + ": "
-                                                + day.split('"')[0]
-                                                + "-"
-                                                + day.split('"openTo":"')[1].split('"')[
-                                                    0
-                                                ]
-                                            )
-                                        else:
-                                            hours = (
-                                                hours
-                                                + "; "
-                                                + day.split('"dayOfWeek":[')[1]
-                                                .split("]")[0]
-                                                .replace("1", "Mon")
-                                                .replace("2", "Tue")
-                                                .replace("3", "Wed")
-                                                .replace("4", "Thu")
-                                                .replace("5", "Fri")
-                                                .replace("6", "Sat")
-                                                .replace("7", "Sun")
-                                                + ": "
-                                                + day.split('"')[0]
-                                                + "-"
-                                                + day.split('"openTo":"')[1].split('"')[
-                                                    0
-                                                ]
-                                            )
-                            else:
-                                hours = "<MISSING>"
-                            if len(zc) == 9:
-                                zc = zc[:5] + "-" + zc[-4:]
-                            yield SgRecord(
-                                locator_domain=website,
-                                page_url=purl,
-                                location_name=name,
-                                street_address=add,
-                                city=city,
-                                state=state,
-                                zip_postal=zc,
-                                country_code=country,
-                                phone=phone,
-                                location_type=typ,
-                                store_number=store,
-                                latitude=lat,
-                                longitude=lng,
-                                hours_of_operation=hours,
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if '{"address":' in line:
+                items = line.split('{"address":')
+                for item in items:
+                    if '"dealerName":"' in item:
+                        name = item.split('"dealerName":"')[1].split('"')[0]
+                        store = item.split('"dealerCode":"')[1].split('"')[0]
+                        lat = item.split('"latitude":')[1].split(",")[0]
+                        lng = item.split('"longitude":')[1].split("}")[0]
+                        add = item.split('"addressLine1":"')[1].split('"')[0]
+                        if "addressLine2" in item:
+                            add = (
+                                add
+                                + " "
+                                + item.split('"addressLine2":"')[1].split('"')[0]
                             )
-        except:
-            pass
+                        city = item.split('"cityName":"')[1].split('"')[0]
+                        zc = item.split('"postalCode":"')[1].split('"')[0]
+                        state = item.split('"countrySubdivisionCode":"')[1].split('"')[
+                            0
+                        ]
+                        country = item.split('"countryIso":"')[1].split('"')[0]
+                        phone = item.split('{"phone1":"')[1].split('"')[0]
+                        typ = "Dealer"
+                        try:
+                            purl = item.split('"dealerUrl":"')[1].split('"')[0]
+                        except:
+                            purl = "<MISSING>"
+                        website = "cadillac.com"
+                        hours = ""
+                        if '{"code":"1","departmentHours":[' in item:
+                            hrs = item.split('{"code":"1","departmentHours":[')[
+                                1
+                            ].split('],"name":"Sales"')[0]
+                            days = hrs.split('"dayOfWeek":[')
+                            for day in days:
+                                if '"openTo":"' in day:
+                                    if hours == "":
+                                        hours = (
+                                            day.split("]")[0]
+                                            .replace("1", "Mon")
+                                            .replace("2", "Tue")
+                                            .replace("3", "Wed")
+                                            .replace("4", "Thu")
+                                            .replace("5", "Fri")
+                                            .replace("6", "Sat")
+                                            .replace("7", "Sun")
+                                            + ": "
+                                            + day.split('"openFrom":"')[1].split('"')[0]
+                                            + "-"
+                                            + day.split('"openTo":"')[1].split('"')[0]
+                                        )
+                                    else:
+                                        hours = (
+                                            hours
+                                            + "; "
+                                            + day.split("]")[0]
+                                            .replace("1", "Mon")
+                                            .replace("2", "Tue")
+                                            .replace("3", "Wed")
+                                            .replace("4", "Thu")
+                                            .replace("5", "Fri")
+                                            .replace("6", "Sat")
+                                            .replace("7", "Sun")
+                                            + ": "
+                                            + day.split('"openFrom":"')[1].split('"')[0]
+                                            + "-"
+                                            + day.split('"openTo":"')[1].split('"')[0]
+                                        )
+                        else:
+                            hours = "<MISSING>"
+                        if len(zc) == 9:
+                            zc = zc[:5] + "-" + zc[-4:]
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=purl,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():

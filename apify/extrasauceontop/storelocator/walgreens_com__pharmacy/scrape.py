@@ -42,7 +42,7 @@ def get_data():
             state = location["store"]["address"]["state"]
             zipp = location["store"]["address"]["zip"]
             phone = location["store"]["phone"]["number"]
-            location_type = location["store"]["name"]
+            location_type = "<MISSING>"
             country_code = "US"
 
             try:
@@ -70,6 +70,12 @@ def get_data():
                     log.info(search_code)
                     log.info(location_name)
                     raise Exception
+
+            try:
+                location["store"]["pharmacyOpenTime"]
+
+            except Exception:
+                continue
 
             yield {
                 "locator_domain": locator_domain,
