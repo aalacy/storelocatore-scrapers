@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import datetime
 
 website = "nationalcar.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -52,12 +53,48 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
 
-            hours_of_operation = store["hours"]
-            if not hours_of_operation:
-                hours_of_operation = "<MISSING>"
-
             store_number = store["id"]
+            log.info(f"fetching hours for ID: {store_number}")
+            hours_req = session.get(
+                "https://prd.location.enterprise.com/enterprise-sls/search/location/national/web/hours/"
+                + store_number,
+                headers=headers,
+            )
+            hours_json = json.loads(hours_req.text)["data"]
+            index = 0
+            hours_list = []
+            for dt in hours_json.keys():
+                if index > 6:
+                    break
 
+                day = datetime.datetime.strptime(dt, "%Y-%m-%d").strftime("%A")
+                time = "<MISSING>"
+                if "STANDARD" in hours_json[dt]:
+                    if hours_json[dt]["STANDARD"]["closed"] is True:
+                        time = "Closed"
+                    elif hours_json[dt]["STANDARD"]["open24Hours"] is True:
+                        time = "24 Hours"
+                    else:
+                        time = (
+                            hours_json[dt]["STANDARD"]["hours"][0]["open"]
+                            + " - "
+                            + hours_json[dt]["STANDARD"]["hours"][0]["close"]
+                        )
+                elif "DROP" in hours_json[dt]:
+                    if hours_json[dt]["DROP"]["closed"] is True:
+                        time = "Closed"
+                    elif hours_json[dt]["DROP"]["open24Hours"] is True:
+                        time = "24 Hours"
+                    else:
+                        time = (
+                            hours_json[dt]["DROP"]["hours"][0]["open"]
+                            + " - "
+                            + hours_json[dt]["DROP"]["hours"][-1]["close"]
+                        )
+                hours_list.append(day + ":" + time)
+                index = index + 1
+
+            hours_of_operation = "; ".join(hours_list).strip()
             latitude, longitude = store["gps"]["latitude"], store["gps"]["longitude"]
             if latitude == longitude:
                 latitude = longitude = "<MISSING>"
