@@ -109,14 +109,14 @@ def fetch_data():
     states = []
     stores = []
 
-    logzilla.info(f"Grabbing state links")
+    logzilla.info("Grabbing state links")
     for i in soup.find("div", {"class": "pge-find-store__states"}).find_all(
         "a", {"class": "pge-find-store__state-item"}
     ):
         states.append(i["href"])
 
     url = "https://locations.tacojohns.com/"
-    logzilla.info(f"Grabbing store links")
+    logzilla.info("Grabbing store links")
 
     for i in states:
         son = session.get(i, headers=headers)
@@ -125,7 +125,7 @@ def fetch_data():
         for j in links.find_all("a", {"class": "locator-results__store-detail"}):
             stores.append(j["href"])
 
-    logzilla.info(f"Grabbing store data")
+    logzilla.info("Grabbing store data")
 
     lize = utils.parallelize(
         search_space=stores,
@@ -137,7 +137,7 @@ def fetch_data():
     for i in lize:
         yield i
 
-    logzilla.info(f"Finished grabbing data!!")
+    logzilla.info("Finished grabbing data!!")
 
 
 def fix_comma(x):
