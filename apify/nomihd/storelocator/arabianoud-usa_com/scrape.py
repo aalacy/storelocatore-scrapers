@@ -138,7 +138,7 @@ def fetch_data():
                 zip_postal=zip,
                 country_code=country_code,
                 store_number=store_number,
-                phone=phone,
+                phone=phone.split("Email:")[0].strip(),
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
