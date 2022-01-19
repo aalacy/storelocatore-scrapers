@@ -29,7 +29,9 @@ def fetch_data():
             block = list(_.select_one("div.more").stripped_strings)
             if "Now Open" in block[1]:
                 del block[1]
-            page_url = locator_domain + _.select("div.more a")[-1]["href"]
+            page_url = _.select("div.more a")[-1]["href"]
+            if not page_url.startswith("http"):
+                page_url = locator_domain + page_url
             block = [
                 bb
                 for bb in block

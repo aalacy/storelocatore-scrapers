@@ -49,12 +49,9 @@ def fetch_data():
             if not _addr[0][0].isdigit():
                 del _addr[0]
             phone = ""
-            if link.find("strong", string=re.compile(r"Phone")):
-                phone = (
-                    link.find("strong", string=re.compile(r"Phone"))
-                    .find_parent("p")
-                    .text.replace("Phone", "")
-                )
+            pp = link.find("", string=re.compile(r"Phone"))
+            if pp and pp.find_parent("strong"):
+                phone = pp.find_parent("p").text.replace("Phone", "")
                 if not phone:
                     phone = (
                         link.find("strong", string=re.compile(r"Phone"))

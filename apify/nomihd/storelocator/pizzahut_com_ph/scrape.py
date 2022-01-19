@@ -120,7 +120,7 @@ def scrape():
             search_space=[(coord) for coord in search],
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=10,  # tweak to see what's fastest
+            max_threads=2,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)

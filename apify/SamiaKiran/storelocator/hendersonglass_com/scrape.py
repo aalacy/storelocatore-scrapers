@@ -1,4 +1,3 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -24,71 +23,67 @@ def fetch_data():
         url = "https://hendersonglass.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "locationsCol"})
-        for loc in loclist:
-            try:
-                coords = loc.find("a")["href"].split("@")[1].split(",")
-                latitude = coords[0]
-                longitude = coords[1]
-            except:
-                latitude = MISSING
-                longitude = MISSING
-            loc = loc.get_text(separator="|", strip=True).split("|")
-            location_name = loc[0]
-            log.info(location_name)
-            if len(loc) < 5:
-                street_address = MISSING
-                zip_postal = MISSING
-                city = MISSING
-                state = MISSING
-                country_code = MISSING
-                phone = loc[1].replace("Phone:", "")
-            else:
-                address = loc[1]
-                phone = loc[2].replace("Phone:", "")
-                address = usaddress.parse(address)
-                i = 0
-                street_address = ""
-                city = ""
-                state = ""
-                zip_postal = ""
+        linklist = soup.findAll("div", {"class": "elementor-widget-container"})
+        for link in linklist:
+            if "Phone" not in link.text:
+                continue
+            if "Corporate Location" in link.text:
+                continue
+            loclist = link.findAll("p")
+            for loc in loclist:
+                try:
+                    coords = loc.find("a")["href"].split("@")[1].split(",")
+                    latitude = coords[0]
+                    longitude = coords[1]
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
+                loc = loc.get_text(separator="|", strip=True).split("|")
+                location_name = loc[0]
+                if "Phone" in location_name:
+                    continue
+                log.info(location_name)
+                if len(loc) < 5:
+                    street_address = MISSING
+                    zip_postal = MISSING
+                    city = MISSING
+                    state = MISSING
+                    country_code = MISSING
+                    phone = loc[1].replace("Phone:", "")
+                else:
+                    raw_address = loc[1]
+                    if "," in raw_address:
+                        address = raw_address.split(",")
+                        street_address = address[0]
+                        zip_postal = address[1]
+                        state = MISSING
+                        city = MISSING
+                    else:
+                        address = raw_address.split()
+                        zip_postal = address[0]
+                        street_address = MISSING
+                        state = MISSING
+                        city = MISSING
+                    phone = loc[2].replace("Phone:", "")
+                    hours_of_operation = MISSING
                 country_code = "US"
-                while i < len(address):
-                    temp = address[i]
-                    if (
-                        temp[1].find("Address") != -1
-                        or temp[1].find("Street") != -1
-                        or temp[1].find("Recipient") != -1
-                        or temp[1].find("Occupancy") != -1
-                        or temp[1].find("BuildingName") != -1
-                        or temp[1].find("USPSBoxType") != -1
-                        or temp[1].find("USPSBoxID") != -1
-                    ):
-                        street_address = street_address + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        zip_postal = zip_postal + " " + temp[0]
-                    i += 1
-            hours_of_operation = MISSING
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone,
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
