@@ -41,7 +41,7 @@ def record_initial_requests(http, state):
 
 
 async def producer(state):
-    async with SgRequestsAsync() as httpx:
+    async with SgRequestsAsync(proxy_country="DE") as httpx:
         for next_r in state.request_stack_iter():
             yield {
                 "page_url": next_r.url,
@@ -88,7 +88,7 @@ def fetch_data(state, writer):
 if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="DE") as http:
             state.get_misc_value(
                 "init", default_factory=lambda: record_initial_requests(http, state)
             )
