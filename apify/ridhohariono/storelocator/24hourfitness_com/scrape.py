@@ -41,7 +41,7 @@ def fetch_data():
         hours_of_operation = MISSING
         location_type = row["type"]
         country_code = "US"
-        store_number = MISSING
+        store_number = row["clubNumber"]
         latitude = row["coordinate"]["latitude"]
         longitude = row["coordinate"]["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
@@ -66,7 +66,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
