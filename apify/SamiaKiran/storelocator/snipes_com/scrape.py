@@ -49,20 +49,25 @@ def fetch_data():
             linklist.append(country)
         for link in linklist:
             r = session.get(link, headers=headers)
-            country_code = r.text.split("countryName&quot;:&quot;")[-1].split(
-                "&quot;,&quot;"
-            )[0]
-            log.info(f"Fetching {country_code} Stores from {link}")
-            loclist = (
-                r.text.split('data-locations="')[1]
-                .split("data-icon=")[0]
-                .replace('}]"', "}]")
-            )
+            country_code = country
+            log.info(f"Fetching  Stores from {link}")
+            try:
+                loclist = (
+                    r.text.split('data-locations="')[1]
+                    .split("data-icon=")[0]
+                    .replace('}]"', "}]")
+                )
+            except:
+                continue
             loclist = BeautifulSoup(loclist, "html.parser")
-            loclist = json.loads(str(loclist))
+            try:
+                loclist = json.loads(str(loclist))
+            except:
+                continue
             for loc in loclist:
                 store_number = loc["id"]
                 page_url = "https://www.snipes.com/storedetails?sid=" + store_number
+                log.info(page_url)
                 location_name = loc["name"] + " Store"
                 latitude = loc["latitude"]
                 longitude = loc["longitude"]
@@ -95,7 +100,6 @@ def fetch_data():
                 )
                 zip_postal = formatted_addr.postcode
                 zip_postal = zip_postal.strip() if zip_postal else SgRecord.MISSING
-                log.info(f"{address}")
                 try:
                     phone = soup.select_one("a[href*=tel]")["href"].replace("tel:", "")
                 except:
