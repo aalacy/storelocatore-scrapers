@@ -1,9 +1,8 @@
-from sgscrape.simple_scraper_pipeline import *
+from sgscrape import simple_scraper_pipeline as sp
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
-import json
 
 
 def para(url):
@@ -163,38 +162,38 @@ def fix_comma(x):
 
 def scrape():
     url = "https://www.jetspizza.com/"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["CustomUrl"]),
-        location_name=MappingField(
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(url),
+        page_url=sp.MappingField(mapping=["CustomUrl"]),
+        location_name=sp.MappingField(
             mapping=["Name"], value_transform=lambda x: x.replace("None", "<MISSING>")
         ),
-        latitude=MappingField(mapping=["Latitude"]),
-        longitude=MappingField(mapping=["Longitude"]),
-        street_address=MappingField(mapping=["Address"], value_transform=fix_comma),
-        city=MappingField(
+        latitude=sp.MappingField(mapping=["Latitude"]),
+        longitude=sp.MappingField(mapping=["Longitude"]),
+        street_address=sp.MappingField(mapping=["Address"], value_transform=fix_comma),
+        city=sp.MappingField(
             mapping=["City"], value_transform=lambda x: x.replace("None", "<MISSING>")
         ),
-        state=MappingField(
+        state=sp.MappingField(
             mapping=["State"], value_transform=lambda x: x.replace("None", "<MISSING>")
         ),
-        zipcode=MappingField(
+        zipcode=sp.MappingField(
             mapping=["Zip"], value_transform=lambda x: x.replace("None", "<MISSING>")
         ),
-        country_code=MappingField(mapping=["Country"]),
-        phone=MappingField(
+        country_code=sp.MappingField(mapping=["Country"]),
+        phone=sp.MappingField(
             mapping=["Phone"], value_transform=lambda x: x.replace("None", "<MISSING>")
         ),
-        store_number=MappingField(
+        store_number=sp.MappingField(
             mapping=["StoreNumber"],
             part_of_record_identity=True,
         ),
-        hours_of_operation=MappingField(mapping=["OpenHours"]),
-        location_type=MappingField(mapping=["IsActive"]),
-        raw_address=MissingField(),
+        hours_of_operation=sp.MappingField(mapping=["OpenHours"]),
+        location_type=sp.MappingField(mapping=["IsActive"]),
+        raw_address=sp.MissingField(),
     )
 
-    pipeline = SimpleScraperPipeline(
+    pipeline = sp.SimpleScraperPipeline(
         scraper_name="jetspizza.com",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
