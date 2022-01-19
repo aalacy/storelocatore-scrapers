@@ -1,0 +1,24 @@
+--ignore CentroidValidator (Confirmed Scarpe correctly)
+Found 1 concerning rows. Examples:
+      latitude     longitude                              REASON  rowNumber
+57  445.384869  -122.7505046  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE         57
+
+
+--ignore StreetAddressHasNumber (Confirmed Scarpe correctly)
+Found 2 concerning rows. Examples:
+                                       street_address              REASON  rowNumber
+71                   Suite B Gateway Blvd East Unit 2  ADDR_HAS_NO_NUMBER         71
+93  Kav. 4 Pondok Pondok Pinang Kebayoran Lama Rt....  ADDR_HAS_NO_NUMBER         9
+
+
+--ignore GeoConsistencyValidator (Confirmed Scarpe correctly)
+Found 2 concerning rows. Examples:
+      zip                                              state                REASON  rowNumber
+38  71270                                                 IL  ZIPCODE_NOT_IN_STATE         38
+93  12310  Kota Jakarta Selatan Daerah Khusus Ibukota Jak...  ZIPCODE_NOT_IN_STATE         93
+
+
+--ignore CountryValidator (Not US)
+Found 1 concerning rows. Examples:
+                                                state          phone    zip            REASON  rowNumber
+93  Kota Jakarta Selatan Daerah Khusus Ibukota Jak...  +021-75900876  12310  INVALID_US_STATE         93

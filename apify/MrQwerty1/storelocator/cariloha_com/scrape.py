@@ -26,19 +26,16 @@ def get_data(page_url, sgw: SgWriter):
     line = ", ".join(list(filter(None, [l.strip() for l in line])))
 
     adr = parse_address(International_Parser(), line)
-    street_address = (
-        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-            "None", ""
-        ).strip()
-        or SgRecord.MISSING
-    )
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
 
     if len(street_address) < 5:
         street_address = line.split(",")[0].strip()
-    city = adr.city or SgRecord.MISSING
-    state = adr.state or SgRecord.MISSING
-    postal = adr.postcode or SgRecord.MISSING
-    country_code = adr.country or SgRecord.MISSING
+    city = adr.city
+    state = adr.state
+    postal = adr.postcode
+    country_code = adr.country
     phone = (
         "".join(
             tree.xpath(
@@ -48,14 +45,9 @@ def get_data(page_url, sgw: SgWriter):
         .replace("tel:", "")
         .replace("mailto:", "")
         .strip()
-        or SgRecord.MISSING
     )
-    latitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-latitude")) or "<MISSING>"
-    )
-    longitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-longitude")) or "<MISSING>"
-    )
+    latitude = "".join(tree.xpath("//div[@data-latitude]/@data-latitude"))
+    longitude = "".join(tree.xpath("//div[@data-latitude]/@data-longitude"))
 
     _tmp = []
     tr = tree.xpath("//tr[@class='hours-row']")
@@ -64,7 +56,7 @@ def get_data(page_url, sgw: SgWriter):
         time = "".join(t.xpath("./td[2]//text()")).strip()
         _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
     row = SgRecord(
         page_url=page_url,
@@ -74,9 +66,7 @@ def get_data(page_url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code=country_code,
-        store_number=SgRecord.MISSING,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,

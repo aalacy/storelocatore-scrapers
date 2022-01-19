@@ -22,7 +22,6 @@ def fetch_data():
     typ = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'United States</p><ul class="property-list">' in line:
             uslist = (
                 line.split('United States</p><ul class="property-list">')[1]
@@ -52,7 +51,6 @@ def fetch_data():
     url = "https://www.fairmont.com/destinations/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'li class="property-link"><a href = "/' in line:
             items = line.split('li class="property-link"><a href = "/')
             for item in items:
@@ -78,7 +76,6 @@ def fetch_data():
         r2 = session.get(purl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "'hotelname' : '" in line2:
                 name = line2.split("'hotelname' : '")[1].split("'")[0]
             if "'hotelcode' : '" in line2:
@@ -87,10 +84,8 @@ def fetch_data():
                 next(lines)
                 next(lines)
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 if "<li>" in g:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                 g = g.replace("\r", "").replace("\t", "").replace("\n", "").strip()
                 g = g.replace("Boston,Mass", "Boston - Mass")
                 g = g.replace("Stars, Cal", "Stars, Los Angeles - Cal")
@@ -150,6 +145,12 @@ def fetch_data():
             lng = "<MISSING>"
         if "windsor-park" in loc:
             zc = "TW20 0YL"
+        if "com/san-diego" in loc:
+            phone = "858-314-2000"
+            lng = "-117.198173"
+            lat = "32.939137"
+            store = "GDM"
+            name = "Fairmont Grand Del Mar"
         yield SgRecord(
             locator_domain=website,
             page_url=purl,
@@ -182,7 +183,6 @@ def fetch_data():
         r2 = session.get(purl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "'hotelname' : '" in line2:
                 name = line2.split("'hotelname' : '")[1].split("'")[0]
             if "'hotelcode' : '" in line2:
@@ -193,10 +193,8 @@ def fetch_data():
                 next(lines)
                 next(lines)
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 if "<li>" in g:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                 g = g.replace("\r", "").replace("\t", "").replace("\n", "")
                 raw_address = g.strip()
                 formatted_addr = parse_address_intl(raw_address)

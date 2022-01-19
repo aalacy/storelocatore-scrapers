@@ -37,6 +37,33 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        ll = (
+            "".join(
+                d.xpath(
+                    '//preceding::script[contains(text(), "directionsDisplay.setPanel")]/text()'
+                )
+            )
+            .split(
+                'directionsDisplay.setPanel(document.getElementById("directionsPanel"));'
+            )[1]
+            .split("addMarker")
+        )
+        latitude = (
+            "".join(ll)
+            .split(f"{location_name}")[0]
+            .split("(")[-1]
+            .split(",")[0]
+            .replace("'", "")
+            .strip()
+        )
+        longitude = (
+            "".join(ll)
+            .split(f"{location_name}")[0]
+            .split("(")[-1]
+            .split(",")[1]
+            .replace("'", "")
+            .strip()
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -50,8 +77,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
         )
 

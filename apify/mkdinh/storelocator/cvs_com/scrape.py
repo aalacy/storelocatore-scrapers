@@ -4,6 +4,7 @@ import time
 import random
 import simplejson
 import threading
+import http.client
 from datetime import datetime
 from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -18,6 +19,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("cvs_com")
+http.client._MAXHEADERS = 1000  # type: ignore
 
 
 start_time = datetime.now()
@@ -75,7 +77,7 @@ def enqueue_links(url, selectors):
     session = get_session()
     r = session.get(url, headers=headers)
     if r.status_code != 200:
-        r.raise_for_status()
+        raise Exception()
 
     soup = BeautifulSoup(r.text, "html.parser")
     if not is_valid(soup):
@@ -216,8 +218,8 @@ def get_geolocation(location, page_schema):
             latitude = None
             longitude = None
     try:
-        latitude = float(latitude) or None
-        longitude = float(longitude) or None
+        latitude = latitude or None
+        longitude = longitude or None
     except:
         latitude = None
         longitude = None

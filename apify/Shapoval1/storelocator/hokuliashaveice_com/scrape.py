@@ -58,10 +58,12 @@ def fetch_data(sgw: SgWriter):
         .replace("position:", '"')
         .replace(")]", '"]')
     )
+
     block = eval(block)
 
     for b in block:
         a = b[0]
+
         ad = html.fromstring(a)
         location_name = " ".join(ad.xpath("//*//text()[1]"))
         if location_name == "Year Round Catering":
@@ -145,17 +147,24 @@ def fetch_data(sgw: SgWriter):
             state = street_address.split()[4].strip()
             postal = street_address.split()[-1].strip()
             street_address = " ".join(street_address.split()[:-3])
-
         country_code = "US"
-        try:
-            ll = b[1]
-        except:
-            ll = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if ll != "<MISSING>":
-            latitude = ll.split("(")[1].split(",")[0].strip()
-            longitude = ll.split("(")[1].split(",")[1].strip()
+
+        latitude = (
+            "".join(tree.xpath('//script[contains(text(), "var features = [")]/text()'))
+            .split(f"{location_name}")[0]
+            .split("position: new google.maps.LatLng(")[-1]
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            "".join(tree.xpath('//script[contains(text(), "var features = [")]/text()'))
+            .split(f"{location_name}")[0]
+            .split("position: new google.maps.LatLng(")[-1]
+            .split(",")[1]
+            .replace(")", "")
+            .strip()
+        )
+
         location_type = "<MISSING>"
         hours_of_operation = ad.xpath("//*//text()")
         hours_of_operation = hours_of_operation[-3:]
