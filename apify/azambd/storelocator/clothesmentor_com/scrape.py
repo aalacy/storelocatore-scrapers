@@ -1,4 +1,3 @@
-import time
 import json
 
 from sgscrape.sgpostal import parse_address_intl
