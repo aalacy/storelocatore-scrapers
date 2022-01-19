@@ -1,14 +1,14 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "extraspace_com "
+website = "extraspace_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
@@ -28,50 +28,41 @@ def fetch_data():
         statelist = soup.find("div", {"class": "light-gray"}).findAll("a")
         for state in statelist:
             stiteMap_url = "https://www.extraspace.com" + state["href"]
-            r = session.get(stiteMap_url, headers=headers)
+            r = session.get(stiteMap_url, headers=headers, timeout=180)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.findAll("a", {"class": "electric-gray"})
             for loc in loclist:
                 page_url = "https://www.extraspace.com" + loc["href"]
                 log.info(page_url)
+                try:
+                    store_number = page_url.split("/")[-2]
+                except:
+                    store_number = MISSING
                 r = session.get(page_url, headers=headers, timeout=15)
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:
-                    address = (
+                    raw_address = (
                         soup.find("div", {"class": "address-info"})
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                     )
                 except:
                     continue
-                address = address.replace(",", " ")
-                address = usaddress.parse(address)
-                i = 0
-                street_address = ""
-                city = ""
-                state = ""
-                zip_postal = ""
-                while i < len(address):
-                    temp = address[i]
-                    if (
-                        temp[1].find("Address") != -1
-                        or temp[1].find("Street") != -1
-                        or temp[1].find("Recipient") != -1
-                        or temp[1].find("Occupancy") != -1
-                        or temp[1].find("BuildingName") != -1
-                        or temp[1].find("USPSBoxType") != -1
-                        or temp[1].find("USPSBoxID") != -1
-                    ):
-                        street_address = street_address + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        zip_postal = zip_postal + " " + temp[0]
-                    i += 1
+                address_raw = raw_address.replace(",", " ")
+                pa = parse_address_intl(address_raw)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
                 location_name = soup.find("h1").text
-                temp = soup.find("div", {"class": "phone-container"})
                 phone = (
                     soup.find("div", {"class": "current-customer-container"})
                     .find("a")
@@ -89,7 +80,8 @@ def fetch_data():
                 except:
                     latitude = r.text.split('"latitude":')[1].split('"')[0]
                     longitude = r.text.split('"longitude":')[1].split('"')[0]
-                store_number = MISSING
+                longitude = longitude.replace('"', "").replace("},", "")
+                latitude = latitude.replace('"', "").replace(",", "")
                 hours_of_operation = hours_of_operation.replace("Storage", "")
                 country_code = "US"
                 yield SgRecord(
@@ -107,6 +99,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
                 )
 
 

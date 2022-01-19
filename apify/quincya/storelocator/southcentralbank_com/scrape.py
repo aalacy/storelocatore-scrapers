@@ -24,7 +24,12 @@ def fetch_data(sgw: SgWriter):
 
     for store in store_data:
         location_name = store["title"].upper()
-        location_type = "<MISSING>"
+        if "ATM" in location_name:
+            location_type = "ATM Location"
+        elif "office" in location_name.lower() or "operations" in location_name.lower():
+            location_type = "Office Location"
+        else:
+            location_type = "Loan Production Office"
 
         raw_data = BeautifulSoup(store["description"], "lxml")
         raw_address = list(raw_data.stripped_strings)[:2]

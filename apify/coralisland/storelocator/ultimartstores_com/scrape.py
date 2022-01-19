@@ -1,108 +1,102 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
-import usaddress
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent import futures
 
 
-base_url = 'http://ultimartstores.com'
+def get_urls():
 
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\u2013', '-').strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
+    r = session.get("https://ultimartstores.com/our-locations/", headers=headers)
+    tree = html.fromstring(r.text)
+    return tree.xpath("//h4/a/@href")
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
-def fetch_data():
-    output_list = []
-    url = "http://ultimartstores.com/"
-    session = requests.Session()
-    source = session.get(url).text
-    response = etree.HTML(source)
-    store_list = response.xpath('//div[@class="single_place_on_all"]//h4//a/@href')
-    for store_link in store_list:
-        store = etree.HTML(session.get(store_link).text)
-        details = eliminate_space(store.xpath('.//div[@class="listing-main-content"]//text()'))
-        output = []
-        address = ''
-        phone = ''
-        store_hours = ''
-        for idx, st in enumerate(details):
-            if 'phone' in st.lower():
-                address = ', '.join(details[1:idx])
-                phone = details[idx+1]
-            if 'hours' in st.lower():
-                store_hours = details[idx+1]
-                break
-        output.append(base_url) # url
-        output.append(details[0]) #location name
-        address = parse_address(address)
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode  
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(get_value(phone)) #phone
-        output.append("Ultimart in Wisconsin - The Ultimate Convenience") #location type
-        output.append(validate(store.xpath('.//div[@class="apus-single-listing"]/@data-latitude'))) #latitude
-        output.append(validate(store.xpath('.//div[@class="apus-single-listing"]/@data-longitude'))) #longitude        
-        output.append(get_value(store_hours)) #opening hours
-        output_list.append(output)
-    return output_list
+def get_data(url, sgw: SgWriter):
+    locator_domain = "https://ultimartstores.com/"
+    page_url = url
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+    }
+    r = session.get(page_url, headers=headers)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    tree = html.fromstring(r.text)
+    street_address = (
+        "".join(
+            tree.xpath(
+                '//div[@class="listing-main-content"]//h2/following-sibling::p[1]/strong[1]/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+    )
+    ad = (
+        "".join(
+            tree.xpath(
+                '//div[@class="listing-main-content"]//h2/following-sibling::p[1]/strong[2]/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+    )
+    city = ad.split(",")[0].strip()
+    state = ad.split(",")[1].split()[0].strip()
+    postal = ad.split(",")[1].split()[1].strip()
+    country_code = "US"
+    location_name = (
+        "".join(tree.xpath('//div[@class="listing-main-content"]//h2/text()'))
+        or "<MISSING>"
+    )
+    phone = (
+        "".join(tree.xpath('//strong[text()="Phone:"]/following-sibling::text()[1]'))
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+    hours_of_operation = (
+        "".join(tree.xpath('//strong[text()="Hours:"]/following-sibling::text()'))
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+    latitude = "".join(tree.xpath("//div/@data-latitude")) or "<MISSING>"
+    longitude = "".join(tree.xpath("//div/@data-longitude")) or "<MISSING>"
 
-scrape()
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=SgRecord.MISSING,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+        raw_address=street_address + " " + ad,
+    )
+
+    sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    session = SgRequests(verify_ssl=False)
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

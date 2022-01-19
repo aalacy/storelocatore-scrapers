@@ -1,133 +1,91 @@
-import csv
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+import math
+from concurrent.futures import ThreadPoolExecutor
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("cashconverters")
+
+locator_domain = "https://www.cashconverters.co.uk"
+base_url = "https://www.cashconverters.co.uk/c3api/store/query"
+
+_headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+}
+session = SgRequests(proxy_country="gb").requests_retry_session()
+max_workers = 8
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetchConcurrentSingle(link):
+    page_url = locator_domain + link["link"]
+    response = request_with_retries(page_url)
+    return page_url, link, response
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    return session.get(url, headers=_headers)
 
 
 def fetch_data():
-    base_url = "https://www.cashconverters.co.uk"
-    data = []
-    for x in range(1, 23):
-        url = (
-            "https://www.cashconverters.co.uk/store-locator?show-all-stores=&page="
-            + str(x)
-            + "#store-results"
+    locations = session.get(base_url, headers=_headers).json()["Value"]
+    logger.info(f"{len(locations)} found")
+    for page_url, _, res in fetchConcurrentList(locations):
+        if "stores/" not in res.url or res.status_code != 200:
+            continue
+        logger.info(page_url)
+        addr = _["addressline2"].split()
+        sp1 = bs(res.text, "lxml")
+        hours = []
+        if sp1.select("div.store-detail__hours--body"):
+            for hh in list(
+                sp1.select("div.store-detail__hours--body")[0].stripped_strings
+            ):
+                if "holiday" in hh.lower() or "bank" in hh.lower():
+                    break
+                hours.append(hh)
+        yield SgRecord(
+            page_url=res.url,
+            location_name=_["title"],
+            street_address=_["addressline1"],
+            city=addr[0],
+            state=" ".join(addr[1:-2]),
+            zip_postal=" ".join(addr[-2:]),
+            country_code="UK",
+            phone=_["phone"],
+            latitude=_["lat"],
+            longitude=_["lng"],
+            locator_domain=locator_domain,
+            hours_of_operation="; ".join(hours).replace("–", "-"),
+            raw_address=_["addressline1"] + " " + _["addressline2"],
         )
-        res = session.get(url)
-        store_links = bs(res.text, "lxml").select("div.store-result a")
-
-        for store_link in store_links:
-            page_url = base_url + store_link["href"]
-            res1 = session.get(page_url)
-            store = bs(res1.text, "lxml")
-            address_detail = (
-                store.select_one("div.store-panel-info").select("p")[0].text.split(", ")
-            )
-            zip_city = address_detail.pop().split(" ")
-            if len(zip_city) == 2:
-                zip = "<MISSING>"
-                city = " ".join(zip_city)
-            elif len(zip_city) == 1:
-                city = zip_city.pop()
-                zip_city = address_detail.pop().split(" ")
-                zip = " ".join(zip_city[:2])
-                city = " ".join(zip_city[2:]) if len(zip_city) > 2 else city
-            else:
-                city = " ".join(zip_city[2:])
-                zip = " ".join(zip_city[:2])
-            state = "<MISSING>"
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
-            location_name = store.select_one("h2").text
-            street_address = ", ".join(address_detail)
-            phone = (
-                store.select_one("div.store-panel-info")
-                .select("p")[1]
-                .contents[1]
-                .text.split("/")[0]
-                .strip()
-            )
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-            hours = (
-                store.select_one("div.store-panel-info").select("p")[2].text.split("\n")
-            )
-
-            keyword_list = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-            hours_of_operation = ""
-            for x in hours:
-                if any(s in x for s in keyword_list):
-                    hours_of_operation += x.strip() + " "
-                elif x.strip().lower().islower() is False:
-                    hours_of_operation += x.strip() + " "
-            hours_of_operation = hours_of_operation.strip()
-            hours_of_operation = (
-                hours_of_operation.replace("Click and Collect", "")
-                or "Temporarily closed"
-            )
-            if "now closed" in "".join(hours):
-                continue
-
-            data.append(
-                [
-                    base_url,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

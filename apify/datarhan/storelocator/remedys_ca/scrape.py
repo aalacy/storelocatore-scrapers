@@ -1,6 +1,6 @@
 import re
-import json
 from urllib.parse import urljoin
+from lxml import etree
 
 from sgrequests import SgRequests
 from sgpostal.sgpostal import parse_address_intl
@@ -12,32 +12,28 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-    start_url = "https://www.remedys.ca/api/sitecore/Pharmacy/Pharmacies?id=%7B0018F0E6-DF33-46DA-B4D8-51C5C8441883%7D"
+    start_url = "https://www.guardian-ida-remedysrx.ca/en/find-a-pharmacy"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
-    data = json.loads(response.text)
+    dom = etree.HTML(response.text)
+    url = dom.xpath("//@data-pharmacies-url")[0]
+    data = session.get(urljoin(start_url, url)).json()
 
     for poi in data["pharmacies"]:
         store_url = urljoin(start_url, poi["detailUrl"])
         location_name = poi["title"]
-        location_name = location_name if location_name else "<MISSING>"
         addr = parse_address_intl(poi["address"])
         street_address = poi["address"].split(",")[0]
         city = addr.city
-        city = city if city else "<MISSING>"
         state = addr.state
-        state = state if state else "<MISSING>"
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
         store_number = poi["storeCode"]
         phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = poi["flyerUrl"].split("=")[-1]
         latitude = poi["location"]["latitude"]
         latitude = latitude if latitude and len(str(latitude)) > 2 else "<MISSING>"
         longitude = poi["location"]["longitude"]
