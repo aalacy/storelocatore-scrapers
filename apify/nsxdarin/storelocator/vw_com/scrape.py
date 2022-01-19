@@ -10,8 +10,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 def write_output(data):
     with SgWriter(
-        SgRecordDeduper(RecommendedRecordIds.StoreNumberId),
-        duplicate_streak_failure_factor=-1,
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for row in data:
             writer.write_row(row)
@@ -19,7 +20,6 @@ def write_output(data):
 
 def fetch_locations(postal, session):
     url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
-    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/62711.json"
     try:
         response = session.get(url)
         data = response.json()

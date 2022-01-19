@@ -72,6 +72,8 @@ async function fetchData({ page, request }) {
   // waiting for google popup to load. Sometimes it stalls so just kick it back into queue
   await page.waitForSelector('.store-item', { timeout: 10000 });
 
+  await setTimeout(() => {}, 5000);
+
   const html = await page.content();
   const parser = parseHtml(html);
   const storePopup = parser.$('.store-item');
@@ -107,6 +109,7 @@ async function fetchData({ page, request }) {
     store_number: getOrDefault(store_number),
     hours_of_operation: getOrDefault(hours_of_operation),
     location_type: MISSING,
+    record_id: 'store_number',
   };
 }
 
@@ -147,7 +150,7 @@ Apify.main(async function () {
     launchPuppeteerOptions,
     useSessionPool: true,
     maxRequestRetries: 10,
-    maxConcurrency: 10,
+    maxConcurrency: 1,
     maxRequestsPerCrawl: 1000,
     async handlePageFunction({ page, request }) {
       switch (request.userData.pageType) {
