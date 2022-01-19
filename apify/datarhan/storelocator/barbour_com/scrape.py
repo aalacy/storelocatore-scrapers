@@ -66,6 +66,8 @@ def fetch_data():
             raw_address = " ".join(poi["address"].replace("\r\n", " ").split())
         if phone and phone == zip_code:
             phone = ""
+        if zip_code and "@" in zip_code:
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
