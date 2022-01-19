@@ -143,7 +143,7 @@ def fetch_data():
             longitude=lng,
             hours_of_operation=hours,
         )
-    loc = "<MISSING>"
+    loc = "https://mcallen.orderjimmysegg.com/"
     name = "McAllen, TX"
     add = "4100 N. 10th St."
     city = "McAllen"

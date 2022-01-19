@@ -5,21 +5,21 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
 def fetch_data():
-
+    session = SgRequests()
     url = "https://cdn.cookielaw.org/consent/4820770c-1140-49ef-a270-e1bea1c0caf9/4bb37873-8110-4c3a-b241-d54e8ae72449/en.json"
     loclist = session.get(url, headers=headers).json()["DomainData"]["Groups"][2][
         "FirstPartyCookies"
     ]
 
     for loc in loclist:
-
+        session = SgRequests()
         link = "https://" + loc["Host"] + "/en-us/"
 
         if "locale_" in loc["Name"]:
