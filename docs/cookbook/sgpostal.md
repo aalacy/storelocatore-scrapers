@@ -28,7 +28,7 @@ sgpostal>=0.1.0
 ## In use:
 
 ```python
-from sgpostal.sgpostal import *
+from sgpostal.sgpostal import parse_address_usa, parse_address_intl, SgAddress
 
 an_address_in_the_usa    = parse_address_usa('836 Prudential Drive, Jacksonville, Florida 12345')
 an_international_address = parse_address_intl('221B Baker Street, London, NW1 6XE, UK')
