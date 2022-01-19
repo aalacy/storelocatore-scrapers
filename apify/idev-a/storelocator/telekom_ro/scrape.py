@@ -95,7 +95,6 @@ json_url = "https://fix.telekom.ro/blocks/business/magazine/magazineLocatorJson.
 
 cc = [
     "us",
-    "kr",
     "ro",
     "ca",
     "jp",
@@ -103,7 +102,6 @@ cc = [
     "ru",
     "gb",
     "de",
-    "in",
     "hu",
     "hk",
     "pe",
@@ -112,7 +110,6 @@ cc = [
     "sg",
     "es",
     "se",
-    "ch",
     "tw",
     "th",
     "tr",
@@ -124,7 +121,7 @@ cc = [
 proxy_country = "us"
 
 
-@retry(stop=stop_after_attempt(7), wait=wait_random(min=100, max=160))
+@retry(stop=stop_after_attempt(7), wait=wait_random(min=140, max=160))
 def get_json(city):
     global proxy_country
     while True:
@@ -135,7 +132,7 @@ def get_json(city):
         break
 
     with SgRequests(
-        proxy_country=proxy_country, retries_with_fresh_proxy_ip=7, verify_ssl=False
+        proxy_country=proxy_country, retries_with_fresh_proxy_ip=2, verify_ssl=False
     ) as session:
         _headers["User-Agent"] = random.choice(user_agents)
         locations = session.get(
@@ -179,7 +176,7 @@ def fetch_data():
                     raw_address=_["address"],
                 )
 
-            time.sleep(random.randint(10, 20))
+            time.sleep(random.randint(110, 150))
 
 
 if __name__ == "__main__":

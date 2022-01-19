@@ -44,7 +44,7 @@ def override(js):
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=SearchableCountries.ALL, expected_search_radius_miles=1000
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
     )
     for _z in search:
         api = f"https://maps.pandora.net/api/getAsyncLocations?search={_z}&level=domain&template=domain&limit=1000&radius=1000"
@@ -65,10 +65,13 @@ def fetch_data(sgw: SgWriter):
             if page_url.startswith("/"):
                 page_url = page_url.replace("//", "https://")
             location_name = j.get("location_name")
-            street_address = f"{j.get('address_1')} {j.get('address_2')}".strip()
-            city = j.get("city")
-            state = j.get("big_region")
-            postal = j.get("post_code")
+            adr1 = j.get("address_1") or ""
+            adr2 = j.get("address_1") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = j.get("city") or ""
+            state = j.get("big_region") or ""
+            postal = j.get("post_code") or ""
+            raw_address = " ".join(f"{street_address} {city} {state} {postal}".split())
             country_code = j.get("country")
             store_number = j.get("fid")
             phone = j.get("local_phone")
@@ -109,6 +112,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=longitude,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
             sgw.write_row(row)

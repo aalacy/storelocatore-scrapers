@@ -7,6 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
 from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 
 try:
@@ -20,6 +21,34 @@ else:
 
 website = "paulsmith.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+
+def get_driver(url, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
 
 def fetch_data():
@@ -44,7 +73,7 @@ def fetch_data():
                 locator_domain = website
                 page_url = store_url
                 log.info(page_url)
-                driver.get(page_url)
+                driver = get_driver(page_url)
                 store_sel = lxml.html.fromstring(driver.page_source)
                 temp_city = "".join(
                     store_sel.xpath('//span[@class="text-block-badge"]/text()')
@@ -61,10 +90,14 @@ def fetch_data():
 
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
+                if street_address:
+                    if formatted_addr.street_address_2:
+                        street_address = (
+                            street_address + ", " + formatted_addr.street_address_2
+                        )
+                else:
+                    if formatted_addr.street_address_2:
+                        street_address = formatted_addr.street_address_2
 
                 city = temp_city
                 state = formatted_addr.state

@@ -152,6 +152,14 @@ def fetch_records_us(idx, url, sgw: SgWriter):
 
         hours_of_operation = get_business_hoo(data)
 
+        comingsoon_flag = data.get("flags")["comingSoonFlag"]
+        if comingsoon_flag is True:
+            hours_of_operation = "Coming Soon"
+
+        temporarily_closed_flag = data.get("flags")["temporarilyClosedFlag"]
+        if temporarily_closed_flag is True:
+            hours_of_operation = "Temporarily Closed"
+
         # Raw Address
         raw_address = ""
         raw_address = raw_address if raw_address else MISSING
