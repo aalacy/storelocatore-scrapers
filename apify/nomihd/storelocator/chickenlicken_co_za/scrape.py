@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+from sgpostal import sgpostal as parser
 
 website = "chickenlicken.co.za"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -110,10 +111,15 @@ def fetch_data():
                 page_url = search_url
                 locator_domain = website
                 location_name = store["attributes"]["name"]
-                street_address = store["attributes"]["address"]
+                raw_address = store["attributes"]["address"]
                 if len(store["attributes"]["address2"]) > 0:
+                    raw_address = raw_address + ", " + store["attributes"]["address2"]
+
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
                     street_address = (
-                        street_address + ", " + store["attributes"]["address2"]
+                        street_address + ", " + formatted_addr.street_address_2
                     )
 
                 city = store["attributes"]["area"]
@@ -145,6 +151,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 
