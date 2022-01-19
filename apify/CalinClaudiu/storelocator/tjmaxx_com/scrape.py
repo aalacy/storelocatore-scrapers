@@ -173,7 +173,7 @@ if __name__ == "__main__":
         search_type="DynamicGeoSearch",
         granularity=Grain_8(),
         expected_search_radius_miles=8,
-        max_search_results = 45,
+        max_search_results=45,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
