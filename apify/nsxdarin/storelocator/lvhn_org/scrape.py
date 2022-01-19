@@ -129,8 +129,11 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
+        CS = False
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
+            if "Coming Soon</div>" in line2:
+                CS = True
             if name == "" and "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if '"address-line1">' in line2:
@@ -171,6 +174,10 @@ def fetch_data():
             add = add.split(" Suite")[0]
         if " #" in add:
             add = add.split(" #")[0]
+        if "LVHN" in phone:
+            phone = "888-402-5846"
+        if CS:
+            name = name + " - Coming Soon"
         if city != "":
             yield SgRecord(
                 locator_domain=website,
