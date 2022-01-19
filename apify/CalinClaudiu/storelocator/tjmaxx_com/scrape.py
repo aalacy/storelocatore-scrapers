@@ -182,7 +182,7 @@ if __name__ == "__main__":
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.PHONE,
-                    SgRecprd.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STREET_ADDRESS,
                 },
                 fail_on_empty_id=True,
             )
