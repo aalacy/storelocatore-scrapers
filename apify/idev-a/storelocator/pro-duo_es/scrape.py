@@ -41,6 +41,8 @@ def fetch_data():
                     "span.oh-display"
                 )
             ]
+            if hours:
+                hours.append("Do: cerrado")
             yield SgRecord(
                 page_url=page_url,
                 location_name=bs(_["title"], "lxml").text.strip(),
