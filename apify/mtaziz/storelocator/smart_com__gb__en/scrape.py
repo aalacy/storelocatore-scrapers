@@ -53,9 +53,11 @@ def get_api_key():
     response_pjsurl = get_response(
         0, dealerlocator_payload_pluginJSUrl, headers_dealer_locator
     )
+
     apikey_pjsurl = re.findall(
-        r"apiKey:_\|\|String(.*)searchProfileName", response_pjsurl.text
+        r"apiKey:.\|\|String(.*)searchProfileName", response_pjsurl.text
     )
+
     apikey = "".join(apikey_pjsurl).split('"')[1]
     try:
         if apikey:
@@ -82,7 +84,7 @@ def determine_brand(k):
         brands.append(
             str(i["brand"]["name"]) + str("(" + str(i["brand"]["code"]) + ")")
         )
-    logger.info(" brands: %s" % brands)
+    logger.info("Brands: %s" % brands)
     return ", ".join(brands)
 
 

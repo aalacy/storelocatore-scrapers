@@ -57,6 +57,7 @@ def fetch_data(sgw: SgWriter):
         page_url = f"https://uk.loccitane.com{slug}"
         street_address = j.get("Address1") or ""
         city = j.get("City") or ""
+        city = city.replace("0", "")
         state = j.get("State") or ""
         postal = j.get("ZipCode") or ""
         if postal in city:
