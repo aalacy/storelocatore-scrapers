@@ -34,6 +34,7 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         latitude=station_obj["latitude"],
         longitude=station_obj["longitude"],
         locator_domain=LOCATOR_DOMAIN,
+        hours_of_operation=station_obj.get("openingTimes") or "<INACCESSIBLE>"
     )
 
 
