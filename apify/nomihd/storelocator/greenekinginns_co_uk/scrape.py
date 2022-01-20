@@ -117,7 +117,7 @@ def fetch_data():
                     if len(location_type) > 0:
                         location_type = "OldEnglish"
                     else:
-                        location_type = "<MISSING>"
+                        location_type = "Green King Inn"
 
                     hours_of_operation = "<MISSING>"
                     checkInTime = "".join(

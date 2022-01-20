@@ -52,6 +52,9 @@ def get_data(url, sgw: SgWriter):
     phone = (
         "".join(tree.xpath('//address/a[contains(@href, "tel")]/text()')) or "<MISSING>"
     )
+    location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
+    if location_name == "<MISSING>":
+        return
     hours = tree.xpath('//div[@class="ns-StoreDetails-openingsTimesDetail"]')
     days = tree.xpath('//div[contains(@class, "ns-StoreDetails-openingsDay")]//text()')
     days = list(filter(None, [a.strip() for a in days]))
@@ -132,20 +135,13 @@ def get_data(url, sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
-        if street_address == "91 Rue Saint-Antoine":
-            continue
         city = j.get("town")
         state = "<MISSING>"
         postal = j.get("postcode")
         country_code = j.get("country")
-        location_name = j.get("displayName")
-        if location_name == "ARCHIVES":
-            continue
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         store_number = j.get("name")
-        if store_number == "00000375":
-            continue
 
         row = SgRecord(
             locator_domain=locator_domain,

@@ -76,6 +76,10 @@ def get_phone(Source):
     for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
         phone = match
         return phone
+    if phone == MISSING:
+        for match in re.findall(r"[1-9][0-9 .\-\(\)]{8,}", Source):
+            phone = match
+            return phone
     return phone
 
 
@@ -150,7 +154,7 @@ def fetch_data():
         zip_postal = get_JSON_object(properties, "address.zipcode")
 
         country_code = get_JSON_object(properties, "address.country_code")
-        phone = get_JSON_object(properties, "contact.phone")
+        phone = get_phone(get_JSON_object(properties, "contact.phone"))
 
         latitude = get_JSON_object(geometry, "coordinates")[0]
         longitude = get_JSON_object(geometry, "coordinates")[1]
