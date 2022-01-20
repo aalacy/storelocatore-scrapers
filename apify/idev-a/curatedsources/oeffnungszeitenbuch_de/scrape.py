@@ -6,8 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
-from sgrequests.sgrequests import SgRequests, SgRequestsAsync
-import asyncio
+from sgrequests.sgrequests import SgRequests
 from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("")
