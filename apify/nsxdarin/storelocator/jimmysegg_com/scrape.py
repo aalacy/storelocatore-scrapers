@@ -11,8 +11,6 @@ logger = SgLogSetup().get_logger("jimmysegg_com")
 
 headers_ = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9",
     "referer": "https://www.jimmysegg.com/online-ordering/",
     "agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
@@ -42,7 +40,8 @@ def fetch_data():
     for line in r.iter_lines():
         if "ORDER NOW<" in line:
             locs.append(line.split('href="')[1].split('"')[0])
-    for loc in locs:
+    logger.info(f"Total Store Count: {len(locs)}")
+    for idx2, loc in enumerate(locs[0:]):
         logger.info(loc)
         name = ""
         add = ""
@@ -55,6 +54,7 @@ def fetch_data():
         lng = ""
         HFound = False
         hours = ""
+        logger.info(f"[{idx2}] Pulling the data for {loc} ")
         r2 = get_response(loc, headers_)
         lines = r2.iter_lines()
         for line2 in lines:
@@ -113,9 +113,12 @@ def fetch_data():
                 state = addinfo.split(",")[2].strip().split(" ")[0]
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
+        logger.info(f"[{idx2}] Phone: {phone}")
         name = name.replace("\\u0026", "&")
         if hours == "":
+            logger.info("Hours found to be empty")
             hurl = loc.replace("/#", "") + "/Website/Hours"
+            logger.info(f"[{idx2}] Pulling Hours for {hurl}")
             try:
                 r3 = get_response(hurl, headers_)
                 lines2 = r3.iter_lines()
@@ -218,10 +221,12 @@ def fetch_data():
 
 
 def scrape():
+    logger.info("Scrape Started")
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.PAGE_URL,
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.LONGITUDE,
@@ -233,6 +238,7 @@ def scrape():
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+    logger.info("Scrape Finished")
 
 
 if __name__ == "__main__":
