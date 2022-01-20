@@ -2,6 +2,9 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
+
+from lxml import etree
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -38,7 +41,7 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         hours_of_operation=(
             ",".join(map(str, station_obj["openingTimes"])) or "00:00 - 23:59"
         ),
-        phone=station_obj.get("phone") or "<INACCESSIBLE>",
+        phone=PHONE_NUMBER
     )
 
 
@@ -56,11 +59,25 @@ def _fetch_data(http: SgRequests) -> Iterable[SgRecord]:
     return map(_make_sg_record, station_objs)
 
 
+def _fetch_phone_number(http: SgRequests) -> str:
+    PHONE_PREFIX = "tel:"
+
+    response = http.get(
+        url=LOCATOR_DOMAIN,
+        headers={"User-Agent": UA}
+    )
+    dom = etree.HTML(response.text)
+    phone_txt = dom.xpath(f"//a[contains(@href, '{PHONE_PREFIX}')]/@href")[0]
+
+    return ''.join(phone_txt[len(PHONE_PREFIX):].split())
+
+
 if __name__ == "__main__":
     LOCATOR_DOMAIN = "https://www.esbenergy.co.uk/"
     PAGE_URL = "https://myevaccount.esbenergy.co.uk/stationFacade/findStationsByIds"
+    UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+        "User-Agent": UA,
         "Content-Type": "application/json",
     }
     UK_BOUNDING_BOX = {
@@ -74,6 +91,7 @@ if __name__ == "__main__":
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
         with SgRequests() as http:
+            PHONE_NUMBER = _fetch_phone_number(http)
             records = _fetch_data(http)
             for record in records:
                 writer.write_row(record)
