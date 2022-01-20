@@ -18,6 +18,48 @@ def get_hoo(page_url):
     return hoo
 
 
+def get_uk(sgw: SgWriter):
+    r = session.get("https://cdn.topgolf.com/venue-locations.json", headers=headers)
+    for j in r.json():
+        location_name = j.get("context_title")
+        page_url = j.get("site_url")
+        street_address = j.get("address")
+        city = j.get("city_name")
+        postal = j.get("postal_code")
+        phone = j.get("phone")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        store_number = j.get("idx")
+
+        _tmp = []
+        source = j.get("hours") or "<html>"
+        tree = html.fromstring(source)
+        hours = tree.xpath("//div[contains(@class, 'vi-hours')]")
+        for h in hours:
+            day = "".join(h.xpath("./div[1]//text()")).strip()
+            inter = "".join(h.xpath("./div[2]//text()")).strip()
+            _tmp.append(f"{day}: {inter}")
+
+        hours_of_operation = ";".join(_tmp)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            zip_postal=postal,
+            country_code="GB",
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
 def fetch_data(sgw: SgWriter):
     for i in range(1, 500):
         api = f"https://topgolf.com/api/locations/list?lookup=true&page={i}&limit=20"
@@ -78,4 +120,5 @@ if __name__ == "__main__":
     }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        get_uk(writer)
         fetch_data(writer)
