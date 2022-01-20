@@ -65,7 +65,7 @@ def fetch_data():
 
                 store_number = "<MISSING>"
 
-                location_name = "".join(store.xpath("./td[1]/p[1]//text()"))
+                location_name = "".join(store.xpath("./td[1]/p[1]//text()")).strip()
                 location_type = "<MISSING>"
 
                 store_info = list(
@@ -73,7 +73,14 @@ def fetch_data():
                         str, [x.strip() for x in store.xpath("./td[1]/p[2]//text()")]
                     )
                 )
-
+                if len(store_info) <= 0:
+                    store_info = list(
+                        filter(
+                            str,
+                            [x.strip() for x in store.xpath("./td[1]/p[1]//text()")],
+                        )
+                    )
+                    location_name = "".join(store.xpath("./td[1]/span/text()"))
                 raw_address = ", ".join(store_info)
 
                 formatted_addr = parser.parse_address_intl(raw_address)

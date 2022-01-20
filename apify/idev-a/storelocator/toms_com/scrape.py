@@ -72,6 +72,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=", ".join(_addr),
             )
 
 
@@ -80,9 +81,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )
