@@ -310,7 +310,7 @@ def get_location(page_url):
     hours_of_operation = get_hours(location, page_schema)
 
     locator_domain = "cvs.com"
-    location_name = get(page_schema, "name")
+    location_name = re.sub(r'at\s+at', 'at', get(page_schema, "name"))
     location_type = get(page_schema, "@type")
     street_address = get(basic_info, "street_address")
     city = get(basic_info, "city")
