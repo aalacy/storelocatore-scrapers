@@ -28,8 +28,12 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         link = locator_domain + item["href"]
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+
+        try:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+        except:
+            continue
 
         stores = base.find_all(class_="panel")
         for store in stores:
@@ -69,6 +73,10 @@ def fetch_data(sgw: SgWriter):
                     ].strip()
             if street_address[-1:] == ",":
                 street_address = street_address[:-1]
+
+            if "Boksburg" in street_address:
+                city = "Boksburg"
+
             country_code = "ZA"
             store_number = ""
             location_type = "<MISSING>"

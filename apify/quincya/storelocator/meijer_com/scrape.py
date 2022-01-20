@@ -1,6 +1,9 @@
-import csv
-
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
@@ -9,56 +12,24 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 log = SgLogSetup().get_logger("meijer.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    max_results = 40
-    max_distance = 200
-
-    dup_tracker = []
+    max_distance = 100
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
+        max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
+        max_search_results=10,
     )
 
     locator_domain = "meijer.com"
 
     for postcode in search:
-        log.info(
-            "Searching: %s | Items remaining: %s" % (postcode, search.items_remaining())
-        )
         base_link = (
             "https://www.meijer.com/bin/meijer/store/search?locationQuery=%s&radius=%s"
             % (postcode, max_distance)
@@ -77,35 +48,30 @@ def fetch_data():
             longitude = store["geoPoint"]["longitude"]
             search.found_location_at(latitude, longitude)
             store_number = store["name"]
-            if store_number in dup_tracker:
-                continue
-            dup_tracker.append(store_number)
             location_type = "<MISSING>"
             phone = store["phone"]
             hours_of_operation = "<INACCESSIBLE>"
             link = "<MISSING>"
-            # Store data
-            yield [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
