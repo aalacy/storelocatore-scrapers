@@ -2,7 +2,7 @@
 
 | SN | contitent | country_name | country_code |
 | --------- | --------- | ------------ | ------------ |
-| 1 | NA | United States of America | US |
+| 1 | NA | Canada | CA |
 
 
 
@@ -22,6 +22,9 @@ headers = {
 ```
 
 
+# Note
+If the crawler run on Apify with the US and CA as a single crawler, it experiences CSV chunking issue. 
+But when this crawler for Canada without the US is run, it does not seem to experience chunking issue. 
 
 # The following validation checks ignored
 - --ignore CentroidValidator

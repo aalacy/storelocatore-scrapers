@@ -20,7 +20,7 @@ else:
 
 
 DOMAIN = "openchargemap.org"
-logger = SgLogSetup().get_logger("openchargemap_org")
+logger = SgLogSetup().get_logger("openchargemap_org___hash_ca")
 MISSING = SgRecord.MISSING
 MAX_WORKERS = 1
 BASE_API = (
@@ -35,12 +35,9 @@ headers = {
 }
 
 country_list = [
-    {
-        "country_name": "United States of America",
-        "continent_code": "NA",
-        "country_code": "US",
-    }
+    {"country_name": "Canada", "continent_code": "NA", "country_code": "CA"}
 ]
+
 
 # Tenacity needs to be used b/c sometimes it experiences HTTP Error 500.
 # It is found that after 3/4/5 retries, the request gets through with SUCCESS
@@ -220,5 +217,5 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-    logger.info(f"Total Store Count for the US and CA: {total_store_count_global}")
+    logger.info(f"Total Store Count for Canada: {total_store_count_global}")
     logger.info("Scraping Finished")

@@ -48,6 +48,7 @@ def fetch_data():
                     .split('<span itemprop="addressLocality">')[0]
                     .replace("<br/>", "")
                     .replace("</span>", "")
+                    .replace("<br />", "")
                     .strip()
                 )
             if '<span itemprop="addressLocality">' in line2:
@@ -75,6 +76,11 @@ def fetch_data():
         if "<" in add:
             add = add.split("<")[0]
         add = add.strip()
+        if "Regular Hours" in hours:
+            hours = hours.split("Regular Hours")[1].strip()
+        name = name.replace("&#8211;", "-")
+        if " " in zc:
+            country = "CA"
         if city != "" and CS is False:
             yield SgRecord(
                 locator_domain=website,
