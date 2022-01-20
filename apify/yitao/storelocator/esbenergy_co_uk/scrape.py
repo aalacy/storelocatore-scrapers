@@ -41,7 +41,7 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         hours_of_operation=(
             ",".join(map(str, station_obj["openingTimes"])) or "00:00 - 23:59"
         ),
-        phone=PHONE_NUMBER
+        phone=PHONE_NUMBER,
     )
 
 
@@ -62,14 +62,11 @@ def _fetch_data(http: SgRequests) -> Iterable[SgRecord]:
 def _fetch_phone_number(http: SgRequests) -> str:
     PHONE_PREFIX = "tel:"
 
-    response = http.get(
-        url=LOCATOR_DOMAIN,
-        headers={"User-Agent": UA}
-    )
+    response = http.get(url=LOCATOR_DOMAIN, headers={"User-Agent": UA})
     dom = etree.HTML(response.text)
     phone_txt = dom.xpath(f"//a[contains(@href, '{PHONE_PREFIX}')]/@href")[0]
 
-    return ''.join(phone_txt[len(PHONE_PREFIX):].split())
+    return "".join(phone_txt[len(PHONE_PREFIX) :].split())
 
 
 if __name__ == "__main__":
