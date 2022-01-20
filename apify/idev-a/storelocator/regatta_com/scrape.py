@@ -41,6 +41,10 @@ def fetch_data():
             hours = []
             for hh in _["opening_hours"]:
                 hours.append(f"{hh['day']}: {hh['hours']}")
+
+            country_code = addr["country"]
+            if country_code == "UG":
+                country_code = "GB"
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["store_id"],
@@ -50,8 +54,8 @@ def fetch_data():
                 state=state,
                 zip_postal=addr["postcode"],
                 latitude=_["geolocation"]["latitude"],
-                longitude=_["geolocation"]["latitude"],
-                country_code=addr["country"],
+                longitude=_["geolocation"]["longitude"],
+                country_code=country_code,
                 phone=_["tel"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
