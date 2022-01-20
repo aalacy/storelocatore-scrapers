@@ -30,11 +30,24 @@ def _valid(val):
 locator_domain = "https://www.poundstretcher.co.uk/"
 base_url = "https://www.poundstretcher.co.uk/find-a-store"
 
+
 def _p(val):
-    if val and val.replace('(', '').replace(')', '').replace('+','').replace('-', '').replace('.', ' ').replace('to','').replace(' ', '').strip().isdigit():
+    if (
+        val
+        and val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
         return val
     else:
-        return ''
+        return ""
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -57,7 +70,13 @@ def fetch_data():
             page_url = locator_domain + item["website_url"]
             logger.info(page_url)
             location_name = item["title"].strip()
-            raw_address = item["address_display"].replace("\n", "").replace('\r', ' ').replace("UK", "").strip()
+            raw_address = (
+                item["address_display"]
+                .replace("\n", "")
+                .replace("\r", " ")
+                .replace("UK", "")
+                .strip()
+            )
             soup2 = bs(item["notes"], "lxml")
             hours = []
             for _ in soup2.select("tr"):
@@ -70,36 +89,42 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
 
-            zip_postal=addr.postcode
+            zip_postal = addr.postcode
             city = addr.city
             if not city:
                 city = location_name
-
 
             location_type = "<MISSING>"
             res = session.get(page_url, headers=_headers)
             if res.status_code == 200 and res.url.__str__() != base_url:
                 soup1 = bs(res.text, "html.parser")
                 if soup1.select("div#store-address"):
-                    _address = list(soup1.select("div#store-address")[-1].stripped_strings)
+                    _address = list(
+                        soup1.select("div#store-address")[-1].stripped_strings
+                    )
 
                     if _address[0] == "Address & Contact Details":
                         _address = _address[1:]
                         location_type = _address[0]
 
                     if len(_address) < 3:
-                        _address = _address + list(soup1.select("div#store-address")[-1].find_next_sibling().stripped_strings)
-                    if _p(_address[-1].replace('Tel:','')):
+                        _address = _address + list(
+                            soup1.select("div#store-address")[-1]
+                            .find_next_sibling()
+                            .stripped_strings
+                        )
+                    if _p(_address[-1].replace("Tel:", "")):
                         _address = _address[:-1]
-                   
+
                     if _address[-1] == "UK":
                         _address.pop()
 
-                    raw_address = ', '.join(_address[1:]).replace('\n', '').replace('\r', ' ')
+                    raw_address = (
+                        ", ".join(_address[1:]).replace("\n", "").replace("\r", " ")
+                    )
                     zip_postal = _address[-1]
                     city = _address[-2]
-                    street_address = ' '.join(_address[1:-2])
- 
+                    street_address = " ".join(_address[1:-2])
 
             yield SgRecord(
                 page_url=page_url,
@@ -115,7 +140,7 @@ def fetch_data():
                 country_code=item["country"],
                 locator_domain=locator_domain,
                 hours_of_operation=_valid("; ".join(hours)),
-                raw_address=raw_address
+                raw_address=raw_address,
             )
 
 
