@@ -59,36 +59,7 @@ def fetch_data():
     PFound = True
     while PFound:
         urlnew = (
-            "https://www.lvhn.org/locations?radius=20037.5&zip=10002&sort_by=search_api_relevance&sort_order=DESC&physician_practice=1&region=All&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=10002&keys=&location_types=All&services=All&page="
-            + str(pagenum)
-        )
-        pagenum = pagenum + 1
-        PFound = False
-        logger.info(("Pulling Full List Page %s..." % str(pagenum)))
-        r2 = session.get(urlnew, headers=headers)
-        for line2 in r2.iter_lines():
-            if "NEXT</span>" in line2:
-                PFound = True
-            if (
-                '<a href="/locations/' in line2
-                and '<div class="field__item">' not in line2
-            ):
-                lurl = (
-                    "https://www.lvhn.org" + line2.split('<a href="')[1].split('"')[0]
-                )
-                if lurl not in alllocs:
-                    alllocs.append(lurl)
-                    locs.append(
-                        "https://www.lvhn.org"
-                        + line2.split('<a href="')[1].split('"')[0]
-                        + "|<MISSING>"
-                    )
-        logger.info(("%s Locations Found..." % str(len(locs))))
-    pagenum = 0
-    PFound = True
-    while PFound:
-        urlnew = (
-            "https://www.lvhn.org/locations?radius=20037.5&zip=10002&sort_by=search_api_relevance&sort_order=DESC&physician_practice=0&region=All&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=10002&keys=&location_types=All&services=All&page="
+            "https://www.lvhn.org/locations?keys=&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=&location_types=All&physician_practice=All&region=All&services=All&sort_by=lvpg_tier&sort_order=ASC&page="
             + str(pagenum)
         )
         pagenum = pagenum + 1
@@ -174,10 +145,11 @@ def fetch_data():
             add = add.split(" Suite")[0]
         if " #" in add:
             add = add.split(" #")[0]
-        if "LVHN" in phone:
+        if "LVHN" in phone and "888" in phone:
             phone = "888-402-5846"
         if CS:
             name = name + " - Coming Soon"
+        phone = phone.replace("%28", "(").replace("%29", ")")
         if city != "":
             yield SgRecord(
                 locator_domain=website,
