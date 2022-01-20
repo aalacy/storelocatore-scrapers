@@ -35,6 +35,9 @@ def get_data(soup):
 
     zip_postal = pa.postcode
     zip_postal = zip_postal.strip() if zip_postal else MISSING
+    if zip_postal == MISSING:
+        zip_postal = raw_address.split()
+        zip_postal = zip_postal[-2] + " " + zip_postal[-1]
     phone = soup.select_one("a[href*=tel]").text
     hours_of_operation = (
         soup.findAll("div", {"class": "info-container__details"})[1]
