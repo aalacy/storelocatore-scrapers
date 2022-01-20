@@ -32,7 +32,7 @@ url1 = "https://www.thenomadhotel.com/contact/"
 def fetch_data(
     user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 ):
-    with SgChrome() as driver:
+    with SgChrome(user_agent=user_agent) as driver:
         driver.get(url1)
         all_locs = bs(driver.page_source, "lxml").select("div#all section.contact-info")
         driver.get(base_url)
@@ -52,7 +52,7 @@ def fetch_data(
                 yield SgRecord(
                     page_url=page_url,
                     location_name=ss["name"],
-                    street_address=sp1.address.text.strip(),
+                    street_address=ss["address"]["streetAddress"].replace("South", ""),
                     city=ss["address"]["addressLocality"],
                     state=ss["address"]["addressRegion"],
                     zip_postal=ss["address"]["postalCode"],
@@ -87,6 +87,7 @@ def fetch_data(
                                 "div.detail_content div a"
                             ).text.strip(),
                             locator_domain=locator_domain,
+                            raw_address=" ".join(addr),
                         )
                         break
 
