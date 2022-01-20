@@ -1,7 +1,6 @@
 from typing import Any
 from typing import Dict
 from typing import Iterable
-from typing import List
 
 from lxml import etree
 
@@ -12,7 +11,22 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
 
 
-def _fetch_station_ids(http: SgRequests) -> List[int]:
+LOCATOR_DOMAIN = "https://www.esbenergy.co.uk/"
+PAGE_URL = "https://myevaccount.esbenergy.co.uk/stationFacade/findStationsByIds"
+UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+HEADERS = {
+    "User-Agent": UA,
+    "Content-Type": "application/json",
+}
+UK_BOUNDING_BOX = {
+    "northEastLat": 51.599717874282874,
+    "northEastLng": 0.08654981616212254,
+    "southWestLat": 51.40952366267913,
+    "southWestLng": -0.3381404304199287,
+}
+
+
+def _fetch_station_ids(http: SgRequests) -> Iterable[int]:
     station_records = http.post(
         url="https://myevaccount.esbenergy.co.uk/stationFacade/findStationsInBounds",
         headers=HEADERS,
@@ -22,7 +36,7 @@ def _fetch_station_ids(http: SgRequests) -> List[int]:
         },
     ).json()["data"][1]
 
-    return [record["id"] for record in station_records]
+    return (record["id"] for record in station_records)
 
 
 def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
@@ -70,20 +84,6 @@ def _fetch_phone_number(http: SgRequests) -> str:
 
 
 if __name__ == "__main__":
-    LOCATOR_DOMAIN = "https://www.esbenergy.co.uk/"
-    PAGE_URL = "https://myevaccount.esbenergy.co.uk/stationFacade/findStationsByIds"
-    UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
-    HEADERS = {
-        "User-Agent": UA,
-        "Content-Type": "application/json",
-    }
-    UK_BOUNDING_BOX = {
-        "northEastLat": 51.599717874282874,
-        "northEastLng": 0.08654981616212254,
-        "southWestLat": 51.40952366267913,
-        "southWestLng": -0.3381404304199287,
-    }
-
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
