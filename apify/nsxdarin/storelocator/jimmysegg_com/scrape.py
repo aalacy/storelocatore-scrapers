@@ -3,20 +3,38 @@ from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgscrape.sgrecord_id import SgRecordID
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 logger = SgLogSetup().get_logger("jimmysegg_com")
+
+headers_ = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "referer": "https://www.jimmysegg.com/online-ordering/",
+    "agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url, headers_c):
+    with SgRequests(timeout_config=300) as http:
+        logger.info(f"Pulling the data from: {url}")
+        r = http.get(url, headers=headers_c)
+        if r.status_code == 200:
+            logger.info(f"HTTP Status Code: {r.status_code}")
+            return r
+        raise Exception(
+            f"Please fix GetResponseRetryError >> TemporaryError HttpStatusCode: {r.status_code}"
+        )
 
 
 def fetch_data():
     locs = []
     url = "https://www.jimmysegg.com/online-ordering/"
-    r = session.get(url, headers=headers)
+    r = get_response(url, headers_)
     website = "jimmysegg.com"
     typ = "<MISSING>"
     country = "US"
@@ -37,7 +55,7 @@ def fetch_data():
         lng = ""
         HFound = False
         hours = ""
-        r2 = session.get(loc, headers=headers)
+        r2 = get_response(loc, headers_)
         lines = r2.iter_lines()
         for line2 in lines:
             if "Hours of Business</div>" in line2:
@@ -99,7 +117,7 @@ def fetch_data():
         if hours == "":
             hurl = loc.replace("/#", "") + "/Website/Hours"
             try:
-                r3 = session.get(hurl, headers=headers)
+                r3 = get_response(hurl, headers_)
                 lines2 = r3.iter_lines()
                 for line3 in lines2:
                     if "day</td>" in line3:
@@ -200,10 +218,22 @@ def fetch_data():
 
 
 def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
