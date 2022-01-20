@@ -49,12 +49,9 @@ def fetch_data():
             if not _addr[0][0].isdigit():
                 del _addr[0]
             phone = ""
-            if link.find("strong", string=re.compile(r"Phone")):
-                phone = (
-                    link.find("strong", string=re.compile(r"Phone"))
-                    .find_parent("p")
-                    .text.replace("Phone", "")
-                )
+            pp = link.find("", string=re.compile(r"Phone"))
+            if pp and pp.find_parent("strong"):
+                phone = pp.find_parent("p").text.replace("Phone", "")
                 if not phone:
                     phone = (
                         link.find("strong", string=re.compile(r"Phone"))
@@ -75,6 +72,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=", ".join(_addr),
             )
 
 
@@ -83,9 +81,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )

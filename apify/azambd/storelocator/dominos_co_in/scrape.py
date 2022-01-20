@@ -32,11 +32,11 @@ def request_with_retries(url, retry=1):
         if response.status_code == 404:
             return -1, url
         if response.status_code != 200:
-            log.error(f"{url} ::: {response.status_code}")
+            log.info(f"{url} ::: {response.status_code}")
             return request_with_retries(url, retry + 1)
         return response.text, url
     except Exception as e:
-        log.debug(f"failed loading: {url} with Error: {e}")
+        log.debug(f"failed loading: {url} with info: {e}")
         if retry > 4:
             return None, url
         return request_with_retries(url, retry + 1)
@@ -61,7 +61,7 @@ def fetch_stores():
         for response, url in executor.map(request_with_retries, states):
             count = count + 1
             if response is None or response == "":
-                log.error(f"{count}. failed loading url {url}")
+                log.info(f"{count}. failed loading url {url}")
                 continue
             all_data = json.loads(response)["data"]
             if all_data is None or all_data == "":
@@ -79,7 +79,7 @@ def fetch_stores():
         for response, url in executor.map(request_with_retries, cities):
             count = count + 1
             if response is None or response == "":
-                log.error(f"{count}. failed loading url {url}")
+                log.info(f"{count}. failed loading url {url}")
                 continue
             all_data = json.loads(response)["data"]
             if all_data is None or all_data == "":
@@ -99,7 +99,7 @@ def fetch_stores():
         for response, url in executor.map(request_with_retries, locations):
             count = count + 1
             if response is None or response == "":
-                log.error(f"{count}. failed loading url {url}")
+                log.info(f"{count}. failed loading url {url}")
                 continue
             try:
                 body = html.fromstring(response, "lxml")
@@ -108,7 +108,7 @@ def fetch_stores():
                     if url not in page_urls:
                         page_urls.append(url)
             except Exception as e:
-                log.error(f"{count}. failed loading url {url}: {e}")
+                log.info(f"{count}. failed loading url {url} : {e}")
             if count % 1000 == 0:
                 log.debug(f"{count} page_urls {len(page_urls)}")
 
@@ -137,7 +137,7 @@ def get_address(raw_address):
                 zip_postal = MISSING
             return street_address, city, state, zip_postal
     except Exception as e:
-        log.debug(f"Address Error: {e}")
+        log.debug(f"Address info: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
@@ -147,7 +147,7 @@ def split_text(text, variable):
         val = text.split(variable + '":')[1].splitlines()[0].replace(",", "")
         return val
     except Exception as e:
-        log.debug(f"Split Error: {e}")
+        log.debug(f"Split info: {e}")
         return MISSING
 
 
@@ -185,6 +185,23 @@ def get_ra(address):
     return " ".join(address.split())
 
 
+def get_lat_lng(response):
+    lat = split_text(response, "latitude")
+    lng = split_text(response, "longitude")
+    if lat != MISSING and lng != MISSING:
+        return lat, lng
+
+    try:
+        parts = response.split("LatLng(")[1].split(");")[0].split(",")
+        if len(parts[0].strip()) > 0 and len(parts[1].strip()) > 0:
+            log.debug("found geo from init script")
+            return parts[0].strip(), parts[1].strip()
+    except Exception as e:
+        log.info(f"Lat-Lng: {e}")
+        pass
+    return lat, lng
+
+
 def fetch_data():
     page_urls = fetch_stores()
     log.info(f"Total stores = {len(page_urls)}")
@@ -215,8 +232,7 @@ def fetch_data():
                     body.xpath('//h2[contains(@class, "store-page-address")]/text()')
                 )
                 street_address, city, state, zip_postal = get_address(raw_address)
-                latitude = split_text(response, "latitude")
-                longitude = split_text(response, "longitude")
+                latitude, longitude = get_lat_lng(response)
                 phone = body.xpath('//a[contains(@href, "tel:")]/p/text()')
                 if len(phone) > 0:
                     phone = phone[0]
@@ -234,7 +250,7 @@ def fetch_data():
                     continue
 
                 yield SgRecord(
-                    locator_domain="dominos.co.in",
+                    locator_domain=website,
                     store_number=store_number,
                     page_url=page_url,
                     location_name=location_name,
