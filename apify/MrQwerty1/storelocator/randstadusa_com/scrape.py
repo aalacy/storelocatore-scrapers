@@ -12,6 +12,14 @@ def get_value(data: Optional[list] = None):
     return ""
 
 
+def clean_phone(text: str):
+    black_list = [",", "e", "o", "x", "&"]
+    for b in black_list:
+        if b in text:
+            return text.split(b)[0].strip()
+    return text
+
+
 def fetch_data(sgw: SgWriter):
     data = '{"callback":"@Callbacks/getOverviewResults","currentRoute":{"path":"/locations/:searchParams*","url":"/locations/gv-map/","isExact":true,"params":{"searchParams":"gv-map/"},"routeName":"locations"},"data":{"language":"en"}}'
     api = "https://www.randstadusa.com/api/branches/get-callback"
@@ -29,12 +37,31 @@ def fetch_data(sgw: SgWriter):
         postal = get_value(j.get("postal_code"))
         country = "US"
 
-        phone = get_value(j.get("field_phone"))
+        phone = clean_phone(get_value(j.get("field_phone")))
         latitude = get_value(j.get("lat"))
         longitude = get_value(j.get("lng"))
         store_number = get_value(j.get("field_office_id"))
 
         _tmp = []
+        starts = j.get("starthours") or []
+        ends = j.get("endhours") or []
+        days = j.get("day") or []
+        _days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Friday",
+        ]
+        for s, e, d in zip(starts, ends, days):
+            s = str(s).zfill(4)
+            e = str(e).zfill(4)
+            start = f"{s[:2]}:{s[2:]}"
+            end = f"{e[:2]}:{e[2:]}"
+            day = _days[int(d) - 1]
+            _tmp.append(f"{day}: {start}-{end}")
         hours_of_operation = ";".join(_tmp)
 
         row = SgRecord(
