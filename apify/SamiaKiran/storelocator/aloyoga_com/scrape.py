@@ -36,6 +36,8 @@ def fetch_data():
         loclist = r.split("</picture>")[2:-1]
         for loc in loclist:
             loc = BeautifulSoup(loc, "html.parser")
+            page_url = loc.find("a")["href"]
+            log.info(page_url)
             loc = loc.findAll("span")
             location_name = loc[0].get_text(separator="|", strip=True).replace("|", "")
             address = loc[3].get_text(separator="|", strip=True).replace("|", " ")
@@ -65,7 +67,6 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            log.info(street_address)
             phone = loc[5].get_text(separator="|", strip=True).replace("|", "")
             hours_of_operation = (
                 loc[7].get_text(separator="|", strip=True).replace("|", " ")
@@ -81,7 +82,7 @@ def fetch_data():
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -101,7 +102,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
