@@ -13,34 +13,46 @@ _headers = {
 locator_domain = "https://www.dealz.pl"
 base_url = "https://www.dealz.pl/sklepy/"
 
+
 def _coord(locs, nn):
     for ll in locs:
-        if str(ll['shop_id']) == nn:
+        if str(ll["shop_id"]) == nn:
             return ll
+
 
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locs = json.loads(soup.select_one('div#js-shops-map')['shops-map-markers'].replace('&quot;','"'))
+        locs = json.loads(
+            soup.select_one("div#js-shops-map")["shops-map-markers"].replace(
+                "&quot;", '"'
+            )
+        )
         locations = soup.select("div.find-shop-box")
         for _ in locations:
-            coord = _coord(locs, _['shops-map-marker-anchor'])
-            raw_address = ' '.join(_.select('div.col-24')[2].stripped_strings)
-            addr = raw_address.split(',')
-            hours = '; '.join(_.select_one('div.find-shop-box__open-hours').stripped_strings).replace('\n', '; ').replace('\r', '')
+            coord = _coord(locs, _["shops-map-marker-anchor"])
+            raw_address = " ".join(_.select("div.col-24")[2].stripped_strings)
+            addr = raw_address.split(",")
+            hours = (
+                "; ".join(
+                    _.select_one("div.find-shop-box__open-hours").stripped_strings
+                )
+                .replace("\n", "; ")
+                .replace("\r", "")
+            )
             yield SgRecord(
                 page_url=base_url,
-                store_number=_['shops-map-marker-anchor'],
+                store_number=_["shops-map-marker-anchor"],
                 location_name=_.h3.text.strip(),
-                street_address=' '.join(addr[:-1]),
+                street_address=" ".join(addr[:-1]),
                 city=addr[-1].split()[0].strip(),
                 zip_postal=addr[-1].strip().split()[0].strip(),
                 country_code="Poland",
-                latitude=coord['coordinates']['lat'],
-                longitude=coord['coordinates']['lng'],
+                latitude=coord["coordinates"]["lat"],
+                longitude=coord["coordinates"]["lng"],
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
-                raw_address=raw_address
+                raw_address=raw_address,
             )
 
 
