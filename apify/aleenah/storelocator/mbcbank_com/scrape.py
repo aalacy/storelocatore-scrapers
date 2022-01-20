@@ -45,7 +45,7 @@ def fetch_data():
                 hours_of_operation = hours_of_operation.split("Drive-Thru")[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="hhttps://www.mbcbank.com/our-locations",
+                page_url="https://www.mbcbank.com/our-locations",
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
