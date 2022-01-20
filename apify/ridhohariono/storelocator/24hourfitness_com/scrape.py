@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "24hourfitness.com"
+BASE_URL = "https://24hourfitness.com/Website/Club/{}"
 LOCATION_URL = "https://www.24hourfitness.com"
 API_URL = "https://www.24hourfitness.com/Website/ClubLocation/OpenClubs/"
 HEADERS = {
@@ -26,10 +27,26 @@ def pull_content(url):
     return soup
 
 
+def get_hoo(url):
+    soup = pull_content(url)
+    try:
+        hoo = (
+            soup.find("div", id="club-hours-details")
+            .find("table")
+            .get_text(strip=True, separator=",")
+            .replace("day,", "day: ")
+        )
+    except:
+        return MISSING
+    return hoo.rstrip(",").strip()
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     data = session.get(API_URL, headers=HEADERS).json()
     for row in data["clubs"]:
+        store_number = row["clubNumber"]
+        page_url = BASE_URL.format(store_number)
         location_name = row["name"].strip()
         street_address = (
             row["address"]["street"].replace(" ", "").replace("\n", ",").strip()
@@ -38,16 +55,15 @@ def fetch_data():
         state = row["address"]["state"]
         zip_postal = row["address"]["zip"]
         phone = row["phoneNumber"]
-        hours_of_operation = MISSING
+        hours_of_operation = get_hoo(page_url)
         location_type = row["type"]
         country_code = "US"
-        store_number = row["clubNumber"]
         latitude = row["coordinate"]["latitude"]
         longitude = row["coordinate"]["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -66,7 +82,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
