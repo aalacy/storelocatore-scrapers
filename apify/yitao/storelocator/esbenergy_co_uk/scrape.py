@@ -28,23 +28,30 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         location_name=station_obj["caption"],
         street_address=station_obj["addressAddress1"],
         city=station_obj["addressCity"],
-        country_code=station_obj["addressCountryIso3Code"],
+        zip_postal=station_obj["addressZipCode"],
+        country_code=station_obj["addressCountryIso2Code"],
         store_number=station_obj["id"],
         location_type=station_obj["chargingSpeedId"],
         latitude=station_obj["latitude"],
         longitude=station_obj["longitude"],
         locator_domain=LOCATOR_DOMAIN,
-        hours_of_operation=station_obj.get("openingTimes") or "<INACCESSIBLE>"
+        hours_of_operation=(
+            ",".join(map(str, station_obj["openingTimes"])) or "00:00 - 23:59"
+        ),
+        phone=station_obj.get("phone") or "<INACCESSIBLE>"
     )
 
 
 def _fetch_data(http: SgRequests) -> Iterable[SgRecord]:
     station_ids = _fetch_station_ids(http)
-    station_objs = http.post(
-        url="https://myevaccount.esbenergy.co.uk/stationFacade/findStationsByIds",
-        headers=HEADERS,
-        json={"filterByIds": station_ids},
-    ).json()["data"][1]
+    station_objs = (
+        http.get(
+            url="https://myevaccount.esbenergy.co.uk/stationFacade/findStationById",
+            headers=HEADERS,
+            params={"stationId": station_id},
+        ).json()["data"]
+        for station_id in station_ids
+    )
 
     return map(_make_sg_record, station_objs)
 
