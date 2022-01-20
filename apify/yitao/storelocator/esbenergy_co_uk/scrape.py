@@ -38,7 +38,7 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         hours_of_operation=(
             ",".join(map(str, station_obj["openingTimes"])) or "00:00 - 23:59"
         ),
-        phone=station_obj.get("phone") or "<INACCESSIBLE>"
+        phone=station_obj.get("phone") or "<INACCESSIBLE>",
     )
 
 
