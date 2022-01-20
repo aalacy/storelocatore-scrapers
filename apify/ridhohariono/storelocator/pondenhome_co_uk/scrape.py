@@ -78,6 +78,8 @@ def fetch_data():
             )
         store_number = page_url.split("/")[-2]
         location_type = MISSING
+        if "reopened-store" not in row.parent["class"]:
+            location_type = "TEMP_CLOSED"
         latitude = MISSING
         longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
