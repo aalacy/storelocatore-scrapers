@@ -36,7 +36,7 @@ def fetch_data():
             zip_postal = addr[-1].split(",")[-1].strip().split()[-1]
             city = _["ct"]
             if not city:
-                city = addr[-1].split(",")[0].strip()
+                city = " ".join(addr[-1].split(",")[0].strip().split()[:-1])
             if not zip_postal.isdigit():
                 zip_postal = ""
             hours = list(
