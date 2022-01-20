@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -16,56 +17,38 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./p/a[contains(@href, "maps")]]')
+    div = tree.xpath('//a[@class="pub__link-list__item"]')
     for d in div:
 
-        page_url = "".join(
-            d.xpath(
-                './/following::a[.//span[contains(text(), "Se mere om IKEA")]][1]/@href'
-            )
-        )
-        location_name = "".join(d.xpath(".//h2/text()"))
-        if location_name.find("Studio") != -1:
+        page_url = "".join(d.xpath(".//@href"))
+        if page_url.find("planning-studios") != -1:
             continue
-        text = "".join(d.xpath('.//a[text()="her"]/@href'))
-
         country_code = "DA"
-
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
         store_number = "<MISSING>"
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+
         hours_of_operation = (
             " ".join(
-                d.xpath(
-                    './/strong[contains(text(), "Varehuset")]/following-sibling::text()'
-                )
+                tree.xpath('//h2[text()="Varehus"]/following-sibling::*[1]//text()')
             )
             .replace("\n", "")
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
-        session = SgRequests()
-        r = session.get(text, headers=headers)
-        tree = html.fromstring(r.text)
-
-        ad = (
-            "".join(tree.xpath('//meta[@itemprop="name"]/@content'))
-            .split("·")[1]
-            .strip()
-        )
+        location_name = "".join(tree.xpath("//h1/text()"))
+        ad = tree.xpath("//h2/following-sibling::p/text()")
+        ad = list(filter(None, [a.strip() for a in ad]))
+        js = "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
+        j = json.loads(js)
+        latitude = j.get("geo").get("latitude")
+        longitude = j.get("geo").get("longitude")
         location_type = "<MISSING>"
-        street_address = ad.split(",")[0].strip()
+        street_address = "".join(ad[1]).strip()
         state = "<MISSING>"
-        postal = ad.split(",")[1].split()[0].strip()
+        postal = "".join(ad[2]).split()[0]
         phone = "<MISSING>"
-        city = ad.split(",")[1].split()[1].strip()
+        city = " ".join("".join(ad[2]).split()[1:])
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -82,6 +65,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=" ".join(ad[1:]),
         )
 
         sgw.write_row(row)
@@ -152,6 +136,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {cp}",
         )
 
         sgw.write_row(row)
@@ -159,7 +144,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)
