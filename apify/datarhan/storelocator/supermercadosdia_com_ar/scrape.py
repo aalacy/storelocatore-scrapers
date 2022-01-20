@@ -3,6 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -19,34 +20,26 @@ def fetch_data():
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
-        location_name = poi.get("name")
-        if not location_name:
-            location_name = poi["nombre"]
-        street_address = poi.get("address")
-        if not street_address:
-            street_address = poi["direccion"]
-        if poi.get("geo"):
-            latitude = poi["geo"].split(",")[-1]
-            longitude = poi["geo"].split(",")[0]
-        else:
-            latitude = poi["lat"]
-            longitude = poi["long"]
-        hoo = poi.get("hours")
-        if not hoo:
-            hoo = poi["horarios"]
+        location_name = poi["nombre"]
+        street_address = poi["direccion"]
+        latitude = poi["lat"]
+        longitude = poi["long"]
+        hoo = poi["horarios"]
+        addr = parse_address_intl(location_name)
+        city = addr.city
 
         item = SgRecord(
             locator_domain=domain,
             page_url="https://diaonline.supermercadosdia.com.ar/folletos",
             location_name=location_name,
             street_address=street_address,
-            city=poi.get("city"),
-            state=poi.get("province"),
+            city=city,
+            state="",
             zip_postal="",
             country_code="AR",
             store_number=poi["id"],
             phone="",
-            location_type="",
+            location_type=poi["tipo"],
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,

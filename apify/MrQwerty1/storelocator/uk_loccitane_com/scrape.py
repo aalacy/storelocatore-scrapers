@@ -5,6 +5,18 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def clean_phone(text):
+    text = text.replace("N.A", "").replace("n/a", "").replace("na", "").strip()
+    black_list = ["/", "et", "доб", "ext"]
+    for b in black_list:
+        if b in text:
+            text = text.split(b)[0].strip()
+
+    if len(text) < 5:
+        return SgRecord.MISSING
+    return text
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://uk.loccitane.com/tools/datafeeds/StoresJSON.aspx?task=storelocatorV2"
 
@@ -45,15 +57,19 @@ def fetch_data(sgw: SgWriter):
         page_url = f"https://uk.loccitane.com{slug}"
         street_address = j.get("Address1") or ""
         city = j.get("City") or ""
+        city = city.replace("0", "")
         state = j.get("State") or ""
         postal = j.get("ZipCode") or ""
         if postal in city:
             city = city.replace(postal, "").strip()
         country_code = j.get("ISO2")
-        phone = j.get("Phone")
+        phone = j.get("Phone") or ""
+        phone = clean_phone(phone)
         g = j.get("coord") or {}
-        latitude = g.get("latitude")
-        longitude = g.get("longitude")
+        latitude = g.get("latitude") or ""
+        longitude = g.get("longitude") or ""
+        if str(latitude) == "0" or str(latitude) == "0.0":
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
         store_number = j.get("StoreCode")
 
         _tmp = []

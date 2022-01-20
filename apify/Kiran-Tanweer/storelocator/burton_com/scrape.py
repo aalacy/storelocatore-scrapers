@@ -34,8 +34,10 @@ def fetch_data():
         locations = soup.findAll("figure", {"class": "store-wrap"})
         for loc in locations:
             location_name = loc.find("h3", {"class": "text-h3-display"}).text.split(
-                "-"
+                "—"
             )[0]
+            if "-" in location_name:
+                location_name = location_name.split("-")[0]
             raw_address = (
                 loc.find("p", {"class": "address"})
                 .get_text(separator="|", strip=True)
