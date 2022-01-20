@@ -6,8 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
-from sgrequests.sgrequests import SgRequests, SgRequestsAsync
-import asyncio
+from sgrequests.sgrequests import SgRequests
 from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("")
@@ -22,16 +21,17 @@ base_url = "https://www.oeffnungszeitenbuch.de/einkaufszentrum-uebersicht.html"
 
 def record_initial_requests(http, state):
     soup = bs(http.get(base_url, headers=_headers).text, "lxml")
-    cities = soup.select("#textbereich > div > table:nth-child(4)")
+    cities = soup.find("div", {"id": "textbereich"})
+    cities = cities.find("table").find_all("a")
     for city in cities:  # Sliced for testing
-        city_base = city.a["href"]
+        city_base = city["href"]
         logger.info(city_base)
         pages = bs(
             SgRequests.raise_on_err(http.get(city_base, headers=_headers)).text, "lxml"
-        ).select("#textbereich > div > table:nth-child(2)")
-        all_links = []
-        for page in pages:
-            all_links = all_links + page.find_all("a")
+        )
+        pages = pages.find("div", {"id": "textbereich"})
+        pages = pages.find("table")
+        all_links = pages.find_all("a", {"href": True})
         for link in all_links:
             page_url = link["href"]
             state.push_request(
@@ -40,49 +40,63 @@ def record_initial_requests(http, state):
     return True
 
 
-async def producer(state):
-    async with SgRequestsAsync(proxy_country="DE") as httpx:
-        for next_r in state.request_stack_iter():
-            yield {
-                "page_url": next_r.url,
-                "link": next_r.context.get("link") if next_r.context else None,
-                "text": await SgRequests.raise_on_err(httpx.get(next_r.url)),
-            }
+def page(http, next_r):
+    page = None
+    try:
+        page = SgRequests.raise_on_err(http.get(next_r.url))
+        return page
+    except Exception as e:
+        if "404" in str(e):
+            return None
+        else:
+            raise (f"{str(e)}")
 
 
-async def consumer(resp_generator, writer):
-    async for response in resp_generator:
-        sp2 = bs(response["text"].text, "lxml")
-        addr = [
-            i
-            for i in sp2.find("div", {"id": "textbereich"})
-            .find("table")
-            .find("td")
-            .stripped_strings
-        ]
-        rawa = [addr[8], addr[9], addr[10]]
-        rawa = " ".join(rawa)
-        parsed = parse_address_intl(rawa)
-        realadd = parsed.street_address_1 if parsed.street_address_1 else ""
-        realadd = realadd + parsed.street_address_2 if parsed.street_address_2 else ""
-        writer.write_row(
-            SgRecord(
-                page_url=response["page_url"],
-                location_name=response["link"] if response["link"] else addr[0],
-                street_address=realadd if realadd else SgRecord.MISSING,
-                city=parsed.city if parsed.city else SgRecord.MISSING,
-                zip_postal=parsed.postcode if parsed.postcode else SgRecord.MISSING,
-                country_code="DE",
-                phone=SgRecord.MISSING,
-                locator_domain=locator_domain,
-                hours_of_operation=SgRecord.MISSING,
-                raw_address=rawa,
+def producer(http, state):
+    for next_r in state.request_stack_iter():
+        yield {
+            "page_url": next_r.url,
+            "link": next_r.context.get("link") if next_r.context else None,
+            "text": page(http, next_r),
+        }
+
+
+def consumer(resp_generator, writer):
+    for response in resp_generator:
+        if response["text"]:
+            sp2 = bs(response["text"].text, "lxml")
+            addr = [
+                i
+                for i in sp2.find("div", {"id": "textbereich"})
+                .find("table")
+                .find("td")
+                .stripped_strings
+            ]
+            rawa = [addr[8], addr[9], addr[10]]
+            rawa = " ".join(rawa)
+            parsed = parse_address_intl(rawa)
+            realadd = parsed.street_address_1 if parsed.street_address_1 else ""
+            realadd = (
+                realadd + parsed.street_address_2 if parsed.street_address_2 else ""
             )
-        )
+            writer.write_row(
+                SgRecord(
+                    page_url=response["page_url"],
+                    location_name=response["link"] if response["link"] else addr[0],
+                    street_address=realadd if realadd else SgRecord.MISSING,
+                    city=parsed.city if parsed.city else SgRecord.MISSING,
+                    zip_postal=parsed.postcode if parsed.postcode else SgRecord.MISSING,
+                    country_code="DE",
+                    phone=SgRecord.MISSING,
+                    locator_domain=locator_domain,
+                    hours_of_operation=SgRecord.MISSING,
+                    raw_address=rawa,
+                )
+            )
 
 
-def fetch_data(state, writer):
-    asyncio.get_event_loop().run_until_complete(consumer(producer(state), writer))
+def fetch_data(http, state, writer):
+    consumer(producer(http, state), writer)
 
 
 if __name__ == "__main__":
@@ -92,4 +106,4 @@ if __name__ == "__main__":
             state.get_misc_value(
                 "init", default_factory=lambda: record_initial_requests(http, state)
             )
-            fetch_data(state, writer)
+            fetch_data(http, state, writer)
