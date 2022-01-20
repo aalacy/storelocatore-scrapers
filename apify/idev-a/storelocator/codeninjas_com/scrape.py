@@ -41,7 +41,7 @@ def fetch_data():
                 "lxml",
             )
 
-            phone = data["phone"]
+            phone = data["phone"] or ""
             if not phone and soup1.find("a", href=re.compile(r"tel:")):
                 phone = soup1.find("a", href=re.compile(r"tel:")).text.strip()
 
