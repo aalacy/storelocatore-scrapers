@@ -21,21 +21,21 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@data-region="us"]/@href')[:-1]
+    all_locations = dom.xpath('//a[@data-region="us"]/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
+        if loc_dom.xpath('//div[contains(text(), "Coming Soon!")]'):
+            continue
         poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')
         if not poi:
             continue
         poi = json.loads(poi[0])
         if loc_dom.xpath('//div[contains(text(), "OPENING SOON")]'):
             continue
-        if loc_dom.xpath(
-            '//div[contains(text(), "PERMANENTLY CLOSED DUE TO COVID-19")]'
-        ):
+        if loc_dom.xpath('//div[contains(text(), "PERMANENTLY CLOSED")]'):
             continue
         if loc_dom.xpath('//div[contains(text(), "Permanently closed")]'):
             continue
@@ -69,7 +69,6 @@ def fetch_data():
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["address"]["addressCountry"]
             country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
         if poi.get("telephone"):
             phone = poi["telephone"]
         else:
@@ -78,9 +77,17 @@ def fetch_data():
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath('//div[@class="openhours"]/table//text()')
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split(" Mon,")[0]
+            .replace(
+                " Tue, Wed, Thu, Fri, Sat, Sun 10:00 AM - 11:30 PM Mon 2:00 PM - 11:30 PM",
+                "",
+            )
+        )
         if loc_dom.xpath('//div[contains(text(), "temporarily closed")]'):
-            hours_of_operation = "temporarily closed"
+            location_type = "temporarily closed"
 
         item = SgRecord(
             locator_domain=domain,
@@ -90,13 +97,13 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            country_code="US",
+            store_number="",
             phone=phone,
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hoo,
         )
 
         yield item
