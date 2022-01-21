@@ -22,7 +22,6 @@ def fetch_data():
     if True:
         url = "https://www.one-below.co.uk/a-z-stores"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
         loclist = (
             r.text.split("Store A-Z directory")[1]
             .split("Contact Us</span></span></span></p>")[0]
