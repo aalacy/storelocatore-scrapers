@@ -23,7 +23,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//a[contains(text(), "Branches")]/following-sibling::ul//a/@href'
+        '//ul[@class="list-divider list-border list check"]/li/a/@href'
     )
     for page_url in all_locations:
         loc_response = session.get(page_url)
@@ -37,6 +37,8 @@ def fetch_data():
         if not raw_data:
             raw_data = loc_dom.xpath("//div/h4/text()")
         raw_data = [e.strip() for e in raw_data if e.strip()]
+        hoo = loc_dom.xpath('//div[@class="opening-hours"]//text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(" Monday")[0]
         with SgFirefox() as driver:
             driver.get(page_url)
             sleep(5)
@@ -52,8 +54,6 @@ def fetch_data():
             .split("/@")[-1]
             .split(",")[:2]
         )
-        hoo = loc_dom.xpath('//div[@class="opening-hours"]//text()')
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,

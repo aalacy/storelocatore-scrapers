@@ -76,7 +76,22 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.text.strip(),
-                street_address=street_address,
+                street_address=street_address.split("Hotel")[0]
+                .split("Hydro")[-1]
+                .split("Metropole")[-1]
+                .split("Airport")[-1]
+                .replace("Hilton Leeds City", "")
+                .replace("Hilton London Wembley", "")
+                .replace("Hilton Malta", "")
+                .replace("Hilton Newcastle Gateshead", "")
+                .replace("Hilton Nottingham", "")
+                .replace("Hilton Reading", "")
+                .replace("Hilton Watford", "")
+                .replace("Kallima Club & Spa Hilton London", "")
+                .replace("Livingwell Health Club Hilton Dublin Kilmainham", "")
+                .replace("The Caledonian", "")
+                .replace("Doubletree By Hilton Dartford Bridge", "")
+                .strip(),
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,

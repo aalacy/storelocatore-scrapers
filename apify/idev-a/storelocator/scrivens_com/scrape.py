@@ -7,6 +7,10 @@ from bs4 import BeautifulSoup
 import tenacity
 import os
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 os.environ[
     "PROXY_URL"
 ] = "http://groups-RESIDENTIAL,country-gb:{}@proxy.apify.com:8000/"
@@ -79,6 +83,16 @@ def fetch_data():
                 zip_postal = loc["postcode"]
                 phone = loc["phone_number"]
                 page_url = link
+                # sgpostal failed for these UK ancient cities
+                if location_name == "Driffield":
+                    city = location_name
+                if location_name == "Cottingham":
+                    city = location_name
+                if location_name == "Radcliffe":
+                    city = location_name
+                if location_name == "Stone":
+                    city = location_name
+
                 latitude = loc["lat"]
                 longitude = loc["lng"]
                 hoo = str(loc["opening_times"])

@@ -22,7 +22,7 @@ else:
 DOMAIN = "openchargemap.org"
 logger = SgLogSetup().get_logger("openchargemap_org")
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 2
+MAX_WORKERS = 1
 BASE_API = (
     "https://api.openchargemap.io/v3/poi/?client=ocm.app.ionic.8.0.0&verbose=true"
 )
@@ -39,8 +39,7 @@ country_list = [
         "country_name": "United States of America",
         "continent_code": "NA",
         "country_code": "US",
-    },
-    {"country_name": "Canada", "continent_code": "NA", "country_code": "CA"},
+    }
 ]
 
 # Tenacity needs to be used b/c sometimes it experiences HTTP Error 500.
@@ -49,7 +48,7 @@ country_list = [
 
 @retry(stop=stop_after_attempt(20), wait=tenacity.wait_fixed(120))
 def get_response(url):
-    with SgRequests(timeout_config=300) as http:
+    with SgRequests(timeout_config=600) as http:
         response = http.get(url, headers=headers)
         logger.info(f"Status Code: {response.status_code}")
         if response.status_code == 200:
@@ -117,7 +116,12 @@ def get_custom_location_type(_):
     return location_type
 
 
+global total_store_count_global
+total_store_count_global = 0
+
+
 def fetch_records(url_country, sgw: SgWriter):
+    global total_store_count_global
     store_count_total = 0
     url = url_country[1]
     country = url_country[0]
@@ -131,7 +135,7 @@ def fetch_records(url_country, sgw: SgWriter):
         store_count_total += store_count_per_country
         logger.info(f"Store Count: | {store_count_per_country} | {country} |")
         logger.info(f"Total Store Count: {store_count_total}")
-        for _ in data:
+        for idx3, _ in enumerate(data):
             locator_domain = DOMAIN
             ai = _["AddressInfo"]
             # Custom Location Name
@@ -146,6 +150,12 @@ def fetch_records(url_country, sgw: SgWriter):
             latitude = ai["Latitude"] or MISSING
             longitude = ai["Longitude"] or MISSING
             phone = ai["ContactTelephone1"] or MISSING
+
+            # It is noted that chunking issue has been addressed
+            # and this would help us to determine whether all stores scraped
+            # and saved in the CSV file.
+
+            logger.info(f"[{country}] [{idx3}] Phone: {phone}")
 
             # Custom Location Type
             location_type = get_custom_location_type(_)
@@ -170,6 +180,7 @@ def fetch_records(url_country, sgw: SgWriter):
                 raw_address=raw_address,
             )
             sgw.write_row(rec)
+            total_store_count_global += 1
     logger.info(f"Total Store Count: {store_count_total}")
 
 
@@ -209,3 +220,5 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
+    logger.info(f"Total Store Count for the US and CA: {total_store_count_global}")
+    logger.info("Scraping Finished")
