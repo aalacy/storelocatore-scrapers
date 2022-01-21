@@ -104,6 +104,6 @@ if __name__ == "__main__":
         "recently_compared_product_previous": "%7B%7D",
         "product_data_storage": "%7B%7D",
     }
-    session = SgRequests()
+    session = SgRequests(proxy_country="ca")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)
