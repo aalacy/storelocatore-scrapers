@@ -46,7 +46,9 @@ def format_hours(start, end):
 
 def fetch_location(id, retry_count=0):
     try:
-        page_url = f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={id}"
+        page_url = (
+            f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={id}"
+        )
 
         with SgChrome(is_headless=False).driver() as driver:
             driver.get(page_url)
@@ -54,7 +56,7 @@ def fetch_location(id, retry_count=0):
             soup = BeautifulSoup(driver.page_source)
             result = json.loads(soup.pre.text)
 
-            store_number = get(result, 'locationID')
+            store_number = get(result, "locationID")
             location_name = get(result, "storeName")
             location_type = SgRecord.MISSING
 
