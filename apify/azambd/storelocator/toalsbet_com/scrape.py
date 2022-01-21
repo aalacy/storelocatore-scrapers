@@ -98,6 +98,7 @@ def fetch_data(sgw: SgWriter):
         location_type = MISSING
         hours_of_operation = MISSING
         country_code = "UK"
+
         for store in stores:
             location_name = store["name"]
             raw_address = store["address"]
@@ -111,7 +112,7 @@ def fetch_data(sgw: SgWriter):
             yield SgRecord(
                 locator_domain=DOMAIN,
                 store_number=store_number,
-                page_url=page_url,
+                page_url=website,
                 location_name=location_name,
                 location_type=location_type,
                 street_address=street_address,
