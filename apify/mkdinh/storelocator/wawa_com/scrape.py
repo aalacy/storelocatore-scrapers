@@ -15,7 +15,7 @@ local = threading.local()
 
 def fetch_store_numbers():
     store_numbers = []
-    with SgChrome(is_headless=False).driver() as driver:
+    with SgChrome(is_headless=True).driver() as driver:
         driver.get("https://www.wawa.com/site-map")
         soup = BeautifulSoup(driver.page_source)
         links = soup.find_all("a", class_="CMSSiteMapLink")
