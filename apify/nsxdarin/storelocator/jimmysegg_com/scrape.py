@@ -107,10 +107,14 @@ def fetch_data():
                 lng = line2.split("var _locationLng = ")[1].split(";")[0]
             if 'var _locationAddress = "' in line2:
                 addinfo = line2.split('var _locationAddress = "')[1].split('"')[0]
-                add = addinfo.split(",")[0]
-                zc = addinfo.split(",")[2].rsplit(" ", 1)[1]
-                city = addinfo.split(",")[1].strip()
-                state = addinfo.split(",")[2].strip().split(" ")[0]
+                if addinfo.count(",") == 3:
+                    add = (
+                        addinfo.split(",")[0].strip()
+                        + " "
+                        + addinfo.split(",")[1].strip()
+                    )
+                else:
+                    add = addinfo.split(",")[0].strip()
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
         logger.info(f"[{idx2}] Phone: {phone}")
