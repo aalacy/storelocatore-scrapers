@@ -48,7 +48,7 @@ def fetch_data():
                 logger.info(f"{pref['value']} [page {page}] {len(locations)}")
                 page += 1
                 for _ in locations:
-                    tr = _.select("table tbody tr")
+                    tr = _.select("dd table tbody tr")
                     page_url = "https://as.chizumaru.com" + tr[0].a["href"]
                     raw_address = tr[1].td.text.strip()
                     street_address = city = state = ""
@@ -72,6 +72,7 @@ def fetch_data():
                     phone = ""
                     if _.find("a", href=re.compile(r"tel:")):
                         phone = _.find("a", href=re.compile(r"tel:")).text.strip()
+
                     yield SgRecord(
                         page_url=page_url,
                         location_name=tr[0].td.text.strip(),
@@ -81,7 +82,7 @@ def fetch_data():
                         country_code="JP",
                         phone=phone,
                         locator_domain=locator_domain,
-                        hours_of_operation=tr[3].td.text.split("祝は")[0].strip(),
+                        hours_of_operation=tr[3].td.text.strip(),
                         raw_address=raw_address,
                     )
 

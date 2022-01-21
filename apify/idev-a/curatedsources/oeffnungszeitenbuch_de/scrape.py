@@ -20,12 +20,14 @@ base_url = "https://www.oeffnungszeitenbuch.de/einkaufszentrum-uebersicht.html"
 
 
 def record_initial_requests(http, state):
+    logger.info(f"IP: {http.my_public_ip()}")
     soup = bs(http.get(base_url, headers=_headers).text, "lxml")
     cities = soup.find("div", {"id": "textbereich"})
     cities = cities.find("table").find_all("a")
     for city in cities:  # Sliced for testing
         city_base = city["href"]
         logger.info(city_base)
+        logger.info(f"IP: {http.my_public_ip()}")
         pages = bs(
             SgRequests.raise_on_err(http.get(city_base, headers=_headers)).text, "lxml"
         )
@@ -43,6 +45,7 @@ def record_initial_requests(http, state):
 def page(http, next_r):
     page = None
     try:
+        logger.info(f"IP: {http.my_public_ip()}")
         page = SgRequests.raise_on_err(http.get(next_r.url))
         return page
     except Exception as e:

@@ -54,7 +54,5 @@ class SgAddress:
 
 - Oftentimes, the raw address cannot be parsed. This can be due to many reasons - either because it's in a format that
   the library can't parse, there's some data missing, or there is high ambiguity.
-- This means that one or more of the fields in the resulting `SgAddress` will be `None`. You should check for that.
-- If this is the case (i.e. you cannot reliably parse the raw address,) simply populate the `raw_address` field
-  of `SgRecord` with the raw address string.
-  - __NOTE:__ If you successfully parsed all the required address fields, please don't populate the `raw_address` field.
+- This means that one or more of the fields in the resulting `SgAddress` will be `None`. You should check for that, and discuss with QA / business if it's acceptable.
+- You should always populate the `SgRecord(raw_address=...)` field with the raw address field, if you're using `sgpostal`. 
