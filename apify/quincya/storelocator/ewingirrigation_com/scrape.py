@@ -22,8 +22,6 @@ def fetch_data(sgw: SgWriter):
 
     items = base.find(id="storeslist").find_all(class_="liststores")
 
-    data = []
-
     for item in items:
 
         locator_domain = "ewingirrigation.com"
