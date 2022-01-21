@@ -17,6 +17,16 @@ def clean_phone(text):
     return text
 
 
+def clean_city(text):
+    _tmp = []
+    for t in text:
+        if t.isdigit() or t == "," or t == "-":
+            continue
+        _tmp.append(t)
+
+    return "".join(_tmp).strip()
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://uk.loccitane.com/tools/datafeeds/StoresJSON.aspx?task=storelocatorV2"
 
@@ -62,6 +72,7 @@ def fetch_data(sgw: SgWriter):
         postal = j.get("ZipCode") or ""
         if postal in city:
             city = city.replace(postal, "").strip()
+        city = clean_city(city)
         country_code = j.get("ISO2")
         phone = j.get("Phone") or ""
         phone = clean_phone(phone)

@@ -49,7 +49,7 @@ def fetch_data():
             phone = poi_html.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
             hoo = loc_dom.xpath(
-                '//div[@class="store_locator_single_opening_hours"]//text()'
+                '//div[contains(@class, "store_locator_single_opening_hours")]//text()'
             )[1:]
             hoo = " ".join(hoo)
             street_address = addr.street_address_1
