@@ -5,7 +5,7 @@ import random
 import ssl
 import time
 from sgselenium.sgselenium import SgChrome
-from selenium import webdriver
+from sgselenium.sgselenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,10 +13,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 try:
