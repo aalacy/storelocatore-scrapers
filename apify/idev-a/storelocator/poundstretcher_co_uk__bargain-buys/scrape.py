@@ -95,6 +95,7 @@ def fetch_data():
                 city = location_name
 
             location_type = "<MISSING>"
+            phone = item.get("phone")
             res = session.get(page_url, headers=_headers)
             if res.status_code == 200 and res.url.__str__() != base_url:
                 soup1 = bs(res.text, "html.parser")
@@ -114,6 +115,8 @@ def fetch_data():
                             .stripped_strings
                         )
                     if _p(_address[-1].replace("Tel:", "")):
+                        if not phone:
+                            phone = _address[-1]
                         _address = _address[:-1]
 
                     if _address[-1] == "UK":
@@ -133,7 +136,7 @@ def fetch_data():
                 street_address=street_address,
                 city=city,
                 zip_postal=zip_postal,
-                phone=item.get("phone"),
+                phone=phone,
                 latitude=item["latitude"],
                 longitude=item["longitude"],
                 location_type=location_type,
