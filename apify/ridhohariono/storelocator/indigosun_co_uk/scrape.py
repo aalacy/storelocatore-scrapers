@@ -77,11 +77,22 @@ def fetch_data():
         hoo = hoo_content.get_text(strip=True, separator=" ")
         if len(hoo) < 5:
             hoo = hoo_content.find_next("p").get_text(strip=True, separator=" ")
-        hours_of_operation = re.sub(
-            r"\(.*\)|Opening times.*|Subject to change.*",
-            "",
-            " ".join(hoo.split()).strip(),
+        hours_of_operation = (
+            re.sub(
+                r"\(.*\)|Opening times.*|Subject to change.*|Last.*",
+                "",
+                " ".join(hoo.split()).strip(),
+            )
+            .replace("WATCH OUR LATEST AD", "")
+            .strip()
         )
+        if len(hours_of_operation) < 5 or hours_of_operation == MISSING:
+            hoo = re.sub(
+                r"Opening.*",
+                "",
+                info.get_text(strip=True, separator=" ").split("Opening Hours")[1],
+            )
+            hours_of_operation = " ".join(hoo.split()).strip()
         store_number = MISSING
         location_type = MISSING
         latitude = MISSING
