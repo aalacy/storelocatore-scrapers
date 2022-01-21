@@ -1,78 +1,155 @@
-from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
+from sgpostal.sgpostal import parse_address_intl
+import os
+import json
+import random
+import ssl
+import time
+from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import International_Parser, parse_address
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def fetch_data(sgw: SgWriter):
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
-    locator_domain = "https://www.toalsbet.com/"
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Connection": "keep-alive",
-        "Referer": "https://www.toalsbet.com/shop-locator/",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-    }
 
-    cookies = {
-        "__cf_bm": "ziSNsHMX7V12k4zlMBv7KSwPCAGkvdE1snWTRM6.H2U-1642347912-0-ATqqZ2yIcs7X3qLvDouI5nQIbdsP62vMPa0bzTDaB4TFn86TFFK/Nx5Du0TVG+B+TQjrx9QafIMn1yFlXTfSWcZ9SNE5PZXjaF0wEAYsTk8wptHV6eRTX1y5auU3SJ4Qxo5JoGUJJRwhA2//PIeCi/N5JiCFzMm8MPlDuHmL5JV7RyraBEbEyUPlWxIZjS3Nbw==",
-    }
-    r = session.get(
-        "https://www.toalsbet.com/resources/store_locations.lst",
-        headers=headers,
-        cookies=cookies,
-    )
-    js = r.json()["storeLocations"]
-    for j in js:
+website = "https://www.toalsbet.com"
+page_url = f"{website}/shop-locator"
+json_url = f"{website}/resources/store_locations.lst"
+MISSING = SgRecord.MISSING
 
-        page_url = "https://www.toalsbet.com/shop-locator/"
-        location_name = j.get("name")
-        ad = "".join(j.get("address"))
-        a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
-        state = a.state or "<MISSING>"
-        postal = a.postcode or "<MISSING>"
-        country_code = "UK"
-        city = a.city or "<MISSING>"
-        latitude = j.get("lat")
-        longitude = j.get("lon")
-        phone = j.get("tel") or "<MISSING>"
-        if phone.find(",") != -1:
-            phone = phone.split(",")[0].strip()
+file_path = os.path.dirname(os.path.abspath(__file__))
 
-        row = SgRecord(
-            locator_domain=locator_domain,
+options = webdriver.ChromeOptions()
+options.add_argument("--allow-running-insecure-content")
+options.add_argument("--ignore-certificate-errors")
+options.add_experimental_option("useAutomationExtension", False)
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_argument("--no-proxy-server")
+prefs = {"download.default_directory": file_path, "safebrowsing.enabled": "false"}
+options.add_experimental_option("prefs", prefs)
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+
+def fetch_stores():
+    stores = []
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        is_headless=True,
+        chrome_options=options,
+    ) as driver:
+        driver.get(json_url)
+        random_sleep(driver)
+        with open("store_locations.lst") as json_file:
+            data = json.load(json_file)
+            stores = data["storeLocations"]
+        os.remove(file_path + "/store_locations.lst")
+    return stores
+
+
+def driver_sleep(driver, time=2):
+    try:
+        WebDriverWait(driver, time).until(
+            EC.presence_of_element_located((By.ID, MISSING))
+        )
+    except Exception:
+        pass
+
+
+def random_sleep(driver, start=3, limit=3):
+    driver_sleep(driver, random.randint(start, start + limit))
+
+
+def get_address(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"Address Error: {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def fetch_data():
+    stores = fetch_stores()
+    log.info(f"Total stores = {len(stores)}")
+    store_number = MISSING
+    location_type = MISSING
+    hours_of_operation = MISSING
+    country_code = "UK"
+    for store in stores:
+        location_name = store["name"]
+        raw_address = store["address"]
+        street_address, city, state, zip_postal = get_address(raw_address)
+        phone = MISSING
+        if "tel" in store:
+            phone = store["tel"].split(",")[0].strip()
+        latitude = store["lat"]
+        longitude = store["lon"]
+
+        yield SgRecord(
+            locator_domain=website,
+            store_number=store_number,
             page_url=page_url,
             location_name=location_name,
+            location_type=location_type,
             street_address=street_address,
             city=city,
+            zip_postal=zip_postal,
             state=state,
-            zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
-            raw_address=ad,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
+    return []
 
-        sgw.write_row(row)
+
+def scrape():
+    log.info(f"Start scrapping {website} ...")
+    start = time.time()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":
-    session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
-    ) as writer:
-        fetch_data(writer)
+    scrape()
