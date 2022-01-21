@@ -76,7 +76,7 @@ def fetch_data():
             .replace("day,", "day: ")
             .strip()
         )
-        location_type = "EYE TEST"
+        location_type = "EYE_TEST"
         store_number = (
             row.find("div", {"class": "store-button"})
             .find("a")["href"]
