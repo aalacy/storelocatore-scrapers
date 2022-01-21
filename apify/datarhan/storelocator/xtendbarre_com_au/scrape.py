@@ -25,6 +25,9 @@ def fetch_data():
     for page_url in all_locations:
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
+        c_soon = loc_dom.xpath('//strong[contains(text(), "Opening soon!")]')
+        if c_soon:
+            continue
 
         location_name = loc_dom.xpath("//h1/text()")[0].strip()
         raw_address = loc_dom.xpath('//a[contains(@href, "maps")]/text()')

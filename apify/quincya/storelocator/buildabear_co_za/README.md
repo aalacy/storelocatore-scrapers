@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore CountryCodeFillRateChecker (Confirmed on website)
+--ignore CountryCodeFillRateChecker (Confirmed on website)
