@@ -10,8 +10,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "klass.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-import requests
-
 headers = {
     "Connection": "keep-alive",
     "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
