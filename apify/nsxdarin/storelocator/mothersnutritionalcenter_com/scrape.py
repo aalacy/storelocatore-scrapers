@@ -44,6 +44,8 @@ def fetch_data():
                     lng = item.split("</a></p>',")[1].split(",")[1].strip()
                     phone = "<MISSING>"
                     loc = "https://mothersnc.com/pages/stores"
+                    state = city.rsplit(" ", 1)[1]
+                    city = city.rsplit(" ", 1)[0]
                     zc = zc.replace("\\", "").replace("/", "").strip()
                     yield SgRecord(
                         locator_domain=website,

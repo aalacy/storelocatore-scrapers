@@ -1,3 +1,5 @@
+import ssl
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -5,10 +7,29 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+from sgselenium.sgselenium import SgChrome
+
 session = SgRequests()
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    base_link = "https://www.directtoolsoutlet.com/store-finder"
+
+    driver = SgChrome(user_agent=user_agent).driver()
+
+    driver.get(base_link)
+    cookies = driver.get_cookies()
+    cookie = ""
+    for cook in cookies:
+        cookie = cookie + cook["name"] + "=" + cook["value"] + "; "
+    cookie = cookie.strip()[:-1]
+    driver.close()
 
     headers = {
         "authority": "www.directtoolsoutlet.com",
@@ -16,7 +37,7 @@ def fetch_data(sgw: SgWriter):
         "path": "/api-proxy/rest/api/v2/stores?radius=482802&fields=FULL&pageSize=100&query=",
         "scheme": "https",
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "cookie": " SESSION=YjI0YzQ2Y2QtZGUxOS00ZjU4LWI0NjQtMDI3Mzg0MmFjZDg3; _ga=GA1.2.2121118724.1642552154; _gid=GA1.2.1614330456.1642552154; _fbp=fb.1.1642552154588.1370801792; OptanonAlertBoxClosed=2022-01-19T00:30:21.143Z; OptanonConsent=isIABGlobal=false&datestamp=Tue+Jan+18+2022+20%3A30%3A50+GMT-0400+(Atlantic+Standard+Time)&version=5.10.0&landingPath=NotLandingPage&groups=1%3A1%2C2%3A1%2C3%3A1%2C4%3A1&AwaitingReconsent=false; lastRskxRun=1642552250621; rskxRunCookie=0; rCookie=7sgwxn3zdd3843um71ma2ykykt77ya",
+        "cookie": cookie,
         "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
         "sec-ch-ua-mobile": "?0",
         "sec-fetch-dest": "document",
