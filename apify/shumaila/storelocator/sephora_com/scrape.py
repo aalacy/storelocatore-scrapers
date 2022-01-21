@@ -1,8 +1,10 @@
-from bs4 import BeautifulSoup
-import csv
-import json
-
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,134 +12,88 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    p = 0
-    datanow = []
-    datanow.append("none")
-    url = "https://www.sephora.com/happening/storelist"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select("a[href*=happening]")[6:]
-    for link in linklist:
-        link = "https://www.sephora.com" + link["href"]
 
-        r = session.get(link, headers=headers, verify=False, timeout=100)
-        try:
-            r = r.text.split('"stores":[')[1].split('}],"thirdpartyImageHost"', 1)[0]
-        except:
-            continue
-        r = r + "}"
+    mylist = static_coordinate_list(100, SearchableCountries.USA)
+    mylist = mylist + static_coordinate_list(100, SearchableCountries.CANADA)
 
-        loc = json.loads(r)
-        street = loc["address"]["address1"]
-        try:
-            street = street + " " + str(loc["address"]["address2"])
-            street = street.replace("None", "").replace("null", "").strip()
-        except:
-            pass
-        ccode = loc["address"]["country"]
-        state = loc["address"]["state"]
-        city = loc["address"]["city"]
-        pcode = loc["address"]["postalCode"]
-        phone = loc["address"]["phone"]
-        lat = loc["latitude"]
-        longt = loc["longitude"]
-        store = loc["storeId"]
-        ltype = "Store"
-        link = "https://www.sephora.com" + loc["targetUrl"]
-        title = "Sephora " + loc["displayName"]
-        hours = "<MISSING>"
-        try:
-            hours = (
-                "Monday "
-                + loc["storeHours"]["mondayHours"]
-                + " Tuesday "
-                + loc["storeHours"]["tuesdayHours"]
-                + " Wednesday "
-                + loc["storeHours"]["wednesdayHours"]
-                + " Thursday "
-                + loc["storeHours"]["thursdayHours"]
-                + "Friday "
-                + loc["storeHours"]["fridayHours"]
-                + " Saturday "
-                + loc["storeHours"]["saturdayHours"]
-                + " Sunday "
-                + loc["storeHours"]["sundayHours"]
-            )
-            hours = hours.replace("AM", " AM ").replace("PM", " PM ").replace("-", "- ")
-        except:
-            hours = loc["storeHours"]["closedDays"]
-            if hours.find("Opening on") > -1:
-                hours = "SOON"
-            elif hours.find("closed") > -1:
-                hours = "<MISSING>"
-        if hours != "SOON":
-            if len(phone) < 3:
-                phone = "<MISSING>"
-            if len(pcode) == 4:
-                pcode = "0" + pcode
-            if state == "NW":
-                state = "WA"
-        if store in datanow or "SOON" in hours:
-            continue
-        datanow.append(store)
-        data.append(
-            [
-                "https://www.sephora.com",
-                link,
-                title.rstrip().lstrip(),
-                street.replace("\r", "").replace("\n", " ").rstrip().lstrip(),
-                city.rstrip().lstrip(),
-                state.rstrip().lstrip(),
-                pcode.rstrip().lstrip(),
-                ccode.rstrip().lstrip(),
-                store,
-                phone.rstrip().lstrip(),
-                ltype,
-                lat,
-                longt,
-                hours.rstrip(),
-            ]
+    daylist = ["mon", "tues", "wednes", "thurs", "fri", "satur", "sun"]
+    for lat, lng in mylist:
+        url = (
+            "https://www.sephora.com/api/util/stores?latitude="
+            + str(lat)
+            + "&longitude="
+            + str(lng)
+            + "&radius=100&autoExpand=0"
         )
+        try:
+            loclist = session.get(url, headers=headers).json()["stores"]
+        except:
+            continue
+        for loc in loclist:
+            title = "Sephora " + loc["displayName"]
+            street = loc["address"]["address1"] + " " + str(loc["address"]["address2"])
+            city = loc["address"]["city"]
+            state = loc["address"]["state"]
+            pcode = loc["address"]["postalCode"]
+            ccode = loc["address"]["country"]
+            phone = str(loc["address"]["phone"])
+            lat = loc["latitude"]
+            longt = loc["longitude"]
+            store = loc["storeId"]
+            link = "https://www.sephora.com" + loc["targetUrl"]
 
-        p += 1
-    return data
+            hours = ""
+            try:
+                hourslist = loc["storeHours"]
+                for day in daylist:
+
+                    hours = hours + day + "day " + hourslist[day + "dayHours"] + " "
+                if len(hours) < 3:
+                    hours = "<MISSING>"
+                if len(phone) < 3:
+                    phone = "<MISSING>"
+                hours = (
+                    hours.replace("day", "day ")
+                    .replace("PM", "PM ")
+                    .replace("AM", "AM ")
+                    .replace("osed", "osed ")
+                    .strip()
+                )
+            except:
+                hours = "Opening Soon"
+            if ("AM " and "PM ") not in hours and "Opening Soon" not in hours:
+                hours = "<MISSING>"
+            if (" sunday " not in hours) and ("<MISSING>" not in hours):
+                hours = hours + " sunday Closed "
+            hours = hours.replace("sunday sunday Closed ", "sunday Closed ")
+            yield SgRecord(
+                locator_domain="https://www.sephora.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

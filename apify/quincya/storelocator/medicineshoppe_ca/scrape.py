@@ -37,9 +37,12 @@ def fetch_data(sgw: SgWriter):
         if not phone:
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
-            phone = list(base.find(class_="pharmacy-info-rx-phone").stripped_strings)[
-                -1
-            ]
+            try:
+                phone = list(
+                    base.find(class_="pharmacy-info-rx-phone").stripped_strings
+                )[-1]
+            except:
+                phone = ""
 
         hours_of_operation = ""
         raw_hours = store["storeOpeningHours"]
