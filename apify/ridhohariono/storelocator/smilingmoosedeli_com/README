@@ -1,0 +1,4 @@
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+          state                phone    zip            REASON  rowNumber
+6  North Dakota  701-757-DELI (3354)  58201  INVALID_US_PHONE          6

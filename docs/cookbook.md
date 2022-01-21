@@ -33,6 +33,10 @@
 
 - [Using CrawlState to write long-running crawls](./cookbook/pause_resume.md)
 
+### Parsing Raw Addresses
+
+- [Using sgpostal](./cookbook/sgpostal.md)
+
 ### Declarative Pipeline / SimpleScraperPipeline
 
 - [Using the Declarative Field Mapping](./cookbook/declarative_pipeline.md)

@@ -26,8 +26,18 @@ def fetch_data():
             page_url = option["data-redirect-url"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            raw_address = sp1.select_one("div.address").text
+            _addr = sp1.select_one("div.dig-pub--text h2").text.strip().split(",")
+            city = _addr[-1].strip()
+            if city.endswith("Centre"):
+                city = sp1.select_one("div.dig-pub--text h1").text.strip()
+            raw_address = sp1.select_one("div.address").text.strip()
             addr = raw_address.split(",")
+            state = ""
+            idx = -2
+            if addr[-2].replace(".", "").lower().strip() != city.lower():
+                state = addr[-2]
+                idx -= 1
+            street_address = ", ".join(addr[:idx]).replace("The Two Bears,", "").strip()
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("div.col-hours table tbody tr")
@@ -40,8 +50,9 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=option.text.strip(),
-                street_address=" ".join(addr[:-2]),
-                city=addr[-2].strip(),
+                street_address=street_address,
+                city=city,
+                state=state,
                 zip_postal=addr[-1].strip(),
                 country_code="UK",
                 phone=sp1.select_one(
