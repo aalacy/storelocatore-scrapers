@@ -26,10 +26,23 @@ def fetch_data():
         stores = json.loads(search_res.text)["markers"]
 
         for store in stores:
-            store_sel = lxml.html.fromstring(store["description"])
-            page_url = "".join(
-                store_sel.xpath('//a[contains(text(),"Visit Website")]/@href')
-            ).strip()
+            page_url = "<MISSING>"
+            phone = "<MISSING>"
+
+            if len(store["description"]) > 0:
+                store_sel = lxml.html.fromstring(store["description"])
+
+                page_url = "".join(
+                    store_sel.xpath('//a[contains(text(),"Visit Website")]/@href')
+                ).strip()
+                phone = "".join(
+                    store_sel.xpath('//p/a[contains(@href,"tel:")]//text()')
+                ).strip()
+                if len(phone) <= 0:
+                    phone = store_sel.xpath("//p//text()")
+                    if len(phone) > 0:
+                        phone = phone[0].strip()
+
             locator_domain = website
 
             location_name = store["title"]
@@ -58,14 +71,6 @@ def fetch_data():
                 zip = "32819"
 
             store_number = store["id"]
-
-            phone = "".join(
-                store_sel.xpath('//p/a[contains(@href,"tel:")]//text()')
-            ).strip()
-            if len(phone) <= 0:
-                phone = store_sel.xpath("//p//text()")
-                if len(phone) > 0:
-                    phone = phone[0].strip()
 
             location_type = "<MISSING>"
 
@@ -97,7 +102,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
