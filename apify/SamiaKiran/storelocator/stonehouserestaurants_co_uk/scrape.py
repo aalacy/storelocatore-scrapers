@@ -1,3 +1,4 @@
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -7,41 +8,53 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "dtsb_com"
+website = "stonehouserestaurants_co_uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://dtsb.com/"
+DOMAIN = "https://www.stonehouserestaurants.co.uk"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        url = "https://www.dtsb.com/warehousing/"
+        url = "https://www.stonehouserestaurants.co.uk/ourvenues"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("a", {"class": "et_pb_button et_pb_promo_button"})
-        for loc in loclist[1:-1]:
-            page_url = "https://www.dtsb.com" + loc["href"]
+        loclist = soup.select("a[href*=nationalsearch]")[1:]
+        for loc in loclist:
+            page_url = loc["href"]
+            if DOMAIN not in page_url:
+                page_url = DOMAIN + loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
-            temp = soup.findAll("div", {"class": "et_pb_blurb_description"})
-            address = temp[0].get_text(separator="|", strip=True).split("|")
-            phone = temp[1].get_text(separator="|", strip=True).split("|")[0]
-            street_address = address[0]
-            address = address[1].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
-            coords = soup.find("div", {"class": "et_pb_map"})
-            latitude = coords["data-center-lat"]
-            longitude = coords["data-center-lng"]
-            country_code = "US"
+            temp = soup.find("section", {"class": "premise"})
+            location_name = temp.find("p", {"class": "h1"}).text
+            temp = r.text.split('<script type="application/ld+json">')[1].split(
+                "</script>"
+            )[0]
+            temp = json.loads(temp)
+            location_name = temp["name"]
+            phone = temp["telephone"]
+            street_address = temp["address"]["streetAddress"]
+            city = temp["address"]["addressLocality"]
+            try:
+                state = temp["address"]["addressRegion"]
+            except:
+                state = MISSING
+            zip_postal = temp["address"]["postalCode"]
+            country_code = temp["address"]["addressCountry"]
+            latitude = temp["geo"]["latitude"]
+            longitude = temp["geo"]["longitude"]
+
+            hours_of_operation = (
+                soup.find("ul", {"class": "the-times weekly-schedule"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -56,7 +69,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation.strip(),
             )
 
 

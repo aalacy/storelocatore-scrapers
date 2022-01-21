@@ -6,11 +6,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-import json
-import re
 
-DOMAIN = "oakfurnitureland.co.uk"
-BASE_URL = "https://www.oakfurnitureland.co.uk/showrooms/"
+
+DOMAIN = "mandsopticians.com"
+BASE_URL = "https://mandsopticians.com"
+LOCATION_URL = "https://mandsopticians.com/stores"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -54,35 +54,40 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(BASE_URL)
-    contents = soup.select("div#showroom-atoz a.no-line")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select("div.amlocator-store-desc")
     for row in contents:
-        page_url = BASE_URL + row["href"]
-        store = pull_content(page_url)
-        json_data = json.loads(
-            " ".join(store.find("script", type="application/ld+json").string.split())
+        is_hearing = row.find("a", text="Book a hearing test")
+        if not is_hearing:
+            continue
+        page_url = (
+            BASE_URL
+            + row.find("div", {"class": "store-link"}).find(
+                "a", {"class": "store-info"}
+            )["href"]
         )
-        info = store.find("div", id="address")
-        location_name = info.find("h3").text.strip()
-        raw_address = info.find("ul").get_text(strip=True, separator=" ").strip()
+        location_name = row.find("div", {"class": "amlocator-title"}).text.strip()
+        raw_address = (
+            row.find("div", {"class": "address"}).text.replace("\n", "").strip()
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = row.find("div", {"class": "telephone"}).text.strip()
         country_code = "UK"
-        phone = info.find("p").text.replace("Tel:", "").strip()
-        hoo_content = store.find("div", {"class": "opening-hours"})
-        if not hoo_content:
-            hours_of_operation = MISSING
-        else:
-            hours_of_operation = re.sub(
-                r",\d{2}:\d{2}-\d{2}:\d{2}\s+viewing only",
-                "",
-                hoo_content.get_text(strip=True, separator=",")
-                .replace(":,", ": ")
-                .strip(),
-            )
-        store_number = MISSING
-        location_type = json_data["@type"]
-        latitude = json_data["geo"]["latitude"]
-        longitude = json_data["geo"]["latitude"]
+        hours_of_operation = (
+            row.find("div", {"class": "amlocator-week"})
+            .get_text(strip=True, separator=",")
+            .replace("day,", "day: ")
+            .strip()
+        )
+        location_type = "HEARING"
+        store_number = (
+            row.find("div", {"class": "store-button"})
+            .find("a")["href"]
+            .split("store_id=")[1]
+            .split("&type")[0]
+        )
+        latitude = MISSING
+        longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -106,7 +111,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
