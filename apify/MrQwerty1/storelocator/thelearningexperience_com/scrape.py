@@ -93,6 +93,8 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(h.strip())
 
     hours_of_operation = " ".join(_tmp)
+    if "We " in hours_of_operation:
+        hours_of_operation = hours_of_operation.split("We ")[0].strip()
 
     row = SgRecord(
         page_url=page_url,
