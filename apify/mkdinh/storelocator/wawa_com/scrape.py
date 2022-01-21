@@ -15,7 +15,7 @@ local = threading.local()
 
 def fetch_store_numbers():
     store_numbers = []
-    with SgChrome().driver() as driver:
+    with SgChrome(is_headless=False).driver() as driver:
         driver.get("https://www.wawa.com/site-map")
         soup = BeautifulSoup(driver.page_source)
         links = soup.find_all("a", class_="CMSSiteMapLink")
@@ -44,16 +44,17 @@ def format_hours(start, end):
     return f"{start}-{end}" if end else start
 
 
-def fetch_location(store_number, retry_count=0):
+def fetch_location(id, retry_count=0):
     try:
-        page_url = f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={store_number}"
+        page_url = f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={id}"
 
-        with SgChrome().driver() as driver:
+        with SgChrome(is_headless=False).driver() as driver:
             driver.get(page_url)
 
             soup = BeautifulSoup(driver.page_source)
             result = json.loads(soup.pre.text)
 
+            store_number = get(result, 'locationID')
             location_name = get(result, "storeName")
             location_type = SgRecord.MISSING
 
@@ -94,7 +95,7 @@ def fetch_location(store_number, retry_count=0):
             )
     except:
         if retry_count < 5:
-            return fetch_location(store_number, retry_count + 1)
+            return fetch_location(id, retry_count + 1)
         else:
             raise Exception(f"fail to fetch: {page_url}")
 
