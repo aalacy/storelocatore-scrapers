@@ -74,62 +74,77 @@ def fetch_data(sgw: SgWriter):
             link = "https://www.bigotiresvictoria.com/Contact-Us"
         if link:
             req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            try:
-                hours_of_operation = " ".join(
-                    list(
-                        base.find_all(class_="list simple margin-top-20")[
-                            -1
-                        ].stripped_strings
-                    )
-                )
-            except:
+            if req.status_code:
+                base = BeautifulSoup(req.text, "lxml")
                 try:
-                    hours_of_operation = (
-                        base.find(class_="ourloc wrapper")
-                        .find_all("p")[-1]
-                        .text.strip()
+                    hours_of_operation = " ".join(
+                        list(
+                            base.find_all(class_="list simple margin-top-20")[
+                                -1
+                            ].stripped_strings
+                        )
                     )
                 except:
                     try:
                         hours_of_operation = (
-                            " ".join(
-                                list(
-                                    base.find_all(class_="locationhours")[
-                                        -1
-                                    ].stripped_strings
-                                )
-                            )
-                            .replace("Hours:", "")
-                            .strip()
+                            base.find(class_="ourloc wrapper")
+                            .find_all("p")[-1]
+                            .text.strip()
                         )
                     except:
                         try:
                             hours_of_operation = (
-                                base.find(class_="locwidget-hours")
-                                .text.replace("Hours:", "")
+                                " ".join(
+                                    list(
+                                        base.find_all(class_="locationhours")[
+                                            -1
+                                        ].stripped_strings
+                                    )
+                                )
+                                .replace("Hours:", "")
                                 .strip()
                             )
                         except:
-                            hours_of_operation = "<MISSING>"
-            hours_of_operation = (
-                hours_of_operation.replace("PMSat", "PM Sat")
-                .split("Holidays: view")[0]
-                .strip()
-            )
-            if latitude == "<MISSING>":
-                try:
-                    map_link = base.iframe["src"]
-                    lat_pos = map_link.rfind("!3d")
-                    latitude = map_link[
-                        lat_pos + 3 : map_link.find("!", lat_pos + 5)
-                    ].strip()
-                    lng_pos = map_link.find("!2d")
-                    longitude = map_link[
-                        lng_pos + 3 : map_link.find("!", lng_pos + 5)
-                    ].strip()
-                except:
-                    pass
+                            try:
+                                hours_of_operation = (
+                                    base.find(class_="locwidget-hours")
+                                    .text.replace("Hours:", "")
+                                    .strip()
+                                )
+                            except:
+                                try:
+                                    hours_of_operation = (
+                                        base.find_all(
+                                            class_="left-aligned secondaryHPT"
+                                        )[-1]
+                                        .text.split("open")[1]
+                                        .split(".")[0]
+                                        .strip()
+                                    )
+                                except:
+                                    hours_of_operation = "<MISSING>"
+                hours_of_operation = (
+                    hours_of_operation.replace("PMSat", "PM Sat")
+                    .replace("Hours", "")
+                    .split("Holidays: view")[0]
+                    .strip()
+                )
+                if latitude == "<MISSING>":
+                    try:
+                        map_link = base.iframe["src"]
+                        lat_pos = map_link.rfind("!3d")
+                        latitude = map_link[
+                            lat_pos + 3 : map_link.find("!", lat_pos + 5)
+                        ].strip()
+                        lng_pos = map_link.find("!2d")
+                        longitude = map_link[
+                            lng_pos + 3 : map_link.find("!", lng_pos + 5)
+                        ].strip()
+                    except:
+                        pass
+            else:
+                link = "https://gobigo.ca/#/!search?season_id=all&search_by=size"
+                hours_of_operation = "<MISSING>"
         else:
             link = "https://gobigo.ca/#/!search?season_id=all&search_by=size"
             hours_of_operation = "<MISSING>"

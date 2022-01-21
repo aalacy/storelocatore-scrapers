@@ -162,6 +162,7 @@ def scrape():
                     SgRecord.Headers.STATE,
                     SgRecord.Headers.ZIP,
                     SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LOCATION_NAME,
                 }
             )
         )

@@ -19,7 +19,8 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//ul[@class="vc_tta-tabs-list"]/li/a')
     for d in div:
         id_s = "".join(d.xpath(".//@href")).replace("#", "").strip()
-        page_url = "https://cars.honda.bg/dealers/"
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"https://cars.honda.bg/dealers/{slug}"
         location_name = "".join(d.xpath(f'.//following::div[@id="{id_s}"]//h3//text()'))
         ad = "".join(
             d.xpath(

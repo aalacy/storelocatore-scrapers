@@ -48,6 +48,9 @@ def fetch_data():
                             "option_title"
                         ]
                         hoo += f", {hoo_weekend} - {hoo_weekend_time}"
+                state = poi["state"]
+                if state and state.isdigit():
+                    state = ""
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -55,7 +58,7 @@ def fetch_data():
                     location_name=poi["name"],
                     street_address=poi["address"],
                     city=poi["city"],
-                    state=poi["state"],
+                    state=state,
                     zip_postal=poi["zip"],
                     country_code=poi["country"],
                     store_number=poi["id"],

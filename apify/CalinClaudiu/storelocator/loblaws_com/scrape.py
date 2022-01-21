@@ -1,13 +1,12 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-
+import ssl
 from sgscrape import simple_utils as utils
-
-from sgrequests import SgRequests
+from sgrequests.sgrequests import SgRequests
 from requests.packages.urllib3.util.retry import Retry
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -22,6 +21,15 @@ from fuzzywuzzy import process
 # no need for python-Levenshtein, we're processing only 30 records
 
 import json  # noqa
+
+import time
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def return_last4(fullId):
@@ -373,10 +381,14 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
                 try:
                     if result["api"]:
                         test_url = result["api"]
-                        test = session.get(test_url, headers=result["headers"]).json()
+                        test = SgRequests.raise_on_err(
+                            session.get(test_url, headers=result["headers"])
+                        ).json()
                     elif result["url"]:
                         test_url = result["url"]
-                        test = session.get(test_url, headers=result["headers"]).json()
+                        test = SgRequests.raise_on_err(
+                            session.get(test_url, headers=result["headers"])
+                        ).json()
                     else:
                         test = None
                     if test:
@@ -456,39 +468,42 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    with SgFirefox() as driver:
-        driver.get(url)
-        to_click = WebDriverWait(driver, 40).until(
-            EC.visibility_of_element_located(
-                (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+    driver = SgChrome().driver()
+    driver.get(url)
+    to_click = WebDriverWait(driver, 40).until(
+        EC.visibility_of_element_located(
+            (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+        )
+    )
+    to_click.click()
+
+    input_field = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located(
+            (
+                By.XPATH,
+                "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
             )
         )
-        to_click.click()
-
-        input_field = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located(
-                (
-                    By.XPATH,
-                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[2]/form/div[1]/div[2]/input",
-                )
+    )
+    input_field.send_keys("B3L 4T2")
+    input_field.send_keys(Keys.RETURN)
+    time.sleep(10)
+    wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+        EC.visibility_of_element_located(
+            (
+                By.XPATH,
+                "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
             )
         )
-        input_field.send_keys("B3L 4T2")
-        input_field.send_keys(Keys.RETURN)
+    )
 
-        wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-            EC.visibility_of_element_located(
-                (
-                    By.XPATH,
-                    "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
-                )
-            )
-        )
-        for r in driver.requests:
-            if "DoSearch2" in r.path:
-                url = r.url
-                headers = r.headers
-
+    time.sleep(10)
+    for r in driver.requests:
+        if "DoSearch2" in r.path:
+            url = r.url
+            headers = r.headers
+    driver.quit()
+    time.sleep(10)
     return url, headers
 
 
@@ -578,17 +593,22 @@ def fetch_data():
     # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
 
-    def retry_starting():
-        try:
-            return get_api_call(url)
-        except Exception as e:
-            logzilla.info(f"Handling this:\n{e}")
-            retry_starting()
-            # shouldn't be to worried,
-            # worst case if their API changes crawl will timeout
-            # rather than just pull from the other (worse) data source
+    def rRetry(retry):
+        def retry_starting():
+            try:
+                return get_api_call(url)
+            except Exception as e:
+                logzilla.info(f"Handling this:\n{str(e)}")
+                retry_starting()
+                # shouldn't be to worried,
+                # worst case if their API changes crawl will timeout
+                # rather than just pull from the other (worse) data source
 
-    url, headers = retry_starting()
+        if retry:
+            retry_starting()
+        return get_api_call(url)
+
+    url, headers = rRetry(False)
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
     logzilla.info(f"Fixing up URL,")  # noqa
@@ -596,7 +616,8 @@ def fetch_data():
     logzilla.info(f"New URL:\n{url}\n\n")
 
     session = SgRequests()
-    bullsEyeData = session.get(url, headers=headers).json()
+    headers = dict(headers)
+    bullsEyeData = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
     session.close()
 
     lize = utils.parallelize(
@@ -680,6 +701,7 @@ def scrape():
                 "None", "<MISSING>"
             ),
             is_required=False,
+            part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
             mapping=["Name"],
@@ -688,10 +710,12 @@ def scrape():
         latitude=sp.MappingField(
             mapping=["Latitude"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["Longitude"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         street_address=sp.MultiMappingField(
             mapping=[["Address1"], ["Address2"], ["Address3"], ["Address4"]],
@@ -710,6 +734,7 @@ def scrape():
         zipcode=sp.MappingField(
             mapping=["PostCode"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=sp.MappingField(
             mapping=["CountryCode"],
@@ -721,18 +746,22 @@ def scrape():
                 "None", "<MISSING>"
             ),
             is_required=False,
+            part_of_record_identity=True,
         ),
         store_number=sp.MappingField(
             mapping=["ThirdPartyId"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(
             mapping=["BusinessHours"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         location_type=sp.MappingField(
             mapping=["type"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),
     )

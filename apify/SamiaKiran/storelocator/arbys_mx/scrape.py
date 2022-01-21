@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -26,7 +25,6 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "item info"})
         for loc in loclist:
-
             hour_list = loc.find("div", {"class": "horario"}).findAll("p")[1:]
             hours_of_operation = ""
             for hour in hour_list:
@@ -35,22 +33,14 @@ def fetch_data():
             raw_address = ""
             for address in temp_address[1:-1]:
                 raw_address = raw_address + " " + address.text
+            address = raw_address.split(",")
+            street_address = address[0]
+            zip_postal = address[1].split("C.P.")[1]
+            city = address[2]
+            state = address[3].split(".")[0]
             coords = temp_address[-1].find("a")["href"].split("!3d", 1)[1].split("!4d")
             latitude = coords[0]
             longitude = coords[1]
-            pa = parse_address_intl(raw_address)
-
-            street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
-
-            city = pa.city
-            city = city.strip() if city else MISSING
-
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
             log.info(street_address)
             country_code = "MX"
             yield SgRecord(
@@ -68,7 +58,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 

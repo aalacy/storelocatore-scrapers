@@ -4,11 +4,22 @@ from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape import simple_scraper_pipeline as sp
 import ast
 import ssl
-from sgscrape import simple_scraper_pipeline as sp
 
 ssl._create_default_https_context = ssl._create_unverified_context
+search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
+
+hours_key_list = [
+    ["MonOpen", "MonClose"],
+    ["TueOpen", "TueClose"],
+    ["WedOpen", "WedClose"],
+    ["ThuOpen", "ThuClose"],
+    ["FriOpen", "FriClose"],
+    ["SatOpen", "SatClose"],
+    ["SunOpen", "SunClose"],
+]
 
 
 def get_driver(url, class_name, driver=None):
@@ -180,10 +191,18 @@ def get_data():
             hours = ""
             for open_key, close_key in hours_key_list:
                 day = open_key[:3]
-                open = str(location_data[open_key])
-                end = str(location_data[close_key])
+                open_time = (
+                    str(location_data[open_key])[:-2]
+                    + ":"
+                    + str(location_data[open_key])[-2:]
+                )
+                end_time = (
+                    str(location_data[close_key])[:-2]
+                    + ":"
+                    + str(location_data[close_key])[-2:]
+                )
 
-                hours = hours + day + " " + open + "-" + end + ", "
+                hours = hours + day + " " + open_time + "-" + end_time + ", "
             hours = hours[:-2]
 
             state = "<MISSING>"

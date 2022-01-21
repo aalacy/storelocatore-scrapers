@@ -4,9 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
 
 website = "actionurgentcare.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -26,126 +26,65 @@ headers = {
 }
 
 
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
-    base = "http://actionurgentcare.com"
-    search_url = "https://actionurgentcare.com/#locations"
+    search_url = "https://actionurgentcare.com"
+
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath('//ul[@id="menu-locations-menu"]/li/a')
+    store_list = search_sel.xpath('//div[./div/div/b/text()="Locations"]//li/a')
+    build_id = search_res.text.split('"buildId":')[1].split(",")[0].strip('" ')
 
     for store in store_list:
 
-        page_url = "".join(store.xpath("@href"))
-        if "http" not in page_url:
-            page_url = base + "/" + page_url
+        broken_link = "".join(store.xpath("./@href"))
+
+        page_url = broken_link
+        if "https" not in page_url:
+            page_url = search_url + page_url
+
+        store_api_url = f"{search_url}/_next/data/{build_id}/en-US{broken_link}.json"
+        store_res = session.get(store_api_url, headers=headers)
+
+        store_info = (json.loads(store_res.text))["pageProps"]["clinic"]
+
         locator_domain = website
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
 
-        street_address = " ".join(
-            store_sel.xpath('//span[@itemprop="streetAddress"]//text()')
-        ).strip()
-        city = " ".join(
-            store_sel.xpath('//span[@itemprop="addressLocality"]//text()')
-        ).strip()
-        state = " ".join(
-            store_sel.xpath('//span[@itemprop="addressRegion"]//text()')
-        ).strip()
-        zip = " ".join(
-            store_sel.xpath('//span[@itemprop="postalCode"]//text()')
-        ).strip()
-        country_code = "US"
+        if store_info.get("address"):
 
-        location_name = "".join(store.xpath("text()")).strip()
+            street_address = store_info["address"]["street"]
+            city = store_info["address"]["city"]
+            state = store_info["address"]["state"]
+            zip = store_info["address"]["zipCode"]
+            country_code = "US"
+        else:
+            street_address, city, state, zip = (
+                "<MISSING>",
+                "<MISSING>",
+                "<MISSING>",
+                "<MISSING>",
+            )
 
-        phone = " ".join(
-            store_sel.xpath('//span[@itemprop="telephone"]//text()')
-        ).strip()
-        if len(street_address) <= 0:
-            appoint_link = "".join(
-                store_sel.xpath('//div[@class="app-container"]/iframe/@data-src')
-            ).strip()
-            if len(appoint_link) > 0:
-                temp_sel = lxml.html.fromstring(session.get(appoint_link).text)
-                raw_info = temp_sel.xpath('//div[@class="address"]/text()')
-                add_list = raw_info[0].split(",")
-                street_address = ", ".join(add_list[:-2]).strip()
-                city = add_list[-2].strip()
-                state = add_list[-1].strip().split(" ")[0].strip()
-                zip = add_list[-1].strip().split(" ")[-1].strip()
-                phone = raw_info[-1].strip()
-            else:
-                clinicID = "".join(
-                    store_sel.xpath('//div[@class="app-container"]//div/@clinic-id')
-                ).strip()
-                store_json = json.loads(
-                    session.get(
-                        "https://actionurgentcare.com/wp-admin/admin-ajax.php?widgetType=clinic-appointment&id={}&action=get_clinic_details".format(
-                            clinicID
-                        )
-                    ).text
-                )["data"]["data"]
+        location_name = store_info["title"]
 
-                add_list = store_json["address"].split(",")
-                street_address = ", ".join(add_list[:-2]).strip()
-                city = add_list[-2].strip()
-                state = add_list[-1].strip().split(" ")[0].strip()
-                zip = add_list[-1].strip().split(" ")[-1].strip()
-                phone = store_json["phone_number"].replace("+1", "").strip()
+        phone = store_info["phoneNumber"]
 
-        store_number = "<MISSING>"
+        store_number = store_info["appointment"]["officeId"]
 
         location_type = "<MISSING>"
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//li[./i[contains(@class,"calendar")]]//text()'
-                    )
-                ],
+        if store_info.get("telemedicineOnly"):
+            continue
+        hours_of_operation = store_info["businessHoursShort"]
+
+        if store_info.get("map"):
+            latitude, longitude = (
+                store_info["map"]["coords"]["lat"],
+                store_info["map"]["coords"]["lng"],
             )
-        )
-        hours_of_operation = (
-            "; ".join(hours).replace("Now Open!;", "").replace(":;", ":").strip()
-        )
-        if len(hours_of_operation) <= 0:
-            hours_of_operation = "".join(
-                store_sel.xpath('//div[@class="w-100"]/p/strong/text()')
-            ).strip()
-
-        map_link = "".join(
-            store_sel.xpath('//iframe[contains(@data-src,"maps")]/@data-src')
-        ).strip()
-
-        latitude, longitude = get_latlng(map_link)
-
+        else:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         raw_address = "<MISSING>"
 
         yield SgRecord(

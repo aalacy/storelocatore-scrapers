@@ -37,18 +37,17 @@ def fetch_data():
         store_number = info["id"]
         location_type = info["division"]
         hoo = ""
-        for val in row["tradingHours"]:
-            for day, hour in val.items():
-                if day == "date":
-                    continue
-                hoo += (
-                    day.title()
-                    + ": "
-                    + re.sub(r":00$", "", hour["startTime"])
-                    + "-"
-                    + re.sub(r":00$", "", hour["endTime"])
-                    + ","
-                )
+        for day, hour in row["tradingHours"][0].items():
+            if day == "date":
+                continue
+            hoo += (
+                day.title()
+                + ": "
+                + re.sub(r":00$", "", hour["startTime"])
+                + "-"
+                + re.sub(r":00$", "", hour["endTime"])
+                + ","
+            )
         hours_of_operation = hoo.rstrip(",")
         latitude = info["latitude"]
         longitude = info["longitude"]
