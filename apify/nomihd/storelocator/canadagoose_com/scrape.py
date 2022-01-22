@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from operator import is_
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -8,6 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 from sgselenium import SgChrome
+from selenium.webdriver.chrome.options import Options
 
 website = "canadagoose.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -91,12 +91,24 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = (
-        "http://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
-    )
+    search_url = "http://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
 
-    with SgChrome(is_headless=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36") as session:
+    chrome_options = Options()
+    chrome_options.accept_untrusted_certs = True
+    chrome_options.assume_untrusted_cert_issuer = True
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--allow-http-screen-capture")
+    chrome_options.add_argument("--disable-impl-side-painting")
+    chrome_options.add_argument("--disable-setuid-sandbox")
+    chrome_options.add_argument("--disable-seccomp-filter-sandbox")
+
+    with SgChrome(
+        is_headless=True,
+        chrome_options=chrome_options,
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
+    ) as session:
         session.get(search_url)
+        print(session.page_source)
         search_sel = lxml.html.fromstring(session.page_source, "lxml")
         store_list = search_sel.xpath('//div[@class="store"]')
         log.info(f"Total Locations to crawl: {len(store_list)}")
