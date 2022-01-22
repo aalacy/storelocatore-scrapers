@@ -65,7 +65,7 @@ def fetch_data():
 
                 store_number = "<MISSING>"
 
-                location_name = "".join(store.xpath("./td[1]/p[1]//text()"))
+                location_name = "".join(store.xpath("./td[1]/p[1]//text()")).strip()
                 location_type = "<MISSING>"
 
                 store_info = list(
@@ -73,7 +73,14 @@ def fetch_data():
                         str, [x.strip() for x in store.xpath("./td[1]/p[2]//text()")]
                     )
                 )
-
+                if len(store_info) <= 0:
+                    store_info = list(
+                        filter(
+                            str,
+                            [x.strip() for x in store.xpath("./td[1]/p[1]//text()")],
+                        )
+                    )
+                    location_name = "".join(store.xpath("./td[1]/span/text()"))
                 raw_address = ", ".join(store_info)
 
                 formatted_addr = parser.parse_address_intl(raw_address)
@@ -92,7 +99,11 @@ def fetch_data():
                 zip = formatted_addr.postcode
                 country_code = "CA"
 
-                phone = "".join(store.xpath(".//td[2]//text()")).strip()
+                phone = store.xpath(".//td[2]//text()")
+                if len(phone) > 0:
+                    phone = phone[0]
+                else:
+                    phone = "<MISSING>"
 
                 hours_of_operation = "<MISSING>"
 
@@ -123,7 +134,9 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

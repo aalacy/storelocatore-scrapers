@@ -37,6 +37,7 @@ def fetch_data(sgw: SgWriter):
                 page_url.find("/en/") != -1
                 or page_url.find("/fr/") != -1
                 or page_url.find("/de_nl/") != -1
+                or page_url.find("/ar/") != -1
             ):
                 continue
             r = session.get(page_url, headers=headers)
