@@ -49,9 +49,9 @@ def fetch_data(sgw: SgWriter):
                 continue
             found.append(link)
 
-            location_name = item.a.text.strip()
+            location_name = item.a.text.replace("\n", " ").replace("  ", " ").strip()
 
-            raw_address = item.p.text.strip()
+            raw_address = item.p.text.replace("\n", " ").replace("  ", " ").strip()
             if "May 2018." in raw_address:
                 raw_address = raw_address.split("2018.")[1].strip()
             addr = parse_address_intl(raw_address)
@@ -108,7 +108,25 @@ def fetch_data(sgw: SgWriter):
                     if not hours_of_operation:
                         hours_of_operation = ""
                 except:
-                    pass
+                    try:
+                        if (
+                            "opening times"
+                            in base.find(class_="wysiwygl location-text").text
+                        ):
+                            rows = (
+                                base.find(class_="wysiwygl location-text")
+                                .find(string="Shop opening times")
+                                .find_all_next("p")
+                            )
+                            for row in rows:
+                                if "day" in row.text:
+                                    hours_of_operation = (
+                                        hours_of_operation + " " + row.text
+                                    ).strip()
+                                else:
+                                    break
+                    except:
+                        pass
 
                 try:
                     latitude = base.find(class_="bhflocation map-container-small")[

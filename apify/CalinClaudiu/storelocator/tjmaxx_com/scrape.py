@@ -1,11 +1,11 @@
 from typing import Iterable, Tuple, Callable
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_2
+from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 
@@ -47,13 +47,6 @@ def replac(x):
 
 
 class ExampleSearchIteration(SearchIteration):
-    """
-    Here, you define what happens with each iteration of the search.
-    The `do(...)` method is what you'd do inside of the `for location in search:` loop
-    It provides you with all the data you could get from the search instance, as well as
-    a method to register found locations.
-    """
-
     def __init__(self):
         self.__state = CrawlStateSingleton.get_instance()
 
@@ -65,21 +58,8 @@ class ExampleSearchIteration(SearchIteration):
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
-        """
-        This method gets called on each iteration of the search.
-        It provides you with all the data you could get from the search instance, as well as
-        a method to register found locations.
-
-        :param coord: The current coordinate (lat, long)
-        :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
-        :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
-        :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
-        :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
-        """
         with SgRequests() as http:
-            # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
             lat, lng = coord
-            # just some clever accounting of locations/country:
             numbers = "21%2C20"
             nCA = "93%2C91%2C90"
             nUS = "8%2C10%2C28%2C29%2C50"
@@ -184,14 +164,29 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    tocrawl = SearchableCountries.CANADA
+    tocrawl = []
+    tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.CANADA)
+    tocrawl.append(SearchableCountries.AUSTRALIA)
+    tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        granularity=Grain_2(),
-        expected_search_radius_miles=2,
+        granularity=Grain_8(),
+        expected_search_radius_miles=8,
+        max_search_results=45,
     )
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                },
+                fail_on_empty_id=True,
+            )
+        )
     ) as writer:
         with SgRequests() as http1:
             search_iter = ExampleSearchIteration()
