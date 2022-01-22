@@ -54,7 +54,7 @@ def fetch_records(snum, store_name, sgw: SgWriter):
         )
         alert_msg = "".join(sel.xpath(xpath_alert))
         if "Check that you" in alert_msg:
-            logger.info(f"store data is not available")
+            logger.info("Store data is not available")
             return
         else:
             logger.info("The data is available")
