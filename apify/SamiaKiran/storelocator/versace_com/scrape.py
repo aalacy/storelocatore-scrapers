@@ -90,11 +90,16 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         r = http.get(next_r.url, headers=headers)
         log.info(f"Pulling the data from: {next_r.url}")
         soup = BeautifulSoup(r.text, "html.parser")
-        street = strip_accents(
-            soup.find("span", {"class": "c-address-street-1"}).text
-            + " "
-            + soup.find("span", {"class": "c-address-street-2"}).text
-        )
+        try:
+            street = strip_accents(
+                soup.find("span", {"class": "c-address-street-1"}).text
+                + " "
+                + soup.find("span", {"class": "c-address-street-2"}).text
+            )
+        except:
+            street = strip_accents(
+                soup.find("span", {"class": "c-address-street-1"}).text
+            )
         street_address = strip_accents(
             soup.find("span", {"class": "c-address-street-1"}).text
         )
