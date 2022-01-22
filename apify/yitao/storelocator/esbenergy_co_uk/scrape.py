@@ -19,10 +19,10 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 UK_BOUNDING_BOX = {
-    "northEastLat": 51.599717874282874,
-    "northEastLng": 0.08654981616212254,
-    "southWestLat": 51.40952366267913,
-    "southWestLng": -0.3381404304199287,
+    "northEastLat": 61.061,
+    "northEastLng": 2.0919117,
+    "southWestLat": 49.674,
+    "southWestLng": -8.1775098,
 }
 
 
@@ -53,7 +53,7 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         longitude=station_obj["longitude"],
         locator_domain=LOCATOR_DOMAIN,
         hours_of_operation=(
-            ",".join(map(str, station_obj["openingTimes"])) or "00:00 - 23:59"
+            " ".join(map(str, station_obj["openingTimes"])) or "Open 24/7"
         ),
         phone=PHONE_NUMBER,
     )
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        with SgRequests() as http:
+        with SgRequests(proxy_country="gb") as http:
             PHONE_NUMBER = _fetch_phone_number(http)
             records = _fetch_data(http)
             for record in records:
