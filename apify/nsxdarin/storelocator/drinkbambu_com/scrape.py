@@ -48,6 +48,7 @@ def fetch_data():
                     .split('<span itemprop="addressLocality">')[0]
                     .replace("<br/>", "")
                     .replace("</span>", "")
+                    .replace("<br />", "")
                     .strip()
                 )
             if '<span itemprop="addressLocality">' in line2:
@@ -75,6 +76,18 @@ def fetch_data():
         if "<" in add:
             add = add.split("<")[0]
         add = add.strip()
+        if "Regular Hours" in hours:
+            hours = hours.split("Regular Hours")[1].strip()
+        name = name.replace("&#8211;", "-")
+        if " " in zc:
+            country = "CA"
+        state = state.replace("Canada", "").replace(",", "").strip()
+        if "(Next" in add:
+            add = add.split("(Next")[0].strip()
+        if "3000," in add:
+            add = add.split("3000,")[1].strip()
+        if "Horse Pike" in add:
+            add = add.split("Horse Pike")[1].strip()
         if city != "" and CS is False:
             yield SgRecord(
                 locator_domain=website,
