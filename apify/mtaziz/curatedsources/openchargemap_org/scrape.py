@@ -22,7 +22,7 @@ else:
 DOMAIN = "openchargemap.org"
 logger = SgLogSetup().get_logger("openchargemap_org")
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 2
+MAX_WORKERS = 1
 BASE_API = (
     "https://api.openchargemap.io/v3/poi/?client=ocm.app.ionic.8.0.0&verbose=true"
 )
@@ -39,8 +39,7 @@ country_list = [
         "country_name": "United States of America",
         "continent_code": "NA",
         "country_code": "US",
-    },
-    {"country_name": "Canada", "continent_code": "NA", "country_code": "CA"},
+    }
 ]
 
 # Tenacity needs to be used b/c sometimes it experiences HTTP Error 500.
@@ -49,7 +48,7 @@ country_list = [
 
 @retry(stop=stop_after_attempt(20), wait=tenacity.wait_fixed(120))
 def get_response(url):
-    with SgRequests(timeout_config=300) as http:
+    with SgRequests(timeout_config=600) as http:
         response = http.get(url, headers=headers)
         logger.info(f"Status Code: {response.status_code}")
         if response.status_code == 200:

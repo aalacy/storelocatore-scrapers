@@ -20,6 +20,8 @@ def fetch_data(sgw: SgWriter):
             phone = acf.get("phone_number")
             a = acf.get("address") or {}
             raw_address = a.get("address") or ""
+            if ", USA" in raw_address:
+                raw_address = raw_address.replace(", USA", "")
             line = raw_address.split(",")
             state = line.pop().strip()
             city = line.pop().strip()

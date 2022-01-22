@@ -30,8 +30,16 @@ def fetch_data(sgw: SgWriter):
         info = j.get("content")
         b = html.fromstring(info)
         page_url = "".join(b.xpath("//a/@href"))
+        content = "<MISSING>"
         if page_url == "https://fit4lifehealthclubs.com/fayetteville-2/":
             page_url = api_url
+            content = (
+                "".join(b.xpath("//text()[1]"))
+                .replace("\n", "")
+                .replace("\r", "")
+                .split("•")[-2]
+                .strip()
+            )
         ad = j.get("address")
         a = parse_address(USA_Best_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
@@ -63,6 +71,8 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
+        if phone == "<MISSING>":
+            phone = content
         hours_of_operation = (
             " ".join(
                 tree.xpath(
