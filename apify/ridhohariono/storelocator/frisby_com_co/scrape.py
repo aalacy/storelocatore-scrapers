@@ -4,13 +4,15 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
-import json
 import re
+import ast
 
-DOMAIN = "oakfurnitureland.co.uk"
-BASE_URL = "https://www.oakfurnitureland.co.uk/showrooms/"
+
+DOMAIN = "frisby.com.co"
+BASE_URL = "https://frisby.com.co"
+LOCATION_URL = "https://frisby.com.co/restaurantes"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -18,7 +20,7 @@ HEADERS = {
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 
 def getAddress(raw_address):
@@ -54,42 +56,27 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(BASE_URL)
-    contents = soup.select("div#showroom-atoz a.no-line")
-    for row in contents:
-        page_url = BASE_URL + row["href"]
-        store = pull_content(page_url)
-        json_data = json.loads(
-            " ".join(store.find("script", type="application/ld+json").string.split())
-        )
-        info = store.find("div", id="address")
-        location_name = info.find("h3").text.strip()
-        raw_address = info.find("ul").get_text(strip=True, separator=" ").strip()
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        if zip_postal == MISSING and "OL2 5HX" in street_address:
-            zip_postal = "OL2 5HX"
-            street_address = street_address.replace(zip_postal, "").strip()
-        country_code = "UK"
-        phone = info.find("p").text.replace("Tel:", "").strip()
-        hoo_content = store.find("div", {"class": "opening-hours"})
-        if not hoo_content:
-            hours_of_operation = MISSING
-        else:
-            hours_of_operation = re.sub(
-                r",\d{2}:\d{2}-\d{2}:\d{2}\s+viewing only",
-                "",
-                hoo_content.get_text(strip=True, separator=",")
-                .replace(":,", ": ")
-                .strip(),
-            )
+    soup = pull_content(LOCATION_URL)
+    script = soup.find("script", string=re.compile(r"markers\.push\(.*"))
+    data = re.findall(r"markers\.push\((.*)\);", script.string)
+    for row in data:
+        info = ast.literal_eval(row.strip())
+        location_name = info[2].strip()
+        street_address = " ".join(info[4].split()).strip()
+        city = info[3].strip()
+        state = MISSING
+        zip_postal = MISSING
+        phone = MISSING
+        country_code = "CO"
+        hours_of_operation = info[-1].strip()
+        latitude = info[0] if info[0] != 0 else MISSING
+        longitude = info[1] if info[1] != 0 else MISSING
+        location_type = MISSING
         store_number = MISSING
-        location_type = json_data["@type"]
-        latitude = json_data["geo"]["latitude"]
-        longitude = json_data["geo"]["latitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=page_url,
+            page_url=LOCATION_URL,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -102,14 +89,22 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
