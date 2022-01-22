@@ -38,12 +38,14 @@ def fetch_data():
                 separator="|", strip=True
             ).split("|")
             hours_of_operation = " ".join(hours_of_operation[2:])
-            hours_of_operation = hours_of_operation.split("Mailing")[0].replace(
-                "Drive-Thru Hours: None", ""
-            )
+            hours_of_operation = hours_of_operation.replace(
+                "Lobby & Drive-Thru Hours:", ""
+            ).replace("Lobby Hours:", "")
+            if "Drive-Thru" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Drive-Thru")[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="hhttps://www.mbcbank.com/our-locations",
+                page_url="https://www.mbcbank.com/our-locations",
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
