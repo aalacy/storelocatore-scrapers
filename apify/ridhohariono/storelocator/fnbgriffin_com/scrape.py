@@ -45,7 +45,6 @@ def fetch_data():
             .replace("day,", "day:")
             .strip(),
         ).rstrip(",")
-        print(hours_of_operation)
         location_type = "BRANCH"
         if not row["active"]:
             location_type = "TEMP_CLOSED"
