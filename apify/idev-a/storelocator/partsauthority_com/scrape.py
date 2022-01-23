@@ -4,11 +4,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from typing import Iterable
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 import re
+import bs4
 
 logger = SgLogSetup().get_logger("partsauthority")
 
@@ -27,7 +27,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
         .find_next_sibling("ul")
         .select("a")[1:]
     )
-    logger.info(f"{len(locs)} found")
+    logger.info(f"{len(locs)} locs found")
     for loc in locs:
         page_url = loc["href"]
         state.push_request(SerializableRequest(url=page_url))
@@ -35,12 +35,12 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     return True
 
 
-def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
+def fetch_records(http, state):
     for next_r in state.request_stack_iter():
-        logger.info(next_r.url)
         locations = bs(http.get(next_r.url, headers=_headers).text, "lxml").select(
             'div[data-elementor-type="single"] div.elementor-col-25 div.elementor-text-editor'
         )
+        logger.info(f"[{len(locations)}] {next_r.url}")
         for _ in locations:
             if not _.h3:
                 continue
@@ -49,9 +49,23 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             del raw_address[0]
             hours = []
             _hr = _.select_one("span strong").find_parent("p")
-            hours = [
-                "; ".join(pp.stripped_strings) for pp in _hr.find_next_siblings("p")
-            ]
+            hours = []
+            for tt in _hr.find_next_siblings("p"):
+                temp = []
+                _tt = list(tt.children)
+                for x, hh in enumerate(_tt):
+                    _hh = ""
+                    if type(hh) == bs4.element.NavigableString:
+                        _hh = hh
+                    else:
+                        _hh = hh.text
+                    if "Online" in _hh or "Website" in _hh:
+                        break
+                    if hh.name != "br":
+                        temp.append(_hh)
+                    if temp and (hh.name == "br" or x == len(_tt) - 1):
+                        hours.append(" ".join(temp))
+                        temp = []
             addr = parse_address_intl(" ".join(raw_address))
             street_address = addr.street_address_1
             if addr.street_address_2:

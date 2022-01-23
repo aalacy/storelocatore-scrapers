@@ -1,72 +1,72 @@
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import re
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "goodearthnaturalfoods_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
+
+DOMAIN = "https://goodearthmarkets.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        pattern = re.compile(r"\s\s+")
-        url = "https://goodearthnaturalfoods.com/"
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "col-sm-4 col-lg saddress"})
+        url = "https://goodearthmarkets.com/locations/"
+        r = session.get(url, headers=headers)
+        loclist = r.text.split('<div class="mcb-wrap-inner">')[2:-1]
         for loc in loclist:
-            page_url = loc.find("a")["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1", {"class": "text-uppercase"}).text
-            hours_of_operation = (
-                soup.find("p", {"class": "p-0 mb-2 location-store-hours"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("Store Hours:", "")
-            )
-            address = loc.find("div", {"class": "sstreet"}).text
-            address = re.sub(pattern, "\n", address).strip()
-            address = address.split("\n")
-            phone = address[-1]
-            address = address[:-1]
-            street_address = address[0]
-            address = address[1].split(",")
+            loc = BeautifulSoup(loc, "html.parser")
+            address = loc.get_text(separator="|", strip=True).split("|")
+            phone = address[3]
+            location_name = address[0]
+            log.info(location_name)
+            street_address = address[1]
+            address = address[2].split(",")
             city = address[0]
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
+            country_code = "US"
+            temp = loc.findAll("div", {"class": "column_attr"})
+            hours_of_operation = (
+                temp[1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Store Hours: -", "")
+            )
             yield SgRecord(
-                locator_domain="https://goodearthnaturalfoods.com/",
-                page_url=page_url,
+                locator_domain=DOMAIN,
+                page_url=url,
                 location_name=location_name.strip(),
                 street_address=street_address.strip(),
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
-                country_code="US",
-                store_number="<MISSING>",
-                phone=phone,
-                location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
-                hours_of_operation=hours_of_operation.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

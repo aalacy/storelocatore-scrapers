@@ -4,7 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("machinemart")
 
 base_url = "https://www.machinemart.co.uk/customactions/storefindersurface/GetStores/"
 locator_domain = "https://www.machinemart.co.uk"
@@ -14,12 +16,15 @@ def fetch_data():
     with SgRequests() as session:
         store_list = session.get(base_url).json()["Stores"]
         for store in store_list:
-            page_url = "https://www.machinemart.co.uk/stores/" + store["id"]
+            page_url = "https://www.machinemart.co.uk/stores/" + store["id"] + "/"
+            logger.info(page_url)
             sp1 = bs(session.get(page_url).text, "lxml")
             hours = sp1.select_one("div.times p").contents[2:]
-            _hr = sp1.find("u", string=re.compile(r"Normal Opening Times"))
-            if _hr:
-                hours = list(_hr.find_parent().stripped_strings)[1:]
+            pp = sp1.select("div.times p")
+            if len(pp) > 1:
+                if pp[-1].select("u"):
+                    del pp[-1]
+                hours = list(pp[-1].stripped_strings)
 
             yield SgRecord(
                 page_url=page_url,
@@ -33,6 +38,7 @@ def fetch_data():
                 latitude=store["latitude"],
                 longitude=store["longitude"],
                 hours_of_operation=" ".join(hours),
+                raw_address=" ".join(sp1.select_one("div.address").stripped_strings),
             )
 
 

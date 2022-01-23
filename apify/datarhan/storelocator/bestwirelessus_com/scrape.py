@@ -41,13 +41,14 @@ def fetch_data():
             .split("!2m")[0]
             .split("!3d")
         )
+        city = poi_html.xpath(".//p/text()")[1].split(",")[0].strip()
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code=addr.country,
