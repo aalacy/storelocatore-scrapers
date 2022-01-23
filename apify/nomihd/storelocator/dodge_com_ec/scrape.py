@@ -37,7 +37,14 @@ def fetch_data():
 
             location_name = store_info[0].strip()
 
-            raw_address = ", ".join(store_info[1:]).strip().split("ono:")[0].strip()
+            raw_address = (
+                ", ".join(store_info[1:])
+                .strip()
+                .split("ono:")[0]
+                .strip()
+                .rsplit(",", 1)[0]
+                .strip()
+            )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1

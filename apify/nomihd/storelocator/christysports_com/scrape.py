@@ -16,7 +16,7 @@ headers = {
 
 
 def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
+    street_address = ", ".join(address_info[0:-1]).strip(" ,.")
 
     city_state_zip = (
         address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
@@ -81,9 +81,11 @@ def fetch_data():
 
             locator_domain = website
 
-            location_name = "".join(
-                store_sel.xpath('//div[contains(@class,"hero-title")]/h2//text()')
-            ).strip()
+            location_name = store_sel.xpath(
+                '//div[contains(@class,"hero-title")]/h2//text()'
+            )
+            if len(location_name) > 0:
+                location_name = location_name[0]
 
             location_type = "<MISSING>"
 
@@ -100,6 +102,9 @@ def fetch_data():
             )
 
             full_address = store_info[1:]
+            if len(full_address) == 3:
+                full_address = store_info[2:]
+
             street_address, city, state, zip, country_code = split_fulladdress(
                 full_address
             )

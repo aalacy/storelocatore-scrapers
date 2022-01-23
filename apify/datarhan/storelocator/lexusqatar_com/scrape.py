@@ -28,22 +28,24 @@ def fetch_data():
         loc_type = poi["cat"]
         if loc_type != 1:
             continue
+        raw_address = poi["addr"]
 
         item = SgRecord(
             locator_domain=domain,
             page_url="lexusqatar.com",
             location_name=poi["name"],
-            street_address=poi["addr"],
-            city="",
+            street_address=", ".join(raw_address.split(", ")[:-2]),
+            city=raw_address.split(", ")[-2],
             state="",
             zip_postal="",
-            country_code="Qatar",
+            country_code=raw_address.split(", ")[-1],
             store_number="",
             phone=poi["tel"],
             location_type="",
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item

@@ -22,7 +22,7 @@ def get_international(line):
 
 def fetch_data(sgw: SgWriter):
     r = session.get(
-        "https://aratiendas.com/wp-content/litespeed/js/7e2bd4733f5bf52dac599670758e6fb1.js?ver=91065",
+        "https://aratiendas.com/wp-content/litespeed/js/c64ec378fdbc256766d19e5a5c04f9a6.js",
         headers=headers,
     )
     text = r.text
@@ -31,8 +31,10 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         location_name = j.get("name")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
+        latitude = j.get("latitude") or ""
+        longitude = j.get("longitude") or ""
+        if str(latitude) == "0" or str(longitude) == "0":
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
         phone = j.get("phone")
         store_number = j.get("ID")
         street_address = j.get("address") or ""
@@ -50,6 +52,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = ";".join(_tmp)
 
         row = SgRecord(
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -68,6 +71,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://aratiendas.com/"
+    page_url = "https://aratiendas.com/ubicacion-tiendas/"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "application/json, text/javascript, */*; q=0.01",

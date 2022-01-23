@@ -16,7 +16,6 @@ user_agent = (
 
 def fetch_data(sgw: SgWriter):
     with SgChrome(user_agent=user_agent) as driver:
-
         page_url = "https://www.nbtbank.com/locations/index.html"
         api = "https://www.nbtbank.com/locations/locations.json"
         driver.get(api)
@@ -28,8 +27,8 @@ def fetch_data(sgw: SgWriter):
                 SgRecord.MISSING,
             ]
             j = j.get("properties")
-            location_name = j.get("name")
-            if location_name.find("ATM") != -1:
+            location_name = j.get("name") or ""
+            if "ATM" in location_name:
                 continue
             street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
             city = j.get("city")
@@ -57,8 +56,9 @@ def fetch_data(sgw: SgWriter):
                 else:
                     part = d[:3]
 
-                time = j.get(f"Lobby_{part}") or "Closed"
-                _tmp.append(f"{d}: {time}")
+                time = j.get(f"Lobby_{part}")
+                if time:
+                    _tmp.append(f"{d}: {time}")
 
             hours_of_operation = ";".join(_tmp)
 

@@ -12,8 +12,8 @@ def fetch_data(sgw: SgWriter):
 
     for j in r.json():
         location_name = j.get("title")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+        latitude = j.get("lat") or ""
+        longitude = j.get("lng") or ""
         phone = j.get("phone")
         store_number = j.get("id")
         street_address = f'{j.get("street")} {j.get("street2") or ""}'.strip()
@@ -39,8 +39,8 @@ def fetch_data(sgw: SgWriter):
             country_code="ZA",
             phone=phone,
             store_number=store_number,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=latitude.replace(",", "."),
+            longitude=longitude.replace(",", "."),
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
         )

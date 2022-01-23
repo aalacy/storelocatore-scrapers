@@ -41,14 +41,17 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         store_number = "<MISSING>"
         try:
-            phone = re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", str(item))[0]
+            phone = item.find(string="PHONE:").find_next().text.strip()
         except:
-            phone = "<MISSING>"
+            try:
+                phone = item.find(string="phone:").find_next().text.strip()
+            except:
+                phone = item.find(string="Phone:").find_next().text.strip()
         location_type = "<MISSING>"
         raw_item = str(item).replace("&quot;", '"')
         latitude = re.findall(r'lat":[0-9]{2}\.[0-9]+', raw_item)[0].split(":")[1]
         longitude = re.findall(r'lng":-[0-9]{2,3}\.[0-9]+', raw_item)[0].split(":")[1]
-        hours_of_operation = base.find_all(class_="landing-block-card-address-link")[
+        hours_of_operation = item.find_all(class_="landing-block-card-address-link")[
             1
         ].text
 

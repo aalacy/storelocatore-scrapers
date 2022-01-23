@@ -36,6 +36,8 @@ def get_data(slug, sgw: SgWriter):
 
     try:
         phone = j["contactPoint"][0]["telephone"].replace("+", "")
+        if phone.startswith("44"):
+            phone = phone[2:]
     except:
         phone = SgRecord.MISSING
 

@@ -28,8 +28,14 @@ def fetch_data():
     data = json.loads(data)
     locs_html = etree.HTML(data["Coordinate"])
 
-    all_locations = list(set(locs_html.xpath('//span[@class="nome_conc"]/b/a/@href')))
-    for url in all_locations:
+    all_locations = locs_html.xpath('//p[span[@class="nome_conc"]]')
+    for loc in all_locations:
+        loc_type = loc.xpath(
+            './/following-sibling::div[@class="servizi"]//img[contains(@src, "ico-vendita.gif")]'
+        )
+        if not loc_type:
+            continue
+        url = loc.xpath(".//a/@href")[0]
         if "concessionari-suzuk" in url:
             response = session.get(url + "/sedi/")
             dom = etree.HTML(response.text)
@@ -47,9 +53,6 @@ def fetch_data():
                 zip_code = zip_code[0].strip() if zip_code else ""
                 phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
                 phone = phone[0] if phone else ""
-                location_type = loc_dom.xpath('//header[@itemprop="name"]/h3/text()')[
-                    0
-                ].strip()
                 latitude = loc_dom.xpath("//@data-lat")
                 latitude = latitude[0] if latitude else ""
                 longitude = loc_dom.xpath("//@data-lng")
@@ -77,7 +80,7 @@ def fetch_data():
                     country_code="IT",
                     store_number="",
                     phone=phone,
-                    location_type=location_type,
+                    location_type="",
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hoo,
@@ -88,7 +91,6 @@ def fetch_data():
             page_url = urljoin(start_url, url)
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
-
             location_name = loc_dom.xpath(
                 '//span[@id="ctl00_ContentPlaceHolder1_lbDealerName"]/text()'
             )[0]
@@ -122,9 +124,6 @@ def fetch_data():
             else:
                 hoo = ""
 
-            types = loc_dom.xpath('//div[@class="box servizi"]/img/@src')
-            types = [e.split("/")[-1].split("-")[-1].split(".")[0] for e in types]
-            location_type = ", ".join(types)
             latitude = re.findall(r'lat":(.+?),', loc_response.text)[0]
             longitude = re.findall(r'lng":(.+?)\}', loc_response.text)[0]
 
@@ -139,7 +138,7 @@ def fetch_data():
                 country_code="IT",
                 store_number="",
                 phone=phone,
-                location_type=location_type,
+                location_type="",
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hoo,

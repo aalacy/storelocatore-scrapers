@@ -58,17 +58,21 @@ def pull_content(url):
 def get_hoo(url, hoo_api):
     soup = pull_content(url)
     hoo = (
-        re.sub(
-            r"Holiday Hours.*",
-            "",
-            soup.find("h2", text=re.compile(r"Hours", re.IGNORECASE))
-            .find_next("p")
-            .get_text(strip=True, separator=","),
-            re.IGNORECASE,
+        (
+            re.sub(
+                r"Holiday Hours.*|Black Friday.*|Easter.*|\d{2}\..*|\d{2}\/.*",
+                "",
+                soup.find("h2", text=re.compile(r"Hours", re.IGNORECASE))
+                .find_next("p")
+                .get_text(strip=True, separator=","),
+                re.IGNORECASE,
+            )
+            .replace("|", "")
+            .strip()
         )
-        .replace("|", "")
+        .rstrip(",")
         .strip()
-    ).rstrip(",")
+    )
     if "day" not in hoo:
         hoo = (
             (
@@ -99,6 +103,11 @@ def fetch_data():
         if "london" in raw_address.lower():
             city = "London"
             country_code = "UK"
+            if "W12 7HT" in raw_address:
+                zip_postal = "W12 7HT"
+                street_address = re.sub(
+                    r"W12 7HT", "", street_address, flags=re.IGNORECASE
+                ).strip()
         elif len(zip_postal.split(" ")) > 1:
             country_code = "CA"
         else:

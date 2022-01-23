@@ -11,7 +11,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 session = SgRequests()
 website = "amerisbank_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
@@ -22,21 +21,23 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     bank_locations_url = "https://banks.amerisbank.com/"
-
-    for bank_state_link in BeautifulSoup(
-        session.get(bank_locations_url).content, "lxml"
-    ).find_all("a", {"linktrack": re.compile("State index page")}):
-
-        for bank_city_link in BeautifulSoup(
-            session.get(bank_state_link.get("href")).content, "lxml"
-        ).find_all("a", {"dta-linktrack": re.compile("City index page -")}):
-
-            for branch_link in BeautifulSoup(
-                session.get(bank_city_link.get("href")).content, "lxml"
-            ).find_all("a", {"linktrack": "Landing page"}):
-                page_url = branch_link.get("href")
+    r = session.get(bank_locations_url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    for bank_state_link in soup.find_all(
+        "a", {"linktrack": re.compile("State index page")}
+    ):
+        r = session.get(bank_state_link["href"], headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        for bank_city_link in soup.find_all(
+            "a", {"dta-linktrack": re.compile("City index page -")}
+        ):
+            r = session.get(bank_city_link["href"], headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            for branch_link in soup.find_all("a", {"linktrack": "Landing page"}):
+                page_url = branch_link["href"]
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
                 log.info(page_url)
-                soup = BeautifulSoup(session.get(page_url).content, "html5lib")
                 data = (
                     soup.find_all("script", {"type": "application/ld+json"})[-1]
                 ).text
