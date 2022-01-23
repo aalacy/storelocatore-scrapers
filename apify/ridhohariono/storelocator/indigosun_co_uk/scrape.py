@@ -66,6 +66,8 @@ def fetch_data():
             ).find("div", {"class": "shop clearfix"})
         except:
             continue
+        if not store:
+            continue
         info = store.find("div", {"class": "opening"})
         location_name = info.find("h3").text.strip()
         addr = info.find("p").get_text(strip=True, separator=",").split("Tel:")
