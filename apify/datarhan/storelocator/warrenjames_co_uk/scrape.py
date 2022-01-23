@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import json
 from lxml import etree
 from urllib.parse import urljoin
@@ -9,6 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -31,13 +31,17 @@ def fetch_data():
         location_name = loc_dom.xpath('//h1[@class="signInTitle pl-0"]/text()')[0]
         poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
         poi = json.loads(poi)
+        city = poi["address"]["addressLocality"]
+        if not city:
+            addr = parse_address_intl(location_name)
+            city = addr.city
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
             street_address=poi["address"]["streetAddress"],
-            city=poi["address"]["addressLocality"],
+            city=city,
             state="",
             zip_postal=poi["address"]["postalCode"],
             country_code="",
