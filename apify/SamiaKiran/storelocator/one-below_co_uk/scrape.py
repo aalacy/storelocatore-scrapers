@@ -58,8 +58,8 @@ def fetch_data():
             hours_of_operation = loclist[idx + 1]
             hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
-                .get_text(separator=",", strip=True)
-                .split(",")[0]
+                .get_text(separator="{", strip=True)
+                .split("{")[0]
                 .replace("|", "")
             )
             country_code = "UK"
