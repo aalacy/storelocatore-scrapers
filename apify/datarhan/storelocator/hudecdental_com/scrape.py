@@ -39,7 +39,7 @@ def fetch_data():
             driver.get(page_url)
             sleep(10)
             driver.switch_to.frame(
-                driver.find_element(By.XPATH, '//iframe[contains(@src, "maps")]')
+                driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
             )
             loc_dom = etree.HTML(driver.page_source)
         geo = (
