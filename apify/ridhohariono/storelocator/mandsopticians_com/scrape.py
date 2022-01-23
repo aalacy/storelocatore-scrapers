@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 
 DOMAIN = "mandsopticians.com"
@@ -56,6 +57,13 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.select("div.amlocator-store-desc")
+    latlong_content = soup.find(
+        "script", string=re.compile(r"const\s+locations.*")
+    ).string
+    latlong = re.findall(
+        r'"lat":"(-?[\d]*\.[\d]*)","lng":"(-?[\d]*\.[\d]*)"', latlong_content
+    )
+    num = 0
     for row in contents:
         page_url = (
             BASE_URL
@@ -68,6 +76,15 @@ def fetch_data():
             row.find("div", {"class": "address"}).text.replace("\n", "").strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "Da9 9Sd" in street_address:
+            city = "Greenhithe"
+            zip_postal = "DA9 9SD"
+            street_address = (
+                street_address.replace("Da9 9Sd", "").replace(city, "").strip()
+            )
+        if "Hedge End" in city:
+            city = city.replace("Southampton", "").strip()
+        city = city.replace("St Albans", "")
         phone = row.find("div", {"class": "telephone"}).text.strip()
         country_code = "UK"
         hours_of_operation = (
@@ -83,8 +100,8 @@ def fetch_data():
             .split("store_id=")[1]
             .split("&type")[0]
         )
-        latitude = MISSING
-        longitude = MISSING
+        latitude = latlong[num][0]
+        longitude = latlong[num][1]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -103,6 +120,7 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
+        num += 1
 
 
 def scrape():
