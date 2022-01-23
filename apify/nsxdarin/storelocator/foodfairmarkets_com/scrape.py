@@ -1,27 +1,48 @@
+import ssl
+import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import json
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("foodfairmarkets_com")
-
 
 def fetch_data():
-    url = "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token=cc6fe941710fa6038d822ffed1f7b959"
-    r = session.get(url, headers=headers)
+
+    base_link = "https://www.foodfairmarkets.com/"
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+
+    driver = SgChrome(user_agent=user_agent).driver()
+    driver.get(base_link)
+    time.sleep(6)
+    token = driver.get_cookie("fp-session")["value"].split("%22")[-2]
+    driver.close()
+
+    url = (
+        "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token="
+        + token
+    )
+    items = session.get(url, headers=headers).json()["items"]
     website = "foodfairmarkets.com"
     typ = "<MISSING>"
     country = "US"
-    logger.info("Pulling Stores")
-    for item in json.loads(r.content)["items"]:
+    for item in items:
         store = item["id"]
         name = item["name"]
         lat = item["latitude"]

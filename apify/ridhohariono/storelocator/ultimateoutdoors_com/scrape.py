@@ -11,6 +11,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import ssl
+import re
+import json
 
 try:
     _create_unverified_https_context = (
@@ -78,6 +80,22 @@ def wait_load(driver):
         driver.refresh()
 
 
+def pull_content(url):
+    log.info("Pull content => " + url)
+    req = session.get(url, headers=HEADERS)
+    if req.status_code == 404:
+        return False
+    soup = bs(req.content, "lxml")
+    return soup
+
+
+def get_json(soup):
+    content = soup.find("script", string=re.compile(r"\,stores\s+=\s+\[.*"))
+    data = re.search(r"\,stores\s+=\s+(\[.*)", content.string)
+    data = re.sub(r",smarty_postcode.*", "", data.group(1))
+    return json.loads(data)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     driver = SgSelenium().chrome()
@@ -85,30 +103,29 @@ def fetch_data():
     wait_load(driver)
     soup = bs(driver.page_source, "lxml")
     driver.quit()
-    content = soup.find("ul", {"class": "store-list"})
-    store_info = content.find_all("li", {"class": "group"})
-    for row in store_info:
-        info = row.find("div", {"class": "store-details"})
-        location_name = info.find("h3").text.strip()
-        raw_address = ",".join(
-            [addr.text for addr in info.find_all("p", {"class": "storeAddress"})]
-        )
-        addr = info.find_all("p", {"class": "storeAddress"})
-        street_address = addr[0].text.strip()
-        city = location_name.split(" | ")[1].strip()
+    data = get_json(soup)
+    for row in data:
+        location_name = row["name"]
+        raw_address = row["address"].replace("<br />", ",")
+        if len(row["address_2"]) > 0:
+            street_address = f'{row["address_1"]}, {row["address_2"]}'
+        else:
+            street_address = row["address_1"]
+        city = row["town"]
         state = MISSING
-        zip_postal = addr[1].text.strip()
-        phone = info.find("p", {"class": "tel"}).text
+        zip_postal = row["postcode"]
+        phone = row["telephone"]
         hours_of_operation = (
-            row.find("table", {"class": "storefinder_opening"})
-            .find_all("tr")[1]
-            .get_text(strip=True, separator=",")
+            re.sub(r"(\D+)", r"\1: ", row["opening_hours"].replace("<br/>", ","))
+            .replace("- :", "-")
+            .replace(" : ", ": ")
+            .strip()
         )
-        store_number = row["data-id"]
+        store_number = row["id"]
         country_code = "GB"
-        location_type = location_name.split(" | ")[0].strip()
-        latitude = MISSING
-        longitude = MISSING
+        location_type = row["store_fascia"]
+        latitude = row["lat"]
+        longitude = row["lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

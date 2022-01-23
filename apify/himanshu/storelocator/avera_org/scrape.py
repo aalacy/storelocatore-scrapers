@@ -44,6 +44,7 @@ def fetch_data():
                 except:
                     store_number = MISSING
                 location_name = temp.find(class_="Name").text
+                location_name = location_name.split("-")[0].strip()
                 address = loc.find("p", {"class": "TheAddress"}).text
                 address = address.replace(",", " ")
                 address = usaddress.parse(address)

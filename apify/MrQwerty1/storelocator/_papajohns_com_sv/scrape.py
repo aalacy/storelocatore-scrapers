@@ -45,7 +45,7 @@ def fetch_data(sgw: SgWriter):
         street_address, city, state, postal = get_international(raw_address)
         store_number = "".join(d.xpath(".//a[@data-info-id]/@data-info-id"))
         text = "".join(d.xpath(".//a[@data-info-url]/@data-info-url"))
-        longitude, latitude = get_coords_from_embed(text)
+        latitude, longitude = get_coords_from_embed(text)
         hours_of_operation = (
             "".join(d.xpath(".//a[@data-info-hours]/@data-info-hours"))
             .replace("|", " ")
