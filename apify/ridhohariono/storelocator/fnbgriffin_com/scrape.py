@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 DOMAIN = "fnbgriffin.com"
 LOCATION_URL = "https://www.fnbgriffin.com/locations-and-hours"
@@ -36,12 +37,14 @@ def fetch_data():
         zip_postal = row["zip"]
         phone = row["phone"]
         country_code = "US"
-        hours_of_operation = (
+        hours_of_operation = re.sub(
+            r"\(Drive-ins only\),?|Drive-ins.*",
+            "",
             bs(row["description"], "lxml")
             .get_text(strip=True, separator=",")
-            .replace("day,", "day: ")
-            .strip()
-        )
+            .replace("day,", "day:")
+            .strip(),
+        ).rstrip(",")
         location_type = "BRANCH"
         if not row["active"]:
             location_type = "TEMP_CLOSED"
