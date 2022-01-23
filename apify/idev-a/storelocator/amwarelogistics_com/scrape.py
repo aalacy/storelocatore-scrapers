@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("amwarelogistics")
 
@@ -51,14 +53,21 @@ def fetch_data():
                         else:
                             phone = ""
                     if not addr:
-                        addr = blocks
+                        for x, bb in enumerate(blocks):
+                            if bb == _.select_one("ul li").text:
+                                addr = blocks[:x]
+                                break
                     yield SgRecord(
                         page_url=page_url,
                         location_name=blocks[0],
-                        street_address=addr[1],
-                        city=addr[2].split(",")[0].strip(),
-                        state=addr[2].split(",")[1].strip().split(" ")[0].strip(),
-                        zip_postal=addr[2].split(",")[1].strip().split(" ")[-1].strip(),
+                        street_address=addr[-2],
+                        city=addr[-1].split(",")[0].strip(),
+                        state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                        zip_postal=addr[-1]
+                        .split(",")[1]
+                        .strip()
+                        .split(" ")[-1]
+                        .strip(),
                         country_code="US",
                         phone=phone,
                         locator_domain=locator_domain,
@@ -96,7 +105,18 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

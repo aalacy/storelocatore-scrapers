@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -20,9 +20,11 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         location_name = "".join(d.xpath(".//h5/text()"))
-        ad = "".join(d.xpath(".//p[1]/text()")).replace("\r\n", "").strip()
-        ad = " ".join(ad.split()).replace("Brooklyn NY 11217", "Brooklyn, NY 11217")
-
+        ad = (
+            "".join(d.xpath(".//h5/following-sibling::text()"))
+            .replace("\r\n", "")
+            .strip()
+        )
         a = parse_address(International_Parser(), ad)
         phone = "".join(d.xpath('.//p[@class="con-num"]/a/text()')).strip()
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
@@ -34,10 +36,10 @@ def fetch_data(sgw: SgWriter):
         if postal.find(" ") != -1:
             country_code = "CA"
         city = a.city or "<MISSING>"
-        if city == "<MISSING>":
-            city = ad.split(",")[1].strip()
+        if ad.find("Brooklyn") != -1:
+            city = "Brooklyn"
         hours_of_operation = (
-            " ".join(d.xpath(".//ul/li/*/text()")).replace("\n", "").strip()
+            " ".join(d.xpath(".//ul/li//text()")).replace("\n", "").strip()
         )
 
         row = SgRecord(

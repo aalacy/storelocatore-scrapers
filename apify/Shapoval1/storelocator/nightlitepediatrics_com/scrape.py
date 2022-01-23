@@ -1,51 +1,16 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get(
-        "https://www.nightlitepediatrics.com/locations-pediatrics-urgent-care-in-florida"
-    )
-    tree = html.fromstring(r.text)
-    return tree.xpath("//a[./span[contains(text(), 'More')]]/@href")
-
-
-def get_data(url):
-    locator_domain = "https://www.nightlitepediatrics.com"
-    page_url = f"{locator_domain}{url}"
+    locator_domain = "https://www.nightlitepediatrics.com/"
+    api_url = "https://www.nightlitepediatrics.com/locations-pediatrics-urgent-care-in-florida"
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -75,105 +40,117 @@ def get_data(url):
         "StateName": "state",
         "ZipCode": "postal",
     }
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    ad = " ".join(tree.xpath('//span[@style="text-decoration: underline;"]/text()'))
-    if ad.find("CALL") == -1:
+    div = tree.xpath(
+        '//div[@class="wp-block-columns alignwide locationstext1 has-white-color has-text-color has-background"]/div[1]/h2[1]/a'
+    )
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"{locator_domain}{slug}"
+        try:
+            phone = (
+                "".join(d.xpath(".//following::h2[1]/a/text()"))
+                .split("Phone:")[1]
+                .strip()
+            )
+        except:
+            phone = "<MISSING>"
+        phone_url = "".join(
+            d.xpath(
+                './/following::div[@class="wp-block-column pg-col-03-loc"][1]//h2/a/@href'
+            )
+        )
+        if phone_url.find("http") == -1:
+            phone_url = f"https://www.nightlitepediatrics.com{phone_url}"
+
+        if page_url.find("telemedicine") != -1:
+            continue
+
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        ad = (
+            " ".join(
+                tree.xpath(
+                    '//strong[text()="Get Google Maps Directions to"]/following-sibling::text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
         a = usaddress.tag(ad, tag_mapping=tag)[0]
-    else:
-        a = "<MISSING>"
-    try:
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
         city = a.get("city") or "<MISSING>"
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
-    except AttributeError:
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        postal = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_name = "".join(tree.xpath("//h1/text()"))
-    if location_name.find("Directions to") != -1:
-        location_name = location_name.split("Directions to")[1].split(",")[0].strip()
-    text = "".join(tree.xpath("//h3/a/@href"))
-    try:
-        if text.find("ll=") != -1:
-            latitude = text.split("ll=")[1].split(",")[0]
-            longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = text.split("@")[1].split(",")[0]
-            longitude = text.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        " ".join(
-            tree.xpath(
-                "//strong[contains(text(), 'Hours')]/following-sibling::text()[1] | //h3[contains(text(), 'Hours')]/text()[1]"
+        location_name = (
+            "".join(
+                tree.xpath(
+                    '//h2[./a[contains(@href, "maps")]]/preceding-sibling::h1/text()'
+                )
             )
+            .replace("Directions to", "")
+            .strip()
         )
-        .replace("\n", "")
-        .strip()
-    )
-    if hours_of_operation.find("Open Hours:") != -1:
+        country_code = "US"
+        text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
         hours_of_operation = (
-            hours_of_operation.split("Open Hours:")[1].split("Open")[0].strip()
+            " ".join(tree.xpath('//strong[text()="Hours:"]/following-sibling::text()'))
+            .replace("\n", "")
+            .replace("Open", "")
+            .strip()
         )
-    if hours_of_operation.find("Open") != -1:
-        hours_of_operation = hours_of_operation.split("Open")[1].strip()
-    phone_urls = locator_domain + "".join(
-        tree.xpath("//a[contains(text(), 'Call')]/@href")
-    )
-    session = SgRequests()
-    r = session.get(phone_urls)
-    subtree = html.fromstring(r.text)
-    phone = (
-        "".join(subtree.xpath('//a[contains(text(), "New Patients")]/text()'))
-        .split("New Patients:")[1]
-        .strip()
-    )
+        if phone == "<MISSING>":
+            session = SgRequests()
+            r = session.get(phone_url, headers=headers)
+            tree = html.fromstring(r.text)
+            phone = (
+                "".join(tree.xpath('//a[contains(text(), "New Patients:")]/text()'))
+                .replace("New Patients:", "")
+                .strip()
+                or "<MISSING>"
+            )
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
