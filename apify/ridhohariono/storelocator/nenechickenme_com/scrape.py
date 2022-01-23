@@ -69,7 +69,7 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     stores = re.sub(
-        r"\|\|Follow us on Instagram.*",
+        r"\|\|Follow us on Instagram.*|\|\|WhatsApp 0585916499\|\|",
         "",
         soup.select_one("div.photo-text div.body-text")
         .get_text(strip=True, separator="||")
@@ -77,7 +77,7 @@ def fetch_data():
         .replace("||Call", "")
         .replace("/Whatsapp", "||"),
     ).split("@")[1:]
-    driver = SgSelenium().chrome()
+    driver = SgSelenium(is_headless=False).chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
     iframes = driver.find_elements_by_css_selector("div.map-component--inner iframe")
