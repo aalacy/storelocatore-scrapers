@@ -61,7 +61,13 @@ def fetch_data():
             .strip()
             .rstrip(",")
         )
-        phone = " ".join(info[3].text.replace("–", " ").split()).strip()
+        phone = (
+            " ".join(info[3].text.replace("–", " ").split())
+            .replace("TBA", "")
+            .strip()
+            .split("/")[0]
+            .split(",")[0]
+        ) or MISSING
         country_code = MISSING
         hours_of_operation = (
             info[2].get_text(strip=True, separator=",").replace("\n", " ").strip()
