@@ -37,9 +37,9 @@ def fetch_data():
 
         with SgFirefox() as driver:
             driver.get(page_url)
-            sleep(5)
+            sleep(10)
             driver.switch_to.frame(
-                driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
+                driver.find_element(By.XPATH, '//iframe[contains(@src, "maps")]')
             )
             loc_dom = etree.HTML(driver.page_source)
         geo = (
