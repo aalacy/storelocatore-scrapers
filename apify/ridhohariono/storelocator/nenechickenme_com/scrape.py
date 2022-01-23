@@ -77,7 +77,7 @@ def fetch_data():
         .replace("||Call", "")
         .replace("/Whatsapp", "||"),
     ).split("@")[1:]
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
     iframes = driver.find_elements_by_css_selector("div.map-component--inner iframe")
