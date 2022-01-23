@@ -34,9 +34,9 @@ def fetch_data(sgw: SgWriter):
             days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
             tmp = []
             for d in days:
-                days = d
+                day = d
                 time = j.get(f"{d}Hours")
-                line = f"{days} {time}".replace("NO DATA", "<MISSING>")
+                line = f"{day} {time}".replace("NO DATA", "<MISSING>")
                 tmp.append(line)
             hours_of_operation = ";".join(tmp) or "<MISSING>"
             if hours_of_operation.count("<MISSING>") == 7:
