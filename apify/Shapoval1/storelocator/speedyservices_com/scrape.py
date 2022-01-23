@@ -35,9 +35,12 @@ def get_data(url, sgw: SgWriter):
     )
     ad = " ".join(ad.split())
     a = parse_address(International_Parser(), ad)
-    street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-        "None", ""
-    ).strip()
+    street_address = (
+        f"{a.street_address_1} {a.street_address_2}".replace("None", "")
+        .replace("Speedy @ B&Q", "")
+        .replace("Speedy & B&Q", "")
+        .strip()
+    )
     state = a.state or "<MISSING>"
     postal = a.postcode or "<MISSING>"
     country_code = "UK"
@@ -63,7 +66,7 @@ def get_data(url, sgw: SgWriter):
     if phone.find("E") != -1:
         phone = phone.split("E")[0].strip()
     hours_of_operation = (
-        " ".join(tree.xpath('//div[@id="working-hours"]/div/text()'))
+        " ".join(tree.xpath('//div[@id="working-hours"]/div//text()'))
         .replace("\n", "")
         .strip()
     )
