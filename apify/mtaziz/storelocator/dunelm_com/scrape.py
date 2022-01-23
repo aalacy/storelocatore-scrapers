@@ -38,7 +38,7 @@ def get_response_post(api_url, payload, headers_p):
         if r1.status_code == 200:
             logger.info(f"HTTP Status Code: {r1.status_code}")
             return r1
-        raise Exception(f"{url} | {payload} >> HTTP Error Code: {response.status_code}")
+        raise Exception(f"{api_url} | {payload} >> HTTPCodeError: {r1.status_code}")
 
 
 def get_hoo(htest):
