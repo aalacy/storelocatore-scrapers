@@ -13,7 +13,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgselenium import SgChrome
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 website = "pnc.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -37,9 +37,10 @@ def get_session(refresh):
 
 def fetch_locations(url, retry=0):
     try:
-        return get_session(retry > 0).get(url, headers=headers, timeout=30).json()
-    except:
-        if retry < 3:
+        time.sleep(random.randint(1, 3))
+        return get_session(retry > 0).get(url, headers=headers).json()
+    except Exception:
+        if retry < 10:
             return fetch_locations(url, retry + 1)
 
         log.error(f"Failure to fetch locations for: {url}")
@@ -85,7 +86,7 @@ def get_hours(data, details):
     store["hours_of_operation"] = MISSING
 
     for service in services:
-        if service["hours"]:
+        if service["service"]["serviceName"] == "Lobby Hours" and service["hours"]:
             hours = []
             for key, value in service["hours"].items():
                 if key == "twentyFourHours":
@@ -199,25 +200,28 @@ def retry_refetch_hours_error_callback(retry_state):
 
 
 @retry(
-    stop=stop_after_attempt(3), retry_error_callback=retry_refetch_hours_error_callback
+    stop=stop_after_attempt(5), retry_error_callback=retry_refetch_hours_error_callback
 )
-def refetch_hours(location, driver):
-    id = location["externalId"]
-    page_url = f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
-    location["page_url"] = page_url
-    details = driver.execute_async_script(
-        f"""
-        var done = arguments[0]
-        fetch("{page_url}")
-            .then(res => res.json())
-            .then(done)
-    """
-    )
+def refetch_hours(location):
+    with get_session() as driver:
+        id = location["externalId"]
+        page_url = (
+            f"https://apps.pnc.com/locator-api/locator/api/v2/location/details/{id}"
+        )
+        location["page_url"] = page_url
+        details = driver.execute_async_script(
+            f"""
+            var done = arguments[0]
+            fetch("{page_url}")
+                .then(res => res.json())
+                .then(done)
+        """
+        )
 
-    if details.get("httpStatusCode"):
-        raise Exception()
+        if details.get("httpStatusCode"):
+            raise Exception()
 
-    return details
+        return details
 
 
 def batch_get_hours(locations, driver):
@@ -261,7 +265,7 @@ def batch_get_hours(locations, driver):
             continue
 
         if details.get("httpStatusCode"):
-            refetched_details = refetch_hours(location, driver)
+            refetched_details = refetch_hours(location)
             if refetched_details:
                 details = refetched_details
             else:
@@ -275,7 +279,10 @@ def batch_get_hours(locations, driver):
 def scrape():
     log.info("start")
     locations = []
-    coords = static_coordinate_list(radius=10, country_code=SearchableCountries.USA)
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=10,
+    )
 
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_records_for, coord) for coord in coords]

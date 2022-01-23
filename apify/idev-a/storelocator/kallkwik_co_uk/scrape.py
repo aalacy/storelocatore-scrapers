@@ -121,6 +121,12 @@ def fetch_records(http, state):
         else:
             continue
 
+        if street_address:
+            street_address = street_address.replace(",", " ").strip()
+            if street_address.endswith("-"):
+                street_address = street_address[:-1].strip()
+        if phone:
+            phone = phone.split("ring")[-1].split("t.")[-1].split("/")[0].strip()
         yield SgRecord(
             page_url=next_r.url,
             location_name=next_r.context.get("name"),

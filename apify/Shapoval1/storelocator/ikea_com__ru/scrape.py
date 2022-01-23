@@ -1,17 +1,16 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-
+    session = SgRequests()
     locator_domain = "https://www.ikea.com/ru/ru/"
     api_url = "https://www.ikea.com/ru/ru/stores/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -21,7 +20,6 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -29,7 +27,7 @@ def fetch_data(sgw: SgWriter):
         ad = (
             " ".join(
                 tree.xpath(
-                    '//strong[contains(text(), "Адрес магазина:")]/following-sibling::text() | //strong[contains(text(), "Адрес:")]/following-sibling::text() | //p[./strong[contains(text(), "Адрес:")]]/following-sibling::p[1]//text()'
+                    '//strong[contains(text(), "Адрес магазина:")]/following-sibling::text() | //strong[contains(text(), "Адрес:")]/following-sibling::text() | //p[./strong[contains(text(), "Адрес:")]]/following-sibling::p[1]//text() | //p[./strong[contains(text(), "Адрес студии:")]]/text()'
                 )
             )
             .replace("\n", "")
@@ -71,26 +69,44 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 " ".join(
                     tree.xpath(
-                        '//strong[contains(text(), "Время работы:")]/following-sibling::text() | //strong[contains(text(), "Время работы:")]/following::p[1]/text()'
+                        '//strong[contains(text(), "Время работы магазина")]/following-sibling::text()'
                     )
                 )
                 .replace("\n", "")
                 .strip()
                 or "<MISSING>"
             )
-        if page_url == "https://www.ikea.com/ru/ru/stores/tyumen/":
+        if hours_of_operation == "<MISSING>":
             hours_of_operation = (
                 " ".join(
                     tree.xpath(
-                        '//strong[contains(text(), "Время работы студии:")]/following-sibling::text()'
+                        '//strong[contains(text(), "Время работы")]/following-sibling::text()'
                     )
                 )
                 .replace("\n", "")
                 .strip()
                 or "<MISSING>"
             )
-        if hours_of_operation.find("Сайт") != -1:
-            hours_of_operation = hours_of_operation.split("Сайт")[0].strip()
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//p[./strong[contains(text(), "Время работы")]]/following-sibling::p[1]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//p[./strong[contains(text(), "Магазин (")]]/text()')
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -114,7 +130,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

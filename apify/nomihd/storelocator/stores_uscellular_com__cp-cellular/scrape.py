@@ -74,6 +74,7 @@ def fetch_data():
         if len(hours_list) > 0:
             hours_of_operation = "; ".join(hours_list).strip()
         else:
+            hours_of_operation = "<MISSING>"
             if "our store is currently closed" in store_req.text:
                 hours_of_operation = "Temporarily Closed"
 

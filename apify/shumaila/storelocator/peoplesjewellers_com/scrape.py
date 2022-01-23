@@ -13,22 +13,20 @@ headers = {
 
 
 def fetch_data():
-
+    pattern = re.compile(r"\s\s+")
     url = "https://www.peoplesjewellers.com/store-finder/view-all-states"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    state_list = soup.find("div", {"id": "0"}).findAll("a")
+    state_list = soup.select("a[href*=view-stores]")
 
     for slink in state_list:
         slink = "https://www.peoplesjewellers.com/store-finder/" + slink["href"]
 
-        r = session.get(slink, headers=headers, verify=False)
+        r = session.get(slink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         branchlist = soup.find("div", {"class": "view-all-stores"}).findAll(
             "div", {"class": "col-lg-3"}
         )
-
-        pattern = re.compile(r"\s\s+")
 
         for branch in branchlist:
             try:
@@ -40,7 +38,7 @@ def fetch_data():
 
                 link = "https://www.peoplesjewellers.com" + branch.find("a")["href"]
 
-                r = session.get(link, headers=headers, verify=False)
+                r = session.get(link, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 title = soup.find("h1", {"itemprop": "name"}).text
                 street = soup.find("span", {"itemprop": "streetAddress"}).text
@@ -52,14 +50,15 @@ def fetch_data():
                 coord = soup.find("a", {"class": "link-directions"})["href"]
                 lat, longt = coord.split("Location/")[1].split(",", 1)
                 store = link.split("-peo")[1]
-                soup = str(soup)
                 hours = (
-                    soup.split('detailSectionHeadline">Hours</div>')[1]
+                    str(soup)
+                    .split('"openings":', 1)[1]
                     .split("{", 1)[1]
                     .split("}", 1)[0]
+                    .replace('"', "")
+                    .replace(":", " ")
                 )
-                hours = hours.replace('"', "").replace("\n", " ").replace("::", " ")
-                hours = re.sub(pattern, " ", hours).lstrip()
+                hours = re.sub(pattern, " ", hours).strip()
             else:
 
                 street = branch.find("span", {"itemprop": "streetAddress"}).text

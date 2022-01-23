@@ -11,7 +11,6 @@ from sgpostal import sgpostal as parser
 
 website = "papajohns.com.pe"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "Connection": "keep-alive",
     "Cache-Control": "max-age=0",
@@ -42,85 +41,94 @@ api_headers = {
 def fetch_data():
     # Your scraper here
     home_url = "https://papajohns.com.pe/locales"
-    home_req = session.get(home_url, headers=headers)
-    home_sel = lxml.html.fromstring(home_req.text)
+    with SgRequests() as session:
+        home_req = session.get(home_url, headers=headers)
+        home_sel = lxml.html.fromstring(home_req.text)
 
-    token = (
-        home_req.headers["Set-Cookie"]
-        .split("tokenSession=")[1]
-        .strip()
-        .split(";")[0]
-        .strip()
-    )
-
-    cities = home_sel.xpath('//select[@id="gender"]/option[position()>1]/@value')
-    for cty in cities:
-        data = {"tag": cty, "section": "locales", "session_token": token}
-
-        search_res = session.post(
-            "https://4231ficvsl.execute-api.us-east-1.amazonaws.com/pro/api/stores/tag",
-            headers=api_headers,
-            data=json.dumps(data),
+        token = (
+            home_req.headers["Set-Cookie"]
+            .split("tokenSession=")[1]
+            .strip()
+            .split(";")[0]
+            .strip()
         )
 
-        store_list = json.loads(search_res.text)["data"]["stores"]
+        cities = home_sel.xpath('//select[@id="gender"]/option[position()>2]/@value')
+        for cty in cities:
+            data = {"tag": cty, "section": "locales", "session_token": token}
 
-        for store in store_list:
-
-            page_url = home_url
-
-            locator_domain = website
-            location_name = store["name"]
-
-            raw_address = store["address"]
-
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            city = cty
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
-            country_code = "PE"
-
-            store_number = store["storelocator_id"]
-            phone = store["phone"]
-            if phone == "-":
-                phone = "<MISSING>"
-
-            location_type = "<MISSING>"
-            hours_list = []
-            hours_sel = lxml.html.fromstring(store["description"])
-            hours = hours_sel.xpath("//p/text()")
-            for hour in hours:
-                hours_list.append("".join(hour).strip())
-
-            hours_of_operation = "; ".join(hours_list).strip()
-            latitude = store["latitude"]
-            longitude = store["longtitude"]
-            if latitude == "0.000":
-                latitude = "<MISSING>"
-            if longitude == "0.000":
-                longitude = "<MISSING>"
-
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
+            search_res = session.post(
+                "https://4231ficvsl.execute-api.us-east-1.amazonaws.com/pro/api/stores/tag",
+                headers=api_headers,
+                data=json.dumps(data),
             )
+
+            store_list = json.loads(search_res.text)["data"]["stores"]
+
+            for store in store_list:
+
+                page_url = home_url
+
+                locator_domain = website
+                location_name = store["name"]
+
+                raw_address = store["address"]
+
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+
+                city = cty
+                state = formatted_addr.state
+                zip = formatted_addr.postcode
+                country_code = "PE"
+
+                store_number = store["storelocator_id"]
+                phone = store["phone"]
+                if phone == "-":
+                    phone = "<MISSING>"
+
+                phone = (
+                    phone.replace("Food Court", "")
+                    .strip()
+                    .replace("pick up", "")
+                    .strip()
+                )
+                location_type = "<MISSING>"
+                hours_list = []
+                hours_sel = lxml.html.fromstring(store["description"])
+                hours = hours_sel.xpath("//p/text()")
+                for hour in hours:
+                    hours_list.append("".join(hour).strip())
+
+                hours_of_operation = "; ".join(hours_list).strip()
+                latitude = store["latitude"]
+                longitude = store["longtitude"]
+                if latitude == "0.000":
+                    latitude = "<MISSING>"
+                if longitude == "0.000":
+                    longitude = "<MISSING>"
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():

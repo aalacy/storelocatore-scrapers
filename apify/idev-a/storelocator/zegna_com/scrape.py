@@ -30,11 +30,15 @@ def fetch_data():
             page_url = f"https://www.zegna.com/us-en/store-locator/store-detail/united-states/{_city}/{_address}.{_['STORE_ID']}/"
             hours = []
             for hh in _["OPENING_HOURS"].split(","):
-                if not hh:
-                    continue
-                day = hh.split(":")[0]
-                times = " ".join(hh.split(":")[1:])
-                hours.append(f"{hours_object[day]}: {times}")
+                try:
+                    if not hh:
+                        continue
+                    day = hh.split(":")[0]
+                    times = " ".join(hh.split(":")[1:])
+                    hours.append(f"{hours_object[day]}: {times}")
+                except:
+                    hours = ["temporarily closed"]
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["NAME"],

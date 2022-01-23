@@ -1,5 +1,5 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -13,7 +13,7 @@ def fetch_data(sgw: SgWriter):
     api_url = "http://www.wendys.co.id/location/search/R"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
     }
     r = session.post(api_url, headers=headers)
     tree = html.fromstring(r.text)
@@ -22,9 +22,18 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//text()"))
 
         session = SgRequests()
-        data = {
-            "search": f"{slug}",
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "multipart/form-data; boundary=---------------------------376098739433867467283407551032",
+            "Origin": "http://www.wendys.co.id",
+            "Connection": "keep-alive",
+            "Referer": "http://www.wendys.co.id/location",
+            "Upgrade-Insecure-Requests": "1",
         }
+        data = f'-----------------------------376098739433867467283407551032\r\nContent-Disposition: form-data; name="search"\r\n\r\n{slug}\r\n-----------------------------376098739433867467283407551032\r\nContent-Disposition: form-data; name="search_address"\r\n\r\n\r\n-----------------------------376098739433867467283407551032--\r\n'
+
         r = session.post(
             "http://www.wendys.co.id/location/result_search/",
             headers=headers,

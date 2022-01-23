@@ -2,7 +2,7 @@ import re
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
 
 
@@ -41,10 +41,9 @@ def get_data():
     page_urls = []
     session = SgRequests()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_2()
+        country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
     )
 
-    x = 0
     for search_code in search:
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
@@ -97,6 +96,7 @@ def get_data():
             location_type = location["type"]
 
             if page_url != "<MISSING>":
+                page_url = page_url.lower()
                 if page_url in page_urls or "-atm-" in page_url:
                     continue
 
@@ -156,10 +156,6 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
-
-        x = x + 1
-        # if x == 5:
-        #     break
 
 
 def scrape():

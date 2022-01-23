@@ -26,8 +26,6 @@ def fetch_data():
     for poi in all_locations:
         store_url = poi["landingPageUrl"]
         location_name = poi["name"]
-        if "Capital City Bank ATM" in location_name:
-            continue
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]["line1"]
         street_address = street_address if street_address else "<MISSING>"
@@ -50,6 +48,8 @@ def fetch_data():
         hours_of_operation = []
         if poi.get("hours"):
             for day, hours in poi["hours"].items():
+                if type(hours) == list:
+                    continue
                 if hours.get("openIntervals"):
                     opens = hours["openIntervals"][0]["start"]
                     closes = hours["openIntervals"][0]["end"]
