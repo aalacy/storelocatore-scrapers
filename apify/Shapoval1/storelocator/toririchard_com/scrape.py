@@ -49,6 +49,8 @@ def fetch_data(sgw: SgWriter):
             .replace("<br>", " ")
             .replace("\\", "")
             .replace("Open", "")
+            .replace("r ", " ")
+            .strip()
             .strip()
             or "<MISSING>"
         )
