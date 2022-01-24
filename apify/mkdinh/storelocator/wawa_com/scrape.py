@@ -50,7 +50,7 @@ def fetch_location(id, retry_count=0):
             f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={id}"
         )
 
-        with SgChrome(is_headless=False).driver() as driver:
+        with SgChrome(is_headless=True).driver() as driver:
             driver.get(page_url)
 
             soup = BeautifulSoup(driver.page_source)
