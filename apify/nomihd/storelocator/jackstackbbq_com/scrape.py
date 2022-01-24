@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-
+import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "jackstackbbq.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -22,20 +24,6 @@ headers = {
     "sec-fetch-dest": "document",
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
-
-
-def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
-
-    city_state_zip = (
-        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
-    )
-
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
-    country_code = "US"
-    return street_address, city, state, zip, country_code
 
 
 def get_latlng(map_link):
@@ -64,68 +52,42 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(
-        set(search_sel.xpath('//div[contains(@class,"-locations")]//a/@href'))
-    )
+    store_list = list(set(search_sel.xpath('//div[@class="locations__list-text"]')))
 
     for store in store_list:
 
-        page_url = base + store
+        page_url = base + "".join(
+            store.xpath('.//a[./button[contains(text(),"View Location")]]/@href')
+        )
         locator_domain = website
         log.info(page_url)
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
+        store_json = json.loads(
+            "".join(store_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')).strip()
+        )["props"]["pageProps"]["bodyInfo"]
 
-        location_name = "".join(
-            store_sel.xpath('//div[contains(@class,"restaurant-details")]/h1/text()')
-        )
+        location_name = "".join(store.xpath("div/span/strong/text()"))
 
-        full_address = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//div[contains(@class,"restaurant-details") and (.//h2[contains(text(),"ddress")] or .//h2[contains(text(),"DDRESS")])]//text()'
-                    )
-                ],
-            )
-        )
-
-        full_address = full_address[2:]
-
-        street_address, city, state, zip, country_code = split_fulladdress(full_address)
+        street_address = store_json["address1"]
+        city = store_json["address2"].split(",")[0].strip()
+        state = store_json["address2"].split(",")[-1].strip().split(" ")[0].strip()
+        zip = store_json["address2"].split(",")[-1].strip().split(" ")[-1].strip()
+        country_code = "US"
 
         store_number = "<MISSING>"
-        phone = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//div[contains(@class,"restaurant-details") and (.//h2[contains(text(),"ONTACT")] or .//h2[contains(text(),"ontact")])]/text()'
-                        )
-                    ],
-                )
-            )
-        ).strip()
+        phone = store_json["phone"]
 
         location_type = "<MISSING>"
 
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//div[contains(@class,"restaurant-details") and (.//h2[contains(text(),"Hours")] or .//h2[contains(text(),"HOURS")] or .//h2[contains(text(),"hours")])]//text()'
-                    )
-                ],
-            )
+        hours_of_operation = (
+            "; ".join(store_json["hours"])
+            .strip()
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "-")
+            .strip()
         )
-        hours = hours[1:]
-        hours_of_operation = "; ".join(hours)
 
         map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
 
@@ -155,7 +117,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

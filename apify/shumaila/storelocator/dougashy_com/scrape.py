@@ -14,16 +14,16 @@ headers = {
 
 def fetch_data():
     url = "https://dougashy.com/locations/"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.find("ul", {"class": "sub-menu"}).findAll("li")
     maplink = "https://dougashy.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxRqlWqBQCnUQoG"
-    coordlist = session.get(maplink, headers=headers, verify=False).json()["markers"]
+    coordlist = session.get(maplink, headers=headers).json()["markers"]
     cleanr = re.compile(r"<[^>]+>")
     pattern = re.compile(r"\s\s+")
     for link in linklist:
         link = link.find("a")["href"]
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         divlist = soup.findAll("div", {"class": "fl-rich-text"})
         for div in divlist:

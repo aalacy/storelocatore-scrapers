@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://prettykittywax.com/"
     api_url = "https://prettykittywax.com/"
-    session = SgRequests()
+
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -54,25 +54,12 @@ def fetch_data(sgw: SgWriter):
             == "https://prettykittywax.wpengine.com/locations/tx/houston-wash-heights/"
         ):
             continue
-        if (
-            page_url
-            == "https://prettykittywax.wpengine.com/locations/tx/dallas-uptown/"
-        ):
-            continue
-        if (
-            page_url
-            == "https://prettykittywax.wpengine.com/locations/tx/dallas-mockingbird/"
-        ):
-            continue
+
         if page_url == "https://prettykittywax.com/locations/tx/houston-wash-heights/":
-            continue
-        if page_url == "https://prettykittywax.com/locations/tx/dallas-uptown/":
-            continue
-        if page_url == "https://prettykittywax.com/locations/tx/dallas-mockingbird/":
             continue
         if page_url == "https://prettykittywax.com/locations/tx/dallas-southlake/":
             page_url = "https://prettykittywax.com/locations/tx/dallas-south-lake/"
-        session = SgRequests()
+
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         ad = tree.xpath(
@@ -81,6 +68,7 @@ def fetch_data(sgw: SgWriter):
         ad = list(filter(None, [a.strip() for a in ad]))
         if "closed permanently" in "".join(ad):
             continue
+
         ad = " ".join(ad).replace("\n", " ").replace(",", "").strip()
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         location_name = tree.xpath('//h2[contains(text(), "The Pretty Kitty")]/text()')
@@ -134,6 +122,9 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.find("Modified Hours") != -1:
             hours_of_operation = "<MISSING>"
+        cms = "".join(tree.xpath('//h2[contains(text(), "Coming Soon")]/text()'))
+        if cms:
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -150,6 +141,7 @@ def fetch_data(sgw: SgWriter):
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

@@ -9,6 +9,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="swedish.org")
 
 session = SgRequests()
 
@@ -35,14 +38,14 @@ def fetch_populated_location_map():
         longitude = group.get("Longitude", "<MISSING>")
 
         locations = group.get("Locations", [])
-        street_address, city, state, zipcode = parse_address(
-            group.get("Locations")[0].get("Address")
-        )
 
         for location in locations:
             location_name = location.get("Name").replace("–", "-").split("-")[0].strip()
             if "swedish" not in location_name.split()[0].lower():
                 location_name = "Swedish " + location_name
+            street_address, city, state, zipcode = parse_address(
+                location.get("Address")
+            )
             key = location.get("Maps")
             page_url = f"https://www.swedish.org{key}"
 
@@ -125,15 +128,23 @@ def fetch_data(sgw: SgWriter):
 
         if ".providence.org" in page_url:
             page_url = page_url.replace("https://www.swedish.org", "")
-
+        log.info("Pull content => " + page_url)
         r = session.get(page_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
 
         if ".providence.org" in page_url:
-            phoneNumber = soup.find(class_="loc-phone").text.strip()
-            hours_of_operation = " ".join(
-                list(soup.find(class_="hours-text").stripped_strings)
-            )
+            try:
+                phone = soup.find(class_="loc-phone")
+            except:
+                phone = soup.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+            try:
+                hours_of_operation = " ".join(
+                    list(soup.find(class_="clinic_hours").stripped_strings)
+                )
+            except:
+                hours_of_operation = (
+                    "Mon - Fri: 8 a.m. - 8 p.m.,Sat - Sun: 8 a.m. - 4 p.m."
+                )
         else:
             phone = soup.find(class_="mobile-only-phone")
             phoneNumber = clean_phone(phone)
@@ -149,11 +160,31 @@ def fetch_data(sgw: SgWriter):
             hours = soup.select_one(
                 "#main_0_rightpanel_0_pnlOfficeHours .option-content"
             )
+            if not hours:
+                hours = soup.find(id="main_0_contentpanel_2_pnlOfficeHours")
             hours_of_operation = (
                 hours.text.replace("\n", " ").strip()
                 if hours and hours.text != ""
-                else None
+                else ""
             )
+        hours_of_operation = (
+            hours_of_operation.split("Schedule your")[0]
+            .split("A pharmacist")[0]
+            .split("; please call")[0]
+            .split("Please contact")[0]
+            .split("Printable")[0]
+            .split("Call to")[0]
+            .split("Patients and")[0]
+            .split("Schedule a")[0]
+            .split("Lab hours vary")[0]
+        )
+
+        if (
+            "Each provider sets their hours" in hours_of_operation
+            or "Hours may vary;" in hours_of_operation
+        ):
+            hours_of_operation = "<MISSING>"
+        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
         location_map[key]["phone"] = phoneNumber or "<MISSING>"
         location_map[key]["hours_of_operation"] = hours_of_operation or "<MISSING>"
@@ -170,7 +201,7 @@ def fetch_data(sgw: SgWriter):
                 street_address=location.get("street_address"),
                 city=location.get("city"),
                 state=location.get("state"),
-                zip_postal=location.get("zip"),
+                zip_postal=location.get("zip").replace("98209", "98029"),
                 country_code=location.get("country_code"),
                 store_number=location.get("store_number"),
                 phone=location.get("phone"),
