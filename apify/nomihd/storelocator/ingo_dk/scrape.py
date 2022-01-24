@@ -50,7 +50,7 @@ def fetch_data():
 
             location_type = store["/sites/{siteId}"]["brand"]
 
-            page_url = "<MISSING>"
+            page_url = search_url
 
             raw_address = "<MISSING>"
 
