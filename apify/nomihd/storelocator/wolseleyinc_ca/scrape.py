@@ -99,9 +99,17 @@ def fetch_data():
                 zip = formatted_addr.postcode
                 country_code = "CA"
 
-                phone = store.xpath(".//td[2]//text()")
-                if len(phone) > 0:
-                    phone = phone[0]
+                temp_phone = store.xpath(".//td[2]//text()")
+                phone_list = []
+                for ph in temp_phone:
+                    if len("".join(ph).strip()) > 0:
+                        phone_list.append("".join(ph).strip())
+
+                if len(phone_list) > 0:
+                    if phone_list[0] == "(":
+                        phone = "".join(phone_list[:2]).strip()
+                    else:
+                        phone = phone_list[0]
                 else:
                     phone = "<MISSING>"
 
