@@ -43,11 +43,21 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
+        if ad.find("Время") != -1:
+            ad = ad.split("Время")[0].strip()
+        if ad.find("Ежедневно") != -1:
+            ad = ad.split("Ежедневно")[0].strip()
         location_name = "".join(tree.xpath("//h1/text()"))
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
+        street_address = (
+            street_address.replace("Поселок Сосенское", "")
+            .replace("Cело Федяково", "")
+            .replace("Или 41 Км Мкад", "")
+            .strip()
+        )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "RU"
@@ -123,6 +133,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
