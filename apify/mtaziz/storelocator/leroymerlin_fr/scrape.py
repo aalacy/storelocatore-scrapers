@@ -98,7 +98,8 @@ def fetch_data(sgw: SgWriter):
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [
-            executor.submit(fetch_records, store_num, sgw) for store_num in range(1, 310)
+            executor.submit(fetch_records, store_num, sgw)
+            for store_num in range(1, 310)
         ]
         tasks.extend(task)
         task_concept = [
