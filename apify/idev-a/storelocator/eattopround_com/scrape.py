@@ -32,9 +32,11 @@ def fetch_data():
             coord = link.h3.a["href"].split("/@")[1].split("/data")[0].split(",")
             addr = list(link.p.stripped_strings)
             _hr = link.find("strong", string=re.compile(r"^Hours", re.IGNORECASE))
-            hours = ""
+            hours = []
             if _hr:
-                hours = _hr.find_next_sibling().text.strip()
+                hours.append(_hr.find_next_sibling().text.strip())
+                if "Phone" not in _hr.find_parent().find_next_sibling().text:
+                    hours.append(_hr.find_parent().find_next_sibling().text.strip())
 
             _pp = link.find("a", href=re.compile(r"tel:", re.IGNORECASE))
             phone = ""
@@ -45,7 +47,9 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 location_name=city,
-                street_address=" ".join(addr[:-1]),
+                street_address=" ".join(addr[:-1]).replace(
+                    "Irvine Spectrum Center", ""
+                ),
                 city=city,
                 state=addr[-1].split(",")[1].strip().split()[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
@@ -54,7 +58,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
-                hours_of_operation=hours.replace("–", "-"),
+                hours_of_operation="; ".join(hours).replace("–", "-"),
                 raw_address=" ".join(addr),
             )
 
