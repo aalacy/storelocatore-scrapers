@@ -25,7 +25,6 @@ def fetch_data():
         if "https" in url:
             continue
         store_url = "https://www.ubreakifix.com/" + url
-        print(store_url)
         loc_response = session.get(store_url)
         if "asurion" in str(loc_response.url):
             continue
