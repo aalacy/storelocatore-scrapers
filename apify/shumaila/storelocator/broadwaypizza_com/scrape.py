@@ -64,6 +64,8 @@ def fetch_data():
             lat = lat.split("!", 1)[0]
         except:
             pass
+        if " 200 S" in street:
+            street = "200 S " + street.split(" 200 S", 1)[1]
         yield SgRecord(
             locator_domain="https://www.broadwaypizza.com/",
             page_url=link,
