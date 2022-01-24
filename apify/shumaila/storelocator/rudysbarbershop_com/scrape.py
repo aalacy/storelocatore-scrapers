@@ -26,7 +26,7 @@ def fetch_data():
         address = loc["address"]
         city = loc["city"]
         state = loc["state"]
-        print(address.split(city + state + ", ", 1))
+
         street, pcode = address.split(city + " " + state + ", ", 1)
         phone = loc["phone"]
         hours = loc["hours"].replace("<br />", " ").strip()
