@@ -60,6 +60,10 @@ def fetch_data():
         hours = ""
         for i in range(0, len(daylist)):
             hours = hours + daylist[i].text + " " + timelist[i].text + " "
+        try:
+            lat = lat.split("!", 1)[0]
+        except:
+            pass
         yield SgRecord(
             locator_domain="https://www.broadwaypizza.com/",
             page_url=link,
