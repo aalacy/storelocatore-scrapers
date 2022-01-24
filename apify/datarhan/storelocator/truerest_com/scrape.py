@@ -49,9 +49,9 @@ def fetch_data():
             phone = poi_html.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
             hoo = loc_dom.xpath(
-                '//div[@class="store_locator_single_opening_hours"]//text()'
+                '//div[contains(@class, "store_locator_single_opening_hours")]//text()'
             )[1:]
-            hoo = " ".join(hoo)
+            hoo = " ".join(hoo).split("Opening Hours")[0].strip()
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -64,7 +64,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code="",
+                country_code="US",
                 store_number=poi["ID"],
                 phone=phone,
                 location_type="",

@@ -71,6 +71,9 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
+        postal = postal.replace(",", "").strip()
+        if postal == "Hammersmith":
+            postal = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

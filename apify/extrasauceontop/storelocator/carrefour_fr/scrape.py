@@ -98,6 +98,10 @@ def get_data():
                 + " "
                 + location["address"]["address3"]
             ).strip()
+
+            if address[-1] == "0":
+                address = address[:-2]
+
             state = location["address"]["region"]
             zipp = location["address"]["postalCode"]
 

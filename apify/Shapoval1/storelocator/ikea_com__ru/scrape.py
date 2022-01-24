@@ -1,14 +1,14 @@
 from lxml import html
-from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-
+    session = SgRequests()
     locator_domain = "https://www.ikea.com/ru/ru/"
     api_url = "https://www.ikea.com/ru/ru/stores/"
     headers = {
@@ -20,14 +20,14 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-
+        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
         ad = (
             " ".join(
                 tree.xpath(
-                    '//strong[contains(text(), "Адрес магазина:")]/following-sibling::text() | //strong[contains(text(), "Адрес:")]/following-sibling::text() | //p[./strong[contains(text(), "Адрес:")]]/following-sibling::p[1]//text()'
+                    '//strong[contains(text(), "Адрес магазина:")]/following-sibling::text() | //strong[contains(text(), "Адрес:")]/following-sibling::text() | //p[./strong[contains(text(), "Адрес:")]]/following-sibling::p[1]//text() | //p[./strong[contains(text(), "Адрес студии:")]]/text()'
                 )
             )
             .replace("\n", "")
@@ -98,6 +98,16 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//p[./strong[contains(text(), "Магазин (")]]/text()')
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -120,7 +130,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

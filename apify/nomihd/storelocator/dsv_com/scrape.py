@@ -20,9 +20,10 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://dsv.ankiro.dk/Rest/dsv.com-offices/Search?ScPageType=office&q=*&officeRegion=&officeCountry=&startIndex=0&MaxResults=10000&officeService=&officeType="
+    search_url = "https://dsv.ankiro.dk/Rest/www.dsv.com-en%20offices/Search?ScPageType=office&regionLang=en&q=*&officeRegion=&officeCountry=&officeService=&officeType=&officeLocationType=&MaxResults=10000"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)["Documents"]
+
     for store in stores:
 
         page_url = store["Uri"]
