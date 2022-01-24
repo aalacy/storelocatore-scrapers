@@ -79,7 +79,6 @@ def get_data():
         )
     ]
 
-    x = 0
     for url in region_urls:
         response_session = reset_sessions(url)
         response = response_session[2]
@@ -88,9 +87,6 @@ def get_data():
         json_objects = extract_json(response)
 
         for location in json_objects[1]["search"]["data"]["stores"]:
-            x = x + 1
-            if x == 500:
-                return
             locator_domain = "carrefour.fr"
             page_url = "https://www.carrefour.fr" + location["storePageUrl"]
             location_name = location["name"]
