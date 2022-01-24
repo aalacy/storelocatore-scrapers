@@ -80,7 +80,10 @@ def get_data():
     ]
 
     for url in region_urls:
-        response = reset_sessions(url)[2]
+        response_session = reset_sessions(url)
+        response = response_session[2]
+        session = response_session[0]
+        headers = response_session[1]
         json_objects = extract_json(response)
 
         for location in json_objects[1]["search"]["data"]["stores"]:
@@ -105,9 +108,23 @@ def get_data():
             state = location["address"]["region"]
             zipp = location["address"]["postalCode"]
 
-            phone = location["phoneNumber"]
-            if phone == "":
-                phone = "<MISSING>"
+            try:
+                phone_response = session.get(page_url, headers=headers).text
+
+            except Exception:
+                response_session = reset_sessions(url)
+                phone_response = response_session[2]
+                session = response_session[0]
+                headers = response_session[1]
+
+            phone_soup = bs(phone_response, "html.parser")
+            a_tags = phone_soup.find_all("a")
+
+            phone = "<MISSING>"
+            for a_tag in a_tags:
+                if "tel:" in a_tag["href"]:
+                    phone = a_tag["href"].replace("tel:", "")
+                    break
 
             location_type = "<MISSING>"
             country_code = location["address"]["countryCode"]
