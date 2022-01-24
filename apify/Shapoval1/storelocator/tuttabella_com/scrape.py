@@ -1,103 +1,97 @@
-import csv
-import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.tuttabella.com"
-    api_url = "https://www.tuttabella.com/overview/"
-    session = SgRequests()
+    locator_domain = "https://www.tuttabella.com/"
+    api_url = "https://www.tuttabella.com/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "locations")]/text()'))
-        .split("locations: ")[1]
-        .split("apiKey")[0]
-        .replace("[]}}],", "[]}}]")
-        .strip()
+    div = tree.xpath(
+        '//header[@class="site-header"]/div[@class="site-header-desktop"]//nav//button[contains(text(), "Locations")]/following-sibling::div//ul/li/a'
     )
-    js = json.loads(jsblock)
+    for d in div:
 
-    for j in js:
-        slug = j.get("url")
-        state = j.get("state")
-        page_url = f"{locator_domain}{slug}"
-        location_name = j.get("name")
-        location_type = "<MISSING>"
-        street_address = j.get("street")
-        phone = j.get("phone_number")
-        postal = j.get("postal_code")
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"https://www.tuttabella.com{slug}"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        location_name = "".join(tree.xpath("//h1/text()"))
+        street_address = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="col-md-6"]//a[contains(@href, "maps")]/text()[1]'
+                )
+            )
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
+        )
+        ad = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="col-md-6"]//a[contains(@href, "maps")]/text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
         country_code = "US"
-        city = j.get("city")
-        store_number = "<MISSING>"
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        hours_of_operation = "".join(j.get("hours"))
-        h = html.fromstring(hours_of_operation)
-        hours_of_operation = " ".join(h.xpath("//*//text()")).replace("\n", "").strip()
-        if hours_of_operation.find("Order") != -1:
-            hours_of_operation = hours_of_operation.split("Order")[0].strip()
+        city = ad.split(",")[0].strip()
+        latitude = "".join(tree.xpath("//div/@data-gmaps-lat"))
+        longitude = "".join(tree.xpath("//div/@data-gmaps-lng"))
+        phone = (
+            "".join(
+                tree.xpath('//div[@class="col-md-6"]//a[contains(@href, "tel")]/text()')
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//div[@class="col-md-6"]//p[./a[contains(@href, "tel")]]/following-sibling::p[1]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        cls = "".join(tree.xpath('//p[contains(text(), "temporarily closure")]/text()'))
+        if cls:
+            hours_of_operation = "Temporarily Closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

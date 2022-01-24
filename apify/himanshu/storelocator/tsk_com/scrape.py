@@ -1,27 +1,34 @@
-import csv
+import json
+
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }
-    base_url = "https://tsk.com/locations/"
-    return_main_object = []
-    r = session.get(base_url)
-    soup = BeautifulSoup(r.text,'html5lib')
-    main = soup.find_all('script')[15].text.split("var locations = ")[1].split("for (var i=0; i < locations.length; i++)")[0].replace('twitter.com\/TSMMAFeaster"}]];','twitter.com\/TSMMAFeaster"}]]')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+session = SgRequests()
+
+
+def fetch_data(sgw: SgWriter):
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    base_link = "https://tsk.com/locations/"
+
+    session = SgRequests(verify_ssl=False)
+    req = session.get(base_link, headers=headers)
+    soup = BeautifulSoup(req.text, "lxml")
+
+    all_scripts = soup.find_all("script")
+    for script in all_scripts:
+        if "var locations = " in str(script):
+            script = str(script)
+            break
+
+    main = script.split("var locations = ")[1].split("}]];\n")[0] + "}]]"
     list_1 = []
     data_json = json.loads(main)
     for i in data_json:
@@ -30,31 +37,58 @@ def fetch_data():
     try:
         i = 4
         while True:
-            # r = session.get("https://tsk.com/locations/"+list_1[i]['url'],headers=headers)
-            # soup = BeautifulSoup(r.text, "html5lib")
-            # data = soup.find("div",{"class":"qigLe4VzIR2OBRVx0QbLM dS6uS5vUPuwi9woFSKW5A _1gETrmJP4-nKwWKbJliZCW _1TdCsy72ploof1Rx0WfhEv foajPYZEN0yB_-OGHR4Ol merce-column"}).text
-            # print(data)
-            store=[]
+            store = []
             store.append("https://tsk.com/")
-            store.append(list_1[i]['name'] if list_1[i]['name'] else "<MISSING>")
-            store.append(list_1[i]['street'] if list_1[i]['street'] else "<MISSING>")
-            store.append(list_1[i]['city'] if list_1[i]['city'] else "<MISSING>")
-            store.append(list_1[i]['state'] if list_1[i]['state'] else "<MISSING>")
-            store.append(list_1[i]['zip5'] if list_1[i]['zip5'] else "<MISSING>")
+            store.append(list_1[i]["name"] if list_1[i]["name"] else "<MISSING>")
+            store.append(list_1[i]["street"] if list_1[i]["street"] else "<MISSING>")
+            store.append(list_1[i]["city"] if list_1[i]["city"] else "<MISSING>")
+            store.append(list_1[i]["state"] if list_1[i]["state"] else "<MISSING>")
+            store.append(list_1[i]["zip5"] if list_1[i]["zip5"] else "<MISSING>")
             store.append("US")
-            store.append(list_1[i]['crmSchoolId'])
-            store.append(list_1[i]['phone'] if list_1[i]['phone'] else "<MISSING>")
-            store.append("tsk")
-            store.append(list_1[i]['lat'] if list_1[i]['lat'] else "<MISSING>")
-            store.append(list_1[i]['lon'] if list_1[i]['lon'] else "<MISSING>")
-            store.append("<INACCESSIBLE>")
-            # inaccessible
-            store.append("https://tsk.com/locations"+list_1[i]['url'])
-            yield store
+            store.append(list_1[i]["crmSchoolId"])
+            store.append(list_1[i]["phone"] if list_1[i]["phone"] else "<MISSING>")
+            store.append("")
+            store.append(list_1[i]["lat"] if list_1[i]["lat"] else "<MISSING>")
+            store.append(list_1[i]["lon"] if list_1[i]["lon"] else "<MISSING>")
+
+            link = "https://tsk.com/locations" + list_1[i]["url"]
+            req = session.get(link, headers=headers)
+            soup = BeautifulSoup(req.text, "lxml")
+            hours = ""
+            tables = soup.find_all(
+                class_="elementor-widget-wrap elementor-element-populated"
+            )
+            for table in tables:
+                if "HOURS" in table.text.upper():
+                    hours = (
+                        " ".join(list(table.ul.stripped_strings))
+                        .replace("   ", " ")
+                        .replace("  ", " ")
+                    )
+            if hours.lower().count("soon") != 7 and hours.upper().count("TBD") != 7:
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=store[0],
+                        location_name=store[1],
+                        street_address=store[2],
+                        city=store[3],
+                        state=store[4],
+                        zip_postal=store[5],
+                        country_code=store[6],
+                        store_number=store[7],
+                        phone=store[8],
+                        location_type=store[9],
+                        latitude=store[10],
+                        longitude=store[11],
+                        hours_of_operation=hours,
+                        page_url=link,
+                    )
+                )
+
             i = i + 5
     except:
         pass
-def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

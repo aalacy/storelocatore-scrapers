@@ -72,14 +72,35 @@ def fetch_data():
             bs(row["html"], "lxml")
             .get_text(strip=True, separator=",")
             .replace("Autogrill", "")
-        )
-        street_address, city, state, zip_postal, country_code = getAddress(raw_address)
-        street_address = street_address.replace(state, "")
+            .strip()
+        ).replace("\n", " ")
         phone = re.search(r"Tel:(.*)", raw_address, re.IGNORECASE)
         if not phone:
             phone = MISSING
         else:
             phone = phone.group(1).replace("Tel: ", "").strip()
+        raw_address = (
+            re.sub(r"Tel.*", "", raw_address)
+            .rstrip(",")
+            .replace("+", "-")
+            .replace("Limmtquai", "Limmatquai")
+            .strip()
+        )
+        street_address, city, state, zip_postal, country_code = getAddress(raw_address)
+        street_address = street_address.replace(state, "")
+        if (
+            street_address.replace(" ", "").strip().isnumeric()
+            or len(street_address) == 0
+            or len(street_address) < 5
+        ):
+            if zip_postal is not MISSING:
+                street_address = " ".join(
+                    raw_address.split(zip_postal)[0].split(",")[1:]
+                )
+            elif street_address:
+                street_address = " ".join(
+                    raw_address.split(street_address)[0].split(",")[1:]
+                )
         store_number = row["id"]
         location_type = MISSING
         latitude = fix_coord(row["lat"])

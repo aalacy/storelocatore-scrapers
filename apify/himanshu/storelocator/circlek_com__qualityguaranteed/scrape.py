@@ -6,6 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
+from sgpostal import sgpostal as parser
 
 logger = SgLogSetup().get_logger("circlek.com")
 
@@ -93,22 +94,24 @@ def fetch_data():
                                 city = (
                                     stores[key]["city"].replace("&#039;", "'").strip()
                                 )
-                                state = ""
                                 zipp = store_json["address"]["postalCode"].strip()
                                 country_code = stores[key]["country"]
                                 latitude = store_json["geo"]["latitude"]
                                 longitude = store_json["geo"]["longitude"]
                                 store_number = stores[key]["cost_center"]
-                                raw_address = store_json["name"]
-
+                                state = ""
                                 try:
-                                    state = (
-                                        raw_address.split(",")[-2]
-                                        .replace("PEI", "PE")
-                                        .strip()
+                                    temp_address = "".join(
+                                        store_sel.xpath(
+                                            '//h2[@class="heading-small"]//text()'
+                                        )
+                                    ).strip()
+                                    formatted_addr = parser.parse_address_intl(
+                                        temp_address
                                     )
-                                    if len(state) > 3:
-                                        state = "<MISSING>"
+
+                                    state = formatted_addr.state
+
                                 except:
                                     state = "<MISSING>"
 

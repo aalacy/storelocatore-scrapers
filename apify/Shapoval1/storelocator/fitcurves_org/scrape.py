@@ -25,7 +25,8 @@ def fetch_data(sgw: SgWriter):
         js = r.json()
         for j in js:
             city_url = j.get("city_url")
-            page_url = f"https://fitcurves.org/clubs/{city_url}/"
+            id_s = j.get("id")
+            page_url = f"https://fitcurves.org/clubs/page_{city_url}_{id_s}/"
             location_name = j.get("name") or "<MISSING>"
             street_address = j.get("address") or "<MISSING>"
             state = j.get("region") or "<MISSING>"

@@ -48,6 +48,7 @@ def fetch_data(sgw: SgWriter):
                 or "July" in h
                 or "4/4" in h
                 or "Holiday" in h
+                or "Thanks" in h
             ):
                 continue
             if "*" in h or "Under" in h or "Hours" in h or h[0].isdigit():

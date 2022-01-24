@@ -9,8 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://popeyesmexico.mx/sucursales/"
     domain = "popeyesmexico.mx"
     hdr = {
@@ -20,19 +19,22 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//div[@class="et_pb_column et_pb_column_4_4 et_pb_column_0  et_pb_css_mix_blend_mode_passthrough et-last-child"]/div'
-    )[1:]
+        '//div[@class="my-grid-layout"]/div[@class="listing-item"]'
+    )
     for poi_html in all_locations:
-        location_name = poi_html.xpath('.//div[@class="et_pb_text_inner"]/p/text()')
-        if not location_name:
-            location_name = poi_html.xpath('.//div[@class="column"]/p/span/text()')
-        location_name = location_name[0]
-        raw_adr = poi_html.xpath(".//h6/text()")[0].strip()
+        location_name = poi_html.xpath('.//span[@class="title"]/text()')[0]
+        raw_adr = (
+            poi_html.xpath('.//span[@class="excerpt"]/text()')[0]
+            .split("Pick & Go:")[0]
+            .strip()
+        )
+        raw_adr = " ".join(raw_adr.split()).replace(" CDMX,", "")
         addr = parse_address_intl(raw_adr)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        phone = poi_html.xpath(".//h6/text()")[-1].split(":")[-1].strip()
+        phone = poi_html.xpath('.//span[@class="excerpt"]/text()')[0]
+        phone = phone.split("Pick & Go:")[-1].strip() if "Pick & Go" in phone else ""
 
         item = SgRecord(
             locator_domain=domain,

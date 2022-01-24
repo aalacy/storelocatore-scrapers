@@ -95,6 +95,16 @@ def fetch_data():
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
+        btn = soup.findAll("div", {"class": "button_align align_center"})[1].find("a")
+
+        btn = btn["href"]
+        if btn.find("/@") != -1:
+            coords = btn.split("/@")[1].split(",1")[0]
+            lat, lng = coords.split(",")
+        else:
+            lat = MISSING
+            lng = MISSING
+
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=link,
@@ -107,8 +117,8 @@ def fetch_data():
             store_number=MISSING,
             phone=phone,
             location_type=MISSING,
-            latitude="<INACCESSIBLE>",
-            longitude="<INACCESSIBLE>",
+            latitude=lat,
+            longitude=lng,
             hours_of_operation=hours.strip(),
         )
 

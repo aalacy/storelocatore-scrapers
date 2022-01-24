@@ -47,13 +47,15 @@ def fetch_data():
 
         stores = search_sel.xpath('//div[@class="addresses__wrapper"]')
 
-        for idx, store in enumerate(stores, 1):
+        for store in stores:
 
             page_url = search_url
 
             locator_domain = website
 
             location_name = "".join(store.xpath("./h3//text()")).strip()
+            if len(location_name) <= 0:
+                continue
             full_address = list(
                 filter(
                     str,
@@ -70,6 +72,9 @@ def fetch_data():
                 street_address = street_address.replace("Ste", "Suite")
             city = formatted_addr.city
             state = formatted_addr.state
+            if state:
+                state = state.replace(".", "").strip()
+
             zip = formatted_addr.postcode
 
             country_code = "US"

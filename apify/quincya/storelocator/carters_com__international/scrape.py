@@ -1,4 +1,5 @@
 import re
+import os
 
 from bs4 import BeautifulSoup
 
@@ -24,6 +25,11 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
+    proxies = {"http": proxy_url, "https": proxy_url}
+    session.proxies = proxies
+
     base_link = "https://www.carters.com/on/demandware.store/Sites-Carters-Site/default/Stores-International"
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
@@ -32,7 +38,6 @@ def fetch_data(sgw: SgWriter):
 
     countries = base.find(id="country").find_all("option")[1:]
     num = 1
-
     for i in countries:
         country_code = i["value"]
         final_link = (
@@ -42,8 +47,9 @@ def fetch_data(sgw: SgWriter):
             + "&id=carters"
         )
 
-        if num % 20 == 0:
+        if num % 15 == 0:
             session = SgRequests()
+            session.proxies = proxies
         num = num + 1
 
         logger.info(final_link)

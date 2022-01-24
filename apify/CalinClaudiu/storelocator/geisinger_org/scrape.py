@@ -1,223 +1,58 @@
-from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
-from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MappingField
-from sglogging import sglog
-from sgscrape.simple_scraper_pipeline import MultiMappingField
-from sgscrape.simple_scraper_pipeline import MissingField
-from bs4 import BeautifulSoup as b4
-from sgselenium import SgChrome
-import time
-import ssl
 from sgrequests import SgRequests
-import json
-
-logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-ssl._create_default_https_context = ssl._create_unverified_context
-import os
-import os.path
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+from tenacity import retry, stop_after_attempt
+import tenacity
 import ssl
-import stat
-import subprocess
-import sys
+from lxml import html
+import json
+import time
 
-STAT_0o775 = (
-    stat.S_IRUSR
-    | stat.S_IWUSR
-    | stat.S_IXUSR
-    | stat.S_IRGRP
-    | stat.S_IWGRP
-    | stat.S_IXGRP
-    | stat.S_IROTH
-    | stat.S_IXOTH
-)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-def fixSSL():
-    openssl_dir, openssl_cafile = os.path.split(
-        ssl.get_default_verify_paths().openssl_cafile
-    )
+logger = SgLogSetup().get_logger("geisinger_org")
+MISSING = SgRecord.MISSING
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_argument(f"user-agent={USER_AGENT}")
 
-    subprocess.check_call(
-        [sys.executable, "-E", "-s", "-m", "pip", "install", "--upgrade", "certifi"]
-    )
+headers = {
+    "content-type": "application/json",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
 
-    import certifi
-
-    os.chdir(openssl_dir)
-    relpath_to_certifi_cafile = os.path.relpath(certifi.where())
-    try:
-        os.remove(openssl_cafile)
-    except FileNotFoundError:
-        pass
-    os.symlink(relpath_to_certifi_cafile, openssl_cafile)
-    os.chmod(openssl_cafile, STAT_0o775)
+LOCATION_URL = "http://locations.geisinger.org/?utm_source=Locations%20Page&utm_medium=Web&utm_campaign=Locations%20CTA"
 
 
-def fetch_data():
-    with SgRequests() as session:
-        url = "http://locations.geisinger.org/?utm_source=Locations%20Page&utm_medium=Web&utm_campaign=Locations%20CTA"
-        soup = session.get(url)
-        # json location
-        soup = b4(soup.text, "lxml")
-        k = soup.find("div", {"id": "bottom"}).find("script").text.strip()
-        k = k.split("var results= ")[1]
-        k = k.split("[", 1)[1]
-        k = k.split("}];")[0]
-        k = '{"stores":[' + k + "}]}"
-        son = json.loads(k)
-        for i in son["stores"]:
-            logzilla.info(
-                f'http://locations.geisinger.org/details.cfm?id={str(i["CLINICID"])}'
-            )
-            pageText = None
-            try:
-                with SgChrome() as driver:
-                    driver.get(
-                        str(
-                            "http://locations.geisinger.org/details.cfm?id="
-                            + str(i["CLINICID"])
-                        )
-                    )
-                    element = driver.find_element_by_tag_name("iframe")
-                    driver.execute_script("arguments[0].scrollIntoView();", element)
-                    time.sleep(3)
-                    pageText = driver.page_source
-                    driver.switch_to.frame(element)
-                    coordText = driver.page_source
-            except Exception:
-                pass
-            try:
-                backup = pageText.replace("<b>", '"').replace("</b>", '"')
-                soupy = b4(backup, "lxml")
-                soup = b4(pageText, "lxml")
-                coordSoup = b4(coordText, "lxml")
-            except Exception:
-                pass
-            try:
-                i["hours"] = "; ".join(
-                    list(
-                        soup.find("div", {"class": "officeHours"})
-                        .find("p")
-                        .stripped_strings
-                    )
-                )
-            except Exception:
-                try:
-                    i["hours"] = "; ".join(
-                        list(
-                            soup.find("div", {"class": "officeHours"}).stripped_strings
-                        )
-                    )
-                except Exception:
-                    try:
-                        i["hours"] = soup.find(
-                            "div", {"class": "officeHours"}
-                        ).text.strip()
-                    except Exception:
-                        i["hours"] = "<MISSING>"
-            old = i["hours"]
-            soup = soupy
-            try:
-                i["hours"] = "; ".join(
-                    list(
-                        soup.find("div", {"class": "officeHours"})
-                        .find("p")
-                        .stripped_strings
-                    )
-                )
-            except Exception:
-                try:
-                    i["hours"] = "; ".join(
-                        list(
-                            soup.find("div", {"class": "officeHours"}).stripped_strings
-                        )
-                    )
-                except Exception:
-                    try:
-                        i["hours"] = soup.find(
-                            "div", {"class": "officeHours"}
-                        ).text.strip()
-                    except Exception:
-                        i["hours"] = "<MISSING>"
-
-            try:
-                i["hours"] = old.replace(":;", "")
-            except Exception:
-                pass
-            coords = None
-            try:
-                links = coordSoup.find_all("a", {"href": True})
-                for link in links:
-                    if "maps?ll=" in link["href"]:
-                        coords = link["href"]
-                        coords = coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
-            except Exception:
-                coords = ["<INACCESSIBLE>", "<INACCESSIBLE>"]
-            try:
-                i["lon"] = coords[1]
-                i["lat"] = coords[0]
-            except Exception:
-                i["lon"] = coords
-                i["lat"] = coords
-            try:
-                i["hours"] = i["hours"].split(";")
-                h = []
-                for j in i["hours"]:
-                    if (
-                        any(
-                            i in j
-                            for i in [
-                                "day",
-                                "p.m.",
-                                "a.m.",
-                                ":",
-                                "aci",
-                                "ine",
-                                "ory",
-                                "ics",
-                            ]
-                        )
-                        and any(i not in j for i in ["ppointment", "call"])
-                    ):
-                        h.append(j)
-
-                i["hours"] = "; ".join(h)
-                i["hours"] = i["hours"].replace("\r", ";").replace("\n", ";")
-                i["hours"] = i["hours"].replace(";;", ";")
-                i["hours"] = i["hours"].replace(";;", ";")
-            except Exception:
-                try:
-                    i["hours"] = i["hours"]
-                except Exception:
-                    i["hours"] = "<INACCESSIBLE>"
-
-            try:
-                i["ADDRESS2"] = i["ADDRESS2"]
-            except Exception:
-                i["ADDRESS2"] = ""
-            if not i["lat"]:
-                i["lat"] = "<MISSING>"
-
-            if not i["lon"]:
-                i["lon"] = "<MISSING>"
-            yield i
-
-
-def parse_features(x):
-    s = b4(str(x), "lxml")
-    s = "; ".join(list(s.stripped_strings))
-    s = s.replace("\n", ";").replace("\r", ";").replace(";;", ";").replace(";;", ";")
-    copy = ""
-    while "<!" in s:
-        try:
-            copy = copy + " " + str(s.split("<!")[0])
-            copy = copy + " " + str(s.split("-->")[1])
-        except Exception:
-            return copy
-        if "<!" not in copy:
-            s = copy
-
-    return s
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(60))
+def get_response(urlnum, url):
+    with SgRequests(timeout_config=600) as http:
+        logger.info(f"[{urlnum}] Pulling the data from: {url}")
+        r = http.get(url, headers=headers)
+        if r.status_code == 200 or r.status_code == 500:
+            logger.info(f"HTTP Status Code: {r.status_code}")
+            return r
+        raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
 def fix_address(x):
@@ -262,62 +97,156 @@ def fix_address(x):
             except Exception:
                 h[i] = h[i]
     h = " ".join(h).replace("<br>", " ").strip()
-
     return h
 
 
+def get_loc_type(oservices):
+    sel_os = html.fromstring(oservices)
+    ostext = sel_os.xpath("//text()")
+    ostext = [" ".join(i.split()) for i in ostext]
+    ostext = [i for i in ostext if i]
+    location_type = "; ".join(ostext)
+    return location_type
+
+
+def get_hoo(officehours):
+    sel_hoo = html.fromstring(officehours)
+    hoo_data = sel_hoo.xpath("//text()")
+    hoo_data = [" ".join(i.split()) for i in hoo_data]
+    hoo_data = [i for i in hoo_data if i]
+    hoo_data = "; ".join(hoo_data)
+    return hoo_data
+
+
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = webdriver.Chrome(
+                executable_path=ChromeDriverManager().install(), options=chrome_options
+            )
+            driver.get(url)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            logger.info(f"Success : {url}")
+            break
+        except Exception as e:
+            driver.quit()
+            if x == 5:
+                raise Exception(f"Fix The issue {e} | {url}")
+            continue
+    return driver
+
+
+def fetch_data():
+    r = get_response(0, LOCATION_URL)
+    sel = html.fromstring(r.text, "lxml")
+    data_raw = sel.xpath(
+        '//script[contains(@type, "text/javascript") and contains(text(), "var results")]/text()'
+    )
+    data_raw = "".join(data_raw)
+    dr1 = data_raw.split("var results=")[1].strip().rstrip(";")
+    json_data = json.loads(dr1)
+    for idx, _ in enumerate(json_data[0:]):
+        store_number = _["CLINICID"]
+        store_url = f"https://locations.geisinger.org/details.cfm?id={store_number}"
+        logger.info(f"[{idx}] Pulling the data from {store_url}")
+        lat = None
+        lng = None
+        try:
+            class_name_pg_sec_full = "page-section--full "
+            driver = get_driver(store_url, class_name_pg_sec_full)
+            element = driver.find_element_by_tag_name("iframe")
+            driver.execute_script("arguments[0].scrollIntoView();", element)
+            time.sleep(3)
+            driver.switch_to.frame(element)
+            coordText = driver.page_source
+            sel_latlng = html.fromstring(coordText, "lxml")
+            latlng = "".join(sel_latlng.xpath('//a[contains(@href, "maps?ll=")]/@href'))
+        except Exception as e:
+            logger.info(f"Fix the latlng issue {e} | {store_url}")
+        try:
+            lat = latlng.split("ll=", 1)[1].split("&", 1)[0].split(",")[0]
+            lng = latlng.split("ll=", 1)[1].split("&", 1)[0].split(",")[1]
+        except:
+            lat = "<INACCESSIBLE>"
+            lng = "<INACCESSIBLE>"
+        if str(lat) == "0":
+            lat = "<INACCESSIBLE>"
+        if str(lng) == "0":
+            lng = "<INACCESSIBLE>"
+
+        logger.info(f"latlng: {lat}, {lng}")
+
+        sta_list = []
+        sta1 = _["ADDRESS1"]
+        sta2 = _["ADDRESS2"]
+        sta_list.append(sta1)
+        sta_list.append(sta2)
+        location_type = None
+        hours_of_operation = None
+        officehours = _["OFFICEHOURS"]
+        try:
+            if officehours:
+                hours_of_operation = get_hoo(officehours)
+            else:
+                hours_of_operation = MISSING
+        except:
+            hours_of_operation = MISSING
+
+        otherservices = _["OTHERSERVICES"]
+        try:
+            if otherservices:
+                location_type = get_loc_type(otherservices)
+            else:
+                location_type = MISSING
+        except:
+            location_type = MISSING
+        zip_postal = None
+        zc = _["ZIPCODE"]
+        zc = zc.replace("*", "").strip()
+        if zc:
+            zip_postal = zc
+        else:
+            zip_postal = MISSING
+        item = SgRecord(
+            locator_domain="geisinger.org",
+            page_url=store_url,
+            location_name=_["NAME"] or MISSING,
+            street_address=fix_address(sta_list),
+            city=_["CITY"] or MISSING,
+            state=_["STATE"] or MISSING,
+            zip_postal=zip_postal,
+            country_code="US",
+            store_number=store_number,
+            phone=_["PHONE"],
+            location_type=location_type,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours_of_operation,
+            raw_address=MISSING,
+        )
+        yield item
+
+
 def scrape():
-    url = "https://www.geisinger.org/"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(url),
-        page_url=MappingField(
-            mapping=["CLINICID"],
-            value_transform=lambda x: "https://locations.geisinger.org/details.cfm?id="
-            + str(x),
-            part_of_record_identity=True,
-        ),
-        location_name=MappingField(
-            mapping=["NAME"], value_transform=lambda x: x.replace("&amp; ", "")
-        ),
-        latitude=MappingField(mapping=["lat"], is_required=False),
-        longitude=MappingField(mapping=["lon"], is_required=False),
-        street_address=MultiMappingField(
-            mapping=[["ADDRESS1"], ["ADDRESS2"]],
-            raw_value_transform=fix_address,
-            part_of_record_identity=True,
-        ),
-        city=MappingField(mapping=["CITY"]),
-        state=MappingField(mapping=["STATE"]),
-        zipcode=MappingField(
-            mapping=["ZIPCODE"],
-            value_transform=lambda x: x.replace(" ", "").replace("*", ""),
-            is_required=False,
-            part_of_record_identity=True,
-        ),
-        country_code=MissingField(),
-        phone=MappingField(mapping=["PHONE"], is_required=False),
-        store_number=MappingField(
-            mapping=["CLINICID"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=MappingField(
-            mapping=["hours"],
-            is_required=False,
-            part_of_record_identity=True,
-        ),
-        location_type=MappingField(
-            mapping=["OTHERSERVICES"], value_transform=parse_features, is_required=False
-        ),
-    )
-
-    pipeline = SimpleScraperPipeline(
-        scraper_name="scr",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
