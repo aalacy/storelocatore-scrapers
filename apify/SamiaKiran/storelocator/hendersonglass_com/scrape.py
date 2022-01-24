@@ -49,6 +49,7 @@ def fetch_data():
                     city = MISSING
                     state = MISSING
                     country_code = MISSING
+                    raw_address = MISSING
                     phone = loc[1].replace("Phone:", "")
                 else:
                     raw_address = loc[1]
