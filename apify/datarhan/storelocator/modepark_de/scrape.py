@@ -40,7 +40,12 @@ def fetch_data():
         hoo = poi_html.xpath(
             './/div[@class="mf-storefinder-listitem-inner-openingtime"]/p/text()'
         )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Bei")[0].strip()
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split("Bei")[0]
+            .replace("Viel Spaß beim Shoppen!", "")
+            .strip()
+        )
         state = raw_address[-1]
         zip_code = raw_address[1].split()[0]
         state = state.replace(zip_code, "").strip()
