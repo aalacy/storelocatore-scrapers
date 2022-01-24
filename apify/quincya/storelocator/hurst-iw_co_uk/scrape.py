@@ -22,7 +22,17 @@ def fetch_data(sgw: SgWriter):
     items = base.find(class_="rte").find_all("p")
     locator_domain = "https://hurst-iw.co.uk"
 
+    street_address = ""
+    city = ""
+    state = ""
+    zip_code = ""
+    country_code = ""
+    store_number = ""
+    location_type = ""
+    latitude = ""
+    longitude = ""
     hours_of_operation = ""
+
     for item in items:
         if not hours_of_operation:
             if "hours are" in item.text:
