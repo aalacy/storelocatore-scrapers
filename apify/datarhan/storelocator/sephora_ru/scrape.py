@@ -31,10 +31,7 @@ def fetch_data():
         for url in all_cities:
             city_url = urljoin(start_url, url)
             sleep(uniform(0, 5))
-            try:
-                driver.get(city_url)
-            except:
-                continue
+            driver.get(city_url)
             dom = etree.HTML(driver.page_source)
 
             all_locations = dom.xpath('//div[div[@class="b-shops__slider-item-city"]]')

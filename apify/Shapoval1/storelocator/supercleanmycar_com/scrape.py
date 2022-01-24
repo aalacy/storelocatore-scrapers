@@ -4,32 +4,34 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://supercleanmycar.com"
     api_url = "https://supercleanmycar.com/locations/"
+    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[text()="Learn More"]')
+    div = tree.xpath('//a[./span[text()="Locations"]]/following-sibling::ul/li/a')
     for d in div:
-        slug = "".join(d.xpath(".//@href"))
-        page_url = f"https://supercleanmycar.com/locations{slug}"
-        if page_url.find("bond") != -1:
-            page_url = "https://supercleanmycar.com/bond/"
-        location_name = "".join(d.xpath(".//preceding::h2[1]/text()"))
-        street_address = (
-            "".join(d.xpath(".//preceding::p[1]/text()[1]")).replace("\n", "").strip()
+
+        page_url = "".join(d.xpath(".//@href"))
+        location_name = "".join(d.xpath(".//text()"))
+        postal = (
+            "".join(
+                d.xpath(
+                    f'.//following::h2[text()="{location_name}"]/following-sibling::p[1]/text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .split()[-1]
+            .strip()
         )
-        ad = "".join(d.xpath(".//preceding::p[1]/text()[2]")).replace("\n", "").strip()
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        country_code = "US"
-        city = ad.split(",")[0].strip()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -58,6 +60,20 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        ad = (
+            "".join(
+                tree.xpath('//h2[text()="Directions"]/following-sibling::p[1]/text()')
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

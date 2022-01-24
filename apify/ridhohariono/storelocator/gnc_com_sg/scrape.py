@@ -74,16 +74,19 @@ def fetch_data():
         )
         location_name = info[0]
         raw_address = " ".join(info[1:])
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        if state == "SG":
-            state = "Singapore"
+        street_address = info[1].rstrip(",")
+        city = "Singapore"
+        zip_postal = re.sub(r"\D+", "", info[2])
+        state = MISSING
         try:
             phone = row.find("div", {"class": "mt-3"}).find("a").text.strip()
         except:
             phone = MISSING
         country_code = "SG"
         store_number = MISSING
-        hours_of_operation = row.find("div", {"class": "mt-3"}).find("p").text.strip()
+        hours_of_operation = (
+            row.find("div", {"class": "mt-3"}).find("p").text.strip().replace("\n", "")
+        )
         map_link = row.find("a", {"class": "store-locator__list__item__icon"})["href"]
         latitude, longitude = get_latlong(map_link)
         location_type = MISSING

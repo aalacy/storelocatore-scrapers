@@ -25,8 +25,8 @@ def fetch_data():
     all_locations = json.loads(response.text)
 
     for poi in all_locations:
-        store_url = "https://sperohealth.com/locations-near-you/"
         location_name = poi["title"]
+        page_url = f'https://sperohealth.com/locations/{location_name.replace(", ", "-").lower()}/'
         addr = parse_address_intl(poi["address"])
         street_address = addr.street_address_1
         if addr.street_address_2:
@@ -39,14 +39,14 @@ def fetch_data():
         phone = poi["phone"]
         latitude = poi["lat"]
         longitude = poi["lng"]
-
+        location_type = ""
         if "Coming Soon" in location_name:
             location_name = location_name.split("(C")[0].strip()
             location_type = "Coming Soon"
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

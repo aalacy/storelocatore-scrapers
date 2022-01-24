@@ -1,4 +1,4 @@
-import tabula as tb  # noqa
+import re
 from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
@@ -144,8 +144,8 @@ def fetch_locations(code, tracker):
         item = SgRecord(
             locator_domain=domain,
             page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
-            location_name=location_name.title(),
-            street_address=raw_adr[0].title(),
+            location_name=clean(location_name.title()),
+            street_address=clean(raw_adr[0].title()),
             city=addr.city,
             zip_postal=addr.postcode,
             hours_of_operation=hoo,
@@ -154,6 +154,10 @@ def fetch_locations(code, tracker):
         items.append(item)
 
     return items
+
+
+def clean(string):
+    return re.sub(r"\s\s+", " ", string)
 
 
 def fetch_urls(session):
@@ -200,10 +204,10 @@ def fetch_location(page_url, session, tracker):
     return SgRecord(
         locator_domain="aldi.fr",
         page_url="https://www.aldi.fr/magasins-et-horaires-d-ouverture.html",
-        location_name=location_name.title(),
+        location_name=clean(location_name.title()),
         latitude=latitude,
         longitude=longitude,
-        street_address=street_address.title(),
+        street_address=clean(street_address.title()),
         city=city,
         zip_postal=postal,
         country_code="FR",

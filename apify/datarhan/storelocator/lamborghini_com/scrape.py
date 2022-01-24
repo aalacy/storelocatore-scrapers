@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -39,6 +39,8 @@ def fetch_data():
         location_type = poi["type"]["label"]
         latitude = poi.get("coordinates", {}).get("latitude")
         longitude = poi.get("coordinates", {}).get("longitude")
+        latitude = latitude.replace(",", ".") if latitude else ""
+        longitude = longitude.replace(",", ".") if longitude else ""
 
         item = SgRecord(
             locator_domain=domain,

@@ -32,27 +32,50 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            temp = json.loads(
-                r.text.split('<script type="application/ld+json">')[1].split(
-                    "</script>"
-                )[0]
-            )
-            location_name = temp["name"]
-            phone = temp["telephone"]
-            address = temp["address"]
-            street_address = address["streetAddress"]
-            city = address["addressLocality"]
-            state = address["addressRegion"]
-            zip_postal = address["postalCode"]
-            country_code = address["addressCountry"]
-            latitude = str(temp["geo"]["latitude"])
-            longitude = str(temp["geo"]["longitude"])
+            try:
+                temp = json.loads(
+                    r.text.split('<script type="application/ld+json">')[1].split(
+                        "</script>"
+                    )[0]
+                )
+                location_name = temp["name"]
+                phone = temp["telephone"]
+                address = temp["address"]
+                street_address = address["streetAddress"]
+                city = address["addressLocality"]
+                state = address["addressRegion"]
+                zip_postal = address["postalCode"]
+                country_code = address["addressCountry"]
+                latitude = str(temp["geo"]["latitude"])
+                longitude = str(temp["geo"]["longitude"])
+
+            except:
+                location_name = (
+                    "Lok'nStore " + soup.find("span", {"class": "store__name"}).text
+                )
+                phone = soup.find("p", {"class": "store__number"}).text
+                address = soup.find(
+                    "p", {"class": "store__address__container"}
+                ).text.split(",")
+                street_address = address[0]
+                city = address[1]
+                state = address[2]
+                zip_postal = address[3]
+                country_code = "GB"
+                latitude = MISSING
+                longitude = MISSING
+
             hours_of_operation = (
                 soup.find("div", {"class": "opening__hours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .replace("(Call for information)", "")
+                .replace("TBC", "")
             )
+            if "CURRENTLY CLOSED" in hours_of_operation:
+                location_type = "Temporarily Closed"
+            else:
+                location_type = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -64,7 +87,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=MISSING,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),

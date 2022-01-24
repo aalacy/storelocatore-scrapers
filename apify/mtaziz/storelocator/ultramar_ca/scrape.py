@@ -8,14 +8,12 @@ from lxml import html
 from time import sleep
 from random import randint
 
-logger = SgLogSetup().get_logger(
-    logger_name="ultramar_ca__en-on__service-stations__services__express-mart"
-)
+logger = SgLogSetup().get_logger(logger_name="ultramar_ca")
 MISSING = SgRecord.MISSING
 locator_domain_url = "https://www.ultramar.ca"
 
 headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
 latlng_ca = [
     "43.719,-79.401",
@@ -612,7 +610,7 @@ def fetch_data(http: SgRequests):
         country_code = "CA"
         store_number = MISSING
 
-        xpath_phone = '//*[starts-with(@href, "tel:")]/text()'
+        xpath_phone = '//span[contains(@itemprop, "telephone")]/text()'
         phone_data = data_store.xpath(xpath_phone)[0].strip()
         phone = phone_data if phone_data else MISSING
 
@@ -627,12 +625,12 @@ def fetch_data(http: SgRequests):
         xpath_hoo = '//div[img[@alt="24h clock"]]/text()'
         hoo = data_store.xpath(xpath_hoo)
         hoo = "".join(hoo).strip()
-        logger.info(f"\nHours of Operation Raw Data1: {hoo}\n")
+        logger.info(f"Hours of Operation Raw Data1: {hoo}")
         xpath_hoo2 = (
             '//div[img[@alt="24h clock"]]/div[@class="station__hours"]/div/span/text()'
         )
         hoo2 = data_store.xpath(xpath_hoo2)
-        logger.info(f"[{idx}] Hours of Operation Data2: {hoo2}\n")
+        logger.info(f"[{idx}] Hours of Operation Data2: {hoo2}")
 
         if hoo2:
             hoo3 = []

@@ -24,6 +24,28 @@ def fetch_data(sgw: SgWriter):
             + "*&_fields=direccion,city,horario,latitude,longitude,name,neighborhood,phone,postalCode,state,storeSellerId&_sort=name"
         )
 
+        headers = {
+            "authority": "www.guess.mx",
+            "method": "GET",
+            "path": "/api/dataentities/SO/search?_where=typeStore=*"
+            + loc_type
+            + "*&_fields=direccion,city,horario,latitude,longitude,name,neighborhood,phone,postalCode,state,storeSellerId&_sort=name",
+            "scheme": "https",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en-US,en;q=0.9",
+            "rest-range": "resources=0-49",
+            "sec-ch-ua": '"Google Chrome";v="93", " Not;A Brand";v="99", "Chromium";v="93"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Linux"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "content-type": "application/json; charset=utf-8",
+            "referer": "https://www.guess.mx/localiza-tu-tienda",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+        }
+
         stores = session.get(base_link, headers=headers).json()
 
         for store in stores:
@@ -60,5 +82,5 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
     fetch_data(writer)

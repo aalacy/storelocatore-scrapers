@@ -7,6 +7,17 @@ import dirtyjson as json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
+import ssl
+import time
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("royalbluegrocery")
 
@@ -17,8 +28,11 @@ json_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt"
 
 def _pp(locs, street):
     for loc in locs:
-        if street.lower() in loc.select_one("div.info-element-title").text.lower():
-            return loc.select("div.info-element-description span")[0].text.strip()
+        if (
+            " ".join(street.lower().split()[:2])
+            in loc.select_one("div.info-element-description span").text.lower()
+        ):
+            return loc.select("div.info-element-description span")[-1].text.strip()
 
     return ""
 
@@ -38,6 +52,8 @@ def fetch_data():
             page_url = _["href"]
             logger.info(page_url)
             del driver.requests
+            time.sleep(1)
+
             driver.get(page_url)
             driver.wait_for_request(json_url)
             ss = {}
@@ -71,6 +87,11 @@ def fetch_data():
 
                     break
 
+            phone = _pp(locs, street_address)
+            if not phone:
+                import pdb
+
+                pdb.set_trace()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.text.strip(),
@@ -79,7 +100,7 @@ def fetch_data():
                 state=addr[-2].strip().split()[0].strip(),
                 zip_postal=addr[-2].strip().split()[-1].strip(),
                 country_code="US",
-                phone=_pp(locs, street_address),
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation=hours.replace("\xa0", "").strip(),
                 raw_address=info["address"],

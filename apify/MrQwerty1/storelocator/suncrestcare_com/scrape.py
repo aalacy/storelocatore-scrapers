@@ -1,48 +1,9 @@
-import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
-
-
-def get_address(line):
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if "None" in street_address:
-        street_address = SgRecord.MISSING
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
-
-    return street_address, city, state, postal
 
 
 def get_coords_from_embed(text):
@@ -55,62 +16,67 @@ def get_coords_from_embed(text):
     return latitude, longitude
 
 
-def get_urls():
-    r = session.get("https://suncrestcare.com/location/", headers=headers)
+def get_coords(page_url):
+    r = session.get(page_url)
+    if r.status_code == 404:
+        return SgRecord.MISSING, SgRecord.MISSING
     tree = html.fromstring(r.text)
-
-    return tree.xpath("//a[@class='info-btn']/@href")
-
-
-def get_data(page_url, sgw: SgWriter):
-    if page_url.startswith("/"):
-        page_url = f"https://suncrestcare.com{page_url}"
-
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-
-    location_name = tree.xpath("//h1/text()")[0].strip()
-    line = tree.xpath(
-        "//div[./i[@class='fas fa-map-marker-alt']]/following-sibling::p//text()"
-    )
-    line = ", ".join(list(filter(None, [l.strip() for l in line])))
-
-    street_address, city, state, postal = get_address(line)
-    phone = "".join(tree.xpath("//a[contains(@href, 'tel:')]/text()")).strip()
     text = "".join(tree.xpath("//iframe/@src"))
-    latitude, longitude = get_coords_from_embed(text)
 
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code="US",
-        phone=phone,
-        latitude=latitude,
-        longitude=longitude,
-        locator_domain=locator_domain,
-    )
-
-    sgw.write_row(row)
+    return get_coords_from_embed(text)
 
 
 def fetch_data(sgw: SgWriter):
-    urls = get_urls()
+    api = "https://suncrestcare.com/location/"
+    r = session.get(api)
+    tree = html.fromstring(r.text)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    divs = tree.xpath(
+        "//div[@class='g-block  size-33-3' and .//div[@class='g-mosaicgrid-image']]"
+    )
+    for d in divs:
+        location_name = "".join(
+            d.xpath(".//div[@class='g-mosaicgrid-item-title']//text()")
+        ).strip()
+        page_url = "".join(d.xpath(".//div[@class='g-mosaicgrid-item-title']/a/@href"))
+        if page_url.startswith("/"):
+            page_url = f"https://suncrestcare.com{page_url}"
+        line = d.xpath(".//div[@class='g-mosaicgrid-item-desc']/text()")
+        line = list(filter(None, [l.strip() for l in line]))
+        if line[0][0].isalpha():
+            line.pop(0)
+        if len(line) == 2:
+            line = line.pop(0).split("\n")
+            line[0] = f"{line[0].strip()}, {line[1]}"
+            line.pop(1)
+
+        street_address = line.pop(0)
+        csz = line.pop(0).replace(",", "").split()
+        postal = csz.pop()
+        state = csz.pop()
+        city = " ".join(csz)
+        phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
+        latitude, longitude = get_coords(page_url)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
     locator_domain = "https://suncrestcare.com/"
     session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
-    }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

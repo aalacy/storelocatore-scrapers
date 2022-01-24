@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("loyalcompanion_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,7 +22,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<a href='https://loyalcompanion.com/a/pages/locations" in line:
             items = line.split("<a href='https://loyalcompanion.com/a/pages/locations")
             for item in items:
@@ -71,8 +46,8 @@ def fetch_data():
         lng = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+        lines = r2.iter_lines()
+        for line2 in lines:
             if "position: {lat: " in line2:
                 lat = line2.split("position: {lat: ")[1].split(",")[0]
                 lng = line2.split("lng:")[1].split("}")[0].strip()
@@ -92,37 +67,38 @@ def fetch_data():
                     .split('"')[0]
                     .replace("+1", "")
                 )
-            if '<div itemprop="openingHours" content="' in line2:
-                hrs = line2.split('<div itemprop="openingHours" content="')[1].split(
-                    '"'
-                )[0]
+            if '<div itemprop="openingHours"' in line2:
+                g = next(lines)
+                hrs = g.split('content="')[1].split('"')[0]
                 if hours == "":
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

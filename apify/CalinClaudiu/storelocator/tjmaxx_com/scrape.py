@@ -1,5 +1,5 @@
 from typing import Iterable, Tuple, Callable
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -47,13 +47,6 @@ def replac(x):
 
 
 class ExampleSearchIteration(SearchIteration):
-    """
-    Here, you define what happens with each iteration of the search.
-    The `do(...)` method is what you'd do inside of the `for location in search:` loop
-    It provides you with all the data you could get from the search instance, as well as
-    a method to register found locations.
-    """
-
     def __init__(self):
         self.__state = CrawlStateSingleton.get_instance()
 
@@ -65,22 +58,19 @@ class ExampleSearchIteration(SearchIteration):
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
-        """
-        This method gets called on each iteration of the search.
-        It provides you with all the data you could get from the search instance, as well as
-        a method to register found locations.
-
-        :param coord: The current coordinate (lat, long)
-        :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
-        :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
-        :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
-        :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
-        """
         with SgRequests() as http:
-            # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
             lat, lng = coord
-            # just some clever accounting of locations/country:
-            numbers = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99"
+            numbers = "21%2C20"
+            nCA = "93%2C91%2C90"
+            nUS = "8%2C10%2C28%2C29%2C50"
+            nAU = "20"
+            if current_country == "ca":
+                numbers = nCA
+            elif current_country == "us":
+                numbers = nUS
+            elif current_country == "au":
+                numbers = nAU
+
             url = str(
                 f"https://marketingsl.tjx.com/storelocator/GetSearchResults?geolat={lat}&geolong={lng}&chain={numbers}&maxstores=9999&radius=1000"
             )
@@ -177,15 +167,26 @@ if __name__ == "__main__":
     tocrawl = []
     tocrawl.append(SearchableCountries.USA)
     tocrawl.append(SearchableCountries.CANADA)
-    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    tocrawl.append(SearchableCountries.AUSTRALIA)
+    tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_8(),
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=8,
+        max_search_results=45,
     )
-
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                },
+                fail_on_empty_id=True,
+            )
+        )
     ) as writer:
         with SgRequests() as http1:
             search_iter = ExampleSearchIteration()
@@ -194,6 +195,5 @@ if __name__ == "__main__":
                 search_iteration=search_iter,
                 country_codes=tocrawl,
             )
-
             for rec in par_search.run():
                 writer.write_row(rec)

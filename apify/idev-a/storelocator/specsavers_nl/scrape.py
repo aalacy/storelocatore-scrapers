@@ -50,7 +50,9 @@ def fetch_data():
                 coord = json.loads(res.split("var position =")[1].split(";")[0].strip())
                 sp1 = bs(res, "lxml")
                 _addr = list(sp1.select_one("div.store p").stripped_strings)
-                raw_address = " ".join(_addr).replace("\n", "")
+                raw_address = (
+                    " ".join(_addr).replace("\n", "").replace("Z.O.", "").strip()
+                )
                 addr = parse_address_intl(raw_address + ", Netherlands")
                 hours = [
                     ": ".join(hh.stripped_strings)

@@ -43,6 +43,13 @@ def get_data(page_url, sgw: SgWriter):
         "".join(tree.xpath("//ul[@class='details']/li[1]/text()")).split()
     )
     street_address, city, state, postal = get_international(raw_address)
+    country = "ZA"
+    if state == "NA":
+        state = SgRecord.MISSING
+        country = "NA"
+    elif "Botswana" in raw_address:
+        city = "Gabrone"
+        country = "BW"
     store_number = page_url.split("/")[-2].split("-")[-1]
     phone = "".join(
         tree.xpath("//span[contains(text(), 'Phone')]/following-sibling::text()")
@@ -63,7 +70,7 @@ def get_data(page_url, sgw: SgWriter):
         city=city,
         state=state,
         zip_postal=postal,
-        country_code="ZA",
+        country_code=country,
         phone=phone,
         store_number=store_number,
         latitude=latitude,
