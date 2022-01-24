@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
 from sgpostal import sgpostal as parser
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "assistinghands.com"
@@ -49,7 +49,7 @@ def fetch_data():
 
             raw_address = store["address"]
 
-            formatted_addr = parser.parse_address_usa(raw_address)
+            formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
@@ -102,7 +102,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:

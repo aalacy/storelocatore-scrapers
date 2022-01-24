@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -8,9 +9,14 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.bottegaveneta.com/"
-    countries = ["US", "CA"]
-    for c in countries:
-        api_url = f"https://www.bottegaveneta.com/on/demandware.store/Sites-BV-INTL-Site/en_ZW/Stores-FindStoresData?countryCode={c}"
+    api_url = "https://www.bottegaveneta.com/en-en/storelocator"
+    session = SgRequests()
+    r = session.get(api_url)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//select[@id="country"]/option[position()>1]')
+    for b in div:
+        country_code = "".join(b.xpath(".//@value"))
+        api_url = f"https://www.bottegaveneta.com/on/demandware.store/Sites-BV-INTL-Site/en_ZW/Stores-FindStoresData?countryCode={country_code}"
         session = SgRequests()
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -20,13 +26,21 @@ def fetch_data(sgw: SgWriter):
         for j in js["storesData"]["stores"]:
             page_url = j.get("detailsUrl")
             location_name = j.get("name")
-            street_address = f"{j.get('address1')} {j.get('address2') or ''}".replace(
-                "None", ""
-            ).strip()
+            street_address = (
+                f"{j.get('address1')} {j.get('address2') or ''}".replace("None", "")
+                .replace(",", "")
+                .replace("\n", " ")
+                .replace("\r", " ")
+                .strip()
+            )
+            if street_address.find("Colonia") != -1:
+                street_address = street_address.split("Colonia")[0].strip()
+            if street_address.find(" Av Presidente") != -1:
+                street_address = "Av. Pres. Juscelino Kubitschek, 2041"
+            street_address = " ".join(street_address.split())
             phone = j.get("phone")
             state = j.get("stateCode")
             postal = j.get("postalCode")
-            country_code = "".join(c).upper()
             city = j.get("city")
             store_number = j.get("ID")
             latitude = j.get("latitude")
@@ -36,11 +50,11 @@ def fetch_data(sgw: SgWriter):
             for d in days:
                 day = d
                 time = j.get(f"{d}Hours")
-                line = f"{day} {time}".replace("NO DATA", "<MISSING>")
+                line = f"{day} {time}".replace("NO DATA", "Closed")
                 tmp.append(line)
             hours_of_operation = ";".join(tmp) or "<MISSING>"
-            if hours_of_operation.count("<MISSING>") == 7:
-                hours_of_operation = "<MISSING>"
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
 
             row = SgRecord(
                 locator_domain=locator_domain,
