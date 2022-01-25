@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 from sgpostal.sgpostal import parse_address_intl
@@ -49,12 +49,24 @@ def fetch_data():
             country_code = addr["country"]
             zip_postal = addr["postcode"]
             if country_code == "UG":
-                country_code = "GB"
+                country_code = "United Kingdom"
+            if country_code == "GB":
+                country_code = "United Kingdom"
 
             street_address = ", ".join(_ss)
             raw_address = (
                 f"{street_address}, {city}, {state}, {zip_postal}, {country_code}"
             )
+            if country_code == "United Kingdom" and zip_postal in raw_address:
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1 or ""
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+
+            if street_address.lower() == city.lower():
+                street_address = ""
+            if street_address.replace(" ", "").isdigit():
+                street_address = ", ".join(_ss)
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["store_id"],
@@ -113,9 +125,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
