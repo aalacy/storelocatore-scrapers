@@ -49,7 +49,7 @@ def fetch_data():
                 hoo = loc_dom.xpath(
                     '//ul[@class="m-store-details__shops__worktime__days    "]//text()'
                 )
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(" Mo/Di")[0]
 
             item = SgRecord(
                 locator_domain=domain,
