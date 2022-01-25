@@ -23,7 +23,7 @@ def fetch_data():
         if '<a class="record" href="/locations/' in line:
             items = line.split('<a class="record" href="/locations/')
             for item in items:
-                if 'data-ga-event="locationClick' in item and 'al"' in item:
+                if 'data-ga-event="locationClick' in item:
                     lurl = (
                         "https://www.pandaexpress.com/locations/" + item.split('"')[0]
                     )
