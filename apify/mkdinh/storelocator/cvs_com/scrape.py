@@ -33,6 +33,7 @@ headers = {
 
 MAX_WORKERS = 20
 
+
 def write_output(data):
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         for row in data:
