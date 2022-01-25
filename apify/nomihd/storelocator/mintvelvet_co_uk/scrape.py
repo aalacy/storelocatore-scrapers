@@ -115,7 +115,11 @@ def fetch_data():
             ):
                 hours_of_operation = "<MISSING>"
             latitude, longitude = (
-                store_res.text.split("lat:")[1].split(",")[0].strip(),
+                store_res.text.split("lat:")[1]
+                .split("}")[0]
+                .strip()
+                .replace("\n", "")
+                .strip(),
                 store_res.text.split("lng:")[1].split(",")[0].strip(),
             )
 
