@@ -1,0 +1,17 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly) 
+
+
+--ignore StreetAddressHasStateName (Confirmed scrape correctly) 
+Found 1 concerning rows. Examples:
+          street_address                    REASON  rowNumber
+10  Milower Landstraße 6  ADDR_CONTAINS_STATE_NAME         10
+
+
+--ignore CountryValidator (NOT US PHONE)
+Found 89 concerning rows. Examples:
+       state          phone    zip            REASON  rowNumber
+0  <MISSING>  03303 5062555  16540  INVALID_US_PHONE          0
+1  <MISSING>   030 64329152  15566  INVALID_US_PHONE          1
+2  <MISSING>   03338 604834  16321  INVALID_US_PHONE          2
+3  <MISSING>  033439 143189  15370  INVALID_US_PHONE          3
+4  <MISSING>  03362 7000721  15537  INVALID_US_PHONE          4
