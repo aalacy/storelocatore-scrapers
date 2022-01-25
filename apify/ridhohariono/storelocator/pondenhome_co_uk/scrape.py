@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 DOMAIN = "pondenhome.com"
 BASE_URL = "https://www.pondenhome.co.uk"
@@ -65,6 +66,11 @@ def fetch_data():
         )
         raw_address = addr[0].get_text(strip=True, separator=",")
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1].strip()
+        street_address = re.sub(
+            zip_postal, "", street_address, flags=re.IGNORECASE
+        ).strip()
         country_code = "UK"
         phone = addr[1].text.replace("Tel:", "").strip()
         hoo_content = store.find("ul", {"class": "opening-hours"})
