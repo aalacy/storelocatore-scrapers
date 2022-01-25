@@ -55,13 +55,20 @@ def fetch_data():
                 .strip()
                 .replace("\n", " ")
                 .strip()
-                .split(",")
+                .replace("\\/", "/")
+                .strip()
             )
+            temp_address = raw_address.split(",")
+            street_address = ", ".join(temp_address[:-3]).strip()
+            if (
+                len(street_address.split(",")) > 1
+                and street_address.split(",")[0] == "Centra"
+            ):
+                street_address = ", ".join(temp_address[1:-3]).strip()
 
-            street_address = ", ".join(raw_address[:-3]).strip()
-            city = raw_address[-3]
-            state = raw_address[-2]
-            zip = raw_address[-1]
+            city = temp_address[-3]
+            state = temp_address[-2]
+            zip = temp_address[-1]
 
             country_code = "IE"
 
@@ -92,6 +99,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
