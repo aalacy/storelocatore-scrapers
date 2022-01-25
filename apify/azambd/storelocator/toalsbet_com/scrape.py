@@ -79,7 +79,7 @@ def get_address(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def fetch_data(sgw: SgWriter):
+def fetch_data():
     with SgChrome(
         is_headless=True,
         user_agent=user_agent,

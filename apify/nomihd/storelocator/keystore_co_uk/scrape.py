@@ -45,6 +45,11 @@ def fetch_data():
             locator_domain = website
 
             location_name = store["ic"].split("/")[-1].split("-")[0]
+            if len(location_name.split("KeyStore")) > 1:
+                location_name = (
+                    "KeyStore " + location_name.split("KeyStore")[-1].strip()
+                )
+
             location_type = location_name
 
             page_url = store["gu"]
