@@ -38,90 +38,85 @@ def fetch_data():
             for sub in subRegions:
                 stores = sub["items"]
                 for store in stores:
-                    if store["pubIsClosed"] is False:
-                        page_url = "https://www.jdwetherspoon.com" + store["url"]
+                    page_url = "https://www.jdwetherspoon.com" + store["url"]
 
-                        locator_domain = website
-                        location_name = store["name"]
+                    locator_domain = website
+                    location_name = store["name"]
 
-                        street_address = (
-                            store["address1"]
-                            .strip()
-                            .encode("ascii", "replace")
-                            .decode("utf-8")
-                            .replace("?", "-")
-                            .strip()
+                    street_address = (
+                        store["address1"]
+                        .strip()
+                        .encode("ascii", "replace")
+                        .decode("utf-8")
+                        .replace("?", "-")
+                        .strip()
+                    )
+                    city = store["city"].strip()
+                    state = store["county"].strip()
+                    zip = store["postcode"].strip()
+                    country_code = region["region"]
+
+                    store_number = store["pubNumber"]
+                    phone = store["telephone"]
+
+                    location_type = "<MISSING>"
+                    if "/pubs/" in page_url:
+                        location_type = "pub"
+                    elif "/hotels/" in page_url:
+                        location_type = "hotel"
+
+                    hours_of_operation = ""
+                    if store["pubIsTemporaryClosed"] is True:
+                        hours_of_operation = "Temporary Closed"
+                    else:
+                        log.info(page_url)
+                        store_req = session.get(page_url, headers=headers)
+                        if isinstance(store_req, SgRequestError):
+                            continue
+                        store_sel = lxml.html.fromstring(store_req.text)
+                        hours = store_sel.xpath(
+                            '//div[@id="opening-times"]//td[@itemprop="openingHours"]'
                         )
-                        city = store["city"].strip()
-                        state = store["county"].strip()
-                        zip = store["postcode"].strip()
-                        country_code = region["region"]
-
-                        store_number = store["pubNumber"]
-                        phone = store["telephone"]
-
-                        location_type = "<MISSING>"
-                        if "/pubs/" in page_url:
-                            location_type = "pub"
-                        elif "/hotels/" in page_url:
-                            location_type = "hotel"
-
-                        hours_of_operation = ""
-                        if store["pubIsTemporaryClosed"] is True:
-                            hours_of_operation = "Temporary Closed"
-                        else:
-                            log.info(page_url)
-                            store_req = session.get(page_url, headers=headers)
-                            if isinstance(store_req, SgRequestError):
-                                continue
-                            store_sel = lxml.html.fromstring(store_req.text)
-                            hours = store_sel.xpath(
-                                '//div[@id="opening-times"]//td[@itemprop="openingHours"]'
-                            )
-                            hours_list = []
-                            for hour in hours:
+                        hours_list = []
+                        for hour in hours:
+                            if (
+                                len("".join(hour.xpath("@content")).strip().split("-"))
+                                > 1
+                            ):
                                 if (
                                     len(
                                         "".join(hour.xpath("@content"))
                                         .strip()
-                                        .split("-")
+                                        .split("-")[1]
+                                        .strip()
                                     )
-                                    > 1
+                                    > 0
                                 ):
-                                    if (
-                                        len(
-                                            "".join(hour.xpath("@content"))
-                                            .strip()
-                                            .split("-")[1]
-                                            .strip()
-                                        )
-                                        > 0
-                                    ):
-                                        hours_list.append(
-                                            "".join(hour.xpath("@content")).strip()
-                                        )
+                                    hours_list.append(
+                                        "".join(hour.xpath("@content")).strip()
+                                    )
 
-                            hours_of_operation = "; ".join(hours_list).strip()
+                        hours_of_operation = "; ".join(hours_list).strip()
 
-                        latitude = store["lat"]
-                        longitude = store["lng"]
+                    latitude = store["lat"]
+                    longitude = store["lng"]
 
-                        yield SgRecord(
-                            locator_domain=locator_domain,
-                            page_url=page_url,
-                            location_name=location_name,
-                            street_address=street_address,
-                            city=city,
-                            state=state,
-                            zip_postal=zip,
-                            country_code=country_code,
-                            store_number=store_number,
-                            phone=phone,
-                            location_type=location_type,
-                            latitude=latitude,
-                            longitude=longitude,
-                            hours_of_operation=hours_of_operation,
-                        )
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
 
 
 def scrape():

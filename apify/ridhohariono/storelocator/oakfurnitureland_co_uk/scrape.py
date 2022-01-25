@@ -66,6 +66,9 @@ def fetch_data():
         location_name = info.find("h3").text.strip()
         raw_address = info.find("ul").get_text(strip=True, separator=" ").strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING and "OL2 5HX" in street_address:
+            zip_postal = "OL2 5HX"
+            street_address = street_address.replace(zip_postal, "").strip()
         country_code = "UK"
         phone = info.find("p").text.replace("Tel:", "").strip()
         hoo_content = store.find("div", {"class": "opening-hours"})

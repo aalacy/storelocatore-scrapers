@@ -29,8 +29,8 @@ def fetch_data():
             hh = json.loads(_["opening_hours"])
             for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]:
                 day = day.lower()
-                start = hh.get(f"{day}_from")
-                end = hh.get(f"{day}_to")
+                start = ":".join(hh.get(f"{day}_from").split(":")[:-1])
+                end = ":".join(hh.get(f"{day}_to").split(":")[:-1])
                 hours.append(f"{day}: {start} - {end}")
 
             raw_address = f"{street_address}, {_['city']}, {_['region']}, {_['postcode']}, {_['country']}"
@@ -58,7 +58,15 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

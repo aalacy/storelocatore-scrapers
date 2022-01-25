@@ -9,7 +9,7 @@ from sgscrape.sgpostal import parse_address_intl
 
 
 DOMAIN = "nenechicken.com.my"
-LOCATION_URL = "https://nenechicken.com.my/"
+LOCATION_URL = "https://nenechicken.com.my/#location"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
