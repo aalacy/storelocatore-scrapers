@@ -25,9 +25,7 @@ def fetch_data(sgw: SgWriter):
             page_url = "https://www.alpineshop.com/info/locations-and-hours"
             location_name = "".join(d.xpath(".//text()"))
             ad = "".join(
-                d.xpath(
-                    './/following-sibling::h3[text()="Regular Hours:"][1]/following-sibling::p[2]/a[1]/text()'
-                )
+                d.xpath('.//following::p[./a[contains(@href, "goo")]][1]/a[1]/text()')
             )
             a = parse_address(USA_Best_Parser(), ad)
             street_address = f"{a.street_address_1} {a.street_address_2}".replace(
@@ -38,9 +36,7 @@ def fetch_data(sgw: SgWriter):
             country_code = "US"
             city = a.city or "<MISSING>"
             phone = "".join(
-                d.xpath(
-                    './/following-sibling::h3[text()="Regular Hours:"][1]/following-sibling::p[2]/a[2]/text()'
-                )
+                d.xpath('.//following::a[contains(@href, "tel")][1]/text()')
             )
             hours_of_operation = (
                 " ".join(
@@ -76,6 +72,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         fetch_data(writer)

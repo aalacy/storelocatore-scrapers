@@ -99,7 +99,19 @@ def fetch_data():
                 zip = formatted_addr.postcode
                 country_code = "CA"
 
-                phone = "".join(store.xpath(".//td[2]//text()")).strip()
+                temp_phone = store.xpath(".//td[2]//text()")
+                phone_list = []
+                for ph in temp_phone:
+                    if len("".join(ph).strip()) > 0:
+                        phone_list.append("".join(ph).strip())
+
+                if len(phone_list) > 0:
+                    if phone_list[0] == "(":
+                        phone = "".join(phone_list[:2]).strip()
+                    else:
+                        phone = phone_list[0]
+                else:
+                    phone = "<MISSING>"
 
                 hours_of_operation = "<MISSING>"
 
@@ -130,7 +142,9 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
