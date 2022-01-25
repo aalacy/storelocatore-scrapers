@@ -19,15 +19,17 @@ country_map = {"us": "129", "ca": "128"}
 
 
 def fetch_data(search):
-    with SgRequests() as session:
-        for lat, lng in search:
+    for lat, lng in search:
+        with SgRequests(proxy_country="us") as session:
             _filter = country_map[search.current_country()]
             url = base_url.format(lat, lng, _filter)
-            locations = session.get(url, headers=_headers).json()
+            try:
+                locations = session.get(url, headers=_headers).json()
+            except:
+                continue
             logger.info(f"[{search.current_country()}] {len(locations)} found")
-            if locations:
-                search.found_location_at(lat, lng)
             for _ in locations:
+                search.found_location_at(_["lat"], _["lng"])
                 hours = []
                 if _["hours"]:
                     for hh in bs(_["hours"], "lxml").select("tr"):
