@@ -33,11 +33,13 @@ def fetch_data(search):
                 hours = ""
                 if _["hours1"]:
                     if "apertura" not in _["hours1"].lower():
-                        hours = f"L - S: {_['hours1']}"
-                if _["hours2"]:
-                    if "apertura" not in _["hours1"].lower():
-                        hours = f"L - S: {_['hours1']}"
-                page_url = locator_domain + _["web"]
+                        hours = f"L - S: {_['hours1'].split('24/12')[0]}"
+                if not hours and _["hours2"]:
+                    if "apertura" not in _["hours2"].lower():
+                        hours = f"L - S: {_['hours2']}"
+                page_url = _["web"]
+                if not page_url.startswith("http"):
+                    page_url = locator_domain + page_url
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
@@ -51,7 +53,7 @@ def fetch_data(search):
                     phone=_["phone"],
                     location_type=_["category"],
                     locator_domain=locator_domain,
-                    hours_of_operation=hours,
+                    hours_of_operation=hours.replace(",", ""),
                 )
 
 

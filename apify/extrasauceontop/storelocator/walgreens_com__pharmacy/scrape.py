@@ -1,13 +1,15 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sglogging import sglog
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="walgreens")
     session = SgRequests()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+        country_codes=[SearchableCountries.USA], granularity=Grain_8()
     )
 
     for search_code in search:
@@ -40,32 +42,54 @@ def get_data():
             state = location["store"]["address"]["state"]
             zipp = location["store"]["address"]["zip"]
             phone = location["store"]["phone"]["number"]
-            location_type = location["store"]["name"]
+            location_type = "<MISSING>"
             country_code = "US"
 
-            try:
-                hours_response = session.get(page_url).text
-                hours_soup = bs(hours_response, "html.parser")
-                hours_parts = hours_soup.find(
-                    "li", attrs={"class": "single-hours-lists"}
-                ).find_all("ul")
-
-                hours = ""
-                for part in hours_parts:
-                    day = part.find("li", attrs={"class": "day"}).text.strip()
-                    time = part.find("li", attrs={"class": "time"}).text.strip()
-
-                    hours = hours + day + " " + time + ", "
-
-                hours = hours[:-2]
-            except Exception:
-
-                hours = "<MISSING>"
-                if "temporarily closed" in hours_response.lower():
-                    continue
-
-                else:
+            x = 0
+            while True:
+                x = x + 1
+                if x == 10:
+                    log.info(search_code)
+                    log.info(location_name)
                     raise Exception
+                try:
+                    hours_response = session.get(page_url).text
+                    hours_soup = bs(hours_response, "html.parser")
+                    hours_parts = hours_soup.find(
+                        "li", attrs={"class": "single-hours-lists"}
+                    ).find_all("ul")
+
+                    hours = ""
+                    for part in hours_parts:
+                        day = part.find("li", attrs={"class": "day"}).text.strip()
+                        time = part.find("li", attrs={"class": "time"}).text.strip()
+
+                        hours = hours + day + " " + time + ", "
+
+                    hours = hours[:-2]
+                    break
+                except Exception:
+
+                    try:
+                        hours = "<MISSING>"
+                        if "temporarily closed" in hours_response.lower():
+                            hours = "nope"
+                            break
+
+                        else:
+                            log.info(search_code)
+                            log.info(location_name)
+                    except Exception as e:
+                        log.info(e)
+
+            if hours == "nope":
+                continue
+
+            try:
+                location["store"]["pharmacyOpenTime"]
+
+            except Exception:
+                continue
 
             yield {
                 "locator_domain": locator_domain,

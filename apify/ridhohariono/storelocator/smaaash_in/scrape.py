@@ -55,6 +55,11 @@ def fetch_data():
             row["BM_Address"].replace("Smaaash, ", "").replace("\r\n", "").strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == MISSING:
+            city = row["CM_CityName"]
+            street_address = " ".join(
+                street_address.replace(city, "").rstrip(",").split()
+            )
         phone = MISSING
         country_code = "IN"
         store_number = row["BM_BranchID"]

@@ -29,6 +29,8 @@ def get_data(page_url, sgw: SgWriter):
     tree = html.fromstring(r.text.replace("og:description", "description"))
 
     location_name = " ".join("".join(tree.xpath("//h2//text()")).split())
+    if "KNX" in location_name:
+        location_name = location_name.split("KNX")[0].strip()
     line = tree.xpath("//p[./strong[contains(text(), 'Adres')]]//text()")
     line = list(filter(None, [l.strip().replace("\xa0", " ") for l in line]))
 

@@ -3,7 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from lxml import html
 from typing import Iterable
-
+import re
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -68,16 +68,41 @@ def get_json_objectVariable(Object, varNames, noVal=MISSING):
     return value
 
 
+# get Phone, pull first phone number
+def get_phone(Source):
+    phone = MISSING
+
+    if Source is None or Source == "":
+        return phone
+
+    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
+        phone = match
+        return phone
+    return phone
+
+
 def fetch_single_store(store, retry=0):
     try:
-        country_code = do_fuzzy_search(store["Country"])
+        countryjson = store["Country"]
+        if "ROMANIA_EEMEA" in str(countryjson):
+            countryjson = "ROMANIA"
+        if "Lithuanta" in str(countryjson):
+            countryjson = "Lithuania"
+
+        country_code = do_fuzzy_search(countryjson)
         store_number = store["StoreId"]
         location_name = store["StoreName"]
-        phone = store["PhoneNumber"]
+        phone = get_phone(store["PhoneNumber"])
         latitude = store["Lat"]
         longitude = store["Lng"]
         page_url = f"https://about.puma.com{store['Url']}"
         location_type = "Outlet" if "Outlet" in location_name else "Store"
+
+        if location_type == "Outlet":
+            location_name = "Puma Outlet"
+        else:
+            location_name = "Puma Store"
+
         log.info(f"Scrapping {page_url}...")
         response = http.get(page_url)
         body = html.fromstring(response.text, "lxml")
@@ -161,7 +186,7 @@ def fetch_records(search: DynamicGeoSearch) -> Iterable[SgRecord]:
                 rec_count = state.get_misc_value(countryCode, default_factory=lambda: 0)
                 state.set_misc_value(countryCode, rec_count + 1)
             except Exception as e:
-                log.error(f"Fat store from  <{lat}, {lng}> message={e}")
+                log.info(f"Error store from  <{lat}, {lng}> message={e}")
 
         log.info(
             f"{count}. Total stores from <{lat}, {lng}> = {len(stores)}; total = {totalStores}"

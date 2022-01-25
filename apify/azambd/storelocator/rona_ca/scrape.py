@@ -1,4 +1,3 @@
-from lxml import html
 import time
 import re
 import json
@@ -117,24 +116,6 @@ def getXpathClean(body, xpath):
     return values[0].strip()
 
 
-def getHoo(body):
-    lis = body.xpath("//div[@id='mainHours']/ul/li")
-    hoo = []
-    days = []
-    for li in lis:
-        day = getXpathClean(li, ".//span/text()")
-        time = getXpathClean(li, ".//time/span/text()")
-        if day in days:
-            continue
-        days.append(day)
-        if time == MISSING:
-            time = "Closed"
-        hoo.append(day + " " + time)
-    if len(hoo) == 0:
-        return MISSING
-    return "; ".join(hoo)
-
-
 def fetchData():
     page_urls = fetchStores()
     log.info(f"Total stores = {len(page_urls)}")
@@ -143,31 +124,32 @@ def fetchData():
         count = count + 1
         log.debug(f"{count}. fetching {page_url} ...")
         response = get_response(count, page_url)
-        body = html.fromstring(response.text, "lxml")
 
         storeDetails = getJSObject(response.text, "]", {})
         storeDetails = storeDetails.replace("\u00E9", "").replace("\\'", "")
 
         storeDetails = json.loads(storeDetails)
 
-        store_number = getJSONObjectVariable(storeDetails, "id")
-        location_name = getJSONObjectVariable(storeDetails, "name")
+        store_number = getJSONObjectVariable(storeDetails, "storeDetails.id")
+        location_name = getJSONObjectVariable(storeDetails, "storeDetails.store_name")
+        latitude = str(getJSONObjectVariable(storeDetails, "storeDetails.lat"))
+        longitude = str(getJSONObjectVariable(storeDetails, "storeDetails.long"))
+        phone = str(getJSONObjectVariable(storeDetails, "storeDetails.phone"))
+        city = getJSONObjectVariable(storeDetails, "storeDetails.city")
+        zip_postal = getJSONObjectVariable(storeDetails, "storeDetails.zip")
+        state = getJSONObjectVariable(storeDetails, "storeDetails.state")
+        street_address = getJSONObjectVariable(storeDetails, "storeDetails.address")
+        country_code = getJSONObjectVariable(storeDetails, "storeDetails.country")
 
         location_type = MISSING
-        street_address = getXpathClean(body, "//span[@itemprop='streetAddress']/text()")
-        city = getXpathClean(body, "//span[@itemprop='addressLocality']/text()")
-        zip_postal = getXpathClean(body, "//span[@itemprop='postalCode']/text()")
-        state = getXpathClean(body, "//span[@itemprop='addressRegion']/text()")
-        country_code = "CA"
-        phone = (
-            getXpathClean(body, "//div[@itemprop='telephone']/text()")
-            .replace("Phone:", "")
-            .strip()
-        )
-        latitude = str(getJSObject(response.text, "lat"))
-        longitude = str(getJSObject(response.text, "lng"))
-        hours_of_operation = getHoo(body)
-        raw_address = f"{street_address}, {city}, {state}, {zip_postal}"
+
+        info_hoo = storeDetails["storeDetails"]["storeHours"]
+        hoos = []
+        for t in info_hoo:
+            hoo = f"{t['day']['day']}:{t['day']['open']}-{t['day']['close']}"
+            hoos.append(hoo)
+
+        hours_of_operation = "; ".join(hoos)
 
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -184,12 +166,11 @@ def fetchData():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
-    log.info(f"Start scrapping {website} ...")
+    log.info(f"Start crawling {website} ...")
     start = time.time()
     result = fetchData()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:

@@ -4,7 +4,6 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
-from httpx import Timeout
 
 logger = SgLogSetup().get_logger("walmart_com")
 
@@ -14,18 +13,16 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles=None,
+    expected_search_radius_miles=32,
     max_search_results=50,
 )
 
 
-def api_get(start_url, headers, timeout, attempts, maxRetries):
+def api_get(start_url, headers, attempts, maxRetries):
     error = False
     session = SgRequests()
     try:
-        results = SgRequests.raise_on_err(
-            session.get(start_url, headers=headers, timeout_config=timeout)
-        )
+        results = SgRequests.raise_on_err(session.get(start_url, headers=headers))
     except exceptions.RequestException as requestsException:
         if "ProxyError" in str(requestsException):
             attempts += 1
@@ -42,7 +39,7 @@ def api_get(start_url, headers, timeout, attempts, maxRetries):
 
     if error:
         if attempts < maxRetries:
-            results = api_get(start_url, headers, timeout, attempts, maxRetries)
+            results = api_get(start_url, headers, attempts, maxRetries)
         else:
             TooManyRetries = (
                 "Retried "
@@ -70,11 +67,7 @@ def fetch_data():
             + "&distance=50"
         )
         try:
-            r2 = SgRequests.raise_on_err(
-                session.get(
-                    url, headers=headers, timeout_config=Timeout(timeout=61, connect=61)
-                )
-            ).json()
+            r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
         except Exception:
             r2 = api_get(url, headers, 15, 0, 15).json()
         if r2["payload"]["nbrOfStores"]:
