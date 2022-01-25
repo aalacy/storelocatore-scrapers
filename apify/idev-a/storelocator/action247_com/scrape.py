@@ -84,7 +84,7 @@ def _d(res, url):
     )
 
 
-def fetch_data():
+def fetch_data(writer):
     with SgRequests(proxy_country="us") as http:
         locations = bs(http.get(base_url, headers=_headers).text, "lxml").select(
             "div#primary table td"
@@ -103,13 +103,11 @@ def fetch_data():
                     res = http.get(page_url, headers=_headers)
                     if res.status_code != 200:
                         continue
-                    yield _d(res, url)
+                    writer.write_row(_d(res, page_url))
             else:
-                yield _d(res, url)
+                writer.write_row(_d(res, url))
 
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+        results = fetch_data(writer)
