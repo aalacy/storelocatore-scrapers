@@ -24,7 +24,7 @@ def fetch_data(sgw: SgWriter):
         r = session.get(api_url, headers=headers)
         js = r.json()
         for j in js["storesData"]["stores"]:
-            page_url = j.get("detailsUrl")
+            page_url = "".join(j.get("detailsUrl")).replace("/en-en/", "/en-us/")
             location_name = j.get("name")
             street_address = (
                 f"{j.get('address1')} {j.get('address2') or ''}".replace("None", "")
@@ -41,6 +41,14 @@ def fetch_data(sgw: SgWriter):
             phone = j.get("phone")
             state = j.get("stateCode")
             postal = j.get("postalCode")
+            if postal == "00000":
+                postal = "<MISSING>"
+            postal = (
+                str(postal)
+                .replace("1012 JS", "1012")
+                .replace("1071 CA", "1071")
+                .strip()
+            )
             city = j.get("city")
             store_number = j.get("ID")
             latitude = j.get("latitude")
