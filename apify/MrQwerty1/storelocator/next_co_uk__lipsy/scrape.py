@@ -62,8 +62,9 @@ def get_data(country, sgw: SgWriter):
 
         _tt = []
         for _t in _types:
-            if types_converter.get(str(_t)):
-                _tt.append(types_converter.get(str(_t)))
+            b = types_converter.get(str(_t)) or ""
+            if b:
+                _tt.append(b)
 
         location_type = ";".join(_tt)
         store_number = j.get("location_id")
