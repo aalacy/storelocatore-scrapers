@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -28,7 +28,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         stores_req = session.get(
             "https://www.hihostels.com/sitemap.xml",
             headers=headers,
@@ -44,6 +44,8 @@ def fetch_data():
 
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
+            if isinstance(store_req, SgRequestError):
+                continue
             store_sel = lxml.html.fromstring(store_req.text)
             locator_domain = website
 
