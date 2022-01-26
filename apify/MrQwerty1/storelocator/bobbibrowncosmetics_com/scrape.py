@@ -5,6 +5,19 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def clean_phone(text):
+    text = text.lower()
+    replace_list = ["(", ")", ".", "tel", ":", "+"]
+    black_list = ["e", "x", "d"]
+    for r in replace_list:
+        text = text.replace(r, "").strip()
+    for b in black_list:
+        if b in text:
+            text = text.split(b)[0].strip()
+
+    return text
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.bobbibrowncosmetics.com/rpc/jsonrpc.tmpl"
     r = session.post(api, headers=headers, params=params, data=data)
@@ -12,13 +25,18 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         location_name = j.get("DOORNAME")
-        street_address = f'{j.get("ADDRESS")} {j.get("ADDRESS2") or ""}'.strip()
-        city = j.get("CITY")
-        state = j.get("STATE_OR_PROVINCE")
-        postal = j.get("ZIP_OR_POSTAL")
+        street_address = " ".join(
+            f'{j.get("ADDRESS")} {j.get("ADDRESS2") or ""}'.split()
+        )
+        city = j.get("CITY") or ""
+        state = j.get("STATE_OR_PROVINCE") or ""
+        postal = j.get("ZIP_OR_POSTAL") or ""
+        postal = postal.replace("-", "")
         country = j.get("COUNTRY")
+        raw_address = " ".join(f"{street_address} {city} {state} {postal}".split())
 
-        phone = j.get("PHONE1")
+        phone = j.get("PHONE1") or ""
+        phone = clean_phone(phone)
         latitude = j.get("LATITUDE")
         longitude = j.get("LONGITUDE")
         location_type = j.get("STORE_TYPE")
@@ -40,6 +58,7 @@ def fetch_data(sgw: SgWriter):
             longitude=longitude,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         sgw.write_row(row)

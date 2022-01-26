@@ -41,6 +41,9 @@ def get_data(url, sgw: SgWriter):
         .replace("Speedy & B&Q", "")
         .strip()
     )
+    if ad.find("Unit C/D") != -1:
+        street_address = " ".join(ad.split(",")[:3]).strip()
+        street_address = " ".join(street_address.split())
     state = a.state or "<MISSING>"
     postal = a.postcode or "<MISSING>"
     country_code = "UK"

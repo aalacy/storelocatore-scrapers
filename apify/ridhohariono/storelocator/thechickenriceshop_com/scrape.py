@@ -99,8 +99,10 @@ def fetch_data():
         hours_of_operation = hoo.strip().rstrip(",")
         location_type = MISSING
         store_number = row["name"].split(".")[0]
-        latitude = row["latitude"]
-        longitude = row["logitude"]
+        latitude = row["latitude"] if float(row["latitude"]) < 7.0 else row["logitude"]
+        longitude = (
+            row["logitude"] if float(row["logitude"]) > 98.0 else row["latitude"]
+        )
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

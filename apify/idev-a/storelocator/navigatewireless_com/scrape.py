@@ -7,6 +7,16 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("navigatewireless")
 
@@ -30,8 +40,8 @@ def fetch_data():
                 logger.info(page_url)
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 hours = []
-                days = sp1.select("div.left-hours div.day")
-                timings = sp1.select("div.left-hours div.timings")
+                days = sp1.select("div.hours div.day")
+                timings = sp1.select("div.hours div.timings")
                 for x in range(len(days)):
                     hours.append(f"{days[x].text.strip()}: {timings[x].text.strip()}")
                 yield SgRecord(
