@@ -1,13 +1,12 @@
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-website = "valuhomecenters.com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "accept": "application/json, text/javascript, */*; q=0.01",
     "authority": "valuhomecenters.com",
@@ -23,6 +22,13 @@ headers = {
     "x-mod-sbb-ctype": "xhr",
     "x-requested-with": "XMLHttpRequest",
 }
+
+session = SgRequests()
+website = "valuhomecenters_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+DOMAIN = "https://valuhomecenters.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -41,6 +47,8 @@ def fetch_data():
             page_url = "https://valuhomecenters.com" + loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            if "Coming Spring" in r.text:
+                continue
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1", {"class": "PageHeaderTitle"}).text
             address = (
@@ -56,20 +64,21 @@ def fetch_data():
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
+            country_code = "US"
             yield SgRecord(
-                locator_domain="https://valuhomecenters.com/",
+                locator_domain=DOMAIN,
                 page_url=page_url,
-                location_name=location_name.strip(),
+                location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
-                country_code="US",
-                store_number="<MISSING>",
+                country_code=country_code,
+                store_number=MISSING,
                 phone=phone.strip(),
-                location_type="<MISSING>",
-                latitude="<MISSING>",
-                longitude="<MISSING>",
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
             )
 
@@ -77,7 +86,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

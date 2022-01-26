@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -22,64 +21,70 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         url = "https://hendersonglass.com/locations/"
-        r = session.get(url, headers=headers, timeout=180)
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "locationsCol"})
-        for loc in loclist:
-            try:
-                coords = loc.find("a")["href"].split("@")[1].split(",")
-                latitude = coords[0]
-                longitude = coords[1]
-            except:
-                latitude = MISSING
-                longitude = MISSING
-            loc = loc.get_text(separator="|", strip=True).split("|")
-            location_name = loc[0]
-            log.info(location_name)
-            if len(loc) < 5:
-                street_address = MISSING
-                zip_postal = MISSING
-                city = MISSING
-                state = MISSING
-                country_code = MISSING
-                phone = loc[1].replace("Phone:", "")
-            else:
-                address = loc[1]
-                phone = loc[2].replace("Phone:", "")
-                raw_address = address.replace(",", " ")
-                # Parse the address
-                pa = parse_address_intl(raw_address)
-
-                street_address = pa.street_address_1
-                street_address = street_address if street_address else MISSING
-
-                city = pa.city
-                city = city.strip() if city else MISSING
-
-                state = pa.state
-                state = state.strip() if state else MISSING
-
-                zip_postal = pa.postcode
-                zip_postal = zip_postal.strip() if zip_postal else MISSING
-                hours_of_operation = MISSING
-            country_code = "US"
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone,
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+        linklist = soup.findAll("div", {"class": "elementor-widget-container"})
+        for link in linklist:
+            if "Phone" not in link.text:
+                continue
+            if "Corporate Location" in link.text:
+                continue
+            loclist = link.findAll("p")
+            for loc in loclist:
+                try:
+                    coords = loc.find("a")["href"].split("@")[1].split(",")
+                    latitude = coords[0]
+                    longitude = coords[1]
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
+                loc = loc.get_text(separator="|", strip=True).split("|")
+                location_name = loc[0]
+                if "Phone" in location_name:
+                    continue
+                log.info(location_name)
+                if len(loc) < 5:
+                    street_address = MISSING
+                    zip_postal = MISSING
+                    city = MISSING
+                    state = MISSING
+                    country_code = MISSING
+                    raw_address = MISSING
+                    phone = loc[1].replace("Phone:", "")
+                else:
+                    raw_address = loc[1]
+                    if "," in raw_address:
+                        address = raw_address.split(",")
+                        street_address = address[0]
+                        zip_postal = address[1]
+                        state = MISSING
+                        city = MISSING
+                    else:
+                        address = raw_address.split()
+                        zip_postal = address[0]
+                        street_address = MISSING
+                        state = MISSING
+                        city = MISSING
+                    phone = loc[2].replace("Phone:", "")
+                    hours_of_operation = MISSING
+                country_code = "US"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
