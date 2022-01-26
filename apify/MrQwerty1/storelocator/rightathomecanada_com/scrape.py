@@ -1,4 +1,5 @@
 from lxml import html
+from typing import List
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -107,7 +108,8 @@ def get_data(slug, sgw: SgWriter):
             data["raw_address"] = raw_address
             write(data, sgw)
         else:
-            records, _tmp = [], []
+            _tmp = []  # type: List[str]
+            records = []
             for li in line:
                 if "Right" in li:
                     records.append(_tmp)
