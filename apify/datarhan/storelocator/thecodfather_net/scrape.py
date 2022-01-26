@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -16,33 +17,41 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
+    response = session.get(
+        "https://thecodfather.order-now.menu/order#/collection", headers=hdr
+    )
     dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "FastFoodRestaurant")]/text()')[
+        0
+    ].strip()
 
-    all_locations = dom.xpath('//div[@id="nearLocations"]/div[@data-store-id]')
-    for poi_html in all_locations:
-        location_name = poi_html.xpath('.//div[@class="place"]/p/text()')[0]
-        raw_address = poi_html.xpath('.//div[@class="address"]/p/text()')
-        hoo = poi_html.xpath('.//div[@class="work-time"]//text()')
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
-        store_number = poi_html.xpath(".//@data-store")[0]
-        latitude = poi_html.xpath(".//@data-lat")[0]
-        longitude = poi_html.xpath(".//@data-lng")[0]
+    all_locations = json.loads(data)
+    for poi in all_locations:
+        hoo = []
+        for e in poi["openingHoursSpecification"]:
+            day = e["dayOfWeek"].split("/")[-1]
+            opens = e["opens"][:-3]
+            closes = e["closes"][:-3]
+            hoo.append(f"{day}: {opens} - {closes}")
+        hoo = " ".join(hoo)
+        state = ""
+        if len(poi["address"]["postalCode"].split()) == 2:
+            state = poi["address"]["postalCode"].split()[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
-            location_name=location_name,
-            street_address=raw_address[0][:-1],
-            city=raw_address[1][:-1],
-            state=raw_address[-1].split()[0],
-            zip_postal=raw_address[-1].split()[-1],
-            country_code="",
-            store_number=store_number,
-            phone="",
-            location_type="",
-            latitude=latitude,
-            longitude=longitude,
+            location_name=poi["name"],
+            street_address=poi["address"]["streetAddress"],
+            city=poi["address"]["addressLocality"],
+            state=state,
+            zip_postal=poi["address"]["postalCode"].split()[-1],
+            country_code=poi["address"]["addressCountry"],
+            store_number="",
+            phone=poi["telephone"],
+            location_type=poi["@type"],
+            latitude=poi["geo"]["latitude"],
+            longitude=poi["geo"]["longitude"],
             hours_of_operation=hoo,
         )
 

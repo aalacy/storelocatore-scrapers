@@ -58,6 +58,8 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if len(street_address) < 4:
+                street_address = raw_address.split("Outlet")[0] + "Outlet"
             coords = soup.find("iframe")["src"].split("q=")[1].split(",")
             latitude = coords[0]
             longitude = coords[1]
