@@ -48,7 +48,8 @@ def fetch_data(sgw: SgWriter):
             time = "".join(l.xpath("./span/text()")).strip()
             _tmp.append(f"{day} {time}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp) or "Closed"
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,

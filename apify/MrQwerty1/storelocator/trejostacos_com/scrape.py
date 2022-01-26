@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -16,26 +17,15 @@ def get_urls():
     )
 
 
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-
-    return latitude, longitude
-
-
 def get_data(page_url, sgw: SgWriter):
     if page_url.startswith("/"):
         page_url = f"https://www.trejostacos.com{page_url}"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
+    j = json.loads(tree.xpath("//div[@data-block-json]/@data-block-json")[0])[
+        "location"
+    ]
     location_name = tree.xpath("//title/text()")[0].strip()
     line = tree.xpath("//h2/a[not(contains(@href, 'tel'))]/text()")
     line = list(filter(None, [l.strip() for l in line]))
@@ -65,20 +55,17 @@ def get_data(page_url, sgw: SgWriter):
             )
     except IndexError:
         phone = SgRecord.MISSING
-    text = "".join(tree.xpath("//h2/a[not(contains(@href, 'tel'))]/@href"))
-    latitude, longitude = get_coords_from_google_url(text)
+    latitude = j.get("markerLat")
+    longitude = j.get("markerLng")
 
-    hours_of_operation = (
-        " ".join(tree.xpath("//h2[./a]/following-sibling::h2[1]/text()"))
-        or SgRecord.MISSING
-    )
+    _tmp = []
+    lines = tree.xpath("//h2/text()")
+    for line in lines:
+        if "TRE" in line or not line.strip() or "(" in line:
+            continue
+        _tmp.append(line.strip())
 
-    if hours_of_operation == SgRecord.MISSING:
-        hours_of_operation = " ".join(
-            tree.xpath(
-                "//h2/a[contains(@href, 'tel')]/text()|//h2[./a[contains(@href, 'google.com')]]/text()"
-            )[1:]
-        )
+    hours_of_operation = " ".join(_tmp).replace("PM ", "PM;")
 
     row = SgRecord(
         page_url=page_url,
@@ -88,9 +75,7 @@ def get_data(page_url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code=country_code,
-        store_number=SgRecord.MISSING,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,

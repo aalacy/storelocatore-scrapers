@@ -91,6 +91,15 @@ def fetch_data():
         for _ in locations[1][6][1][12][0][13][0]:
             yield _d(_)
 
+        for _ in locations[1][6][2][12][0][13][0]:
+            yield _d(_)
+
+        for _ in locations[1][6][3][12][0][13][0]:
+            yield _d(_)
+
+        for _ in locations[1][6][4][12][0][13][0]:
+            yield _d(_)
+
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:

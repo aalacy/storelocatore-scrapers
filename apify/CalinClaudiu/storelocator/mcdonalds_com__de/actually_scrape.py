@@ -104,6 +104,8 @@ def getAPIKey(session, country, url):
 
 
 def getLocsPage(session, country):
+    if "kraine" in country["text"]:
+        return "/ua/uk-ua/finn-oss.html"
     headers = {}
     headers[
         "user-agent"
@@ -174,15 +176,11 @@ def transform_item_map(raw, country):
         )
     except Exception:
         pass
-    try:
-        raw["properties"]["addressLine3"] = raw["properties"]["addressLine3"]
-        good["street_address"] = (
-            good["street_address"] + ", " + raw["properties"]["addressLine3"]
-        )
-    except Exception:
-        pass
     good["street_address"] = fix_comma(good["street_address"])
-    good["city"] = raw["properties"]["subDivision"]
+    try:
+        good["city"] = raw["properties"]["addressLine3"]
+    except Exception:
+        good["city"] = ""
     rightID = None
     for i in raw["properties"]["identifiers"]["storeIdentifier"]:
         if i["identifierType"] == "LocalRefNum":
@@ -190,7 +188,10 @@ def transform_item_map(raw, country):
     good["page_url"] = "{}/location///{}.html".format(
         country["page"].replace(".html", ""), str(rightID)
     )
-    good["state"] = raw["properties"]["subDivision"]
+    try:
+        good["state"] = raw["properties"]["subDivision"]
+    except Exception:
+        good["state"] = ""
     good["zipcode"] = raw["properties"]["postcode"]
     good["country_code"] = raw["properties"]["addressLine4"]
     try:
@@ -213,6 +214,9 @@ def strip_locale(country):
 
 def pull_map_poi(coord, url, session, locale, lang, country):
     lat, lng = coord
+
+    if lang == "en-nb-no":
+        lang = "en-no"
     headers = {}
     headers[
         "user-agent"
@@ -221,7 +225,8 @@ def pull_map_poi(coord, url, session, locale, lang, country):
         url.format(lat=lat, lng=lng, locale=locale, lang=lang), headers=headers
     ).json()
     for raw in data["features"]:
-        yield transform_item_map(raw, country)
+        good = transform_item_map(raw, country)
+        yield good
 
 
 def pull_from_map(session, country):
@@ -233,22 +238,41 @@ def pull_from_map(session, country):
     try:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountry],
-            expected_search_radius_miles=None,
-            max_search_results=75,
+            expected_search_radius_miles=8,
+            max_search_results=25,
             granularity=Grain_8(),
         )
     except Exception as e:
         logzilla.warning(
             f"Issue with sgzip and country code: {SearchableCountry}\n{e}\n"
         )
+    lang2 = lang.split("-")[1]
+    lang2 = "en-" + lang
+
     if search:
-        for coord in search:
-            for rec in pull_map_poi(coord, url, session, locale, lang, country):
-                search.found_location_at(rec["latitude"], rec["longitude"])
-                yield rec
+        with SgRequests(proxy_country=locale) as session2:
+            for coord in search:
+                try:
+                    for rec in pull_map_poi(
+                        coord, url, session2, locale, lang, country
+                    ):
+                        search.found_location_at(rec["latitude"], rec["longitude"])
+                        yield rec
+                except Exception:
+                    pass
+                try:
+                    for rec in pull_map_poi(
+                        coord, url, session2, locale, lang2, country
+                    ):
+                        search.found_location_at(rec["latitude"], rec["longitude"])
+                        yield rec
+                except Exception:
+                    pass
 
 
 def test_for_map(locationsPage, country, session, domain):
+    if "kraine" in country["text"]:
+        return True
     headers = {}
     headers[
         "user-agent"
@@ -275,6 +299,7 @@ def fetch_germany_ISH(country):
         elif locationsPage:
             isMap = test_for_map(locationsPage, country, session, domain)
             if isMap:
+                logzilla.info(f"Map test passed!")  # noqa
                 for rec in pull_from_map(session, country):
                     yield rec
 

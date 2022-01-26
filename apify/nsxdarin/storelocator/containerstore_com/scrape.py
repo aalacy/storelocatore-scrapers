@@ -79,6 +79,16 @@ def fetch_data():
                     hours = hours + "; " + day
         if phone == "":
             phone = "<MISSING>"
+        if "store=NOR" in loc:
+            name = "Northbrook"
+            add = "101 Skokie Blvd."
+            city = "Northbrook"
+            state = "IL"
+            zc = "60062"
+            phone = "(847) 559-8222"
+            hours = "Mon-Sat: 10:00 AM - 8:00 PM; Sun: 11:00 AM - 7:00 PM"
+            lat = "42.152"
+            lng = "87.8007"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

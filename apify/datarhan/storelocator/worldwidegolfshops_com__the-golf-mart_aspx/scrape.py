@@ -2,29 +2,34 @@ import re
 import json
 from lxml import etree
 from urllib.parse import urljoin
-from time import sleep
-
-from sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-import ssl
+from sglogging import SgLogSetup
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-ssl._create_default_https_context = ssl._create_unverified_context
+headers = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
+}
+
+start_url = "https://www.worldwidegolfshops.com/the-golf-mart"
+logger = SgLogSetup().get_logger("worldwidegolfshops_com__the-golf-mart_aspx")
 
 
-def fetch_data():
-    start_url = "https://www.worldwidegolfshops.com/the-golf-mart"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        sleep(15)
-        dom = etree.HTML(driver.page_source)
-        data = dom.xpath('//script[contains(text(), "find-a-store")]/text()')[2].split(
-            "__RUNTIME__ ="
-        )[-1]
+def get_store_urls():
+    with SgRequests() as session:
+        response = session.get(start_url, headers=headers)
+        dom = etree.HTML(response.text)
+        data = dom.xpath(
+            '//script[contains(text(), "store.custom.find-a-store")]/text()'
+        )[2]
         data = json.loads(data)
         all_poi = []
         for k, v in data.items():
@@ -36,27 +41,51 @@ def fetch_data():
 
         all_locations = []
         for poi in all_poi:
-            if not poi["content"].get("text"):
-                continue
-            poi_html = etree.HTML(poi["content"]["text"])
-            url = poi_html.xpath(".//a/@href")
-            if url:
-                all_locations.append(url[0])
+            if poi["props"].get("text"):
+                try:
+                    all_locations.append(
+                        poi["props"]["text"].split("](")[1].split(")\n")[0]
+                    )
+                except Exception:
+                    continue
+        return all_locations
 
-        for url in all_locations:
+
+def fetch_data():
+    all_locations = get_store_urls()
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
+        for idx, url in enumerate(all_locations[0:]):
+            domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
             page_url = urljoin(start_url, url)
+            logger.info(f"Pulling the data from {page_url}")
+
+            if "##" in page_url:
+                continue
             driver.get(page_url)
-            sleep(10)
+            WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, '//div[contains(text(), "STORE HOURS")]')
+                )
+            )
             loc_dom = etree.HTML(driver.page_source)
             poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
             poi = json.loads(poi)
-            location_name = loc_dom.xpath(
-                '//h1[@class="vtex-yext-store-locator-0-x-storeTitle tc"]/text()'
-            )[0]
+            location_name = "".join(loc_dom.xpath("//title/text()"))
             hoo = []
-            for e in poi["openingHoursSpecification"]:
-                hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
+            try:
+                for e in poi["openingHoursSpecification"]:
+                    if not e.get("dayOfWeek"):
+                        continue
+                    hoo.append(f'{e["dayOfWeek"]} {e["opens"]} {e["closes"]}')
+            except Exception as e:
+                logger.info(f" [ {e} ] Please fix it at >>> [{idx}] | {page_url}")
             hours_of_operation = " ".join(hoo)
+            country_code = ""
+            country_code = "US"
+            if "store/the-golf-mart-nm-87111/ABQ" in page_url:
+                country_code = "MX"
 
             item = SgRecord(
                 locator_domain=domain,
@@ -66,7 +95,7 @@ def fetch_data():
                 city=poi["address"]["addressLocality"],
                 state=poi["address"]["addressRegion"],
                 zip_postal=poi["address"]["postalCode"],
-                country_code=SgRecord.MISSING,
+                country_code=country_code,
                 store_number=poi["@id"],
                 phone=poi["telephone"],
                 location_type=poi["@type"][0],

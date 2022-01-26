@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,42 +13,23 @@ headers = {
 logger = SgLogSetup().get_logger("chuckecheese_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
+    locs = [
+        "https://locations.chuckecheese.com/gu/tamuning/235-pas-street",
+        "https://locations.chuckecheese.com/pr/bayamon/rexville-town-centre-rd.-167-km-17.6",
+        "https://locations.chuckecheese.com/pr/caguas/plaza-centro-mall-30-ave.-rafael-j.-cordero",
+        "https://locations.chuckecheese.com/pr/carolina/monte-real-plaza-carr.-3-km-15.2-b.o.-canovanillas",
+        "https://locations.chuckecheese.com/ca/on/mississauga/2945-argentia-road",
+        "https://locations.chuckecheese.com/ca/ab/edmonton/14245-137th-avenue-nw",
+        "https://locations.chuckecheese.com/ca/ab/edmonton/9863-19th-avenue-nw",
+        "https://locations.chuckecheese.com/ca/on/mississauga/4141-dixie-rd.",
+    ]
     cities = []
     states = []
     website = "chuckecheese.com"
     typ = "<MISSING>"
     countries = [
         "https://locations.chuckecheese.com/ca",
-        "https://locations.chuckecheese.com/pr",
         "https://locations.chuckecheese.com/us",
     ]
     logger.info("Pulling Stores")
@@ -60,8 +44,7 @@ def fetch_data():
                         purl = (
                             "https://locations.chuckecheese.com/" + item.split('"')[0]
                         )
-                        count = item.split('data-count="(')[1].split(")")[0]
-                        if count == "1":
+                        if purl.count("/") == 6:
                             locs.append(purl)
                         else:
                             states.append(purl)
@@ -77,8 +60,7 @@ def fetch_data():
                         purl = (
                             "https://locations.chuckecheese.com/" + item.split('"')[0]
                         )
-                        count = item.split('data-count="(')[1].split(")")[0]
-                        if count == "1":
+                        if purl.count("/") == 6:
                             locs.append(purl)
                         else:
                             cities.append(purl)
@@ -95,12 +77,14 @@ def fetch_data():
                             "https://locations.chuckecheese.com/" + item.split('"')[0]
                         )
                         locs.append(purl)
+
     for loc in locs:
         logger.info(loc)
         loc = loc.replace("&amp;", "&").replace("&#39;", "'")
         if (
             "https://locations.chuckecheese.com/us" in loc
             or "https://locations.chuckecheese.com/pr" in loc
+            or "https://locations.chuckecheese.com/gu" in loc
         ):
             country = "US"
         else:
@@ -124,12 +108,15 @@ def fetch_data():
                 add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
                 zc = line2.split('temprop="postalCode">')[1].split("<")[0]
                 city = line2.split('><span class="c-address-city">')[1].split("<")[0]
-                if "/pr/" not in loc:
+                if "/pr/" not in loc and "/gu/" not in loc:
                     state = line2.split('<span class="c-address-state" >')[1].split(
                         "<"
                     )[0]
                 else:
-                    state = "PR"
+                    if "/pr/" in loc:
+                        state = "PR"
+                    else:
+                        state = "GU"
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
             if 'itemprop="latitude" content="' in line2:
@@ -150,27 +137,34 @@ def fetch_data():
         name = name.replace("&#39;", "'").replace("&amp;", "&")
         add = add.replace("&#39;", "'").replace("&amp;", "&")
         city = city.replace("&#39;", "'").replace("&amp;", "&")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "gu/tamuning" in loc:
+            add = "235 Pas Street"
+            city = "Tamuning"
+            zc = "96913"
+            state = "GU"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
