@@ -3,75 +3,69 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.static import static_coordinate_list, SearchableCountries
 
 
 def get_hours(hours) -> str:
     tmp = []
     for h in hours:
-        day = h.get("weekday")
-        start = "".join(h.get("start")).split()[1].strip()
-        end = "".join(h.get("end")).split()[1].strip()
-        line = f"{day} {start} - {end}"
+        day = h.get("weekDay")
+        time = h.get("description")
+        line = f"{day} {time}"
         tmp.append(line)
     hours_of_operation = ";".join(tmp) or "<MISISNG>"
     return hours_of_operation
 
 
 def fetch_data(sgw: SgWriter):
-    search = static_coordinate_list(radius=30, country_code=SearchableCountries.USA)
-    for lat, long in search:
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-            "Referer": "https://www.citybbq.com/",
-            "ui-cache-ttl": "300",
-            "ui-transformer": "restaurants",
-            "clientid": "citybbq",
-            "Content-Type": "application/json",
-            "nomnom-platform": "web",
-            "Origin": "https://www.citybbq.com",
-            "Connection": "keep-alive",
-            "TE": "Trailers",
-            "Pragma": "no-cache",
-            "Cache-Control": "no-cache",
-        }
-
+    locator_domain = "https://www.citybbq.com/"
+    api_url = "https://citybbq.olo.com/api/vendors/regions?excludeCities=true"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, */*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "__RequestVerificationToken": "",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-Olo-Request": "1",
+        "X-Olo-Viewport": "Desktop",
+        "X-Olo-App-Platform": "web",
+        "Connection": "keep-alive",
+        "Referer": "https://citybbq.olo.com/locations",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
+        code = j.get("code")
         session = SgRequests()
-
         r = session.get(
-            f"https://nomnom-prod-api.citybbq.com/restaurants/near?lat={lat}&long={long}&radius=20000&limit=100&nomnom=calendars&nomnom_calendars_from=20210724&nomnom_calendars_to=20210801&nomnom_exclude_extref=999",
-            headers=headers,
+            f"https://citybbq.olo.com/api/vendors/search/{code}", headers=headers
         )
-        js = r.json()["restaurants"]
-        s = set()
+        js = r.json()["vendor-search-results"]
         for j in js:
-
-            page_url = j.get("url")
-            location_name = j.get("storename")
-            street_address = j.get("streetaddress")
-            city = j.get("city")
+            page_url = f"https://citybbq.olo.com/menu/{j.get('slug')}"
+            location_name = j.get("name")
+            street_address = f"{j.get('address').get('streetAddress')} {j.get('address').get('streetAddress2')}".strip()
             state = j.get("state")
-            postal = j.get("zip")
-            country_code = j.get("country")
-            phone = j.get("telephone")
+            postal = j.get("address").get("postalCode")
+            country_code = "US"
+            city = j.get("city")
             latitude = j.get("latitude")
             longitude = j.get("longitude")
+            phone = j.get("phoneNumber")
             hours_of_operation = "<MISSING>"
             try:
                 hours = (
-                    j.get("calendars").get("calendar")[0].get("ranges") or "<MISSING>"
+                    j.get("weeklySchedule").get("calendars")[0].get("schedule")
+                    or "<MISSING>"
                 )
             except:
                 hours = "<MISSING>"
             if hours != "<MISSING>":
                 hours_of_operation = str(get_hours(hours))
-            line = latitude
-            if line in s:
-                continue
-            s.add(line)
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -95,6 +89,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://www.citybbq.com/"
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)

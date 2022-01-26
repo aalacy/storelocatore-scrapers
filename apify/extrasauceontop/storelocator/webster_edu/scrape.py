@@ -1,384 +1,175 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import pandas as pd
-import re
-
-session = SgRequests()
-
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
-
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgscrape import simple_scraper_pipeline as sp
+import json
 
 
-def getdata():
+def cross_check(location_name, session):
+
     response = session.get(
-        "https://www.webster.edu/_resources/dmc/php/locations.php?datasource=locations&type=listing&returntype=json&xpath=items%2Fitem&items_per_page=100&page=1&search_phrase=&isinternational%5B%5D=United%20States",
-        headers=headers,
-    ).json()
-
-    locations = response["items"]
-
-    x = 0
-    for location in locations:
-
-        locator_domain = "https://webster.edu"
-        page_url = locator_domain + location["link"]
-        location_name = location["name"]
-        city = location["city"]
-        state = location["stateprovince"]
-        country_code = location["country"]
-        store_number = location["code"]
-        if country_code == "United States":
-            country_code = "US"
-
-        hours = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-
-        data_loc = session.get(page_url, headers=headers).text
-        soup = bs(data_loc, "html.parser")
-
-        if x == 0:
-            address_parts = soup.find_all("li", attrs={"class": "footer-address-item"})
-            phone = address_parts[0].text.strip()
-            address = address_parts[1].text.strip()
-            zipp_part = address_parts[2].text.strip()
-
-            zipp = re.search(r"\d\d\d\d\d", zipp_part).group(0)
-
-            x = x + 1
-            locator_domains.append(locator_domain)
-            page_urls.append(page_url)
-            location_names.append(location_name)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            country_codes.append(country_code)
-            store_numbers.append(store_number)
-            phones.append(phone)
-            location_types.append(location_type)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            hours_of_operations.append(hours)
-            continue
-
-        if page_url == "https://webster.edu/locations/colorado-springs/":
-            address = "<MISSING>"
-            zipp = "<MISSING>"
-            phone = "<MISSING>"
-            locator_domains.append(locator_domain)
-            page_urls.append(page_url)
-            location_names.append(location_name)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            country_codes.append(country_code)
-            store_numbers.append(store_number)
-            phones.append(phone)
-            location_types.append(location_type)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            hours_of_operations.append(hours)
-            continue
-
-        if location_name == "Fort Stewart GA":
-            address = data_loc.split("SFC Paul R. Smith")[1].split("<br>")[2]
-            zipp = (
-                data_loc.split("SFC Paul R. Smith")[1].split("<br>")[3].split(" ")[-1]
-            )
-            phone = ""
-            phone_sect = data_loc.split("Phone")[1]
-            for character in phone_sect:
-                if bool(re.search(r"\d", character)) is True:
-                    phone = phone + character
-                    if len(phone) == 10:
-                        break
-
-            locator_domains.append(locator_domain)
-            page_urls.append(page_url)
-            location_names.append(location_name)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            country_codes.append(country_code)
-            store_numbers.append(store_number)
-            phones.append(phone)
-            location_types.append(location_type)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            hours_of_operations.append(hours)
-            continue
-
-        if location_name == "Hunter Army Airfield GA":
-            address = data_loc.split("<strong>Hunter Army Airfield")[1].split("<br>")[2]
-            zipp = (
-                data_loc.split("<strong>Hunter Army Airfield")[1]
-                .split("<br>")[3]
-                .split(" ")[-1]
-            )
-            phone_sect = data_loc.split("Phone")[2]
-            phone = ""
-            for character in phone_sect:
-                if bool(re.search(r"\d", character)) is True:
-                    phone = phone + character
-                    if len(phone) == 10:
-                        break
-
-            locator_domains.append(locator_domain)
-            page_urls.append(page_url)
-            location_names.append(location_name)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            country_codes.append(country_code)
-            store_numbers.append(store_number)
-            phones.append(phone)
-            location_types.append(location_type)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            hours_of_operations.append(hours)
-            continue
-
-        try:
-            address_part_soup = soup.find_all(
-                "div", attrs={"class": "card-accordion-body"}
-            )[-1]
-            address_part = str(address_part_soup)
-
-            result = re.search(r"\d(.*)<br/>", address_part)
-
-            maybe_address = result.group(0)
-
-            address_pieces = maybe_address.split("<br/>")
-            if len(address_pieces) > 2:
-                address_pieces.pop(-1)
-
-                zipp_check = address_pieces[-1].split(" ")[-1]
-                m = re.search(r"\d+$", zipp_check)
-
-                if m is None:
-                    address = ""
-                    for piece in address_pieces:
-                        address = address + piece + " "
-                    address = address[:-1]
-
-                    zipp = re.search(r"\d\d\d\d\d", address_part).group(0)
-
-                else:
-
-                    address_pieces.pop(-1)
-
-                    address = ""
-                    for piece in address_pieces:
-                        address = address + piece + " "
-                    address = address[:-1]
-
-                    zipp = zipp_check
-
-                p_tags = address_part_soup.find_all("p")
-                for tag in p_tags:
-                    if "Phone" in tag.text.strip():
-                        phone_text = tag.text.strip().split("Phone")[1]
-                        y = 0
-                        phone = ""
-                        for character in phone_text:
-                            m = re.search(r"\d", character)
-                            if m is not None:
-                                phone = phone + character
-                                y = y + 1
-
-                            if y == 10:
-                                break
-
-                        break
-            else:
-
-                p_tags = address_part_soup.find_all("p")
-
-                address = ""
-                for tag in p_tags:
-                    if "Phone" in tag.text.strip():
-                        zipp = tag.text.strip().split("Phone")[0].split(" ")[-1]
-
-                        phone_text = tag.text.strip().split("Phone")[1]
-                        y = 0
-                        phone = ""
-                        for character in phone_text:
-                            m = re.search(r"\d", character)
-                            if m is not None:
-                                phone = phone + character
-                                y = y + 1
-
-                            if y == 10:
-                                break
-
-                        break
-                    else:
-                        address = address + tag.text.strip() + " "
-                address = address[:-1]
-
-        except IndexError:
-            address = "<MISSING>"
-            zipp = "<MISSING>"
-            phone = "<MISSING>"
-
-        except AttributeError:
-
-            address_part_soups = soup.find_all("div", attrs={"class": "card-accordion"})
-
-            for part in address_part_soups:
-                if "Contact Us" in part.text.strip():
-                    address_part_soup = part
-                    address_part = str(part)
-
-            result = re.search(r"\d(.*)<br/>", address_part)
-
-            maybe_address = result.group(0)
-
-            address_pieces = maybe_address.split("<br/>")
-            if len(address_pieces) > 2:
-
-                address_pieces.pop(-1)
-
-                zipp_check = address_pieces[-1].split(" ")[-1]
-                m = re.search(r"\d+$", zipp_check)
-                if m is None:
-                    address = ""
-                    for piece in address_pieces:
-                        address = address + piece + " "
-                    address = address[:-1]
-
-                    zipp = re.search(r"\d\d\d\d\d", address_part).group(0)
-
-                else:
-                    address_pieces.pop(-1)
-
-                    address = ""
-                    for piece in address_pieces:
-                        address = address + piece + " "
-                    address = address[:-1]
-
-                    zipp = zipp_check
-
-                p_tags = address_part_soup.find_all("p")
-                for tag in p_tags:
-                    if "Phone" in tag.text.strip():
-                        phone_text = tag.text.strip().split("Phone")[1]
-                        y = 0
-                        phone = ""
-                        for character in phone_text:
-                            m = re.search(r"\d", character)
-                            if m is not None:
-                                phone = phone + character
-                                y = y + 1
-
-                            if y == 10:
-                                break
-
-                        break
-            else:
-
-                p_tags = address_part_soup.find_all("p")
-
-                address = ""
-                for tag in p_tags:
-                    if "Phone" in tag.text.strip():
-                        zipp = tag.text.strip().split("Phone")[0].split(" ")[-1]
-
-                        phone_text = tag.text.strip().split("Phone")[1]
-                        y = 0
-                        phone = ""
-                        for character in phone_text:
-                            m = re.search(r"\d", character)
-                            if m is not None:
-                                phone = phone + character
-                                y = y + 1
-
-                            if y == 10:
-                                break
-
-                        break
-                    else:
-                        address = address + tag.text.strip() + " "
-                address = address[:-1]
-
-        if address == "1103 Kingshighway":
-            address = "<MISSING>"
-            zipp = "<MISSING>"
-
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
-
-    df = pd.DataFrame(
-        {
-            "locator_domain": locator_domains,
-            "page_url": page_urls,
-            "location_name": location_names,
-            "street_address": street_addresses,
-            "city": citys,
-            "state": states,
-            "zip": zips,
-            "store_number": store_numbers,
-            "phone": phones,
-            "latitude": latitudes,
-            "longitude": longitudes,
-            "hours_of_operation": hours_of_operations,
-            "country_code": country_codes,
-            "location_type": location_types,
-        }
+        "https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query="
+        + location_name
+        + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster"
+    ).text
+    response = (
+        response.replace("\n", "")
+        .replace("\t", "")
+        .replace("ousearchresults(", "")[:-1]
     )
 
-    return df
+    final = json.loads(response)
+
+    page_url = ""
+    for result in final["results"]:
+        url_to_check = result["url"]
+
+        if "/locations/" in url_to_check and "/index.php" in url_to_check:
+            page_url = url_to_check
+            break
+
+    if page_url == "":
+        for result in final["results"]:
+            url_to_check = result["url"]
+
+            if "/locations/" in url_to_check:
+                page_url = url_to_check
+                break
+
+    if page_url == "":
+        response = session.get(
+            "https://ousearch.omniupdate.com/texis/search/?pr=webster&rdepth=31&query="
+            + location_name.split(" ")[0]
+            + "&jump=&uq=https://www.webster.edu/*&prox=page&sufs=0&order=r&rorder=500&rprox=750&rdfreq=500&rwfreq=750&rlead=750&coryMaddensCacheBuster"
+        ).text
+        response = (
+            response.replace("\n", "")
+            .replace("\t", "")
+            .replace("ousearchresults(", "")[:-1]
+        )
+
+        final = json.loads(response)
+        for result in final["results"]:
+            url_to_check = result["url"]
+
+            if "/locations/" in url_to_check:
+                page_url = url_to_check
+                break
+
+    return page_url
 
 
-df = getdata()
+def get_data():
+    session = SgRequests()
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+    response = session.get("https://legacy.webster.edu/locations/index.xml").text
+    soup = bs(response, "html.parser")
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+    placemarks = soup.find_all("placemark")
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
+    for placemark in placemarks:
+        testmark = str(placemark)
 
-df.to_csv("data.csv", index=False)
+        testmark = testmark[:-12]
+        testmark = testmark[11:]
+
+        if "placemark" in testmark.lower():
+            continue
+
+        locator_domain = "legacy.webster.edu"
+        location_name = placemark.find("name").text.strip().replace("\n", "")
+        latitude = placemark.find("coordinates").text.strip().split(",")[1]
+        longitude = placemark.find("coordinates").text.strip().split(",")[0]
+
+        address_parts = placemark.find("description").text.strip()
+        phone = address_parts.split("Phone: ")[-1].strip()
+        if location_name == "San Antonio":
+            phone = phone.replace(" ", "")
+        if " " in phone or "+" in phone or location_name == address_parts:
+            continue
+
+        address_pieces = address_parts.split("<br/>")
+
+        if len(address_pieces) > 2:
+            address_things = address_pieces[:-2]
+            address = ""
+            for piece in address_things:
+                address = address + piece + " "
+
+            address = address.strip()
+
+            city = address_pieces[-2].split(", ")[0].strip()
+            state = " " + address_pieces[-2].split(", ")[1].split(" ")[0].strip()
+            zipp = address_pieces[-2].split(", ")[1].split(" ")[-1].strip()
+
+        else:
+            address = address_pieces[0].split(",")[0].strip()
+            city = address_pieces[0].split(",")[1].strip()
+            state = " " + address_pieces[0].split(",")[2].split(" ")[-2].strip()
+            zipp = address_pieces[0].split(",")[2].split(" ")[-1].strip()
+
+        city = city.replace("Â ", "")
+        zipp = zipp.replace("Â ", "")
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        hours = "<MISSING>"
+        country_code = "US"
+
+        page_url = cross_check(location_name, session)
+        page_response = session.get(page_url).text
+
+        if (
+            "permanently closed" in page_response.lower()
+            or "This Webster University location is no longer open" in page_response
+        ):
+            continue
+
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp[:5],
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"], is_required=False),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

@@ -1,122 +1,88 @@
-import csv
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    headers = {
-        "Referer": "https://storelocator.w3apps.co/map.aspx?shop=argotea-2&container=true"
-    }
+    locator_domain = "https://www.argotea.com/"
     session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://storelocator.w3apps.co",
+        "Connection": "keep-alive",
+        "Referer": "https://storelocator.w3apps.co/map.aspx?shop=argotea-2&container=true",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Cache-Control": "max-age=0",
+    }
+
+    params = (
+        ("shop", "argotea-2"),
+        ("all", "1"),
+    )
+
     r = session.post(
-        "https://storelocator.w3apps.co/get_stores2.aspx?shop=argotea-2&all=1",
+        "https://storelocator.w3apps.co/get_stores2.aspx",
         headers=headers,
+        params=params,
     )
     js = r.json()["location"]
-    out = []
     for j in js:
-        id = j.get("id")
-        url = f"https://storelocator.w3apps.co/get_store_info.aspx?id={id}"
-        out.append(url)
-    return out
 
-
-def get_data(url):
-    locator_domain = "https://www.argotea.com"
-    api_url = url
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["location"]
-    for j in js:
+        page_url = "https://www.argotea.com/apps/store-locator/#locate-a-cafe"
+        location_name = j.get("name")
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
-        city = "".join(j.get("city")).strip()
-        state = "".join(j.get("state")).strip()
-        postal = "".join(j.get("zip")).strip()
-        page_url = "https://www.argotea.com/apps/store-locator/"
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_name = "".join(j.get("name")).strip()
-        phone = "".join(j.get("phone")).strip() or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("long") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours = "".join(j.get("notes"))
-        divs = html.fromstring(hours)
-        tmp = []
-        days = divs.xpath("//p/text()")
-        for d in days:
-            d = list(filter(None, [a.strip() for a in d]))
-            d = "".join(d)
-            tmp.append(d)
-        hours_of_operation = " ; ".join(tmp).strip() or "<MISSING>"
+        street_address = (
+            street_address.replace("Global Commons ", "")
+            .replace("Fenwick Library", "")
+            .replace("Campus Center", "")
+            .replace("Folsom Library", "")
+            .replace("Red Dragon Outfitters Building", "")
+            .replace("Hampden Building", "")
+            .strip()
+        )
+        if street_address.find(",") != -1:
+            street_address = street_address.split(",")[0].strip()
+        state = j.get("state") or "<MISSING>"
+        if state == "<MISSING>":
+            continue
+        postal = j.get("zip")
+        country_code = "USA"
+        city = j.get("city")
+        latitude = j.get("lat")
+        longitude = j.get("long")
+        phone = j.get("phone") or "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-        return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.argotea.com/"
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
+        fetch_data(writer)

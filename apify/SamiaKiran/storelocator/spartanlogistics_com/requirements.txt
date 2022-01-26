@@ -1,5 +1,7 @@
-sglogging==0.0.4
-sgscrape==0.0.23
-sgrequests==0.1.8
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgpostal==0.1.0
 sgvalidator==0.0.71
-beautifulsoup4==4.9.3
+sgrequests==0.2.9
+sgscrape==0.2.4
+sglogging==0.0.4
+beautifulsoup4==4.10.0

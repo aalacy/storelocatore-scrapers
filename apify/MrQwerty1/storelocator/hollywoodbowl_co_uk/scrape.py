@@ -1,45 +1,22 @@
-import csv
-
-from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or ""
+    state = adr.state
+    postal = adr.postcode
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_divs():
-    session = SgRequests()
-    r = session.get("https://www.hollywoodbowl.co.uk/centres")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//div[@class='centre-data__item']")
+    return street_address, city, state, postal
 
 
 def remove_comma(text):
@@ -48,95 +25,87 @@ def remove_comma(text):
     return text
 
 
-def get_data(div):
-    locator_domain = "https://www.hollywoodbowl.co.uk/"
-    page_url = "".join(div.xpath("./@data-link"))
+def fetch_data():
+    r = session.get("https://www.hollywoodbowl.co.uk/centres", cookies=cookies)
 
-    session = SgRequests()
-    r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(div.xpath("./@data-name"))
-    street_address = (
-        remove_comma(
+    all_divs = tree.xpath("//div[@class='centre-list__item centre-list__item--hwb']")
+    for div in all_divs:
+        page_url = "".join(div.xpath(".//a[contains(text(), 'Visit')]/@href"))
+
+        r = session.get(page_url, cookies=cookies)
+        try:
+            tree = html.fromstring(r.text)
+        except:
+            continue
+
+        if tree.xpath('//h3[contains(text(), "WE ARE COMING SOON...")]'):
+            continue
+        location_name = "".join(div.xpath("./@data-name"))
+        street_address = remove_comma(
             "".join(tree.xpath("//span[@itemprop='streetAddress']/p/text()")).strip()
         )
-        or "<MISSING>"
-    )
-    city = (
-        remove_comma(
+        city = remove_comma(
             "".join(tree.xpath("//p[@itemprop='addressLocality']/text()")).strip()
         )
-        or "<MISSING>"
-    )
-    state = (
-        remove_comma(
+        state = remove_comma(
             "".join(tree.xpath("//p[@itemprop='addressRegion']/text()")).strip()
         )
-        or "<MISSING>"
-    )
-    postal = (
-        remove_comma("".join(tree.xpath("//p[@itemprop='postalCode']/text()")).strip())
-        or "<MISSING>"
-    )
-    country_code = "GB"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//p[@itemprop='telephone']/text()")).strip() or "<MISSING>"
-    )
-    latitude = "".join(div.xpath("./@data-lat")) or "<MISSING>"
-    longitude = "".join(div.xpath("./@data-lng")) or "<MISSING>"
-    location_type = "<MISSING>"
+        postal = remove_comma(
+            "".join(tree.xpath("//p[@itemprop='postalCode']/text()")).strip()
+        )
+        if not street_address and not city:
+            raw_address = "".join(
+                div.xpath(".//div[@class='centre-list__details']/p/text()")
+            )
+            street_address, city, state, postal = get_international(raw_address)
+        country_code = "GB"
+        phone = "".join(div.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
+        latitude = "".join(div.xpath("./@data-lat"))
+        longitude = "".join(div.xpath("./@data-lng"))
 
-    _tmp = []
-    tr = tree.xpath("//table[@class='opening-times']//tr")
-    for t in tr:
-        day = "".join(t.xpath("./th/text()")).strip()
-        time = "".join(t.xpath("./td/text()")).strip()
-        _tmp.append(f"{day}: {time}")
+        _tmp = []
+        tr = div.xpath(".//table[@class='opening-times']//tr")
+        for t in tr:
+            day = "".join(t.xpath("./th/text()")).strip()
+            time = "".join(t.xpath("./td/text()")).strip()
+            _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if hours_of_operation.lower().count("closed") == 7:
-        hours_of_operation = "Closed"
+        hours_of_operation = ";".join(_tmp)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return row
-
-
-def fetch_data():
-    out = []
-    divs = get_divs()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, div): div for div in divs}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
+    session = SgRequests()
+    domain = "hollywoodbowl.co.uk"
+    cookies = {"book-exp": "b"}
     scrape()

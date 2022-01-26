@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("")
 
@@ -37,7 +39,7 @@ def fetch_data():
                 coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp1.select_one("h2 strong").text.strip(),
+                location_name=sp1.h2.text.strip(),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
@@ -51,11 +53,12 @@ def fetch_data():
                 latitude=coord[0],
                 longitude=coord[1],
                 locator_domain=locator_domain,
+                raw_address=" ".join(addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

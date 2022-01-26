@@ -1,3 +1,5 @@
+import demjson
+
 from sgrequests import SgRequests
 from sgzip.static import static_coordinate_list, SearchableCountries
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -7,6 +9,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
 
 
 @retry(stop=stop_after_attempt(3))
@@ -20,7 +23,13 @@ def fetch_latlng(lat, lng, country, session, tracker):
         "language": "eng",
         "key": "963d867f-48b8-4f36-823d-88f311d9f6ef",
     }
-    data = session.get(url, params=params).json()
+    response = session.get(url, params=params)
+    if response.status_code != 200:
+        return []
+    try:
+        data = demjson.decode(response.text)
+    except Exception:
+        return []
     if not data.get("servicePoints"):
         return []
 
@@ -113,6 +122,7 @@ def fetch_data():
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
