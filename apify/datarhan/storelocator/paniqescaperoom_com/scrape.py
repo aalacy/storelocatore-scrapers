@@ -42,14 +42,16 @@ def fetch_data():
 
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
+        raw_address = ""
         if not poi.get("address"):
-            addr = parse_address_intl(
+            raw_address = (
                 loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-                .split("q=")[-1]
-                .split("&")[0]
+                .split("query=")[-1]
+                .split("&query")[0]
                 .replace("+", " ")
-                .replace("%2C", "")
+                .replace("%2C", ",")
             )
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -104,6 +106,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item

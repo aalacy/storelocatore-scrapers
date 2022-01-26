@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import json
+import re
 
 DOMAIN = "oakfurnitureland.co.uk"
 BASE_URL = "https://www.oakfurnitureland.co.uk/showrooms/"
@@ -65,16 +66,21 @@ def fetch_data():
         location_name = info.find("h3").text.strip()
         raw_address = info.find("ul").get_text(strip=True, separator=" ").strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING and "OL2 5HX" in street_address:
+            zip_postal = "OL2 5HX"
+            street_address = street_address.replace(zip_postal, "").strip()
         country_code = "UK"
         phone = info.find("p").text.replace("Tel:", "").strip()
         hoo_content = store.find("div", {"class": "opening-hours"})
         if not hoo_content:
             hours_of_operation = MISSING
         else:
-            hours_of_operation = (
+            hours_of_operation = re.sub(
+                r",\d{2}:\d{2}-\d{2}:\d{2}\s+viewing only",
+                "",
                 hoo_content.get_text(strip=True, separator=",")
                 .replace(":,", ": ")
-                .strip()
+                .strip(),
             )
         store_number = MISSING
         location_type = json_data["@type"]
