@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 from sgpostal.sgpostal import parse_address_intl
@@ -11,7 +11,7 @@ _headers = {
 }
 
 locator_domain = "https://www.regatta.com/"
-base_url = "https://www.regatta.com/rest/rg_uk/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=43.6319&searchCriteria%5Blongitude%5D=-79.3716&searchCriteria%5Bcurrent_page%5D=2&searchCriteria%5Bpage_size%5D=2000"
+base_url = "https://www.regatta.com/rest/rg_uk/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=43.6319&searchCriteria%5Blongitude%5D=-79.3716&searchCriteria%5Bcurrent_page%5D=1&searchCriteria%5Bpage_size%5D=2000"
 
 us_url = "https://backend-regatta-us.basecamp-pwa-prod.com/api/ext/store-locations/search?lat1=62.24128219987466&lng1=-171.86167175000003&lat2=-7.767694768368658&lng2=-64.63510925000001"
 
@@ -125,7 +125,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
