@@ -48,7 +48,6 @@ def fetch_data():
 
         phone = content["contactPoint"][0]["telephone"]
 
-        phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:]
         hourslist = content["openingHoursSpecification"]
         hours = ""
         for hr in hourslist:
