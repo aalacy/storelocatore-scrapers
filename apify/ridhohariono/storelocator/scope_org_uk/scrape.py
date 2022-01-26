@@ -5,8 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-import re
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 
 DOMAIN = "scope.org.uk"
@@ -16,6 +16,7 @@ API_URL = "https://www.scope.org.uk/api/sitecore/shopsapi/loadmore?id=fbd8e7c8-2
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
