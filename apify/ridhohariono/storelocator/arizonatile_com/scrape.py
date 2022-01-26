@@ -60,7 +60,7 @@ def fetch_data():
         page_url = BASE_URL + row["url"]
         location_name = row["title"].strip()
         street_address = row["streetAddress"]
-        city = row["city"]
+        city = row["city"].replace("(DFW Airport)", "")
         state = row["state"]
         zip_postal = row["zipcode"]
         country_code = "US"

@@ -4,6 +4,7 @@ import time
 import random
 import simplejson
 import threading
+import http.client
 from datetime import datetime
 from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -18,6 +19,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("cvs_com")
+http.client._MAXHEADERS = 1000  # type: ignore
 
 
 start_time = datetime.now()
@@ -28,6 +30,8 @@ base_url = "https://www.cvs.com"
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
 }
+
+MAX_WORKERS = 20
 
 
 def write_output(data):
@@ -75,7 +79,7 @@ def enqueue_links(url, selectors):
     session = get_session()
     r = session.get(url, headers=headers)
     if r.status_code != 200:
-        r.raise_for_status()
+        raise Exception()
 
     soup = BeautifulSoup(r.text, "html.parser")
     if not is_valid(soup):
@@ -95,7 +99,7 @@ def enqueue_links(url, selectors):
 
 def scrape_state_urls(state_urls):
     city_urls = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(enqueue_links, url, [".states a"]) for url in state_urls
         ]
@@ -109,7 +113,7 @@ def scrape_state_urls(state_urls):
 def scrape_city_urls(city_urls):
     # scrape each city url and populate loc_urls with the results
     loc_urls = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(
                 enqueue_links, url, [".directions-link a", ".tb-store-link a"]
@@ -308,7 +312,7 @@ def get_location(page_url):
     hours_of_operation = get_hours(location, page_schema)
 
     locator_domain = "cvs.com"
-    location_name = get(page_schema, "name")
+    location_name = re.sub(r"\s+at\s+at", " at", get(page_schema, "name"))
     location_type = get(page_schema, "@type")
     street_address = get(basic_info, "street_address")
     city = get(basic_info, "city")

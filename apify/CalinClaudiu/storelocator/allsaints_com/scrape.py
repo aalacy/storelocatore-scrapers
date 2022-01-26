@@ -133,6 +133,7 @@ def scrape():
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(
             mapping=["page_url_post"],
+            part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
             mapping=["name"],
@@ -158,9 +159,11 @@ def scrape():
         ),
         phone=sp.MappingField(
             mapping=["phone_number"],
+            part_of_record_identity=True,
         ),
         store_number=sp.MappingField(
             mapping=["uuid"],
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(
             mapping=["opening_hours"],
@@ -171,6 +174,7 @@ def scrape():
         ),
         raw_address=sp.MappingField(
             mapping=["raw"],
+            part_of_record_identity=True,
         ),
     )
 
