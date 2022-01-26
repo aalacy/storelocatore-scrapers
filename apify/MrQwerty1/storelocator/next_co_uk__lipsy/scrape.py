@@ -59,6 +59,14 @@ def get_data(country, sgw: SgWriter):
         _types = j.get("store_types") or []
         if 10 not in _types:
             continue
+
+        _tt = []
+        for _t in _types:
+            b = types_converter.get(str(_t)) or ""
+            if b:
+                _tt.append(b)
+
+        location_type = ";".join(_tt)
         store_number = j.get("location_id")
         page_url = f"https://stores.next.co.uk/results/infowindow/{store_number}"
         street_address = f"{j.get('AddressLine')} {j.get('street') or ''}".strip()
@@ -100,6 +108,7 @@ def get_data(country, sgw: SgWriter):
             country_code=country,
             latitude=latitude,
             longitude=longitude,
+            location_type=location_type,
             phone=phone,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
@@ -119,6 +128,16 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.next.co.uk/"
+    types_converter = {
+        "1": "Home Stores Only",
+        "3": "Clearance Stores Only",
+        "4": "Lingerie Room Stores Only",
+        "5": "Return Locations Only",
+        "6": "Schoolwear Stores Only",
+        "8": "Express to Store Delivery",
+        "9": "Ex Display Furniture",
+        "10": "Lipsy Stores Only",
+    }
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",

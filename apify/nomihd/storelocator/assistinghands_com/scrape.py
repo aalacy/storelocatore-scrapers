@@ -20,6 +20,7 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://assistinghands.com/wp-json/wpgmza/v1/features/?filter=%7B%22map_id%22%3A%222%22%2C%22mashupIDs%22%3A%5B%5D%2C%22customFields%22%3A%5B%5D%7D"
+    ID_list = []
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
@@ -35,6 +36,18 @@ def fetch_data():
                 page_url = "".join(
                     store_sel.xpath('//a[contains(text(),"Visit Website")]/@href')
                 ).strip()
+                if page_url:
+                    temp_ID = (
+                        page_url.split("assistinghands.com/")[1]
+                        .strip()
+                        .split("/")[0]
+                        .strip()
+                    )
+                    if temp_ID in ID_list:
+                        continue
+
+                    ID_list.append(temp_ID)
+
                 phone = "".join(
                     store_sel.xpath('//p/a[contains(@href,"tel:")]//text()')
                 ).strip()
@@ -100,16 +113,13 @@ def fetch_data():
 
 def scrape():
     log.info("Started")
-    count = 0
     with SgWriter(
         deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
-            count = count + 1
 
-    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

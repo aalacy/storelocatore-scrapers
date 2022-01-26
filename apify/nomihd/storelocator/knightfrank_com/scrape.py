@@ -7,6 +7,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
 import lxml.html
+import time
 
 website = "knightfrank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -78,7 +79,7 @@ def fetch_data():
 
                 location_type = "<MISSING>"
                 phone = "".join(
-                    store.xpath('a[@class="contact-telephone "]/text()')
+                    store.xpath('a[contains(@class,"contact-telephone")]/text()')
                 ).strip()
 
                 hours_of_operation = "<MISSING>"
@@ -92,12 +93,25 @@ def fetch_data():
                         store_req = SgRequests.raise_on_err(
                             session.get(page_url, headers=headers)
                         )
+                        while "captchaPage" in store_req.text:
+                            store_req = SgRequests.raise_on_err(
+                                session.get(page_url, headers=headers)
+                            )
+                            time.sleep(3)
+
                         store_sel = lxml.html.fromstring(store_req.text)
                         map_link = "".join(
                             store_sel.xpath(
                                 '//a[@id="cpMain_UserControlContainer12_ctl00_hlDirections"]/@href'
                             )
                         ).strip()
+                        log.info(map_link)
+                        if len(map_link) <= 0:
+                            map_link = "".join(
+                                store_sel.xpath('//a[@class="directions"]/@href')
+                            ).strip()
+
+                            log.info(map_link)
                         try:
                             latitude = (
                                 map_link.split("/")[-1].strip().split(",")[0].strip()
@@ -156,6 +170,7 @@ def scrape():
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PHONE,
                 }
             )
         )
