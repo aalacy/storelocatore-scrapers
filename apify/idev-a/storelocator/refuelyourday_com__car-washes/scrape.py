@@ -22,7 +22,7 @@ def fetch_data():
             yield SgRecord(
                 page_url="https://refuelyourday.com/car-washes/",
                 store_number=_["id"],
-                location_name=_["store"].replace("&#38;", "&"),
+                location_name=_["store"].replace("&#038;", "&"),
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
