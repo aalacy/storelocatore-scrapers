@@ -33,10 +33,13 @@ def fetch_data(sgw: SgWriter):
         country_code = a.get("country") or "US"
         latitude = a.get("latitude") or "<MISSING>"
         longitude = a.get("longitude") or "<MISSING>"
-        street_address = "".join(a.get("street")).strip() or "<MISSING>"
+        street_address = (
+            "".join(a.get("street")).replace("null", "").strip() or "<MISSING>"
+        )
         city = "".join(a.get("city")).strip() or "<MISSING>"
         state = "".join(a.get("state")).strip() or "<MISSING>"
         postal = "".join(a.get("zip")).strip() or "<MISSING>"
+        store_number = j.get("id")
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -47,7 +50,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=SgRecord.MISSING,
             location_type=location_type,
             latitude=latitude,
@@ -62,6 +65,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://coinsource.net"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         fetch_data(writer)
