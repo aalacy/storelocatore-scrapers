@@ -12,6 +12,7 @@ from selenium.webdriver.chrome.options import Options
 website = "canadagoose.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
+
 def get_latlng(map_link):
     if "z/data" in map_link:
         lat_lng = map_link.split("@")[1].split("z/data")[0]
