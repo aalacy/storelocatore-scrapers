@@ -20,7 +20,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
@@ -46,7 +46,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -67,7 +66,7 @@ def get_latlong(url):
     if not coord:
         coord = re.search(r"!2d([\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
         if not coord:
-            return "<MISSING>", "<MISSING>"
+            return MISSING, MISSING
         return coord.group(1), coord.group(2)
     return coord.group(2), coord.group(1)
 
@@ -120,7 +119,10 @@ def fetch_data():
         )
         phone = [e for e in row["fields"] if e["name"] == "Phone"]
         phone = phone[0]["pivot_field_value"] if phone else SgRecord.MISSING
-        country_code = "US" if len(row["country"]) < 1 else row["country"]
+        if not row["country"]:
+            country_code = "US"
+        else:
+            country_code = "US" if len(row["country"]) < 1 else row["country"]
         store_number = MISSING
         location_type = "slimchickens-" + country_code
         latitude = row["lat"]
@@ -152,9 +154,9 @@ def fetch_data():
         if "coming-soon" in row["href"]:
             continue
         if "slimchickens.co.uk" not in row["href"]:
-            page_url = "http://www.slimchickens.co.uk" + row["href"]
+            page_url = "https://www.slimchickens.co.uk" + row["href"]
         else:
-            page_url = row["href"]
+            page_url = row["href"].replace("http:", "https:")
         content = pull_content(page_url)
         location_name = content.find(
             "div", {"class": "title_subtitle_holder_inner"}
@@ -165,6 +167,8 @@ def fetch_data():
             .strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1]
         phone = (
             content.find(
                 re.compile(r"h4|strong"), text=re.compile(r"PHONE:|PHONE:&nbsp;")
@@ -176,10 +180,15 @@ def fetch_data():
             phone = MISSING
         hours_of_operation = (
             content.find(
-                re.compile(r"h4|strong"), text=re.compile(r"HOURS:|HOURS:&nbsp;")
+                re.compile(r"strong|h4"),
+                text=re.compile(r"HOURS.*"),
             )
-            .parent.get_text(strip=True, separator=",")
+            .find_previous("div")
+            .get_text(strip=True, separator=",")
+            .replace("STANDARD HOURS (4th Jan):,", "")
+            .replace("STANDARD", "")
             .replace("HOURS:,", "")
+            .replace("HOURS:", "")
             .strip()
         )
         country_code = "UK"
@@ -229,7 +238,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

@@ -242,38 +242,29 @@ def fetch_data():
                 city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
                 state = line2.split('<span itemprop="addressRegion">')[1].split("<")[0]
                 zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
-            if 'class="rs-microsite-right-day-column"><span>' in line2:
-                alldays = []
-                allhrs = []
-                days = (
-                    line2.split('right-day-column">')[1]
-                    .split("<br /></div>")[0]
-                    .split("<br />")
-                )
+            if 'class="css-flex css-item-between">' in line2:
+                days = line2.split('class="css-flex css-item-between">')
                 for day in days:
-                    if "</span>" in day:
-                        dname = day.rsplit(">")[1].split("<")[0]
-                        alldays.append(dname)
-                hrs = (
-                    line2.split('right-time-column">')[1]
-                    .split("<br /></div>")[0]
-                    .split("<br />")
-                )
-                for hour in hrs:
-                    if "</span>" in hour:
-                        if hour.count("</span>") == 1:
-                            allhrs.append(hour.split(">")[1].split("<")[0])
+                    if (
+                        '<div class="css-flex css-flex-column"><span>' in day
+                        or '<span class="today">' in day
+                    ):
+                        hrs = (
+                            day.split("</span>")[0].rsplit(">", 1)[1]
+                            + ": "
+                            + day.split("</span></div>")[0].rsplit(">", 1)[1].strip()
+                        )
+                        if hours == "":
+                            hours = hrs
                         else:
-                            allhrs.append(hour.split("</span>")[1])
-                for x in range(0, len(alldays)):
-                    if hours == "":
-                        hours = alldays[x] + ": " + allhrs[x]
-                    else:
-                        hours = hours + "; " + alldays[x] + ": " + allhrs[x]
+                            hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        add = add.replace("&amp;", "&")
+        city = city.replace("&amp;", "&")
+        name = name.replace("&amp;", "&")
         if add != "":
             yield SgRecord(
                 locator_domain=website,

@@ -10,8 +10,8 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = ""
-base_url = "https://www.regatta.com/rest/rg_uk/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=43.6319&searchCriteria%5Blongitude%5D=-79.3716&searchCriteria%5Bcurrent_page%5D=2&searchCriteria%5Bpage_size%5D=2000"
+locator_domain = "https://www.regatta.com/"
+base_url = "https://www.regatta.com/rest/rg_uk/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=43.6319&searchCriteria%5Blongitude%5D=-79.3716&searchCriteria%5Bcurrent_page%5D=1&searchCriteria%5Bpage_size%5D=2000"
 
 us_url = "https://backend-regatta-us.basecamp-pwa-prod.com/api/ext/store-locations/search?lat1=62.24128219987466&lng1=-171.86167175000003&lat2=-7.767694768368658&lng2=-64.63510925000001"
 
@@ -49,12 +49,24 @@ def fetch_data():
             country_code = addr["country"]
             zip_postal = addr["postcode"]
             if country_code == "UG":
-                country_code = "GB"
+                country_code = "United Kingdom"
+            if country_code == "GB":
+                country_code = "United Kingdom"
 
             street_address = ", ".join(_ss)
             raw_address = (
                 f"{street_address}, {city}, {state}, {zip_postal}, {country_code}"
             )
+            if country_code == "United Kingdom" and zip_postal in raw_address:
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1 or ""
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+
+            if street_address.lower() == city.lower():
+                street_address = ""
+            if street_address.replace(" ", "").isdigit():
+                street_address = ", ".join(_ss)
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["store_id"],

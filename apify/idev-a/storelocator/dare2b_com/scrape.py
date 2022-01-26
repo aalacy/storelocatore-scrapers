@@ -8,7 +8,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = ""
+locator_domain = "https://www.dare2b.com/"
 base_url = "https://www.dare2b.com/rest/db_uk/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=32.7254&searchCriteria%5Blongitude%5D=-97.3208&searchCriteria%5Bcurrent_page%5D=1&searchCriteria%5Bpage_size%5D=2000"
 
 
