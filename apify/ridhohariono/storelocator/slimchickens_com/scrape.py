@@ -167,6 +167,8 @@ def fetch_data():
             .strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1]
         phone = (
             content.find(
                 re.compile(r"h4|strong"), text=re.compile(r"PHONE:|PHONE:&nbsp;")
