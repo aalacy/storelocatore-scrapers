@@ -63,13 +63,14 @@ def fetch_data():
         street_address = store["properties"]["addressLine1"].strip()
 
         if (
-            "addressLine2" in store
-            and store["addressLine2"] is not None
-            and len(store["addressLine2"]) > 0
+            "addressLine2" in store["properties"]
+            and store["properties"]["addressLine2"] is not None
+            and len(store["properties"]["addressLine2"]) > 0
         ):
-            street_address = street_address + ", " + store["addressLine2"]
+            street_address = street_address + ", " + store["properties"]["addressLine2"]
 
         city = store["properties"]["city"].strip()
+        location_name = location_name + " - " + city
         state = store["properties"]["province"].strip()
         zip = store["properties"]["postalCode"].strip()
         country_code = store["properties"]["country"].strip()

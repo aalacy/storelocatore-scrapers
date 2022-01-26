@@ -33,6 +33,10 @@ def fetch_data(sgw: SgWriter):
 
         hours = j.get("openingHours") or []
         hours_of_operation = ";".join(hours)
+        if not hours_of_operation and not latitude:
+            continue
+        if not hours_of_operation:
+            hours_of_operation = "Closed"
 
         row = SgRecord(
             page_url=page_url,
@@ -54,12 +58,13 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.detailgarage.com/"
+    locator_domain = "https://www.tuffshed.com"
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
-        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCIsImtpZCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCJ9.eyJhdWQiOiJhcGk6Ly9hcGkucHJkLnR1ZmZzaGVkLmlvIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZTY5MzAwZGUtZjQ5NC00Y2Y2LTliMmMtMTVlNzA2MzY2Y2Q5LyIsImlhdCI6MTYzNjczODMyMCwibmJmIjoxNjM2NzM4MzIwLCJleHAiOjE2MzY3NDIyMjAsImFpbyI6IkUyWmdZTkNUZUIzYmZ5N2pmUGE2VzN1czV6TE9Bd0E9IiwiYXBwaWQiOiI5YzM3Njc4ZS0wOTc4LTQ2M2MtOGY1Ny0wOTFlMWQ1NDdkZjciLCJhcHBpZGFjciI6IjEiLCJncm91cHMiOlsiY2M3YThhYWYtNjQ2Ni00NjRiLTlkOTMtZTM4ZWQ5MWZiOWUxIiwiOWJjNjczNDEtMDZiOS00YmNiLWFmMWItMGNkYzYxMWNlYjQxIl0sImlkcCI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0L2U2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOS8iLCJvaWQiOiJkNzkxZmMzNi1mOGVhLTQ4MjgtOGE4Mi0zYzhlOGZjYWIyNzgiLCJyaCI6IjAuQVRnQTNnQ1Q1cFQwOWt5YkxCWG5CalpzMlk1bk41eDRDVHhHajFjSkhoMVVmZmM0QUFBLiIsInN1YiI6ImQ3OTFmYzM2LWY4ZWEtNDgyOC04YTgyLTNjOGU4ZmNhYjI3OCIsInRpZCI6ImU2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOSIsInV0aSI6Ijg5N3FsdjdnU1UtVTR2b3BvbkVoQUEiLCJ2ZXIiOiIxLjAifQ.JQnqUyaxI2lThDc3EKyCKaHHkwzpeTyxJ4HvNas24MyzsxfbDkzKQDWx09VHXDnIaV5JqUBxmm5xhg13L6a3GI22lJ3sRTIPcRE0eZ4k8Hnm-RC-WIYEuUTbCFFcNEHe_Bw-JVyvmHy0YgpTJmlvdHeaZxelGMs7Ne04sKai5kMdMFNmgAZZ7SpZnNfv8j-KxCCXBjEMNZzJq3gzWVFgXEgV4BFCQyi7qMhAxgQ31lsrjfyX8bxgqb_A5HDHgcLFcRHAVF01tk0zH1diJu022MHse3QKwv8sPGJbVKRlr5O0BjgbtbR7-McgPZBQkq8GSmSweIOANsVJrVxUDINE5w",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik1yNS1BVWliZkJpaTdOZDFqQmViYXhib1hXMCIsImtpZCI6Ik1yNS1BVWliZkJpaTdOZDFqQmViYXhib1hXMCJ9.eyJhdWQiOiJhcGk6Ly9hcGkucHJkLnR1ZmZzaGVkLmlvIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZTY5MzAwZGUtZjQ5NC00Y2Y2LTliMmMtMTVlNzA2MzY2Y2Q5LyIsImlhdCI6MTY0MzA4MTgzOSwibmJmIjoxNjQzMDgxODM5LCJleHAiOjE2NDMwODU3MzksImFpbyI6IkUyWmdZSGgvWEo1ckkrZWxyWGZtQ2o2Tllyek5Cd0E9IiwiYXBwaWQiOiI5YzM3Njc4ZS0wOTc4LTQ2M2MtOGY1Ny0wOTFlMWQ1NDdkZjciLCJhcHBpZGFjciI6IjEiLCJncm91cHMiOlsiY2M3YThhYWYtNjQ2Ni00NjRiLTlkOTMtZTM4ZWQ5MWZiOWUxIiwiOWJjNjczNDEtMDZiOS00YmNiLWFmMWItMGNkYzYxMWNlYjQxIl0sImlkcCI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0L2U2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOS8iLCJvaWQiOiJkNzkxZmMzNi1mOGVhLTQ4MjgtOGE4Mi0zYzhlOGZjYWIyNzgiLCJyaCI6IjAuQVRnQTNnQ1Q1cFQwOWt5YkxCWG5CalpzMlk1bk41eDRDVHhHajFjSkhoMVVmZmM0QUFBLiIsInN1YiI6ImQ3OTFmYzM2LWY4ZWEtNDgyOC04YTgyLTNjOGU4ZmNhYjI3OCIsInRpZCI6ImU2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOSIsInV0aSI6IktDUlFZb05PZTBPNzhBd2dWTndZQUEiLCJ2ZXIiOiIxLjAifQ.RVekUtXVVr4s7HKfm5Qx151v6XL3xlLUyMwjYPDBQU8xy6-9xU8z9bLYpwP43ART7-miaa4QiARmsX8NSitTO70s3mLL94TNqPsEUB6QhQ00ls5Z5N2C-i83wZ0x2Ao-yrqjCRlnAqbEZDhAxM9ZghZcd_hMLFpJxpzphpxQddKWnSsyHod_CgfJBmq7oK4w1oxH19hPgtieoZeD_-R5-u84-jyCyIN8de4SKDs6JXxWmMfo6TxjN6TXrsh_ylWBQyxU0jN8rvn5HZscqSnaspARVht2PaLcExo6vqiD7uGqanxKLsPkFMA3C2elLTkKAYhAE0RErK3O3TB_Kdavag",
         "Origin": "https://www.tuffshed.com",
         "Connection": "keep-alive",
         "Referer": "https://www.tuffshed.com/",

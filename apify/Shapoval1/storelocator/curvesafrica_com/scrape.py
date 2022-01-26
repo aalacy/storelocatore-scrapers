@@ -80,11 +80,11 @@ def fetch_data(sgw: SgWriter):
                 )
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-                if latitude == "1" or longitude == "1":
-                    latitude, longitude = "<MISSING>", "<MISSING>"
                 if text:
                     latitude = text.split("(")[1].split(",")[0].strip()
                     longitude = text.split("(")[1].split(",")[1].strip()
+                if latitude == "1" or longitude == "1":
+                    latitude, longitude = "<MISSING>", "<MISSING>"
                 phone = (
                     "".join(tree.xpath('//div[@class="tel"]/text()'))
                     .replace("Tel:", "")

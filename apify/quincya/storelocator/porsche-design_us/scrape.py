@@ -1,46 +1,20 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("porsche-design_us")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.porsche-design.us/us/en/storelocator/Search/"
 
@@ -50,7 +24,6 @@ def fetch_data():
     session = SgRequests()
 
     all_links = []
-    data = []
 
     us_states_codes = [
         "AL",
@@ -117,7 +90,7 @@ def fetch_data():
     for state in us_states_codes:
         logger.info("Searching: " + state)
         # Request post
-        payload = {"Country": "US", "ZipOrLocus": state, "Distance": "300"}
+        payload = {"Country": "US", "ZipOrLocus": state, "Distance": "1000"}
 
         response = session.post(base_link, headers=headers, data=payload)
         base = BeautifulSoup(response.text, "lxml")
@@ -269,9 +242,10 @@ def fetch_data():
             street_address = street_address[:-1]
 
         if "Porsche" not in street_address:
-            digit = re.search(r"\d", street_address).start(0)
-            if digit != 0:
-                street_address = street_address[digit:]
+            if re.search(r"\d", street_address):
+                digit = str(re.search(r"\d", street_address))
+                start = int(digit.split("(")[1].split(",")[0])
+                street_address = street_address[start:]
 
         if state == "Las":
             state = "NV"
@@ -332,30 +306,25 @@ def fetch_data():
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
