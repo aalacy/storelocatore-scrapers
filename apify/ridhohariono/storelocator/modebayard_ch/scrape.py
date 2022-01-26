@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
 import re
 
 
@@ -20,31 +19,6 @@ MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
 
 
 def pull_content(url):
@@ -65,7 +39,11 @@ def fetch_data():
         raw_address = info.find("p", {"class": "address-store"}).get_text(
             strip=True, separator=","
         )
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        addr = raw_address.split(",")
+        street_address = ", ".join(addr[:-1]).strip()
+        city = re.sub(r"\d+", "", addr[-1]).strip()
+        state = MISSING
+        zip_postal = addr[-1].split(" ")[0].strip()
         phone = info.find("a", {"class": "store-pickup-phone"}).text.strip()
         country_code = "CH"
         hours_of_operation = (
