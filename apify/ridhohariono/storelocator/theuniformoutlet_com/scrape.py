@@ -82,7 +82,7 @@ def get_hoo(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.select("div.page-content.page-content--centered a")
+    contents = soup.select("ul.navBar-section li a")
     for row in contents:
         page_url = row["href"]
         store = pull_content(page_url)
