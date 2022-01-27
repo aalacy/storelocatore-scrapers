@@ -20,7 +20,13 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         page_url = "".join(j.get("permalink"))
-        location_name = j.get("store") or "<MISSING>"
+        location_name = (
+            "".join(j.get("store"))
+            .replace("&amp;", "&")
+            .replace("&#8217;", "’")
+            .strip()
+            or "<MISSING>"
+        )
         street_address = f"{j.get('address')}".replace(",", "").strip() or "<MISSING>"
         state = f"{j.get('state')}".replace(",", "").strip() or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
@@ -28,10 +34,6 @@ def fetch_data(sgw: SgWriter):
         city = f"{j.get('city')}".replace(",", "").strip() or "<MISSING>"
         if city == "<MISSING>":
             city = page_url.split("/")[-2].replace("-", " ").capitalize().strip()
-        if street_address.find("Frome") != -1:
-            street_address = street_address.split("Frome")[0].strip()
-        if street_address.find("Monmouth") != -1:
-            street_address = street_address.split("Monmouth")[0].strip()
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
@@ -74,6 +76,14 @@ def fetch_data(sgw: SgWriter):
         postal = postal.replace(",", "").strip()
         if postal == "Hammersmith":
             postal = "<MISSING>"
+        if street_address.find("Frome") != -1:
+            street_address = street_address.split("Frome")[0].strip()
+        if street_address.find("Monmouth") != -1:
+            postal = " ".join(street_address.split()[-2:])
+            street_address = street_address.split("Monmouth")[0].strip()
+        par_loc = j.get("parent_branch")
+        if par_loc:
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,

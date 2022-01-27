@@ -42,9 +42,14 @@ def para(url):
         k["longitude"] = "<MISSING>"
 
     try:
-        k["hours"] = "; ".join(
-            list(soup.find("div", {"id": "1566722847"}).stripped_strings)
+        k["hours"] = (
+            "; ".join(list(soup.find("div", {"id": "1566722847"}).stripped_strings))
+            .strip()
+            .split("; DELIVERY HOURS")[0]
+            .strip()
         )
+        if "PLEASE CALL TO CONFIRM HOURS" in k["hours"]:
+            k["hours"] = "<MISSING>"
     except Exception:
         k["hours"] = "<MISSING>"
 
@@ -115,7 +120,6 @@ def fetch_data():
         ):
             h.append(i["href"])
 
-    logzilla.info(h)
     pages = h
 
     lize = utils.parallelize(
