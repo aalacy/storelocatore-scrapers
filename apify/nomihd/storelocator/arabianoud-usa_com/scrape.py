@@ -87,11 +87,16 @@ def fetch_data():
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
 
+            if street_address and "UNDEFINED" in street_address.upper():
+                street_address = "<MISSING>"
+
             city = formatted_addr.city
 
             state = formatted_addr.state
 
             zip = formatted_addr.postcode
+            if zip and "UNDEFINED" in zip.upper():
+                zip = "<MISSING>"
 
             country_code = formatted_addr.country
             if not country_code:
@@ -130,6 +135,15 @@ def fetch_data():
                 .replace("Opening hours :;", "")
                 .strip()
             )
+            if len(hours_of_operation) > 0 and hours_of_operation[0] == ":":
+                hours_of_operation = "".join(hours_of_operation[1:]).strip()
+
+            if (
+                len(hours_of_operation) > 0
+                and hours_of_operation[0] == ":"
+                and hours_of_operation[1] == ";"
+            ):
+                hours_of_operation = "".join(hours_of_operation[2:]).strip()
 
             store_number = store["id"]
 
