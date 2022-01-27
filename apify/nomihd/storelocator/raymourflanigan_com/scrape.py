@@ -5,7 +5,9 @@ from sglogging import sglog
 from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import retry, stop_after_attempt
 
 website = "raymourflanigan.com"
@@ -78,12 +80,17 @@ def process_record(raw_results_from_one_zipcode):
             hours = store["hours"]
             hours_list = []
             for key, hour in hours.items():
-                if hours[key] and hours[key]["open"] and hours[key]["close"]:
-                    day = key
-                    if day != "today":
-                        hours_list.append(
-                            day + ":" + hours[key]["open"] + "-" + hours[key]["close"]
-                        )
+                if isinstance(hours[key], dict):
+                    if hours[key] and hours[key]["open"] and hours[key]["close"]:
+                        day = key
+                        if day != "today":
+                            hours_list.append(
+                                day
+                                + ":"
+                                + hours[key]["open"]
+                                + "-"
+                                + hours[key]["close"]
+                            )
             hours_of_operation = "; ".join(hours_list).strip()
 
             latitude = store["latitude"]
@@ -108,17 +115,18 @@ def process_record(raw_results_from_one_zipcode):
 
 
 def scrape():
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        search = DynamicZipSearch(expected_search_radius_miles=20, country_codes=["US"])
         results = parallelize(
-            search_space=static_zipcode_list(
-                radius=10, country_code=SearchableCountries.USA
-            ),
+            search_space=[(zipcode) for zipcode in search],
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=20,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)
+    log.info("Finished")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -47,7 +47,11 @@ def fetch_data():
                     f"{days[hh['dayOfWeek']]}: {hh['startTime'].split()[-1]} - {hh['endTime'].split()[-1]}"
                 )
             raw_address = (
-                _["address"].replace("\n", " ").replace("\r", "").replace("\t", "")
+                _["address"]
+                .replace("\n", " ")
+                .replace("\r", "")
+                .replace("\t", "")
+                .replace("–", ",")
             )
             addr = parse_address_intl(raw_address + ", Turkey")
             street_address = addr.street_address_1

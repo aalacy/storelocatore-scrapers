@@ -28,17 +28,22 @@ def fetch_data():
             else:
                 hoo.append(f"{day}: closed")
         hoo = " ".join(hoo)
+        state = poi["store_state"]
+        city = poi["store_city"]
+        zip_code = poi["store_postcode"]
+        store_number = poi["store_id"]
+        page_url = f"https://www.abraauto.com/location/{state.lower()}/{city.lower()}/{store_number}/"
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.abraauto.com/locations/",
+            page_url=page_url,
             location_name=poi["store_name"],
             street_address=poi["store_address"],
-            city=poi["store_city"],
-            state=poi["store_state"],
-            zip_postal=poi["store_postcode"],
+            city=city,
+            state=state,
+            zip_postal=zip_code,
             country_code="",
-            store_number=poi["store_id"],
+            store_number=store_number,
             phone=poi["store_phone"],
             location_type="",
             latitude=poi["store_lat"],
