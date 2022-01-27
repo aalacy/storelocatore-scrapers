@@ -25,7 +25,7 @@ def fetch_data():
 
         driver.get(start_urls)
         logger.info("Loading Targer Page")
-        data = js = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)
+        data = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)
         all_poi += data["rows"]
 
         for poi in all_poi:
