@@ -47,14 +47,10 @@ def fetch_data():
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
-            page_url = (
-                "https://www.whitefencefarm-il.com/carryout.php#"
-                + location_name.split("#")[1].strip()
-            )
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url,
+                page_url=url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
