@@ -10,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
 
+import time
 
 LOCATOR_DOMAIN = "https://www.esbenergy.co.uk/"
 PAGE_URL = "https://myevaccount.esbenergy.co.uk/stationFacade/findStationsByIds"
@@ -40,6 +41,18 @@ def _fetch_station_ids(http: SgRequests) -> Iterable[int]:
 
 
 def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
+    def format_opening_times(opening_times: Dict[str, str]) -> str:
+        DAY_OF_WK = "dayOfWeekId"
+        START_HR = "startHour"
+        END_HR = "endHour"
+        MS_PER_SEC = 1000
+        hr_range = (
+            time.strftime("%H:%M", time.gmtime(int(opening_times[k]) // MS_PER_SEC))
+            for k in (START_HR, END_HR)
+        )
+
+        return f"{opening_times[DAY_OF_WK]}: {'-'.join(hr_range)}"
+
     return SgRecord(
         page_url=PAGE_URL,
         location_name=station_obj["caption"],
@@ -53,7 +66,8 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         longitude=station_obj["longitude"],
         locator_domain=LOCATOR_DOMAIN,
         hours_of_operation=(
-            " ".join(map(str, station_obj["openingTimes"])) or "Open 24/7"
+            "; ".join(map(format_opening_times, station_obj["openingTimes"]))
+            or "Open 24/7"
         ),
         phone=PHONE_NUMBER,
     )
