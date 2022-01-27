@@ -65,6 +65,14 @@ def fetch_data():
         try:
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
+                if '<h2><span itemprop="name">' in line2:
+                    name = (
+                        line2.split('<h2><span itemprop="name">')[1]
+                        .split("</h2>")[0]
+                        .strip()
+                        .replace("&nbsp;", " ")
+                        .replace("</span>", "")
+                    )
                 if "&amp; Nearby Locations" in line2:
                     LocFound = False
                 if '"addressCountry": "' in line2:
