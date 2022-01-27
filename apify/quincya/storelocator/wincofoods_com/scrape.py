@@ -3,6 +3,10 @@ import time
 
 from bs4 import BeautifulSoup
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -22,7 +26,10 @@ def fetch_data(sgw: SgWriter):
 
     driver = SgChrome(user_agent=user_agent).driver()
     driver.get(base_link)
-    time.sleep(15)
+    WebDriverWait(driver, 30).until(
+        ec.presence_of_element_located((By.CLASS_NAME, "store-list__scroll-container"))
+    )
+    time.sleep(10)
 
     base = BeautifulSoup(driver.page_source, "lxml")
     driver.close()
