@@ -1,5 +1,6 @@
 import time
 import json
+import ssl
 from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.common.by import By
 from sglogging import sglog
@@ -7,6 +8,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"

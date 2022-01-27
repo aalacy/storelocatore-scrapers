@@ -47,6 +47,7 @@ def fetch_data(sgw: SgWriter):
                 str(postal)
                 .replace("1012 JS", "1012")
                 .replace("1071 CA", "1071")
+                .replace("None", "")
                 .strip()
             )
             city = j.get("city")

@@ -42,20 +42,38 @@ def fetch_data():
             latitude = latitude[0] if latitude else ""
             longitude = loc_dom.xpath('//input[@class="js-map-longitude"]/@value')
             longitude = longitude[0] if longitude else ""
-            hoo = loc_dom.xpath(
-                '//ul[@class="m-store-details__shops__worktime__days  two-rows  "]//text()'
-            )
-            if not hoo:
-                hoo = loc_dom.xpath(
-                    '//ul[@class="m-store-details__shops__worktime__days    "]//text()'
-                )
-            hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(" Mo/Di")[0]
             phone = [e.split(":")[-1].strip() for e in raw_data if "Telefon" in e]
             phone = phone[0] if phone else ""
             city = " ".join(raw_data[1].split()[1:])
             phone = phone.split(",")[0].strip()
             if city in phone:
                 phone = ""
+            if location_type == "RESTAURANT":
+                hoo = loc_dom.xpath(
+                    '//div[div[img[contains(@src, "store-manora-logo")]]]/following-sibling::ul[1]//text()'
+                )
+                if not hoo:
+                    hoo = loc_dom.xpath(
+                        '//div[div[img[contains(@src, "manora-fresh-to-go")]]]/following-sibling::ul[1]//text()'
+                    )
+                if not hoo:
+                    hoo = loc_dom.xpath(
+                        '//div[div[img[contains(@src, "manora-pasta-pizza")]]]/following-sibling::ul[1]//text()'
+                    )
+            if location_type == "SUPERMARKET":
+                hoo = loc_dom.xpath(
+                    '//div[div[img[contains(@src, "manor-food-logo")]]]/following-sibling::ul[1]//text()'
+                )
+            if location_type == "STORE":
+                hoo = loc_dom.xpath(
+                    '//div[div[img[contains(@src, "manor-logo")]]]/following-sibling::ul[1]//text()'
+                )
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//ul[contains(@class, "details__shops__worktime__days")]//text()'
+                )
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hoo = " ".join(hoo)
 
             item = SgRecord(
                 locator_domain=domain,
