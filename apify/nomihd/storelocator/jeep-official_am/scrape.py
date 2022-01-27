@@ -193,7 +193,14 @@ def scrape():
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         search_iter = _SearchIteration()
