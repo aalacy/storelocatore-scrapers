@@ -97,7 +97,7 @@ def enqueue_links(url, selectors):
 
 def scrape_state_urls(state_urls):
     city_urls = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(enqueue_links, url, [".states a"]) for url in state_urls
         ]
@@ -111,7 +111,7 @@ def scrape_state_urls(state_urls):
 def scrape_city_urls(city_urls):
     # scrape each city url and populate loc_urls with the results
     loc_urls = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(
                 enqueue_links, url, [".directions-link a", ".tb-store-link a"]

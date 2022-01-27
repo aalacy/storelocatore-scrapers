@@ -32,7 +32,7 @@ def fetch_data():
     for line in r.iter_lines():
         if 'hreflang="en" href="https://www.tesco.com/store-locator/' in line:
             lurl = line.split('href="')[1].split('"')[0]
-            if lurl.count("/") == 5:
+            if lurl.count("/") == 5 and "laurel-dr" in lurl:
                 locs.append(lurl)
     for loc in locs:
         Pharm = False
@@ -53,13 +53,41 @@ def fetch_data():
             logger.info(loc)
             r = get_response(loc)
             for line in r.iter_lines():
-                if "Tesco Pharmacy" in line:
+                if 'itemprop="name">Pharmacy</h3>' in line:
                     Pharm = True
+                if '"main store Pharmacy hours dropdown"' in line and Pharm is True:
+                    days = (
+                        line.split('"main store Pharmacy hours dropdown"')[1]
+                        .split("data-days='[")[1]
+                        .split("]' data-utc")[0]
+                        .split('"day":"')
+                    )
+                    for day in days:
+                        if '"intervals"' in day:
+                            if '"isClosed":false' not in day:
+                                hrs = day.split('"')[0] + ": Closed"
+                            else:
+                                hrs = (
+                                    day.split('"')[0]
+                                    + ": "
+                                    + day.split('"start":')[1].split("}")[0]
+                                    + "-"
+                                    + day.split('"end":')[1].split(",")[0]
+                                )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
                 if '"pageName":"' in line:
                     name = line.split('"pageName":"')[1].split('"')[0]
                     store = line.split('"storeID":"')[1].split('"')[0]
-                if 'itemprop="telephone">' in line:
-                    phone = line.split('itemprop="telephone">')[1].split("<")[0]
+                if 'data-feature="Pharmacy link"' in line:
+                    phone = (
+                        line.split('data-feature="Pharmacy link"')[1]
+                        .split('Phone-display">')[1]
+                        .split("<")[0]
+                        .strip()
+                    )
                 if 'itemprop="latitude" content="' in line:
                     lat = line.split('itemprop="latitude" content="')[1].split('"')[0]
                     lng = line.split('itemprop="longitude" content="')[1].split('"')[0]
@@ -71,15 +99,6 @@ def fetch_data():
                     add = line.split('itemprop="streetAddress" content="')[1].split(
                         '"'
                     )[0]
-                if 'itemprop="openingHours" content="' in line:
-                    days = line.split('itemprop="openingHours" content="')
-                    for day in days:
-                        if '<div class="About-dropdown">' not in day:
-                            hrs = day.split('"')[0]
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
             if "id=;" in hours:
                 hours = hours.split("id=;")[1]
             if Pharm:

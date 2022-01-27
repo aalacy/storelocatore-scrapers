@@ -1,11 +1,13 @@
-import csv
 import time
 import datetime
 import re
 import threading
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -33,33 +35,12 @@ def get_or_default(obj, key):
 
 
 def write_output(data):
-    with open("data.csv", "w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "store_number",
-                "location_type",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "latitude",
-                "longitude",
-                "phone",
-                "hours_of_operation",
-            ]
-        )
-
-        for i in data:
-            if i:
-                writer.writerow(i)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 def create_url(url):
