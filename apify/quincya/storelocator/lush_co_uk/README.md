@@ -1,1 +1,1 @@
---ignore CountryCodeFillRateChecker (UK locations)
+--ignore CountryCodeFillRateChecker --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (UK locations)

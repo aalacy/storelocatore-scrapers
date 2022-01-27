@@ -1,7 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import re
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,135 +12,87 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-
-    data = []
+    cleanr = re.compile(r"<[^>]+>")
     pattern = re.compile(r"\s\s+")
-    url = "https://broadwaypizza.com/locations.html"
-    r = session.get(url, headers=headers, verify=False)
+    url = "https://www.broadwaypizza.com/locations"
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "padd-10"})
-    p = 0
+    divlist = soup.findAll("a", {"class": "location-block-2"})
     for div in divlist:
-        title = div.find("h3").text
-
-        link = "https://broadwaypizza.com/" + div.find("a")["href"]
-        content = div.find("p").text
-        content = re.sub(pattern, "\n", content).strip().splitlines()
-        m = 0
-        if len(content) == 4:
-            street = content[m] + " " + content[m + 1]
-            m += 2
-        elif len(content) == 3:
-            street = content[m]
-            m += 1
-        city, state = content[m].split(", ", 1)
+        title = div.find("h2").text
+        link = "https://www.broadwaypizza.com" + div["href"]
+        content = div.find("p", {"class": "location-page-text"})
+        content = re.sub(cleanr, "\n", str(content))
+        content = re.sub(pattern, "\n", str(content)).strip().splitlines()
+        if len(content) == 3:
+            street = content[0]
+            city, state = content[1].split(", ", 1)
+        elif len(content) == 4:
+            street = content[0] + " " + content[1]
+            city, state = content[2].split(", ", 1)
+        else:
+            continue
         state, pcode = state.split(" ", 1)
-        phone = content[-1]
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        try:
-            longt, lat = (
-                soup.select_one("iframe[src*=maps]")["src"]
-                .split("!2d", 1)[1]
-                .split("!2m", 1)[0]
-                .split("!3d", 1)
-            )
 
-            try:
-                lat = lat.split("!3m", 1)[0]
-            except:
-                pass
-        except:
-            try:
-                lat, longt = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("ll=", 1)[1]
-                    .split("&", 1)[0]
-                    .split(",")
-                )
-            except:
-                lat = longt = "<MISSING>"
+        phone = content[-1]
+
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        longt, lat = (
+            soup.find("div", {"class": "location-column-1"})
+            .find("iframe")["src"]
+            .split("!2d", 1)[1]
+            .split("!3m", 1)[0]
+            .split("!3d", 1)
+        )
+
+        daylist = (
+            soup.find("div", {"class": "ms-big-hours-columns"})
+            .find("div", {"class": "ms-big-hours-column---day"})
+            .findAll("p")
+        )
+        timelist = (
+            soup.find("div", {"class": "ms-big-hours-columns"})
+            .find("div", {"class": "ms-big-hours-column---hours"})
+            .findAll("p")
+        )
+        hours = ""
+        for i in range(0, len(daylist)):
+            hours = hours + daylist[i].text + " " + timelist[i].text + " "
         try:
-            street = street.split(" ™ ", 1)[1]
+            lat = lat.split("!", 1)[0]
         except:
             pass
-        hours = "<MISSING>"
-        if "https://broadwaypizza.com/downtown-minneapolis/" in link:
-            link = (
-                "https://broadwaypizza.com/downtown-minneapolis/"
-                + soup.select_one("a[href*=location]")["href"]
-            )
-            r = session.get(link, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
-            try:
-                longt, lat = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!2m", 1)[0]
-                    .split("!3d", 1)
-                )
-
-                hours = "Monday – Friday 10:30am – 3:30pm"
-            except:
-                pass
-        data.append(
-            [
-                "https://broadwaypizza.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+        if " 200 S" in street:
+            street = "200 S " + street.split(" 200 S", 1)[1]
+        yield SgRecord(
+            locator_domain="https://www.broadwaypizza.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
