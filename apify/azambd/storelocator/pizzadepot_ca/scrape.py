@@ -63,7 +63,7 @@ def get_driver(url, xpath_name, driver=None):
             address = mapembedaddress.find("div", {"class": "address"}).text
             driver.switch_to.default_content()
             break
-        except Exception:
+        except Exception as e:
             driver.quit()
             if x == 3:
                 log.info(f"Page is not valid {url} : {e}")
