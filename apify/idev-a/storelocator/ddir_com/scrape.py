@@ -83,7 +83,7 @@ def fetch_data():
 
             if hours and "Temporarily closed" in hours[0]:
                 hours = ["temporarily closed"]
-                
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=coord["id"],
