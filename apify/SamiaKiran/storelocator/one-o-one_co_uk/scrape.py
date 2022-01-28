@@ -43,6 +43,11 @@ def fetch_data():
                 .replace('{"', "")
                 .replace('"]}', "")
             )
+            if (
+                'mon":"0","tue":"0","wed":"0","thu":"0","fri":"0","sat":"0","sun":"0"'
+                in hours_of_operation
+            ):
+                hours_of_operation = MISSING
             country_code = loc["country"]
             yield SgRecord(
                 locator_domain=DOMAIN,
