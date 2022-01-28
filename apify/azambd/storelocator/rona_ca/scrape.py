@@ -25,7 +25,9 @@ headers = {
 session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-# Testing : stop using tenacity
+# Testing:stop using tenacity
+
+
 @retry(stop=stop_after_attempt(3), wait=tenacity.wait_fixed(5))
 def get_response(idx, url):
     with SgRequests() as http:
