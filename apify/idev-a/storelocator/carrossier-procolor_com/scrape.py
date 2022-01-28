@@ -47,6 +47,13 @@ def fetch_data(search):
                 )
                 slug = "-".join([ss.strip() for ss in slug.split() if ss.strip()])
                 page_url = f"https://www.procolor.com/en-ca/shop/{slug}/"
+                logger.info(page_url)
+                res = session.get(page_url, headers=_headers)
+                if res.status_code == 200:
+                    sp1 = bs(res.text, "lxml")
+                    hours = []
+                    for hh in sp1.select("div.working-hours div.row"):
+                        hours.append(": ".join(hh.stripped_strings))
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],
