@@ -122,7 +122,7 @@ def fetchData():
     page_urls = fetchStores()
     log.info(f"Total stores = {len(page_urls)}")
     count = 0
-    for page_url in page_urls[99:104]:
+    for page_url in page_urls:
         count = count + 1
         log.debug(f"{count}. fetching {page_url} ...")
         response = get_response(count, page_url)
