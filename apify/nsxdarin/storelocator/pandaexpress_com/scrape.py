@@ -17,7 +17,7 @@ def fetch_data():
     url = "https://www.pandaexpress.com/locations"
     states = []
     cities = []
-    locs = []
+    locs = ["https://www.pandaexpress.com/locations/ar/benton/20810-i-30-north"]
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<a class="record" href="/locations/' in line:
@@ -111,22 +111,25 @@ def fetch_data():
                                 hours = hours + "; " + hrs
             if hours == "":
                 hours = "<MISSING>"
-            yield SgRecord(
-                locator_domain=website,
-                page_url=purl,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+            if "," in add:
+                add = add.split(",")[1].strip()
+            if len(zc) >= 5:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
         except:
             pass
 
