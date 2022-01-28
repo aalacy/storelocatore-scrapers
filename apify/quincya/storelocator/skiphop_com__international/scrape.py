@@ -76,7 +76,12 @@ def fetch_data(sgw: SgWriter):
             if not phone[1].isdigit():
                 phone = ""
             try:
-                zip_code = zip_code.replace(phone, "").split("250-3")[0].strip()
+                zip_code = (
+                    zip_code.replace(phone, "")
+                    .split("250-3")[0]
+                    .replace("BURNLEY", "")
+                    .strip()
+                )
             except:
                 pass
             try:
@@ -122,6 +127,53 @@ def fetch_data(sgw: SgWriter):
             if city == "St.":
                 if "ST. MICHAEL" in raw_address:
                     city = "ST. MICHAEL".title()
+            if city in ["1Pa", "4At", "4Qd", "0Lr", "3Lf", "2Pa"]:
+                zip_code = zip_code + " " + city.upper()
+                city = ""
+            if city in ["7J"]:
+                city.replace(city, "").strip()
+            if "Cf62 7Dz" in raw_address:
+                zip_code = "Cf62 7Dz".upper()
+            if "Da9 9Sl" in raw_address:
+                zip_code = "Da9 9Sl".upper()
+                city = ""
+            if "M4 6Dl" in raw_address:
+                zip_code = "M4 6Dl".upper()
+                city = ""
+            if "L9 5An" in raw_address:
+                zip_code = "L9 5An".upper()
+                city = ""
+            if "Wa14 1Du" in city:
+                city = ""
+                zip_code = "Wa14 1Du".upper()
+            if "Ts1 4Jl" in city:
+                zip_code = "Ts1 4Jl".upper()
+                city = city.replace("Ts1 4Jl", "").strip()
+            if "W10 5Be" in city:
+                zip_code = "W10 5BE"
+                city = ""
+
+            # Fix bad city/zips
+            for i in [
+                "Ex31 1Ba",
+                "Cm1 1An",
+                "Da9 9Sa",
+                "Nw4 3Fl",
+                "Al8 6Tp",
+                "W1A 1Ex",
+                "N8 9De",
+                "Sa31 1Qn",
+                "W1C 2Eb",
+                "Cm1 1An",
+                "Mk9 3Ba",
+                "Ha4 6Lr",
+            ]:
+                if i in city:
+                    zip_code = i.upper()
+                    city = city.replace(i, "").strip()
+
+            if not city and "cornwall" in raw_address.lower():
+                city = "Cornwall"
 
             if not city and country_code == "ES":
                 if raw_address.split()[-1].isupper():
