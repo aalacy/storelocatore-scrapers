@@ -30,10 +30,12 @@ def fetch_data():
             for day in days:
                 hours.append(f"{day}: {temp.get(day)}")
 
+            if "We’re keeping this store closed" in _["store_name"]:
+                hours = ["temporarily_closed"]
             yield SgRecord(
                 page_url=locator_domain + "/us" + _["url"],
                 store_number=_["id"],
-                location_name=_["store_name"],
+                location_name=_["store_name"].split("-")[0].strip(),
                 street_address=_["address"],
                 city=_["city"],
                 state=_.get("state"),
