@@ -25,11 +25,13 @@ def fetch_data(sgw: SgWriter):
     divs = tree.xpath("//div[@class='location-container']")
     for d in divs:
         location_name = "".join(d.xpath("./preceding-sibling::h3[1]/text()")).strip()
-        page_url = "".join(d.xpath(".//a[contains(@href, '/locations/')]/@href"))
-        if not page_url:
-            page_url = api
-        if page_url.startswith("/"):
-            page_url = f"https://www.liquorexpress.ca{page_url}"
+        slug = (
+            location_name.replace("Liquor Express", "")
+            .lower()
+            .strip()
+            .replace(" ", "-")
+        )
+        page_url = f"https://www.liquorexpress.ca/locations/{slug}/"
 
         line = "".join(
             d.xpath(
