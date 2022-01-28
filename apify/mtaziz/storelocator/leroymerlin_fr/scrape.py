@@ -54,23 +54,73 @@ def fetch_records(store_num, sgw: SgWriter):
             try:
                 hours = []
                 for k, ohu in opening_hours_usual.items():
-                    weekday = dates[k] + " " + ohu[0]["start"] + " - " + ohu[0]["end"]
-                    hours.append(weekday)
+                    if ohu:
+                        start = ohu[0]["start"]
+                        end = ohu[0]["end"]
+                        weekday = dates[k] + " " + start + " - " + end
+                        hours.append(weekday)
+                    else:
+                        weekday = dates[k] + " " + "Closed"
+                        hours.append(weekday)
                 hours_of_operation = "; ".join(hours)
-            except:
+            except Exception as e:
                 hours_of_operation = MISSING
+                logger.info(
+                    f"Fix HoursOfOperationError: << {e} >> at {opening_hours_usual}"
+                )  # noqa
+
             logger.info(
                 f"Location Name: [<<< {props['name']} for store_id - {store_num} >>>] "
             )  # noqa
 
+            sta = ""
+            add_lines = props["address"]["lines"]
+            if add_lines:
+                if len(add_lines) > 1:
+                    sta = add_lines[0] + ", " + add_lines[1]
+                else:
+                    sta = ", ".join(add_lines)
+            else:
+                sta = MISSING
+
+            add_lines_raw = ", ".join(props["address"]["lines"])
+
+            # City
+            city = props["address"]["city"] or MISSING
+            zip_postal = props["address"]["zipcode"] or MISSING
+            country_code = props["address"]["country_code"] or MISSING
+
+            # Raw Address
+            raw_address = ""
+            if props["address"]["lines"]:
+                raw_address = add_lines_raw
+                if MISSING not in add_lines_raw:
+                    raw_address = add_lines_raw
+                    if MISSING not in city:
+                        raw_address = raw_address + ", " + city
+                        if MISSING not in zip_postal:
+                            raw_address = raw_address + ", " + zip_postal
+                            if MISSING not in country_code:
+                                raw_address = raw_address + ", " + country_code
+                            else:
+                                raw_address = raw_address
+                        else:
+                            raw_address = raw_address
+                    else:
+                        raw_address = raw_address
+                else:
+                    raw_address = add_lines_raw
+            else:
+                raw_address = MISSING
+
             row = SgRecord(
                 page_url=props["contact"]["website"] or MISSING,
                 location_name=props["name"],
-                street_address=", ".join(props["address"]["lines"]) or MISSING,
-                city=props["address"]["city"],
+                street_address=sta,
+                city=city,
                 state=MISSING,
-                zip_postal=props["address"]["zipcode"] or MISSING,
-                country_code=props["address"]["country_code"] or MISSING,
+                zip_postal=zip_postal,
+                country_code=country_code,
                 store_number=props["store_id"] or MISSING,
                 phone=props["contact"]["phone"],
                 location_type=SgRecord.MISSING,
@@ -78,6 +128,7 @@ def fetch_records(store_num, sgw: SgWriter):
                 longitude=data["geometry"]["coordinates"][1] or MISSING,
                 locator_domain="leroymerlin.fr",
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
             sgw.write_row(row)
