@@ -29,57 +29,63 @@ def get_urls():
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    if r.status_code == 200:
+        tree = html.fromstring(r.text)
 
-    location_name = (
-        "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip() or "Bang & Olufsen"
-    )
-    if tree.xpath("//div[@class='Directory-content']"):
-        return
-    street_address = ", ".join(
-        tree.xpath("//span[contains(@class, 'c-address-street')]/text()")
-    ).strip()
-    city = "".join(tree.xpath("//span[@class='c-address-city']/text()")).strip()
-    state = "".join(tree.xpath("//span[@class='c-address-state']/text()")).strip()
-    postal = "".join(
-        tree.xpath("//span[@class='c-address-postal-code']/text()")
-    ).strip()
-    country = "".join(tree.xpath("//*[@itemprop='addressCountry']/text()")).strip()
-    if not country:
-        country = page_url.split("/en/")[1].split("/")[0].replace("-", " ").capitalize()
+        location_name = (
+            "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
+            or "Bang & Olufsen"
+        )
+        if tree.xpath("//div[@class='Directory-content']"):
+            return
+        street_address = ", ".join(
+            tree.xpath("//span[contains(@class, 'c-address-street')]/text()")
+        ).strip()
+        city = "".join(tree.xpath("//span[@class='c-address-city']/text()")).strip()
+        state = "".join(tree.xpath("//span[@class='c-address-state']/text()")).strip()
+        postal = "".join(
+            tree.xpath("//span[@class='c-address-postal-code']/text()")
+        ).strip()
+        country = "".join(tree.xpath("//*[@itemprop='addressCountry']/text()")).strip()
+        if not country:
+            country = (
+                page_url.split("/en/")[1].split("/")[0].replace("-", " ").capitalize()
+            )
 
-    phone = "".join(tree.xpath("//div[contains(@class, 'Core-phone')]/text()")).strip()
-    try:
-        latitude = tree.xpath("//meta[@itemprop='latitude']/@content")[0]
-        longitude = tree.xpath("//meta[@itemprop='longitude']/@content")[0]
-    except IndexError:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+        phone = "".join(
+            tree.xpath("//div[contains(@class, 'Core-phone')]/text()")
+        ).strip()
+        try:
+            latitude = tree.xpath("//meta[@itemprop='latitude']/@content")[0]
+            longitude = tree.xpath("//meta[@itemprop='longitude']/@content")[0]
+        except IndexError:
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-    _tmp = []
-    hours = tree.xpath("//tr[@itemprop='openingHours']")
-    for h in hours:
-        day = " ".join("".join(h.xpath("./td[1]//text()")).split())
-        inter = " ".join("".join(h.xpath("./td[2]//text()")).split())
-        _tmp.append(f"{day}: {inter}")
+        _tmp = []
+        hours = tree.xpath("//tr[@itemprop='openingHours']")
+        for h in hours:
+            day = " ".join("".join(h.xpath("./td[1]//text()")).split())
+            inter = " ".join("".join(h.xpath("./td[2]//text()")).split())
+            _tmp.append(f"{day}: {inter}")
 
-    hours_of_operation = ";".join(_tmp)
+        hours_of_operation = ";".join(_tmp)
 
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        latitude=latitude,
-        longitude=longitude,
-        country_code=country,
-        phone=phone,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-    )
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            latitude=latitude,
+            longitude=longitude,
+            country_code=country,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    sgw.write_row(row)
+        sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
