@@ -54,15 +54,19 @@ def fetch_data():
                 )
                 if not hoo:
                     hoo = loc_dom.xpath(
-                        '//div[div[img[contains(@src, "store-manora-fresh-to-go")]]]/following-sibling::ul[1]//text()'
+                        '//div[div[img[contains(@src, "manora-fresh-to-go")]]]/following-sibling::ul[1]//text()'
+                    )
+                if not hoo:
+                    hoo = loc_dom.xpath(
+                        '//div[div[img[contains(@src, "manora-pasta-pizza")]]]/following-sibling::ul[1]//text()'
                     )
             if location_type == "SUPERMARKET":
                 hoo = loc_dom.xpath(
-                    '//div[div[img[contains(@src, "store-manor-food-logo")]]]/following-sibling::ul[1]//text()'
+                    '//div[div[img[contains(@src, "manor-food-logo")]]]/following-sibling::ul[1]//text()'
                 )
             if location_type == "STORE":
                 hoo = loc_dom.xpath(
-                    '//div[div[img[contains(@src, "store-manor-logo")]]]/following-sibling::ul[1]//text()'
+                    '//div[div[img[contains(@src, "manor-logo")]]]/following-sibling::ul[1]//text()'
                 )
             if not hoo:
                 hoo = loc_dom.xpath(
