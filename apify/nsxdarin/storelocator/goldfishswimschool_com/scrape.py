@@ -41,7 +41,15 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '<strong class="blk">' in line2 and add == "":
-                add = line2.split('<strong class="blk">')[1].split(",")[0]
+                add = (
+                    line2.split('<strong class="blk">')[1]
+                    .replace(", #", " #")
+                    .replace(",Ste", "Ste")
+                    .replace(",Suite", "Suite")
+                    .replace(", Ste", " Ste")
+                    .replace(", Suite", " Suite")
+                    .split(",")[0]
+                )
                 zc = (
                     line2.split('<strong class="blk">')[1]
                     .split("<")[0]
@@ -73,6 +81,10 @@ def fetch_data():
                     else:
                         hours = hours + "; " + hrs
         if hours == "":
+            hours = "<MISSING>"
+        if '<span style="background-color' in hours:
+            hours = "<MISSING>"
+        if "To Learn More About Our School, Call Today:" in hours:
             hours = "<MISSING>"
         if name != "":
             if "burlington-ont" in loc:

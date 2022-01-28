@@ -31,22 +31,26 @@ def fetch_data(sgw: SgWriter):
     for section in sections:
         items = section.find(
             class_="elementor-container elementor-column-gap-default"
-        ).find_all(class_="elementor-container elementor-column-gap-default")
+        ).find_all(class_="elementor-widget-wrap elementor-element-populated")
         for item in items:
-            if "opening" in item.text.lower() or "hiring" in item.text.lower():
+            if "opening" in item.text.lower() or "coming" in item.text.lower():
                 continue
-            location_name = item.h3.text.strip()
+            try:
+                location_name = item.h3.text.strip()
+            except:
+                continue
             raw_address = list(item.h5.stripped_strings)
-            street_address = raw_address[0]
-            city = raw_address[1].split(",")[0]
-            state = raw_address[1].split(",")[1].split()[0].strip()
-            zip_code = raw_address[1].split(",")[1].split()[1].strip()
+            if "Rd Cedar" in raw_address[0]:
+                raw_address = (
+                    raw_address[0].replace("Rd Cedar", "Rd, Cedar").split(" Rd, ")
+                )
+            street_address = " ".join(raw_address[:-1])
+            city_line = raw_address[-1]
+            city = city_line.split(",")[0]
+            state = city_line.split(",")[1].split()[0].strip()
+            zip_code = city_line.split(",")[1].split()[1].strip()
             country_code = "US"
             location_type = ""
-            phone = item.a.text
-            if not phone[2].isdigit():
-                phone = ""
-
             try:
                 hours_of_operation = (
                     " ".join(list(item.table.stripped_strings))
@@ -54,6 +58,12 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                 )
             except:
+                hours_of_operation = ""
+
+            phone = item.a.text
+            if not phone[2].isdigit():
+                phone = ""
+            if "follow" in hours_of_operation:
                 hours_of_operation = ""
             store_number = ""
             try:

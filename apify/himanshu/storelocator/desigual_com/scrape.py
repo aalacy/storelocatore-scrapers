@@ -41,7 +41,11 @@ def fetch_data():
                 )
                 store_number = temp.split("id :")[1].split(",")[0]
                 location_name = temp.split("name :")[1].split(",")[0]
-                street_address = temp.split("address :")[1].split(", city :")[0]
+                street_address = (
+                    temp.split("address :")[1]
+                    .split(", city :")[0]
+                    .replace("MIRACLE MILE SHOPS ", "")
+                )
                 city = temp.split(", city :")[1].split(",")[0]
                 state = temp.split("regionSapId :")[1].split(",")[0]
                 zip_postal = temp.split("postalCode :")[1].split(",")[0]
@@ -71,6 +75,12 @@ def fetch_data():
                     + ", "
                     + sun
                 )
+                if "," in street_address:
+                    street_address = street_address.split(",")
+                    if "MALL" in street_address[0]:
+                        street_address = " ".join(street_address[1:])
+                    else:
+                        street_address = " ".join(street_address)
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
