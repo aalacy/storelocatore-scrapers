@@ -29,6 +29,8 @@ def fetch_data():
             street_address = ""
         if street_address:
             street_address = " ".join(street_address.replace("\r\n", " ").split())
+        if street_address and street_address.startswith(","):
+            street_address = street_address[1:].strip()
         city = poi["city"]
         if city:
             city = city.replace("?", "")
@@ -52,22 +54,57 @@ def fetch_data():
         longitude = poi["lng"]
         if longitude == "0.00000000":
             longitude = ""
-        if street_address:
-            addr = parse_address_intl(street_address)
-            if not zip_code:
-                zip_code = addr.postcode
-            if not city:
-                city = addr.city
-            if not state:
-                state = addr.state
-            street_address = street_address.replace(location_name, "")
-        raw_address = ""
-        if poi["address"]:
-            raw_address = " ".join(poi["address"].replace("\r\n", " ").split())
+        raw_address = f'{street_address}, {poi["city"]}, {poi["state"]}, {poi["zip"]}, {poi["country"]}'.strip()
+        addr = parse_address_intl(raw_address)
+        if not zip_code:
+            zip_code = addr.postcode
+        if not city:
+            city = addr.city
+        if not state:
+            state = addr.state
+        street_address = street_address.replace(location_name, "")
         if phone and phone == zip_code:
+            phone = ""
+        if phone and phone == city:
             phone = ""
         if zip_code and "@" in zip_code:
             zip_code = ""
+        if zip_code and zip_code == ".":
+            zip_code = ""
+        if phone and phone.startswith("-"):
+            phone = phone[1:]
+        if phone:
+            phone = (
+                phone.split("..")[0]
+                .replace("Voss", "")
+                .split("(P")[0]
+                .split("J")[0]
+                .split("Butik:")[-1]
+                .split("Inköp:")[0]
+                .replace("Butik", "")
+                .replace("Tel:", "")
+                .split("(butik")[0]
+                .split("/ 8 (800")[0]
+                .split("（バ")[0]
+                .replace("03-3567-2224", "")
+                .replace("https://www.proidee.de/", "")
+                .strip()
+            )
+            if phone.endswith("."):
+                phone = phone[:-1]
+        if city and city == "None":
+            city = ""
+        if zip_code and state:
+            zip_code = zip_code.replace(state, "").strip()
+        if street_address and city:
+            if city in street_address:
+                street_address = street_address.split(city)[0].strip()
+                if street_address.endswith(","):
+                    street_address = street_address[:-1]
+        if city and city == ", , None, .,":
+            city = ""
+        if street_address and street_address.strip().startswith(","):
+            street_address = street_address[1:]
 
         item = SgRecord(
             locator_domain=domain,

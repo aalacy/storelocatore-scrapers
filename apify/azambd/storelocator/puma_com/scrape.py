@@ -98,11 +98,6 @@ def fetch_single_store(store, retry=0):
         page_url = f"https://about.puma.com{store['Url']}"
         location_type = "Outlet" if "Outlet" in location_name else "Store"
 
-        if location_type == "Outlet":
-            location_name = "Puma Outlet"
-        else:
-            location_name = "Puma Store"
-
         log.info(f"Scrapping {page_url}...")
         response = http.get(page_url)
         body = html.fromstring(response.text, "lxml")
