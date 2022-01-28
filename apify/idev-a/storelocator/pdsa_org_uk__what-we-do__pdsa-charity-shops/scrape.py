@@ -37,7 +37,7 @@ def fetch_records(session, search):
             continue
         logger.info(f"[{zip_code}] {len(locations)}")
         for _ in locations:
-            page_url = base_url + _["Url"]
+            page_url = "https://www.pdsa.org.uk" + _["Url"]
             street_address = _["AddressLine1"]
             if _["AddressLine2"]:
                 street_address += " " + _["AddressLine2"]

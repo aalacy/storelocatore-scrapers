@@ -53,6 +53,36 @@ def fetch_data():
                     hours = hours.replace("<br/>", " ")
                     hours = BeautifulSoup(hours, "html.parser")
                     hours = hours.text
+                    req = session.get(link, headers=headers)
+                    soup = BeautifulSoup(req.text, "html.parser")
+                    title = soup.find("h1", {"id": "location-name"}).findAll("span")
+                    title = title[0].text + " " + title[1].text
+                    if link.find("united-states") != -1:
+                        state = link.split("united-states/")[1].split("/")[0].upper()
+                        country_code = "US"
+                    elif link.find("canada") != -1:
+                        state = link.split("canada/")[1].split("/")[0].upper()
+                        country_code = "CA"
+                    elif link.find("united-kingdom") != -1:
+                        country_code = "UK"
+                    else:
+                        state = MISSING
+                    if street == "Lennox Square, 3393 Peachtree Road NE":
+                        street = "3393 Peachtree Road NE"
+                    if street == "Houston Galleria, 5085 Westheimer Rd.":
+                        street = "5085 Westheimer Rd."
+                    try:
+                        street1 = soup.find(
+                            "span", {"itemprop": "c-address-street-1"}
+                        ).text
+                        street2 = soup.find(
+                            "span", {"itemprop": "c-address-street-2"}
+                        ).text
+
+                        street = street1 + " " + street2
+                        street = street.strip()
+                    except AttributeError:
+                        street = street
 
                     yield SgRecord(
                         locator_domain=DOMAIN,
@@ -62,7 +92,7 @@ def fetch_data():
                         city=city.strip(),
                         state=state.strip(),
                         zip_postal=pcode,
-                        country_code="US",
+                        country_code=country_code,
                         store_number=MISSING,
                         phone=phone,
                         location_type=MISSING,
