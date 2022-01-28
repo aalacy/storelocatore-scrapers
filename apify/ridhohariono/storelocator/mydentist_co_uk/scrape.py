@@ -48,6 +48,8 @@ def fetch_data():
     log.info("Fetching store_locator data")
     urls = get_store_url()
     for page_url in urls:
+        if "61-high-street-0" in page_url:
+            continue
         store = pull_content(page_url)
         try:
             location_name = store.find("span", {"itemprop": "name"}).text.strip()
