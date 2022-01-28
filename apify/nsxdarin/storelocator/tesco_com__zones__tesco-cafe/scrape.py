@@ -1,4 +1,3 @@
-# -*- coding: cp1252 -*-
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -56,9 +55,9 @@ def fetch_data():
             for line in r.iter_lines():
                 if 'itemprop="name">Caf' in line:
                     Cafe = True
-                if '"main store Café hours dropdown"' in line and Cafe is True:
+                if '"main store Caf"' in line and Cafe is True:
                     days = (
-                        line.split('"main store Café hours dropdown"')[1]
+                        line.split('"main store Caf"')[1]
                         .split("data-days='[")[1]
                         .split("]' data-utc")[0]
                         .split('"day":"')
@@ -82,9 +81,9 @@ def fetch_data():
                 if '"pageName":"' in line:
                     name = line.split('"pageName":"')[1].split('"')[0]
                     store = line.split('"storeID":"')[1].split('"')[0]
-                if 'data-feature="Café link"' in line:
+                if 'data-feature="Caf' in line:
                     phone = (
-                        line.split('data-feature="Café link"')[1]
+                        line.split('data-feature="Caf"')[1]
                         .split('Phone-display">')[1]
                         .split("<")[0]
                         .strip()
