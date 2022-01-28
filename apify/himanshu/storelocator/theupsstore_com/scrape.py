@@ -1,44 +1,14 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+
 logger = SgLogSetup().get_logger("theupsstore_com")
 session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file,
-            delimiter=",",
-            quotechar='"',
-            quoting=csv.QUOTE_ALL,
-            lineterminator="\n",
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,11 +16,9 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36"
     }
     sub_url = "https://locations.theupsstore.com/"
-    base_url = "https://www.theupsstore.com/"
     r = session.get("https://locations.theupsstore.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    addresses = []
     location_name = "<MISSING>"
     street_address = "<MISSING>"
     city = "<MISSING>"
@@ -116,6 +84,7 @@ def fetch_data():
                             data.find(
                                 "span", {"class": "c-address-street-1"}
                             ).text.strip()
+                            + " "
                             + data.find(
                                 "span", {"class": "c-address-street-2"}
                             ).text.strip()
@@ -158,6 +127,8 @@ def fetch_data():
                     hours_of_operation = (
                         soup2.find("table", {"class": "c-hours-details"})
                         .text.replace("Store HoursDay of the WeekHours", "")
+                        .replace("PM", "PM ")
+                        .replace("Closed", " Closed")
                         .strip()
                     )
                 except:
@@ -176,25 +147,24 @@ def fetch_data():
                     store_number = "6948"
                     phone = "(302) 907-0455"
 
-                store = []
-                store.append(base_url)
-                store.append(location_name if location_name else "<MISSING>")
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append(country_code if country_code else "<MISSING>")
-                store.append(store_number if store_number else "<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append(location_type if location_type else "<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-                store.append(page_url if page_url else "<MISSING>")
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
-                yield store
+                item = SgRecord(
+                    locator_domain="theupsstore.com",
+                    page_url=page_url.replace("/../", "/"),
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                yield item
 
             else:
                 locations_url1 = (
@@ -234,6 +204,7 @@ def fetch_data():
                                 data1.find(
                                     "span", {"class": "c-address-street-1"}
                                 ).text.strip()
+                                + " "
                                 + data1.find(
                                     "span", {"class": "c-address-street-2"}
                                 ).text.strip()
@@ -280,32 +251,31 @@ def fetch_data():
                         hours_of_operation = (
                             soup4.find("table", {"class": "c-hours-details"})
                             .text.replace("Store HoursDay of the WeekHours", "")
+                            .replace("PM", "PM ")
+                            .replace("Closed", " Closed")
                             .strip()
                         )
                     except:
                         hours_of_operation = "<MISSING>"
 
-                    store = []
-                    store.append(base_url)
-                    store.append(location_name if location_name else "<MISSING>")
-                    store.append(street_address if street_address else "<MISSING>")
-                    store.append(city if city else "<MISSING>")
-                    store.append(state if state else "<MISSING>")
-                    store.append(zipp if zipp else "<MISSING>")
-                    store.append(country_code if country_code else "<MISSING>")
-                    store.append(store_number if store_number else "<MISSING>")
-                    store.append(phone if phone else "<MISSING>")
-                    store.append(location_type if location_type else "<MISSING>")
-                    store.append(latitude if latitude else "<MISSING>")
-                    store.append(longitude if longitude else "<MISSING>")
-                    store.append(
-                        hours_of_operation if hours_of_operation else "<MISSING>"
+                    item = SgRecord(
+                        locator_domain="theupsstore.com",
+                        page_url=page_url.replace("/../", "/"),
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zipp,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
                     )
-                    store.append(page_url if page_url else "<MISSING>")
-                    if store[2] in addresses:
-                        continue
-                    addresses.append(store[2])
-                    yield store
+
+                    yield item
 
     link = "https://locations.theupsstore.com/dc/washington"
     r5 = session.get(link, headers=headers)
@@ -335,6 +305,7 @@ def fetch_data():
             try:
                 street_address = (
                     data2.find("span", {"class": "c-address-street-1"}).text.strip()
+                    + " "
                     + data2.find("span", {"class": "c-address-street-2"}).text.strip()
                 )
             except:
@@ -370,34 +341,44 @@ def fetch_data():
             hours_of_operation = (
                 soup6.find("table", {"class": "c-hours-details"})
                 .text.replace("Store HoursDay of the WeekHours", "")
+                .replace("PM", "PM ")
+                .replace("Closed", " Closed")
                 .strip()
             )
         except:
             hours_of_operation = "<MISSING>"
-        store = []
-        store.append(base_url)
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append(location_type if location_type else "<MISSING>")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-        store.append(page_url if page_url else "<MISSING>")
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-        yield store
+
+        item = SgRecord(
+            locator_domain="theupsstore.com",
+            page_url=page_url.replace("/../", "/"),
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

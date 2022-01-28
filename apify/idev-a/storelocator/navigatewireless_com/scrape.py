@@ -40,8 +40,8 @@ def fetch_data():
                 logger.info(page_url)
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 hours = []
-                days = sp1.select("div.left-hours div.day")
-                timings = sp1.select("div.left-hours div.timings")
+                days = sp1.select("div.hours div.day")
+                timings = sp1.select("div.hours div.timings")
                 for x in range(len(days)):
                     hours.append(f"{days[x].text.strip()}: {timings[x].text.strip()}")
                 yield SgRecord(
