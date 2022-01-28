@@ -32,10 +32,7 @@ def fetch_data():
             page_url = "https://www.duckdonuts.com" + loc["Path"]
             log.info(page_url)
             location_name = loc["FranchiseLocationName"]
-            try:
-                street_address = loc["Address1"] + " " + loc["Address1"]
-            except:
-                street_address = loc["Address1"]
+            street_address = loc["Address1"]
             city = loc["City"]
             state = loc["State"]
             zip_postal = loc["ZipCode"]
