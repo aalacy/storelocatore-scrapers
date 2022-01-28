@@ -53,8 +53,9 @@ def fetch_data():
             location_name = store.find("span", {"itemprop": "name"}).text.strip()
         except:
             location_name = store.title.text.split("-")[0].strip()
-
         city_content = store.find("span", {"itemprop": "addressLocality"})
+        if not city_content:
+            continue
         if len(city_content) > 1:
             street_address = (
                 store.find("span", {"itemprop": "streetAddress"}).text.strip()
