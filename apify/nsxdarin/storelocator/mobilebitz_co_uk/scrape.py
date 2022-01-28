@@ -35,7 +35,7 @@ def fetch_data():
                 .replace(" ,", ",")
                 .replae(", ", ",")
             )
-            formatted_addr = parse_address_intl(raw_address)
+            formatted_addr = parse_address_intl(rawadd)
             add = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 add = add + ", " + formatted_addr.street_address_2
