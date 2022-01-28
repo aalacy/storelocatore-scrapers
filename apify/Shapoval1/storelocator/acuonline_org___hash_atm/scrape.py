@@ -1,76 +1,72 @@
-import json
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
-
+import geonamescache
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent import futures
-from sgscrape.pause_resume import CrawlStateSingleton
-
-from sglogging import sglog
-import time
-from tenacity import retry, stop_after_attempt
-import tenacity
-import random
 
 
-locator_domain = "acuonline.org"
-log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
-api_url = "https://locationapi.wave2.io/api/client/getlocations"
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-    "Accept": "*/*",
-    "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-    "Content-Type": "application/json; charset=UTF-8",
-    "Origin": "https://03919locator.wave2.io",
-    "Connection": "keep-alive",
-    "Referer": "https://03919locator.wave2.io/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-site",
-    "TE": "trailers",
-}
+def get_urls():
+    gc = geonamescache.GeonamesCache()
+    c = gc.get_cities()
+    US_cities = [
+        c[key]["name"] for key in list(c.keys()) if c[key]["countrycode"] == "US"
+    ]
+    return US_cities
 
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
-def get_response(data):
-    with SgRequests() as http:
-        response = http.post(api_url, headers=headers, data=json.dumps(data))
-        time.sleep(random.randint(3, 7))
-        if response.status_code == 200:
-            log.info(f"HTTP STATUS Return: {response.status_code}")
-            return response
-        raise Exception(f"HTTP Error Code: {response.status_code}")
-
-
-def get_data(coord, sgw: SgWriter):
-    lat, lng = coord
-
-    page_url = "https://www.acuonline.org/home/resources/locations"
-
-    data = {
-        "Latitude": f"{lat}",
-        "Longitude": f"{lng}",
-        "Address": "",
-        "City": "",
-        "State": "",
-        "Zipcode": "",
-        "Country": "",
-        "Action": "textsearch",
-        "ActionOverwrite": "",
-        "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
+def get_data(url, sgw: SgWriter):
+    locator_domain = "https://www.anthonys.com"
+    session = SgRequests()
+    api_url = f"https://api.nettoolkit.com/v1/geo/names?restriction=1&key=xwyzhZvZ0lsjRR9nl1jYxbZFbJVoZZyge5gXjONT&text={url}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    try:
+        js = r.json()["results"]
+    except:
+        return
+    for j in js:
+        city_lat = j.get("latitude")
+        city_lon = j.get("longitude")
+        if city_lon == 0:
+            continue
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "*/*",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "application/json; charset=UTF-8",
+            "Origin": "https://03919locator.wave2.io",
+            "Connection": "keep-alive",
+            "Referer": "https://03919locator.wave2.io/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "TE": "trailers",
+        }
 
-    r = get_response(data)
+        data = (
+            '{"Latitude":"'
+            + str(city_lat)
+            + '","Longitude":"'
+            + str(city_lon)
+            + '","Address":"","City":"","State":"","Zipcode":"","Country":"","Action":"geolocate","ActionCategory":"web","Filters":"FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,"}'
+        )
 
-    js = r.json()["Features"]
-    if js:
-        log.debug(f"From {lat,lng} stores = {len(js)}")
-
+        r = session.post(
+            "https://locationapi.wave2.io/api/client/getlocations",
+            headers=headers,
+            data=data,
+        )
+        js = r.json()["Features"]
+        if not js:
+            continue
         for j in js:
+
+            page_url = "https://www.acuonline.org/home/resources/locations"
             a = j.get("Properties")
             location_name = a.get("LocationName") or "<MISSING>"
             street_address = a.get("Address") or "<MISSING>"
@@ -90,6 +86,7 @@ def get_data(coord, sgw: SgWriter):
             )
 
             row = SgRecord(
+                locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
@@ -102,7 +99,6 @@ def get_data(coord, sgw: SgWriter):
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )
 
@@ -110,15 +106,9 @@ def get_data(coord, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    postals = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.JAPAN],
-        max_search_distance_miles=50,
-        expected_search_radius_miles=10,
-        max_search_results=100,
-    )
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 

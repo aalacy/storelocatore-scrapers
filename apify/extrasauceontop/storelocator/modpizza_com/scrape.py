@@ -96,6 +96,15 @@ def get_data():
         address = soup.find(
             "span", attrs={"class": "Address-field Address-line1"}
         ).text.strip()
+
+        try:
+            address2 = soup.find(
+                "span", attrs={"class": "Address-field Address-line2"}
+            ).text.strip()
+            address = address + " " + address2
+
+        except Exception:
+            pass
         state = page_url.split("/")[-3]
         zipp = soup.find(
             "span", attrs={"class": "Address-field Address-postalCode"}
@@ -119,8 +128,16 @@ def get_data():
             day = part["day"]
             if len(part["intervals"]) == 0:
                 continue
-            start = part["intervals"][0]["start"]
-            end = part["intervals"][0]["end"]
+            start = (
+                str(part["intervals"][0]["start"])[:-2]
+                + ":"
+                + str(part["intervals"][0]["start"])[-2:]
+            )
+            end = (
+                str(part["intervals"][0]["end"])[:-2]
+                + ":"
+                + str(part["intervals"][0]["end"])[-2:]
+            )
 
             hours = hours + day + " " + str(start) + "-" + str(end) + ", "
 

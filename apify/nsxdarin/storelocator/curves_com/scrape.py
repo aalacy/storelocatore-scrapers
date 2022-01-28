@@ -262,6 +262,9 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        add = add.replace("&amp;", "&")
+        city = city.replace("&amp;", "&")
+        name = name.replace("&amp;", "&")
         if add != "":
             yield SgRecord(
                 locator_domain=website,

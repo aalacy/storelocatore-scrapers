@@ -56,12 +56,14 @@ def fetch_data():
             lat = lat.split("!", 1)[0]
         except:
             pass
-        store = (
-            div.find("a", {"class": "apptBtn"})["href"]
-            .split("location/", 1)[1]
-            .split("/", 1)[0]
-        )
-
+        try:
+            store = (
+                div.find("a", {"class": "apptBtn"})["href"]
+                .split("location/", 1)[1]
+                .split("/", 1)[0]
+            )
+        except:
+            store = "<MISSING>"
         state = "<MISSING>"
         hours = hours.encode("ascii", "ignore").decode("ascii")
         yield SgRecord(

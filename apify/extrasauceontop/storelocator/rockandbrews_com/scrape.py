@@ -107,24 +107,26 @@ def get_data():
                 "https://www.rockandbrews.com"
                 + grid.find("a", attrs={"class": "details-button"})["href"]
             )
-            driver.get(page_url)
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located(
-                    (By.CLASS_NAME, "pm-custom-section-heading")
+
+            try:
+                driver.get(page_url)
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "location-social"))
                 )
-            )
+
+            except Exception:
+                driver.get(page_url)
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "social"))
+                )
 
             html = driver.page_source
             soup = bs(html, "html.parser")
 
-            div = soup.find("div", attrs={"id": "location"})
-            try:
-                phone = div.find("a")["href"].replace("tel:", "")
-            except Exception:
-                a_tags = soup.find_all("a")
-                for tag in a_tags:
-                    if "tel:" in tag["href"]:
-                        phone = tag["href"].replace("tel:", "")
+            a_tags = soup.find_all("a")
+            for tag in a_tags:
+                if "tel:" in tag["href"]:
+                    phone = tag["href"].replace("tel:", "")
 
             if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"
@@ -185,5 +187,3 @@ def scrape():
 
 
 scrape()
-
-# https://www.rockandbrews.com/yaamava'-resort--and--casino

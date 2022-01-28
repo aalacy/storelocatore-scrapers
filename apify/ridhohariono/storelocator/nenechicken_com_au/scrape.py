@@ -103,7 +103,26 @@ def fetch_data():
                 )
                 addr_optional = get_addr_info(raw_address)
                 if not raw_address:
-                    raw_address = ""
+                    raw_address = (
+                        location_name.replace("(", "").replace(")", "").strip()
+                    )
+                    street_address = MISSING
+                    city = MISSING
+                    state = MISSING
+                    zip_postal = MISSING
+                else:
+                    street_address, city, state, zip_postal = getAddress(raw_address)
+                    if street_address == MISSING:
+                        street_address = " ".join(raw_address.split(",")[:-1])
+                    if city == MISSING and addr_optional:
+                        if "Victoria" in raw_address:
+                            city = "Victoria"
+                        else:
+                            city = addr_optional["city"].replace(",", " ").strip()
+                    if state == MISSING and addr_optional:
+                        state = addr_optional["state"].strip()
+                    if zip_postal == MISSING and addr_optional:
+                        zip_postal = addr_optional["zip_postal"].upper().strip()
                 phone = re.sub(
                     r"Store number:|\(Pickup Only\)",
                     "",
@@ -118,18 +137,6 @@ def fetch_data():
                     .replace("Trading hours:,", "")
                     .strip()
                 )
-                street_address, city, state, zip_postal = getAddress(raw_address)
-                if street_address == MISSING:
-                    street_address = " ".join(raw_address.split(",")[:-1])
-                if city == MISSING and addr_optional:
-                    if "Victoria" in raw_address:
-                        city = "Victoria"
-                    else:
-                        city = addr_optional["city"].replace(",", " ").strip()
-                if state == MISSING and addr_optional:
-                    state = addr_optional["state"].strip()
-                if zip_postal == MISSING and addr_optional:
-                    zip_postal = addr_optional["zip_postal"].upper().strip()
                 log.info("Append {} => {}".format(location_name, street_address))
                 yield SgRecord(
                     locator_domain=DOMAIN,
@@ -146,7 +153,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=f"{street_address}, {city}, {zip_postal}",
+                    raw_address=raw_address,
                 )
         else:
             title = info.find_all("h3", {"class": "title text-large"})
@@ -199,7 +206,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=f"{street_address}, {city}, {zip_postal}",
+                    raw_address=raw_address,
                 )
 
 

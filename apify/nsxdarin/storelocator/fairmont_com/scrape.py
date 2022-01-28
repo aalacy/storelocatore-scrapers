@@ -80,7 +80,7 @@ def fetch_data():
                 name = line2.split("'hotelname' : '")[1].split("'")[0]
             if "'hotelcode' : '" in line2:
                 store = line2.split("'hotelcode' : '")[1].split("'")[0]
-            if '<ul class="hotels-common-details">' in line2:
+            if '"hotels-common-details' in line2:
                 next(lines)
                 next(lines)
                 g = next(lines)
@@ -106,6 +106,12 @@ def fetch_data():
                     zc = g.split("Canada")[0].rsplit(" ", 1)[1].replace(",", "")
                 if "United Kingdom" in g:
                     zc = g.split("United Kingdom")[1].strip()
+            if '"addressRegion": "' in line2:
+                city = line2.split('"addressRegion": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
             if 'aria-label="Phone number"' in line2:
                 phone = (
                     line2.split('aria-label="Phone number"')[1]
@@ -189,7 +195,7 @@ def fetch_data():
                 store = line2.split("'hotelcode' : '")[1].split("'")[0]
             if "'hotelcountry' : '" in line2:
                 country = line2.split("'hotelcountry' : '")[1].split("'")[0]
-            if '<ul class="hotels-common-details">' in line2:
+            if '"hotels-common-details' in line2:
                 next(lines)
                 next(lines)
                 g = next(lines)
