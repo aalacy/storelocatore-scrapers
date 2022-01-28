@@ -82,7 +82,7 @@ def fetch_data():
         store_sel = lxml.html.fromstring(driver.page_source)
 
         locator_domain = website
-        page_url = "<MISSING>"
+        page_url = "https://www.jenningsbet.com/shop-locator/"
         location_name = "".join(
             store_sel.xpath('//div[@class="leaflet-popup-content"]/b/text()')
         ).strip()
@@ -102,6 +102,8 @@ def fetch_data():
             street_address = street_address.replace("Ste", "Suite")
 
         city = formatted_addr.city
+        if city:
+            city = city.replace("Great Clacton", "").strip()
 
         state = formatted_addr.state
         zip = formatted_addr.postcode

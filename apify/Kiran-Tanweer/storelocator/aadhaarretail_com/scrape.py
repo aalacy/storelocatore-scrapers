@@ -68,6 +68,9 @@ def fetch_data():
                                 coords = coords.split("q=")[1].split("&")[0]
                                 lat, lng = coords.split(", ")
                                 street = address.replace(",,", " ")
+                                street = street.lstrip(",")
+
+                                raw = street
 
                                 yield SgRecord(
                                     locator_domain=DOMAIN,
@@ -84,6 +87,7 @@ def fetch_data():
                                     latitude=lat,
                                     longitude=lng,
                                     hours_of_operation=MISSING,
+                                    raw_address=raw,
                                 )
 
 

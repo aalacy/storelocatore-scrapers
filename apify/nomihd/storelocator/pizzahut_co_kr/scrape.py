@@ -50,6 +50,12 @@ def fetch_data():
 
             street_address = store["addressStreet"]
 
+            location_type = "<MISSING>"
+            if "예정" in street_address:
+                location_type = "Coming Soon"
+
+            street_address = street_address.split("(")[0].strip()
+
             city = "<MISSING>"
             state = "<MISSING>"
             zip = "<MISSING>"
@@ -60,9 +66,7 @@ def fetch_data():
 
             store_number = "<MISSING>"
 
-            page_url = "<MISSING>"
-
-            location_type = "<MISSING>"
+            page_url = "https://www.pizzahut.co.kr/misc/address"
 
             hours_of_operation = "<MISSING>"
 
