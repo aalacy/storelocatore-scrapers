@@ -44,7 +44,10 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.h1.text.strip(),
-                street_address=addr[0].replace(",", ""),
+                street_address=" ".join(addr[0].split(",")[2:])
+                .replace(",", "")
+                .replace("Marina Bay Sands", "")
+                .strip(),
                 city="Singapore",
                 zip_postal=addr[-1].replace(",", ""),
                 country_code="Singapore",
