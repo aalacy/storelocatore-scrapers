@@ -48,7 +48,7 @@ def fetch_data(sgw: SgWriter):
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
         hours_of_operation = (
-            " ".join(d.xpath("./p[2]/text()"))
+            " ".join(d.xpath("./p[contains(text(), '営業時間')]/text()"))
             .replace("\n", "")
             .replace("営業時間:", "")
             .strip()

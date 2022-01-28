@@ -28,6 +28,26 @@ def fetch_records(http, search):
             longitude = _["yextDisplayCoordinate"]["longitude"]
             search.found_location_at(latitude, longitude)
             hours = []
+            for day in [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]:
+                day = day.lower()
+                for key, hh in _.get("hours", {}).items():
+                    times = []
+                    if day == key:
+                        if hh.get("isClosed"):
+                            times = ["closed"]
+                        else:
+                            for hr in hh["openIntervals"]:
+                                times.append(f"{hr['start']} - {hr['end']}")
+                        hours.append(f"{day}: {', '.join(times)}")
+
             yield SgRecord(
                 page_url="https://www.volvocarssouthbay.com/"
                 + _["c_dealerSiteTrackingTag"],

@@ -31,7 +31,9 @@ def fetch_data(sgw: SgWriter):
         location_name = get_value(j.get("title"))
         slug = get_value(j.get("url"))
         page_url = f"https://www.randstadusa.com{slug}"
-        street_address = get_value(j.get("addrest_suggest"))
+        adr1 = get_value(j.get("address_line1"))
+        adr2 = get_value(j.get("address_line2"))
+        street_address = f"{adr1} {adr2}".strip()
         city = get_value(j.get("city"))
         state = get_value(j.get("state"))
         postal = get_value(j.get("postal_code"))
