@@ -12,11 +12,14 @@ def para(k):
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
-    k = session.get(
-        "https://www.tntsupermarket.com/rest/V1/xmapi/get-store-details?lang=en&id="
-        + k["id"],
-        headers=headers,
-    ).json()
+    k = SgRequests.raise_on_err(
+        session.get(
+            "https://www.tntsupermarket.com/rest/V1/xmapi/get-store-details?lang=en&id="
+            + k["id"],
+            headers=headers,
+        )
+    )
+    k = k.json()
     k = k["data"]
     backup = k
     try:
@@ -100,9 +103,20 @@ def para(k):
 
 
 def fix_hours(x):
-    x = x.replace("<br />", ", ").replace("\n", "")
-
+    x = x.replace("<br />", ", ").replace("\n", "").replace("\r", "").replace("\t", "")
+    try:
+        x = x.split("/2021")[1].strip()
+    except Exception:
+        pass
     return x
+
+
+def process_address(i):
+    try:
+        i["address"] = i["address"].split(",")[0]
+    except Exception:
+        pass
+    return i
 
 
 def fetch_data():
@@ -146,6 +160,9 @@ def fetch_data():
                     print_stats_interval=20,
                 )
                 for i in lize:
+                    if i["region"] in i["address"]:
+                        yield process_address(i)
+                        continue
                     yield i
             progress = (
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
