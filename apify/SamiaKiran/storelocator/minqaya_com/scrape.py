@@ -54,7 +54,7 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            latitude, longitude = (
+            longitude, latitude = (
                 soup.find("iframe")["src"].split("!2d")[1].split("!2m")[0].split("!3d")
             )
             country_code = "Germany"
