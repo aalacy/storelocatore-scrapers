@@ -123,7 +123,7 @@ def fetch_data():
         location_type = MISSING
         latitude = MISSING
         longitude = MISSING
-        # log.info("Append {} => {}".format(location_name, street_address))
+        log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=LOCATION_URL,
