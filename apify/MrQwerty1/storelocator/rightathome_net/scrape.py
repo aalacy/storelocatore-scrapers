@@ -64,7 +64,7 @@ def fetch_data(sgw: SgWriter):
 
             try:
                 text = "".join(d.xpath(".//script[@type='application/ld+json']/text()"))
-                j = json.loads(text)
+                j = json.loads(text, strict=False)
                 g = j.get("geo") or {}
                 latitude = g.get("latitude")
                 longitude = g.get("longitude")

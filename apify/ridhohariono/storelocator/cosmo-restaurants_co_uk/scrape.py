@@ -9,8 +9,8 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 
 
-DOMAIN = ".cosmo-restaurants.co.uk"
-BASE_URL = "https://www..cosmo-restaurants.co.uk"
+DOMAIN = "cosmo-restaurants.co.uk"
+BASE_URL = "https://www.cosmo-restaurants.co.uk"
 LOCATION_URL = "https://www.cosmo-restaurants.co.uk/restaurants"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -119,10 +119,15 @@ def fetch_data():
                     {"type": "Dinner", "content": hoo_dinner},
                 ]
             )
-            location_type = MISSING
+            if "Temporarily Closed" in hours_of_operation:
+                location_type = "TEMP_CLOSED"
+            else:
+                location_type = MISSING
             map_link = info.find("a", {"href": re.compile(r"\/maps\/place")})["href"]
             latitude, longitude = get_latlong(map_link)
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == MISSING:
+            city = location_name
         store_number = MISSING
         country_code = "GB"
         log.info("Append {} => {}".format(location_name, street_address))

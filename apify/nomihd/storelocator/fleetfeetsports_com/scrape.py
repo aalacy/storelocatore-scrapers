@@ -103,6 +103,10 @@ def fetch_data():
                             in "".join(
                                 sec.xpath(".//p[@class='address']/text()")
                             ).strip()
+                            or zip
+                            in "".join(
+                                sec.xpath(".//p[@class='address']/text()")
+                            ).strip()
                         ):
                             days = sec.xpath('.//p[@class="hours"]/strong/text()')
                             tim = sec.xpath('.//p[@class="hours"]/text()')
@@ -139,6 +143,8 @@ def fetch_data():
             longitude = "".join(store.xpath("@data-lng")).strip()
 
             hours_of_operation = "; ".join(hours_list).strip()
+            if len(page_url) <= 0:
+                page_url = "https://www.fleetfeet.com/locations"
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

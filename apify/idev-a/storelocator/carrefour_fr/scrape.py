@@ -43,25 +43,22 @@ def get_response(url):
         try:
             response = http.get(url, headers=_headers)
             logger.info(f"{url} >> STATUS: {response.status_code}")
+
             if response.status_code == 200:
                 logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
                 return response
         except Exception as e:
-            logger.info(f"{url} Not loading: {response.status_code} : {e}")
+            logger.info(f"Not loading page: {response.status_code} : {e}")
             pass
 
 
 def fetch_data():
-    with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=7) as session:
-        response = session.get(base_url, headers=_headers)
-        logger.info(f"BASE Res: {response.status_code}")
-
-        regions = bs(response.text, "lxml").select(
+    with SgRequests(retries_with_fresh_proxy_ip=7) as session:
+        regions = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "li.store-locator-footer-list__item a"
         )
         for region in regions:
             url = locator_domain + region["href"]
-            logger.info(f"Region: {url}")
             locations = json.loads(
                 session.get(url, headers=_headers)
                 .text.split(":context-stores=")[1]
@@ -92,7 +89,7 @@ def fetch_data():
                 if page_url != base_url:
                     logger.info(page_url)
                     res = session.get(page_url, headers=_headers)
-                    logger.info(f"Page Crawl Status: {res.status_code}")
+                    logger.info(f"2nd level: {res.status_code}")
                     time.sleep(1)
                     if res.status_code == 404:
                         continue

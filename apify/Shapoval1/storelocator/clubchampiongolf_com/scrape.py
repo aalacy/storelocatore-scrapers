@@ -1,10 +1,10 @@
-from sgpostal.sgpostal import USA_Best_Parser, parse_address
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -71,15 +71,15 @@ def fetch_data(sgw: SgWriter):
         ad = (
             " ".join(
                 tree.xpath(
-                    '//tr[.//a[contains(@href, "tel")]]/following-sibling::tr//span//text()'
+                    '//td[.//img[contains(@src, "find")]]/following-sibling::td//text()'
                 )
             )
             .replace("\n", "")
             .strip()
         )
+        ad = " ".join(ad.split())
         if ad.find("(") != -1:
             ad = ad.split("(")[0].strip()
-
         a = parse_address(USA_Best_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -88,12 +88,32 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "US"
         city = a.city or "<MISSING>"
-        phone = "".join(
-            tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')
-        ).strip()
-        hours_of_operation = " ".join(
-            tree.xpath("//div[./h3]/following-sibling::div[1]//text()")
+        phone = (
+            "".join(
+                tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')
+            ).strip()
+            or "<MISSING>"
         )
+        if phone == "<MISSING>":
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//td[.//img[contains(@src, "call")]]/following-sibling::td//p/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    "//div[./h3]/following-sibling::div[1]//*[contains(text(), ':')]/text()"
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
         if hours_of_operation.find("GET") != -1:
             hours_of_operation = hours_of_operation.split("GET")[0].strip()
         if hours_of_operation.find("Get") != -1:
@@ -126,6 +146,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)

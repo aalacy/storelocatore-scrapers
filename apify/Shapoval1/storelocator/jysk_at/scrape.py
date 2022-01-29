@@ -31,9 +31,11 @@ def fetch_data(sgw: SgWriter):
         )
         r = session.get(single_page_url)
         tree = html.fromstring(r.text)
-        js_block = "".join(tree.xpath('//script[@type="application/json"]/text()'))
+        js_block = "".join(
+            tree.xpath("//div[@data-jysk-react-properties]/@data-jysk-react-properties")
+        )
         js = json.loads(js_block)
-        for j in js["storesLocator"]["BuildCoordinates"]:
+        for j in js["storesCoordinates"]:
             location_name = j.get("name")
             latitude = j.get("lat")
             longitude = j.get("lng")

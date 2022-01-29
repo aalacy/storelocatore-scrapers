@@ -8,7 +8,7 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.telekom.mk/telekom-prodavnici.nspx"
+locator_domain = "https://telekom.mk/"
 base_url = "https://www.telekom.mk/services/ShopsGMapService_New.asmx/GetShopsGoogleMap"
 
 

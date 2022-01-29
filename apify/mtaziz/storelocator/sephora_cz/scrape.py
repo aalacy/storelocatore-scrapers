@@ -30,7 +30,6 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.pt/lojas",
     "https://www.sephora.es/tiendas",
     "https://www.sephora.se/butiker/",
-    "https://ch.sephora.fr/ch/fr/magasin",
     "https://www.sephora.ae/en/store",
     "https://www.sephora.de/Stores-Alle",
     "https://www.sephora.it/beauty-store/",

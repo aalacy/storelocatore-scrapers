@@ -40,14 +40,12 @@ def fetch_data():
         hoo = bs(row["description"], "lxml").get_text(strip=True, separator=",")
         hours_of_operation = (
             re.sub(
-                r"Lobby:|Lobby|(By Appointment)|,Drive.*|,24-Hour.*|,24 ATM.*",
+                r"Lobby:|Lobby|\(By Appointment\)|,Drive.*|,24-Hour.*|,24 ATM.*",
                 "",
                 hoo,
                 flags=re.IGNORECASE,
-            )
-            .lstrip(",")
-            .strip()
-        )
+            ).strip()
+        ).strip(",")
         country_code = "US"
         store_number = MISSING
         location_type = "BRANCH"

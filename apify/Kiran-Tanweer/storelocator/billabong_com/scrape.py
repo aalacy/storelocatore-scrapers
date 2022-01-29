@@ -3,6 +3,7 @@ from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -29,14 +30,39 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()["stores"]
         page_url = "https://www.billabong.com/stores/"
         for loc in loclist:
+            hour_list = loc["storeHours"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                len_None = sum(x is None for x in hour)
+                if len_None == 4:
+                    continue
+                else:
+                    time = hour[0] + " " + hour[1] + "-" + hour[4]
+                    hours_of_operation = hours_of_operation + time + " "
+            if not hours_of_operation:
+                hours_of_operation = MISSING
             location_name = strip_accents(loc["name"])
             store_number = loc["ID"]
             log.info(location_name)
             phone = loc["phone"]
-            street_address = strip_accents(loc["address"]).split("\n")[0]
-            if "., 16" in street_address:
-                street_address = MISSING
-            city = strip_accents(loc["city"])
+            raw_address = (
+                loc["address"]
+                + " "
+                + loc["city"]
+                + " "
+                + loc["postalCode"]
+                + " "
+                + loc["country"]
+            )
+            raw_address = raw_address.replace("\n", " ")
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+            city = loc["city"]
             zip_postal = loc["postalCode"]
             country_code = loc["country"]
             latitude = loc["latitude"]
@@ -55,7 +81,8 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
