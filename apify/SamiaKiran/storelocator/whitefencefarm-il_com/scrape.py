@@ -41,7 +41,7 @@ def fetch_data():
                 "https://www.whitefencefarm-il.com/carryout.php#"
                 + location_name.split("#")[1]
             )
-            log.info(location_name)
+            log.info(page_url)
             phone = loc[-1]
             street_address = loc[1]
             address = loc[2].split(",")
