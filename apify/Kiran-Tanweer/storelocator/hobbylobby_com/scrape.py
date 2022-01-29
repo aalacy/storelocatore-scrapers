@@ -48,7 +48,9 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
-        search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        )
         for zipcode in search:
             search_url = (
                 "https://www.hobbylobby.com/stores/search?q="
@@ -56,7 +58,11 @@ def fetch_data():
                 + "&CSRFToken=47258482-bb64-4eb0-9f18-77468d8a8186"
             )
             stores_req = session.get(search_url, headers=headers2)
-            soup = BeautifulSoup(stores_req.text, "html.parser")
+            try:
+                soup = BeautifulSoup(stores_req.text, "html.parser")
+            except AttributeError:
+                continue
+
             locations = soup.find("div", {"class": "map-canvas"})
             if str(locations).find("map-canvas anime") == -1:
                 locations = locations["data-stores"]
@@ -74,16 +80,21 @@ def fetch_data():
                     loc_link = "https://www.hobbylobby.com" + loc["linkUrl"]
                     req = session.get(loc_link, headers=headers)
                     bs = BeautifulSoup(req.text, "html.parser")
-                    hours = bs.find(
-                        "table", {"class": "store-openings weekday_openings"}
-                    ).text
-                    hours = hours.replace("\n", " ")
-                    hours = re.sub(pattern, " ", hours).strip()
+                    try:
+                        hours = bs.find(
+                            "table", {"class": "store-openings weekday_openings"}
+                        ).text
+                        hours = hours.replace("\n", " ")
+                        hours = re.sub(pattern, " ", hours).strip()
+                    except AttributeError:
+                        hours = MISSING
+
+                    title = "Hobby Lobby"
 
                     yield SgRecord(
                         locator_domain=DOMAIN,
                         page_url=loc_link,
-                        location_name="Hobby Lobby",
+                        location_name=title,
                         street_address=street.strip(),
                         city=city.strip(),
                         state=state.strip(),
@@ -102,9 +113,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

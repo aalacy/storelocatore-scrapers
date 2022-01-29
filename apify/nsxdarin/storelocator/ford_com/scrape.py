@@ -20,7 +20,7 @@ search = DynamicZipSearch(
 
 
 def fetch_data():
-    extrazips = ["01915"]
+    extrazips = ["01915", "04401", "04915", "04736", "04426", "04743"]
     for code in extrazips:
         url = (
             "https://www.ford.com/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&postalCode="

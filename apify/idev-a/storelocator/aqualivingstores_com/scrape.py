@@ -93,16 +93,13 @@ def fetch_data():
                     )
                 else:
                     hh = _tt[1]
-                    if (
-                        "open by appointment only" in hh
-                        or "call for an appointment" in hh
-                    ):
+                    if "by appointment only" in hh or "call for an appointment" in hh:
                         hours = ""
                     elif "seven days a week" in hh:
                         hours = "seven days a week"
                     else:
                         hours = (
-                            hh.split("We’re open")[1]
+                            hh.split("open")[1]
                             .split("Please")[0]
                             .split("Give")[0]
                             .split("To")[0]

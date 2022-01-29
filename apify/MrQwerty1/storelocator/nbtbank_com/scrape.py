@@ -1,114 +1,86 @@
-import csv
-from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+import json
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    with SgChrome(user_agent=user_agent) as driver:
+        page_url = "https://www.nbtbank.com/locations/index.html"
+        api = "https://www.nbtbank.com/locations/locations.json"
+        driver.get(api)
+        js = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["features"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
+        for j in js:
+            geo = j.get("geometry", {}).get("coordinates") or [
+                SgRecord.MISSING,
+                SgRecord.MISSING,
             ]
-        )
+            j = j.get("properties")
+            location_name = j.get("name") or ""
+            if "ATM" in location_name:
+                continue
+            street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
+            city = j.get("city")
+            state = j.get("state")
+            postal = j.get("zip")
+            phone = j.get("phone")
+            latitude = geo[1]
+            longitude = geo[0]
 
-        for row in data:
-            writer.writerow(row)
+            _tmp = []
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]
+            for d in days:
+                if d == "Tuesday":
+                    part = "Tues"
+                elif d == "Thursday":
+                    part = "Thurs"
+                else:
+                    part = d[:3]
 
+                time = j.get(f"Lobby_{part}")
+                if time:
+                    _tmp.append(f"{d}: {time}")
 
-def fetch_data():
-    out = []
-    url = "https://www.nbtbank.com/"
-    api_url = "https://www.nbtbank.com/content/branchResults.cshtml"
+            hours_of_operation = ";".join(_tmp)
 
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["features"]
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-    for j in js:
-        geo = j.get("geometry", {}).get("coordinates") or ["<MISSING>", "<MISSING>"]
-        j = j.get("properties")
-        locator_domain = url
-        location_name = j.get("name") or "<MISSING>"
-        if location_name.find("ATM") != -1:
-            continue
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = geo[1]
-        longitude = geo[0]
-        location_type = "<MISSING>"
-
-        _tmp = []
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-        ]
-        for d in days:
-            if d == "Tuesday":
-                part = "Tues"
-            elif d == "Thursday":
-                part = "Thurs"
-            else:
-                part = d[:3]
-
-            time = j.get(f"Lobby_{part}") or "Closed"
-            _tmp.append(f"{d}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.nbtbank.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)
