@@ -3,4 +3,5 @@ sgrequests==0.2.10
 sgscrape==0.2.6
 sgpostal==0.1.0
 sgvalidator==0.0.71
+sgrequests==0.2.10
 PyYAML==6.0

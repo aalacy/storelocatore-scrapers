@@ -69,7 +69,8 @@ def fetch_data():
                 street_address = street_address.replace("Ste", "Suite")
 
             city = formatted_addr.city
-
+            if city and city.isdigit():
+                city = raw_address.split(",")[-2].strip().split(" ")[0].strip()
             state = formatted_addr.state
 
             zip = formatted_addr.postcode

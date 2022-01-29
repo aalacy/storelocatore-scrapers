@@ -55,8 +55,10 @@ def fetch_data(sgw: SgWriter):
             for j in js:
                 location_name = j.get("name")
                 postal = j.get("postcode")
-                latitude = j.get("latitude")
-                longitude = j.get("longitude")
+                latitude = j.get("latitude") or ""
+                longitude = j.get("longitude") or ""
+                if str(latitude) == "0.0":
+                    latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
                 store_number = j.get("id")
                 source = j.get("infoBoxDetail") or "<html></html>"
                 root = html.fromstring(source)
@@ -72,6 +74,8 @@ def fetch_data(sgw: SgWriter):
                     phone = root.xpath("//a[contains(@href, 'tel:')]/text()")[0].strip()
                     if "@" in phone or "not" in phone:
                         raise IndexError
+                    if "o" in phone:
+                        phone = phone.split("o")[0].strip()
                 except IndexError:
                     phone = SgRecord.MISSING
 
