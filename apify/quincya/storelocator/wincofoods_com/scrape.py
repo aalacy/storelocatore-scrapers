@@ -4,6 +4,8 @@ import time
 
 from bs4 import BeautifulSoup
 
+from sglogging import SgLogSetup
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -16,6 +18,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgChrome
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+logger = SgLogSetup().get_logger("wincofoods.com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -51,23 +55,47 @@ def fetch_data(sgw: SgWriter):
         )[-1].title()
 
         link = "https://www.wincofoods.com/stores/" + store_number
-        driver.get(link)
-        WebDriverWait(driver, 30).until(
-            ec.presence_of_element_located((By.CLASS_NAME, "address1"))
-        )
-        time.sleep(2)
+        logger.info(link)
+        got_page = False
 
-        base = BeautifulSoup(driver.page_source, "lxml")
-        phone = base.find("a", {"href": re.compile(r"tel:")}).text
-        latitude = base.find("meta", attrs={"property": "og:location:latitude"})[
-            "content"
-        ]
-        longitude = base.find("meta", attrs={"property": "og:location:longitude"})[
-            "content"
-        ]
-        hours_of_operation = " ".join(
-            list(base.find(class_="store-details-store-hours__list").stripped_strings)
-        )
+        try:
+            driver.get(link)
+            WebDriverWait(driver, 30).until(
+                ec.presence_of_element_located((By.CLASS_NAME, "address1"))
+            )
+            time.sleep(5)
+            got_page = True
+        except:
+            logger.info("Retrying link ..")
+            try:
+                driver.get(link)
+                WebDriverWait(driver, 30).until(
+                    ec.presence_of_element_located((By.CLASS_NAME, "address1"))
+                )
+                time.sleep(5)
+                got_page = True
+            except:
+                pass
+
+        if got_page:
+            base = BeautifulSoup(driver.page_source, "lxml")
+            phone = base.find("a", {"href": re.compile(r"tel:")}).text
+            latitude = base.find("meta", attrs={"property": "og:location:latitude"})[
+                "content"
+            ]
+            longitude = base.find("meta", attrs={"property": "og:location:longitude"})[
+                "content"
+            ]
+            hours_of_operation = " ".join(
+                list(
+                    base.find(class_="store-details-store-hours__list").stripped_strings
+                )
+            )
+        else:
+            phone = "<INACCESSIBLE>"
+            latitude = "<INACCESSIBLE>"
+            longitude = "<INACCESSIBLE>"
+            hours_of_operation = "<INACCESSIBLE>"
 
         sgw.write_row(
             SgRecord(
