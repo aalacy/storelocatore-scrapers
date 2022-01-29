@@ -65,7 +65,7 @@ def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
-        "//div[@class='elementor-widget-wrap elementor-element-populated' and .//h2[contains(text(), 'Domo')]]"
+        "//div[contains(@class, 'elementor-column elementor-col-50') and .//h2[contains(text(), 'Domo')]]"
     )
     coords = get_coords()
 

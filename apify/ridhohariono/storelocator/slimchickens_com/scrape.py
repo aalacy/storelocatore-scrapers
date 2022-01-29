@@ -221,6 +221,32 @@ def fetch_data():
             raw_address=raw_address,
         )
 
+    # Kuait Location
+    soup = pull_content(LOCATION_URL)
+    content = soup.find("a", {"href": re.compile(r"kuwait-terminal.*")})
+    location_name = "Kuwait"
+    raw_address = content.get_text(strip=True, separator=",").replace("–", "").strip()
+    page_url = content["href"]
+    street_address, city, state, zip_postal = getAddress(raw_address)
+    log.info("Append {} => {}".format(location_name, street_address))
+    yield SgRecord(
+        locator_domain=DOMAIN,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code="Kuwait",
+        store_number=MISSING,
+        phone=MISSING,
+        location_type=MISSING,
+        latitude=MISSING,
+        longitude=MISSING,
+        hours_of_operation=MISSING,
+        raw_address=raw_address,
+    )
+
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))

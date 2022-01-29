@@ -120,6 +120,10 @@ def fetch_details(tup, retry=False):
                 logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
                 return retryer(fetch_details, (store, get_session(1)), True)
 
+            if '"streetAddress":' not in store_req.text:
+                logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
+                return retryer(fetch_details, (store, get_session(1)), True)
+
             store_sel = lxml.html.fromstring(store_req.text)
             json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
             for js in json_list:
