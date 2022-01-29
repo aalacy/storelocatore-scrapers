@@ -9,6 +9,16 @@ from webdriver_manager.chrome import ChromeDriverManager
 from lxml import html
 from tenacity import retry, stop_after_attempt
 import tenacity
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 session = SgRequests()
 
