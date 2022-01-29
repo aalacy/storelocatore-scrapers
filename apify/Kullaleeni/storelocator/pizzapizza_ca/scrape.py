@@ -82,6 +82,9 @@ def fetch_data(sgw: SgWriter):
                         + hr["end_time"]
                         + "; "
                     )
+                if hours.endswith("; "):
+                    hours = "".join(hours[:-2])
+
                 link = (
                     mlink
                     + "/"
