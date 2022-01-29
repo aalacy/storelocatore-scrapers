@@ -65,9 +65,7 @@ def fetch_data(sgw: SgWriter):
             if page_url.startswith("/"):
                 page_url = page_url.replace("//", "https://")
             location_name = j.get("location_name")
-            adr1 = j.get("address_1") or ""
-            adr2 = j.get("address_1") or ""
-            street_address = f"{adr1} {adr2}".strip()
+            street_address = j.get("address_1") or ""
             city = j.get("city") or ""
             state = j.get("big_region") or ""
             postal = j.get("post_code") or ""
