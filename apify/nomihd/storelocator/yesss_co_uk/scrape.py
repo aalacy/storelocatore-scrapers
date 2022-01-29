@@ -43,6 +43,8 @@ def fetch_data():
 
             page_url = store["url"]
 
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
             location_name = store["name"].strip()
 
             location_type = store["ldSchema"]["@type"]
