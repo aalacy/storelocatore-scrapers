@@ -49,7 +49,7 @@ def get_data(url, sgw: SgWriter):
     if not js:
         return
     for j in js:
-        print(j)
+
         page_url = "https://www.acuonline.org/home/resources/locations"
         a = j.get("Properties")
         location_name = a.get("LocationName") or "<MISSING>"
