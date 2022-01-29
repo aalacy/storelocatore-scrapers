@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 logger = SgLogSetup().get_logger("carrossier")
 
@@ -19,15 +19,17 @@ country_map = {"us": "129", "ca": "128"}
 
 
 def fetch_data(search):
-    with SgRequests() as session:
-        for lat, lng in search:
+    for lat, lng in search:
+        with SgRequests(proxy_country="us") as session:
             _filter = country_map[search.current_country()]
             url = base_url.format(lat, lng, _filter)
-            locations = session.get(url, headers=_headers).json()
+            try:
+                locations = session.get(url, headers=_headers).json()
+            except:
+                continue
             logger.info(f"[{search.current_country()}] {len(locations)} found")
-            if locations:
-                search.found_location_at(lat, lng)
             for _ in locations:
+                search.found_location_at(_["lat"], _["lng"])
                 hours = []
                 if _["hours"]:
                     for hh in bs(_["hours"], "lxml").select("tr"):
@@ -45,10 +47,17 @@ def fetch_data(search):
                 )
                 slug = "-".join([ss.strip() for ss in slug.split() if ss.strip()])
                 page_url = f"https://www.procolor.com/en-ca/shop/{slug}/"
+                logger.info(page_url)
+                res = session.get(page_url, headers=_headers)
+                if res.status_code == 200:
+                    sp1 = bs(res.text, "lxml")
+                    hours = []
+                    for hh in sp1.select("div.working-hours div.row"):
+                        hours.append(": ".join(hh.stripped_strings))
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],
-                    location_name=_["store"],
+                    location_name=_["store"].replace("&#8217;", "'"),
                     street_address=street_address,
                     city=_["city"].strip(),
                     state=_["state"].strip(),
@@ -70,7 +79,7 @@ if __name__ == "__main__":
     ) as writer:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-            granularity=Grain_8(),
+            granularity=Grain_4(),
         )
         results = fetch_data(search)
         for rec in results:

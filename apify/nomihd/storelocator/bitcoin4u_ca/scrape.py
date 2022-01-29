@@ -54,6 +54,9 @@ def fetch_data():
             city = formatted_addr.city
             state = formatted_addr.state
             zip = formatted_addr.postcode
+            if not zip:
+                if page_url == "https://bitcoin4u.ca/atm/north-york-3/":
+                    zip = "M2J 2K8"
 
             country_code = "CA"
             store_number = store_json["storeid"]

@@ -1,11 +1,12 @@
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-import pgeocode
-
 import ssl
 
 
@@ -21,42 +22,41 @@ else:
 
 logger = SgLogSetup().get_logger("cashamerica_com__cashland")
 MISSING = SgRecord.MISSING
+MAX_WORKERS = 10
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
 }
 
 
-def fetch_data():
-    with SgRequests() as session:
-        url_store = "http://find.cashamerica.us/api/stores?p="
-        url_key = "http://find.cashamerica.us/js/controllers/StoreMapController.js"
-        logger.info(f"Extract key from: {url_key}")
-        r = session.get(url_key, headers=headers)
-        key = r.text.split("&key=")[1].split('");')[0]
-        if key:
-            logger.info(f"Key Found:{key}")
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(60))
+def get_response(urlnum, url):
+    with SgRequests(timeout_config=600) as http:
+        logger.info(f"[{urlnum}] Pulling the data from: {url}")
+        r = http.get(url, headers=headers)
+        if r.status_code == 200:
+            logger.info(f"HTTP Status Code: {r.status_code}")
+            return r
+        elif r.status_code == 500:
+            return
         else:
-            logger.info(f"Unable to find the Key, please check the {url_key}")
-        start = 1
-        total_page_number = 2750  # As of now the last item returned by the page number 2711 while returning 1 item at a time
-        items_num_per_page = 1
-        total = 0
-        for page in range(start, total_page_number):
-            url_data = f"{url_store}{str(page)}&s={items_num_per_page}&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key={str(key)}"
-            try:
-                data = session.get(url_data, headers=headers).json()
-                if "message" in data:
-                    continue
-            except Exception as e:
-                logger.info(f"error loading the data:{e}")
-                continue
+            raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
+
+def fetch_records(key, idx, url_data, sgw: SgWriter):
+    try:
+        r = get_response(idx, url_data)
+        if r is None:
+            return
+        else:
+            try:
+                data = r.json()
+            except AttributeError as e:
+                logger.info(f"Fix AttributeError {e}")
+                return
             logger.info(f"[ Pulling the data from] {url_data}")
-            found = 0
             for i in range(len(data)):
                 store_data = data[i]
-
                 # Locator Domain
                 locator_domain = "https://cashamerica.com/cashland"
 
@@ -143,15 +143,16 @@ def fetch_data():
 
                 # Zip Code
                 zipcode = store_data["address"]["zipCode"]
-                nomi = pgeocode.Nominatim("us")
-                if nomi.query_postal_code(str(zipcode))["country_code"] != "US":
-                    continue
                 if "00000" in store_data["address"]["zipCode"]:
                     zipcode = MISSING
                 zipcode = zipcode if zipcode else MISSING
 
                 # Country Code
-                country_code = "US"
+                country_code = None
+                if "#" in location_name:
+                    country_code = "<INACCESSIBLE>"
+                else:
+                    country_code = "US"
 
                 # Store Number
                 store_number = (
@@ -200,6 +201,7 @@ def fetch_data():
                 )
 
                 # Hours of Operation
+                session = SgRequests()
                 hours_request = session.get(
                     "http://find.cashamerica.us/api/stores/"
                     + str(store_data["storeNumber"])
@@ -225,7 +227,7 @@ def fetch_data():
 
                 # Raw Address
                 raw_address = MISSING
-                yield SgRecord(
+                item = SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
                     location_name=location_name,
@@ -242,24 +244,65 @@ def fetch_data():
                     hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
-                found += 1
-            total += found
-            logger.info(f"Total Store Count: {total}")
-        logger.info(f"Scraping Finished | Total Store Count: {total}")
+                sgw.write_row(item)
+    except Exception as e:
+        logger.info(f"Please fix this error: <{e}> for < {url_data} >")
+
+
+def get_api_key():
+    with SgRequests() as http:
+        url_key = "http://find.cashamerica.us/js/controllers/StoreMapController.js"
+        logger.info(f"Extract key from: {url_key}")
+        r = http.get(url_key, headers=headers)
+        key = r.text.split("&key=")[1].split('");')[0]
+
+        if key:
+            logger.info(f"Key Found: {key}")
+            return key
+        else:
+            logger.info(f"Unable to find the Key, please check the {url_key}")
+
+
+def get_api_endpoint_urls():
+    api_endpoint_urls = []
+    url_store = "http://find.cashamerica.us/api/stores?p="
+    api_key = get_api_key()
+    start = 1
+    total_page_number = 2800
+    items_num_per_page = 1
+    for page in range(start, total_page_number):
+        url_data = f"{url_store}{str(page)}&s={items_num_per_page}&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key={str(api_key)}"
+        api_endpoint_urls.append(url_data)
+    return api_endpoint_urls, api_key
+
+
+def fetch_data(sgw: SgWriter):
+    api_urls, api_key = get_api_endpoint_urls()
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+        task_global = [
+            executor.submit(fetch_records, api_key, urlpartnum, urlpart, sgw)
+            for urlpartnum, urlpart in enumerate(api_urls[0:])
+        ]
+        tasks.extend(task_global)
+        for future in as_completed(tasks):
+            future.result()
 
 
 def scrape():
-    logger.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    logger.info(f"No of records being processed: {count}")
+        fetch_data(writer)
     logger.info("Finished")
 
 
