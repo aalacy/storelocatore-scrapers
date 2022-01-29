@@ -52,7 +52,7 @@ def fetch_data():
             zip_postal = zip_postal.strip() if zip_postal else MISSING
             if zip_postal is MISSING:
                 zip_postal = raw_address.split()
-                zip_postal = raw_address[-2] + " " + raw_address[-1]
+                zip_postal = zip_postal[-2] + " " + zip_postal[-1]
             temp = temp.findAll("p")
             phone = temp[1].text
             hours_of_operation = temp[-2].text
