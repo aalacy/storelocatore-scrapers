@@ -60,6 +60,8 @@ def fetch_data(sgw: SgWriter):
             )
             city = a.get("addressLocality") or "<MISSING>"
             state = a.get("addressRegion") or "<MISSING>"
+            if state.isdigit():
+                state = "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
             country_code = a.get("addressCountry") or "<MISSING>"
             location_name = j.get("name") or "<MISSING>"
@@ -129,6 +131,8 @@ def fetch_data(sgw: SgWriter):
         )
         city = a.get("addressLocality") or "<MISSING>"
         state = a.get("addressRegion") or "<MISSING>"
+        if state.isdigit():
+            state = "<MISSING>"
         postal = a.get("postalCode") or "<MISSING>"
         country_code = a.get("addressCountry") or "<MISSING>"
         location_name = j.get("name") or "<MISSING>"

@@ -65,22 +65,27 @@ def fetch_data():
                 ptag = loc_div.findAll("p")
                 address = ptag[0].findAll("a")[0].text
                 phone = ptag[0].findAll("a")[1].text
-                if len(ptag) == 3:
-                    hours = ptag[-1].text
-                elif len(ptag) == 5:
-                    hours = ptag[2].text
-                else:
-                    hours = ptag[3].text
-                if hours.find("Available") != -1:
-                    hours = hours.split("Available ")[1]
-                if hours.find("Open for Dine In") != -1:
-                    hours = hours.lstrip("Open for Dine In")
-                if hours == "":
-                    hours = "Temporarily Closed"
-                hours = hours.replace("Every Day", "Monday-Sunday")
-                hours = hours.replace("\n", "")
-                hours = re.sub(pattern, " ", hours)
-                hours = re.sub(cleanr, " ", hours)
+                hours = loc_div.findAll("p")
+                hoo = ""
+                for hr in hours:
+                    ho = hr.text
+                    hoo = hoo + " " + ho
+                try:
+                    hoo = hoo.split("Delivery Available")[1]
+                except IndexError:
+                    hoo = hoo.split("Dine In")[1]
+
+                hoo = hoo.split("pm ")[0].strip()
+                hoo = hoo + "pm"
+
+                hoo = hoo.replace("Every Day", "Monday-Sunday").strip()
+                hoo = hoo.replace("Everyday", "Monday-Sunday").strip()
+
+                if hoo == "":
+                    hoo = "Temporarily Closed"
+
+                hoo = re.sub(pattern, " ", hoo)
+                hoo = re.sub(cleanr, " ", hoo)
                 maps = bs.find("div", {"class": "gmaps"})
                 lat = maps["data-gmaps-lat"]
                 lng = maps["data-gmaps-lng"]
@@ -115,7 +120,7 @@ def fetch_data():
                     location_type=MISSING,
                     latitude=lat,
                     longitude=lng,
-                    hours_of_operation=hours.strip(),
+                    hours_of_operation=hoo.strip(),
                 )
 
 
