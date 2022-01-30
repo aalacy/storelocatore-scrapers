@@ -47,6 +47,8 @@ def fetch_data():
                 continue
 
             loc_response = session.get(page_url, headers=hdr)
+            if loc_response.status_code != 200:
+                continue
             loc_dom = etree.HTML(loc_response.text)
 
             raw_data = loc_dom.xpath("//h2/span/text()")
