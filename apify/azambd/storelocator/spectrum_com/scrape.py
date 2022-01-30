@@ -1,7 +1,6 @@
-import json
 from sglogging import sglog
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+
 from sgscrape.simple_scraper_pipeline import *
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
