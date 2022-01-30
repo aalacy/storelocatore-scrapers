@@ -1,9 +1,10 @@
 from sglogging import sglog
 from sgrequests import SgRequests
 
-from sgscrape.simple_scraper_pipeline import *
+from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
+website = "https://www.spectrum.com/locations"
 DOMAIN = "spectrum.com"
 logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
@@ -102,28 +103,28 @@ def fetch_data():
 
 
 def scrape():
-
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(DOMAIN),
-        page_url=MappingField(mapping=["page_url"]),
-        location_name=MappingField(mapping=["location_name"]),
-        latitude=MappingField(mapping=["latitude"]),
-        longitude=MappingField(mapping=["longitude"]),
-        street_address=MappingField(mapping=["street_address"]),
-        city=MappingField(mapping=["city"]),
-        state=MappingField(mapping=["state"]),
-        zipcode=MappingField(mapping=["zip_postal"]),
-        country_code=MappingField(mapping=["country_code"]),
-        phone=MappingField(mapping=["phone"]),
-        store_number=MappingField(
+    logger.info(f"Start Crawling {website} ...")
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(DOMAIN),
+        page_url=sp.MappingField(mapping=["page_url"]),
+        location_name=sp.MappingField(mapping=["location_name"]),
+        latitude=sp.MappingField(mapping=["latitude"]),
+        longitude=sp.MappingField(mapping=["longitude"]),
+        street_address=sp.MappingField(mapping=["street_address"]),
+        city=sp.MappingField(mapping=["city"]),
+        state=sp.MappingField(mapping=["state"]),
+        zipcode=sp.MappingField(mapping=["zip_postal"]),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"]),
+        store_number=sp.MappingField(
             mapping=["store_number"], part_of_record_identity=True
         ),
-        hours_of_operation=MappingField(mapping=["hours_of_operation"]),
-        location_type=MappingField(mapping=["location_type"]),
-        raw_address=MappingField(mapping=["raw_address"]),
+        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
+        location_type=sp.MappingField(mapping=["location_type"]),
+        raw_address=sp.MappingField(mapping=["raw_address"]),
     )
 
-    pipeline = SimpleScraperPipeline(
+    pipeline = sp.SimpleScraperPipeline(
         scraper_name="Crawler",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
