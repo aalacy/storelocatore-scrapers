@@ -35,6 +35,8 @@ def fetch_data():
             loc_dom = etree.HTML(loc_response.text)
             if loc_dom.xpath('//h4[contains(text(), "Coming Soon!")]'):
                 continue
+            if loc_dom.xpath('//h4[contains(text(), "Opening February")]'):
+                continue
 
             poi_html = etree.HTML(poi["de"])
             raw_address = poi_html.xpath('//p[@class="locations_info"]/text()')
@@ -71,6 +73,7 @@ def fetch_data():
                 latitude=poi["lat"],
                 longitude=poi["lng"],
                 hours_of_operation=hoo,
+                raw_address=" ".join(raw_address),
             )
 
             yield item
