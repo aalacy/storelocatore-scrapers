@@ -40,6 +40,8 @@ def fetch_data(sgw: SgWriter):
             location_name = j.get("nombre")
             raw_address = j.get("direccion")
             street_address, city, state, postal = get_international(raw_address)
+            if city == "":
+                city = location_name
             postal = "".join(postal.split()).replace("C.P.", "").strip()
             if postal == "" and "C.P." in "".join(raw_address.split()):
                 postal = "".join(raw_address.split()).split("C.P.")[-1].strip()
