@@ -12,9 +12,7 @@ from sgselenium.sgselenium import SgFirefox
 def fetch_data():
     start_url = "https://brunosfinefoods.ca/locations"
     domain = "brunosfinefoods.ca"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
+
     with SgFirefox() as driver:
         driver.get(start_url)
         sleep(5)
