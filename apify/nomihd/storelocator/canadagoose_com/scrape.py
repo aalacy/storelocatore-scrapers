@@ -36,7 +36,9 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = "http://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
+    search_url = (
+        "https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
+    )
 
     chrome_options = Options()
     chrome_options.accept_untrusted_certs = True
