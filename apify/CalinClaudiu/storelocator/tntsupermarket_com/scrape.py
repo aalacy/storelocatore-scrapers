@@ -111,6 +111,14 @@ def fix_hours(x):
     return x
 
 
+def process_address(i):
+    try:
+        i["address"] = i["address"].split(",")[0]
+    except Exception:
+        pass
+    return i
+
+
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://www.tntsupermarket.com/rest/V1/xmapi/get-store-list-new?lang=en&address={zipcode}"
@@ -152,6 +160,9 @@ def fetch_data():
                     print_stats_interval=20,
                 )
                 for i in lize:
+                    if i["region"] in i["address"]:
+                        yield process_address(i)
+                        continue
                     yield i
             progress = (
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"

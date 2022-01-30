@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from urllib.parse import urljoin
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
@@ -59,24 +58,46 @@ def fetch_data():
         logger.info(f"{len(links)} found")
         for page_url, sp1 in fetchConcurrentList(links):
             logger.info(page_url)
-            raw_address = sp1.select_one("div.restaurant-detail-area p").text.strip()
-            addr = parse_address_intl(raw_address + ", Turkey")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            raw_address = (
+                sp1.select_one("div.restaurant-detail-area p")
+                .text.replace("/", ",")
+                .strip()
+            )
+            addr = raw_address.split(",")
             hours = [
                 hh.text.strip()
                 for hh in sp1.select("div.working-hours-info div.hours-item")
             ]
+            city = addr[-2]
+            street_address = ", ".join(addr[:-2])
+            state = addr[-1]
+            if city == "1 Kadıköy":
+                city = "Kadıköy"
+                street_address += " 1"
+            elif city == "1B Nilüfer":
+                city = "Nilüfer"
+                street_address += " 1B"
+            elif "No:16A Kağıthane" in city:
+                street_address += " " + city.replace("Kağıthane", "")
+                city = "Kağıthane"
+
+            if (
+                "Şehit Metin Kaya Sokak No:11 Mağaza No:237 Eyüp Istanbul"
+                in raw_address
+                and not street_address
+            ):
+                city = "Eyüp"
+                state = "Istanbul"
+                street_address = "Vialand Alışveriş Merkezi, Yeşilpınar Mahallesi Şehit Metin Kaya Sokak No:11 Mağaza No:237"
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one(
                     "div.restaurant-detail-area h3"
                 ).text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=city,
+                state=state,
                 country_code="Turkey",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
