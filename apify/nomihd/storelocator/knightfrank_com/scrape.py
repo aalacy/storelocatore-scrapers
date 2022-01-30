@@ -7,6 +7,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
 import lxml.html
+import time
 
 website = "knightfrank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -57,7 +58,10 @@ def fetch_data():
                 temp_address = store.xpath("text()")
                 add_list = []
                 for temp in temp_address:
-                    if len("".join(temp).strip()) > 0:
+                    if (
+                        len("".join(temp).strip()) > 0
+                        and "".join(temp).strip() not in add_list
+                    ):
                         add_list.append("".join(temp).strip())
 
                 raw_address = ", ".join(add_list).strip()
@@ -70,6 +74,9 @@ def fetch_data():
 
                 city = formatted_addr.city
                 state = formatted_addr.state
+                if state:
+                    state = state.replace("Region", "").strip()
+
                 zip = formatted_addr.postcode
 
                 country_code = country_url.split("?country=")[1].strip()
@@ -78,7 +85,7 @@ def fetch_data():
 
                 location_type = "<MISSING>"
                 phone = "".join(
-                    store.xpath('a[@class="contact-telephone "]/text()')
+                    store.xpath('a[contains(@class,"contact-telephone")]/text()')
                 ).strip()
 
                 hours_of_operation = "<MISSING>"
@@ -92,12 +99,25 @@ def fetch_data():
                         store_req = SgRequests.raise_on_err(
                             session.get(page_url, headers=headers)
                         )
+                        while "captchaPage" in store_req.text:
+                            store_req = SgRequests.raise_on_err(
+                                session.get(page_url, headers=headers)
+                            )
+                            time.sleep(3)
+
                         store_sel = lxml.html.fromstring(store_req.text)
                         map_link = "".join(
                             store_sel.xpath(
                                 '//a[@id="cpMain_UserControlContainer12_ctl00_hlDirections"]/@href'
                             )
                         ).strip()
+                        log.info(map_link)
+                        if len(map_link) <= 0:
+                            map_link = "".join(
+                                store_sel.xpath('//a[@class="directions"]/@href')
+                            ).strip()
+
+                            log.info(map_link)
                         try:
                             latitude = (
                                 map_link.split("/")[-1].strip().split(",")[0].strip()
@@ -121,11 +141,20 @@ def fetch_data():
                                 hours_list.append("".join(hour).strip())
 
                         hours_of_operation = (
-                            "; ".join(hours_list).strip().replace("\n", "").strip()
+                            "; ".join(hours_list)
+                            .strip()
+                            .replace("\r\n", "")
+                            .strip()
+                            .replace("\n", "")
+                            .strip()
+                            .replace("\t", "")
+                            .strip()
                         )
                     except SgRequestError as e:
                         log.error(e.status_code)
 
+                if len("".join(raw_address).strip()) <= 0:
+                    raw_address = "<MISSING>"
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -156,6 +185,7 @@ def scrape():
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PHONE,
                 }
             )
         )

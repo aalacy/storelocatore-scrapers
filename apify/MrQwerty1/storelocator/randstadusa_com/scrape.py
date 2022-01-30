@@ -31,7 +31,9 @@ def fetch_data(sgw: SgWriter):
         location_name = get_value(j.get("title"))
         slug = get_value(j.get("url"))
         page_url = f"https://www.randstadusa.com{slug}"
-        street_address = get_value(j.get("addrest_suggest"))
+        adr1 = get_value(j.get("address_line1"))
+        adr2 = get_value(j.get("address_line2"))
+        street_address = f"{adr1} {adr2}".strip()
         city = get_value(j.get("city"))
         state = get_value(j.get("state"))
         postal = get_value(j.get("postal_code"))
@@ -53,16 +55,26 @@ def fetch_data(sgw: SgWriter):
             "Thursday",
             "Friday",
             "Saturday",
-            "Friday",
+            "Sunday",
         ]
-        for s, e, d in zip(starts, ends, days):
-            s = str(s).zfill(4)
-            e = str(e).zfill(4)
-            start = f"{s[:2]}:{s[2:]}"
-            end = f"{e[:2]}:{e[2:]}"
-            day = _days[int(d) - 1]
-            _tmp.append(f"{day}: {start}-{end}")
+        cnt = 0
+        for day in _days:
+            try:
+                s = starts[cnt]
+                e = ends[cnt]
+                s = str(s).zfill(4)
+                e = str(e).zfill(4)
+                start = f"{s[:2]}:{s[2:]}"
+                end = f"{e[:2]}:{e[2:]}"
+                inter = f"{start}-{end}"
+            except IndexError:
+                inter = "Closed"
+            _tmp.append(f"{day}: {inter}")
+            cnt += 1
+
         hours_of_operation = ";".join(_tmp)
+        if not days:
+            hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,

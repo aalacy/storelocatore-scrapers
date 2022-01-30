@@ -35,12 +35,15 @@ def _p(val):
     if (
         val
         and val.replace("(", "")
+        .encode("unicode-escape")
+        .decode("utf8")
         .replace(")", "")
         .replace("+", "")
         .replace("-", "")
         .replace(".", " ")
         .replace("to", "")
         .replace(" ", "")
+        .replace("\\xa0", "")
         .strip()
         .isdigit()
     ):
@@ -90,6 +93,7 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
 
             zip_postal = addr.postcode
+            state = ""
             city = addr.city
             if not city:
                 city = location_name
@@ -114,10 +118,14 @@ def fetch_data():
                             .find_next_sibling()
                             .stripped_strings
                         )
+
                     if _p(_address[-1].replace("Tel:", "")):
                         if not phone:
                             phone = _address[-1]
                         _address = _address[:-1]
+
+                    if "Tel:" in _address[-1]:
+                        del _address[-1]
 
                     if _address[-1] == "UK":
                         _address.pop()
@@ -127,7 +135,20 @@ def fetch_data():
                     )
                     zip_postal = _address[-1]
                     city = _address[-2]
-                    street_address = " ".join(_address[1:-2])
+                    st_idx = -2
+                    if city == "Northern Ireland":
+                        state = "Northern Ireland"
+                        city = _address[-3]
+                        st_idx -= -1
+                    street_address = ", ".join(_address[1:st_idx])
+
+                    if city in [
+                        "The Orchards Shopping Centre",
+                        "44-52 Broadwalk North",
+                        "Strabane Retail Park",
+                    ]:
+                        street_address += ", " + city
+                        city = location_name.replace("Bargain Buys", "").strip()
 
             yield SgRecord(
                 page_url=page_url,
@@ -135,6 +156,7 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
+                state=state,
                 zip_postal=zip_postal,
                 phone=phone,
                 latitude=item["latitude"],

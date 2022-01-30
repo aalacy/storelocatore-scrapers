@@ -9,7 +9,7 @@ import tenacity
 from lxml import html
 import ssl
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+import json
 
 try:
     _create_unverified_https_context = (
@@ -62,9 +62,12 @@ def fetch_records(snum, store_name, sgw: SgWriter):
             json_data = data["data"]
             for j in json_data:
                 location_name = j["displayName"] or MISSING
+                # Newry Bed Store store URL does not work therefore, it's dropped
+                if "Newry Bed Store" in location_name:
+                    return
 
                 # Page URL
-                name = j["name"]
+                name = j["name"] or MISSING
                 store_locator_url = "https://www.dreams.co.uk/store/"
                 page_url = f"{store_locator_url}{name}"
                 logger.info(f"[{snum}][{store_name}] Page URL: {page_url}")
@@ -80,7 +83,31 @@ def fetch_records(snum, store_name, sgw: SgWriter):
                     sta = sta2
                 else:
                     sta = MISSING
-                city = j["town"] or MISSING
+                if MISSING not in sta:
+                    if "Unit" in sta and len(sta) < 12:
+                        r1 = get_response(page_url)
+                        logger.info(f"Pulling StreetAddress from: {page_url}")
+                        sel = html.fromstring(r1.text, "lxml")
+                        add_js = sel.xpath(
+                            '//script[contains(@type, "application/ld+json") and contains(text(), "LocalBusiness")]/text()'
+                        )
+                        add_js = json.loads("".join(add_js))
+                        sta = add_js["address"]["streetAddress"].replace("amp;", "")
+
+                city = ""
+                c = j["town"]
+                if c:
+                    city = c
+                else:
+                    if "Wembley Bed Store" in location_name:
+                        city = "Wembley"
+                    elif "West Ealing Bed Store" in location_name:
+                        city = "West Ealing"
+                    elif "Perth Bed Store" in location_name:
+                        city = "Perth"
+                    else:
+                        city = MISSING
+
                 state = MISSING
                 zip_postal = j["postalCode"] or MISSING
                 country_code = "GB"

@@ -69,7 +69,8 @@ def fetch_data():
                 street_address = street_address.replace("Ste", "Suite")
 
             city = formatted_addr.city
-
+            if city and city.isdigit():
+                city = raw_address.split(",")[-2].strip().split(" ")[0].strip()
             state = formatted_addr.state
 
             zip = formatted_addr.postcode
@@ -115,7 +116,11 @@ def fetch_data():
             ):
                 hours_of_operation = "<MISSING>"
             latitude, longitude = (
-                store_res.text.split("lat:")[1].split(",")[0].strip(),
+                store_res.text.split("lat:")[1]
+                .split("}")[0]
+                .strip()
+                .replace("\n", "")
+                .strip(),
                 store_res.text.split("lng:")[1].split(",")[0].strip(),
             )
 

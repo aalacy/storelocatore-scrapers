@@ -68,7 +68,7 @@ def fetch_data():
         zip_postal = MISSING
         phone = MISSING
         country_code = "CO"
-        hours_of_operation = info[-1].strip()
+        hours_of_operation = " - ".join(info[-2:]).strip()
         latitude = info[0] if info[0] != 0 else MISSING
         longitude = info[1] if info[1] != 0 else MISSING
         location_type = MISSING
