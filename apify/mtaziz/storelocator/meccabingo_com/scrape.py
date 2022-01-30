@@ -21,7 +21,7 @@ else:
 
 DOMAIN = "meccabingo.com"
 MISSING = SgRecord.MISSING
-logger = SgLogSetup().get_logger("meccabingo_com")
+logger = SgLogSetup().get_logger("meccabingo_com")  # noqa
 MAX_WORKERS = 1
 
 
@@ -46,7 +46,7 @@ def get_response(url):
     with SgRequests(timeout_config=600) as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
-            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")  # noqa
             return response
         raise Exception(
             f"{url} Please fix GetResponseError or HttpCodeError: {response.status_code}"
@@ -88,7 +88,7 @@ def get_hoo(today_opening_times):
 
 def fetch_records(num, url, sgw: SgWriter):
     try:
-        logger.info(f"[{num}] Crawling From  {url}")
+        logger.info(f"[{num}] Crawling From  {url}")  # noqa
         r = get_response(url)
         data_json = r.json()
         data = data_json["data"]
@@ -99,7 +99,7 @@ def fetch_records(num, url, sgw: SgWriter):
                 page_url = f"https://www.meccabingo.com{slug}"
             else:
                 page_url = MISSING
-            logger.info(f"[{idx}] [ {page_url} ] crawled")
+            logger.info(f"[{idx}] [ {page_url} ] crawled")  # noqa
             addraw = _["address"]
             sta = ""
             city = ""
