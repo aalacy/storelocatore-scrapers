@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,9 +9,9 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://www.congebec.com/index.php/en/locations/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "congebec.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -35,28 +34,17 @@ def fetch_data():
             street_address += " " + addr.street_address_2
         city = addr.city
         state = addr.state
-        state = state if state else "<MISSING>"
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
         raw_data = poi_html.xpath('.//p[contains(text(), "Adress")]/text()')
         if not raw_data:
             raw_data = poi_html.xpath('.//p[contains(text(), "Address")]/text()')
-        phone = [e.strip() for e in raw_data if "Phone" in e]
-        phone = (
-            phone[0].split("Phone:")[-1].replace("\xa0", "") if phone else "<MISSING>"
+        phone = poi_html.xpath('.//strong[contains(text(), "Phone")]/following::text()')
+        phone = phone[0].replace(":", "").strip() if phone else ""
+        hoo = poi_html.xpath(
+            './/strong[contains(text(), "Opening hours")]/following::text()'
         )
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hoo = [e.strip() for e in raw_data if "hours:" in e]
-        hours_of_operation = (
-            hoo[0].split("hours:")[-1].replace("\xa0", " ").strip()
-            if hoo
-            else "<MISSING>"
-        )
+        hoo = hoo[0].strip()[1:] if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -67,12 +55,12 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=store_number,
+            store_number="",
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
         )
 
         yield item

@@ -1,60 +1,18 @@
-import csv
+import ssl
 import time
-
 from lxml import html
-from sgselenium import SgFirefox
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium import SgChrome
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.karnsfoods.com/"
+def fetch_data(sgw: SgWriter):
     page_url = "https://www.karnsfoods.com/store-locator/"
     coords = []
 
-    with SgFirefox() as fox:
+    with SgChrome() as fox:
         fox.get(page_url)
         time.sleep(10)
         source = fox.page_source
@@ -62,11 +20,14 @@ def fetch_data():
         for iframe in iframes:
             fox.switch_to.frame(iframe)
             root = html.fromstring(fox.page_source)
-            coords.append(
-                get_coords_from_google_url(
-                    "".join(root.xpath("//a[contains(@href, 'll=')]/@href"))
+            try:
+                text = "".join(
+                    root.xpath("//script[contains(text(), 'initEmbed')]/text()")
                 )
-            )
+                lat, lng = text.split("],0,1]")[0].split("[null,null,")[-1].split(",")
+            except:
+                lat, lng = SgRecord.MISSING, SgRecord.MISSING
+            coords.append((lat, lng))
             fox.switch_to.default_content()
 
     tree = html.fromstring(source)
@@ -74,6 +35,8 @@ def fetch_data():
 
     for d in divs:
         location_name = "".join(d.xpath("./div[1]/h3/text()")).strip()
+        if "office" in location_name.lower():
+            continue
         line = d.xpath(".//p[./a[@class='btn btn-sm btn-default']]/text()")
         line = list(filter(None, [l.strip() for l in line]))
 
@@ -83,49 +46,40 @@ def fetch_data():
         line = line.split(",")[1].strip()
         state = line.split()[0]
         postal = line.split()[-1]
-        country_code = "US"
-        store_number = "<MISSING>"
+
         try:
             phone = d.xpath(".//a[@class='tel']/text()")[0].strip()
         except IndexError:
-            phone = (
-                "".join(d.xpath(".//p[./i[@class='fa fa-phone']]/text()")).strip()
-                or "<MISSING>"
-            )
+            phone = "".join(d.xpath(".//p[./i[@class='fa fa-phone']]/text()")).strip()
+
         latitude, longitude = coords.pop(0)
-        location_type = "<MISSING>"
         try:
             hours_of_operation = d.xpath(
                 ".//p[./strong[text()='Store Hours:']]/text()"
             )[0].strip()
         except IndexError:
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = SgRecord.MISSING
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.karnsfoods.com/"
+    ssl._create_default_https_context = ssl._create_unverified_context
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

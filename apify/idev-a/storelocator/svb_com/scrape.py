@@ -21,9 +21,6 @@ base_url = "https://www.svb.com/locations"
 
 def _d(_, country):
     _title = _.select_one("div.collapsible-boxes__item-title")
-    location_type = ""
-    if _title.get("data-branch") == "True":
-        location_type = "branch"
     _addr = list(_.p.stripped_strings)
     raw_address = " ".join(_addr).split("Get")[0]
     addr = parse_address_intl(raw_address + ", " + country)
@@ -62,7 +59,6 @@ def _d(_, country):
         phone=phone,
         latitude=coord["latitude"],
         longitude=coord["longitude"],
-        location_type=location_type,
         locator_domain=locator_domain,
         hours_of_operation=hours,
         raw_address=raw_address,
@@ -110,4 +106,5 @@ if __name__ == "__main__":
     ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

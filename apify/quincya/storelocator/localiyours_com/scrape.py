@@ -12,7 +12,7 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.localiyours.com/"
+    base_link = "https://www.localiyours.com"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -67,10 +67,12 @@ def fetch_data(sgw: SgWriter):
         latitude = lats[i].split(":")[1]
         longitude = lngs[i].split(":")[1]
 
+        link = base_link + item.find("a", string="More Info")["href"]
+
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=base_link,
+                page_url=link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
