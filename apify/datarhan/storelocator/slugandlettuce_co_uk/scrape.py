@@ -1,4 +1,5 @@
 import re
+import demjson
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -49,6 +50,10 @@ def fetch_data():
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else ""
 
+        loc_response = session.get(store_url + "/contact")
+        geo = re.findall(r"(\{ lng: .+? \})", loc_response.text)[0]
+        geo = demjson.decode(geo)
+
         item = SgRecord(
             locator_domain=domain,
             page_url=store_url,
@@ -61,9 +66,10 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=latitude,
-            longitude=longitude,
+            latitude=geo["lat"],
+            longitude=geo["lng"],
             hours_of_operation=hours_of_operation,
+            raw_address=" ".join(address_raw),
         )
 
         yield item

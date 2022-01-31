@@ -118,6 +118,12 @@ def fetch_data():
                 pcode = pcode.lstrip("Unit").strip()
                 city = "London"
 
+            if (
+                link
+                == "https://www.industriousoffice.com/l/phoenix/biltmore/2801-e-camelback-road"
+            ):
+                title = title.replace("Coming Soon")[0].strip()
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=store,
