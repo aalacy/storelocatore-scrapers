@@ -35,6 +35,8 @@ def fetch_data():
             )
         if "We Are Currently Running" in street_address:
             street_address = ""
+        if "a mobile showroom" in raw_address:
+            raw_address = ""
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
@@ -42,8 +44,8 @@ def fetch_data():
             zip_code = "PH1 5JS"
             street_address = street_address.replace(" Ph1 5Js", "")
         country_code = addr.country
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/span/text()')
-        phone = phone[0] if phone else ""
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = phone[0].split(":")[-1].strip() if phone else ""
         geo = (
             loc_dom.xpath('//img[contains(@data-src, "map")]/@data-src')[0]
             .split("map-")[-1]
@@ -56,6 +58,8 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@class="franchise_tile col-md-4"]//table//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else ""
+        if "Monday Appointment Only" in hours_of_operation:
+            hours_of_operation = ""
 
         item = SgRecord(
             locator_domain=domain,
