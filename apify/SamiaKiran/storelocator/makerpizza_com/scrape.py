@@ -28,6 +28,7 @@ def fetch_data():
         hour_list = soup.find(
             "div", {"class": "address-group address-group-hours"}
         ).findAll("div", {"class": "address-line"})
+        phone = soup.select_one("a[href*=tel]").text.replace("T", "")
         zip_list = soup.findAll("address")
         for loc, hour, temp_zip in zip(loclist, hour_list, zip_list):
             location_name = loc["label"]
@@ -36,7 +37,6 @@ def fetch_data():
             loc = loc["address"]
             street_address = loc["address_one"]
             city = loc["city"]
-            phone = MISSING
             latitude = loc["latitude"]
             longitude = loc["longitude"]
             state = loc["state"]
