@@ -29,6 +29,8 @@ def fetch_data():
     # Your scraper here
     search_url = "https://www.tazauae.com/taza-stores/"
     with SgRequests(dont_retry_status_codes=([404])) as session:
+        hoo_req = session.get("https://www.tazauae.com/", headers=headers)
+        hoo_sel = lxml.html.fromstring(hoo_req.text)
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         cities = stores_sel.xpath(
@@ -73,11 +75,29 @@ def fetch_data():
                 country_code = "UAE"
                 store_number = "<MISSING>"
 
-                phone = "<MISSING>"
+                phone = (
+                    "".join(
+                        store_sel.xpath(
+                            '//a[./img[contains(@src,"call-phone-02.png")]]/@href'
+                        )
+                    )
+                    .strip()
+                    .replace("tel:", "")
+                    .strip()
+                )
 
                 location_type = "<MISSING>"
 
-                hours_of_operation = "<MISSING>"
+                hours_of_operation = (
+                    "".join(
+                        hoo_sel.xpath(
+                            '//div[@class="thrv_wrapper thrv_text_element"]/p[./strong/span[contains(text(),"Restaurant")]]/strong/span/text()'
+                        )
+                    )
+                    .strip()
+                    .split("Restaurant")[-1]
+                    .strip()
+                )
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
                 yield SgRecord(

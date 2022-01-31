@@ -5,13 +5,13 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from sgpostal.sgpostal import parse_address_intl
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 from sgselenium.sgselenium import SgChrome
 
-
+MISSING = SgRecord.MISSING
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -45,12 +45,20 @@ def fetch_data():
                 address = re.sub(pattern, "\n", str(address)).strip()
                 address = address.split("\n")
 
-                state = address[-1].split(" ")[-2]
-                pcode = address[-1].split(" ")[-1]
-                city = address[-1].split(state, 1)[0]
-                street = (
-                    " ".join(address[0 : len(address) - 1]).replace("&amp;", "").strip()
-                )
+                pa = parse_address_intl(address)
+
+                street_address = pa.street_address_1
+                street = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                pcode = zip_postal.strip() if zip_postal else MISSING
+                street = street.replace("&amp;", "").strip()
                 content = re.sub(cleanr, "\n", str(div))
                 content = re.sub(pattern, "\n", str(content)).strip()
                 phone = content.split("PHONE", 1)[1].split("\n", 1)[1].split("\n", 1)[0]

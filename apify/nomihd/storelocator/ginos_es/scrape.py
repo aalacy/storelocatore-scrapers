@@ -43,7 +43,12 @@ def fetch_data():
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
 
-            location_name = "".join(store_sel.xpath("//title//text()")).strip()
+            location_name = (
+                "".join(store_sel.xpath("//title//text()"))
+                .strip()
+                .replace("| Reserva tu mesa en nuestro restaurante italiano", "")
+                .strip()
+            )
 
             location_type = "<MISSING>"
 
@@ -57,9 +62,9 @@ def fetch_data():
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
 
-            city = store[1]
+            city = formatted_addr.city
             if not city:
-                city = formatted_addr.city
+                city = store[1]
 
             state = store[5]
             if not state:

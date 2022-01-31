@@ -19,7 +19,7 @@ def fetch_data(sgw: SgWriter):
         assert isinstance(r, httpx.Response)
         assert 200 == r.status_code
         tree = html.fromstring(r.text)
-        div = tree.xpath("//label/b")
+        div = tree.xpath("//label/b | //label/strong")
         for d in div:
 
             location_name = "".join(d.xpath(".//text()"))

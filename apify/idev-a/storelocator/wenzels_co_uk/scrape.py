@@ -59,7 +59,7 @@ def fetch_data():
                 country_code="UK",
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("\u2013", "-"),
+                hours_of_operation="; ".join(hours).replace("\\u2013", "-"),
             )
 
 

@@ -56,6 +56,8 @@ def fetch_data(sgw: SgWriter):
         page_url = loc["Center_Website"]
         if not page_url:
             page_url = "https://www.take5oilchange.com/locations/"
+            if "5205 Rufe Snow" in street_address:
+                page_url = "https://www.take5oilchange.com/locations/tx/north-richland-hills-670/"
 
         sgw.write_row(
             SgRecord(

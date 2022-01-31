@@ -24,7 +24,7 @@ days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 def fetch_data():
     with SgChrome() as driver:
         driver.get(base_url)
-        rr = driver.wait_for_request(json_url)
+        rr = driver.wait_for_request(json_url, timeout=20)
         locations = json.loads(rr.response.body)["results"]
         for loc in locations:
             _ = loc["raw"]
@@ -38,13 +38,13 @@ def fetch_data():
                     times = _.get(f"{day}hours")
                     hours.append(f"{day}: {times}")
             yield SgRecord(
-                page_url=_["uri"],
-                store_number=_["webstoreid"],
+                page_url=base_url,
+                store_number=_["storeid"],
                 location_name=_["title"],
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
-                zip_postal=_["zipcode"],
+                zip_postal=_["zipcode"].replace("0000", ""),
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 country_code=_["country"],
@@ -56,7 +56,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

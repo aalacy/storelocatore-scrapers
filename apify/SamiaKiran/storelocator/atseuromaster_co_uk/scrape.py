@@ -4,17 +4,16 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "therange_co_uk"
+website = "atseuromaster_co_uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://www.atseuromaster.co.uk/consumer"
+DOMAIN = "https://www.atseuromaster.co.uk"
 MISSING = SgRecord.MISSING
 
 
@@ -42,7 +41,12 @@ def fetch_data():
             except:
                 page_list = 1
             for page in range(1, int(page_list) + 1):
-                url = "https://centre.atseuromaster.co.uk/gb/england?page=" + str(page)
+                url = (
+                    "https://centre.atseuromaster.co.uk/gb/"
+                    + state_url.lower()
+                    + "?page="
+                    + str(page)
+                )
                 r = session.get(url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 loclist = soup.findAll(
@@ -54,6 +58,7 @@ def fetch_data():
                 log.info(f"Fetching Locations from Page No {page}")
                 for loc in loclist:
                     page_url = "https://centre.atseuromaster.co.uk" + loc["href"]
+                    store_number = loc["href"].split("-")[0].replace("/", "")
                     log.info(page_url)
                     r = session.get(page_url, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
@@ -82,15 +87,10 @@ def fetch_data():
                         .replace("|", " ")
                         .replace("Show more Hide", "")
                     )
-                    pa = parse_address_intl(raw_address)
-                    street_address = pa.street_address_1
-                    street_address = street_address if street_address else MISSING
-                    city = pa.city
-                    city = city.strip() if city else MISSING
-                    state = pa.state
-                    state = state.strip() if state else MISSING
-                    zip_postal = pa.postcode
-                    zip_postal = zip_postal.strip() if zip_postal else MISSING
+                    street_address = r.text.split('"streetAddress":"')[1].split('"')[0]
+                    city = r.text.split('"addressLocality":"')[1].split('"')[0]
+                    state = r.text.split('"addressRegion":"')[1].split('"')[0]
+                    zip_postal = r.text.split('"postalCode":"')[1].split('"')[0]
                     country_code = "UK"
                     yield SgRecord(
                         locator_domain=DOMAIN,
@@ -101,7 +101,7 @@ def fetch_data():
                         state=state.strip(),
                         zip_postal=zip_postal.strip(),
                         country_code=country_code,
-                        store_number=MISSING,
+                        store_number=store_number,
                         phone=phone.strip(),
                         location_type=MISSING,
                         latitude=latitude,

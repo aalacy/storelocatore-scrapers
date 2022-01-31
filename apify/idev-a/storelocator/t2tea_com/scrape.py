@@ -10,6 +10,7 @@ from fuzzywuzzy import process
 import httpx
 from typing import Iterable, Tuple, Callable
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import Grain_1_KM
 from sgpostal.sgpostal import parse_address_intl
 
 timeout = httpx.Timeout(10.0)
@@ -126,6 +127,9 @@ if __name__ == "__main__":
         countries = []
         country_map = {}
         logger.info("... read countries")
+        search_maker = DynamicSearchMaker(
+            search_type="DynamicGeoSearch", granularity=Grain_1_KM()
+        )
         for country in bs(http.get(base_url, headers=_headers).text, "lxml").select(
             "ul.location__list-contries li a"
         ):
@@ -140,7 +144,6 @@ if __name__ == "__main__":
             com1 = link.split("demandware.store/")[1].split("/")[0]
             com2 = country["data-locale"]
             country_map[d_cc] = [com1, com2]
-        search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
         logger.info("... search")
         with SgWriter(
             deduper=SgRecordDeduper(

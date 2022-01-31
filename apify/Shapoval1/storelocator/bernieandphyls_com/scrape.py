@@ -1,10 +1,11 @@
+import calendar
+from datetime import datetime
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
@@ -43,40 +44,45 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("id")
         latitude = j.get("latitude")
         longitude = j.get("longitude")
-        with SgFirefox() as driver:
+        hours = j.get("schedule").get("calendar")
+        tmp = []
+        for h in hours:
+            d = datetime.strptime(h, "%Y-%m-%d")
+            day = calendar.day_name[d.weekday()]
+            if not hours[h]:
+                continue
+            for k in hours[h]:
+                opens = k.get("start_time")
+                closes = k.get("end_time")
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+        hours_of_operation = ";".join(tmp) or "<MISSING>"
+        if (
+            hours_of_operation.count("Sunday 12:00 PM - 6:00 PM") == 2
+            or hours_of_operation.count("Sunday 11:00 AM - 6:00 PM") == 2
+        ):
+            hours_of_operation = " ".join(hours_of_operation.split(";")[1:])
+        if hours_of_operation.find("Sunday") == -1:
+            hours_of_operation = hours_of_operation + " Sunday Closed"
 
-            driver.get(page_url)
-            x = driver.page_source
-            tree = html.fromstring(x)
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//button[./span[text()="Hours"]]/following-sibling::div[1]//table//tr//td//text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            hours_of_operation = " ".join(hours_of_operation.split())
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-            row = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
-
-            sgw.write_row(row)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":

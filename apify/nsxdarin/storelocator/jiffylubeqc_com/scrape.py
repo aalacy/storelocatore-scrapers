@@ -20,10 +20,9 @@ headers2 = {
 
 def fetch_data():
     locs = []
-    url = "https://jiffylubeqc.com/succursales/trouver-une-succursale/"
+    url = "https://jiffylubeqc.com/succursales/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if (
             'menu-item-depth-1" value="https://jiffylubeqc.com/succursales/' in line
             and "Trouver votre su" not in line
@@ -54,13 +53,10 @@ def fetch_data():
         r2 = session.get(loc, headers=headers2)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "<p><strong>" in line2:
                 name = line2.split("<p><strong>")[1].split("<")[0]
                 g = next(lines)
                 h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
                 add = g.split("<")[0]
                 city = name.split("Jiffy lube")[1].strip()
                 zc = h.split(",")[2].split("<")[0].strip()
@@ -102,6 +98,12 @@ def fetch_data():
             .replace("mercredi", "Wed")
             .replace("Jeudi", "Thu")
             .replace("Vendredi", "Fri")
+        )
+        hours = (
+            hours.replace("FERMÉ", "Closed")
+            .replace("à", "to")
+            .replace("Fermé", "Closed")
+            .replace(" et ", " and ")
         )
         yield SgRecord(
             locator_domain=website,

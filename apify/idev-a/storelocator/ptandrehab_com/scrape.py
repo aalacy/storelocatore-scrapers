@@ -4,6 +4,11 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
+from bs4 import BeautifulSoup as bs
+import re
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -26,6 +31,12 @@ def fetch_data():
         for _ in locations:
             if _["is_coming_soon"] != "0":
                 continue
+            logger.info(_["href"])
+            sp1 = bs(session.get(_["href"], headers=_headers).text, "lxml")
+            _hr = sp1.find("p", string=re.compile(r"HOURS:"))
+            hours = ""
+            if _hr:
+                hours = _hr.find_parent().find_next_sibling().text.strip()
             yield SgRecord(
                 page_url=_["href"],
                 store_number=_["id"],
@@ -39,6 +50,7 @@ def fetch_data():
                 country_code="US",
                 phone=_["phone"],
                 locator_domain=locator_domain,
+                hours_of_operation=hours,
             )
 
 

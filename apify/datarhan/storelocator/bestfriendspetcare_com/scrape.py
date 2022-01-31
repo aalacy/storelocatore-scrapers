@@ -25,6 +25,9 @@ def fetch_data():
 
         for poi in locations:
             store_url = f'https://www.bestfriendspetcare.com/location/{poi["value"]}'
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+
             location_name = poi["label"]
             location_name = location_name if location_name else "<MISSING>"
             street_address = poi["address"]["line1"]
@@ -47,7 +50,12 @@ def fetch_data():
             longitude = poi["lng"]
             longitude = longitude if longitude else "<MISSING>"
             hoo = etree.HTML(poi["hours"])
-            hoo = [elem.strip() for elem in hoo.xpath("//text()") if "AM" in elem]
+            hoo = [
+                elem.strip() for elem in hoo.xpath("//text()") if "am" in elem.lower()
+            ]
+            if not hoo:
+                hoo = loc_dom.xpath('//p[contains(text(), "am – ")]/text()')
+            hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
 
             item = SgRecord(

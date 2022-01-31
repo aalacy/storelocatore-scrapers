@@ -68,10 +68,12 @@ def fetch_data(sgw: SgWriter):
         if page_req.status_code != 404:
             page = BeautifulSoup(page_req.text, "lxml")
 
-            if "open for delivery only" in page.text:
-                location_type = "Delivery Only"
-            if "pickup and delivery" in page.text:
-                location_type = "Pickup and Delivery"
+            try:
+                location_type = ",".join(
+                    list(page.find(class_="order-buttons").stripped_strings)
+                )
+            except:
+                location_type = ""
 
             raw_hours = page.find(class_="addr-hours")
             raw_hours = raw_hours.find_all("p")
