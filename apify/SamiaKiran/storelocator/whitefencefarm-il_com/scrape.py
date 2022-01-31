@@ -37,7 +37,11 @@ def fetch_data():
             if "(behind main restaurant)" in loc[2]:
                 del loc[2]
             location_name = loc[0]
-            log.info(location_name)
+            page_url = (
+                "https://www.whitefencefarm-il.com/carryout.php#"
+                + location_name.split("#")[1]
+            )
+            log.info(page_url)
             phone = loc[-1]
             street_address = loc[1]
             address = loc[2].split(",")
@@ -48,7 +52,7 @@ def fetch_data():
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),

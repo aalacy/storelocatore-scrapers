@@ -71,32 +71,37 @@ def fetch_data():
                     else:
                         log.info(page_url)
                         store_req = session.get(page_url, headers=headers)
-                        if isinstance(store_req, SgRequestError):
-                            continue
-                        store_sel = lxml.html.fromstring(store_req.text)
-                        hours = store_sel.xpath(
-                            '//div[@id="opening-times"]//td[@itemprop="openingHours"]'
-                        )
-                        hours_list = []
-                        for hour in hours:
-                            if (
-                                len("".join(hour.xpath("@content")).strip().split("-"))
-                                > 1
-                            ):
+                        if not isinstance(store_req, SgRequestError):
+                            store_sel = lxml.html.fromstring(store_req.text)
+                            hours = store_sel.xpath(
+                                '//div[@id="opening-times"]//td[@itemprop="openingHours"]'
+                            )
+                            hours_list = []
+                            for hour in hours:
                                 if (
                                     len(
                                         "".join(hour.xpath("@content"))
                                         .strip()
-                                        .split("-")[1]
-                                        .strip()
+                                        .split("-")
                                     )
-                                    > 0
+                                    > 1
                                 ):
-                                    hours_list.append(
-                                        "".join(hour.xpath("@content")).strip()
-                                    )
+                                    if (
+                                        len(
+                                            "".join(hour.xpath("@content"))
+                                            .strip()
+                                            .split("-")[1]
+                                            .strip()
+                                        )
+                                        > 0
+                                    ):
+                                        hours_list.append(
+                                            "".join(hour.xpath("@content")).strip()
+                                        )
 
-                        hours_of_operation = "; ".join(hours_list).strip()
+                            hours_of_operation = "; ".join(hours_list).strip()
+                        else:
+                            log.error("\t\tSkipped\t\t")
 
                     latitude = store["lat"]
                     longitude = store["lng"]
