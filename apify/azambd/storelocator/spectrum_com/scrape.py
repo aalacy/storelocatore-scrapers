@@ -102,7 +102,7 @@ def parse_json(loc):
 
 def fetch_data():
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=1000
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
 
     for z in search:
