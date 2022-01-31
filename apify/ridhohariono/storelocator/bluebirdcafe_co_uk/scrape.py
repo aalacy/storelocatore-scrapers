@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import re
 
-DOMAIN = "bluebirdcafe.com"
+DOMAIN = "bluebirdcafe.co.uk"
 BASE_URL = "https://bluebirdcafe.co.uk/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
