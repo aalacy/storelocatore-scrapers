@@ -82,7 +82,11 @@ def fetch_data():
         state = state_zip.split(" ")[0].strip()
         zip = state_zip.split(" ")[-1].strip()
 
-        location_name = city
+        location_name = store_sel.xpath("//h2/text()")
+        if len(location_name) > 0:
+            location_name = location_name[0]
+        else:
+            location_name = city
 
         country_code = "US"
         store_number = "<MISSING>"
