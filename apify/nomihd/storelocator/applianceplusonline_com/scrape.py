@@ -61,7 +61,7 @@ def fetch_data():
         page_url = store_url
         log.info(page_url)
         api_url = (
-            "https://www.applianceplusonline.com/api/rest/pages/"
+            "https://www.applianceplusonline.com/api/rest/pages/locations%2F"
             + page_url.split("/")[-1].strip()
         )
         store_req = session.get(api_url, headers=headers)
