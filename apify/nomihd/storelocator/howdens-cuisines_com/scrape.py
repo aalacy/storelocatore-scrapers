@@ -82,9 +82,12 @@ class _SearchIteration(SearchIteration):
                 store_number = "<MISSING>"
 
                 page_url = "https://www.howdens-cuisines.com/nos-depots/"
-                location_name = "".join(
-                    store_sel.xpath('//span[@class="name"]//text()')
-                ).strip()
+                location_name = (
+                    "".join(store_sel.xpath('//span[@class="name"]//text()'))
+                    .strip()
+                    .split("(")[0]
+                    .strip()
+                )
                 location_type = "<MISSING>"
 
                 store_info = list(
