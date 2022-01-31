@@ -58,7 +58,7 @@ def fetch_data():
             hours_of_operation = temp[-2].text
             if "Weekdays" not in hours_of_operation:
                 hours_of_operation = MISSING
-            if street_address < 3:
+            if street_address.Isdigit():
                 street_adresss = raw_address.split(",")[0]
             latitude = r.text.split("lat:")[1].split(",")[0]
             longitude = r.text.split("lng:")[1].split("}")[0]
