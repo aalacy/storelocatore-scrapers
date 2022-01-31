@@ -4,6 +4,10 @@ from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+
+
 website = "https://www.spectrum.com/locations"
 DOMAIN = "spectrum.com"
 logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
@@ -18,6 +22,16 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
     "sec-ch-ua-platform": '"Windows"',
 }
+
+
+@retry(stop=stop_after_attempt(8), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        logger.info(f"HTTP STATUS: {response.status_code}")
+        if response.status_code == 200:
+            return response.json()
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
 
 def parse_json(loc):
@@ -87,19 +101,20 @@ def parse_json(loc):
 
 
 def fetch_data():
-    search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+    )
 
     for z in search:
         api_url = f"https://www.spectrum.com/bin/spectrum/storeLocator?address={z}&miles=500&maxStoresDisplayed=500"
         logger.info(f"Crawling: {api_url}")
-        response = session.get(api_url, headers=headers)
-        data_json = response.json()
+        data_json = get_response(api_url)
+        if data_json:
+            for loc in data_json["response"]["locations"]:
+                if "Duplicate" in str(loc):
+                    continue
 
-        for loc in data_json["response"]["locations"]:
-            if "Duplicate" in str(loc):
-                continue
-
-            yield parse_json(loc)
+                yield parse_json(loc)
 
 
 def scrape():
