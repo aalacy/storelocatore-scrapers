@@ -52,7 +52,9 @@ def fetch_data():
         store_sel = lxml.html.fromstring(store_res.text)
 
         location_name = " ".join(
-            store_sel.xpath("//table[not(@class)]//div[@id='left_bar_content']//text()")
+            store_sel.xpath(
+                "//table[not(@class)]//div[@id='left_bar_content']/div[1]//text()"
+            )
         ).strip()
 
         store_info = list(
