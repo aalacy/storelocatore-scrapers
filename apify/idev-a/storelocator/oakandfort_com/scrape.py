@@ -2,6 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("oakandfort")
 
@@ -49,11 +51,17 @@ def fetch_data():
                 hours.append(f"{days}: {time}")
 
             page_url = f"https://www.oakandfort.com/stores/details/{_['internalid']}"
+            street_address = _["address1"]
+            if _["address2"]:
+                street_address += " " + _["address2"]
+
+            if not street_address and not _["city"] and not _["state"]:
+                continue
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
                 store_number=_["internalid"],
-                street_address=f'{_["address1"]} {_["address2"]}',
+                street_address=street_address,
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["zip"],
@@ -67,7 +75,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

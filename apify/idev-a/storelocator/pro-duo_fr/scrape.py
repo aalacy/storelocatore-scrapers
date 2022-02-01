@@ -31,7 +31,9 @@ def fetch_data():
             if _["name"] in ["Troyes", "Poitiers"]:
                 temp = hours
                 hours = []
-                for hh in json.loads(temp[0].replace('30""', '30"'))["periods"]:
+                for hh in json.loads(
+                    temp[0].replace('30""', '30"').replace('}"}', "}")
+                )["periods"]:
                     hours.append(
                         f"{hh['openDay']}: {hh['openTime']} - {hh['closeTime']}"
                     )

@@ -127,6 +127,7 @@ def fetch_data(driver):
 
         street_address, city, state, zip_postal = get_address(address)
         phone = get_phone(address)
+        phone = phone.replace(zip_postal, "")
         raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
             MISSING, ""
         )

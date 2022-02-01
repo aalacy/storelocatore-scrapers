@@ -3,20 +3,36 @@ from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgscrape.sgrecord_id import SgRecordID
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 logger = SgLogSetup().get_logger("jimmysegg_com")
+
+headers_ = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "referer": "https://www.jimmysegg.com/online-ordering/",
+    "agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url, headers_c):
+    with SgRequests(timeout_config=300) as http:
+        logger.info(f"Pulling the data from: {url}")
+        r = http.get(url, headers=headers_c)
+        if r.status_code == 200:
+            logger.info(f"HTTP Status Code: {r.status_code}")
+            return r
+        raise Exception(
+            f"Please fix GetResponseRetryError >> TemporaryError HttpStatusCode: {r.status_code}"
+        )
 
 
 def fetch_data():
     locs = []
     url = "https://www.jimmysegg.com/online-ordering/"
-    r = session.get(url, headers=headers)
+    r = get_response(url, headers_)
     website = "jimmysegg.com"
     typ = "<MISSING>"
     country = "US"
@@ -24,7 +40,8 @@ def fetch_data():
     for line in r.iter_lines():
         if "ORDER NOW<" in line:
             locs.append(line.split('href="')[1].split('"')[0])
-    for loc in locs:
+    logger.info(f"Total Store Count: {len(locs)}")
+    for idx2, loc in enumerate(locs[0:]):
         logger.info(loc)
         name = ""
         add = ""
@@ -37,7 +54,8 @@ def fetch_data():
         lng = ""
         HFound = False
         hours = ""
-        r2 = session.get(loc, headers=headers)
+        logger.info(f"[{idx2}] Pulling the data for {loc} ")
+        r2 = get_response(loc, headers_)
         lines = r2.iter_lines()
         for line2 in lines:
             if "Hours of Business</div>" in line2:
@@ -89,17 +107,24 @@ def fetch_data():
                 lng = line2.split("var _locationLng = ")[1].split(";")[0]
             if 'var _locationAddress = "' in line2:
                 addinfo = line2.split('var _locationAddress = "')[1].split('"')[0]
-                add = addinfo.split(",")[0]
-                zc = addinfo.split(",")[2].rsplit(" ", 1)[1]
-                city = addinfo.split(",")[1].strip()
-                state = addinfo.split(",")[2].strip().split(" ")[0]
+                if addinfo.count(",") == 3:
+                    add = (
+                        addinfo.split(",")[0].strip()
+                        + " "
+                        + addinfo.split(",")[1].strip()
+                    )
+                else:
+                    add = addinfo.split(",")[0].strip()
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
+        logger.info(f"[{idx2}] Phone: {phone}")
         name = name.replace("\\u0026", "&")
         if hours == "":
+            logger.info("Hours found to be empty")
             hurl = loc.replace("/#", "") + "/Website/Hours"
+            logger.info(f"[{idx2}] Pulling Hours for {hurl}")
             try:
-                r3 = session.get(hurl, headers=headers)
+                r3 = get_response(hurl, headers_)
                 lines2 = r3.iter_lines()
                 for line3 in lines2:
                     if "day</td>" in line3:
@@ -143,7 +168,7 @@ def fetch_data():
             longitude=lng,
             hours_of_operation=hours,
         )
-    loc = "<MISSING>"
+    loc = "https://mcallen.orderjimmysegg.com/"
     name = "McAllen, TX"
     add = "4100 N. 10th St."
     city = "McAllen"
@@ -200,10 +225,25 @@ def fetch_data():
 
 
 def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    logger.info("Scrape Started")
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+    logger.info("Scrape Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

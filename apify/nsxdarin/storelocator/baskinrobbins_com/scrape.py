@@ -129,7 +129,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if add != "":
+            if add != "" and "INACTIVE" not in status:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

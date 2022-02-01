@@ -1,16 +1,11 @@
-import time
 import json
 
 from sgscrape.sgpostal import parse_address_intl
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sglogging import sglog
-
+from sgscrape import simple_scraper_pipeline as sp
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -78,8 +73,9 @@ def fetch_data():
         page_url = d["url"]
         latitude = d["latitude"]
         longitude = d["longitude"]
-        street_address = d["address"]
-        hours_of_operation = d["custom_field_1"]
+        street_address = d["address"].replace("&amp;", "&")
+        hours = d["custom_field_1"]
+        hours_of_operation = hours.replace("&amp;", ",")
         location_name = d["name"]
         addrs = parse_address_intl(
             location_name.split("#")[0].replace("Store", "").strip()
@@ -94,40 +90,64 @@ def fetch_data():
         location_type = "Store"
         country_code = "US"
         zip_postal = MISSING
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            phone=phone,
-            location_type=location_type,
-            store_number=store_number,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+
+        yield {
+            "locator_domain": DOMAIN,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": street_address,
+            "state": state,
+            "zip": zip_postal,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours_of_operation,
+            "country_code": country_code,
+        }
 
     driver.quit()
 
 
+# is require false means if missing then it will add row
 def scrape():
-    log.info(f"Start Crawl {website} ...")
-    count = 0
-    start = time.time()
-    result = fetch_data()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
-        for rec in result:
-            writer.write_row(rec)
-    end = time.time()
-    log.info(f"Total Locations added = {count}")
-    log.info(f"It took {end-start} seconds to complete the crawl.")
+    log.info(f"Start Crawling {website} ...")
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

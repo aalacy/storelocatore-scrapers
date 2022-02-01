@@ -92,7 +92,7 @@ def fetch_data():
             hours_of_operation = "; ".join(hour_list)
 
             if "closed" in location_name.lower():
-                location_type = "Closed"
+                location_type = "Permanently Closed"
                 hours_of_operation = "<MISSING>"
 
             latitude = store["yextDisplayCoordinate"]["latitude"]

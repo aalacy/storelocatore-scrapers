@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -18,24 +19,28 @@ def record_transformer(poi):
     if not location_name:
         location_name = street_address
     city = poi["city"]
-    city = city if city else "<MISSING>"
+    city = city if city else ""
     state = poi.get("state")
-    state = state if state else "<MISSING>"
+    state = state if state else ""
     if state == "--":
         state = SgRecord.MISSING
+    if state.isdigit():
+        state = ""
     zip_code = poi["zipCode"]
-    zip_code = zip_code if zip_code else "<MISSING>"
+    zip_code = zip_code if zip_code else ""
+    if zip_code and str(zip_code.strip()) == "0":
+        zip_code = ""
     country_code = poi["countryCode"]
     store_number = poi["id"]
     phone = poi["phones"]
-    phone = phone[0] if phone else "<MISSING>"
+    phone = phone[0] if phone else ""
     if phone == "--":
         phone = SgRecord.MISSING
     location_type = poi["datatype"]
     latitude = poi["latitude"]
-    latitude = latitude if latitude else "<MISSING>"
+    latitude = latitude if latitude else ""
     longitude = poi["longitude"]
-    longitude = longitude if longitude else "<MISSING>"
+    longitude = longitude if longitude else ""
 
     item = SgRecord(
         locator_domain=domain,

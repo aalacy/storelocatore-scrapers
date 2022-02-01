@@ -87,6 +87,8 @@ def fetch_data(sgw: SgWriter):
             page_url = (
                 "".join(t.xpath('.//a[@itemprop="url"]/@href')).strip() or "<MISSING>"
             )
+            if page_url.find("virtual-store") != -1:
+                continue
             if page_url != "<MISSING>":
                 phone, latitude, longitude, hours_of_operation = get_info(page_url)
 
@@ -100,6 +102,18 @@ def fetch_data(sgw: SgWriter):
             if street_address.find("-") != -1 and street_address.find("(") == -1:
                 phone = street_address
                 street_address = "<MISSING>"
+            if not street_address[0].isdigit():
+                r = session.get(page_url)
+                tree = html.fromstring(r.text)
+                street_address = (
+                    "".join(
+                        tree.xpath(
+                            '//h3[text()="LOCATION"]/following-sibling::p[1]/text()[1] | //h3[contains(text(), "LOCATION")]/following-sibling::text()[1]'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                )
             if page_url.find("Toronto-Signature") != -1:
                 session = SgRequests()
                 r = session.get(page_url)
@@ -109,6 +123,9 @@ def fetch_data(sgw: SgWriter):
                     .replace("\n", "")
                     .strip()
                 )
+            street_address = street_address.replace(
+                "Tanger Outlets San Marcos", ""
+            ).strip()
             country_code = country
 
             row = SgRecord(

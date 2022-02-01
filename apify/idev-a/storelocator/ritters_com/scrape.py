@@ -51,8 +51,13 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             try:
                 hours_of_operation = detail[2].text
+                if (
+                    "closed until" in hours_of_operation.lower()
+                    or "closed for" in hours_of_operation.lower()
+                ):
+                    hours_of_operation = "Temporarily_closed"
             except:
-                hours_of_operation = "<MISSING>"
+                hours_of_operation = ""
             try:
                 latitude = store["latLng"][0]
                 longitude = store["latLng"][1]
@@ -73,7 +78,9 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.replace("\r\n", " ")
                 .replace("\n", " ")
-                .split("Call us")[0],
+                .replace("Store Hours:", "")
+                .split("Call us")[0]
+                .split("Except")[0],
                 raw_address=raw_address,
             )
 

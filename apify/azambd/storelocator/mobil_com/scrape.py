@@ -28,7 +28,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def request_with_retries(payload):
     lat, lng = payload
-    url = json_url.format(lat, lat + 2.0, lng, lng + 2.0)
+    url = json_url.format(lat, lat + 1.5, lng, lng + 1.5)
     log.info(f"URL: {url}")
     response = session.get(url, headers=headers)
     log.info(f"Response: {response}")
@@ -95,7 +95,7 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=0.5,
+        expected_search_radius_miles=1,
     )
     count = 0
 
