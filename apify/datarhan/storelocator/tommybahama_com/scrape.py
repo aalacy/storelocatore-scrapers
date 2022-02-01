@@ -55,10 +55,11 @@ def fetch_data():
             and "AM -" not in e
             and not e.endswith("PM")
         ]
-        if len(raw_address[0].split(".")) == 3:
+        if (
+            len(raw_address[0].split(".")) == 3
+            and raw_address[0].split(".")[1].strip().isdigit()
+        ):
             raw_address = raw_address[1:]
-        if len(raw_address) > 2:
-            raw_address = raw_data[2:]
         addr = parse_address_intl(" ".join(raw_address))
         location_name = loc_dom.xpath('//h3[@class="cmp-title__text"]/text()')
         if not location_name:
@@ -118,6 +119,7 @@ def fetch_data():
             .split("Open to a limited")[0]
             .replace(">br>", "")
             .split("Reservations Encouraged. ")[-1]
+            .replace("ours:", "")
             .strip()
         )
 

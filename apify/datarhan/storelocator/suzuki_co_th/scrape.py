@@ -43,8 +43,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=poi.get("latitude"),
-            longitude=poi.get("longitude"),
+            latitude=poi.get("latitute"),
+            longitude=poi.get("longitute"),
             hours_of_operation="",
         )
 
