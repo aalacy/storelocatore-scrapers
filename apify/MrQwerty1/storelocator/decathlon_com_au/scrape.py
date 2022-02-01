@@ -9,13 +9,17 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 def fetch_data(sgw: SgWriter):
     urls = [
-        "https://cdn.shopify.com/s/files/1/0066/6563/3903/t/577/assets/sca.storelocator_scripttag.js?v=1639609318&shop=decathlon-australia.myshopify.com",
+        "https://cdn.shopify.com/s/files/1/0066/6563/3903/t/591/assets/sca.storelocator_scripttag.js?v=1643607188&shop=decathlon-australia.myshopify.com",
         "https://cdn.shopify.com/s/files/1/0418/6000/6041/t/2/assets/sca.storelocator_scripttag.js?v=1635403500&amp;shop=decathlon-sl.myshopify.com",
     ]
 
     for api in urls:
         r = session.get(api, headers=headers)
-        text = r.text.split("locationsRaw:'")[1].split("}]'")[0] + "}]"
+        text = (
+            r.text.split('locationsRaw":"')[1].split('","app_url"')[0].replace("\\", "")
+        )
+        if ']"' in text:
+            text = text.split(']"')[0] + "]"
         js = json.loads(text)
 
         for j in js:
