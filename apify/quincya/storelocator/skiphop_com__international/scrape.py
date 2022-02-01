@@ -146,8 +146,10 @@ def fetch_data(sgw: SgWriter):
                 if city in ["1Pa", "4At", "4Qd", "0Lr", "3Lf", "2Pa"]:
                     zip_code = zip_code + " " + city.upper()
                     city = ""
+                if ", 5" in city:
+                    city = ""
                 if city in ["7J"]:
-                    city.replace(city, "").strip()
+                    city = city.replace(city, "").strip()
                 if "Cf62 7Dz" in raw_address:
                     zip_code = "Cf62 7Dz".upper()
                 if "Da9 9Sl" in raw_address:
@@ -187,8 +189,6 @@ def fetch_data(sgw: SgWriter):
                     if i in city:
                         zip_code = i.upper()
                         city = city.replace(i, "").strip()
-                if city in zip_code:
-                    city = ""
 
             if not city and "cornwall" in raw_address.lower():
                 city = "Cornwall"
@@ -211,8 +211,6 @@ def fetch_data(sgw: SgWriter):
                     street_address = street_address[
                         : street_address.rfind("Dubai")
                     ].strip()
-                if ", 5" in city:
-                    city = ""
 
             try:
                 if len(state) < 4:
