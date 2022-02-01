@@ -1,13 +1,9 @@
 import json
-import re
-
 from bs4 import BeautifulSoup
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
 from sgrequests import SgRequests
 
 session = SgRequests(dont_retry_status_codes=([404]))
