@@ -9,6 +9,8 @@ from sgpostal.sgpostal import parse_address_intl
 
 session = SgRequests()
 
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
 
