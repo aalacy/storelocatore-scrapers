@@ -5,7 +5,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import parse_address_intl
+
+# from sgpostal.sgpostal import parse_address_intl
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -40,10 +41,12 @@ def fetch_data():
 
             try:
                 title = div.find("h2").text
+                print(title)
+                continue
                 address = div.find("p")
                 address = re.sub(cleanr, "\n", str(address))
                 address = re.sub(pattern, "\n", str(address)).strip()
-                address = address.split("\n")
+                address = address.replace("\n", " ").strip()
 
                 pa = parse_address_intl(address)
 
