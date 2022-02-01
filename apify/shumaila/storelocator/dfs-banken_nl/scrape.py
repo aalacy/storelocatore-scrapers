@@ -31,8 +31,7 @@ def fetch_data():
             raw_address = div.find("p")
             raw_address = re.sub(cleanr, "\n", str(raw_address))
             raw_address = re.sub(pattern, "\n", str(raw_address))
-            raw_address1 = raw_address.replace("\n", " ").strip()
-            raw_address = raw_address.strip().splitlines()
+            raw_address = raw_address.replace("\n", " ").strip()
 
             phone = div.find("p", {"class": "phoneDetails"}).text.split(" ", 1)[1]
             hours = div.find("ol").text
