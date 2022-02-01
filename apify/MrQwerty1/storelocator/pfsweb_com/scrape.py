@@ -33,6 +33,10 @@ def fetch_data(sgw: SgWriter):
         except IndexError:
             phone = SgRecord.MISSING
 
+        location_type = SgRecord.MISSING
+        if d.xpath(".//strong[contains(text(), 'Headquarters')]"):
+            location_type = "Headquarters"
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,
@@ -41,6 +45,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country,
+            location_type=location_type,
             phone=phone,
             locator_domain=locator_domain,
         )

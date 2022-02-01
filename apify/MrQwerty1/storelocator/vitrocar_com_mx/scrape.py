@@ -72,6 +72,8 @@ if __name__ == "__main__":
     page_url = "http://www.vitrocar.com.mx/sucursales"
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
     ) as writer:
         fetch_data(writer)

@@ -125,6 +125,8 @@ def fetch_data(sgw: SgWriter):
                     if zip_code:
                         if zip_code in street_address:
                             street_address = street_address.replace(zip_code, "")
+                        if "-" in zip_code and not zip_code[0].isdigit():
+                            zip_code = " ".join(zip_code.split("-")[1:])
 
                     if "Jardim Pirajussara" in street_address:
                         city = "Jardim Pirajussara"

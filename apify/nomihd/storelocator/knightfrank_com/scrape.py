@@ -92,6 +92,12 @@ def fetch_data():
 
                 latitude, longitude = "<MISSING>", "<MISSING>"
 
+                if location_name == "Esher":
+                    zip = "KT10 9RL"
+
+                if location_name == "International Occupier Services - USA":
+                    zip = "W1U 8EW"
+
                 if "/contact/" in link:
                     page_url = link
                     log.info(page_url)
@@ -149,11 +155,25 @@ def fetch_data():
                             .strip()
                             .replace("\t", "")
                             .strip()
+                            .replace("day", "day:")
+                            .strip()
+                            .replace("::", ":")
+                            .strip()
                         )
                     except SgRequestError as e:
                         log.error(e.status_code)
 
-                if len("".join(raw_address).strip()) <= 0:
+                if (
+                    len(
+                        "".join(raw_address)
+                        .strip()
+                        .encode("ascii", "replace")
+                        .decode("utf-8")
+                        .replace("?", "")
+                        .strip()
+                    )
+                    <= 0
+                ):
                     raw_address = "<MISSING>"
                 yield SgRecord(
                     locator_domain=locator_domain,
