@@ -61,6 +61,9 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 pcode = pcode + " " + temp[0]
             i += 1
+        if len(city) < 3 and "Sioux Falls" in street:
+            city = "Sioux Falls"
+            street = street.replace("Sioux Falls", "")
         street = street.lstrip().replace(",", "")
         city = city.lstrip().replace(",", "")
         state = state.lstrip().replace(",", "")
