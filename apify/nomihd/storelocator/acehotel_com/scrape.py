@@ -95,6 +95,10 @@ def fetch_data():
             phone = contact_sel.xpath(
                 f'//div[contains(@class,"text-single-content")]//span[b[contains(text(),"{location_name}")]]/..//a[contains(@href,"tel:")]//text()'
             )
+            if len(phone) <= 0:
+                phone = contact_sel.xpath(
+                    f'//div[contains(@class,"text-single-content")]//span[stong[contains(text(),"{location_name}")]]/..//a[contains(@href,"tel:")]//text()'
+                )
             phone = "".join(phone[:1])
 
             location_type = "<MISSING>"
