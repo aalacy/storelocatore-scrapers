@@ -93,7 +93,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                store_url=store_url,
+                page_url=store_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
