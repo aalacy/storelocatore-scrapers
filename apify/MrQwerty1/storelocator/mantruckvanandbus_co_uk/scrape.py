@@ -18,10 +18,9 @@ def get_urls(driver):
     return tree.xpath("//a[contains(text(), 'Details')]/@href")
 
 
-def get_data(slug, sgw: SgWriter, driver: SgChrome):
+def get_data(slug: str, driver: SgChrome):
     locator_domain = "https://www.mantruckvanandbus.co.uk/"
     page_url = f"https://www.mantruckvanandbus.co.uk{slug}"
-    sleep(15)
     driver.get(page_url)
     tree = html.fromstring(driver.page_source)
     text = "".join(tree.xpath("//script[contains(text(), 'AutoDealer')]/text()"))
@@ -53,7 +52,7 @@ def get_data(slug, sgw: SgWriter, driver: SgChrome):
 
     hours_of_operation = ";".join(_tmp)
 
-    row = SgRecord(
+    return SgRecord(
         page_url=page_url,
         location_name=location_name,
         street_address=street_address,
@@ -70,22 +69,24 @@ def get_data(slug, sgw: SgWriter, driver: SgChrome):
         hours_of_operation=hours_of_operation,
     )
 
-    sgw.write_row(row)
 
 
-def fetch_data(sgw: SgWriter, driver: SgChrome):
+def fetch_data(driver: SgChrome):
     urls = get_urls(driver)
 
     with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {
-            executor.submit(get_data, url, sgw, driver): url for url in urls
+            executor.submit(get_data, url, driver): url for url in urls
         }
         for future in futures.as_completed(future_to_url):
-            future.result()
+            yield future.result()
 
 
 if __name__ == "__main__":
     with SgChrome(is_headless=True, user_agent=agent) as driver, SgWriter(
         SgRecordDeduper(RecommendedRecordIds.PageUrlId)
     ) as writer:
-        fetch_data(writer, driver)
+        data = fetch_data(driver)
+        for row in data:
+                writer.write_row(row)
+        
