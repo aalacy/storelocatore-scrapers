@@ -69,19 +69,21 @@ def get_data(slug: str, driver: SgChrome):
     )
 
 
-def fetch_data(driver: SgChrome):
-    urls = get_urls(driver)
+def fetch_data():
+    with SgChrome(is_headless=True, user_agent=agent) as driver:
+        urls = get_urls(driver)
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_url = {executor.submit(get_data, url, driver): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            yield future.result()
+        with futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future_to_url = {executor.submit(get_data, url, driver): url for url in urls}
+            for future in futures.as_completed(future_to_url):
+                yield future.result()
 
 
 if __name__ == "__main__":
-    with SgChrome(is_headless=True, user_agent=agent) as driver, SgWriter(
+    data = fetch_data()
+
+    with SgWriter(
         SgRecordDeduper(RecommendedRecordIds.PageUrlId)
     ) as writer:
-        data = fetch_data(driver)
         for row in data:
             writer.write_row(row)
