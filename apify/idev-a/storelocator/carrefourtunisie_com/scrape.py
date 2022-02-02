@@ -38,7 +38,12 @@ def fetch_data():
                 page_url="https://www.carrefour.tn/default/nos-magasins",
                 store_number=_["our_store_id"],
                 location_name=_["name"],
-                street_address=street_address,
+                street_address=street_address.replace("Carrefour Market", "")
+                .replace("Carreour Market", "")
+                .replace("Carrefour Express", "")
+                .replace("Carreour Express", "")
+                .replace("Carrefour Orange", "")
+                .replace("Tunisia", ""),
                 city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
