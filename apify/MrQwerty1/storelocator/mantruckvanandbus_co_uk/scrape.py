@@ -70,14 +70,11 @@ def get_data(slug: str, driver: SgChrome):
     )
 
 
-
 def fetch_data(driver: SgChrome):
     urls = get_urls(driver)
 
     with futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_url = {
-            executor.submit(get_data, url, driver): url for url in urls
-        }
+        future_to_url = {executor.submit(get_data, url, driver): url for url in urls}
         for future in futures.as_completed(future_to_url):
             yield future.result()
 
@@ -88,5 +85,4 @@ if __name__ == "__main__":
     ) as writer:
         data = fetch_data(driver)
         for row in data:
-                writer.write_row(row)
-        
+            writer.write_row(row)
