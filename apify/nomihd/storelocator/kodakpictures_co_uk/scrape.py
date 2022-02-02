@@ -21,7 +21,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "http://kodakpictures.co.uk/find-a-store.html"
     api_url = "http://kodakpictures.co.uk/locations/all-locations.xml"
     with SgRequests() as session:
         api_res = session.get(api_url, headers=headers)
