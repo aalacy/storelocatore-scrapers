@@ -13,7 +13,7 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or ""
     state = adr.state
     postal = adr.postcode
 
@@ -31,6 +31,11 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("name")
         raw_address = j.get("address")
         street_address, city, state, postal = get_international(raw_address)
+        if city:
+            if city[-1].isdigit():
+                city = "Guatemala"
+        if city == "La":
+            city = "San Marcos"
         phone = j.get("phone")
         latitude = j.get("latitude")
         longitude = j.get("longitude")
