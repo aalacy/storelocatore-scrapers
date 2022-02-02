@@ -6,6 +6,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("")
 
@@ -52,16 +53,30 @@ def fetch_data():
                     f"{hour.select('td')[0].text}: {hour.select('td')[1].text}-{hour.select('td')[2].text}"
                 )
 
-            street_address = store["address"].strip()
+            raw_address = (
+                f'{store["address"]}, {store["city"]}, {store["state"]}, United Kingdom'
+            )
+            addr = parse_address_intl(raw_address)
+            street_address = (
+                store["address"]
+                .split("Swindon")[0]
+                .replace("Hamleys", "")
+                .replace("Designer Outlet", "")
+                .strip()
+            )
+            if "Merry Hill Shopping Centre" in street_address:
+                street_address = store["location_name"] + " " + street_address
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            if street_address.startswith(","):
+                street_address = street_address[1:]
 
             yield SgRecord(
                 page_url=base_url,
                 location_name=store["location_name"],
                 street_address=street_address,
-                city=store["city"],
-                state=store["state"],
+                city=addr.city,
+                state=addr.state,
                 latitude=store["position"]["latitude"],
                 longitude=store["position"]["longitude"],
                 zip_postal=store["zipcode"],
@@ -69,6 +84,7 @@ def fetch_data():
                 phone=store["phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).split("Day: Open-Close;")[-1],
+                raw_address=f'{store["address"]}, {store["city"]}, {store["state"]}, {store["zipcode"]}',
             )
 
 
