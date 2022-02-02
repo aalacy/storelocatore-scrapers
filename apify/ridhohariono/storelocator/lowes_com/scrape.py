@@ -10,7 +10,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
 
 DOMAIN = "lowes.com"
-SITE_MAP = "https://www.lowes.com/content/lowes/desktop/en_us/stores.xml"
+SITE_MAP = "https://www.lowes.com/sitemap/store0.xml"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
