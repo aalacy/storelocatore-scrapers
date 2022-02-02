@@ -59,7 +59,18 @@ def fetch_data():
                     ],
                 )
             )
-
+            if len(store_info) <= 0:
+                store_info = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in contact_sel.xpath(
+                                f'//div[contains(@class,"text-single-content")]//span[strong[contains(text(),"{location_name}")]]/..//text()'
+                            )
+                        ],
+                    )
+                )
             raw_address = " ".join(store_info[1:]).split("Tel")[0].strip()
 
             formatted_addr = parser.parse_address_intl(raw_address)
