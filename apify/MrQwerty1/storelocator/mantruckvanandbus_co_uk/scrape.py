@@ -85,7 +85,7 @@ def fetch_data(sgw: SgWriter, driver: SgChrome):
 
 
 if __name__ == "__main__":
-    with SgChrome(is_headless=False, user_agent=agent) as driver, SgWriter(
+    with SgChrome(is_headless=True, user_agent=agent) as driver, SgWriter(
         SgRecordDeduper(RecommendedRecordIds.PageUrlId)
     ) as writer:
         fetch_data(writer, driver)
