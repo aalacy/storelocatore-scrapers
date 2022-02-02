@@ -22,6 +22,8 @@ def fetch_data():
     all_locations = dom.xpath('//article[@class="c-list-item"]')
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//h3/text()")[0]
+        if "СЕРВИС" in location_name:
+            continue
         raw_address = poi_html.xpath('.//div[@class="c-list-item__body"]/p/text()')[
             0
         ].strip()

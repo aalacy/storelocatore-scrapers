@@ -31,9 +31,10 @@ def fetch_data():
         "https://www.bathandbodyworks.com/middle-east-and-africa/global-locations-egypt.html",
     ]
 
-    with SgChrome(user_agent=user_agent) as driver:
+    for search_url in search_urls:
+        with SgChrome(user_agent=user_agent) as driver:
 
-        for search_url in search_urls:
+            log.info(search_url)
             driver.get(search_url)
             time.sleep(5)
             htmlpage = driver.page_source
@@ -108,6 +109,7 @@ def scrape():
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
                 }
             )
         )
