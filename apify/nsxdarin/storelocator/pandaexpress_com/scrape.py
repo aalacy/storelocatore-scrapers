@@ -17,7 +17,7 @@ def fetch_data():
     url = "https://www.pandaexpress.com/locations"
     states = []
     cities = []
-    locs = []
+    locs = ["https://www.pandaexpress.com/locations/ar/benton/20810-i-30-north"]
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<a class="record" href="/locations/' in line:
@@ -62,68 +62,76 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for loc in locs:
-        logger.info(loc)
-        hours = ""
-        add = ""
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        country = "US"
-        store = "<MISSING>"
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<div class="phone"><a href="tel:' in line2:
-                phone = line2.split('<div class="phone"><a href="tel:')[1].split('"')[0]
-            if '<link rel="canonical" href="' in line2:
-                purl = line2.split('<link rel="canonical" href="')[1].split('"')[0]
-            if '<div class="name"><h2>' in line2:
-                name = (
-                    line2.split('<div class="name"><h2>')[1]
-                    .split("<")[0]
-                    .replace("&amp;", "&")
+        try:
+            logger.info(loc)
+            hours = ""
+            add = ""
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            country = "US"
+            store = "<MISSING>"
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                if '<div class="phone"><a href="tel:' in line2:
+                    phone = line2.split('<div class="phone"><a href="tel:')[1].split(
+                        '"'
+                    )[0]
+                if '<link rel="canonical" href="' in line2:
+                    purl = line2.split('<link rel="canonical" href="')[1].split('"')[0]
+                if '<div class="name"><h2>' in line2:
+                    name = (
+                        line2.split('<div class="name"><h2>')[1]
+                        .split("<")[0]
+                        .replace("&amp;", "&")
+                    )
+                if '<div class="address">' in line2 and add == "":
+                    address = line2.split('<div class="address">')[1].split("</div>")[0]
+                    add = address.split("<br>")[0].strip()
+                    city = address.split("<br>")[1].strip().split(",")[0]
+                    state = (
+                        address.split("<br>")[1]
+                        .strip()
+                        .split(",")[1]
+                        .strip()
+                        .rsplit(" ", 1)[0]
+                    )
+                    zc = address.strip().rsplit(" ", 1)[1]
+                if '<div class="day_name">' in line2:
+                    days = line2.split('<div class="day_name">')
+                    for day in days:
+                        if '<div class="day_hours">' in day:
+                            hrs = (
+                                day.split("<")[0]
+                                + ": "
+                                + day.split('<div class="day_hours">')[1].split("<")[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+            if hours == "":
+                hours = "<MISSING>"
+            if "," in add:
+                add = add.split(",")[1].strip()
+            if len(zc) >= 5:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
                 )
-            if '<div class="address">' in line2 and add == "":
-                address = line2.split('<div class="address">')[1].split("</div>")[0]
-                add = address.split("<br>")[0].strip()
-                city = address.split("<br>")[1].strip().split(",")[0]
-                state = (
-                    address.split("<br>")[1]
-                    .strip()
-                    .split(",")[1]
-                    .strip()
-                    .rsplit(" ", 1)[0]
-                )
-                zc = address.strip().rsplit(" ", 1)[1]
-            if '<div class="day_name">' in line2:
-                days = line2.split('<div class="day_name">')
-                for day in days:
-                    if '<div class="day_hours">' in day:
-                        hrs = (
-                            day.split("<")[0]
-                            + ": "
-                            + day.split('<div class="day_hours">')[1].split("<")[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-        if hours == "":
-            hours = "<MISSING>"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=purl,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        except:
+            pass
 
 
 def scrape():

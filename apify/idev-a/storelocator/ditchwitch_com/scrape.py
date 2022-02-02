@@ -73,6 +73,7 @@ def fetch_records(search):
 if __name__ == "__main__":
     countries = [
         "ar",
+        "au",
         "at",
         "bg",
         "ca",
