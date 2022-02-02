@@ -87,7 +87,9 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=str(lat),
             longitude=str(longt),
-            hours_of_operation=hours.replace(":00 am", " am").replace(":00 pm", " pm"),
+            hours_of_operation=hours.replace(":00 am", " am")
+            .replace(":00 pm", " pm")
+            .replace("Closed", "Closed "),
         )
 
 
