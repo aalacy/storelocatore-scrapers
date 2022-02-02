@@ -30,6 +30,12 @@ def fetch_data():
         stores_sel = lxml.html.fromstring(driver.page_source)
         store_list = json.loads("".join(stores_sel.xpath("//body//text()")).strip())
         for store in store_list:
+            if (
+                not store["Address1"]
+                and not store["city"]
+                and not store["Zipcode"].strip()
+            ):
+                continue
             locator_domain = website
             page_url = "https://www.marketstreetunited.com/rs/StoreLocator?id={}"
             location_name = store["StoreName"]
