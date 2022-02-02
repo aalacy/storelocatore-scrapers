@@ -76,6 +76,8 @@ def fetch_data():
             )["href"]
         )
         location_name = row.find("div", {"class": "amlocator-title"}).text.strip()
+        if "COMING SOON" in location_name:
+            continue
         raw_address = (
             row.find("div", {"class": "address"}).text.replace("\n", "").strip()
         )
@@ -96,7 +98,7 @@ def fetch_data():
             .replace("day,", "day: ")
             .strip()
         )
-        location_type = "HEARING"
+        location_type = "HEARING TEST"
         store_number = (
             row.find("div", {"class": "store-button"})
             .find("a")["href"]

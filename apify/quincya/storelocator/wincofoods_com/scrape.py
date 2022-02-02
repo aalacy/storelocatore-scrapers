@@ -1,7 +1,10 @@
+import re
 import ssl
 import time
 
 from bs4 import BeautifulSoup
+
+from sglogging import SgLogSetup
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -16,10 +19,12 @@ from sgselenium.sgselenium import SgChrome
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+logger = SgLogSetup().get_logger("wincofoods.com")
+
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.wincofoods.com/stores/?coordinates=34.264406683768875,-93.34875642499999&zoom=4"
+    base_link = "https://www.wincofoods.com/stores/"
     user_agent = (
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
@@ -32,7 +37,6 @@ def fetch_data(sgw: SgWriter):
     time.sleep(10)
 
     base = BeautifulSoup(driver.page_source, "lxml")
-    driver.close()
 
     items = base.find(class_="store-list__scroll-container").find_all("li")
     locator_domain = "https://www.wincofoods.com/"
@@ -51,11 +55,47 @@ def fetch_data(sgw: SgWriter):
         )[-1].title()
 
         link = "https://www.wincofoods.com/stores/" + store_number
+        logger.info(link)
+        got_page = False
 
-        phone = "<INACCESSIBLE>"
-        latitude = "<INACCESSIBLE>"
-        longitude = "<INACCESSIBLE>"
-        hours_of_operation = "<INACCESSIBLE>"
+        try:
+            driver.get(link)
+            WebDriverWait(driver, 30).until(
+                ec.presence_of_element_located((By.CLASS_NAME, "address1"))
+            )
+            time.sleep(5)
+            got_page = True
+        except:
+            logger.info("Retrying link ..")
+            try:
+                driver.get(link)
+                WebDriverWait(driver, 30).until(
+                    ec.presence_of_element_located((By.CLASS_NAME, "address1"))
+                )
+                time.sleep(5)
+                got_page = True
+            except:
+                pass
+
+        if got_page:
+            base = BeautifulSoup(driver.page_source, "lxml")
+            phone = base.find("a", {"href": re.compile(r"tel:")}).text
+            latitude = base.find("meta", attrs={"property": "og:location:latitude"})[
+                "content"
+            ]
+            longitude = base.find("meta", attrs={"property": "og:location:longitude"})[
+                "content"
+            ]
+            hours_of_operation = " ".join(
+                list(
+                    base.find(class_="store-details-store-hours__list").stripped_strings
+                )
+            )
+        else:
+            phone = "<INACCESSIBLE>"
+            latitude = "<INACCESSIBLE>"
+            longitude = "<INACCESSIBLE>"
+            hours_of_operation = "<INACCESSIBLE>"
 
         sgw.write_row(
             SgRecord(
@@ -75,6 +115,7 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation=hours_of_operation,
             )
         )
+    driver.close()
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:

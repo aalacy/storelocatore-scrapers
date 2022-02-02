@@ -40,10 +40,11 @@ def fetch_data():
 
             try:
                 title = div.find("h2").text
+
                 address = div.find("p")
                 address = re.sub(cleanr, "\n", str(address))
                 address = re.sub(pattern, "\n", str(address)).strip()
-                address = address.split("\n")
+                address = address.replace("\n", " ").strip()
 
                 pa = parse_address_intl(address)
 
