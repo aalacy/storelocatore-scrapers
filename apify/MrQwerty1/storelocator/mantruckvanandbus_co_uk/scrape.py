@@ -74,7 +74,9 @@ def fetch_data():
         urls = get_urls(driver)
 
         with futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future_to_url = {executor.submit(get_data, url, driver): url for url in urls}
+            future_to_url = {
+                executor.submit(get_data, url, driver): url for url in urls
+            }
             for future in futures.as_completed(future_to_url):
                 yield future.result()
 
@@ -82,8 +84,6 @@ def fetch_data():
 if __name__ == "__main__":
     data = fetch_data()
 
-    with SgWriter(
-        SgRecordDeduper(RecommendedRecordIds.PageUrlId)
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
             writer.write_row(row)
