@@ -84,6 +84,16 @@ class _SearchIteration(SearchIteration):
                     city = store["address"]["city"]
                     state = store["address"]["state"]
                     zip = store["address"]["zipcode"]
+                    raw_address = ""
+                    if street_address and len(street_address) > 0:
+                        raw_address = street_address
+                    if city and len(city) > 0:
+                        raw_address = raw_address + ", " + city
+                    if state and len(state) > 0:
+                        raw_address = raw_address + ", " + state
+                    if zip and len(zip) > 0:
+                        raw_address = raw_address + ", " + zip
+
                     country_code = store["address"]["country"]
                     store_number = store["storeId"]
                     phone = store["address"]["officePhoneNumber"]
@@ -119,6 +129,7 @@ class _SearchIteration(SearchIteration):
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
 
             except:

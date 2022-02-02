@@ -61,8 +61,8 @@ def fetch_data():
                     .split("!2m3")[0]
                     .split("!3d")
                 )
-                latitude = geo[0]
-                longitude = geo[1]
+                latitude = geo[0].split("!")[0]
+                longitude = geo[1].split("!")[0]
             else:
                 loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)

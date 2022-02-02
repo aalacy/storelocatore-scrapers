@@ -51,8 +51,6 @@ def get_data():
     grids = soup.find_all("div", attrs={"class": "col-md-4 col-xs-12 pm-location"})
 
     for grid in grids:
-        if "temporarily closed" in grid.text.strip().lower():
-            continue
         locator_domain = "rockandbrews.com"
         phone = "<MISSING>"
 
@@ -102,15 +100,18 @@ def get_data():
             hour_parts = grid.find_all("span", attrs={"class": "hours-time"})
 
             count = 0
-            hours = ""
-            for day_bit in days:
-                day = day_bit.text.strip()
-                hour_part = hour_parts[count].text.strip().replace(" ", "")
-                hours = hours + day + " " + hour_part + ", "
+            if "temporarily closed" in grid.text.strip().lower():
+                hours = "Temporarily Closed"
+            else:
+                hours = ""
+                for day_bit in days:
+                    day = day_bit.text.strip()
+                    hour_part = hour_parts[count].text.strip().replace(" ", "")
+                    hours = hours + day + " " + hour_part + ", "
 
-                count = count + 1
+                    count = count + 1
 
-            hours = hours[:-2]
+                hours = hours[:-2]
 
             try:
                 driver.get(page_url)
