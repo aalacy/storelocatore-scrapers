@@ -111,7 +111,7 @@ def fetch_data(sgw: SgWriter):
                 location_type = location_type[1:].strip()
             latitude = item["lat"]
             longitude = item["lng"]
-            if "." not in latitude:
+            if "." not in str(latitude):
                 latitude = ""
                 longitude = ""
             link = locator_domain + item["detailsUrl"]
