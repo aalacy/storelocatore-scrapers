@@ -38,11 +38,9 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = "<MISSING>"
         if desc != "<MISSING>":
             h = html.fromstring(desc)
-            hours_of_operation = h.xpath("//*//text()")
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
-            hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
+            hours_of_operation = " ".join(h.xpath("//*//text()"))
+            hours_of_operation = " ".join(hours_of_operation.split())
+
         if hours_of_operation.find("Lobby Hours") != -1:
             hours_of_operation = (
                 hours_of_operation.split("Lobby Hours")[1].split("Services")[0].strip()
