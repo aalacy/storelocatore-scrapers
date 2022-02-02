@@ -21,9 +21,9 @@ def fetch_data():
     for poi in data["dealers"]:
         loc_response = session.get(poi["url"])
         loc_dom = etree.HTML(loc_response.text)
-        raw_data = loc_dom.xpath('//p[b[contains(text(), "SALON LEXUS")]]/text()')
-        raw_data = " ".join([e.strip() for e in raw_data if e.strip()])
-        hoo = raw_data.split("as salona")[-1]
+        hoo = loc_dom.xpath(
+            '//p[strong[contains(text(), "SERVISNI SPREJEM ")]]/text()'
+        )[-1]
 
         item = SgRecord(
             locator_domain=domain,
