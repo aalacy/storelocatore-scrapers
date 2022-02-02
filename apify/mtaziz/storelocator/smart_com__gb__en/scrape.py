@@ -53,9 +53,11 @@ def get_api_key():
     response_pjsurl = get_response(
         0, dealerlocator_payload_pluginJSUrl, headers_dealer_locator
     )
+
     apikey_pjsurl = re.findall(
-        r"apiKey:_\|\|String(.*)searchProfileName", response_pjsurl.text
+        r"apiKey:.\|\|String(.*)searchProfileName", response_pjsurl.text
     )
+
     apikey = "".join(apikey_pjsurl).split('"')[1]
     try:
         if apikey:
@@ -82,7 +84,7 @@ def determine_brand(k):
         brands.append(
             str(i["brand"]["name"]) + str("(" + str(i["brand"]["code"]) + ")")
         )
-    logger.info(" brands: %s" % brands)
+    logger.info("Brands: %s" % brands)
     return ", ".join(brands)
 
 
@@ -230,6 +232,8 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
             l = fix_comma(l)
             street_address = l or SgRecord.MISSING
             city = d["address"]["city"] or SgRecord.MISSING
+            state1 = ""
+            state2 = ""
             if "region" in d["address"]["region"]:
                 state1 = d["address"]["region"]["region"]
             else:
@@ -239,13 +243,13 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
                 state2 = d["address"]["region"]["subRegion"]
             else:
                 state2 = ""
-
-            if state1 and state2:
-                state = state1 + ": " + state2
+            state = ""
+            if state1:
+                state = state1
+            elif not state1 and state2:
+                state = state2
             elif state1 and not state2:
                 state = state1
-            elif state2 and not state1:
-                state = state2
             else:
                 state = SgRecord.MISSING
 
@@ -325,6 +329,7 @@ def get_api_endpoint_url_based_on_dealer(headers_ak):
 def fetch_data(sgw: SgWriter):
     headers_with_apikey = get_api_based_headers()
     api_endpoint_urls = get_api_endpoint_url_based_on_dealer(headers_with_apikey)
+    logger.info(f"Total API ENDPOINT URLs: {len(api_endpoint_urls)}")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [

@@ -1,27 +1,31 @@
 import re
 from lxml import html
-from sgscrape.sgrecord import SgRecord
+from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 
+website = "mystricklands_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+locator_domain = "https://www.mystricklands.com/"
+
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.mystricklands.com/"
     api_url = "https://www.mystricklands.com/"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//p[text()="LOCATIONS"]/following::ul[1]/li/a')
     for d in div:
         location_type = SgRecord.MISSING
         page_url = "".join(d.xpath(".//@href"))
+        log.info(page_url)
         location_name = "".join(d.xpath(".//text()"))
         r = session.get(page_url, headers=headers)
         if "CLOSED FOR THE" in r.text:
@@ -101,7 +105,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

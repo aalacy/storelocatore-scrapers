@@ -56,7 +56,7 @@ def fetch_data():
 
             store_info = store.split(',"')[1]
 
-            store_number = store_info.split('",')[1].strip()
+            store_number = "<MISSING>"
 
             html_str = store_info.split('",')[0].strip()
             page_sel = lxml.html.fromstring(html_str)
@@ -104,7 +104,18 @@ def fetch_data():
                 .replace(";  ;  ;  ;", "")
                 .replace(";  ;  ; ", "")
                 .strip()
+                .split("; Located")[0]
+                .strip()
+                .replace("; ,nbsp;", "")
+                .strip()
+                .split("; Appointments")[0]
+                .strip()
+                .split("; Christmas Eve")[0]
+                .strip()
             )
+
+            if "call the store for more information" in hours_of_operation.lower():
+                hours_of_operation = "<MISSING>"
 
             try:
                 latitude = store.split(',"')[2].strip(' "')
@@ -138,7 +149,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
