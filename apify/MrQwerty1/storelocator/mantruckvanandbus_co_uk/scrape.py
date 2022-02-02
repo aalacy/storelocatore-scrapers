@@ -1,5 +1,4 @@
 import json
-from time import sleep
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
