@@ -40,7 +40,6 @@ def fetch_data():
                         + code.replace(" ", "%20")
                     )
                     locs.append(lurl)
-    print(locs)
     lat = "54.594718"
     lng = "-5.801682"
     city = "Belfast"
