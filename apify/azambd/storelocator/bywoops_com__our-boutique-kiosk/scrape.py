@@ -43,6 +43,12 @@ def parse_json(store):
     data["latitude"] = store["meta"]["store_latitude"]
     data["longitude"] = store["meta"]["store_longitude"]
 
+    tc = store["meta"]["store_show_as_closed"].strip()
+
+    if "Coming" in str(data["location_type"]) and tc == "1":
+        data["location_type"] = "Temporarily Closed"
+        logger.info(f'{ data["location_name"]} => {data["location_type"]}')
+
     try:
         data["hours_of_operation"] = ", ".join(
             [
