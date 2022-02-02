@@ -16,7 +16,10 @@ def fetch_data(sgw: SgWriter):
     for api in urls:
         r = session.get(api, headers=headers)
         text = (
-            r.text.split('locationsRaw":"')[1].split('","app_url"')[0].replace("\\", "")
+            r.text.split('locationsRaw":"')[1]
+            .split('","app_url"')[0]
+            .replace("\\r", "")
+            .replace("\\", "")
         )
         if ']"' in text:
             text = text.split(']"')[0] + "]"
@@ -60,6 +63,8 @@ def fetch_data(sgw: SgWriter):
                 if not h or "click" in h or "open" in h:
                     continue
                 _tmp.append(h.strip())
+                if "sunday" in h.lower():
+                    break
 
             hours_of_operation = ";".join(_tmp)
 
