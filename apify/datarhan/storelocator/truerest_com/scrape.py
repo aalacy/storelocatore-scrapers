@@ -73,6 +73,7 @@ def fetch_data():
                 latitude=poi["lat"],
                 longitude=poi["lng"],
                 hours_of_operation=hoo,
+                raw_address=" ".join(raw_address),
             )
 
             yield item

@@ -83,8 +83,7 @@ if __name__ == "__main__":
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=5,
-        max_search_results=35,
+        expected_search_radius_miles=10,
     )
     with SgWriter(
         SgRecordDeduper(

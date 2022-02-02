@@ -89,19 +89,20 @@ def fetch_data():
         location_name = row.find("h3").get_text(strip=True, separator=" ").upper()
         row.find("h3").decompose()
         info = re.sub(
-            r"\|\|Opening Hours:?\|\||\|\|[\w.+-]+@[\w-]+\.[\w.-]+",
-            "HOURS",
+            r"\|\|[\w.+-]+@[\w-]+\.[\w.-]+",
+            "",
             row.get_text(strip=True, separator="||"),
         )
+        info = re.sub(r"\|\|Opening Hours:?\|\|", "HOURS", info)
         addr = info.split("HOURS")[0].split("||")
         if len(addr) > 1:
             raw_address = ", ".join(addr[:-1])
             phone = addr[-1]
-            hours_of_operation = info.split("HOURS")[-1].replace("||", ",")
         else:
             raw_address = addr[0].strip()
             phone = MISSING
             hours_of_operation = MISSING
+        hours_of_operation = info.split("HOURS")[-1].replace("||", ",")
         raw_address = (
             raw_address.replace("D.C.", "DC")
             .replace("-", ",")
