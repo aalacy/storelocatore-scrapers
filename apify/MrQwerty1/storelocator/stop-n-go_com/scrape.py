@@ -7,7 +7,9 @@ from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
 def fetch_data(sgw: SgWriter):
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], expected_search_radius_miles=100)
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+    )
     for lat, lng in search:
         api = f"https://www.kwiktrip.com/locproxy.php?Latitude={lat}&Longitude={lng}&maxDistance=100&limit=250"
         r = session.get(api, headers=headers)
@@ -51,7 +53,7 @@ def fetch_data(sgw: SgWriter):
                 city=city,
                 state=state,
                 zip_postal=postal,
-                country_code='US',
+                country_code="US",
                 store_number=store_number,
                 phone=phone,
                 latitude=latitude,
@@ -73,4 +75,3 @@ if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
-
