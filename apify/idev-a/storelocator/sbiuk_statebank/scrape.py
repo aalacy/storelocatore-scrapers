@@ -41,12 +41,16 @@ def fetch_data():
                 )[-1]
 
             hours = []
-            if _.find("strong", string=re.compile(r"Business hours")):
-                hours = (
-                    _.find("strong", string=re.compile(r"Business hours"))
-                    .find_next_sibling()
-                    .stripped_strings
-                )
+            hr = _.find("strong", string=re.compile(r"^Business hours", re.I))
+            if not hr:
+                hr = _.find("p", string=re.compile(r"^Business hours", re.I))
+            if hr:
+                hours = list(hr.find_next_sibling().stripped_strings)
+                if not hours:
+                    hours = list(
+                        hr.find_parent("li").find_next_sibling().stripped_strings
+                    )
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h4.text.strip(),

@@ -30,6 +30,8 @@ def fetch_data(sgw: SgWriter):
     items = base.find_all(class_="css-4611wo")
 
     for item in items:
+        if item.text.count("details") > 1:
+            continue
         raw_address = list(item.stripped_strings)[:-1]
         location_name = raw_address[0].strip()
         street_address = raw_address[1].strip()

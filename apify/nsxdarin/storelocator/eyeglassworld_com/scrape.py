@@ -36,6 +36,7 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
+        HFound = False
         try:
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
@@ -51,18 +52,20 @@ def fetch_data():
                     zc = line2.split('"postalCode" : "')[1].split('"')[0]
                 if '"telephone" : "' in line2:
                     phone = line2.split('"telephone" : "')[1].split('"')[0]
-                if 'pm"' in line2:
+                if '"openingHours" : [' in line2:
+                    HFound = True
+                if HFound and "]" in line2:
+                    HFound = False
+                if HFound and '"' in line2 and "[" not in line2:
                     hrs = line2.split('"')[1]
                     if hours == "":
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-                if "Closed</span>" in line2:
-                    hours = "Temporarily Closed"
             if phone == "":
                 phone = "<MISSING>"
             if hours == "":
-                hours = "<MISSING>"
+                hours = "Temporarily Closed"
             add = (
                 add.replace("Suite", " Suite").replace("  ", " ").replace("&amp;", "&")
             )
