@@ -1,4 +1,3 @@
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -54,7 +53,6 @@ def get_response_post(url, data_body):
 
 def fetch_records(zipcode, sgw: SgWriter):
     # Your scraper here
-    session = SgRequests()
     location_url_state_city_with_hyphen_clientkey_part1_us = (
         "https://www.dollartree.com/locations/"
     )
@@ -183,7 +181,6 @@ def fetch_data(sgw: SgWriter):
 
 
 def scrape():
-    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
