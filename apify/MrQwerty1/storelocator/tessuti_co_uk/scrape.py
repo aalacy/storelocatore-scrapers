@@ -73,7 +73,7 @@ def get_data(slug, driver):
 
 
 def fetch_data():
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome(is_headless=True) as driver:
         urls = get_urls(driver)
         for url in urls:
             yield get_data(url, driver)
