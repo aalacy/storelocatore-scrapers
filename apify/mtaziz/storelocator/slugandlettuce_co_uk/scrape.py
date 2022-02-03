@@ -9,7 +9,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 import tenacity
 from tenacity import retry, stop_after_attempt
-import json
 import ssl
 
 
@@ -135,7 +134,6 @@ def fetch_data(sgw: SgWriter):
 
 
 def scrape():
-    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
