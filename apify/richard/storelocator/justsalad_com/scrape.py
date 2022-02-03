@@ -54,7 +54,7 @@ def fetch_data():
             # Store ID
             location_id = store["locationID"]
 
-            location_link = "<MISSING>"
+            location_link = "https://justsalad.com/locations"
 
             # Type
             location_type = "<MISSING>"
