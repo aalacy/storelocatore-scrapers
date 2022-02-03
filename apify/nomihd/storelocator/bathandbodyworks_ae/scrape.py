@@ -123,6 +123,7 @@ def fetch_data():
                 try:
                     if location_name in ID_dict:
                         ID = ID_dict[location_name]
+                        store_number = ID
                         log.info(ID)
                         ajax_URL = (
                             search_url.split("/en")[0].strip()

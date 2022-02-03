@@ -30,7 +30,7 @@ def fetch_data(sgw: SgWriter):
     )
     tex = text.split("markersCoords.push(")
     tex.pop(0)
-    for t in text:
+    for t in tex:
         _id = t.split("id:")[1].split(",")[0].strip()
         if _id == "0":
             break

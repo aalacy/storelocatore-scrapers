@@ -66,7 +66,18 @@ def fetch_data():
             )
             raw_address = "<MISSING>"
 
-            street_address = store_info[-2].split(":")[1].strip()
+            street_address = (
+                store_info[-2]
+                .split(":")[1]
+                .strip()
+                .replace("Georgian Mall", "")
+                .replace(", Mountainview Plaza Midland", "")
+                .replace("The Quinte Mall", "")
+                .replace("The Huntsville Place Mall", "")
+                .strip()
+            )
+            if street_address[-1] == ",":
+                street_address = "".join(street_address[:-1]).strip()
 
             city = store_info[0].split(":")[1].strip()
 

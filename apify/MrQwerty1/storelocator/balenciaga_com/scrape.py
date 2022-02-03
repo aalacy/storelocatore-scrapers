@@ -43,13 +43,15 @@ def fetch_data(sgw: SgWriter):
                 "\n", ", "
             ).strip()
 
-            city = j.get("city")
-            state = j.get("stateCode")
-            postal = j.get("postalCode")
+            city = j.get("city") or ""
+            state = j.get("stateCode") or ""
+            postal = j.get("postalCode") or ""
 
             street_address, city, state, postal = get_international(
                 line, city, state, postal
             )
+
+            raw_address = " ".join(f"{line} {city} {state} {postal}".split())
             country_code = j.get("countryCode")
             store_number = j.get("ID")
             page_url = j.get("detailsUrl")
@@ -91,6 +93,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=longitude,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
             sgw.write_row(row)
