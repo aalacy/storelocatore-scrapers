@@ -1,4 +1,3 @@
-import re
 import usaddress
 from lxml import html
 from sglogging import sglog
