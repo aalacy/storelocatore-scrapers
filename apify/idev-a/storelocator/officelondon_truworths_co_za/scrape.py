@@ -33,20 +33,25 @@ def fetch_records(http, search):
             phone = ""
             if _.get("store.telephone"):
                 phone = _["store.telephone"][0]
+            if phone == "0" or phone == "-":
+                phone = ""
             coord = _["store.geocode"][0].split(",")
             search.found_location_at(coord[1], coord[0])
+            zip_postal = _["store.postalCode"][0]
+            if zip_postal == "0":
+                zip_postal = ""
             yield SgRecord(
                 page_url="https://officelondon.truworths.co.za/store-location",
                 location_name=_["store.name"][0],
                 store_number=_["store.id"][0],
                 street_address=street_address,
                 city=_["store.city"][0].split(",")[0],
-                zip_postal=_["store.postalCode"][0],
+                zip_postal=zip_postal,
                 country_code="South Africa",
                 location_type=", ".join(_["store.companyName"]),
                 phone=phone,
-                latitude=coord[1],
-                longitude=coord[0],
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
             )
 
