@@ -1,113 +1,91 @@
-import csv
 import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+def get_phone(page_url) -> str:
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    return "".join(tree.xpath('//a[contains(@href, "tel")]/text()')).strip()
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
+
     locator_domain = "https://www.spiceandtea.com"
     api_url = "https://www.spiceandtea.com/where-to-buy"
 
-    session = SgRequests()
     r = session.get(api_url)
     tree = html.fromstring(r.text)
     block = (
         "".join(tree.xpath('//script[contains(text(), "jsonLocations")]/text()'))
         .split("jsonLocations: ")[1]
         .replace("\n", "")
-        .split(",            imageLocations")[0]
         .strip()
     )
+    block = " ".join(block.split()).split(", imageLocations:")[0].strip()
+
     js = json.loads(block)
 
     for j in js["items"]:
-        street_address = j.get("address")
-        city = j.get("city")
-        postal = j.get("zip")
-        state = j.get("state")
-        phone = j.get("phone") or "<MISSING>"
-        if phone.find("COMING") != -1:
-            phone = "<MISSING>"
+        ids = j.get("id")
+        info = j.get("popup_html")
+        a = html.fromstring(info)
+        text = " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+        street_address = text.split("Address:")[1].split("State:")[0].strip()
+        city = text.split("City:")[1].split("Zip:")[0].strip()
+        postal = text.split("Zip:")[1].split("Address:")[0].strip()
+        if postal.find("*") != -1:
+            postal = postal.replace("*", "").strip()
+        state = text.split("State:")[1].split("Description:")[0].strip()
         country_code = "US"
-        store_number = "<MISSING>"
-        location_name = j.get("name")
+        location_name = "".join(
+            a.xpath('//div[@class="amlocator-title"]/text()')
+        ).strip()
         latitude = j.get("lat")
         longitude = j.get("lng")
-        location_type = "<MISSING>"
-        page_url = f"https://www.spiceandtea.com/{j.get('website')}"
-        hours = j.get("schedule_array")
-        tmp = []
-        for h in hours:
-            days = "".join(h)
-            start = ":".join(hours.get(days).get("from"))
-            if start.count("0") == 4:
-                start = "Closed"
-            close = ":".join(hours.get(days).get("to"))
-            if close.count("0") == 4:
-                close = "Closed"
-            line = f"{days} {start} - {close}"
-            if start == close:
-                line = f"{days} Closed"
-            tmp.append(line)
-        hours_of_operation = " ".join(tmp) or "<MISSING>"
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        page_url = "".join(
+            tree.xpath(f'//div[@data-amid="{ids}"]//a[@class="more-info"]/@href')
+        ).strip()
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    f'//div[@data-amid="{ids}"]//div[@class="amlocator-schedule-table"]/div/span/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        phone = get_phone(page_url) or "<MISSING>"
+        if phone == "Coming Soon":
+            phone = "<MISSING>"
 
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

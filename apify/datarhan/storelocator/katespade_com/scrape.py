@@ -62,6 +62,8 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = "".join(loc_dom.xpath('//h1[@itemprop="name"]//text()'))
+        if "STORE CLOSED" in location_name:
+            continue
         street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')
         street_address = street_address[0]
         city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]

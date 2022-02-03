@@ -24,47 +24,58 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        search_url = "https://www.primohoagies.com/sitemap.php"
-        stores_req = session.get(search_url, headers=headers)
-        soup = BeautifulSoup(stores_req.text, "html.parser")
-        locations = soup.findAll("ul", {"class": "list"})[1].findAll("a")
-        for loc in locations:
-            title = loc.text
-            link = loc["href"]
-            stores_req = session.get(link, headers=headers)
-            soup = BeautifulSoup(stores_req.text, "html.parser")
-            details = soup.findAll("div", {"class": "row"})[1]
-            address = details.find("div", {"class": "p-street-address"})
-            if address is not None:
-                street = address.find("span", {"itemprop": "streetAddress"}).text
-                city = address.find("span", {"itemprop": "addressLocality"}).text
-                state = address.find("span", {"itemprop": "addressRegion"}).text
-                pcode = address.find("span", {"itemprop": "postalCode"}).text
-                lat = soup.find("meta", {"itemprop": "latitude"})["content"]
-                lng = soup.find("meta", {"itemprop": "longitude"})["content"]
-                phone = details.find("h4", {"itemprop": "telephone"}).text
-                hours = details.find("div", {"class": "hours"}).text
-                hours = hours.replace("day", "day ")
-                hours = hours.replace("pm", "pm ")
-                hours = hours.strip()
-                street = street.replace("\n", " ").strip()
+        search_url = "https://www.primohoagies.com/json/locations.json"
+        stores_req = session.get(search_url, headers=headers).json()
+        for store in stores_req:
+            storeid = store["ID"]
+            lat = store["lat"]
+            lng = store["lng"]
+            address = store["address"]
+            address2 = store["address2"]
+            street = address + " " + address2
+            street = street.strip()
+            city = store["city"]
+            state = store["state"]
+            pcode = store["postal"]
+            phone = store["phone"]
+            title = store["name"]
+            hours = store["hours"]
+            city2 = city
+            if city2.strip().find(" ") != -1:
+                city2 = city2.replace(" ", "-")
+            link = "https://www.primohoagies.com/" + city2 + "-" + state
+            hours = hours.replace("\n", " ")
+            if hours.strip() == "":
+                req = session.get(link, headers=headers)
+                if req.status_code == 200:
+                    soup = BeautifulSoup(req.text, "html.parser")
+                    hours = soup.find("div", {"class": "hours"})
+                    if hours is None:
+                        hours = "Coming Soon"
+                    else:
+                        hours = hours.text
+                        hours = hours.replace("day", "day ")
+                        hours = hours.replace("pm", "pm ")
+                        hours = hours.strip()
+                else:
+                    hours = "<MISSING>"
 
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=link,
-                    location_name=title,
-                    street_address=street.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=pcode,
-                    country_code="US",
-                    store_number=MISSING,
-                    phone=phone,
-                    location_type=MISSING,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours.strip(),
-                )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode,
+                country_code="US",
+                store_number=storeid.strip(),
+                phone=phone,
+                location_type=MISSING,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours.strip(),
+            )
 
 
 def scrape():

@@ -44,7 +44,7 @@ def fetch_data():
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation="",
+            hours_of_operation="<INACCESIBLE>",
         )
 
         yield item

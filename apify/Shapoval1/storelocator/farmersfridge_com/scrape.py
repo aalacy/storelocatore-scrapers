@@ -8,8 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.farmersfridge.com/page-data/sq/d/3661717568.json"
-    session = SgRequests()
+    api_url = "https://www.farmersfridge.com/page-data/locations-map/page-data.json"
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -44,7 +43,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     js = r.json()
-    for j in js["data"]["arabesque"]["locations"]["locations"]:
+    for j in js["result"]["pageContext"]["fridgeAndWholesaleLocations"]:
         a = j.get("operationConfigs")
         b = j.get("locationConfigs")
         ad = a.get("address")
