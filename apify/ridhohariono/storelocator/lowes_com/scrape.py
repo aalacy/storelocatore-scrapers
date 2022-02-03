@@ -62,6 +62,7 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     page_urls = pull_content(SITE_MAP).find_all("loc")
+    log.info(f"Total : {len(page_urls)}")
     for row in page_urls:
         page_url = row.text.strip()
         store = pull_content(page_url)
