@@ -38,8 +38,8 @@ def get_data(zips, sgw: SgWriter):
         data=data,
     )
 
-    js = r.json()["data"] or "<MISSING>"
-    if js == "<MISSING>":
+    js = r.json()["data"] or []
+    if not js:
         return
 
     for j in js:
