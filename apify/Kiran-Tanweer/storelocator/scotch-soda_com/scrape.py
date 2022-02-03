@@ -40,7 +40,7 @@ def fetch_data():
             stores_req = session.get(search_url, headers=headers).json()
             if stores_req != []:
                 for store in stores_req["stores"]:
-                    title = store["name"]
+                    title_main = store["name"]
                     street = store["address"]
                     city = store["city"]
                     pcode = store["postalCode"]
@@ -55,8 +55,12 @@ def fetch_data():
                     hours = hours.text
                     req = session.get(link, headers=headers)
                     soup = BeautifulSoup(req.text, "html.parser")
-                    title = soup.find("h1", {"id": "location-name"}).findAll("span")
-                    title = title[0].text + " " + title[1].text
+                    try:
+                        title = soup.find("h1", {"id": "location-name"}).text
+                        title = title.strip()
+                        title = title.replace('Soda', 'Soda ').strip()
+                    except AttributeError:
+                        title = title_main
                     if link.find("united-states") != -1:
                         state = link.split("united-states/")[1].split("/")[0].upper()
                         country_code = "US"
@@ -119,3 +123,4 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
+                    
