@@ -6,7 +6,6 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
 from sgpostal import sgpostal as parser
 
 website = "threeriversparks.org"
