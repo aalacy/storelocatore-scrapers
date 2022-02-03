@@ -58,7 +58,7 @@ def fetch_data():
                     try:
                         title = soup.find("h1", {"id": "location-name"}).text
                         title = title.strip()
-                        title = title.replace('Soda', 'Soda ').strip()
+                        title = title.replace("Soda", "Soda ").strip()
                     except AttributeError:
                         title = title_main
                     if link.find("united-states") != -1:
@@ -123,4 +123,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-                    
