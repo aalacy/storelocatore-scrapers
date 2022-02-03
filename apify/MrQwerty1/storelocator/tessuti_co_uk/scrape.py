@@ -5,7 +5,6 @@ from sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
 
 
 def get_urls(driver):
@@ -78,7 +77,6 @@ def fetch_data():
         urls = get_urls(driver)
         for url in urls:
             yield get_data(url, driver)
-        
 
 
 if __name__ == "__main__":
