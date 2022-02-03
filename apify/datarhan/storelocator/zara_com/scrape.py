@@ -98,7 +98,8 @@ def fetch_data():
     }
     with SgRequests() as session:
         search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, expected_search_radius_miles=20
+            country_codes=SearchableCountries.ALL,
+            expected_search_radius_miles=5,
         )
         for item in search_all(session, search, hdr):
             yield item

@@ -32,11 +32,14 @@ def fetch_data():
 
             if "We’re keeping this store closed" in _["store_name"]:
                 hours = ["temporarily_closed"]
+            street_address = _["address"].split("London")[0].strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             yield SgRecord(
                 page_url=locator_domain + "/us" + _["url"],
                 store_number=_["id"],
                 location_name=_["store_name"].split("-")[0].strip(),
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["city"],
                 state=_.get("state"),
                 zip_postal=_["postcode"],

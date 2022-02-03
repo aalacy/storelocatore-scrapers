@@ -43,13 +43,13 @@ def fetch_data():
                 .replace("&#40;", "(")
                 .replace("&#41;", ")")
             )
-        if "DAY</span></td>" in line and "</strong>" not in line:
-            day = line.split('">')[1].split("<")[0]
+        if "DAY </b>" in line and "</strong>" not in line:
+            day = line.split("<b>")[1].split("<")[0].strip()
             g = next(lines)
-            if ">CLOSED<" not in g:
-                day = day + ": " + g.rsplit(';">', 1)[1].split("<")[0]
+            if "CLOSED" not in g:
+                day = day + ": " + g.split("<td>")[1].split("<")[0].strip()
                 g = next(lines)
-                day = day + "-" + g.rsplit(';">', 1)[1].split("<")[0]
+                day = day + "-" + g.split("<td>")[1].split("<")[0].strip()
                 if hours == "":
                     hours = day
                 else:

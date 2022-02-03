@@ -34,7 +34,7 @@ def fetch_data():
         if poi["name"] == "Test dealer":
             continue
         country_code = poi["country"]
-        if country_code in ["Sverige", "Danmark"]:
+        if country_code in ["Sverige", "Danmark", "Polen"]:
             continue
 
         item = SgRecord(
