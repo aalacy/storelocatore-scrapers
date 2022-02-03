@@ -50,8 +50,8 @@ def fetch_records(http, search):
                 country_code="South Africa",
                 location_type=", ".join(_["store.companyName"]),
                 phone=phone,
-                latitude=coord[1],
-                longitude=coord[0],
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
             )
 
