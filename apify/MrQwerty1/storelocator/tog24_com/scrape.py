@@ -55,7 +55,10 @@ def fetch_data(sgw: SgWriter):
         street_address, city, postal = get_international(raw_address)
         phone = "".join(d.xpath(".//span[@class='phone']/text()")).strip()
         store_number = "".join(d.xpath("./@onblur")).split("(")[1].replace(")", "")
-        latitude, longitude = coords.get(store_number)
+        latitude, longitude = coords.get(store_number) or (
+            SgRecord.MISSING,
+            SgRecord.MISSING,
+        )
 
         _tmp = []
         hours = d.xpath(".//span[@class='hours']/text()")
