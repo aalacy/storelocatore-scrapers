@@ -45,11 +45,11 @@ def fetch_data(search):
                 "latitude": str(lat),
                 "longitude": str(lng),
                 "locale": "en_US",
-                "limit": "15",
+                "limit": "200",
                 "radius": "200000",
                 "networks": "",
                 "subnetworks": "",
-                "maxNumResults": "15",
+                "maxNumResults": "200",
                 "type": "",
             }
             try:
