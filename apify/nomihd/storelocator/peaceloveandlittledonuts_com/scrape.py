@@ -77,6 +77,8 @@ def fetch_data():
                         street_address + ", " + formatted_addr.street_address_2
                     )
 
+                if street_address:
+                    street_address = street_address.replace("Hill Center ", "").strip()
                 city = formatted_addr.city
                 state = state_name
                 zip = formatted_addr.postcode

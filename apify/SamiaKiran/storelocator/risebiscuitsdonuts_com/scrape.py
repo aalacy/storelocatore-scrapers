@@ -39,6 +39,8 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if "Grand" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Grand")[0]
             phone = soup.find("div", {"class": "loc-contact"}).findAll("a")[1].text
             address = (
                 soup.find("div", {"class": "loc-address"})

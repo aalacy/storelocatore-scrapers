@@ -48,6 +48,8 @@ def fetch_data():
         hours_of_operation = []
         if poi.get("hours"):
             for day, hours in poi["hours"].items():
+                if type(hours) == list:
+                    continue
                 if hours.get("openIntervals"):
                     opens = hours["openIntervals"][0]["start"]
                     closes = hours["openIntervals"][0]["end"]

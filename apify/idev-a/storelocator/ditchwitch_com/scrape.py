@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicZipAndGeoSearch, Grain_2
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("ditchwitch")
@@ -32,11 +32,11 @@ def fetch_records(search):
             res = http.get(url, headers=headers)
             if res.status_code != 200:
                 continue
-            locations = res.json()
+            try:
+                locations = res.json()
+            except:
+                continue
             if "dealers" in locations:
-                if locations["dealers"]:
-                    search.found_location_at(lat, lng)
-
                 total += len(locations["dealers"])
                 for loc in locations["dealers"]:
                     hours = []
@@ -45,7 +45,11 @@ def fetch_records(search):
                         if loc.get(f"{day}_open"):
                             open = loc[f"{day}_open"]
                             close = loc[f"{day}_open"]
-                            hours.append(f"{day}: {open} - {close}")
+                            if open:
+                                times = f"{open} - {close}"
+                            else:
+                                times = "Not Listed"
+                            hours.append(f"{day}: {times}")
 
                     street_address = loc["address1"]
                     if loc["address2"]:
@@ -67,9 +71,34 @@ def fetch_records(search):
 
 
 if __name__ == "__main__":
-    search = DynamicZipAndGeoSearch(
-        country_codes=SearchableCountries.ALL, granularity=Grain_4()
-    )
+    countries = [
+        "ar",
+        "au",
+        "at",
+        "bg",
+        "ca",
+        "co",
+        "cz",
+        "es",
+        "lb",
+        "lt",
+        "mx",
+        "my",
+        "nl",
+        "nz",
+        "ph",
+        "pl",
+        "ru",
+        "sa",
+        "se",
+        "sg",
+        "th",
+        "tr",
+        "ua",
+        "us",
+        "za",
+    ]
+    search = DynamicZipAndGeoSearch(country_codes=countries, granularity=Grain_2())
     with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000

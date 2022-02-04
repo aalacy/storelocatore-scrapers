@@ -77,7 +77,7 @@ class _SearchIteration(SearchIteration):
             if "data" in stores_req.text:
 
                 for store in json.loads(stores_req.text)["data"]:
-                    page_url = "<MISSING>"
+                    page_url = "https://www.dodge.co.ao/localizador_de_stands/"
                     locator_domain = website
                     location_name = store["name"]
                     raw_address = store["address"]

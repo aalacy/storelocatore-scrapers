@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 session = SgRequests()
-website = "simplyfresh_info"
+website = "verlo_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
@@ -42,7 +42,10 @@ def fetch_data():
             location_name = loc["name"]
             log.info(page_url)
             store_number = loc["id"]
-            phone = loc["phone"]
+            try:
+                street_address = loc["address"]
+            except:
+                continue
             try:
                 street_address = loc["address"] + " " + loc["address2"]
             except:
@@ -53,6 +56,7 @@ def fetch_data():
             country_code = "US"
             latitude = loc["lat"]
             longitude = loc["lng"]
+            phone = loc["phone"]
             hours_of_operation = loc["fields"]["hours"]["meta"]
             hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
             hours_of_operation = hours_of_operation.findAll("meta")
