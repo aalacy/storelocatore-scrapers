@@ -68,16 +68,29 @@ def fetch_data():
                     break
 
                 day = datetime.datetime.strptime(dt, "%Y-%m-%d").strftime("%A")
-                if hours_json[dt]["STANDARD"]["closed"] is True:
-                    time = "Closed"
-                elif hours_json[dt]["STANDARD"]["open24Hours"] is True:
-                    time = "24 Hours"
-                else:
-                    time = (
-                        hours_json[dt]["STANDARD"]["hours"][0]["open"]
-                        + " - "
-                        + hours_json[dt]["STANDARD"]["hours"][0]["close"]
-                    )
+                time = "<MISSING>"
+                if "STANDARD" in hours_json[dt]:
+                    if hours_json[dt]["STANDARD"]["closed"] is True:
+                        time = "Closed"
+                    elif hours_json[dt]["STANDARD"]["open24Hours"] is True:
+                        time = "24 Hours"
+                    else:
+                        time = (
+                            hours_json[dt]["STANDARD"]["hours"][0]["open"]
+                            + " - "
+                            + hours_json[dt]["STANDARD"]["hours"][0]["close"]
+                        )
+                elif "DROP" in hours_json[dt]:
+                    if hours_json[dt]["DROP"]["closed"] is True:
+                        time = "Closed"
+                    elif hours_json[dt]["DROP"]["open24Hours"] is True:
+                        time = "24 Hours"
+                    else:
+                        time = (
+                            hours_json[dt]["DROP"]["hours"][0]["open"]
+                            + " - "
+                            + hours_json[dt]["DROP"]["hours"][-1]["close"]
+                        )
                 hours_list.append(day + ":" + time)
                 index = index + 1
 

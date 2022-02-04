@@ -1,11 +1,14 @@
 import re
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sglogging import sglog
+
+logger = sglog.SgLogSetup().get_logger(logger_name="vw.com")
 
 
 def write_output(data):
@@ -19,37 +22,50 @@ def write_output(data):
 
 
 def fetch_locations(postal, session):
-    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
-    url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/62711.json"
+    url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
+    logger.info(f"Crawling {url}")
+    response = session.get(url)
+    logger.info(f"Response: {response}")
     try:
-        response = session.get(url)
         data = response.json()
         dealers = data.get("dealers", [])
 
         pois = []
         for dealer in dealers:
+            # Page Url
             page_url = dealer["url"]
 
+            # Store ID
             store_number = dealer["dealerid"]
 
+            # Name
             location_name = dealer["name"]
 
+            # Street
             street_address = (dealer["address1"] + " " + dealer["address2"]).strip()
 
+            # Country
             country = dealer["country"]
 
+            # State
             state = dealer["state"]
 
+            # city
             city = dealer["city"]
 
+            # zip
             postal = dealer["postalcode"]
 
+            # Lat
             latitude = dealer["latlong"].split(",")[0]
 
+            # Long
             longitude = dealer["latlong"].split(",")[1]
 
+            # Phone
             phone = dealer["phone"]
 
+            # hour
             regex = re.compile("sale", re.IGNORECASE)
             department_hours = dealer["hours"]
             department = next(
@@ -99,15 +115,19 @@ def fetch_locations(postal, session):
                     hours_of_operation=hours_of_operation,
                 )
             )
-    except:
-        pass
 
-    return pois
+        return pois
+
+    except Exception as e:
+        logger.info(f"Error: {e}")
+        pass
 
 
 def fetch_data():
     with SgRequests() as session, ThreadPoolExecutor() as executor:
-        search = static_zipcode_list(10, SearchableCountries.USA)
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        )
         futures = [
             executor.submit(fetch_locations, postal, session) for postal in search
         ]
