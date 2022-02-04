@@ -52,7 +52,7 @@ def fetch_data():
             location_name = store["office"]
             if "Primary EyeCare" not in location_name:
                 continue
-            page_url = "<MISSING>"
+            page_url = "https://scheduling.aegvision.com/?brand=31&showstorelocator=1&businessunit=-1"
 
             location_type = "<MISSING>"
 

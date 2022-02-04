@@ -45,31 +45,45 @@ def get_data():
             location_type = "<MISSING>"
             country_code = "US"
 
-            try:
-                hours_response = session.get(page_url).text
-                hours_soup = bs(hours_response, "html.parser")
-                hours_parts = hours_soup.find(
-                    "li", attrs={"class": "single-hours-lists"}
-                ).find_all("ul")
-
-                hours = ""
-                for part in hours_parts:
-                    day = part.find("li", attrs={"class": "day"}).text.strip()
-                    time = part.find("li", attrs={"class": "time"}).text.strip()
-
-                    hours = hours + day + " " + time + ", "
-
-                hours = hours[:-2]
-            except Exception:
-
-                hours = "<MISSING>"
-                if "temporarily closed" in hours_response.lower():
-                    continue
-
-                else:
+            x = 0
+            while True:
+                x = x + 1
+                if x == 10:
                     log.info(search_code)
                     log.info(location_name)
                     raise Exception
+                try:
+                    hours_response = session.get(page_url).text
+                    hours_soup = bs(hours_response, "html.parser")
+                    hours_parts = hours_soup.find(
+                        "li", attrs={"class": "single-hours-lists"}
+                    ).find_all("ul")
+
+                    hours = ""
+                    for part in hours_parts:
+                        day = part.find("li", attrs={"class": "day"}).text.strip()
+                        time = part.find("li", attrs={"class": "time"}).text.strip()
+
+                        hours = hours + day + " " + time + ", "
+
+                    hours = hours[:-2]
+                    break
+                except Exception:
+
+                    try:
+                        hours = "<MISSING>"
+                        if "temporarily closed" in hours_response.lower():
+                            hours = "nope"
+                            break
+
+                        else:
+                            log.info(search_code)
+                            log.info(location_name)
+                    except Exception as e:
+                        log.info(e)
+
+            if hours == "nope":
+                continue
 
             try:
                 location["store"]["pharmacyOpenTime"]

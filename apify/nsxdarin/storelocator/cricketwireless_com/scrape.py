@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("cricketwireless_com")
 
@@ -10,38 +13,14 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_distance_miles=None,
+    max_search_results=None,
+)
 
 
 def fetch_data():
-    ids = []
     for search_lat, search_lng in search:
         try:
             logger.info("Pulling %s-%s..." % (str(search_lat), str(search_lng)))
@@ -53,7 +32,7 @@ def fetch_data():
                 + "&coordinates=40,-90,60,-110&multi_account=false&name=Cricket+Wireless+Authorized+Retailer,Cricket+Wireless+Store&page=1&pageSize=500&type=store"
             )
             r = session.get(url, headers=headers)
-            lines = r.iter_lines(decode_unicode=True)
+            lines = r.iter_lines()
             name = ""
             website = "cricketwireless.com"
             country = "US"
@@ -61,7 +40,7 @@ def fetch_data():
                 if '"momentfeed_venue_id":"' in line:
                     items = line.split('"momentfeed_venue_id":"')
                     for item in items:
-                        if '"internal_ref":"' in item:
+                        if '"store_info":' in item:
                             name = item.split('"name":"')[1].split('"')[0]
                             typ = item.split('"brand_name":"')[1].split('"')[0]
                             store = item.split('"corporate_id":"')[1].split('"')[0]
@@ -101,34 +80,36 @@ def fetch_data():
                                 hours = "<MISSING>"
                             if phone == "":
                                 phone = "<MISSING>"
-                            if store not in ids:
-                                ids.append(store)
-                                if "Sun" not in hours:
-                                    hours = hours + " Sun: Closed"
-                                    hours = hours.replace("  ", " ")
-                                yield [
-                                    website,
-                                    purl,
-                                    name,
-                                    add,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                            if "Sun" not in hours:
+                                hours = hours + " Sun: Closed"
+                                hours = hours.replace("  ", " ")
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=purl,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
         except:
             pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
