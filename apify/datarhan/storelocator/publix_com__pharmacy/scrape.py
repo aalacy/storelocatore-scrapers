@@ -12,7 +12,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     start_url = "https://rx.publix.com/en/pharmacy/search/results"
     domain = "publix.com/pharmacy"
@@ -21,11 +21,7 @@ def fetch_data():
         "Accept-Encoding": "gzip, deflate, br",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
     }
-    import requests
-
-    session = requests.Session()
-    proxies = {"http": "127.0.0.1:24000", "https": "127.0.0.1:24000"}
-    response = session.get(start_url, headers=hdr, proxies=proxies, verify=False)
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     token = dom.xpath('//input[@name="__RequestVerificationToken"]/@value')[0]
     hdr = {
@@ -38,9 +34,7 @@ def fetch_data():
     )
     for code in all_codes:
         frm = {"__RequestVerificationToken": token, "SearchInput": code}
-        response = session.post(
-            start_url, headers=hdr, data=frm, proxies=proxies, verify=False
-        )
+        response = session.post(start_url, headers=hdr, data=frm)
         dom = etree.HTML(response.text)
         data = dom.xpath('//script[contains(text(), "Mapper")]/text()')
         if not data:
