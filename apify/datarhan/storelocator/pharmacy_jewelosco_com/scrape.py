@@ -26,7 +26,7 @@ def fetch_data():
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
     for code in all_coords:
-        with SgChrome(is_headless=False) as driver:
+        with SgChrome() as driver:
             all_poi_html = []
 
             driver.get(start_url)
