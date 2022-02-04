@@ -81,11 +81,41 @@ def fetch_data():
             ).strip()
 
             phone_index = 0
+            raw_address = ""
             for phone_index, x in enumerate(store_info, 0):
                 if phone in x:
                     break
             if phone in store_info[phone_index]:
                 raw_address = " ".join(store_info[:phone_index])
+
+            if len(raw_address) <= 0:
+                raw_address = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[@class="custom-page-content product-data-list"]//div[@class="column store-finder-left"]//text()'
+                            )
+                        ],
+                    )
+                )
+                if len(raw_address) <= 0:
+                    raw_address = list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    '//div[@class="custom-page-content product-data-list"]//div[@class="column left"]//text()'
+                                )
+                            ],
+                        )
+                    )
+
+                raw_address = (
+                    " ".join(raw_address[1:]).strip().split("Telephone")[0].strip()
+                )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1

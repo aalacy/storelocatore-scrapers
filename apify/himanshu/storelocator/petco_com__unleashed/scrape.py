@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+import re
 import json
 from lxml import etree
 
@@ -8,55 +8,63 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://maps.stores.petco.com/api/getAsyncLocations?template=search&level=search&search={}&radius=100"
+    start_url = "https://stores.petco.com/"
     domain = "petco.com/unleashed"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
-    )
-    for code in all_codes:
-        data = session.get(start_url.format(code), headers=hdr).json()
-        if not data["markers"]:
-            continue
-        for poi in data["markers"]:
-            poi_data = json.loads(etree.HTML(poi["info"]).xpath("//div/text()")[0])
-            if poi_data["location_name"] != "Unleashed":
-                continue
-            page_url = poi_data["url"]
-            loc_response = session.get(page_url)
-            loc_dom = etree.HTML(loc_response.text)
-            street_address = poi_data["address_1"]
-            if poi_data["address_2"]:
-                street_address += ", " + poi_data["address_2"]
-            hoo = loc_dom.xpath('//div[@class="hours"]//text()')
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath('//a[@class="gaq-link"]/@href')
+    for url in all_states:
+        response = session.get(url)
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath(
+            '//div[@class="map-list-item-wrap is-single"]//a[@class="gaq-link"]/@href'
+        )
+        for url in all_cities:
+            response = session.get(url)
+            dom = etree.HTML(response.text)
+            all_locations = dom.xpath('//div[@data-brand="Unleashed"]/a/@href')
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=page_url,
-                location_name=poi_data["location_display_name"],
-                street_address=street_address,
-                city=poi_data["city"],
-                state=poi_data["region"],
-                zip_postal=poi_data["post_code"],
-                country_code="",
-                store_number=poi["locationId"],
-                phone=poi_data["local_phone"],
-                location_type=poi_data["location_name"],
-                latitude=poi["lat"],
-                longitude=poi["lng"],
-                hours_of_operation=hoo,
-            )
+            for page_url in all_locations:
+                loc_response = session.get(page_url)
+                loc_dom = etree.HTML(loc_response.text)
 
-            yield item
+                poi = loc_dom.xpath('//script[@id="indy-schema"]/text()')[0]
+                poi = json.loads(poi)[0]
+                location_name = (
+                    poi["name"]
+                    .replace("Welcome to your Unleashed in ", "")
+                    .replace("Welcome to your ", "")
+                    .replace("!", "")
+                    .strip()
+                )
+                store_number = re.findall(r"-(\d+).html", str(loc_response.url))[0]
+
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=poi["address"]["streetAddress"],
+                    city=poi["address"]["addressLocality"],
+                    state=poi["address"]["addressRegion"],
+                    zip_postal=poi["address"]["postalCode"],
+                    country_code="",
+                    store_number=store_number,
+                    phone=poi["address"]["telephone"],
+                    location_type=poi["@type"],
+                    latitude=poi["geo"]["latitude"],
+                    longitude=poi["geo"]["longitude"],
+                    hours_of_operation=poi["openingHours"],
+                )
+
+                yield item
 
 
 def scrape():
