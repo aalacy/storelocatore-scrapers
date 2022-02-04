@@ -34,7 +34,7 @@ def fetch_data():
                 loc = json.loads(loc)
                 temp = loc["metatag"]["value"]
                 location_name = temp["og_title"]
-                page_url = temp["canonical_url"].replace("\/", "/")
+                page_url = temp["canonical_url"].replace("\\/", "/")
                 try:
                     location_type = loc["service_details"]["AH"]["title"]
                 except:
