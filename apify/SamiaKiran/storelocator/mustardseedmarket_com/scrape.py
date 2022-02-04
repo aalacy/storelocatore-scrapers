@@ -64,6 +64,7 @@ def fetch_data():
                 phone.replace("(Press1)", "")
                 .replace("(CAFE)", "")
                 .replace("Grocery:", "")
+                .replace("(SEED)", "")
             )
             try:
                 address = (
