@@ -40,7 +40,11 @@ def fetch_data():
             latitude = r.text.split("var latitude =")[1].split(";")[0]
             longitude = r.text.split("var longitude =")[1].split(";")[0]
             location_name = soup.find("h2").text
-            location_type = soup.find("title").text.split("|")[1]
+            location_type = soup.find("title").text
+            if "PTS" in location_type:
+                location_type = "PTS"
+            else:
+                location_type = location_type.split("|")[1]
             raw_address = (
                 soup.find("div", {"class": "addrss"})
                 .get_text(separator="|", strip=True)
