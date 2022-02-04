@@ -60,6 +60,15 @@ def fetch_data():
             req = session.get(store, headers=headers)
             bs = BeautifulSoup(req.text, "html.parser")
             title = bs.find("h3", {"class": "location-name"}).text
+            try:
+                label = bs.find("div", {"data-test-id": "location_label"}).text
+            except AttributeError:
+                label = MISSING
+            label = label.lower()
+            if label.find("opening") != -1:
+                title = title + " " + "Coming Soon"
+            if label.find("coming") != -1:
+                title = title + " " + "Coming Soon"
             phone = bs.find("a", {"class": "phone phone-ga-mobile"})
             if phone is None:
                 phone = MISSING
@@ -91,6 +100,28 @@ def fetch_data():
             city = parsed.city if parsed.city else "<MISSING>"
             state = parsed.state if parsed.state else "<MISSING>"
             pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+
+            if street == "Windmill Green 24 Mount St":
+                pcode = state + " " + pcode
+                state = MISSING
+
+            if street == "245 Hammersmith Rd":
+                pcode = state + " " + pcode
+                state = MISSING
+                city = "London"
+
+            if street == "70 St Mary Axe London, Unit Ec3A 8Be":
+                street = street.split("London")
+                street, city = street
+                pcode = city.split(",")
+                pcode = pcode[1].strip()
+                pcode = pcode.lstrip("Unit").strip()
+                city = "London"
+            title = title.strip()
+
+            title = title.replace(
+                "Industrious Biltmore Coming Soon", "Industrious Biltmore"
+            ).strip()
 
             yield SgRecord(
                 locator_domain=DOMAIN,

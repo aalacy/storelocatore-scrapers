@@ -28,9 +28,8 @@ def fetch_data(sgw: SgWriter):
             ]
             j = j.get("properties")
             location_name = j.get("name") or ""
-            location_type = "Branch"
             if "ATM" in location_name:
-                location_type = "ATM"
+                continue
             street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
             city = j.get("city")
             state = j.get("state")
@@ -74,7 +73,6 @@ def fetch_data(sgw: SgWriter):
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,
-                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )

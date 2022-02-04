@@ -27,13 +27,6 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath("//h1/text()")[0]
-        latitude = ""
-        longitude = ""
-        geo = loc_dom.xpath('//a[contains(@href, "/@")]/@href')
-        if geo:
-            geo = geo[0].split("/@")[-1].split(",")[:2]
-            latitude = geo[0]
-            longitude = geo[1]
         poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
         if poi:
             poi = demjson.decode(poi[0])
@@ -55,9 +48,15 @@ def fetch_data():
             )
             phone = phone[-1] if phone else ""
         hoo = loc_dom.xpath(
-            '//h4[contains(text(), "Hours of Operation:")]/following-sibling::h4/text()'
+            '//span[contains(text(), "Hours of operation")]/following-sibling::p/text()'
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        latitude = loc_dom.xpath("//@data-lat")
+        latitude = latitude[0] if latitude else ""
+        longitude = loc_dom.xpath("//@data-lon")
+        longitude = longitude[0] if longitude else ""
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -67,10 +66,10 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type="",
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,

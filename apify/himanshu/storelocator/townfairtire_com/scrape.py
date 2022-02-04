@@ -25,67 +25,40 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("div", {"class": "storeLocations"}).findAll("a")
-        temp_list = soup.findAll("div", {"class": "panel panel-default storePanel"})
         for loc in loclist:
-            if "NO URL" in loc["href"]:
-                name = loc.text
-                for temp in temp_list:
-                    if name in temp.find("h4").find("span").text:
-                        page_url = url
-                        log.info(page_url)
-                        location_name = temp.find("h4").find("span").text
-                        address = temp.find(
-                            "div", {"class": "col-md-6 col-sm-7 col-xs-6"}
-                        )
-                        hours_of_operation = (
-                            address.find("div")
-                            .get_text(separator="|", strip=True)
-                            .replace("|", " ")
-                        )
-                        address = address.get_text(separator="|", strip=True).split("|")
-                        phone = (
-                            temp.select_one("button[onclick*=tel]")["onclick"]
-                            .replace('location.href="tel:', "")
-                            .replace('"', "")
-                        )
-                        street_address = address[0]
-                        address = address[1].split(",")
-                        city = address[0]
-                        address = address[1].split()
-                        state = address[0]
-                        zip_postal = address[1]
-                        country_code = "US"
-                        latitude = MISSING
-                        longitude = MISSING
-                        break
+            page_url = DOMAIN + loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            log.info(f"Response Status: {r}")
+            soup = BeautifulSoup(r.text, "html.parser")
 
-            else:
-                page_url = DOMAIN + loc["href"]
-                log.info(page_url)
-                r = session.get(page_url, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
-                if soup.find("script", {"type": "application/ld+json"}) is None:
-                    continue
-                loc = json.loads(
-                    soup.find("script", {"type": "application/ld+json"}).text
-                )
-                location_name = loc["name"]
-                address = loc["address"]
-                phone = loc["telephone"]
-                street_address = address["streetAddress"]
-                city = address["addressLocality"]
-                state = address["addressRegion"]
-                zip_postal = address["postalCode"]
-                country_code = address["addressCountry"]
-                coords = loc["geo"]
-                latitude = coords["latitude"]
-                longitude = coords["longitude"]
-                hours_of_operation = (
-                    soup.find("div", {"class": "storeHours"})
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                    .replace("Store Hours", "")
-                )
+            try:
+                schema = r.text.split('<script type="application/ld+json">', 1)[
+                    1
+                ].split("</script>", 1)[0]
+                schema = schema.replace("\n", "")
+                loc = json.loads(schema)
+            except Exception as e:
+                log.info(f"Error: {e}")
+                continue
+
+            location_name = loc["name"]
+            address = loc["address"]
+            phone = loc["telephone"]
+            street_address = address["streetAddress"]
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            zip_postal = address["postalCode"]
+            country_code = address["addressCountry"]
+            coords = loc["geo"]
+            latitude = coords["latitude"]
+            longitude = coords["longitude"]
+            hours_of_operation = (
+                soup.find("div", {"class": "storeHours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Store Hours", "")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
