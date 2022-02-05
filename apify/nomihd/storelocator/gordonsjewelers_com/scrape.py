@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "gordonsjewelers.com"
@@ -43,12 +45,14 @@ def fetch_data():
         state_sel = lxml.html.fromstring(state_res.text)
 
         store_list = state_sel.xpath(
-            '//div[contains(@class,"view-all-stores")]//div[./p]'
+            '//div[contains(@class,"view-all-stores")]//div[./div[@class="viewstoreslist"]]'
         )
 
         for store in store_list:
 
-            page_url = base + "".join(store.xpath(".//@href"))
+            if len("".join(store.xpath(".//a/@href"))) <= 0:
+                continue
+            page_url = base + "".join(store.xpath(".//a/@href"))
 
             locator_domain = website
 
@@ -119,7 +123,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

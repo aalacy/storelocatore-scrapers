@@ -1,117 +1,123 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
-import json
 import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-base_url = 'https://www.batterywarehouse.net'
 
-def validate(item):    
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\r', '').replace('\n', '').strip()
+session = SgRequests()
+website = "batterywarehouse_net"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
+headers = {
+    "User-Agent": "Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
+}
 
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
+DOMAIN = "https://batterywarehouse.net/"
+MISSING = SgRecord.MISSING
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    output_list = []
-    url = "https://www.batterywarehouse.net/battery_warehouse_locations_batteries_Maryland_Delaware_Pennsylvania.php"
-    session = requests.Session()
-    request = session.get(url)
-    response = etree.HTML(request.text)
-    cl_store_list = response.xpath('//div[@class="col-lg-6 col-md-6 col-sm-6"]')[1].xpath('.//a/@href')
-    for link in cl_store_list:        
-        if 'http' not in link:
-            link = base_url + '/' + link
-        store = etree.HTML(session.get(link).text)
-        detail = eliminate_space(store.xpath('.//div[@id="headerInfo"]//text()')) 
-        output = []
-        output.append(base_url) # url
-        output.append(detail[1]) #location name
-        address = parse_address(detail[2] + ', ' + detail[3])
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(detail[0]) #phone
-        output.append("Battery Warehouse") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(get_value(eliminate_space(store.xpath('.//div[@class="col-lg-10 col-md-10 col-sm-10"]//h3//text()'))).replace('Hours:', '').replace('  ', '')) #opening hours        
-        output_list.append(output)
-    al_store_list = response.xpath('//div[@class="col-lg-6 col-md-6 col-sm-6"]')[2].xpath('.//a/@href')
-    for link in al_store_list:        
-        if 'http' not in link:
-            link = base_url + '/' + link
-        store = etree.HTML(session.get(link).text)
-        detail = eliminate_space(store.xpath('.//div[@class="col-lg-12 col-md-12 col-sm-12"]')[0].xpath('.//text()')) 
-        output = []            
-        output.append(base_url) # url
-        output.append(detail[0]) #location name
-        address = parse_address(detail[2].replace('Address:', ''))
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(detail[1].replace('Phone:', '')) #phone
-        output.append("Battery Warehouse") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append('<MISSING>') #opening hours        
-        output_list.append(output)
-    return output_list
+    if True:
+        url = "https://batterywarehouse.net/battery_warehouse_locations_batteries_Maryland_Delaware_Pennsylvania.php"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "col-lg-6 col-md-6 col-sm-6"})[
+            1
+        ].findAll("a")
+        for loc in loclist:
+            page_url = DOMAIN + loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            temp = soup.find("div", {"id": "headerInfo"})
+            phone = temp.find("span").text
+            temp = temp.findAll("p")
+            location_name = temp[0].text
+            address = (
+                temp[1]
+                .get_text(separator="|", strip=True)
+                .replace("|", "")
+                .replace("YorkPA", "York PA")
+                .replace("Road", "Road ")
+                .replace("Ave", "Ave ")
+            )
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            hours_of_operation = (
+                soup.findAll("h3")[1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Hours:", "")
+                .replace("/", " ")
+            )
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!3m", 1)[0]
+                .split("!3d")
+            )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code="US",
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

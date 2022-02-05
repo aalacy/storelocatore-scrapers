@@ -1,4 +1,4 @@
-lxml==4.3.4
-sgselenium
-bs4
-sglogging
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.2.3
+lxml==4.6.2
+sgrequests==0.2.2

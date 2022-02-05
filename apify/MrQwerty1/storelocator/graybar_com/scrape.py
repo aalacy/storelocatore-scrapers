@@ -1,77 +1,84 @@
-import csv
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = 'https://graybar.com/'
-
-    session = SgRequests()
-    headers = {'Accept': 'application/json'}
-
+def fetch_data(sgw: SgWriter):
     for i in range(0, 100000):
-        r = session.get(f'https://www.graybar.com/store-finder?q=&page={i}&latitude=38.6994076&longitude=-90.4384332',
-                        headers=headers)
-        js = r.json()['data']
-        for j in js:
-            locator_domain = url
-            location_name = j.get('displayName') or '<MISSING>'
-            street_address = f"{j.get('line1')} {j.get('line2') or ''}".strip() or '<MISSING>'
-            city = j.get('town') or '<MISSING>'
-            state = j.get('region') or '<MISSING>'
-            postal = j.get('postalCode') or '<MISSING>'
-            country_code = 'US'
-            store_number = '<MISSING>'
-            page_url = '<MISSING>'
-            phone = j.get('phone') or '<MISSING>'
-            latitude = j.get('latitude') or '<MISSING>'
-            longitude = j.get('longitude') or '<MISSING>'
+        r = session.get(
+            f"https://www.graybar.com/store-finder?q=&page={i}&latitude=38.6994076&longitude=-90.4384332",
+            headers=headers,
+        )
 
-            hours = j.get('openingHours') or []
+        try:
+            js = r.json()["data"]
+        except:
+            break
+
+        for j in js:
+            location_name = j.get("displayName")
+            street_address = f"{j.get('line1')} {j.get('line2') or ''}".strip()
+            city = j.get("town")
+            state = j.get("region")
+            postal = j.get("postalCode")
+            country_code = "US"
+            slug = j.get("url") or "?"
+            slug = slug.split("?")[0]
+            page_url = f"https://www.graybar.com{slug}"
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+
+            hours = j.get("openingHours") or []
             for h in hours:
-                location_type = h.get('type')
-                times = h.get('times')
+                location_type = h.get("type")
+                times = h.get("times")
                 _tmp = []
                 for t in times:
-                    day = t.get('weekDay')
-                    opening = t.get('opening')
-                    close = t.get('closing')
+                    day = t.get("weekDay")
+                    opening = t.get("opening")
+                    close = t.get("closing")
                     if opening:
-                        _tmp.append(f'{day}: {opening} - {close}')
+                        _tmp.append(f"{day}: {opening} - {close}")
                     else:
-                        _tmp.append(f'{day}: Closed')
+                        _tmp.append(f"{day}: Closed")
 
-                hours_of_operation = ';'.join(_tmp)
-
-                if hours_of_operation.count('Closed') == 7:
+                hours_of_operation = ";".join(_tmp)
+                if hours_of_operation.count("Closed") == 7:
                     continue
-                else:
-                    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-                    out.append(row)
+
+                row = SgRecord(
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                sgw.write_row(row)
+
         if len(js) < 10:
             break
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://graybar.com/"
+    headers = {"Accept": "application/json"}
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.LOCATION_TYPE})
+        )
+    ) as writer:
+        fetch_data(writer)

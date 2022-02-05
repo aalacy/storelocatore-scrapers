@@ -87,6 +87,8 @@ def fetch_data():
         location_name = row["StoreName"]
         raw_address = row["Address"]
         street_address, city, state, _ = getAddress(raw_address)
+        if state == "G4":
+            state = MISSING
         zip_postal = row["Postcode"]
         country_code = "GB"
         store_number = row["Id"]

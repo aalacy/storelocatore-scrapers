@@ -1,251 +1,145 @@
-from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
-from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MappingField
-from sgscrape.simple_scraper_pipeline import MissingField
-from sgscrape import simple_network_utils as net_utils
-from sgscrape import simple_utils as utils
-import bs4
-from typing import Callable
-from typing import List
-from typing import Dict
+from typing import Iterable
 from bs4 import BeautifulSoup
-import json
+from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 
 
-def fetch_axml(
-    request_url: str,
-    root_node_name: str,
-    location_node_name: str,
-    method: str = "GET",
-    location_parser: Callable[[bs4.Tag], dict] = utils.xml_to_dict,
-    location_node_properties: Dict[str, str] = {},
-    query_params: dict = {},
-    data_params: dict = {},
-    headers: dict = {},
-    xml_parser: str = "lxml",
-    retries: int = 10,
-) -> List[dict]:
+DOMAIN = "https://www.noodles.com/"
+logger = SgLogSetup().get_logger(logger_name="noodles_com")
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-    response = net_utils.fetch_data(
-        request_url=request_url,
-        method=method,
-        data_params=data_params,
-        query_params=query_params,
-        headers=headers,
-        retries=retries,
-    )
-
-    xml_result = BeautifulSoup(response.text, "lxml")
-
-    root_node = xml_result.find(root_node_name)
-
-    location_nodes = root_node.find_all(location_node_name, location_node_properties)
-
-    results = []
-    for location in location_nodes:
-        results.append({"dic": location_parser(location), "requrl": request_url})
-    return results
+session = SgRequests()
+MISSING = SgRecord.MISSING
 
 
-def fetch_data():
-    url = "https://locations.noodles.com/index.html"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    states = net_utils.fetch_xml(
-        root_node_name="body",
-        location_node_name="li",
-        location_node_properties={"class": "c-directory-list-content-item"},
-        request_url=url,
-        headers=headers,
-    )
-    stores = {"state": [], "city": [], "store": []}
+def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     url = "https://locations.noodles.com/"
-    for j in states:
-        link = list(j)[0].split("href=")[1]
-        count = link.count("/")
-        if count == 0:
-            stores["state"].append(url + link)
-        elif count == 1:
-            stores["city"].append(url + link)
+    store_url_list = []
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    state_list = soup.findAll("li", {"class": "c-directory-list-content-item"})
+    for idx1, state_url in enumerate(state_list):
+        logger.info(f"Fetching locations from State {state_url.text}")
+        if state_url.find("span").text == "(1)":
+            temp = "https://locations.noodles.com/" + state_url.find("a")["href"]
+            store_url_list.append(temp)
+            logger.info(temp)
+            state.push_request(SerializableRequest(url=temp))
         else:
-            stores["store"].append(url + link)
-    # odd sitemap may show states, cities, or individual stores,
-    # building states list
-
-    for i in stores["state"]:
-        cities = net_utils.fetch_xml(
-            root_node_name="body",
-            location_node_name="li",
-            location_node_properties={"class": "c-directory-list-content-item"},
-            request_url=i,
-            headers=headers,
-        )
-        for j in cities:
-            link = list(j)[0].split("href=")[1]
-            count = link.count("/")
-            if count == 1:
-                stores["city"].append(url + link)
+            state_url = "https://locations.noodles.com/" + state_url.find("a")["href"]
+            r2 = session.get(state_url, headers=headers)
+            soup2 = BeautifulSoup(r2.text, "html.parser")
+            city_list = soup2.findAll("li", {"class": "c-directory-list-content-item"})
+            if not city_list:
+                city_list = soup2.findAll("div", {"class": "c-location-grid-item"})
+                for city in city_list:
+                    loc = "https://locations.noodles.com/" + city.find("a")[
+                        "href"
+                    ].replace("..", "")
+                    store_url_list.append(loc)
+                    logger.info(loc)
+                    state.push_request(SerializableRequest(url=loc))
             else:
-                stores["store"].append(url + link)
-    # building city list
+                for city in city_list:
+                    if city.find("span").text == "(1)":
+                        temp = "https://locations.noodles.com/" + city.find("a")["href"]
+                        store_url_list.append(temp)
+                        logger.info(temp)
+                        state.push_request(SerializableRequest(url=temp))
+                    else:
+                        city_url = (
+                            "https://locations.noodles.com/" + city.find("a")["href"]
+                        )
+                        r4 = session.get(city_url, headers=headers)
+                        soup4 = BeautifulSoup(r4.text, "html.parser")
+                        loclist = soup4.findAll(
+                            "div", {"class": "c-location-grid-item"}
+                        )
+                        for loc in loclist:
+                            loc = "https://locations.noodles.com/" + loc.find("a")[
+                                "href"
+                            ].replace("..", "")
+                            store_url_list.append(loc)
+                            logger.info(loc)
+                            state.push_request(SerializableRequest(url=loc))
+    return True
 
-    for i in stores["city"]:
-        store = net_utils.fetch_xml(
-            root_node_name="body",
-            location_node_name="h2",
-            location_node_properties={"class": "c-location-grid-item-title"},
-            request_url=i,
-            headers=headers,
+
+def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
+    for next_r in state.request_stack_iter():
+        r = session.get(next_r.url.replace(".com//", ".com/"), headers=headers)
+        logger.info(f"Pulling the data from: {next_r.url}")
+        soup = BeautifulSoup(r.text, "html.parser")
+        page_url = next_r.url
+        location_name = soup.find("span", {"class": "location-name-geo"}).text
+        try:
+            street_address = (
+                soup.find("span", {"class": "c-address-street-1"}).text
+                + " "
+                + soup.find("span", {"class": "c-address-street-2"}).text
+            )
+        except:
+            street_address = soup.find("span", {"class": "c-address-street-1"}).text
+        city = soup.find("span", {"itemprop": "addressLocality"}).text
+        state = soup.find("abbr", {"itemprop": "addressRegion"}).text
+        zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
+        country_code = soup.find("abbr", {"itemprop": "addressCountry"}).text
+        try:
+            phone = soup.find("span", {"itemprop": "telephone"}).text
+        except Exception:
+            phone = "<MISSING>"
+
+        try:
+            hours_of_operation = (
+                soup.find("table", {"class": "c-location-hours-details"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Day of the Week Hours ", "")
+            )
+        except Exception:
+            hours_of_operation = "<MISSING>"
+        latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
+        longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-        for j in store:
-            link = i[0:-5] + "/" + list(j)[0].split("/")[-1].split(" title")[0]
-            stores["store"].append(link)
-    # building final store list
-
-    j = utils.parallelize(
-        search_space=stores["store"],
-        fetch_results_for_rec=lambda x: fetch_axml(
-            root_node_name="body",
-            location_node_name="div",
-            location_node_properties={"class": "nap-container row"},
-            request_url=x,
-            headers=headers,
-        ),
-        max_threads=15,
-        print_stats_interval=15,
-    )
-    for i in j:
-        for h in i:
-            yield h
-
-
-def pretty_hours(k):
-    try:
-        k = k.split("data-days=")[1]
-        k = k.split(" data-showopentoday")[0]
-        k = '{"hours":' + k + "}"
-        k = json.loads(k)
-        x = []
-        for i in k["hours"]:
-            d = ""
-            d = i["day"] + " : "
-            if len(i["intervals"]) != 0:
-                d = (
-                    d
-                    + str(i["intervals"][0]["start"])
-                    + "-"
-                    + str(i["intervals"][0]["end"])
-                )
-            else:
-                d = d + "Closed"
-            x.append(d)
-        x = ", ".join(x)
-        return x
-    except Exception:
-        return "<MISSING>"
 
 
 def scrape():
-    url = "https://noodles.com/"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["requrl"]),
-        location_name=MappingField(
-            mapping=[
-                "dic",
-                "div class=[nap-col, nap-col--large]",
-                "div class=[white-container]",
-                "div class=[c-location-title-wrapper]",
-                "h1 class=[c-location-title] aria-level=1 id=location-name itemprop=name",
-                "span class=[location-name-geo]",
-                "span class=[location-name-geo]",
-            ]
-        ),
-        latitude=MappingField(
-            mapping=[
-                "dic",
-                "div class=[nap-col]",
-                "div class=[nap-address-wrapper]",
-                "span class=[coordinates] itemprop=geo itemscope= itemtype=http://schema.org/GeoCoordinates",
-            ],
-            value_transform=lambda x: x.split("itemprop=latitude content=")[1].split(
-                "'"
-            )[0],
-        ),
-        longitude=MappingField(
-            mapping=[
-                "dic",
-                "div class=[nap-col]",
-                "div class=[nap-address-wrapper]",
-                "span class=[coordinates] itemprop=geo itemscope= itemtype=http://schema.org/GeoCoordinates",
-            ],
-            value_transform=lambda x: x.split("itemprop=longitude content=")[1].split(
-                "'"
-            )[0],
-        ),
-        street_address=MappingField(
-            mapping=["dic", "div class=[nap-col]", "div class=[nap-address-wrapper]"],
-            value_transform=lambda x: x.split("c-address-street-1]': ")[-1]
-            .split("}")[0]
-            .replace('"', "")
-            .replace("'", ""),
-        ),
-        city=MappingField(
-            mapping=["dic", "div class=[nap-col]", "div class=[nap-address-wrapper]"],
-            value_transform=lambda x: x.split("itemprop=addressLocality': ")[-1]
-            .split("}")[0]
-            .replace('"', "")
-            .replace("'", ""),
-        ),
-        state=MappingField(
-            mapping=["dic", "div class=[nap-col]", "div class=[nap-address-wrapper]"],
-            value_transform=lambda x: x.split("addressRegion': ")[-1]
-            .split("}")[0]
-            .replace('"', "")
-            .replace("'", ""),
-        ),
-        zipcode=MappingField(
-            mapping=["dic", "div class=[nap-col]", "div class=[nap-address-wrapper]"],
-            value_transform=lambda x: x.split("emprop=postalCode': ")[-1]
-            .split("}")[0]
-            .replace('"', "")
-            .replace("'", ""),
-        ),
-        country_code=MappingField(
-            mapping=["dic", "div class=[nap-col]", "div class=[nap-address-wrapper]"],
-            value_transform=lambda x: x.split("itemprop=addressCountry': ")[-1]
-            .split("}")[0]
-            .replace('"', "")
-            .replace("'", ""),
-        ),
-        phone=MappingField(
-            mapping=["dic", "div class=[nap-col]", "div class=[nap-address-wrapper]"],
-            value_transform=lambda x: x.split("itemprop=telephone id=telephone': ")[-1]
-            .split("}")[0]
-            .replace('"', "")
-            .replace("'", "")
-            .replace(
-                "{div class=[nap-address-header]: {i class=[fa, fa-map-marker] aria-hidden=true: {",
-                "<MISSING>",
+    logger.info("Started")
+    state = CrawlStateSingleton.get_instance()
+    count = 0
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        with SgRequests() as session:
+            state.get_misc_value(
+                "init", default_factory=lambda: record_initial_requests(session, state)
             )
-            .strip(),
-        ),
-        store_number=MissingField(),
-        hours_of_operation=MappingField(
-            mapping=["dic", "div class=[nap-col]-2"], value_transform=pretty_hours
-        ),
-        location_type=MissingField(),
-    )
+            for rec in fetch_records(session, state):
+                writer.write_row(rec)
+                count = count + 1
 
-    pipeline = SimpleScraperPipeline(
-        scraper_name="noodles.com",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
