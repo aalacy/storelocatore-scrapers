@@ -54,20 +54,28 @@ def pull_content(url):
     return soup
 
 
-def get_hoo(url):
-    soup = pull_content(url)
-    hoo_content = soup.find("div", id=re.compile(r"dine-in-\d"))
-    if not hoo_content:
-        hoo_content = soup.find("div", id=re.compile(r"curbside-\d"))
-    if not hoo_content:
-        hoo_content = soup.find("div", id="-0")
-    hours = " ".join(
-        hoo_content.find("table")
-        .get_text(strip=True, separator=",")
-        .replace("day,", "day: ")
-        .strip()
-        .split()
-    ).strip()
+def get_hoo(url, num=0):
+    log.info("Pull content => " + url)
+    num += 1
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+        hoo_content = soup.find("div", id=re.compile(r"dine-in-\d"))
+        if not hoo_content:
+            hoo_content = soup.find("div", id=re.compile(r"curbside-\d"))
+        if not hoo_content:
+            hoo_content = soup.find("div", id="-0")
+        hours = " ".join(
+            hoo_content.find("table")
+            .get_text(strip=True, separator=",")
+            .replace("day,", "day: ")
+            .strip()
+            .split()
+        ).strip()
+    except:
+        if num < 3:
+            return get_hoo(url, num)
+        else:
+            return MISSING
     return hours
 
 
@@ -94,17 +102,7 @@ def fetch_data():
             location_name = row["title"].replace("&#039;", "'")
             if "Coming Soon" in location_name:
                 continue
-            street_address = (
-                row["street_address"]
-                .replace(
-                    "(Mailing address:  Ft. Benning Exchange - Harmony Church Charley's, P.O. Box 52328, zip 31995)",
-                    "",
-                )
-                .replace(
-                    "(Promotional Kits:  AAFES Europe EIA, GRS Bakery Plt Sply Whse {Dry}, Kircheimerstr 104, 67269 Gruenstadt, Germany   Contact: Brigitte Chrysler, phone 06359-808103)",
-                    "",
-                )
-            )
+            street_address = re.sub(r"\(.*\)", "", row["street_address"]).strip()
             city = row["city"]
             state = row["state"]
             if state == "DC":

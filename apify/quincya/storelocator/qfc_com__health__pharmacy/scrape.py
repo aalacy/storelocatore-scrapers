@@ -104,7 +104,7 @@ def fetch_data(sgw: SgWriter):
                         .replace("Su-Sa", "Sun - Sat:")
                         .replace("Su-Fr", "Sun - Fri:")
                         .replace("-00:00", " - Midnight")
-                        .replace("Su ", "Sun")
+                        .replace("Su ", "Sun ")
                         .replace("Mo-Fr", "Mon - Fri")
                         .replace("Sa ", "Sat ")
                         .replace("  ", " ")

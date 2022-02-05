@@ -30,7 +30,7 @@ def fetch_data():
             all_poi_html = []
 
             driver.get(start_url)
-            sleep(5)
+            sleep(10)
             driver.find_element_by_id("searchData").send_keys(code)
             driver.find_element_by_id("submitbutton").click()
             sleep(5)
