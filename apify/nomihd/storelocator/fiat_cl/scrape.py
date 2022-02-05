@@ -74,7 +74,6 @@ def fetch_data():
                 cities_dict["".join(city.xpath("@value")).strip()] = "".join(
                     city.xpath("@data-region")
                 ).strip()
-            log.info(cities_dict)
             stores = stores_sel.xpath("//div[@data-comuna]")
             for store in stores:
                 if len("".join(store.xpath("@data-comuna")).strip()) <= 0:
@@ -102,6 +101,16 @@ def fetch_data():
                         phone = (
                             raw_address.split("Tel.")[1].strip().split("|")[0].strip()
                         )
+
+                if raw_address:
+                    raw_address = (
+                        raw_address.replace("\r\n", "")
+                        .strip()
+                        .replace("\n", "")
+                        .strip()
+                        .replace("\r", "")
+                        .strip()
+                    )
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if formatted_addr.street_address_2:
@@ -110,7 +119,6 @@ def fetch_data():
                     )
 
                 city = "".join(store.xpath("@data-comuna")).strip()
-                log.info(city)
                 if city not in cities_dict:
                     if city == "v-valparaiso":
                         city = "valparaiso"
@@ -168,8 +176,6 @@ def fetch_data():
                     hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
-
-            # break
 
 
 def scrape():

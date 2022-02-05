@@ -35,12 +35,19 @@ def fetch_data(sgw: SgWriter):
         info = j.get("popup_html")
         a = html.fromstring(info)
         text = " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
-        street_address = text.split("Address:")[1].split("State:")[0].strip()
+        street_address = "<MISSING>"
+        if text.find("State:") != -1:
+            street_address = text.split("Address:")[1].split("State:")[0].strip()
+        if street_address == "<MISSING>" and text.find("Description:") != -1:
+            street_address = text.split("Address:")[1].split("Description:")[0].strip()
         city = text.split("City:")[1].split("Zip:")[0].strip()
         postal = text.split("Zip:")[1].split("Address:")[0].strip()
         if postal.find("*") != -1:
             postal = postal.replace("*", "").strip()
-        state = text.split("State:")[1].split("Description:")[0].strip()
+        try:
+            state = text.split("State:")[1].split("Description:")[0].strip()
+        except:
+            state = "<MISSING>"
         country_code = "US"
         location_name = "".join(
             a.xpath('//div[@class="amlocator-title"]/text()')
