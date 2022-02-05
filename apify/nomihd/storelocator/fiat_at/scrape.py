@@ -38,9 +38,10 @@ class _SearchIteration(SearchIteration):
     a method to register found locations.
     """
 
-    def __init__(self, http: SgRequests):
+    def __init__(self, http: SgRequests, country: str):
         self.__http = http
         self.__state = CrawlStateSingleton.get_instance()
+        self.__country_name = country
         self.__country_dict = {
             "at": "3103",
             "be": "3104",
@@ -76,10 +77,10 @@ class _SearchIteration(SearchIteration):
         lat = coord[0]
         lng = coord[1]
         log.info(
-            f"fetching data for country: {current_country} having coordinates:{lat},{lng}"
+            f"fetching data for country: {self.__country_name} having coordinates:{lat},{lng}"
         )
         search_url = "https://dealerlocator.fiat.com/geocall/RestServlet?jsonp=callback&mkt={}&brand=00&func=finddealerxml&serv=sales&track=1&x={}&y={}&rad=100"
-        mkt = self.__country_dict[current_country]
+        mkt = self.__country_dict[self.__country_name]
         stores_req = self.__http.get(search_url.format(mkt, lng, lat), headers=headers)
 
         try:
@@ -90,7 +91,7 @@ class _SearchIteration(SearchIteration):
             if "results" in json_str:
 
                 for store in json.loads(json_str)["results"]:
-                    page_url = "<MISSING>"
+                    page_url = store.get("WEBSITE", "<MISSING>")
                     locator_domain = website
                     location_name = store["COMPANYNAM"]
                     street_address = store["ADDRESS"]
@@ -100,7 +101,7 @@ class _SearchIteration(SearchIteration):
                         state = "<MISSING>"
 
                     zip = store["ZIPCODE"]
-                    country_code = current_country
+                    country_code = self.__country_name
                     store_number = store["MAINCODE"]
                     phone = store["TEL_1"]
                     location_type = store["BUSINESS_CENTER"]
@@ -109,7 +110,47 @@ class _SearchIteration(SearchIteration):
                     else:
                         location_type = "<MISSING>"
 
-                    hours_of_operation = "<MISSING>"
+                    hours_list = []
+                    try:
+                        hours = store["ACTIVITY"][0]
+                        for key in hours.keys():
+                            if "OPENTIME" in key:
+                                day = hours[key]["DATEWEEK"]
+                                if (
+                                    "MORNING_FROM" in hours[key]
+                                    and "AFTERNOON_TO" in hours[key]
+                                ):
+                                    time = (
+                                        hours[key]["MORNING_FROM"]
+                                        + " - "
+                                        + hours[key]["AFTERNOON_TO"]
+                                    )
+                                elif (
+                                    "MORNING_FROM" in hours[key]
+                                    and "MORNING_TO" in hours[key]
+                                ):
+                                    time = (
+                                        hours[key]["MORNING_FROM"]
+                                        + " - "
+                                        + hours[key]["MORNING_TO"]
+                                    )
+                                elif (
+                                    "AFTERNOON_FROM" in hours[key]
+                                    and "AFTERNOON_TO" in hours[key]
+                                ):
+                                    time = (
+                                        hours[key]["AFTERNOON_FROM"]
+                                        + " - "
+                                        + hours[key]["AFTERNOON_TO"]
+                                    )
+                                else:
+                                    time = "Closed"
+
+                                hours_list.append(day + ":" + time)
+                    except:
+                        pass
+
+                    hours_of_operation = "; ".join(hours_list).strip()
                     latitude = store["YCOORD"]
                     longitude = store["XCOORD"]
 
@@ -140,7 +181,7 @@ def scrape():
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=20,
     )
 
     country_list = [
@@ -171,16 +212,18 @@ def scrape():
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
-        with SgRequests(dont_retry_status_codes=([404])) as http:
-            search_iter = _SearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=country_list,
-            )
+        for country in country_list:
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+            with SgRequests(dont_retry_status_codes=([404])) as http:
+                search_iter = _SearchIteration(http=http, country=country)
+                par_search = ParallelDynamicSearch(
+                    search_maker=search_maker,
+                    search_iteration=search_iter,
+                    country_codes=[country],
+                )
+
+                for rec in par_search.run():
+                    writer.write_row(rec)
 
 
 if __name__ == "__main__":

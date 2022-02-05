@@ -24,7 +24,7 @@ else:
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 DOMAIN = "https://www.costa.co.uk/business/costa-express"
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 16
+MAX_WORKERS = 12
 
 
 headers = {
@@ -33,7 +33,7 @@ headers = {
 }
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(60))
 def get_response(url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
@@ -186,17 +186,26 @@ def fetch_records(latlng, sgw):
 
 def fetch_data(sgw: SgWriter):
     logger.info("Started")
+
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        expected_search_radius_miles=5,
+        expected_search_radius_miles=10,
         granularity=Grain_8(),
         use_state=False,
     )
-
+    ll_custom = [
+        ("51.59730000000002", "-1.8076700000000017"),
+        ("51.5977", "-1.8091699999999946"),
+    ]
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task_global = [executor.submit(fetch_records, latlng, sgw) for latlng in search]
         tasks.extend(task_global)
+        task_custom = [
+            executor.submit(fetch_records, latlng, sgw) for latlng in ll_custom
+        ]
+        tasks.extend(task_custom)
+
         for future in as_completed(tasks):
             future.result()
 

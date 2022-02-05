@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "burgerboss.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -26,21 +28,19 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.burgerboss.com/#locations"
+    search_url = "https://www.burgerboss.com/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@id="location_info_block"]/div[@class="loc_info"]')
+    stores = stores_sel.xpath('//div[@class="bottomAddress"]')
 
     for store in stores:
 
         page_url = search_url
         locator_domain = website
 
-        location_name = "".join(
-            store.xpath('.//p[@class="store-name"]/span/strong/text()')
-        ).strip()
+        location_name = "".join(store.xpath(".//h2/text()")).strip()
 
-        address = store.xpath('.//a[@class="map-link"]/p[position()>1]/text()')
+        address = store.xpath('.//p/a[@target="_blank"]/text()')
         street_address = address[0]
         if "," == street_address[-1]:
             street_address = "".join(street_address[:-1]).strip()
@@ -51,23 +51,17 @@ def fetch_data():
 
         country_code = "US"
 
-        store_number = "".join(store.xpath("@data-location")).strip()
+        store_number = "<MISSING>"
 
-        phone = "".join(store.xpath('.//p[@class="store-phone"]//text()')).strip()
-
-        location_type = "<MISSING>"
-        hours_of_operation = "; ".join(
-            store.xpath('div[@class="open-hours"]/ul/li/text()')
+        phone = "".join(
+            store.xpath('.//p[@class="store-phone"]/a[contains(@href,"tel:")]/text()')
         ).strip()
 
-        latitude = ""
-        longitude = ""
-        map_link = "".join(store.xpath('.//a[@class="map-link"]/@href')).strip()
+        location_type = "<MISSING>"
+        hours_of_operation = "; ".join(store.xpath(".//p/text()")).strip()
 
-        if len(map_link) > 0:
-            if "/@" in map_link:
-                latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
-                longitude = map_link.split("/@")[1].strip().split(",")[1]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -90,7 +84,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

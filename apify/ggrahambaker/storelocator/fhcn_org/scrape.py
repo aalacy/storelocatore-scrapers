@@ -89,6 +89,18 @@ def fetch_data():
             hours = hours.split("Medical", 1)[1].strip().split("Dental", 1)[0]
         except:
             pass
+        try:
+            hours = hours.split("Chiropractic", 1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split("Walk", 1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split("Pharmacy", 1)[0]
+        except:
+            pass
         if "call" in hours:
             hours = "<MISSING>"
         yield SgRecord(
@@ -105,7 +117,12 @@ def fetch_data():
             location_type=ltype,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
-            hours_of_operation=hours,
+            hours_of_operation=hours.replace("pm", "pm ")
+            .replace("PM", "PM ")
+            .replace("day", "day ")
+            .replace("Services", "")
+            .replace("\n", "")
+            .strip(),
         )
 
 

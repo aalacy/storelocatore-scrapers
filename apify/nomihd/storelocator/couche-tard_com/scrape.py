@@ -75,9 +75,10 @@ def fetch_data():
                                     "&#039;", "'"
                                 )
                                 if stores[key]["franchise"] == "1":
-                                    location_type = "Brand Store"
-                                else:
                                     location_type = "Dealer/Distributor/Retail Partner"
+
+                                else:
+                                    location_type = "Brand Store"
 
                                 phone = store_json["telephone"]
                                 street_address = (

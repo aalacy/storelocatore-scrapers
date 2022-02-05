@@ -5,11 +5,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 import re
 
 DOMAIN = "sohaliving.com"
-BASE_URL = "https://sohaliving.com"
 LOCATION_URL = "https://sohaliving.com/pages/store-locator"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -24,14 +23,13 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -75,14 +73,11 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     element = soup.find("div", {"class": "rte rte--nomargin"})
-    out_tag = bs(
-        "<p><span>SoHa Keiki Ka'anapali<br> 2435 Kaanapali Pkwy<br> Lahaina, HI 96761 <br>(808) 465-3020</span> Monday to Sunday from 11am to 8pm</p>",
-        "lxml",
-    )
-    element.insert(35, out_tag)
+    for el in element.find_all("p"):
+        if len(el.text) < 2:
+            el.decompose()
     contents = element.find_all("p")
-    stores = contents[:-2][2:]
-    for row in stores:
+    for row in contents[1:]:
         info = row.get_text(strip=True, separator="@").split("@")
         location_name = info[0]
         raw_address = ""
@@ -93,7 +88,7 @@ def fetch_data():
                 break
             raw_address += " " + addr
         street_address, city, state, zip_postal = getAddress(raw_address.strip())
-        hours_of_operation = get_hoo(info)
+        hours_of_operation = get_hoo(info).rstrip(",")
         country_code = "US"
         store_number = MISSING
         location_type = "sohaliving"

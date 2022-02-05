@@ -1,61 +1,35 @@
 from sgrequests import SgRequests
-import json
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sglogging import sglog
-
-
-def extract_json(html_string):
-    json_objects = []
-    count = 0
-
-    brace_count = 0
-    for element in html_string:
-
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
-
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
-                except Exception:
-                    pass
-        count = count + 1
-
-    return json_objects
 
 
 def get_data():
     log = sglog.SgLogSetup().get_logger(logger_name="walgreens")
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
-    )
     session = SgRequests()
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+    )
 
     for search_code in search:
-        url = "https://www.walgreens.com/storelocator/find.jsp?searchCriteria=" + str(
-            search_code
-        )
+        if len(str(search_code)) == 4:
+            search_code = "0" + str(search_code)
+        params = {
+            "requestType": "dotcom",
+            "s": "1000",
+            "p": "1",
+            "zip": str(search_code),
+        }
 
+        url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
+        response = session.post(url, data=params).json()
         try:
-            response = session.get(url).text
-        except Exception:
-            raise Exception(url)
-
-        json_objects = extract_json(response)
-
-        try:
-            locations = json_objects[3]["storelist"]["results"]
+            response["results"]
         except Exception:
             continue
 
-        for location in locations:
+        for location in response["results"]:
             locator_domain = "https://www.walgreens.com/"
             page_url = locator_domain + location["storeSeoUrl"]
             location_name = location["store"]["address"]["street"]
@@ -68,33 +42,54 @@ def get_data():
             state = location["store"]["address"]["state"]
             zipp = location["store"]["address"]["zip"]
             phone = location["store"]["phone"]["number"]
-            location_type = location["store"]["name"]
+            location_type = "<MISSING>"
             country_code = "US"
 
-            hours = "<LATER>"
-            try:
-                hours_response = session.get(page_url).text
-                hours_soup = bs(hours_response, "html.parser")
-                hours_parts = hours_soup.find(
-                    "li", attrs={"class": "single-hours-lists"}
-                ).find_all("ul")
-
-                hours = ""
-                for part in hours_parts:
-                    day = part.find("li", attrs={"class": "day"}).text.strip()
-                    time = part.find("li", attrs={"class": "time"}).text.strip()
-
-                    hours = hours + day + " " + time + ", "
-
-                hours = hours[:-2]
-            except Exception:
-                log.info(page_url)
-                hours = "<MISSING>"
-                if "temporarily closed" in hours_response.lower():
-                    continue
-
-                else:
+            x = 0
+            while True:
+                x = x + 1
+                if x == 10:
+                    log.info(search_code)
+                    log.info(location_name)
                     raise Exception
+                try:
+                    hours_response = session.get(page_url).text
+                    hours_soup = bs(hours_response, "html.parser")
+                    hours_parts = hours_soup.find(
+                        "li", attrs={"class": "single-hours-lists"}
+                    ).find_all("ul")
+
+                    hours = ""
+                    for part in hours_parts:
+                        day = part.find("li", attrs={"class": "day"}).text.strip()
+                        time = part.find("li", attrs={"class": "time"}).text.strip()
+
+                        hours = hours + day + " " + time + ", "
+
+                    hours = hours[:-2]
+                    break
+                except Exception:
+
+                    try:
+                        hours = "<MISSING>"
+                        if "temporarily closed" in hours_response.lower():
+                            hours = "nope"
+                            break
+
+                        else:
+                            log.info(search_code)
+                            log.info(location_name)
+                    except Exception as e:
+                        log.info(e)
+
+            if hours == "nope":
+                continue
+
+            try:
+                location["store"]["pharmacyOpenTime"]
+
+            except Exception:
+                continue
 
             yield {
                 "locator_domain": locator_domain,

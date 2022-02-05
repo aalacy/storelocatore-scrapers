@@ -22,7 +22,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://www.jeep.com.do/concesionario/"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
         search_res = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(search_res.text)
         stores = stores_sel.xpath(
@@ -48,6 +48,8 @@ def fetch_data():
                     street_address = formatted_addr.street_address_2
 
             city = formatted_addr.city
+            if not city:
+                city = "Santo Domingo"
             state = formatted_addr.state
             zip = formatted_addr.postcode
 
