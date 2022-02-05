@@ -289,6 +289,11 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
             if "CLOSED" in location_name:
                 location_name = location_name.replace("CLOSED", "").strip()
                 hours_of_operation = "Closed"
+            if (
+                "WEDNESDAY: Closed; MONDAY: Closed; THURSDAY: Closed; SUNDAY: Closed; TUESDAY: Closed; FRIDAY: Closed; SATURDAY: Closed"
+                in hours_of_operation
+            ):
+                hours_of_operation = MISSING
 
             logger.info(f"Locname: {location_name}")
             raw_address = MISSING
