@@ -26,6 +26,8 @@ _headers = {
 }
 
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+locator_domain = "https://www.adoreme.com/"
+base_url = "https://www.stores.adoreme.com/"
 
 
 def _p(val):
@@ -40,8 +42,6 @@ def _p(val):
 
 
 def fetch_data():
-    locator_domain = "https://www.adoreme.com/"
-    base_url = "https://www.stores.adoreme.com/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = [
@@ -73,7 +73,7 @@ def fetch_data():
                         phone = _phone.text.strip()
                 hours = []
                 if sp1.select("div.visit-hours ul li"):
-                    for hh in sp1.select("div.visit-hours ul li"):
+                    for hh in sp1.select_one("div.visit-hours").select("ul li"):
                         _hr = list(hh.stripped_strings)
                         _hr[0] = _hr[0].split(",")[0]
                         if (
@@ -85,6 +85,11 @@ def fetch_data():
                         hours.append(": ".join(_hr))
                     if not phone:
                         phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
+                elif sp1.select("div.weeklyHours dl"):
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in sp1.select("div.weeklyHours dl")
+                    ]
                 elif sp1.select("table.mabel-bhi-businesshours tr"):
                     temp = [
                         ":".join(hh.stripped_strings)
