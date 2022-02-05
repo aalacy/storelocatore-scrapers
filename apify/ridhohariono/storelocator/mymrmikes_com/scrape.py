@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import re
 
 DOMAIN = "mymrmikes.com"
 LOCATION_URL = "https://mymrmikes.com/locations/"
