@@ -15,9 +15,9 @@ logger = SgLogSetup().get_logger("mobilebitz_co_uk")
 
 
 def fetch_data():
-    url = ""
+    url = "https://mobilebitz.co.uk/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1643389582324"
     r = session.get(url, headers=headers)
-    website = "https://mobilebitz.co.uk/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1643389582324"
+    website = "mobilebitz.co.uk"
     typ = "<MISSING>"
     country = "GB"
     logger.info("Pulling Stores")
