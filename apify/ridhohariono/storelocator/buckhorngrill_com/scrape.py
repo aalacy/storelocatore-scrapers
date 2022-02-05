@@ -60,6 +60,8 @@ def fetch_data():
         location_name = store.find("h2", {"class": "location-title"}).text.strip()
         raw_address = store.find("p", {"class": "location-address"}).text.strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == MISSING:
+            city = location_name
         phone = store.find("h5", {"class": "phone-number"}).text.strip()
         country_code = "US"
         hours_of_operation = (
