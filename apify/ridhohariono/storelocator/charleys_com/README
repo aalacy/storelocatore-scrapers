@@ -1,0 +1,40 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 19 concerning rows. Examples:
+                                        street_address              REASON  rowNumber
+80                            PO Box 12955  Bldg 82301  ADDR_HAS_NO_NUMBER         80
+109  Lewis North Food Court11566 41st Division St M...  ADDR_HAS_NO_NUMBER        109
+133                                  Derby St Bldg 352  ADDR_HAS_NO_NUMBER        133
+137  Charley's Grilled SubsNAS-JRB AAFES Food Court...  ADDR_HAS_NO_NUMBER        137
+139  Fort Sam Houston Exchange   Charley's Steakery...  ADDR_HAS_NO_NUMBER        139
+
+--ignore StreetAddressHasStateName (No state name on this street_address)
+Found 18 concerning rows. Examples:
+                            street_address                    REASON  rowNumber
+21  555 Shops at Mission Viejo, Space VC08  ADDR_CONTAINS_STATE_NAME         21
+22              100 W. Broadway, Sp. FC-05  ADDR_CONTAINS_STATE_NAME         22
+60              604 Great Mall Drive, FC 4  ADDR_CONTAINS_STATE_NAME         60
+74             1151 Galleria Rd., Sp. FC-9  ADDR_CONTAINS_STATE_NAME         74
+97    One West Flatiron Circle, Sp. Ff 228  ADDR_CONTAINS_STATE_NAME         97
+
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+Found 2 concerning rows. Examples:
+       zip state                REASON  rowNumber
+378  33551    FL  ZIPCODE_NOT_IN_STATE        378
+442  20332    DC  ZIPCODE_NOT_IN_STATE        442
+
+
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 3 concerning rows. Examples:
+            state           phone         zip            REASON  rowNumber
+154     <MISSING>  82 31 646 2815  96271-5471  INVALID_US_PHONE        154
+501            NJ  (609) 723-6100        8641    INVALID_US_ZIP        501
+541  Grand Bahama    954-607-2484   <MISSING>  INVALID_US_STATE        541
+
+
+--ignore LatLngDuplicationValidator (Same latlong with different location_name)
+Found 4 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+       latitude    longitude                                     street_address  num_addrs
+19   26.1462808  -80.3229469  {12801 WEST SUNRISE BLVD, 12801 West Sunrise B...          2
+57   28.4501582  -81.4007641  {11376 S. Orange Blossom Trail, 8001 S. Orange...          2
+244     35.1573     -78.9774  {Bragg Military Shopping Plaza Bldg # 1007, Fo...          2
+514  42.3899294  -87.9593224           {6170 W Grand Ave, 6170 West Grand Ave.}          2

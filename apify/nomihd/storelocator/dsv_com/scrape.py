@@ -5,6 +5,8 @@ import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "dsv.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -18,9 +20,10 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://dsv.ankiro.dk/Rest/dsv.com-offices/Search?ScPageType=office&q=*&officeRegion=&officeCountry=&startIndex=0&MaxResults=10000&officeService=&officeType="
+    search_url = "https://dsv.ankiro.dk/Rest/www.dsv.com-en%20offices/Search?ScPageType=office&regionLang=en&q=*&officeRegion=&officeCountry=&officeService=&officeType=&officeLocationType=&MaxResults=10000"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)["Documents"]
+
     for store in stores:
 
         page_url = store["Uri"]
@@ -61,13 +64,28 @@ def fetch_data():
         phone = store_sel.xpath('//a[contains(@href,"tel:")]')
         if len(phone) > 0:
             phone = "".join(phone[0].xpath("text()")).strip()
+        else:
+            phone = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
 
         store_number = "<MISSING>"
 
+        map_link = "".join(
+            store_sel.xpath('//a[contains(text(),"Get directions")]/@href')
+        ).strip()
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        if len(map_link) > 0:
+            try:
+                latitude = map_link.split("/place/")[1].strip().split(",")[0].strip()
+            except:
+                pass
+
+            try:
+                longitude = map_link.split("/place/")[1].strip().split(",")[-1].strip()
+            except:
+                pass
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -90,7 +108,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
