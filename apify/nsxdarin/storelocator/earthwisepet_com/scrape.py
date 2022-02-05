@@ -16,7 +16,7 @@ headers = {
 def fetch_data():
     url = "https://www.earthwisepet.com/sitemap.xml"
     locs = ["https://earthwisepet.com/stores/view/yakima"]
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if "<loc>https://earthwisepet.com/stores/view/" in line:
             items = line.split("<loc>https://earthwisepet.com/stores/view/")
