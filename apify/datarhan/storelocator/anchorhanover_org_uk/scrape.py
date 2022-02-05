@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import json
 from lxml import etree
 from urllib.parse import urljoin
@@ -36,6 +35,9 @@ def fetch_data():
             dom = etree.HTML(response.text)
             all_locations += dom.xpath(
                 '//a[@class="property-results__nested-link"]/@href'
+            )
+            all_locations += dom.xpath(
+                '//div[@class="property-results__buttons"]/a/@href'
             )
 
     for page_url in all_locations:
