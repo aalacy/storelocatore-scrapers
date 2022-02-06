@@ -45,7 +45,7 @@ def fetch_data():
                 store_number=_["shops-map-marker-anchor"],
                 location_name=_.h3.text.strip(),
                 street_address=" ".join(addr[:-1]),
-                city=addr[-1].split()[0].strip(),
+                city=" ".join(addr[-1].split()[1:]),
                 zip_postal=addr[-1].strip().split()[0].strip(),
                 country_code="Poland",
                 latitude=coord["coordinates"]["lat"],

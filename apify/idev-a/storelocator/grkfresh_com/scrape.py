@@ -69,8 +69,12 @@ def fetch_data():
                         continue
                     if "Order Now" in hh:
                         continue
+                    if "Pickup" in hh:
+                        continue
                     hours.append(hh)
                 break
+            if "Permanently Closed" in " ".join(hours):
+                continue
             coord, addr = _coord(stores, location_name)
             city = addr.city
             if city == "Washington":

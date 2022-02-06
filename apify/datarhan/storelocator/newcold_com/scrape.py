@@ -52,14 +52,9 @@ def fetch_data():
         if country_code == "Verenigde Staten":
             country_code = "United States"
         store_number = poi["id"]
-        phone = loc_dom.xpath('//div[@class="iconbox_content_container  "]/p[1]/text()')
-        phone = [e.strip() for e in phone if e.strip()]
-        for e in phone:
-            if e.startswith("+"):
-                phone = e
-                break
-        if type(phone) == list:
-            phone = "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="iconbox_content_container "]/p/text()')
+        phone = [e.strip() for e in phone if "+" in e]
+        phone = phone[0].replace("\xa0", " ").strip() if phone else ""
         latitude = poi["location"]["lat"]
         longitude = poi["location"]["lng"]
         hoo = loc_dom.xpath('//div[@class="avia-animated-number-content"]/p/text()')

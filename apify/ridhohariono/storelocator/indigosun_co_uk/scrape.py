@@ -66,22 +66,32 @@ def fetch_data():
             ).find("div", {"class": "shop clearfix"})
         except:
             continue
+        if not store:
+            continue
         info = store.find("div", {"class": "opening"})
         location_name = info.find("h3").text.strip()
         addr = info.find("p").get_text(strip=True, separator=",").split("Tel:")
         raw_address = addr[0].rstrip(",")
         street_address, city, state, zip_postal = getAddress(raw_address)
-        country_code = "UK"
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1]
+        if city == MISSING:
+            city = (
+                raw_address.split(",")[-2].replace("451 Prescott Road", "").strip()
+                or MISSING
+            )
+        elif "Birmingham" in city:
+            city = "Birmingham"
+        country_code = "GB"
         phone = addr[1].strip()
-        hoo_content = info.find("h3", text="Opening Hours").find_next("p")
-        hoo = hoo_content.get_text(strip=True, separator=" ")
-        if len(hoo) < 5:
-            hoo = hoo_content.find_next("p").get_text(strip=True, separator=" ")
-        hours_of_operation = re.sub(
-            r"\(.*\)|Opening times.*|Subject to change.*",
+        hoo = re.sub(
+            r"Opening.*|Subject to change.*|Last.*|\*\*.*|\(last sunbed \d{1,2}:\d{1,2}(am|pm)\)",
             "",
-            " ".join(hoo.split()).strip(),
+            info.get_text(strip=True, separator=" ")
+            .replace("Opening times", "Opening Hours")
+            .split("Opening Hours")[1],
         )
+        hours_of_operation = " ".join(hoo.split()).strip()
         store_number = MISSING
         location_type = MISSING
         latitude = MISSING
@@ -123,7 +133,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

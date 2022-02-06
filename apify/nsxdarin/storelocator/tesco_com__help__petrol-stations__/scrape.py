@@ -38,7 +38,7 @@ def fetch_data():
         Petrol = False
         try:
             website = "tesco.com/help/petrol-stations/"
-            typ = "<MISSING>"
+            typ = "Petrol Filling Station"
             country = "GB"
             state = "<MISSING>"
             hours = ""
@@ -53,7 +53,7 @@ def fetch_data():
             logger.info(loc)
             r = get_response(loc)
             for line in r.iter_lines():
-                if "Tesco Pharmacy" in line:
+                if 'itemprop="name">Petrol Filling Station</h3>' in line:
                     Petrol = True
                 if (
                     '"main store Petrol Filling Station hours dropdown"' in line

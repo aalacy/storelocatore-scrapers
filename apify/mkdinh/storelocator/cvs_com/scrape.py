@@ -97,7 +97,7 @@ def enqueue_links(url, selectors):
 
 def scrape_state_urls(state_urls):
     city_urls = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(enqueue_links, url, [".states a"]) for url in state_urls
         ]
@@ -111,7 +111,7 @@ def scrape_state_urls(state_urls):
 def scrape_city_urls(city_urls):
     # scrape each city url and populate loc_urls with the results
     loc_urls = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(
                 enqueue_links, url, [".directions-link a", ".tb-store-link a"]
@@ -310,7 +310,7 @@ def get_location(page_url):
     hours_of_operation = get_hours(location, page_schema)
 
     locator_domain = "cvs.com"
-    location_name = re.sub(r"\s+at\s+at", " at", get(page_schema, "name"))
+    location_name = re.sub(r"(\s*at\s+){1,2}", " ", get(page_schema, "name"))
     location_type = get(page_schema, "@type")
     street_address = get(basic_info, "street_address")
     city = get(basic_info, "city")

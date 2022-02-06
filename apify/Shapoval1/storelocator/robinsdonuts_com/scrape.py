@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
     with SgRequests() as http:
-        locator_domain = "https://buffalos.com/"
+        locator_domain = "https://robinsdonuts.com/"
         api_url = "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token=VKUHLIZZDXHUKKWJ&multi_account=false"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -43,9 +43,7 @@ def fetch_data(sgw: SgWriter):
                 "Cache-Control": "max-age=0",
                 "TE": "trailers",
             }
-            slug = a.get("address")
             params = (
-                ("address", f"{slug}"),
                 ("locality", f"{city}"),
                 ("multi_account", "false"),
                 ("pageSize", "30"),
@@ -95,6 +93,22 @@ def fetch_data(sgw: SgWriter):
                     hours_of_operation = "closed"
                 if cms == "temp closed":
                     hours_of_operation = "temp closed"
+                if (
+                    hours_of_operation != "<MISSING>"
+                    and hours_of_operation != "coming soon"
+                    and hours_of_operation != "closed"
+                    and hours_of_operation != "temp closed"
+                    and hours_of_operation.find("Sunday") == -1
+                ):
+                    hours_of_operation = hours_of_operation + " Sunday Closed"
+                if (
+                    hours_of_operation != "<MISSING>"
+                    and hours_of_operation != "coming soon"
+                    and hours_of_operation != "closed"
+                    and hours_of_operation != "temp closed"
+                    and hours_of_operation.find("Saturday") == -1
+                ):
+                    hours_of_operation = hours_of_operation + " Saturday Closed"
 
                 row = SgRecord(
                     locator_domain=locator_domain,

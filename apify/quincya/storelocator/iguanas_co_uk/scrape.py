@@ -84,7 +84,9 @@ def fetch_data(sgw: SgWriter):
                 for hours in raw_hours:
                     if "festive hours" in hours.lower():
                         break
-                    hours_of_operation = (hours_of_operation + " " + hours).strip()
+                    hours_of_operation = (
+                        hours_of_operation + " " + hours.split("/")[0]
+                    ).strip()
                 hours_of_operation = hours_of_operation.replace(
                     "Opening Hours", ""
                 ).strip()

@@ -59,7 +59,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         location_name = loc["name"]
         address = loc["address"][0]
         phone = loc["telephone"]
-        street_address = address["streetAddress"]
+        street_address = address["streetAddress"].replace("undefined", "")
         city = address["addressLocality"]
         state = MISSING
         zip_postal = address["postalCode"]

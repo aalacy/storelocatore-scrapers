@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
         csz = line.pop()
         city = csz.split(", ")[0]
         state, postal = csz.split(", ")[-1].split()
-        street_address = ", ".join(line)
+        street_address = line.pop()
         hours = d.xpath(
             "./following-sibling::p[2]/text()|./following-sibling::p[3]/text()"
         )
