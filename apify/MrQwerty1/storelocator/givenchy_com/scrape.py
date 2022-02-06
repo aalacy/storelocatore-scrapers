@@ -143,6 +143,6 @@ if __name__ == "__main__":
         "Sec-Fetch-Site": "same-origin",
         "Sec-Fetch-User": "?1",
     }
-    session = SgRequests()
+    session = SgRequests(proxy_country="au")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
