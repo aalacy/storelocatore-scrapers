@@ -43,7 +43,9 @@ def get_data(slug, driver):
 
     a = j.get("address") or {}
     street_address = a.get("streetAddress")
-    city = a.get("addressLocality")
+    city = a.get("addressLocality") or ""
+    if "," in city:
+        city = city.split(",")[-1].strip()
     state = a.get("addressRegion")
     postal = a.get("postalCode")
     phone = j.get("telephone") or ""
