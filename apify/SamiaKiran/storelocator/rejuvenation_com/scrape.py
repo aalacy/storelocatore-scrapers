@@ -25,19 +25,24 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll(
-            "div", {"class": "cms-equal_width_column_control-col cms-image-block-col"}
+            "div",
+            {
+                "class": "cms-equal_width_column_control-col cms-image-block-col mobile-only"
+            },
         )
         for loc in loclist[:-1]:
+            if "PERMANENTLY CLOSED" in loc.text:
+                continue
             temp = loc.findAll("p")
-            location_name = temp[1].text
-            phone = temp[3].text
-            hours_of_operation = (
-                temp[5].get_text(separator="|", strip=True).replace("|", " ")
-            )
             page_url = "https://www.rejuvenation.com" + str(
                 loc.findAll("button")[1]["onclick"]
             ).replace("window.location.href = '", "").replace("';", "")
             log.info(page_url)
+            location_name = temp[1].text
+            phone = loc.select_one("a[href*=tel]").text
+            hours_of_operation = (
+                temp[5].get_text(separator="|", strip=True).replace("|", " ")
+            )
             raw_address = temp[2].get_text(separator="|", strip=True).replace("|", " ")
             address = raw_address.replace(",", " ")
             address = usaddress.parse(address)

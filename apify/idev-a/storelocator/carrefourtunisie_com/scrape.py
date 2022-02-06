@@ -14,6 +14,18 @@ locator_domain = "https://carrefourtunisie.com"
 base_url = "https://www.carrefour.tn/default/nos-magasins"
 
 
+def _v(val):
+    return (
+        val.replace("Carrefour Market", "")
+        .replace("CARREFOUR MARKET", "")
+        .replace("CARREFOUR EXPRESS", "")
+        .replace("CARREFOUR ORANGE", "")
+        .replace("CARREFOUR", "")
+        .replace("MINI HYPER", "")
+        .replace("HAMMAM LIF 2", "HAMMAM LIF")
+    )
+
+
 def fetch_data():
     with SgRequests() as session:
         locations = json.loads(
@@ -25,12 +37,14 @@ def fetch_data():
         for _ in locations:
             if not _["address"]:
                 continue
-            addr = parse_address_intl(_["address"] + ", Tunisia")
+            st = _v(_["address"])
+            addr = parse_address_intl(st + ", Tunisia")
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            street_address = street_address.replace("Tunisia", "").strip()
             if street_address and street_address.isdigit():
-                street_address = _["address"]
+                street_address = _v(_["address"])
             city = addr.city
             if city and city.isdigit():
                 city = ""
@@ -44,14 +58,8 @@ def fetch_data():
             )
             yield SgRecord(
                 page_url=base_url,
-                store_number=_["storeId"],
                 location_name=_["name"],
-                street_address=street_address.replace("Carrefour Market", "")
-                .replace("Carreour Market", "")
-                .replace("Carrefour Express", "")
-                .replace("Carreour Express", "")
-                .replace("Carrefour Orange", "")
-                .replace("Tunisia", ""),
+                street_address=street_address,
                 city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
