@@ -66,12 +66,12 @@ def get_driver(url, class_name, timeout, driver=None):
 def get_page_urls():
     base_url = "https://www.weismarkets.com/"
     class_name_main_nav = "main-navigation"
-    timeout3 = 20
+    timeout3 = 40
     driver = get_driver(base_url, class_name_main_nav, timeout3)
     stores_link_xpath = (
         '//*[contains(@data-original-title, "Stores") and contains(@href, "stores#")]'
     )
-    WebDriverWait(driver, 20).until(
+    WebDriverWait(driver, 30).until(
         EC.element_to_be_clickable((By.XPATH, stores_link_xpath))
     )
     driver.find_element_by_xpath(stores_link_xpath).click()
@@ -98,7 +98,13 @@ def get_page_urls():
 
 def fetch_data():
     logger.info("Pulling store URLs")
-    page_urls = get_page_urls()
+    page_urls = None
+    store_urls = get_page_urls()
+    if not store_urls:
+        page_urls = get_page_urls()
+    else:
+        page_urls = store_urls
+
     logger.info(f"Store URLs Scraping Finished: {page_urls[0:5]}")  # noqa
 
     for idx, ln_sn_purl in enumerate(page_urls[0:]):
