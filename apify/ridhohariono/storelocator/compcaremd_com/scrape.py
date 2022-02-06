@@ -69,9 +69,12 @@ def fetch_data():
             .text.replace("US,", "")
             .replace("US", "")
             .replace(", United States", "")
+            .replace(" ", "")
             .strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "Jonnet Building" in city:
+            city = city.replace("Jonnet Building,", "").strip()
         country_code = "US"
         hours_of_operation = MISSING
         store_number = MISSING
