@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import re
 
-DOMAIN = "dank.com"
+DOMAIN = "dank.ca"
 BASE_URL = "https://dank.ca"
 LOCATION_URL = "https://dank.ca/pages/locations"
 HEADERS = {
