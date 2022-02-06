@@ -54,7 +54,9 @@ def fetch_data():
         raw_address = store["address"]
         street_address, city, _, zip_postal = getAddress(raw_address)
         if zip_postal == MISSING:
-            zip_postal = raw_address.split(",")[-1].strip()
+            addr_split = raw_address.split(",")
+            if len(addr_split) > 2:
+                zip_postal = raw_address.split(",")[-1].strip()
         state = MISSING
         phone = store["phoneNumber"]
         country_code = "CA"
