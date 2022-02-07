@@ -27,7 +27,7 @@ def fetch_data():
     api_url = "https://www.infineon.com/locationFinder/locations?types=&locale=en&site=ifx&region=&country="
     with SgChrome(user_agent=user_agent) as driver:
 
-        driver.get(api_url, headers=headers)
+        driver.get(api_url)
         time.sleep(10)
         json_res = json.loads(driver.page_source)
 
