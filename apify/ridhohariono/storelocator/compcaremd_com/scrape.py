@@ -64,14 +64,18 @@ def fetch_data():
     phone = soup.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
     for row in contents:
         location_name = row.find("h2", {"class": "content-box-heading"}).text.strip()
-        raw_address = (
+        raw_address = " ".join(
             row.find("p", {"class": "p1"})
             .text.replace("US,", "")
             .replace("US", "")
             .replace(", United States", "")
-            .strip()
-        )
+            .replace("United States", "")
+            .replace(" ", " ")
+            .split()
+        ).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "Jonnet Building" in city:
+            city = city.replace("Jonnet Building,", "").strip()
         country_code = "US"
         hours_of_operation = MISSING
         store_number = MISSING
