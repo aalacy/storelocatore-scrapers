@@ -54,21 +54,21 @@ def fetch_data():
                 next_page = ""
             if next_page:
                 next_page.click()
-                sleep(5)
+                sleep(10)
                 all_locations = driver.find_elements_by_xpath(
                     '//button[contains(text(), "Store details")]'
                 )
                 for i, loc in enumerate(all_locations):
                     all_locations[i].click()
-                    sleep(5)
+                    sleep(10)
                     all_poi_html.append(etree.HTML(driver.page_source))
                     driver.back()
-                    sleep(5)
+                    sleep(10)
                     next_page = driver.find_element_by_xpath(
                         '//li[@class="pagination-next ng-scope"]/a'
                     )
                     next_page.click()
-                    sleep(5)
+                    sleep(10)
                     all_locations = driver.find_elements_by_xpath(
                         '//button[contains(text(), "Store details")]'
                     )
@@ -80,7 +80,7 @@ def fetch_data():
                 next_page = ""
             if next_page:
                 next_page.click()
-                sleep(5)
+                sleep(10)
                 all_locations = driver.find_elements_by_xpath(
                     '//button[contains(text(), "Store details")]'
                 )
@@ -89,15 +89,15 @@ def fetch_data():
                         all_locations[i].click()
                     except Exception:
                         continue
-                    sleep(5)
+                    sleep(10)
                     all_poi_html.append(etree.HTML(driver.page_source))
                     driver.back()
-                    sleep(5)
+                    sleep(10)
                     next_page = driver.find_element_by_xpath(
                         '//li/a[contains(text(), "3")]'
                     )
                     next_page.click()
-                    sleep(5)
+                    sleep(10)
                     all_locations = driver.find_elements_by_xpath(
                         '//button[contains(text(), "Store details")]'
                     )
