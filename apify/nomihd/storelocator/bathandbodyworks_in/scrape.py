@@ -71,6 +71,12 @@ def fetch_data():
                 .strip()
                 .split("; contact -")[0]
                 .strip()
+                .replace("\\n", "")
+                .strip()
+                .split("Email:")[0]
+                .strip()
+                .split(", INDIA")[0]
+                .strip()
             )
             if raw_address[-1] == ",":
                 raw_address = "".join(raw_address[:-1]).strip()
@@ -112,6 +118,12 @@ def fetch_data():
                 street_address = "F-118, Infinity 2 Link RD Malad(W)"
                 city = "Mumbai"
 
+            try:
+                if city.split(" ")[-1].isdigit():
+                    zip = city.split(" ")[-1]
+                    city = " ".join(city.split(" ")[:-1]).strip()
+            except:
+                pass
             country_code = "IN"
 
             store_number = store_info[0].strip().replace('"', "").strip()

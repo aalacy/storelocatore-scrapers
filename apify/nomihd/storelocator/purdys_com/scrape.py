@@ -76,6 +76,7 @@ def fetch_data():
                     ).strip()
                     hours_info = (
                         hours_info.replace("pm ", "pm | ")
+                        .replace("PM ", "PM | ")
                         .replace("closed ", "closed | ")
                         .replace("CLOSED", "CLOSED | ")
                     )

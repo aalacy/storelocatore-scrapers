@@ -17,42 +17,46 @@ logger = SgLogSetup().get_logger("dominos_com_tr")
 def fetch_data():
     for x in range(1, 100):
         url = "https://fe.dominos.com.tr/api/store/location?cityCode=" + str(x)
-        logger.info(str(x))
         r = session.get(url, headers=headers)
         website = "dominos.com.tr"
         typ = "<MISSING>"
         country = "TR"
-        try:
-            for item in json.loads(r.content):
-                store = item["id"]
-                hours = item["availableFrom"] + "-" + item["availableUntil"]
-                name = item["name"]
-                add = item["address"]
-                phone = item["phone"]
-                loc = "<MISSING>"
-                lng = item["longitude"]
-                lat = item["lattitude"]
-                city = item["city"]["name"]
-                state = "<MISSING>"
-                zc = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
-        except:
-            pass
+        PFound = False
+        trycount = 0
+        while PFound is False and trycount <= 3:
+            trycount = trycount + 1
+            logger.info(str(x))
+            try:
+                for item in json.loads(r.content):
+                    PFound = True
+                    store = item["id"]
+                    hours = item["availableFrom"] + "-" + item["availableUntil"]
+                    name = item["name"]
+                    add = item["address"]
+                    phone = item["phone"]
+                    lng = item["longitude"]
+                    lat = item["lattitude"]
+                    city = item["city"]["name"]
+                    state = "<MISSING>"
+                    zc = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=url,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+            except:
+                pass
 
 
 def scrape():
