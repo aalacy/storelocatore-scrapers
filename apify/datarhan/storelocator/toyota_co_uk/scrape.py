@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -33,7 +32,7 @@ def fetch_data():
         "https://www.toyota.pt/api/dealer/drive/-8.6108/41.1495?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ru/api/dealer/drive/37.4121287410622/55.9698601178023?count=2000&extraCountries=by&limitSearchDistance=150&isCurrentLocation=false",
         "https://www.toyota.sk/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.se/api/dealer/drive/16.9104983/58.7871654?count=2000&extraCountries=&isCurrentLocation=false",
+        # "https://www.toyota.se/api/dealer/drive/16.9104983/58.7871654?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.com.tr/api/dealer/drive/30.68333/36.9?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ua/api/dealer/drive/30.517621/50.451497?count=2000&extraCountries=&isCurrentLocation=false",
     ]
@@ -42,6 +41,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     for start_url in start_urls:
+        print(start_url)
         data = session.get(start_url, headers=hdr).json()
         for poi in data["dealers"]:
             hoo = []
