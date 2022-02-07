@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
+import re
 
 DOMAIN = "buckhorngrill.com"
 SITE_MAP = "https://buckhorngrill.com/locations-sitemap.xml"
@@ -64,15 +65,15 @@ def fetch_data():
             city = location_name
         phone = store.find("h5", {"class": "phone-number"}).text.strip()
         country_code = "US"
-        hours_of_operation = (
+        hours_of_operation = re.sub(
+            r"\s?Hours:,?|Current\s?:|,?Please.*",
+            "",
             store.find("div", {"class": "hours-wrapper"})
             .get_text(strip=True, separator=",")
             .replace(" Hours:,", ": ")
             .replace("ly,", "ly: ")
-            .replace("Current :", "")
-            .replace("day,", "day: ")
-            .strip()
-        )
+            .replace("day,", "day: "),
+        ).strip()
         store_number = MISSING
         location_type = MISSING
         latitude = MISSING
