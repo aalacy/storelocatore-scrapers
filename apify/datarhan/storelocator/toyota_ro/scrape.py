@@ -1,6 +1,4 @@
-from email import header
 from lxml import etree
-from rsa import verify
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
