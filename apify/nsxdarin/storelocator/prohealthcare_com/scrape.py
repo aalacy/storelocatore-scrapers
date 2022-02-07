@@ -35,7 +35,7 @@ def fetch_data():
             website = "prohealthcare.com"
             typ = "<MISSING>"
             country = "US"
-            loc = "<MISSING>"
+            loc = "https://www.prohealthcare.com/bin/optumcare/findlocations"
             store = "<MISSING>"
             hours = "<MISSING>"
             for line in r.iter_lines():

@@ -24,7 +24,7 @@ else:
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 DOMAIN = "https://www.costa.co.uk/business/costa-express"
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 16
+MAX_WORKERS = 12
 
 
 headers = {
@@ -33,7 +33,7 @@ headers = {
 }
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(60))
 def get_response(url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)

@@ -47,9 +47,7 @@ def fetch_data():
             phone = poi["phone"]
             if phone:
                 phone = phone.replace("...", "").strip()
-            location_type = poi["dealertype"]
-            if not location_type:
-                location_type = poi["icon"]
+            location_type = poi["icon"]
             latitude = poi["latitude"]
             longitude = poi["longitude"]
             hours_of_operation = []

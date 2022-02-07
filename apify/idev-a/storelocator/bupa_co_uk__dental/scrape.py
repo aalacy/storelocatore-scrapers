@@ -36,7 +36,7 @@ def fetch_records(driver, http, search):
             f'https://www.bupa.co.uk/dental/dental-care/practices?loc={zip.replace(" ", "%20")}'
         )
         try:
-            rr = driver.wait_for_request(json_url, timeout=20)
+            rr = driver.wait_for_request(json_url, timeout=30)
         except:
             continue
 
