@@ -29,6 +29,9 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "US"
         city = a.city.replace("Cypress Cypress", "Cypress").strip() or "<MISSING>"
+        if location_name == "Fort Worth":
+            city = "Fort Worth"
+            street_address = ad.split("  ")[0].strip()
         latitude = j.get("lat")
         longitude = j.get("lng")
         phone = j.get("description") or "<MISSING>"
