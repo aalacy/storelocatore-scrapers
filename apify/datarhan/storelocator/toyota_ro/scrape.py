@@ -26,7 +26,6 @@ def fetch_data():
         data = session.get(url, headers=hdr).json()
         for poi in data["dealers"]:
             page_url = poi["url"]
-            print(page_url)
             loc_response = session.get(page_url, headers=hdr)
             hoo = ""
             if loc_response.status_code == 200:
