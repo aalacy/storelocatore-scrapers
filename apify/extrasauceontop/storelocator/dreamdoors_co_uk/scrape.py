@@ -35,7 +35,6 @@ def get_driver(url, class_name, driver=None):
         except Exception:
             driver.quit()
             if x == 10:
-                print(url)
                 raise Exception(
                     "Make sure this ran with a Proxy, will fail without one"
                 )
