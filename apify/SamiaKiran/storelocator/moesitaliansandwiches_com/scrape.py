@@ -38,15 +38,22 @@ def fetch_data():
                 loc.find("div", {"class": "hours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("NOW OFFERING CURBSIDE SERVICE & DELIVERY", "")
+                .replace("DELIVERY NOW AVAILABLE THROUGH DOORDASH", "")
+                .replace("THROUGH DOOR DASH ", "")
+                .replace("(THROUGH DOORDASH and POSTMATES) ", "")
+                .replace("THROUGH DOORDASH and", "")
+                .replace(")", "")
+                .replace("(", "")
+                .replace("GRUBHUB", "")
+                .replace("GOPHER", "")
             )
-            if "NOW OFFERING" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split(" NOW OFFERING")[0]
+            if "ONLINE" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("ONLINE")[0]
             elif "NEW" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("NEW")[0]
-            elif "ONLINE" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("ONLINE")[0]
-            elif "DELIVERY" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("DELIVERY")[0]
+            elif "NOW" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("NOW")[0]
             address = address.replace(",", " ").replace("inside Mobil", "")
             address = usaddress.parse(address)
             i = 0
