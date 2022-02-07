@@ -69,6 +69,11 @@ def fetch_data():
         location_name = info.find("span", {"itemprop": "name"}).text.strip()
         raw_address = info.find("p", {"itemprop": "address"}).text.strip()
         street_address, city, state, zip_postal, country_code = getAddress(raw_address)
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1].strip()
+            street_address = re.sub(
+                zip_postal, "", street_address, flags=re.IGNORECASE
+            ).strip()
         if country_code == MISSING:
             country_code = "GB"
         phone = info.find("span", {"itemprop": "telephone"}).text.strip()
