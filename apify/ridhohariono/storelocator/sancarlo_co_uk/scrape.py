@@ -62,6 +62,9 @@ def fetch_data():
     for row in contents:
         page_url = row["href"]
         store = pull_content(page_url)
+        description = store.find("div", {"itemprop": "description"}).text.strip()
+        if "Coming Soon" in description:
+            continue
         info = store.find("div", {"class": "main__restaurant"})
         location_name = info.find("span", {"itemprop": "name"}).text.strip()
         raw_address = info.find("p", {"itemprop": "address"}).text.strip()

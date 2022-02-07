@@ -35,23 +35,17 @@ def fetch_data():
         for poi in all_locations:
             store_url = urljoin(start_url, poi["url"])
             location_name = poi["profile"].get("c_geomodifier")
-            location_name = location_name if location_name else "<MISSING>"
             street_address = poi["profile"]["address"]["line1"]
             if poi["profile"]["address"]["line2"]:
                 street_address += " " + poi["profile"]["address"]["line2"]
             if poi["profile"]["address"]["line3"]:
                 street_address += " " + poi["profile"]["address"]["line3"]
             city = poi["profile"]["address"]["city"]
-            city = city if city else "<MISSING>"
             state = poi["profile"]["address"]["region"]
-            state = state if state else "<MISSING>"
             zip_code = poi["profile"]["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["profile"]["address"]["countryCode"]
-            country_code = country_code if country_code else "<MISSING>"
             store_number = poi["distance"]["id"].split("-")[-1]
             phone = poi["profile"].get("mainPhone", {}).get("display")
-            phone = phone if phone else "<MISSING>"
             location_type = poi["profile"]["c_bankLocationType"]
             latitude = poi["profile"]["yextDisplayCoordinate"]["lat"]
             longitude = poi["profile"]["yextDisplayCoordinate"]["long"]
@@ -68,7 +62,7 @@ def fetch_data():
                         closes = closes[:-2] + ":" + closes[-2:]
                         hoo.append(f"{day} {opens} {closes}")
             hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            hours_of_operation = " ".join(hoo) if hoo else ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -94,7 +88,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_TYPE,
+                }
             ),
             duplicate_streak_failure_factor=-1,
         )
