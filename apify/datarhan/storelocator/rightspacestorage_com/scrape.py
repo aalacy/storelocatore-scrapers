@@ -19,13 +19,11 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_cities = dom.xpath(
-        '//h4[contains(text(), "All Right Space Storage Facilities")]/following-sibling::ul//a/@href'
-    )
+    all_cities = dom.xpath('//ul[@class="listing-holder"]/li/a/@href')
     for url in all_cities:
         response = session.get(urljoin(start_url, url))
         dom = etree.HTML(response.text)
-        all_locations = dom.xpath('//a[contains(text(), "View Facility")]/@href')
+        all_locations = dom.xpath('//a[contains(text(), "View All Units")]/@href')
 
         for url in all_locations:
             page_url = urljoin(start_url, url)
