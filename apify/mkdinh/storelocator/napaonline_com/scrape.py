@@ -25,7 +25,7 @@ base_url = "https://www.napaonline.com/stores"
 
 def get_driver():
     driver = SgChrome(
-        is_headless=True, seleniumwire_auto_config=False, user_agent=user_agent
+        is_headless=False, seleniumwire_auto_config=True, user_agent=user_agent
     ).driver()
     driver.set_script_timeout(600)
     load_initial_page(driver)
@@ -139,7 +139,7 @@ def fetch_data():
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
-    ) as writer, ThreadPoolExecutor(max_workers=1) as executor, get_driver() as driver:
+    ) as writer, ThreadPoolExecutor(max_workers=5) as executor, get_driver() as driver:
         search = static_zipcode_list(country_code=SearchableCountries.USA, radius=5)
         futures = [
             executor.submit(fetch_locations, postal, driver, writer)
