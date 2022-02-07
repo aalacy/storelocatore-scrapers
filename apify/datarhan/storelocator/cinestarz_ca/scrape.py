@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -12,7 +11,7 @@ from sgpostal.sgpostal import parse_address_intl
 def fetch_data():
     session = SgRequests()
     start_url = "https://cinestarz.ca/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "cinestarz.ca"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -26,8 +25,7 @@ def fetch_data():
         open_soon = loc_dom.xpath('//h2[contains(text(), "OPENING SOON!")]')
         if open_soon:
             continue
-
-        location_name = loc_dom.xpath('//h2[@class="vc_custom_heading"]/text()')[0]
+        location_name = loc_dom.xpath('//*[@class="vc_custom_heading"]/text()')[0]
         if location_name.lower() == "get in touch":
             location_name = loc_dom.xpath('//h1[@class="vc_custom_heading"]/text()')[0]
         raw_data = loc_dom.xpath(
@@ -64,6 +62,9 @@ def fetch_data():
             .replace("Day Opening Closing ", "")
             .strip()
         )
+        state = addr.state
+        if state and state.endswith("."):
+            state = state[:-1]
         temp_closed = loc_dom.xpath('//img[contains(@src, "EMPORARILYCLOSED")]')
         location_type = ""
         if temp_closed:
@@ -83,7 +84,7 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=addr.city,
-            state=addr.state,
+            state=state,
             zip_postal=addr.postcode,
             country_code="CA",
             store_number="",
