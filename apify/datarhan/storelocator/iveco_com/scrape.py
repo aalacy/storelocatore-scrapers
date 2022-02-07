@@ -28,18 +28,13 @@ def fetch_data():
             continue
         for poi in data["results"]:
             poi = poi["poi"]
-            street_address = [
-                e["short_name"]
-                for e in poi["address_components"]
-                if "route" in e["types"]
-            ]
-            street_address = street_address[0] if street_address else ""
+            street_address = poi["additional_information"].get("display_address")
             city = [
                 e["short_name"]
                 for e in poi["address_components"]
                 if "locality" in e["types"]
             ]
-            city = city[0] if city else ""
+            city = city[0].split("(")[0].strip() if city else ""
             state = [
                 e["short_name"]
                 for e in poi["address_components"]

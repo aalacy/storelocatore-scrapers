@@ -26,16 +26,12 @@ def fetch_data(sgw: SgWriter):
         location_type = (
             "".join(d.xpath('.//span[@class="light-tag"]/text()')) or "<MISSING>"
         )
-        street_address = (
-            "".join(
-                d.xpath(
-                    './/i[@class="bi bi-geo-alt-fill"]/following-sibling::div[1]/text()[1]'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-            or "<MISSING>"
+        info = d.xpath(
+            './/i[@class="bi bi-geo-alt-fill"]/following-sibling::div[1]/text()'
         )
+        info = list(filter(None, [a.strip() for a in info]))
+        street_address = "".join(info[0]).replace("\xa0", " ").strip()
+
         ad = (
             "".join(
                 d.xpath(
@@ -51,12 +47,14 @@ def fetch_data(sgw: SgWriter):
             " ".join(ad.split(",")[1].split()[1:]).replace("ON", "").strip()
             or "<MISSING>"
         )
+        if street_address.find(f"{postal}") != -1:
+            street_address = street_address.split(",")[0].strip()
         country_code = "CA"
         if postal.isdigit():
             country_code = "US"
         city = ad.split(",")[0].strip()
-        if street_address.find(f"{city}") != -1:
-            street_address = street_address.split(f"{city}")[0].replace(",", "").strip()
+        if page_url.find("georgia") != -1:
+            city, state = state, city
         try:
             latitude = (
                 "".join(d.xpath('.//a[text()="Get Directions"]/@href'))
