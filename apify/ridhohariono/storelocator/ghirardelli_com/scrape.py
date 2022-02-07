@@ -1,7 +1,3 @@
-import csv
-import re
-from sgrequests import SgRequests
-
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -9,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
 import re
 
 MISSING = "<MISSING>"
