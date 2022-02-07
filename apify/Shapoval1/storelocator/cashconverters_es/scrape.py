@@ -33,7 +33,6 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//@href"))
 
         page_url = f"https://cashconverters.es{slug}"
-        print(page_url)
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
