@@ -47,6 +47,15 @@ def fetch_data(sgw: SgWriter):
                 " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
             )
             hours_of_operation = " ".join(hours_of_operation.split())
+        desc = j.get("description") or "<MISSING>"
+        per_cls = "<MISSING>"
+        if desc != "<MISSING>":
+            b = html.fromstring(desc)
+            per_cls = "".join(
+                b.xpath('//*[contains(text(), "Store closed permanently")]/text()')
+            )
+        if per_cls == "Store closed permanently.":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
