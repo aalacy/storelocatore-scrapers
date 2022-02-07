@@ -1,3 +1,4 @@
+import ssl
 import time
 from bs4 import BeautifulSoup
 
