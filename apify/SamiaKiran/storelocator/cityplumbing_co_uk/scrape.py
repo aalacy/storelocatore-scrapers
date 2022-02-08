@@ -40,7 +40,11 @@ def fetch_data():
             latitude = r.text.split("var latitude =")[1].split(";")[0]
             longitude = r.text.split("var longitude =")[1].split(";")[0]
             location_name = soup.find("h2").text
-            location_type = soup.find("title").text.split("|")[1]
+            location_type = soup.find("title").text
+            if "PTS" in location_type:
+                location_type = "PTS"
+            else:
+                location_type = location_type.split("|")[1]
             raw_address = (
                 soup.find("div", {"class": "addrss"})
                 .get_text(separator="|", strip=True)
@@ -55,6 +59,7 @@ def fetch_data():
                 soup.find("div", {"class": "opn_hours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Opening Times", "")
             )
             pa = parse_address_intl(raw_address)
 
@@ -70,6 +75,12 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
+            if len(street_address) < 3:
+                street_address = raw_address.split(",")[0]
+            if zip_postal == MISSING:
+                zip_postal = raw_address.split()
+                zip_postal = zip_postal[-2] + " " + zip_postal[-1]
+            street_address = street_address.replace(zip_postal, "")
             country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,
