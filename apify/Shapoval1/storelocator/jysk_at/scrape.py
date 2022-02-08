@@ -77,6 +77,8 @@ def fetch_data(sgw: SgWriter):
                 )
                 time = h.get("format_time")
                 line = f"{day} {time}"
+                if line == "Sunday 0:00 - 24:00":
+                    line = "Sunday Closed"
                 tmp.append(line)
             hours_of_operation = "; ".join(tmp)
 
