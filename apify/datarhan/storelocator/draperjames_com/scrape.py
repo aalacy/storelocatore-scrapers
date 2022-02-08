@@ -21,9 +21,9 @@ def fetch_data():
     all_locations = dom.xpath('//div[@class="store-location"]')
     for poi_html in all_locations:
         store_url = start_url
-        location_name = poi_html.xpath(
-            './/h4[@class="store-location__location"]/text()'
-        )[0]
+        location_name = "".join(
+            poi_html.xpath('.//h4[@class="store-location__location"]/text()')
+        )
         if "Permanently Closed" in location_name:
             continue
 
