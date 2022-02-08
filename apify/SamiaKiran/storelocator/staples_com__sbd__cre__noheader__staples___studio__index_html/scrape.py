@@ -40,8 +40,8 @@ def fetch_data():
                     state = zip_postal
                     zip_postal = MISSING
                 if zip_postal.split()[0] == "BC":
-                    zip_postal = zip_postal.replace("BC", "")
                     state = zip_postal.split()[0]
+                    zip_postal = zip_postal.replace("BC", "")
                 country_code = "CA"
             else:
                 street_address = address[0]
