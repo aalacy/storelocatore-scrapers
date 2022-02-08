@@ -38,6 +38,10 @@ def fetch_data(sgw: SgWriter):
     )
     js = r.json()["data"]["page"]["activeComponents"][0]["options"]["stores"]
     for j in js:
+        otherText = "".join(j.get("otherText")) or "<MISSING>"
+        store_number = "<MISSING>"
+        if otherText != "<MISSING>":
+            store_number = otherText.split()[1].strip()
         page_url = "https://www.tacobell.cl/tiendas"
         location_name = j.get("name")
         place_id = j.get("placeId")
@@ -71,7 +75,7 @@ def fetch_data(sgw: SgWriter):
             state=SgRecord.MISSING,
             zip_postal=SgRecord.MISSING,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
             latitude=latitude,
