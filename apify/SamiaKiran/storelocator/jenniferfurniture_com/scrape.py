@@ -24,15 +24,19 @@ def fetch_data():
         url = "https://www.jenniferfurniture.com/pages/store-locator"
         r = session.get(url, headers=headers)
         token = r.text.split("storelocator_scripttag.js?v=")[1].split("\\u")[0]
-        url = (
-            "https://cdn.shopify.com/s/files/1/1101/6302/t/179/assets/sca.storelocator_scripttag.js?v="
-            + token
-            + "&shop=jennifer-convertibles.myshopify.com"
+        api_url = (
+            r.text.split("var urls = ")[1]
+            .split("]")[0]
+            .split('","')[-2]
+            .replace("\\/", "/")
         )
-        r = session.get(url, headers=headers)
-        loclist = json.loads(
-            r.text.split("locationsRaw:'")[1].split("'},function()")[0]
+        r = session.get(api_url, headers=headers)
+        loclist = (
+            r.text.split('"locationsRaw":"')[1]
+            .split('","app_url"')[0]
+            .replace('\\"', '"')
         )
+        loclist = json.loads(loclist)
         for loc in loclist:
             page_url = loc["web"].replace("\\/", "/")
             log.info(page_url)
