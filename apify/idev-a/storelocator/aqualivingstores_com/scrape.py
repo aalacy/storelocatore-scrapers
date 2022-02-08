@@ -64,7 +64,6 @@ def fetch_data():
             _aa = sp1.find("", string=re.compile(r"Address$"))
             phone = ""
             addr = []
-
             if _aa:
                 addr = _addr(_aa)
             else:
@@ -75,12 +74,6 @@ def fetch_data():
                     _cc = sp1.find("", string=re.compile(r"Outlet$"))
                     if _cc:
                         addr = _addr(_cc)
-                    elif sp1.select_one("div.fusion-text.fusion-text-4"):
-                        addr = list(
-                            sp1.select_one(
-                                "div.fusion-text.fusion-text-4"
-                            ).stripped_strings
-                        )
                     else:
                         temp = [
                             list(aa.stripped_strings)
@@ -100,6 +93,14 @@ def fetch_data():
                 addr = list(
                     sp1.select_one("div.fusion-text.fusion-text-3 p").stripped_strings
                 )
+            if addr and "hour" in addr[0].lower():
+                if sp1.select_one("div.fusion-text.fusion-text-4"):
+                    addr = list(
+                        sp1.select_one("div.fusion-text.fusion-text-4").stripped_strings
+                    )
+            if _p(addr[-1]):
+                phone = addr[-1]
+                del addr[-1]
             _hr = sp1.find("strong", string=re.compile(r"^Hours:"))
             hours = ""
             if _hr:
@@ -135,9 +136,7 @@ def fetch_data():
                 if "appointment" in hours:
                     hours = ""
             street_address = city = state = zip_postal = ""
-            if _p(addr[-1]):
-                phone = addr[-1]
-                del addr[-1]
+
             if len(addr) > 1:
                 c_s = [
                     cc.strip()
