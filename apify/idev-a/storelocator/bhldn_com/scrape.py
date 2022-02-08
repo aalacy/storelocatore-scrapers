@@ -47,16 +47,23 @@ def fetch_data():
             if _p(addr[-1]):
                 phone = addr[-1]
                 del addr[-1]
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in sp1.select("div.flex.horizontal > div")
+            ]
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("p.title.large").text.strip(),
-                street_address=" ".join(addr[:-1]),
+                street_address=" ".join(addr[:-1])
+                .replace("Highland Village", "")
+                .replace("Highland Park Village", ""),
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split()[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=" ".join(addr),
             )
 
