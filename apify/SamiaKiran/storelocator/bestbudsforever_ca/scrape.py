@@ -58,14 +58,17 @@ def fetch_data():
                 city = temp_address[0]
                 state = temp_address[1]
                 zip_postal = address[2]
-                latitude = MISSING
-                longitude = MISSING
+                coords = r.text.split("LatLng(")[1].split(")")[0].split(",")
+                latitude = coords[0]
+                longitude = coords[1]
             hours_of_operation = (
                 soup.findAll("div", {"class": "col-inner text-left"})[1]
                 .findAll("p")[1]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if "," in city:
+                city = city.split(",")[1]
             country_code = "CA"
             yield SgRecord(
                 locator_domain=DOMAIN,
