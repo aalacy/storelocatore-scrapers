@@ -38,7 +38,10 @@ def fetch_data():
             log.info(location_name)
             store_number = loc["Id"]
             phone = loc["Phone"]
-            street_address = loc["Address1"]
+            try:
+                street_address = loc["Address1"] + " " + loc["Address2"]
+            except:
+                street_address = loc["Address1"]
             log.info(street_address)
             city = loc["Town"]
             state = loc["County"]
