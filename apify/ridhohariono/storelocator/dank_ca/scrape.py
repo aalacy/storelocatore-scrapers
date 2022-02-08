@@ -52,10 +52,19 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def get_latlong(url):
-    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+def get_latlong(store):
+    map_link = store.find_all("div", {"class": "contact-box-info location-info"})[
+        0
+    ].find("a")["href"]
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", map_link)
     if not latlong:
-        return MISSING, MISSING
+        try:
+            latlong = store.find(
+                "a", {"href": re.compile(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*).*")}
+            )
+            latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", latlong["href"])
+        except:
+            return MISSING, MISSING
     return latlong.group(1), latlong.group(2)
 
 
@@ -85,8 +94,7 @@ def fetch_data():
             .get_text(strip=True, separator=",")
             .replace("day,", "day: ")
         )
-        map_link = info[0].find("a")["href"]
-        latitude, longitude = get_latlong(map_link)
+        latitude, longitude = get_latlong(store)
         store_number = MISSING
         location_type = MISSING
         log.info("Append {} => {}, {}".format(location_name, street_address, city))
