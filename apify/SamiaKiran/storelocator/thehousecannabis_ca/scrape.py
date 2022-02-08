@@ -61,7 +61,9 @@ def fetch_data():
             temp_zip = r.text.split('"postalCode":"')[1].split('"')[0]
             if temp_zip == zip_postal:
                 latitude = r.text.split('"latitude":')[1].split(",")[0]
-                longitude = r.text.split('"longitude":')[1].split(",")[0]
+                longitude = (
+                    r.text.split('"longitude":')[1].split(",")[0].replace("}", "")
+                )
             else:
                 latitude = MISSING
                 longitude = MISSING
