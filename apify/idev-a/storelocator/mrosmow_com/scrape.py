@@ -50,7 +50,7 @@ def fetch_data():
                 )
                 state = addr[-1].split()[-3].strip().replace(",", "")
                 zip_postal = " ".join(addr[-1].split()[2:])
-             
+
             yield SgRecord(
                 page_url=_["url"],
                 store_number=_["id"],
