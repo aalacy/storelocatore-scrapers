@@ -39,6 +39,9 @@ def fetch_data():
                 street_address = store["address"]["address1"].strip()
             city = store["address"]["city"]
             state = store["address"]["state"]["stateCode"]
+            if "Aliso Viejo" in location_name:
+                city = "Aliso Viejo"
+                street_address = street_address.replace(city, "")
             zip_postal = store["address"]["zip"].replace(state, "").strip()
             phone = store["phone"].strip()
             country_code = store["address"]["country"]["countryIATACode"]
