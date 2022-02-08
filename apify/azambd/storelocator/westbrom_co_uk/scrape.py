@@ -34,7 +34,7 @@ def fetch_stores():
     body = request_with_retries(
         "https://www.bankopeningtimes.co.uk/west-bromwich-building-society/west-bromwich-building-society.html"
     )
-    places = []
+
     for a in body.xpath("//li/a"):
         if "West Bromwich Building Society In" in a.xpath(".//text()")[0]:
             loc = a.xpath(".//@href")[0].replace(".html", "")
