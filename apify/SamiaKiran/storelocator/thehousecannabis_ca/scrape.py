@@ -35,7 +35,7 @@ def fetch_data():
                 "div", {"class": "StoreFacts__Description-sc-19jbc8c-3"}
             )
             address = temp[0].get_text(separator="|", strip=True).split("|")
-            street_address = address[0]
+            street_address = address[0].replace("in Chinatown", "")
             address = address[1].split(",")
             city = address[0]
             address = address[1].split()
