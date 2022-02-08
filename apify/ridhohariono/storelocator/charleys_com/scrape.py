@@ -47,18 +47,22 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def pull_content(url):
+def pull_content(url, num=0):
+    num += 1
     log.info("Pull content => " + url)
     HEADERS["Referer"] = url
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        if num < 3:
+            return pull_content(url, num)
+        else:
+            return False
     return soup
 
 
-def get_hoo(url, num=0):
-    log.info("Pull content => " + url)
-    num += 1
+def get_hoo(soup):
     try:
-        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
         hoo_content = soup.find("div", id=re.compile(r"dine-in-\d"))
         if not hoo_content:
             hoo_content = soup.find("div", id=re.compile(r"curbside-\d"))
@@ -72,10 +76,7 @@ def get_hoo(url, num=0):
             .split()
         ).strip()
     except:
-        if num < 3:
-            return get_hoo(url, num)
-        else:
-            return MISSING
+        return MISSING
     return hours
 
 
@@ -100,25 +101,41 @@ def fetch_data():
         for row in data:
             page_url = row["permalink"]
             location_name = row["title"].replace("&#039;", "'")
-            if "Coming Soon" in location_name:
+            if "Coming Soon" in location_name or "trashed" in page_url:
                 continue
-            street_address = re.sub(r"\(.*\)", "", row["street_address"]).strip()
-            city = row["city"]
-            state = row["state"]
-            if state == "DC":
-                state = "Washington DC"
-            zip_postal = (
-                MISSING if row["zip"] == "0" or len(row["zip"]) == 0 else row["zip"]
-            )
+            store = pull_content(page_url)
+            if not store:
+                raw_address = f"{row['street_address']}, {row['city']}, {row['state']}, {row['zip']}"
+                hours_of_operation = MISSING
+            else:
+                try:
+                    raw_address = store.find(
+                        "p", {"class": "address-container"}
+                    ).get_text(strip=True, separator=",")
+                except:
+                    raw_address = f"{row['street_address']}, {row['city']}, {row['state']}, {row['zip']}"
+                hours_of_operation = get_hoo(store)
+                if (
+                    "Monday: -,Tuesday: -,Wednesday: -,Thursday: -,Friday: -,Saturday: -,Sunday: -"
+                    in hours_of_operation
+                ):
+                    hours_of_operation = MISSING
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            if len(street_address) < 5:
+                street_address = re.sub(r"\(.*\)", "", row["street_address"]).strip()
+            if city == MISSING:
+                city = row["city"]
+            if state == MISSING:
+                state = row["state"]
+                if state == "DC":
+                    state = "Washington DC"
+            if zip_postal == MISSING:
+                zip_postal = (
+                    MISSING if row["zip"] == "0" or len(row["zip"]) == 0 else row["zip"]
+                )
             phone = row["phone"]
             country_code = MISSING
             store_number = row["store_num"]
-            hours_of_operation = get_hoo(page_url)
-            if (
-                "Monday: -,Tuesday: -,Wednesday: -,Thursday: -,Friday: -,Saturday: -,Sunday: -"
-                in hours_of_operation
-            ):
-                hours_of_operation = MISSING
             latitude = row["lat"]
             longitude = "-97.2478" if row["lng"] == "-972478" else row["lng"]
             location_type = MISSING
@@ -138,6 +155,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

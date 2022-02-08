@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://shoprite.com/pharmacy"
+    locator_domain = "https://shoprite.com/shopritewinesandspirits"
     session = SgRequests()
     headers = {
         "accept": "*/*",
@@ -62,6 +62,15 @@ def fetch_data(sgw: SgWriter):
         for i in info:
             if "Phone" in i:
                 phone = "".join(i).replace("Phone", "").strip() or "<MISSING>"
+        if phone == "<MISSING>":
+            phone = (
+                "".join(
+                    d.xpath(
+                        './/div[@class="store__address"]/div[@class="store__phone"][1]//text()'
+                    )
+                )
+                or "<MISSING>"
+            )
         str_info = " ".join(info).replace("\n", " ").replace("\r", " ").strip()
         str_info = " ".join(str_info.split())
         hours_of_operation = str_info
@@ -80,6 +89,22 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation.find("Free RX") != -1:
             hours_of_operation = hours_of_operation.split("Free RX")[0].strip()
         hours_of_operation = hours_of_operation or "<MISSING>"
+        if (
+            hours_of_operation == "<MISSING>"
+            and location_name.find("Wines") != -1
+            or hours_of_operation == "<MISSING>"
+            and location_name.find("Liquors") != -1
+        ):
+            hours_of_operation = (
+                " ".join(
+                    d.xpath(
+                        './/h4[contains(text(), "Hours")]/following-sibling::p//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
         address = f"{street_address} {city}, {state} {postal}"
         address = " ".join(address.split())
 

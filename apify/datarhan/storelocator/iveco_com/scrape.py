@@ -28,7 +28,7 @@ def fetch_data():
             continue
         for poi in data["results"]:
             poi = poi["poi"]
-            street_address = poi["additional_information"]["display_address"]
+            street_address = poi["additional_information"].get("display_address")
             city = [
                 e["short_name"]
                 for e in poi["address_components"]

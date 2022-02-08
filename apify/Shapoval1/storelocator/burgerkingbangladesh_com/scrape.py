@@ -36,7 +36,7 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "Bangladesh"
-        city = location_name.replace("Burger King", "").strip()
+        city = location_name.replace("Burger King", "").replace("2", "").strip()
         latitude = b[1]
         longitude = b[2]
 

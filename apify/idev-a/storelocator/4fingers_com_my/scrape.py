@@ -81,10 +81,6 @@ def fetch_data():
                     phone = ""
             name = _.select_one("div.headers-right").text.strip()
             coord = _coord(locs, name)
-            if not coord:
-                import pdb
-
-                pdb.set_trace()
             yield SgRecord(
                 page_url=base_url,
                 location_name=name,
