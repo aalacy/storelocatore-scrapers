@@ -74,8 +74,12 @@ def fetch_data():
             street_address = re.sub(
                 zip_postal, "", street_address, flags=re.IGNORECASE
             ).strip()
+            zip_postal = MISSING if zip_postal in ["Bahrain", "Qatar"] else zip_postal
         if country_code == MISSING:
-            country_code = "GB"
+            if "Bahrain" in location_name:
+                country_code = "BH"
+            else:
+                country_code = "GB"
         phone = info.find("span", {"itemprop": "telephone"}).text.strip()
         try:
             hours_of_operation = re.sub(
