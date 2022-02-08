@@ -53,6 +53,7 @@ def pull_content(url):
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
