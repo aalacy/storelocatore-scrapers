@@ -74,9 +74,7 @@ def fetch_data():
 
         # agency
         soup = bs(session.get(agency_url, headers=_headers).text, "lxml")
-        block1 = soup.select(
-            "div.aem-Grid.aem-Grid--12.aem-Grid--default--5.aem-Grid--phone--6 "
-        )
+        block1 = soup.select("div.aem-Grid.aem-Grid--default--5.aem-Grid--phone--6")
         block2 = soup.select(
             "div.aem-Grid.aem-Grid--12.aem-Grid--default--7.aem-Grid--phone--6 "
         )
