@@ -5,12 +5,13 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 import re
 
 
-DOMAIN = "sancarlo.co.uk"
-LOCATION_URL = "https://sancarlo.co.uk/restaurants/"
+DOMAIN = "crayolaexperience.com"
+BASE_URL = "https://www.crayolaexperience.com"
+SITE_MAP = "https://www.crayolaexperience.com/sitemap"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -24,14 +25,13 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-            country_code = data.country
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -40,13 +40,11 @@ def getAddress(raw_address):
                 state = MISSING
             if zip_postal is None or len(zip_postal) == 0:
                 zip_postal = MISSING
-            if country_code is None or len(country_code) == 0:
-                country_code = MISSING
-            return street_address, city, state, zip_postal, country_code
+            return street_address, city, state, zip_postal
     except Exception as e:
         log.info(f"No valid address {e}")
         pass
-    return MISSING, MISSING, MISSING, MISSING, MISSING
+    return MISSING, MISSING, MISSING, MISSING
 
 
 def pull_content(url):
@@ -57,44 +55,35 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.select("main a.item-flex__content")
+    soup = pull_content(SITE_MAP)
+    contents = soup.find("section", id="content-block").find_all("a", text="Contact Us")
     for row in contents:
         page_url = row["href"]
         store = pull_content(page_url)
-        description = store.find("div", {"itemprop": "description"}).text.strip()
-        if "Coming Soon" in description:
-            continue
-        info = store.find("div", {"class": "main__restaurant"})
-        location_name = info.find("span", {"itemprop": "name"}).text.strip()
-        raw_address = info.find("p", {"itemprop": "address"}).text.strip()
-        street_address, city, state, zip_postal, country_code = getAddress(raw_address)
-        if zip_postal == MISSING:
-            zip_postal = raw_address.split(",")[-1].strip()
-            street_address = re.sub(
-                zip_postal, "", street_address, flags=re.IGNORECASE
-            ).strip()
-            zip_postal = MISSING if zip_postal in ["Bahrain", "Qatar"] else zip_postal
-        if country_code == MISSING:
-            if "Bahrain" in location_name:
-                country_code = "BH"
-            else:
-                country_code = "GB"
-        phone = info.find("span", {"itemprop": "telephone"}).text.strip()
-        try:
-            hours_of_operation = re.sub(
-                r",Booking.*|,Deliver.*",
-                "",
-                info.find("span", {"itemprop": "openingHours"})
-                .get_text(strip=True, separator=",")
-                .replace("day,", "day: "),
-            )
-        except:
-            hours_of_operation = MISSING
+        info = store.find("div", id="MainContent_main_2_contentWrapper")
+        location_name = info.find("h2").text.strip()
+        raw_address = ",".join(
+            info.find("p")
+            .get_text(strip=True, separator=",")
+            .replace("Mailing/GPS Address:,", "")
+            .replace("Address:,", "")
+            .strip()
+            .split(",")[1:]
+        )
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = store.find("a", {"href": re.compile(r"tel:.*")}, text=True).text.strip()
+        country_code = "US"
+        hours_of_operation = re.search(r".*(weekdays.*)", info.text.strip()).group(1)
         location_type = MISSING
         store_number = MISSING
-        latitude = MISSING
-        longitude = MISSING
+        try:
+            map_link = store.find("a", text="Google Directions")["href"]
+            latlong = map_link.split("&ll=")[1].split("&spn")[0].split(",")
+            latitude = latlong[0]
+            longitude = latlong[1]
+        except:
+            latitude = MISSING
+            longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

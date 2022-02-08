@@ -24,7 +24,7 @@ def fetch_data():
         location_name = poi_html.xpath(".//h5/text()")[0]
         raw_data = poi_html.xpath("./p[1]/text()")
         hoo = poi_html.xpath("./p[strong]//text()")[1:]
-        hoo = " ".join([e.strip() for e in hoo])
+        hoo = " ".join([e.strip() for e in hoo]).split(" Statutory")[0]
 
         item = SgRecord(
             locator_domain=domain,
