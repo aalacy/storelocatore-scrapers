@@ -23,7 +23,6 @@ def fetch_data():
     if True:
         url = "https://www.jenniferfurniture.com/pages/store-locator"
         r = session.get(url, headers=headers)
-        token = r.text.split("storelocator_scripttag.js?v=")[1].split("\\u")[0]
         api_url = (
             r.text.split("var urls = ")[1]
             .split("]")[0]
