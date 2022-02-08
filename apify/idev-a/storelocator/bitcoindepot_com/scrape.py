@@ -95,10 +95,11 @@ def fetch_records(http, state):
         store = next_r.context.get("store")
         page_url = next_r.url
         try:
+            res = http.get(next_r.url)
+            if res.status_code != 200:
+                continue
             loc = json.loads(
-                bs(http.get(next_r.url).text, "lxml")
-                .find("script", type="application/ld+json")
-                .string
+                bs(res.text, "lxml").find("script", type="application/ld+json").string
             )
             data = {"location_group": loc["url"]}
             _ = http.post(loc_url, headers=_headers, data=data).json()["set_locations"][
