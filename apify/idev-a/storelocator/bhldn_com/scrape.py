@@ -48,8 +48,8 @@ def fetch_data():
                 phone = addr[-1]
                 del addr[-1]
             yield SgRecord(
-                page_url=base_url,
-                location_name=sp1.select_one("p.title.large"),
+                page_url=page_url,
+                location_name=sp1.select_one("p.title.large").text.strip(),
                 street_address=" ".join(addr[:-1]),
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split()[0].strip(),
@@ -62,7 +62,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
