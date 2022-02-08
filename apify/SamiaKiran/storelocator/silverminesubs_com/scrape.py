@@ -82,7 +82,7 @@ def fetch_data():
                     street_address=street_address.strip(),
                     city=city,
                     state=state,
-                    zip_postal=MISSING,
+                    zip_postal=zip_postal,
                     country_code="US",
                     store_number=MISSING,
                     phone=phone.strip(),
