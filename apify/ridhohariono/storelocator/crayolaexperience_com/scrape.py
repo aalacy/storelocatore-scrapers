@@ -4,23 +4,22 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
 import re
 
-DOMAIN = "nutritionsmart.com"
-BASE_URL = "https://www.nutritionsmart.com"
-LOCATION_URL = "https://www.nutritionsmart.com/store-locations/"
+
+DOMAIN = "crayolaexperience.com"
+BASE_URL = "https://www.crayolaexperience.com"
+SITE_MAP = "https://www.crayolaexperience.com/sitemap"
 HEADERS = {
-    "Accept": "application/json",
-    "Content-type": "application/json",
+    "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
+MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-MISSING = "<MISSING>"
 
 
 def getAddress(raw_address):
@@ -56,37 +55,35 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.select(
-        "div.elementor-element.elementor-align-center.elementor-widget.elementor-widget-button a.elementor-button-link.elementor-button.elementor-size-sm.elementor-animation-grow"
-    )
+    soup = pull_content(SITE_MAP)
+    contents = soup.find("section", id="content-block").find_all("a", text="Contact Us")
     for row in contents:
         page_url = row["href"]
         store = pull_content(page_url)
-        location_name = store.find(
-            "h3", {"class": "elementor-heading-title elementor-size-default"}
-        ).text.strip()
-        info = store.select(
-            "div.elementor-element.elementor-position-left.elementor-view-default.elementor-vertical-align-top.elementor-widget.elementor-widget-icon-box"
-        )
-        raw_address = " ".join(
-            info[2].get_text(strip=True, separator=",").replace("Address,", "").split()
+        info = store.find("div", id="MainContent_main_2_contentWrapper")
+        location_name = info.find("h2").text.strip()
+        raw_address = ",".join(
+            info.find("p")
+            .get_text(strip=True, separator=",")
+            .replace("Mailing/GPS Address:,", "")
+            .replace("Address:,", "")
+            .strip()
+            .split(",")[1:]
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        if "464 Sw Port" in street_address:
-            street_address = "464 Sw Port St. Lucie Blvd"
-            city = "Port St. Lucie"
+        phone = store.find("a", {"href": re.compile(r"tel:.*")}, text=True).text.strip()
         country_code = "US"
-        phone = store.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
-        hours_of_operation = (
-            " ".join(info[3].get_text(strip=True, separator=",").split())
-            .replace("Store Hours,", "")
-            .strip()
-        )
-        store_number = MISSING
+        hours_of_operation = re.search(r".*(weekdays.*)", info.text.strip()).group(1)
         location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
+        store_number = MISSING
+        try:
+            map_link = store.find("a", text="Google Directions")["href"]
+            latlong = map_link.split("&ll=")[1].split("&spn")[0].split(",")
+            latitude = latlong[0]
+            longitude = latlong[1]
+        except:
+            latitude = MISSING
+            longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -110,15 +107,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
