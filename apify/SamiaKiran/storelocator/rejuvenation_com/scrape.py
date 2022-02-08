@@ -15,7 +15,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://www.rejuvenation.com/"
+DOMAIN = "https://www.rejuvenation.com"
 MISSING = SgRecord.MISSING
 
 
@@ -34,9 +34,17 @@ def fetch_data():
             if "PERMANENTLY CLOSED" in loc.text:
                 continue
             temp = loc.findAll("p")
-            page_url = "https://www.rejuvenation.com" + str(
+            page_url = (
                 loc.findAll("button")[1]["onclick"]
-            ).replace("window.location.href = '", "").replace("';", "")
+                .replace("window.location.href = '", "")
+                .replace("';", "")
+            )
+            if DOMAIN not in page_url:
+                page_url = DOMAIN + page_url
+            r = session.get(page_url, headers=headers)
+            latitude = r.text.split('"latitude": "')[1].split('"')[0]
+            longitude = r.text.split('"longitude": "')[1].split('"')[0]
+            soup = BeautifulSoup(r.text, "html.parser")
             log.info(page_url)
             location_name = temp[1].text
             phone = loc.select_one("a[href*=tel]").text
@@ -83,8 +91,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
                 raw_address=raw_address,
             )
