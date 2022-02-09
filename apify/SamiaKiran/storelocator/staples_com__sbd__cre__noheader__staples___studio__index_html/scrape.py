@@ -26,7 +26,9 @@ def fetch_data():
         r = session.get(api_url, headers=headers)
         temp_list = r.text.split('"location_name":')[1:]
         for loc in loclist:
-            page_url = "https://www.staples.com" + loc.find("a")["href"]
+            page_url = loc.find("a")["href"]
+            if "studio.staples.ca" not in page_url:
+                page_url = "https://www.staples.com" + loc.find("a")["href"]
             log.info(page_url)
             location_name = loc.find("div", {"class": "studio_titile white_color"}).text
             address = loc.find("p").get_text(separator="|", strip=True).split("|")
@@ -40,8 +42,8 @@ def fetch_data():
                     state = zip_postal
                     zip_postal = MISSING
                 if zip_postal.split()[0] == "BC":
-                    zip_postal = zip_postal.replace("BC", "")
                     state = zip_postal.split()[0]
+                    zip_postal = zip_postal.replace("BC", "")
                 country_code = "CA"
             else:
                 street_address = address[0]

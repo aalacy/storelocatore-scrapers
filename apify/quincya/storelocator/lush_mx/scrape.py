@@ -10,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
 
 from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -24,12 +25,12 @@ def fetch_data(sgw: SgWriter):
     driver.get(base_link)
 
     time.sleep(2)
-    driver.find_element_by_class_name("i4ewOd-pzNkMb-ornU0b-b0t70b-Bz112c").click()
+    driver.find_element(By.CLASS_NAME, "i4ewOd-pzNkMb-ornU0b-b0t70b-Bz112c").click()
     time.sleep(2)
     raw_data = str(BeautifulSoup(driver.page_source, "lxml"))
     locs = raw_data.split("_pageData")[1].split(",[[[")
 
-    items = driver.find_elements_by_class_name("suEOdc")[2:-1]
+    items = driver.find_elements(By.CLASS_NAME, "suEOdc")[2:-1]
     locator_domain = "https://www.lush.mx/"
 
     for i in items:
@@ -80,8 +81,9 @@ def fetch_data(sgw: SgWriter):
                 raw_address=raw_address,
             )
         )
-        driver.find_element_by_css_selector(
-            ".U26fgb.mUbCce.p9Nwte.HzV7m-tJHJj-LgbsSe.qqvbed-a4fUwd-LgbsSe.M9Bg4d"
+        driver.find_element(
+            By.CSS_SELECTOR,
+            ".U26fgb.mUbCce.p9Nwte.HzV7m-tJHJj-LgbsSe.qqvbed-a4fUwd-LgbsSe.M9Bg4d",
         ).click()
         time.sleep(2)
     driver.close()

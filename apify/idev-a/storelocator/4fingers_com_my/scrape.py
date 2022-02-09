@@ -51,7 +51,7 @@ def fetch_data():
         soup = bs(res, "lxml")
         locations = soup.select("div.child-effect")
         for _ in locations:
-            if "Opening" in _.text:
+            if "Opening Soon" in _.text:
                 continue
             _addr = []
             for aa in _.select(

@@ -36,6 +36,9 @@ def fetch_data(sgw: SgWriter):
         except:
             street_address = addr.street_address_1
         city = addr.city
+        if "14 norte 976" in raw_address:
+            city = "Viña del Mar"
+            raw_address = raw_address + " Viña del Mar"
         state = addr.state
         zip_code = addr.postcode
         country_code = "CL"
