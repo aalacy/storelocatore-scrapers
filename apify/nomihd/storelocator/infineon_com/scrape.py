@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -8,34 +7,32 @@ import re
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgChrome
+import time
+import ssl
+import lxml.html
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "infineon.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "authority": "www.infineon.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
-}
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
     # Your scraper here
 
     api_url = "https://www.infineon.com/locationFinder/locations?types=&locale=en&site=ifx&region=&country="
-    with SgRequests() as session:
-        api_res = session.get(api_url, headers=headers)
+    with SgChrome(user_agent=user_agent) as driver:
 
-        json_res = json.loads(api_res.text)
+        driver.get(api_url)
+        time.sleep(10)
+        stores_sel = lxml.html.fromstring(driver.page_source)
+        json_str = "".join(stores_sel.xpath("//body//text()")).strip()
+        json_res = json.loads(json_str)
 
         stores_list = json_res["locations"]
 

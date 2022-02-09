@@ -39,7 +39,7 @@ def fetch_data():
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["description"],
-                street_address=poi["address"]["streetAddress"],
+                street_address=poi["address"]["streetAddress"].replace("&#039;", "'"),
                 city=poi["address"]["addressLocality"],
                 state=poi["address"]["addressRegion"],
                 zip_postal=poi["address"]["postalCode"],
