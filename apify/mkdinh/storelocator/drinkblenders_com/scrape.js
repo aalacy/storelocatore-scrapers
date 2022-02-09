@@ -12,7 +12,7 @@ function parseInfo(text, name) {
   const city = hasCity ? components[0].replace(/\(|\)/g, '') : name;
   const street_address = hasCity ? components[1] : components[0];
   const phoneAndHours = hasCity ? components[3] : components[2];
-  const phoneNumber = phoneAndHours.slice(0, 14).trim()
+  const phoneNumber = phoneAndHours.slice(0, 14).trim();
   const hours = phoneAndHours.slice(14).trim();
 
   const phone = phoneNumber.replace(/\(|\)|\-|\s/g, '').trim();
