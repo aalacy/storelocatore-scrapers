@@ -64,9 +64,9 @@ def fetch_data():
             .get_text(strip=True, separator="@@")
             .split("@@")
         )
-        location_name = row.find("h3").text.strip()
         raw_address = ", ".join(info[:-1]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        location_name = city
         phone = info[-1].strip()
         country_code = "US"
         hours_of_operation = MISSING
