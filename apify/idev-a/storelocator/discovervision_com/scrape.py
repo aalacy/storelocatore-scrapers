@@ -26,7 +26,7 @@ def fetch_data():
             street_address = addr["streetAddress"].strip()
             if street_address.endswith(","):
                 street_address = street_address[:-1].strip()
-            coord = _["hasMap"].split("/@")[1].split("/data")[0]
+            coord = _["hasMap"].split("/@")[1].split("/data")[0].split(",")
             yield SgRecord(
                 page_url=_["url"],
                 location_name=_["name"],
