@@ -54,7 +54,6 @@ def fetch_data(sgw: SgWriter):
         longitude = a.get("longitude") or "<MISSING>"
         phone = j.get("contact").get("phone") or "<MISSING>"
         hours = j.get("businessHours") or "<MISSING>"
-        tmp = []
         hours_of_operation = "<MISSING>"
         if hours != "<MISSING>":
             hours_of_operation = get_hours(hours)
