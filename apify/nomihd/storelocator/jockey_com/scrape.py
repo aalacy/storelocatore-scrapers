@@ -40,7 +40,7 @@ def fetch_data():
                 store["Address"]["Line2"] is not None
                 and len(store["Address"]["Line2"]) > 0
             ):
-                street_address = street_address + ", " + store["Address"]["Line2"]
+                street_address = street_address + store["Address"]["Line2"]
 
             city = store["Address"]["City"]
             state = store["Address"]["State"]["Short"]
