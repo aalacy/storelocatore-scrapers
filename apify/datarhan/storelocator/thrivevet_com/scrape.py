@@ -22,9 +22,9 @@ def fetch_data():
         all_locations = session.get(start_url.format(code), headers=hdr).json()
         for poi in all_locations:
             location_name = poi["name"]
-            street_address = poi["addressLine1"]
-            if poi["addressLine2"]:
-                street_address += ", " + poi["addressLine2"]
+            street_address = poi["addressLine1"].strip()
+            if poi["addressLine2"].strip():
+                street_address += " " + poi["addressLine2"].strip()
             city = poi["city"]
             state = poi["state"]
             page_url = f'https://www.thrivepetcare.com/locations/{state.lower().replace(" ", "-")}/{city.lower().replace(" ", "-")}/{location_name.lower().replace(".", "").replace(" ", "-")}'

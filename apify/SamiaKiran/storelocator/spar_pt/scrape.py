@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -32,31 +31,26 @@ def fetch_data():
         url = "https://www.spar.pt/rede-de-lojas"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("tbody")[-1].findAll("tr")[1]
+        loclist = (
+            soup.find("div", {"class": "vc_single_image-wrapper vc_box_border_grey"})
+            .find("tbody")
+            .find("tr")
+        )
         loclist = str(loclist).split("<tr>")[1:]
         for loc in loclist:
             loc = BeautifulSoup(loc, "html.parser")
             loc = loc.get_text(separator="|", strip=True).split("|")
-            location_name = loc[0]
+            location_name = strip_accents(loc[0])
             location_type = MISSING
             if "**" in location_name:
                 location_type = "Temporarily Closed"
             location_name = location_name.replace("*", "")
             log.info(location_name)
-            raw_address = strip_accents(loc[1])
-
-            pa = parse_address_intl(raw_address)
-
-            street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
-
-            city = pa.city
-            city = city.strip() if city else MISSING
-
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = loc[2]
+            street_address = strip_accents(loc[1])
+            city = strip_accents(loc[2])
+            phone = loc[-1]
+            zip_postal = loc[-2]
+            state = MISSING
             country_code = "PT"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -68,12 +62,11 @@ def fetch_data():
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
-                phone=MISSING,
+                phone=phone,
                 location_type=location_type,
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=MISSING,
-                raw_address=raw_address,
             )
 
 
