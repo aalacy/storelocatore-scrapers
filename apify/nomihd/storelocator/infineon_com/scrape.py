@@ -10,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import time
 import ssl
+import lxml.html
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -29,7 +30,9 @@ def fetch_data():
 
         driver.get(api_url)
         time.sleep(10)
-        json_res = json.loads(driver.page_source)
+        stores_sel = lxml.html.fromstring(driver.page_source)
+        json_str = "".join(stores_sel.xpath("//body//text()")).strip()
+        json_res = json.loads(json_str)
 
         stores_list = json_res["locations"]
 
