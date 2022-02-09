@@ -1,5 +1,4 @@
 const Apify = require('apify');
-const axios = require('axios');
 
 const MISSING = '<MISSING>';
 function getOrDefault(value) {
@@ -10,7 +9,7 @@ function formatHoursOfOperation(serializedHours) {
   const REPLACE_OPEN_BRACKET_REGEX = /\[/g;
   const REPLACE_CLOSE_BRACKET_REGEX = /\]/g;
   const REMOVE_TRAILING_COLON_REGEX = /,$/;
-  const REMOVE_SECONDS_REGEX = /\:\d\d$/;
+  const REMOVE_SECONDS_REGEX = /:\d\d$/;
 
   const cleaned = serializedHours
     .replace(REPLACE_OPEN_BRACKET_REGEX, '{')
@@ -50,7 +49,7 @@ Apify.main(async () => {
     async handlePageFunction({ page }) {
       const page_url = 'https://www.sweetandsassy.com/locations?CallAjax=GetLocations';
       const data = await page.evaluate(async (page) => {
-        const response = await fetch(page);
+        const response = await fetch(page); // eslint-disable-line
         const data = response.json();
         return data;
       }, page_url);
