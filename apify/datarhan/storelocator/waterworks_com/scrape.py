@@ -28,8 +28,6 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["storesjson"]:
-        if poi["tag"] and poi["tag"] != 3:
-            continue
         store_url = "https://www.waterworks.com/us_en/{}".format(
             poi["rewrite_request_path"]
         )
@@ -51,8 +49,6 @@ def fetch_data():
         state = poi["state"]
         zip_code = poi["zipcode"]
         country_code = poi["country_id"]
-        if country_code not in ["US", "CA", "GB"]:
-            continue
         store_number = poi["storelocation_id"]
         phone = poi["phone"]
         location_type = "<MISSING>"
