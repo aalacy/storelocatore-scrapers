@@ -37,8 +37,17 @@ Apify.main(async () => {
     }
   })
 
+  const launchPuppeteerOptions = {
+    headless: true,
+    stealth: true,
+    useChrome: true,
+    useApifyProxy: true,
+    groups: ['RESIDENTIAL']
+  };
+
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions,
     async handlePageFunction({ page }) {
       const page_url = 'https://www.sweetandsassy.com/locations?CallAjax=GetLocations'
       const data = await page.evaluate(async (page) => {
