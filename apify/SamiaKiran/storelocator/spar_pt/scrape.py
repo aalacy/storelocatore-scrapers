@@ -34,7 +34,7 @@ def fetch_data():
         loclist = (
             soup.find("div", {"class": "vc_single_image-wrapper vc_box_border_grey"})
             .find("tbody")
-            .findAll("tr")[1]
+            .find("tr")
         )
         loclist = str(loclist).split("<tr>")[1:]
         for loc in loclist:
