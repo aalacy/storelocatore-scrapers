@@ -47,6 +47,12 @@ def fetch_data(sgw: SgWriter):
                 street_address = j.get("addressLines")[0]
             except:
                 street_address = "<MISSING>"
+            street_address = (
+                str(street_address)
+                .replace(", NEAR SYRIA & LEBANON BANK,", "")
+                .replace(", TULIPANES", "")
+                .strip()
+            )
             state = j.get("state") or "<MISSING>"
             postal = j.get("zipCode") or "<MISSING>"
             if postal == "0":
@@ -87,6 +93,9 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{street_address} {city}, {state} {postal}".replace(
+                    "<MISSING>", ""
+                ).strip(),
             )
 
             sgw.write_row(row)
