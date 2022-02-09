@@ -39,7 +39,7 @@ Apify.main(async () => {
     headless: true,
     stealth: true,
     useChrome: true,
-    useApifyProxy: true,
+    useApifyProxy: false,
     groups: ['RESIDENTIAL'],
   };
 
