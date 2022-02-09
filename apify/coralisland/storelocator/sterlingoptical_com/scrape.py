@@ -56,6 +56,7 @@ def fetch_data(sgw: SgWriter):
         try:
             hours = soup.find("ul", {"class": "location-hours-list"}).text
             hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
+            hours = hours.split("-----")[0].split("alternative")[0].strip()
         except:
             hours = "<MISSING>"
 
