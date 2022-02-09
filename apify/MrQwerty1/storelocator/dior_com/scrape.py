@@ -22,7 +22,7 @@ def generate_urls(ids):
     _tmp = []
     cnt = 0
     for i in ids:
-        if cnt == 100:
+        if cnt == 50:
             urls.append(f'{u}{",".join(_tmp)}')
             _tmp = []
             cnt = 0
@@ -35,10 +35,7 @@ def generate_urls(ids):
 
 def get_data(url, sgw: SgWriter):
     r = session.get(url)
-    try:
-        js = r.json()["Items"]
-    except KeyError:
-        return
+    js = r.json()["Items"]
 
     for j in js:
         location_name = j.get("defaultName").replace("\n", " ").strip()
@@ -140,6 +137,10 @@ if __name__ == "__main__":
     locator_domain = "https://www.dior.com/"
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
     ) as writer:
         fetch_data(writer)

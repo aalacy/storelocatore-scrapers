@@ -161,8 +161,8 @@ def transform_item_map(raw, country):
     good = {}
     good["locator_domain"] = country["page"]
     good["location_name"] = raw["properties"]["name"]
-    good["latitude"] = raw["geometry"]["coordinates"][0]
-    good["longitude"] = raw["geometry"]["coordinates"][-1]
+    good["latitude"] = raw["geometry"]["coordinates"][-1]
+    good["longitude"] = raw["geometry"]["coordinates"][0]
     good["street_address"] = ""
     try:
         raw["properties"]["addressLine1"] = raw["properties"]["addressLine1"]
@@ -203,7 +203,19 @@ def transform_item_map(raw, country):
     good["hours_of_operation"] = str(raw["properties"]["restauranthours"]).replace(
         '"', " "
     )
-    good["location_type"] = raw["properties"]["filterType"]
+    good["hours_of_operation"] = (
+        good["hours_of_operation"]
+        .replace("{", "")
+        .replace("}", "")
+        .replace("hours", "")
+        .replace("'", "")
+    )
+    good["location_type"] = (
+        str(raw["properties"]["filterType"])
+        .replace("'", "")
+        .replace("[", "")
+        .replace("]", "")
+    )
     good["raw_address"] = ""
     return good
 
