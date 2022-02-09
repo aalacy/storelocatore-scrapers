@@ -4,3 +4,4 @@ sglogging==0.0.4
 sgselenium==0.1.4
 sgscrape==0.2.6
 sgpostal==0.1.0
+lxml==4.6.2
