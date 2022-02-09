@@ -32,7 +32,7 @@ def fetch_data():
 
     search_url = "https://www.coworker.com/office-space/cities"
 
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
