@@ -17,13 +17,15 @@ function formatHoursOfOperation(serializedHours) {
     .replace(REMOVE_TRAILING_COLON_REGEX, '');
 
   const data = JSON.parse(`[${cleaned}]`);
-  const hours = data.filter(x => x.Interval).map((day) =>{
-    const interval = day.Interval;
-    const open = day.OpenTime.replace(REMOVE_SECONDS_REGEX, '');
-    const close = day.CloseTime.replace(REMOVE_SECONDS_REGEX, '');
+  const hours = data
+    .filter((x) => x.Interval)
+    .map((day) => {
+      const interval = day.Interval;
+      const open = day.OpenTime.replace(REMOVE_SECONDS_REGEX, '');
+      const close = day.CloseTime.replace(REMOVE_SECONDS_REGEX, '');
 
-    return `${interval}: ${open}-${close}`
-  });
+      return `${interval}: ${open}-${close}`;
+    });
 
   return hours.length ? hours.join(', ') : null;
 }
