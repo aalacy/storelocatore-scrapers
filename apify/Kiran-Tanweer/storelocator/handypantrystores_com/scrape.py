@@ -26,15 +26,18 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        search_url = "https://handypantrystores.com//locations/"
+        search_url = "https://handypantrystores.com/locations/"
         stores_req = session.get(search_url, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
         locations = soup.find("div", {"class": "dmContent"})
         locations = locations.findAll("div", {"data-anim-desktop": "fadeInRight"})
-        for loc in locations:
-            locs = loc.findAll("div", {"class": "dmRespCol"})
-            for i in range(0, len(locs) - 1):
+        for loc in range(0, len(locations)):
+            locs = locations[loc].findAll("div", {"class": "dmRespCol"})
+            for i in range(0, len(locs)):
                 store = locs[i]
+                if loc == 2:
+                    if i == 3:
+                        break
                 details = store.find("div", {"class": "dmNewParagraph"})
                 storeid = details["id"]
                 info = store.findAll("div")
@@ -62,7 +65,7 @@ def fetch_data():
 
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=DOMAIN,
+                    page_url=search_url,
                     location_name=title,
                     street_address=street.strip(),
                     city=city.strip(),

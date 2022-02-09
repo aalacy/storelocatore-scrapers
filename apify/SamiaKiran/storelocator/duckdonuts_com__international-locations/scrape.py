@@ -18,6 +18,19 @@ headers = {
 DOMAIN = "https://www.duckdonuts.com"
 MISSING = SgRecord.MISSING
 
+headers_2 = {
+    "Connection": "keep-alive",
+    "Accept": "*/*",
+    "X-Requested-With": "XMLHttpRequest",
+    "User-Agent": "Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Origin": "https://www.duckdonuts.com",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Dest": "empty",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
 
 def fetch_data():
     if True:
@@ -26,6 +39,7 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("ul", {"class": "flex items-3"}).findAll("li")
         for loc in loclist:
+            hours_of_operation = MISSING
             location_name = loc.find("h2").text
             raw_address = (
                 loc.find("address")
@@ -33,6 +47,31 @@ def fetch_data():
                 .replace("|", " ")
             )
             log.info(location_name)
+            page_url = loc.find("a")["href"]
+            page_url = "https://www.duckdonuts.com" + page_url
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            if "View All Hours" in r.text:
+                payload = (
+                    "_m_=HoursPopup&HoursPopup%24_edit_=16580&HoursPopup%24_command_="
+                )
+                r2 = session.post(page_url, headers=headers_2, data=payload)
+                hours_of_operation = (
+                    BeautifulSoup(r2.text, "html.parser")
+                    .find("table")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            try:
+                longitude, latitude = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+            except:
+                longitude = MISSING
+                latitude = MISSING
             try:
                 phone = loc.find("div", {"class": "phone"}).text
             except:
@@ -56,7 +95,7 @@ def fetch_data():
             country_code = country_code.strip() if country_code else MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -66,9 +105,9 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
-                hours_of_operation=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
 

@@ -23,10 +23,13 @@ def fetch_data():
             hours = []
             hours.append(f"Weekdays: {_['NormalTime']}")
             hours.append(f"Weekends: {_['WeekendTime']}")
+            location_name = "Kipling"
+            if "outlet" in _["Name"].lower():
+                location_name = "Kipling Outlet"
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["Id"],
-                location_name="Kipling",
+                location_name=location_name,
                 street_address=street_address,
                 city=_["CityName"],
                 zip_postal=_["ZipCode"],

@@ -19,9 +19,9 @@ def get_hours(hours) -> str:
 
     for h in hours:
         day = h.get("day_of_week")
-        open = h.get("opening_time")
+        opens = h.get("opening_time")
         close = h.get("closing_time")
-        line = f"{days[day]} : {open} - {close}"
+        line = f"{days[day]} : {opens} - {close}"
         tmp.append(line)
     hours_of_operation = " ; ".join(tmp) or "<MISSING>"
     return hours_of_operation
@@ -80,6 +80,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{street_address} {city}, {state} {postal}",
             )
 
             sgw.write_row(row)

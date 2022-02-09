@@ -19,16 +19,16 @@ headers2 = {
 
 def fetch_data():
     locs = [
-        "https://www.jiffylubeontario.com/sudbury-1003-kingsway||Sudbury||",
-        "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard||Sudbury||",
-        "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15||Chelmsford||",
-        "https://www.jiffylubeontario.com/oshawa-581-king-st||Oshawa||",
-        "https://www.jiffylubeontario.com/oshawa-23-taunton-rd-west||Oshawa||",
-        "https://www.jiffylubeontario.com/whitby-516-brock-st-n||Whitby||",
-        "https://www.jiffylubeontario.com/stcatharines-124-hartzel-rd||St. Catharines||",
-        "https://www.jiffylubeontario.com/niagara-falls-5975-thorold-stone-rd||Niagara Falls||",
-        "https://www.jiffylubeontario.com/welland-536-niagara-st||Welland||",
-        "https://www.jiffylubeontario.com/sarnia-763-exmouth-st||Sarnia||",
+        "https://www.jiffylubeontario.com/sudbury-1003-kingsway|P3B 2E6|Sudbury||",
+        "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard|P3A 5W8|Sudbury||",
+        "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15|P0M 1L0|Chelmsford||",
+        "https://www.jiffylubeontario.com/oshawa-581-king-st|L1H 1G3|Oshawa||",
+        "https://www.jiffylubeontario.com/oshawa-23-taunton-rd-west|L1G 7B4|Oshawa||",
+        "https://www.jiffylubeontario.com/whitby-516-brock-st-n|L1N 4J2|Whitby||",
+        "https://www.jiffylubeontario.com/stcatharines-124-hartzel-rd|L2P 1N7|St. Catharines||",
+        "https://www.jiffylubeontario.com/niagara-falls-5975-thorold-stone-rd|L2J 1A2|Niagara Falls||",
+        "https://www.jiffylubeontario.com/welland-536-niagara-st|L3C 1L8|Welland||",
+        "https://www.jiffylubeontario.com/sarnia-763-exmouth-st|N7T 5P7|Sarnia||",
     ]
     url = "https://www.jiffylubeontario.com/wp-admin/admin-ajax.php"
     cities = [
@@ -227,8 +227,8 @@ def fetch_data():
             if 'itemprop="name address">' in line2:
                 g = next(lines)
                 add = g.split(">")[1].split("<")[0]
-            if 'class="location-phone">' in line2:
-                phone = line2.split('"tel:')[1].split('"')[0]
+            if "class=location-phone>" in line2:
+                phone = line2.split("tel:")[1].split("class")[0].strip()
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("|")[0].strip()
         if phone == "":

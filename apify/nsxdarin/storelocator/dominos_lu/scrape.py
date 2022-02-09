@@ -69,6 +69,18 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+            if 'name="store-lat" id="store-lat" value="' in line2:
+                lat = (
+                    line2.split('name="store-lat" id="store-lat" value="')[1]
+                    .split('"')[0]
+                    .replace(",", ".")
+                )
+            if 'name="store-lon" id="store-lon" value="' in line2:
+                lng = (
+                    line2.split('name="store-lon" id="store-lon" value="')[1]
+                    .split('"')[0]
+                    .replace(",", ".")
+                )
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

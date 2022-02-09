@@ -94,22 +94,27 @@ def fetch_data(sgw: SgWriter):
             country_code = item["countryCode"]
             store_number = item["ID"]
             phone = item["phone"]
-            location_type = "Store"
+            location_type = ""
             if item["isClosed"]:
                 continue
             if item["isTemporaryClosed"]:
                 location_type = "Temporary Closed"
-            elif item["isKiosk"]:
-                location_type = "Kiosk"
-            elif item["isRetailShop"]:
-                location_type = "Retail Shop"
-            elif item["isKioskOrShop"]:
-                location_type = "Kiosk Or Shop"
-            elif item["isServiceCenter"]:
-                location_type = "Service Center"
+            if item["isRetailShop"]:
+                location_type = ", ".join([location_type, "Retail Shop"])
+            if item["isKiosk"]:
+                location_type = ", ".join([location_type, "Kiosk"])
+            if item["isKioskOrShop"]:
+                location_type = ", ".join([location_type, "Kiosk Or Shop"])
+            if item["isServiceCenter"]:
+                location_type = ", ".join([location_type, "Service Center"])
+            if location_type[:1] == ",":
+                location_type = location_type[1:].strip()
             latitude = item["lat"]
             longitude = item["lng"]
-            link = item["pgdDetailsUrl"]
+            if "." not in str(latitude):
+                latitude = ""
+                longitude = ""
+            link = locator_domain + item["detailsUrl"]
             hours_of_operation = item["storeHours"]
             if not state:
                 if "/united-states" in link:

@@ -23,6 +23,7 @@ def fetch_data():
     coords = []
     zc = "<MISSING>"
     state = "<MISSING>"
+    name = "<MISSING>"
     phone = "<MISSING>"
     lat = "<MISSING>"
     lng = "<MISSING>"
@@ -40,18 +41,22 @@ def fetch_data():
                 + line.split('", ')[1].split(",")[1].strip().split("]")[0]
             )
         if "<h3>" in line:
-            name = line.split("<h3>")[1].split("<")[0]
+            pname = line.split("<h3>")[1].split("<")[0]
             g = next(lines)
             h = next(lines)
-            add = g.split(">")[1].split("<")[0]
-            hours = h.split(": ")[1].split("<")[0].strip()
-            city = name
-            places.append(name + "|" + add + "|" + city + "|" + hours)
+            padd = g.split(">")[1].split("<")[0]
+            phours = h.split(": ")[1].split("<")[0].strip()
+            pcity = name
+            places.append(pname + "|" + padd + "|" + pcity + "|" + phours)
         for item in coords:
             for place in places:
                 if item.split("|")[0] == place.split("|")[1]:
                     lat = item.split("|")[1]
                     lng = item.split("|")[2]
+                    name = place.split("|")[0]
+                    add = place.split("|")[1]
+                    city = place.split("|")[2]
+                    hours = place.split("|")[3]
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

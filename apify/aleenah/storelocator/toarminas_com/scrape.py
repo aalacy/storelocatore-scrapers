@@ -1,30 +1,26 @@
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from bs4 import BeautifulSoup
 import json
+from bs4 import BeautifulSoup
+from sglogging import sglog
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import usaddress
-import re
-
-logger = SgLogSetup().get_logger("toarminas_com")
-
-
-def write_output(data):
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
-        for row in data:
-            writer.write_row(row)
-
 
 session = SgRequests()
+website = "toarminas_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
+
+DOMAIN = "https://toarminas.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
     res = session.get("https://www.toarminas.com/locations/")
     soup = BeautifulSoup(res.text, "html.parser")
     state = (
@@ -32,69 +28,97 @@ def fetch_data():
         .split("var maplistScriptParamsKo =")[1]
         .split(";")[0]
     )
-    jso = json.loads(state)
-    jso = jso["KOObject"][0]["locations"]
+    loclist = json.loads(state)["KOObject"][0]["locations"]
 
-    for js in jso:
+    for loc in loclist:
+        location_type = MISSING
+        page_url = loc["locationUrl"]
+        log.info(page_url)
+        location_name = loc["title"]
+        latitude = loc["latitude"]
+        longitude = loc["longitude"]
+        store_number = loc["cssClass"].split("loc-")[1]
+        res = session.get(page_url)
+        if "Coming Soon!" in res.text:
+            continue
+        if "Temporarily Closed" in res.text:
+            location_type = "Temporarily Closed"
+        temp = loc["description"]
+        temp = (
+            BeautifulSoup(temp, "html.parser")
+            .get_text(separator="|", strip=True)
+            .split("|")
+        )
+        phone = temp[-1].replace("P. ", "")
+        location_name = loc["title"]
+        if len(temp) > 4:
+            if temp[0] == temp[2]:
+                del temp[2]
+                del temp[3]
+        address = " ".join(temp[:-1])
+        raw_address = (
+            address.replace(",", " ")
+            .replace("New Location!", "")
+            .replace("United States", "")
+        )
+        pa = parse_address_intl(raw_address)
 
-        simple = js["simpledescription"].split("</p>\n<p>")
-        phone = re.findall(r"(\(\d{3}\) \d{3}\-\d{4})", js["simpledescription"])[0]
-        addr = (
-            simple[0].replace("<br />\n", ",").replace("<p>", "").split("<strong>")[0]
-        )  # .replace('<strong>','' ).replace('</p>','').replace('</strong>','' ).strip()
+        street_address = pa.street_address_1
+        street_address = street_address if street_address else MISSING
 
-        tagged = usaddress.tag(addr)[0]
+        city = pa.city
+        city = city.strip() if city else MISSING
 
-        street = tagged["AddressNumber"]
-        if "StreetNamePreDirectional" in tagged:
-            street += " " + tagged["StreetNamePreDirectional"]
-        street += " " + tagged["StreetName"]
-        if "StreetNamePostType" in tagged:
-            street += " " + tagged["StreetNamePostType"]
-        if "StateName" in tagged:
-            state = tagged["StateName"]
-        else:
-            state = "<MISSING>"
+        state = pa.state
+        state = state.strip() if state else MISSING
 
-        if "ZipCode" in tagged:
-            zip = tagged["ZipCode"]
-        else:
-            zip = "<MISSING>"
-
-        res = session.get(js["locationUrl"])
+        zip_postal = pa.postcode
+        zip_postal = zip_postal.strip() if zip_postal else MISSING
+        res = session.get(page_url)
         soup = BeautifulSoup(res.text, "html.parser")
-        if "Hour" in str(soup):
-            hrs = str(soup.find("div", {"id": "MapDescription"})).replace("\n", "")
-            tim = (
-                re.findall("Hours(.*pm)", hrs)[0]
-                .replace("<br/>", ", ")
-                .strip(", ")
-                .replace("</h3><ul><li>", "")
-                .replace("</li><li>", ", ")
-                .strip()
-            )
+        hours_of_operation = (
+            soup.findAll("div", {"class": "col-md-6"})[1]
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+        if "Hours" not in hours_of_operation:
+            hours_of_operation = MISSING
         else:
-            tim = "<MISSING>"
+            hours_of_operation = hours_of_operation.split("Hours")[1]
+        country_code = "US"
         yield SgRecord(
-            locator_domain="https://www.toarminas.com",
-            page_url=js["locationUrl"],
-            location_name=js["title"],
-            street_address=street,
-            city=tagged["PlaceName"],
-            state=state,
-            zip_postal=zip,
-            country_code="US",
-            store_number=js["cssClass"].split("loc-")[1],
-            phone=phone,
-            location_type="<MISSING>",
-            latitude=js["latitude"],
-            longitude=js["longitude"],
-            hours_of_operation=tim,
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
 def scrape():
-    write_output(fetch_data())
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

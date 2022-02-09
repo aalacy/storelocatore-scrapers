@@ -1,0 +1,16 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+
+--ignore LatLngDuplicationValidator (Same latlong with different location_name)
+Found 19 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+     latitude longitude                                     street_address  num_addrs
+39   18.56231  73.91683  {PHOENIX MARKET CITY MALL, SURVEY NO 207, F 22...          3
+43   18.99442  72.82408  {THE PHOENIX MILLS LTD. , PHOENIX MILLS COMPOU...          3
+98   28.50531    77.097  {AMBIENCE MALL, GROUND FLOOR, NH 8 . . NORTH1,...          3
+5    12.87592  77.59592  {DIVISION OF SHOPPERS' STOP LTD, PLOT NO, A3, ...          2
+88   26.85824  80.97624  {FUN REPUBLIC MALL GOMTI NAGAR . . NORTH1, FUN...          2
+109  28.63411  77.36994  {SHIPRA MALL, 9, VAIBHAV KHAND, INDIRAPURAM .....          2
+106  28.58272  77.34824  {LOGIX CITY CENTRE MALL, NOIDA CITY CENTRE MET...          2
+104  28.56762   77.3262  {THE GREAT INDIA PALACE , PLOT NO - 2,SECTOR 3...          2
+103   28.5675  77.32108  {DLF MALL OF INDIA, SHOP NO.174, SECTOR NO.18,...          2
+99   28.55026  77.12191  {UNIT NO. DS-21A, TERMINAL 3, DOMESTIC DEPARTU...          2

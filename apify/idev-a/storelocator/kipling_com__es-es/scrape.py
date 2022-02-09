@@ -48,9 +48,13 @@ def fetch_data():
                 del block[-1]
             raw_address = " ".join(block[1:])
             addr = parse_address_intl(raw_address)
+            location_name = "Kipling"
+            if "outlet" in _.strong.text.lower():
+                location_name = "Kipling Outlet"
+
             yield SgRecord(
                 page_url=base_url,
-                location_name="Kipling",
+                location_name=location_name,
                 street_address=block[1:][0],
                 city=addr.city,
                 state=addr.state,

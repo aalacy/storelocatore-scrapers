@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import Grain_8, SearchableCountries
+from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 
@@ -54,6 +54,7 @@ class _SearchIteration(SearchIteration):
 
         lat = coord[0]
         lng = coord[1]
+        log.info(f"cood:{lat},{lng}")
         search_url = "https://dl-emea.dxtservice.com/dl/api/search?latitude={}&longitude={}&searchRadius=100&includeStores=COUNTRY&pageIndex={}&pageSize=100&minDealers=10&maxDealers=20&storeTags=[103]"
         page_no = 0
         while True:
@@ -62,7 +63,8 @@ class _SearchIteration(SearchIteration):
                 search_url.format(lat, lng, page_no), headers=headers
             )
             try:
-                if "No Content" == json.loads(stores_req.text)["httpStatus"]:
+                status = json.loads(stores_req.text)["httpStatus"]
+                if "No Content" == status or "External API error" == status:
                     break
                 for store in json.loads(stores_req.text)["data"]["items"]:
                     page_url = "<MISSING>"
@@ -82,6 +84,16 @@ class _SearchIteration(SearchIteration):
                     city = store["address"]["city"]
                     state = store["address"]["state"]
                     zip = store["address"]["zipcode"]
+                    raw_address = ""
+                    if street_address and len(street_address) > 0:
+                        raw_address = street_address
+                    if city and len(city) > 0:
+                        raw_address = raw_address + ", " + city
+                    if state and len(state) > 0:
+                        raw_address = raw_address + ", " + state
+                    if zip and len(zip) > 0:
+                        raw_address = raw_address + ", " + zip
+
                     country_code = store["address"]["country"]
                     store_number = store["storeId"]
                     phone = store["address"]["officePhoneNumber"]
@@ -101,11 +113,6 @@ class _SearchIteration(SearchIteration):
                     latitude = store["geoCoordinates"]["latitude"]
                     longitude = store["geoCoordinates"]["longitude"]
 
-                    rec_count = self.__state.get_misc_value(
-                        current_country, default_factory=lambda: 0
-                    )
-                    self.__state.set_misc_value(current_country, rec_count + 1)
-
                     found_location_at(lat, lng)
                     yield SgRecord(
                         locator_domain=locator_domain,
@@ -122,9 +129,11 @@ class _SearchIteration(SearchIteration):
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
 
             except:
+                log.error(stores_req.text)
                 pass
 
             page_no = page_no + 1
@@ -136,31 +145,26 @@ def scrape():
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         expected_search_radius_miles=100,
-        granularity=Grain_8(),
+        max_search_results=100,
     )
 
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
-        with SgRequests(dont_retry_status_codes=([404])) as http:
-            search_iter = _SearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
-
-            for rec in par_search.run():
-                writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
-    log.info("Printing number of records by country-code:")
-    for country_code in SearchableCountries.ALL:
-        log.info(
-            country_code,
-            ": ",
-            state.get_misc_value(country_code, default_factory=lambda: 0),
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
+    ) as writer:
+        countries = SearchableCountries.ALL
+        for country in countries:
+            with SgRequests(dont_retry_status_codes=([404])) as http:
+                search_iter = _SearchIteration(http=http)
+                par_search = ParallelDynamicSearch(
+                    search_maker=search_maker,
+                    search_iteration=search_iter,
+                    country_codes=[country],
+                )
+
+                for rec in par_search.run():
+                    writer.write_row(rec)
 
 
 if __name__ == "__main__":
