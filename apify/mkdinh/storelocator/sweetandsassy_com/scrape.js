@@ -28,32 +28,31 @@ function formatHoursOfOperation(serializedHours) {
 }
 
 Apify.main(async () => {
-
   const requestQueue = await Apify.openRequestQueue();
   await requestQueue.addRequest({
     url: 'https://www.sweetandsassy.com/locations',
     data: {
-      type: 'html'
-    }
-  })
+      type: 'html',
+    },
+  });
 
   const launchPuppeteerOptions = {
     headless: true,
     stealth: true,
     useChrome: true,
     useApifyProxy: true,
-    groups: ['RESIDENTIAL']
+    groups: ['RESIDENTIAL'],
   };
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
     launchPuppeteerOptions,
     async handlePageFunction({ page }) {
-      const page_url = 'https://www.sweetandsassy.com/locations?CallAjax=GetLocations'
+      const page_url = 'https://www.sweetandsassy.com/locations?CallAjax=GetLocations';
       const data = await page.evaluate(async (page) => {
-        const response = await fetch(page)
-        const data = response.json()
-        return data
+        const response = await fetch(page);
+        const data = response.json();
+        return data;
       }, page_url);
 
       const pois = data.map((location) => {
@@ -76,9 +75,8 @@ Apify.main(async () => {
       });
 
       await Apify.pushData(pois);
-    }
-  })
+    },
+  });
 
   await crawler.run();
-
 });
