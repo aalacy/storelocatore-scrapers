@@ -17,7 +17,6 @@ def fetch_data():
     ]
     domain = "lexus.si"
     for start_url in start_urls:
-        print(start_url)
         data = session.get(start_url).json()
         for poi in data["dealers"]:
             loc_response = session.get(poi["url"])
