@@ -38,7 +38,10 @@ def fetch_data(sgw: SgWriter):
     )
     js = r.json()["data"]["page"]["activeComponents"][0]["options"]["stores"]
     for j in js:
-        otherText = "".join(j.get("otherText")) or "<MISSING>"
+        try:
+            otherText = "".join(j.get("otherText"))
+        except:
+            otherText = "<MISSING>"
         store_number = "<MISSING>"
         if otherText != "<MISSING>":
             store_number = otherText.split()[1].strip()
