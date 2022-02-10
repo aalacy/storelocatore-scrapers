@@ -29,6 +29,8 @@ def fetch_data(sgw: SgWriter):
 
     for store in stores:
         link = store["url"].lower()
+        if "missouri-store" in link:
+            link = "https://www.rockler.com/retail/stores/mo/st-louis-missouri-hardware-store"
         if link in found:
             continue
         found.append(link)
@@ -63,6 +65,9 @@ def fetch_data(sgw: SgWriter):
             try:
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
+
+                if not phone:
+                    phone = list(base.find(class_="col-m-6").stripped_strings)[4]
                 try:
                     hours_of_operation = " ".join(
                         list(
@@ -94,7 +99,11 @@ def fetch_data(sgw: SgWriter):
                     continue
                 if req.status_code == 404:
                     link = "https://www.rockler.com/retail/stores/"
-            hours_of_operation = hours_of_operation.replace("Store Hours", "").strip()
+            hours_of_operation = (
+                hours_of_operation.replace("Store Hours", "")
+                .split("Holiday")[0]
+                .strip()
+            )
 
             sgw.write_row(
                 SgRecord(
