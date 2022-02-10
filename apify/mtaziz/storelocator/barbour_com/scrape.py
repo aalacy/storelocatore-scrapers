@@ -7,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 import ssl
 from sgpostal.sgpostal import parse_address_intl
-
+import os
 
 try:
     _create_unverified_https_context = (
@@ -29,6 +29,25 @@ hd_it = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
 }
+
+
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+
+
+def set_proxies():
+    if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
+
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        url = (
+            os.environ["PROXY_URL"] if "PROXY_URL" in os.environ else DEFAULT_PROXY_URL
+        )
+        proxy_url = url.format(proxy_password)
+        proxies = {
+            "https://": proxy_url,
+        }
+        return proxies
+    else:
+        return None
 
 
 def get_page_url(url_key, cc):
@@ -86,6 +105,7 @@ def fetch_data():
 
     proxy_country_it = "it"
     session_it = SgRequests(proxy_country=proxy_country_it)
+    session_it.proxies = set_proxies()
     payload_it = "lat=45.4642035&lng=9.189982&radius=50000&mapId=amlocator-map-canvas6203f16fd942a&storeListId=amlocator_store_list6203f16fd967b&product=0&category=0&attributes%5B0%5D%5Bname%5D=2&attributes%5B0%5D%5Bvalue%5D=&attributes%5B1%5D%5Bname%5D=3&attributes%5B1%5D%5Bvalue%5D=&attributes%5B2%5D%5Bname%5D=4&attributes%5B2%5D%5Bvalue%5D=&attributes%5B3%5D%5Bname%5D=5&attributes%5B3%5D%5Bvalue%5D="
     api_url_it = "https://www.barbour.com/amlocator/index/ajax/"
     rit = session_it.post(api_url_it, data=json.dumps(payload_it), headers=hd_it)
