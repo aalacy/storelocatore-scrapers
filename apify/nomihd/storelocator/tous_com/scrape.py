@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "tous.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -58,6 +59,8 @@ def fetch_data():
                     location_name = store["name"].strip()
                     street_address = store["address"].strip()
                     city = store["city"].strip()
+                    zip = "<MISSING>"
+                    state = "<MISSING>"
                     if country_code == "CA":
                         state = "<MISSING>"
                         zip = store["postalcode"].strip()
@@ -83,6 +86,25 @@ def fetch_data():
                     if "Richmond BC" == city:
                         city = "Richmond"
                         state = "BC"
+
+                    raw_address = street_address
+                    if len(city) > 0 and city != "<MISSING>":
+                        raw_address = raw_address + ", " + city
+                    if len(state) > 0 and state != "<MISSING>":
+                        raw_address = raw_address + ", " + state
+                    if len(zip) > 0 and zip != "<MISSING>":
+                        raw_address = raw_address + ", " + zip
+
+                    formatted_addr = parser.parse_address_intl(raw_address)
+                    street_address = formatted_addr.street_address_1
+                    if street_address:
+                        if formatted_addr.street_address_2:
+                            street_address = (
+                                street_address + ", " + formatted_addr.street_address_2
+                            )
+                    else:
+                        if formatted_addr.street_address_2:
+                            street_address = formatted_addr.street_address_2
 
                     store_number = store["id"]
                     phone = store["phone"]
@@ -110,6 +132,7 @@ def fetch_data():
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
 
 

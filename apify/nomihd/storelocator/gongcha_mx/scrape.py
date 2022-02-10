@@ -61,7 +61,7 @@ def fetch_data():
             street_address = (
                 store["address"].strip() + ", " + store["address2"].strip()
             ).strip(", ")
-
+            street_address = street_address.split("(")[0].strip()
             city = store["city"]
             state = store["state"]
 

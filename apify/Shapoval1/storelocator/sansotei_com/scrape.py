@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.sansotei.com/locations"
+    locator_domain = "https://www.sansotei.com/"
     page_url = "https://www.sansotei.com/locations"
     session = SgRequests()
     headers = {
@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//div[./p//a]")
+    div = tree.xpath("//div[./div/h3]")[1:]
 
     for d in div:
         info = d.xpath(".//span/text()")
@@ -28,11 +28,9 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(info[0])
         street_address = "".join(info[1]).replace(",", "").strip()
         ad = "".join(info[2]).strip()
-        phone = (
-            "".join(d.xpath('.//a[contains(@href, "tel")]/@href'))
-            .replace("tel:", "")
-            .strip()
-        )
+        phone_list = d.xpath('.//a[contains(@href, "tel")]/@href')
+
+        phone = "".join(phone_list[-1]).replace("tel:", "").strip()
         state = ad.split(",")[1].strip()
         country_code = "Canada"
         city = ad.split(",")[0].strip()

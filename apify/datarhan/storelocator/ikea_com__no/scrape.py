@@ -113,6 +113,10 @@ def fetch_data():
             hoo = dom.xpath(
                 '//h2[contains(text(), "Åpningstider")]/following-sibling::p/text()'
             )
+        if not hoo:
+            hoo = dom.xpath(
+                '//p[strong[contains(text(), "Varehuset")]]/following-sibling::p[1]//text()'
+            )
         hoo = " ".join(hoo).split("Rest")[0].strip()
 
         item = SgRecord(

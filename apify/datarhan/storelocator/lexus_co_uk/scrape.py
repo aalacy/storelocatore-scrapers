@@ -14,7 +14,6 @@ def fetch_data():
         "Belgium": "https://fr.lexus.be/api/dealers/all",
         "Estonia": "https://ee.lexus.ee/api/dealers/all",
         "France": "https://www.lexus.fr/api/dealers/all",
-        "Finland": "https://www.lexus.fi/api/dealers/all",
         "Germany": "https://www.lexus.de/api/dealers/all",
         "Hungary": "https://www.lexus.hu/api/dealers/all",
         "Italy": "https://www.lexus.it/api/dealers/all",
