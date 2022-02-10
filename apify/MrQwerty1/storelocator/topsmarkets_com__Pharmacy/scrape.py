@@ -35,7 +35,7 @@ def get_data(page_url, sgw: SgWriter):
     except:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
     try:
-        phone = tree.xpath("//p[@class='PhoneNumber']/a/text()")[0].strip()
+        phone = tree.xpath("//p[@class='PhoneNumber']/a/text()")[-1].strip()
     except IndexError:
         phone = SgRecord.MISSING
 
@@ -44,7 +44,7 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//dt[contains(text(), 'Pharmacy')]/following-sibling::dd/text()")
     ).strip()
     if not hours_of_operation:
-        hours_of_operation = ";".join(tree.xpath("//dd/text()")).strip()
+        return
 
     row = SgRecord(
         page_url=page_url,
