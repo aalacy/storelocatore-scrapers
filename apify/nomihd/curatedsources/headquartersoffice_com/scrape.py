@@ -19,8 +19,7 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://headquartersoffice.com/rio-tinto/"
-    api_url = "https://headquartersoffice.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMjaIUdIBiRRnlBZ4uhQDBaNjgQLJpcUl+blumak5KRCxWqVaABYhFuw"
+    api_url = "https://headquartersoffice.com/wp-json/wpgmza/v1/features/"
 
     with SgRequests() as session:
         api_res = session.get(api_url, headers=headers)
@@ -33,20 +32,27 @@ def fetch_data():
 
             locator_domain = website
 
-            page_url = search_url
+            page_url = "https://headquartersoffice.com/"
             location_name = store["title"].strip()
 
             location_type = "<MISSING>"
 
-            raw_address = store["custom_field_data"][0]["value"]
+            custom_field_data = store["custom_field_data"]
+            if len(custom_field_data) > 0:
+                raw_address = custom_field_data[0]["value"]
+            else:
+                raw_address = ""
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
 
             city = formatted_addr.city
 
