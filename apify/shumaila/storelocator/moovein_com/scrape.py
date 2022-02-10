@@ -14,7 +14,6 @@ headers = {
 
 
 def fetch_data():
-
     url = "https://www.moovein.com/sitemap.xml"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")

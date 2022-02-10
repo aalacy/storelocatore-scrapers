@@ -34,27 +34,37 @@ def fetch_data():
                 location_name = loc.get_text(separator="|", strip=True).split("|")[0]
                 page_url = loc.findAll("a")[-1]["href"]
                 r = session.get(page_url, headers=headers)
-                page_url = r.url
-                log.info(page_url)
-                soup = BeautifulSoup(r.text, "html.parser")
-                temp = soup.find("div", {"class": "location-intro__content"})
-                if temp is None:
-                    address = loc.get_text(separator="|", strip=True).split("|")
-                    phone = address[4]
-                    address = address[1] + " " + address[2]
+                if r.status_code != 200:
+                    location_name = loc.find("h3").text
+                    address = (
+                        loc.find("address")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                    phone = loc.find("p", {"class": "phone"}).find("a").text
                     hours_of_operation = MISSING
                 else:
-                    phone = temp.select_one("a[href*=tel]").text
-                    address = (
-                        temp.find("address")
-                        .get_text(separator="|", strip=True)
-                        .replace("|", " ")
-                    )
-                    hours_of_operation = (
-                        temp.find("p", {"class": "hours"})
-                        .get_text(separator="|", strip=True)
-                        .replace("|", " ")
-                    )
+                    page_url = r.url
+                    log.info(page_url)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    temp = soup.find("div", {"class": "location-intro__content"})
+                    if temp is None:
+                        address = loc.get_text(separator="|", strip=True).split("|")
+                        phone = address[4]
+                        address = address[1] + " " + address[2]
+                        hours_of_operation = MISSING
+                    else:
+                        phone = temp.select_one("a[href*=tel]").text
+                        address = (
+                            temp.find("address")
+                            .get_text(separator="|", strip=True)
+                            .replace("|", " ")
+                        )
+                        hours_of_operation = (
+                            temp.find("p", {"class": "hours"})
+                            .get_text(separator="|", strip=True)
+                            .replace("|", " ")
+                        )
                 raw_address = address.replace(",", " ")
                 address = usaddress.parse(raw_address)
                 i = 0

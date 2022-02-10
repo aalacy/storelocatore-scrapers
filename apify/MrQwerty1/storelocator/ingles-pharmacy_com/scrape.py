@@ -29,7 +29,7 @@ def get_csrf():
 def get_ids():
     ids = set()
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=15
     )
     api = "https://www.ingles-pharmacy.com/inweb/getStoreList.htm"
     for lat, lng in search:

@@ -43,6 +43,7 @@ def fetch_data():
             street_address = poi["address"]["address1"]
             if poi["address"].get("address"):
                 street_address += ", " + poi["address"]["address"]
+            street_address = street_address.replace("&#xD;&#xA;", " ")
             hoo = []
             if poi["openingTimes"].get("ShowRoom"):
                 for e in poi["openingTimes"]["ShowRoom"]:
@@ -59,7 +60,7 @@ def fetch_data():
                 street_address=street_address,
                 city=poi["address"]["city"],
                 state=poi["address"]["region"],
-                zip_postal=poi["address"]["zip"],
+                zip_postal=poi["address"]["zip"].replace("LV-", ""),
                 country_code=poi["country"],
                 store_number="",
                 phone=poi["phone"],
