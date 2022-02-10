@@ -33,7 +33,7 @@ def fetch_data():
         "https://www.toyota.ru/api/dealer/drive/37.4121287410622/55.9698601178023?count=2000&extraCountries=by&limitSearchDistance=150&isCurrentLocation=false",
         "https://www.toyota.sk/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.com.tr/api/dealer/drive/30.68333/36.9?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.ua/api/dealer/drive/30.517621/50.451497?count=2000&extraCountries=&isCurrentLocation=false",
+        # "https://www.toyota.ua/api/dealer/drive/30.517621/50.451497?count=2000&extraCountries=&isCurrentLocation=false",
     ]
     domain = "toyota.co.uk"
     hdr = {
@@ -58,13 +58,19 @@ def fetch_data():
             hoo = " ".join(hoo).replace("SAT - SAT", "SAT").replace("SUN - SUN", "SUN")
             if not hoo:
                 continue
+            street_address = (
+                poi["address"]["address1"].strip().split("/İST")[0].split(" Tekirda")[0]
+            )
+            city = poi["address"]["city"].strip()
+            if street_address.lower().endswith(city.lower()):
+                street_address = street_address[: -len(city)].replace("/", "").strip()
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=poi["url"],
                 location_name=poi["name"],
-                street_address=poi["address"]["address1"],
-                city=poi["address"]["city"],
+                street_address=street_address,
+                city=city,
                 state=poi["address"]["region"],
                 zip_postal=poi["address"]["zip"],
                 country_code=poi["country"],
