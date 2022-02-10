@@ -88,6 +88,6 @@ if __name__ == "__main__":
         "Cache-Control": "no-cache",
     }
 
-    session = SgRequests()
+    session = SgRequests(proxy_country="ca")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
