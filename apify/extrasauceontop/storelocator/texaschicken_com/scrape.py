@@ -1408,7 +1408,6 @@ def get_data():
                 yield loc
 
         else:
-            print(country)
             raise Exception("New country not scraped")
 
 
