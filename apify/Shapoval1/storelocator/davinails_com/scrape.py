@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -65,22 +65,65 @@ def fetch_data(sgw: SgWriter):
         )
         jj = r_1.json()["data"]["getMarker"]
         try:
-            line = "".join(jj.get("formattedAddress"))
+            line = "".join(jj.get("formattedAddress")).replace("\n", " ").strip()
+            line = " ".join(line.split()).replace("# ", "#")
         except:
             continue
-        ad = line
-        if line.find("DaVi") != -1:
-            line = " ".join(ad.split("\n")[1:])
-        line = " ".join(line.split())
-        a = parse_address(International_Parser(), line)
-        street_address = (
-            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
-            or "<MISSING>"
-        )
-        city = a.city
-        postal = a.postcode
-        state = a.state
+        if line.find("DaVi Nails inside WM") != -1:
+            line = " ".join(
+                " ".join(line.split("DaVi Nails inside WM")[1].split("#")[1:]).split()[
+                    1:
+                ]
+            )
+        if line.find("DaVi Nails in WM") != -1:
+            line = " ".join(
+                " ".join(line.split("DaVi Nails in WM")[1].split("#")[1:]).split()[1:]
+            )
+        if line.find("DaVi Nails (Inside WM)") != -1:
+            line = " ".join(
+                " ".join(
+                    line.split("DaVi Nails (Inside WM)")[1].split("#")[1:]
+                ).split()[1:]
+            )
+        if line.find("DaVi nails inside WM") != -1:
+            line = " ".join(
+                " ".join(line.split("DaVi nails inside WM")[1].split("#")[1:]).split()[
+                    1:
+                ]
+            )
+        if line.find("DaVi Nals inside WM") != -1:
+            line = " ".join(
+                " ".join(line.split("DaVi Nals inside WM")[1].split("#")[1:]).split()[
+                    1:
+                ]
+            )
+        if line.find("DaVi Nails inside HEB") != -1:
+            line = " ".join(
+                " ".join(line.split("DaVi Nails inside HEB")[1].split("#")[1:]).split()[
+                    1:
+                ]
+            )
+        if line.find("DaVi Nails at") != -1:
+            line = " ".join(line.split("DaVi Nails at")[1].split()[1:])
+        if line.find("DaVi Nails insie WM") != -1:
+            line = " ".join(
+                " ".join(line.split("DaVi Nails insie WM")[1].split("#")[1:]).split()[
+                    1:
+                ]
+            )
+
+        a = parse_address(USA_Best_Parser(), line)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
+        city = a.city or "<MISSING>"
+        info = "".join(jj.get("formattedAddress")).split("\n")
+        info = list(filter(None, [a.strip() for a in info]))
+        if city == "<MISSING>":
+            city = info[-1].split(",")[0].strip()
         location_name = "".join(jj.get("name")).split(",")[0]
         phone = jj.get("notes")
         phone = str(phone)
@@ -118,6 +161,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
+            raw_address=line,
         )
 
         sgw.write_row(row)

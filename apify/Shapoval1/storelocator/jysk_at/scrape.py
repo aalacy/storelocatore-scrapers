@@ -31,9 +31,18 @@ def fetch_data(sgw: SgWriter):
         )
         r = session.get(single_page_url)
         tree = html.fromstring(r.text)
-        js_block = "".join(tree.xpath('//script[@type="application/json"]/text()'))
+        js_block = (
+            "".join(
+                tree.xpath(
+                    "//div[@data-jysk-react-properties]/@data-jysk-react-properties"
+                )
+            )
+            .split('storesCoordinates":')[1]
+            .split(',"initialPapersCatalogueBlock"')[0]
+            .strip()
+        )
         js = json.loads(js_block)
-        for j in js["storesLocator"]["BuildCoordinates"]:
+        for j in js:
             location_name = j.get("name")
             latitude = j.get("lat")
             longitude = j.get("lng")
@@ -68,6 +77,8 @@ def fetch_data(sgw: SgWriter):
                 )
                 time = h.get("format_time")
                 line = f"{day} {time}"
+                if line == "Sunday 0:00 - 24:00":
+                    line = "Sunday Closed"
                 tmp.append(line)
             hours_of_operation = "; ".join(tmp)
 

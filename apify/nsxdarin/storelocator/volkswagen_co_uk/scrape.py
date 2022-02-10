@@ -1,91 +1,150 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
+import time
 
-logger = SgLogSetup().get_logger('volkswagen_co_uk')
-
-
+logger = SgLogSetup().get_logger("volkswagen_co_uk")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    urlhome = 'https://www.volkswagen.co.uk/app/dealersearch/vw-gb/en/Volkswagen%20Passenger%20Cars%20Search/+/53.98724/-1.0928/800/JCT600%20Volkswagen%20York/+/+/+'
-    r = session.get(urlhome, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '%22id%5C%22:%5C%22' in line:
-            items = line.split('%22id%5C%22:%5C%22')
-            for item in items:
-                if '%5C%22,%5C%22name%5C%22' in item:
-                    lid = item.split('%')[0]
-                    lat = item.split('%5C%22coordinates%5C%22:%5B')[1].split(',')[0]
-                    lng = item.split('%5C%22coordinates%5C%22:%5B')[1].split(',')[1].split('%')[0]
-                    locs.append(lid + '|' + lat + '|' + lng)
-    for loc in locs:
-        lat = loc.split('|')[1]
-        lng = loc.split('|')[2]
-        loc = loc.split('|')[0]
-        logger.info(loc)
-        url = 'https://cdn6.prodworksngwapi.de/sds/search/v2/dealers/' + loc + '?dv=1591269&tenant=v-gbr-dcc'
+    letters = [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+    ]
+    pids = []
+    for letter in letters:
+        logger.info(letter)
+        url = (
+            "https://prod-ds.vwa-d.cc/v1-91-0/bff-search/suggestions?serviceConfigsServiceConfig=%7B%22key%22%3A%22service-config%22%2C%22urlOrigin%22%3A%22https%3A%2F%2Fwww.volkswagen.co.uk%22%2C%22urlPath%22%3A%22%2Fen.service-config.json%22%2C%22tenantCommercial%22%3Anull%2C%22tenantPrivate%22%3Anull%2C%22customConfig%22%3Anull%2C%22homePath%22%3Anull%2C%22credentials%22%3A%7B%22username%22%3A%22%22%2C%22password%22%3A%22%22%7D%7D&query=%7B%22type%22%3A%22SUGGESTION%22%2C%22name%22%3A%22"
+            + letter.upper()
+            + "%22%2C%22countryCode%22%3A%22GB%22%2C%22language%22%3A%22en%22%2C%22dealerServiceFilter%22%3A%5B%5D%2C%22userServiceFilter%22%3A%5B%5D%2C%22contentDealerServiceFilter%22%3A%5B%5D%7D"
+        )
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if '{"type":"LOCATION"' in line:
+                items = line.split('{"type":"LOCATION"')
+                for item in items:
+                    if ',"placeId":"' in item:
+                        pid = item.split(',"placeId":"')[1].split('"')[0]
+                        if pid not in pids:
+                            pids.append(pid)
+    for pid in pids:
+        url = (
+            "https://prod-ds.vwa-d.cc/v1-91-0/bff-search/search_searchDealersByLocation?serviceConfigsServiceConfig=%7B%22key%22%3A%22service-config%22%2C%22urlOrigin%22%3A%22https%3A%2F%2Fwww.volkswagen.co.uk%22%2C%22urlPath%22%3A%22%2Fen.service-config.json%22%2C%22tenantCommercial%22%3Anull%2C%22tenantPrivate%22%3Anull%2C%22customConfig%22%3Anull%2C%22homePath%22%3Anull%2C%22credentials%22%3A%7B%22username%22%3A%22%22%2C%22password%22%3A%22%22%7D%7D&query=%7B%22type%22%3A%22PLACE%22%2C%22placeId%22%3A%22"
+            + pid
+            + "%22%2C%22language%22%3A%22en%22%2C%22countryCode%22%3A%22GB%22%2C%22dealerServiceFilter%22%3A%5B%5D%2C%22userServiceFilter%22%3A%5B%5D%2C%22contentDealerServiceFilter%22%3A%5B%5D%7D"
+        )
+        logger.info(pid)
         r2 = session.get(url, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        website = 'volkswagen.co.uk'
-        typ = '<MISSING>'
-        country = 'GB'
-        name = ''
-        add = ''
-        city = ''
-        state = '<MISSING>'
-        zc = ''
-        store = loc
-        phone = ''
-        week = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-        hours = ''
-        lurl = ''
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if ',"name":"' in line2:
-                name = line2.split(',"name":"')[1].split('"')[0]
-                add = line2.split('"street":"')[1].split('"')[0]
-                city = line2.split(',"city":"')[1].split('"')[0]
-                zc = line2.split('postalCode":"')[1].split('"')[0]
-                try:
-                    phone = line2.split(',"phoneNumber":"')[1].split('"')[0]
-                except:
-                    phone = '<MISSING>'
-                lurl = line2.split('"website":"')[1].split('"')[0]
-                try:
-                    days = line2.split('"businessHours":{"days":[{')[1].split('}]}},')[0].split('"dayOfWeek":')
-                    for day in days:
-                        if '"from":"' in day:
-                            daynum = int(day.split(',')[0])
-                            hrs = day.split('"from":"')[1].split('"')[0] + '-' + day.split('"till":"')[1].split('"')[0]
-                            hrs = week[daynum - 1] + ': ' + hrs
-                            if hours == '':
+        website = "volkswagen.co.uk"
+        typ = "<MISSING>"
+        country = "GB"
+        for item in json.loads(r2.content)["dealers"]:
+            lurl = item["contact"]["website"]
+            name = item["name"]
+            store = item["id"]
+            city = item["address"]["city"]
+            state = "<MISSING>"
+            phone = item["contact"]["phoneNumber"]
+            zc = item["address"]["postalCode"]
+            add = item["address"]["street"]
+            lat = item["coordinates"][0]
+            lng = item["coordinates"][1]
+            hours = ""
+            OHFound = False
+            try:
+                r3 = session.get(lurl, headers=headers)
+                time.sleep(5)
+                lines = r3.iter_lines()
+                dc = -1
+                week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                for line3 in lines:
+                    if '"openingHours": [' in line3 and hours == "":
+                        OHFound = True
+                    if OHFound and "]," in line3:
+                        OHFound = False
+                    if OHFound and "-" in line3:
+                        hrs = line3.split('"')[1]
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+                    if '<span class="retailer-direction__text">' in line3:
+                        if " - " in line3 or "losed" in line3 and dc <= 5:
+                            dc = dc + 1
+                            hrs = week[dc] + ": " + line3.split('">')[1].split("<")[0]
+                            if hours == "":
                                 hours = hrs
                             else:
-                                hours = hours + '; ' + hrs
-                except:
-                    hours = '<MISSING>'
-        if 'GL56 0XW' in zc:
-            city = 'Moreton-In-Marsh'
-            add = '<MISSING>'
-        if 'Channel Islands Guernsey Volkswagen' in name:
-            phone = '01481235441'
-        yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                hours = hours + "; " + hrs
+            except:
+                pass
+            if hours == "":
+                hours = "<MISSING>"
+            if "Greenock" in city:
+                hours = "Mon 09:00 - 19:00; Tue 09:00 - 18:00; Wed 09:00 - 19:00; Thu 09:00 - 18:00; Fri 08:30 - 19:00; Sat 09:00 - 18:00; Sun 12:00 - 18:00"
+            if "Caffyn" in name:
+                hours = "Mon 08:30 - 18:00 Tue: 08:30 - 18:00; Wed 08:30 - 18:00; Thu 08:30 - 18:00; Fri 08:30 - 18:00; Sat 09:00 - 17:00; Sun 10:00 - 16:00"
+            if "Helston Garages" in name:
+                hours = "Mon 08:30 - 18:00 Tue: 08:30 - 18:00; Wed 08:30 - 18:00; Thu 08:30 - 18:00; Fri 08:30 - 18:00; Sat 08:30 - 17:00; Sun Closed"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=lurl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

@@ -131,12 +131,89 @@ def fetch_data():
                 i += 1
 
             country_code = "US"
+            r = session.post(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
             try:
                 hours_of_operation = (
-                    div.find("div", {"class": "hours-detail"})
+                    soup.find("div", {"class": "hours-details"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
+                    .replace("\n", " ")
+                    .replace("Ask About Our New Express Pick Up", "")
+                    .replace("Covid-19 Hours)", "")
+                    .replace("November thru March", "")
+                    .replace("**Covid-19 Special Hours**", "")
+                    .replace("Call 707-333-3425 for after hours material needs", "")
+                    .replace("AFTER NOVEMBER 30TH.", "")
+                    .replace("Open Saturday's starting April 24,2021 ", "")
+                    .replace("Open for Express Pickup", "")
+                    .replace("April-October", "")
+                    .replace("**Covid-19 Special Hours**", "")
+                    .replace("closed 11/1 thru 2/28", "")
+                    .replace("Closed Fri, Dec 3rd for our annual Inventory.", "")
+                    .replace("November - March", "")
+                    .replace("(April - October)", "")
+                    .replace("Face Covering's are required", "")
+                    .replace("Closed Dec. 30 & 31 For New Year's", "")
+                    .replace(", Nov 25th and 26th", "")
+                    .replace("Showroom closes at 4:00 p.m.", "")
+                    .replace("(except holiday weekends)", "")
+                    .replace("(Dec.- Mar.)", "")
+                    .replace("(Closed Weekends)", "Closed Weekends")
+                    .replace("(Starting April 10th)", "")
+                    .replace("April-September", "")
+                    .replace("(4/1- 11/20)", "")
+                    .replace("Weekends hours start april 12th - oct.1st. ", "")
+                    .replace("(May - October)", "")
+                    .replace("Starting 4/10/2021 ", "")
+                    .replace("(April - November)", "")
+                    .replace("(7:30 AM - 5:00 PM)", "")
+                    .replace("(April - August)", "")
+                    .replace("Starting MAY 1st", "")
+                    .replace("(8:00 AM - 4:00 PM)", "")
+                    .replace("(April - December)", "")
+                    .replace("AFTER NOVEMBER 30TH.", "")
+                    .replace("(May - October)", "")
+                    .replace("Open Saturday's starting April 24,2021 ", "")
+                    .replace("Open for Express Pickup", "")
+                    .replace("April-October", "")
+                    .replace("**Covid-19 Special Hours**", "")
+                    .replace("closed 11/1 thru 2/28", "")
+                    .replace("May-Oct", "")
+                    .replace("Closed Dec 3rd for inventory", "")
+                    .replace("May 1st", "")
+                    .replace("(April - September)", "")
+                    .replace("April - November", "")
+                    .replace("Closing at 4pm on November 1st", "")
+                    .replace("Winter Hours 12/13/21 - 3/4/22", "")
+                    .replace("November - March", "")
+                    .replace("Apr-Sept NO holiday weekends", "")
+                    .replace("/  April 1st thru Nov. 1st", "")
+                    .replace("hours start april 12th - oct.1st.", "")
+                    .replace(" during the winter months.", "")
+                    .replace("Until Labor Day", "")
+                    .replace("Regular Season Hours", "")
+                    .replace("We are on Winter Hours", "")
+                    .replace("Off Season/Winter Hours", "")
+                    .replace("()", "")
+                    .replace("Closed Holidays and Dec 3, 2021", "")
+                    .replace("We will be closed November 5-6 for Inventory.", "")
                 )
+                if "Weekends/Holidays" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Weekends/Holidays")[
+                        0
+                    ]
+                if "Due to " in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Due to ")[0]
+                if "Showroom" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Showroom")[0]
+                if "Due to " in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Due to ")[0]
+                if "October 18th" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Due to ")[0]
+                if "Inbound" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Inbound")[0]
+
             except:
                 hours_of_operation = MISSING
             latitude = longitude = MISSING

@@ -37,13 +37,16 @@ def fetch_data():
             street_address = _["address"]
             if _["address2"]:
                 street_address += " " + _["address2"]
+            state = _["state"]
+            if state == "&lt;P":
+                state = ""
             yield SgRecord(
                 page_url="https://refuelyourday.com/locations/",
                 store_number=_["id"],
                 location_name=_["store"].replace("&#8217;", "'").replace("&#038;", "&"),
                 street_address=street_address,
                 city=_["city"],
-                state=_["state"],
+                state=state,
                 zip_postal=_["zip"],
                 latitude=_["lat"],
                 longitude=_["lng"],

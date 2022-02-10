@@ -65,10 +65,17 @@ def fetch_data():
         raw_address = re.sub(
             r"(\(.*\))", "", store.find("address", {"itemprop": "address"}).text.strip()
         )
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        if "CH5 3YB" in raw_address or "WD6 3SB" in raw_address:
+            zip_postal = raw_address.split(",")[-1].strip()
+            raw_address = raw_address.replace(zip_postal, "").rstrip(",")
+            street_address, city, state, _ = getAddress(raw_address)
+        else:
+            street_address, city, state, zip_postal = getAddress(raw_address)
         phone = MISSING
         country_code = "UK"
-        hours_of_operation = MISSING
+        hours_of_operation = store.find(
+            "time", {"itemprop": "openingHours"}
+        ).text.strip()
         location_type = MISSING
         store_number = MISSING
         latitude = store.find("meta", {"property": "place:location:latitude"})[

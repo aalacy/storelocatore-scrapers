@@ -60,7 +60,9 @@ def fetch_data():
                 street_address = street_address.replace("Ste", "Suite")
 
             city = formatted_addr.city
-
+            if not city:
+                city = location_name
+                street_address = street_address.split(city)[0].strip()
             state = formatted_addr.state
             zip = formatted_addr.postcode
 
