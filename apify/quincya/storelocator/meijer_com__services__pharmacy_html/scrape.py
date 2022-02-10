@@ -53,8 +53,7 @@ def fetch_data(sgw: SgWriter):
             state = store["address"]["region"]["isocode"].replace("US-", "")
             zip_code = store["address"]["postalCode"]
             country_code = "US"
-            phone = store["phone"]
-            main_link = "https://www.meijer.com/gas-stations.html"
+            main_link = "https://www.meijer.com/services/pharmacy.html"
             latitude = store["geoPoint"]["latitude"]
             longitude = store["geoPoint"]["longitude"]
             search.found_location_at(latitude, longitude)
@@ -70,6 +69,7 @@ def fetch_data(sgw: SgWriter):
                 "storeLocatorFeatures"
             ]
 
+            phone = ""
             location_type = ""
             hours_of_operation = ""
             for i in store_det:
@@ -95,9 +95,12 @@ def fetch_data(sgw: SgWriter):
                             hours_of_operation = (
                                 hours_of_operation + " " + day_hours
                             ).strip()
+                    phone = i["phone"]
 
             if "pharmacy" not in location_type.lower():
                 continue
+            if not phone:
+                phone = store["phone"]
 
             sgw.write_row(
                 SgRecord(
