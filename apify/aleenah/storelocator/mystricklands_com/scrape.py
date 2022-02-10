@@ -88,6 +88,7 @@ def fetch_data(sgw: SgWriter):
             if temp[1].find("ZipCode") != -1:
                 zip_postal = zip_postal + " " + temp[0]
             i += 1
+        street_address = street_address.replace("(500 ft.", "")
         country_code = "US"
         row = SgRecord(
             locator_domain=locator_domain,
