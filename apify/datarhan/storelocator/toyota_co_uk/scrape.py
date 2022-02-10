@@ -33,7 +33,6 @@ def fetch_data():
         "https://www.toyota.ru/api/dealer/drive/37.4121287410622/55.9698601178023?count=2000&extraCountries=by&limitSearchDistance=150&isCurrentLocation=false",
         "https://www.toyota.sk/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.com.tr/api/dealer/drive/30.68333/36.9?count=2000&extraCountries=&isCurrentLocation=false",
-        # "https://www.toyota.ua/api/dealer/drive/30.517621/50.451497?count=2000&extraCountries=&isCurrentLocation=false",
     ]
     domain = "toyota.co.uk"
     hdr = {
