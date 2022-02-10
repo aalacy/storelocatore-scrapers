@@ -47,8 +47,11 @@ def get_data(page_url, sgw: SgWriter):
         cnt += 1
 
     adr = line[line.index("Address:") + 1 : cnt]
-    raw_address = ", ".join(adr)
+    raw_address = ", ".join(adr).replace(",,", ",")
     street_address, city, state, postal = get_international(raw_address)
+    if "East" in street_address:
+        street_address = street_address.replace("East", "").strip()
+        city = f"East {city}"
     if not city:
         city = raw_address.split(",")[-1].strip()
 
