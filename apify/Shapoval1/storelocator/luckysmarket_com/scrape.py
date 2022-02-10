@@ -4,7 +4,7 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -18,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//p[./span[@style="font-size:16px"]]')
+    div = tree.xpath('//p[@style="font-size:16px; line-height:1.7em;"]')
     for d in div:
 
         ad = "".join(d.xpath(".//following-sibling::p[2]//text()")).replace(
@@ -43,11 +43,11 @@ def fetch_data(sgw: SgWriter):
             .upper()
             .strip()
         )
-        page_url = "".join(
-            d.xpath(
-                f'.//preceding::p[text()="STORES"]/following::a[contains(text(), "{slug}")][1]/@href'
-            )
+
+        page_urls = d.xpath(
+            f'.//preceding::p[text()="STORES"]/following::ul[1]/li/a[contains(text(), "{slug}")][1]/@href'
         )
+        page_url = "".join(page_urls[-1])
         session = SgRequests()
 
         api_url = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=100&token={}"
@@ -93,5 +93,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
         fetch_data(writer)
