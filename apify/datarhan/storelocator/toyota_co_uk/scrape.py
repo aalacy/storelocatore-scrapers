@@ -56,6 +56,8 @@ def fetch_data():
                     end_hours = h["hours"][0]["endTime"]
                     hoo.append(f"{start_day} - {end_day}: {start_hours} - {end_hours}")
             hoo = " ".join(hoo).replace("SAT - SAT", "SAT").replace("SUN - SUN", "SUN")
+            if not hoo:
+                continue
 
             item = SgRecord(
                 locator_domain=domain,
