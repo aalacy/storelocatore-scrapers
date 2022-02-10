@@ -41,7 +41,11 @@ def fetch_data():
                 all_locations[i].click()
                 sleep(5)
                 all_poi_html.append(etree.HTML(driver.page_source))
-                driver.back()
+                try:
+                    driver.back()
+                except Exception:
+                    sleep(120)
+                    driver.back()
                 sleep(5)
                 all_locations = driver.find_elements_by_xpath(
                     '//button[contains(text(), "Store details")]'
