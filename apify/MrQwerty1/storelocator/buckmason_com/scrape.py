@@ -1,40 +1,12 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_coords(page_url):
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -42,27 +14,25 @@ def get_coords(page_url):
     return eval(text.split(".LatLng")[1].split("),")[0] + ")")
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.buckmason.com/"
+def fetch_data(sgw: SgWriter):
     api = "https://www.buckmason.com/pages/our-stores"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//figure[@class='stores-menu__item']")
-    slugs = tree.xpath("//a[@class='site_menu-panel_link submenu_store-link']/@href")
+    divs = tree.xpath("//div[@class='store ']")
 
-    for d, slug in zip(divs, slugs):
-        page_url = f"https://www.buckmason.com{slug}"
+    for d in divs:
+        slug = "".join(d.xpath(".//div[@class='store-title']/a/@href"))
+        page_url = api
+        if slug:
+            page_url = f"https://www.buckmason.com{slug}"
+
         location_name = "".join(
-            d.xpath(".//h2[@class='stores-menu__name']/text()")
+            d.xpath(
+                ".//div[@class='store-title']/a/text()|.//div[@class='store-title']/text()"
+            )
         ).strip()
 
-        line = d.xpath(".//div[@class='stores-menu__address']/text()")
+        line = d.xpath(".//div[@class='store-address']/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
         if not line:
             continue
@@ -73,47 +43,55 @@ def fetch_data():
         state = line.split()[0]
         postal = line.split()[1]
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-            or "<MISSING>"
-        )
+        phone = "".join(
+            d.xpath(".//a[@class='store-detail__telephone']/text()")
+        ).strip()
+
         try:
             latitude, longitude = get_coords(page_url)
         except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        location_type = "<MISSING>"
-        hours = d.xpath(".//p[@class='stores-hours_copy']/text()")
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+        _tmp = []
+        black_list = ["dec", "christmas", "new", "/", "thanksgiving", "xmas"]
+        hours = d.xpath(".//div[@class='store-hours']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours) or "<MISSING>"
-        if "Hours;" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("Hours;")[-1].strip()
+        for h in hours:
+            if "holiday" in h.lower():
+                break
+            for b in black_list:
+                if b in h.lower():
+                    break
+            else:
+                _tmp.append(h)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        hours_of_operation = ";".join(_tmp)
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=str(latitude),
+            longitude=str(longitude),
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.buckmason.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

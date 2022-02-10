@@ -1,50 +1,16 @@
-import csv
-import json
 import re
-import time
 
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://chebahut.com/locations/"
 
@@ -55,7 +21,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     all_links = []
 
     items = base.find_all("h2", {"class": re.compile(r"title-heading.+")})
@@ -65,8 +30,6 @@ def fetch_data():
 
     locator_domain = "chebahut.com"
 
-    driver = SgChrome(user_agent=user_agent).driver()
-
     for i, link in enumerate(all_links):
         raw_address = items[i].text.split(",")
         street_address = raw_address[0].strip()
@@ -75,7 +38,7 @@ def fetch_data():
         zip_code = "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = "Open"
 
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
@@ -83,23 +46,13 @@ def fetch_data():
         if "coming soon" in base.find(class_="title-heading-center").text.lower():
             continue
 
-        driver.get(link)
-        time.sleep(2)
-        try:
-            WebDriverWait(driver, 50).until(
-                ec.presence_of_element_located((By.TAG_NAME, "h1"))
-            )
-
-        except:
-            driver.refresh()
-            time.sleep(10)
-        time.sleep(2)
-
-        base = BeautifulSoup(driver.page_source, "lxml")
-
         location_name = "CHEBA HUT - " + base.h1.text.strip()
         if location_name == "CHEBA HUT - ":
             location_name = "CHEBA HUT - " + city
+
+        if "Opening" in location_name:
+            location_type = "Open" + location_name.split("Open")[1]
+            location_name = location_name.split("Open")[0].strip()
 
         raw_data = list(base.find(class_="content-container").stripped_strings)
 
@@ -116,43 +69,33 @@ def fetch_data():
             continue
 
         try:
-            script = base.find(id="mfLocationJsonLD").contents[0]
-            store = json.loads(script)
-            city = store["address"]["addressLocality"]
-            state = store["address"]["addressRegion"]
-            zip_code = store["address"]["postalCode"]
-            latitude = store["geo"]["latitude"]
-            longitude = store["geo"]["longitude"]
+            map_link = base.find(class_="content-container").find_all("a")[-1]["href"]
+            zip_code = re.findall(r"\+[\d]{5}", map_link)[0].replace("+", "")
         except:
-            script = str(base.find(class_="wpgmza_map"))
-            latitude = script.split('map_start_lat":"')[1].split('",')[0]
-            longitude = script.split('map_start_lng":"')[1].split('",')[0]
+            pass
+        script = str(base.find(class_="wpgmza_map"))
+        latitude = script.split('map_start_lat":"')[1].split('",')[0]
+        longitude = script.split('map_start_lng":"')[1].split('",')[0]
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    driver.close()
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

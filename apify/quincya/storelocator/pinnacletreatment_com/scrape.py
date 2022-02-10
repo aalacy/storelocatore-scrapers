@@ -1,41 +1,16 @@
-import csv
+import re
 
 from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://pinnacletreatment.com/locations/"
 
@@ -46,7 +21,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     locator_domain = "pinnacletreatment.com"
 
     sections = base.find(class_="locations-select").find_all("option")[1:]
@@ -64,6 +38,10 @@ def fetch_data():
             raw_address = list(
                 item.find(class_="locations-grid-address").stripped_strings
             )
+            if "Same Day" in raw_address[-1]:
+                raw_address.pop(-1)
+            if "Walk-in" in raw_address[-1]:
+                raw_address.pop(-1)
             street_address = raw_address[-4]
             city = raw_address[-3].split(",")[0].replace("5th St", "").strip()
             state = raw_address[-3].split(",")[1].split()[0]
@@ -117,7 +95,7 @@ def fetch_data():
                 hours_of_operation = (
                     hours_of_operation.replace("\r\n", " ")
                     .replace("\nGroups:", " Groups:")
-                    .split("\n")[0]
+                    .split("\n\n")[0]
                     .replace("Clinic:", "")
                     .replace("Clinic", "")
                     .replace("We're open", "")
@@ -150,7 +128,10 @@ def fetch_data():
             except:
                 hours_of_operation = "<MISSING>"
 
-            if " Hours" in hours_of_operation:
+            if (
+                " Hours" in hours_of_operation
+                and "Holiday Hours" not in hours_of_operation
+            ):
                 hours_of_operation.split(" Hours")[1].strip()
 
             hours_of_operation = (
@@ -165,36 +146,39 @@ def fetch_data():
                 .replace("Business:", "")
                 .replace(": Mon", "Mon")
                 .replace("  ", " ")
+                .replace("\n", " ")
                 .split("Groups:")[0]
+                .split("Licenses:")[0]
+                .split("Out of")[0]
             ).strip()
 
-            if "Hours " in hours_of_operation:
+            if (
+                " Hours" in hours_of_operation
+                and "Holiday Hours" not in hours_of_operation
+            ):
                 hours_of_operation = hours_of_operation.split("Hours ")[1].strip()
 
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -1,15 +1,31 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import time
+from sgselenium.sgselenium import SgChrome  # noqa
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from seleniumwire import webdriver  # noqa
+import ssl
+from undetected_chromedriver import ChromeOptions
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "rentokil.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
 headers = {
     "authority": "www.rentokil.co.uk",
@@ -27,19 +43,56 @@ headers = {
 }
 
 
+def get_driver():
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    )
+    options = ChromeOptions()
+    options.add_argument("--disable-gpu")
+    options.add_argument("--headless")
+    options.add_argument(f"user-agent={user_agent}")
+    options.add_argument("--no-sandbox")  #
+    options.add_argument("--disable-dev-shm-usage")  #
+    options.add_argument("--ignore-certificate-errors")  #
+    options.add_argument(f"user-agent={user_agent}")
+    return webdriver.Chrome(
+        options=options, executable_path=ChromeDriverManager().install()
+    )
+
+
+def check(url, class_name, driver):
+    try:
+        driver.get(url)
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.ID, class_name))
+        )
+        return True
+    except Exception:
+        driver.quit()
+        return False
+
+
+def Se(url, class_name):
+    for c in range(10):
+        time.sleep(1)
+        driver = get_driver()
+        if check(url, class_name, driver):
+            return driver
+
+
 def fetch_data():
     # Your scraper here
     search_url = "https://www.rentokil.co.uk/property-care/branches/"
-    stores_req = session.get(search_url, headers=headers)
-    log.info("first_requst successfull")
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//a[@class="link-list-module_link"]/@href')
+    class_name = "menu"
+    driver = Se(search_url, class_name)
+    stores_sel = lxml.html.fromstring(driver.page_source)
+    stores = stores_sel.xpath('//select[@id="menu"]/option[position()>1]/@value')
     for store_url in stores:
-        page_url = "https://www.rentokil.co.uk/property-care" + store_url
+        page_url = "https://www.rentokil.co.uk" + store_url
 
         log.info(page_url)
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
+        driver.get(page_url)
+        store_sel = lxml.html.fromstring(driver.page_source)
 
         locator_domain = website
         location_name = "".join(

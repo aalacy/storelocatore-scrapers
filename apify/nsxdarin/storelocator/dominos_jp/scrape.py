@@ -18,9 +18,8 @@ logger = SgLogSetup().get_logger("dominos_jp")
 def fetch_data():
     locs = []
     url = "https://www.dominos.jp/sitemap.aspx"
-    r = session.get(url, headers=headers, timeout=60)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://www.dominos.jp/en/store/" in line:
             items = line.split("<loc>https://www.dominos.jp/en/store/")
             for item in items:
@@ -35,6 +34,7 @@ def fetch_data():
         logger.info(loc)
         store = loc.rsplit("/", 1)[1]
         name = ""
+        raw_address = ""
         add = ""
         city = ""
         state = ""
@@ -46,7 +46,6 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split(" - ")[0].replace("&#39;", "'")
             if 'id="store-lat" value="' in line2:
@@ -57,13 +56,7 @@ def fetch_data():
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
             if 'href="http://maps.google.com/maps/' in line2 and add == "":
                 g = next(lines)
-                g = (
-                    str(g.decode("utf-8"))
-                    .strip()
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .replace("\r", "")
-                )
+                g = g.strip().replace("\t", "").replace("\n", "").replace("\r", "")
                 raw_address = g.strip()
                 formatted_addr = parse_address_intl(raw_address)
                 add = formatted_addr.street_address_1
@@ -74,6 +67,36 @@ def fetch_data():
                 zc = formatted_addr.postcode if formatted_addr.postcode else "<MISSING>"
             if "～" in line2 and "～～this" not in line2:
                 hours = line2.split(">")[1].split("<")[0].replace("～", "-")
+        if "," in raw_address:
+            add = raw_address.split(",")[0].strip()
+        else:
+            add = "<MISSING>"
+        if (
+            "a" not in add
+            and "e" not in add
+            and "i" not in add
+            and "o" not in add
+            and "u" not in add
+            and "MISSING" not in add
+        ):
+            add = (
+                raw_address.split(",")[0].strip()
+                + " "
+                + raw_address.split(",")[1].strip()
+            )
+        if "Tokyo" in raw_address:
+            city = "Tokyo"
+        zc = "<MISSING>"
+        items = raw_address.split(",")
+        for item in items:
+            if "-Shi" in item or "-shi" in item:
+                city = item.strip()
+        if int(lat.split(".")[0]) < -90 or int(lat.split(".")[0]) > 90:
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+        if lng == "-99":
+            lat = "<MISSING>"
+            lng = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

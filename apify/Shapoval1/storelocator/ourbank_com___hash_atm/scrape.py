@@ -7,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.ourbank.com/_/api/atms/45.6789447/-111.0340133/500"
+    api_url = "https://www.ourbank.com/_/api/atms/45.6789447/-111.0340133/1000"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -17,8 +17,17 @@ def fetch_data(sgw: SgWriter):
     for j in js["atms"]:
 
         page_url = "https://www.ourbank.com/locations"
-        location_name = j.get("name")
+        location_name = "".join(j.get("name")).strip()
         location_type = "ATM"
+        net_name = j.get("networkName")
+        if net_name == "First Security Bank ATMs":
+            location_name = "First Security Bank"
+        if net_name != "First Security Bank ATMs":
+            location_name = (
+                location_name.replace("First Security Bank", "")
+                .replace("-", "")
+                .strip()
+            )
         street_address = "".join(j.get("address"))
         if street_address.find("\n") != -1:
             street_address = street_address.split("\n")[1].strip()
@@ -54,6 +63,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.ourbank.com"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

@@ -1,122 +1,90 @@
-import re
-import csv
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    items = []
-
     start_url = "https://maxemhealthurgentcare.com/locations-2/"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "maxemhealthurgentcare.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="link"]/a/@href')
-    for store_url in all_locations:
+    all_locations = dom.xpath('//li/a[contains(@href, "locations-2")]/@href')
+    for store_url in list(set(all_locations)):
+        if store_url == "https://maxemhealthurgentcare.com/locations-2/":
+            continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h1[@class="post_title"]/text()')[0].strip()
-        raw_data = loc_dom.xpath(
-            '//div[@class="profile_single_photo col-md-5"]/following-sibling::div[1]/p/text()'
+        data = (
+            loc_dom.xpath('//script[contains(text(), "map_options")]/text()')[0]
+            .split("maps(")[-1]
+            .split(").data")[0]
         )
-        raw_data = [e.strip() for e in raw_data if e.strip()]
-        if "Ocean Springs Urgent Care – Washington" in raw_data[0]:
-            raw_data = raw_data[1:]
-        if len(raw_data) == 1:
-            continue
-        if "suit" in raw_data[1].lower():
-            raw_data = [" ".join(raw_data[:2])] + raw_data[2:]
-        street_address = raw_data[0].strip()
-        city = raw_data[1].split(", ")[0].strip()
-        state = raw_data[1].split(", ")[-1].split()[0].strip()
-        zip_code = raw_data[1].split(", ")[-1].split()[-1].strip()
-        if len(zip_code) == 2:
-            zip_code = "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = [e.replace("Ph. ", "") for e in raw_data if "Ph." in e]
+        data = json.loads(data)
+        poi = data["places"][0]
+
+        phone = loc_dom.xpath('//span[contains(text(), "Ph.")]/text()')
+        if phone:
+            phone = phone[0].replace("Ph. ", "")
         if not phone:
-            phone = [e.split(":")[-1] for e in raw_data if "Ph:" in e]
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if len(raw_data) == 2:
-            hoo = loc_dom.xpath('//div[@dir="ltr"]/div[@dir="ltr"]/div/text()')
-        else:
-            hoo = raw_data[-3:]
-            hoo = [e.strip() for e in hoo if e.strip() and "Fax" not in e]
-            hoo = [e.strip() for e in hoo if e.strip() and "Ph:" not in e]
-        hours_of_operation = (
-            " ".join(hoo).split(" Click")[0].strip() if hoo else "<MISSING>"
+            phone = loc_dom.xpath('//span[contains(text(), "Ph:")]/text()')
+            if phone:
+                phone = phone[0].replace("Ph: ", "")
+        if not phone:
+            phone = loc_dom.xpath("//h1/following-sibling::p[1]/span/text()")
+            phone = [e.strip() for e in phone if "Ph." in e]
+            phone = phone[0].replace("Ph. ", "") if phone else SgRecord.MISSING
+        hoo = loc_dom.xpath(
+            '//h3[contains(text(), "Hours of Operation")]/following-sibling::p//text()'
         )
-        if "Click" in hours_of_operation:
-            hours_of_operation = [e for e in raw_data if "Everyday" in e][0]
+        hoo = [e.replace("\xa0", "").strip() for e in hoo]
+        hours_of_operation = " ".join(hoo)
+        state = poi["location"]["state"]
+        zip_code = poi["location"]["postal_code"]
+        if zip_code == "70460":
+            state = "LA"
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=poi["title"],
+            street_address=poi["address"].split(",")[0],
+            city=poi["location"]["city"],
+            state=state,
+            zip_postal=zip_code,
+            country_code=poi["location"]["country"],
+            store_number=SgRecord.MISSING,
+            phone=phone.replace("Ph: ", ""),
+            location_type=SgRecord.MISSING,
+            latitude=poi["location"]["lat"],
+            longitude=poi["location"]["lng"],
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

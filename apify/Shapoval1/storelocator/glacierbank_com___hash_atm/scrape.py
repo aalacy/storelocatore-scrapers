@@ -7,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.glacierbank.com/_/api/atms/48.1968612/-114.3136565/1000"
+    api_url = "https://www.glacierbank.com/_/api/atms/48.1968612/-114.3136565/2000"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -19,6 +19,9 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.glacierbank.com/locations"
         location_name = j.get("name")
         location_type = "ATM"
+        net_name = j.get("networkName")
+        if net_name == "Glacier Bank ATMs" and location_name.find("Glacier Bank") == -1:
+            location_name = "Glacier Bank" + " " + location_name
         street_address = "".join(j.get("address"))
         if street_address.find("\n") != -1:
             street_address = street_address.split("\n")[1].strip()

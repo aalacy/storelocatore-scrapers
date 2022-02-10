@@ -1,119 +1,67 @@
-import req
-import json
-import csv
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+import re
+from lxml import etree
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    locator_domain = "https://www.christiedental.com/"
-    missingString = "<MISSING>"
+    session = SgRequests()
 
-    def send(l, d):
-        return req.Req().post(l, data=d)
+    start_url = "https://www.christiedental.com/"
+    domain = "christiedental.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    def toJSON(o):
-        return json.loads(o.text)
+    all_locations = dom.xpath('//div[@class="office-card"]')
+    for poi_html in all_locations:
+        location_name = poi_html.xpath('.//h3[@class="office-card__title"]/text()')[0]
+        page_url = poi_html.xpath('.//a[@class="office-card__website"]/@href')[0]
+        loc_response = session.get(page_url)
 
-    def allStores():
-        l = send(
-            "https://www.christiedental.com/wp-admin/admin-ajax.php",
-            {
-                "action": "prov_search",
-                "data[search_type]": "all",
-                "data[lat]": "28.5383",
-                "data[lng]": "-81.3792",
-                "data[sort_field]": "dentist_last",
-                "data[sort_order]": "ASC",
-            },
-        )
-        return toJSON(l)["results"]
+        raw_address = poi_html.xpath('.//div[@class="office-card__address"]/div/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        phone = poi_html.xpath('.//a[@class="office-card__phone"]/text()')[0].strip()
+        latitude = re.findall(r'latitude: "(.+?)",', loc_response.text)[0]
+        longitude = re.findall('longitude: "(.+?)",', loc_response.text)[0]
 
-    s = allStores()
-    result = []
-
-    def validatorCheck(s):
-        if s == "" or not s:
-            return missingString
-        else:
-            return s
-
-    for ss in s:
-        url = validatorCheck(ss["website"])
-        name = validatorCheck(ss["name"])
-        street = validatorCheck(ss["address1"] + " " + ss["address2"])
-        city = validatorCheck(ss["city"])
-        country = validatorCheck(ss["country"])
-        num = validatorCheck(ss["id"])
-        lat = validatorCheck(ss["lat"])
-        lng = validatorCheck(ss["lng"])
-        zp = validatorCheck(ss["postal_code"])
-        phone = validatorCheck(ss["phone_primary"])
-        state = validatorCheck(ss["state"])
-        timeArray = []
-        for d in ss["hours"]:
-            h = list(filter(None, ss["hours"][d]))
-            if not h:
-                pass
-            else:
-                timeArray.append(
-                    d + " : " + ss["hours"][d][0] + " - " + ss["hours"][d][1]
-                )
-        hours = validatorCheck(", ".join(timeArray).strip())
-        result.append(
-            [
-                locator_domain,
-                url,
-                name,
-                street,
-                city,
-                state,
-                zp,
-                country,
-                num,
-                phone,
-                missingString,
-                lat,
-                lng,
-                hours,
-            ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[-1].split()[0],
+            zip_postal=raw_address[1].split(", ")[-1].split()[-1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation="",
         )
 
-    return result
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

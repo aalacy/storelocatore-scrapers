@@ -1,9 +1,7 @@
 import urllib.parse
 
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
-from requests.packages.urllib3.util.retry import Retry
-from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -13,13 +11,29 @@ from sgscrape.sgwriter import SgWriter
 
 def make_request(session, Point):
     headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-        "x-xsrf-token": "efe961be-c68a-44d6-a844-d18021f76f66",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en",
+        "Accept-Encoding": "gzip, deflate, br",
+        "x-web-host": "www.marks.com",
+        "service-client": "mk/web",
     }
-    url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}%2C{}".format(
-        *Point
+    url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}".format(
+        Point[:3] + " " + Point[3:]
     )
-    return session.get(url, headers=headers).json()
+    hdr_opt = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "service-client,x-web-host",
+    }
+    response = session.request(url, method="OPTIONS", headers=hdr_opt)
+    response = session.get(url, headers=headers)
+    if response.status_code != 200:
+        return {}
+    return response.json()
 
 
 def clean_record(poi):
@@ -37,10 +51,6 @@ def clean_record(poi):
     street_address = poi["address"]["line1"]
     if poi["address"]["line2"]:
         street_address += ", " + poi["address"]["line2"]
-    addr = parse_address_intl(street_address)
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
     city = poi["address"]["town"]
     city = city if city else "<MISSING>"
     state = poi["address"]["province"]
@@ -60,7 +70,8 @@ def clean_record(poi):
     longitude = poi["geoPoint"]["longitude"]
     longitude = longitude if longitude else "<MISSING>"
     hoo = poi.get("workingHours")
-    hoo = [e.strip() for e in hoo.split()]
+    if hoo:
+        hoo = [e.strip() for e in hoo.split()]
     hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
     item = SgRecord(
@@ -84,13 +95,10 @@ def clean_record(poi):
 
 
 def fetch_data():
-    with SgRequests(
-        retry_behavior=Retry(total=3, connect=3, read=3, backoff_factor=0.1),
-        proxy_rotation_failure_threshold=0,
-    ) as session:
-        search = DynamicGeoSearch(
+    with SgRequests(verify_ssl=False) as session:
+        search = DynamicZipSearch(
             country_codes=[SearchableCountries.CANADA],
-            expected_search_radius_miles=10,
+            expected_search_radius_miles=40,
         )
 
         maxZ = search.items_remaining()
@@ -99,6 +107,8 @@ def fetch_data():
                 maxZ = search.items_remaining()
             data = make_request(session, Point)
             if "error.storelocator.find.nostores.error" not in str(data):
+                if not data.get("storeLocatorPageData"):
+                    continue
                 for fullRecord in data["storeLocatorPageData"]["results"]:
                     record = clean_record(fullRecord)
                     yield record

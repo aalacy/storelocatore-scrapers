@@ -209,8 +209,6 @@ def fetch_data(sgw: SgWriter):
         )
         if phone.find("Phone:") != -1:
             phone = phone.split("Phone:")[1].strip()
-        if phone.find("-RIBS") != -1:
-            phone = "<MISSING>"
         if page_url.find("http://www.moesoriginalbbq.com/lo/steamboat") != -1:
             phone = (
                 "".join(
@@ -431,10 +429,12 @@ def fetch_data(sgw: SgWriter):
                 )
             ).strip()
             a = usaddress.tag(ad, tag_mapping=tag)[0]
-            street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-                "None", ""
-            ).strip()
-            city = a.get("city")
+            street_address = (
+                f"{a.get('address1')} {a.get('address2')}".replace("None", "").strip()
+                + " "
+                + "St."
+            )
+            city = a.get("city").replace("St.", "").strip()
             state = a.get("state")
             postal = a.get("postal")
             country_code = "US"
@@ -516,12 +516,12 @@ def fetch_data(sgw: SgWriter):
             postal = ad.split(",")[2].split()[1].strip()
         if location_name == "Leadville":
             street_address = (
-                "".join(tree.xpath('//a[contains(@href, "google")]//text()[1]'))
+                "".join(tree.xpath('//a[contains(@href, "goo.")]//text()[1]'))
                 .replace("\n", "")
                 .strip()
             )
             ad = (
-                "".join(tree.xpath('//a[contains(@href, "google")]//text()[2]'))
+                "".join(tree.xpath('//a[contains(@href, "google")]//text()[1]'))
                 .replace("\n", "")
                 .strip()
             )
@@ -585,6 +585,21 @@ def fetch_data(sgw: SgWriter):
             .replace("Close  @ 3pm 12/24 Closed  12/25", "")
             .strip()
         )
+        if latitude == "<MISSING>":
+            ll = (
+                "".join(tree.xpath('//a[contains(@href, "maps")]/@href')) or "<MISSING>"
+            )
+            if ll == "<MISSING>":
+                ll = "".join(tree.xpath("//iframe/@src")) or "<MISSING>"
+        try:
+            latitude = ll.split("@")[1].split(",")[0].strip()
+            longitude = ll.split("@")[1].split(",")[1].strip()
+        except:
+            try:
+                latitude = ll.split("!3d")[1].split("!")[0].strip()
+                longitude = ll.split("!2d")[1].split("!")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
