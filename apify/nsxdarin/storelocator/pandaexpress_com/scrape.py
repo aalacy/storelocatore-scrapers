@@ -111,8 +111,20 @@ def fetch_data():
                                 hours = hours + "; " + hrs
             if hours == "":
                 hours = "<MISSING>"
-            if "," in add:
-                add = add.split(",")[1].strip()
+            if (
+                "," in add
+                and "Km " not in add
+                and "Lot " not in add
+                and "Int. " not in add
+                and "Pr2" not in add
+                and "Pr-3" not in add
+                and "Suite" not in add
+            ):
+                addnew = add.split(",")[1].strip()
+                if len(addnew) <= 2:
+                    add = add.replace(",", "")
+                else:
+                    add = addnew
             if len(zc) >= 5:
                 yield SgRecord(
                     locator_domain=website,

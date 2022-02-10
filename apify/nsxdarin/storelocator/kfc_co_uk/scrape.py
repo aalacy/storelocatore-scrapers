@@ -95,22 +95,25 @@ def fetch_data():
         if city == "" or city is None:
             city = "<MISSING>"
         city = city.replace('"', "").replace("\r", "").replace("\n", "")
-        yield SgRecord(
-            locator_domain=website,
-            page_url=page_url,
-            location_name=name,
-            street_address=street,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if city == "<MISSING>":
+            city = name.split("-")[0].strip()
+        if "Norwich Road" not in name:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=page_url,
+                location_name=name,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

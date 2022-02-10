@@ -140,7 +140,20 @@ def fetch_data():
                     time = "".join(hour.xpath("strong/text()")).strip()
                     hours_list.append(day + ": " + time)
 
-                hours_of_operation = "; ".join(hours_list).strip()
+                if len(hours_list) <= 0:
+                    hours_list = store_sel.xpath(
+                        '//div[@class="location-info"]//div[@class="timesheet"]/text()'
+                    )
+                hours_of_operation = (
+                    "; ".join(hours_list)
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                    .replace("day;", "day:")
+                    .strip()
+                )
+                if len(hours_of_operation) > 0 and hours_of_operation[0] == ";":
+                    hours_of_operation = "".join(hours_of_operation[1:]).strip()
 
                 latitude = "".join(
                     store.xpath('.//div[@class="location-map2"]/@data-lat')
