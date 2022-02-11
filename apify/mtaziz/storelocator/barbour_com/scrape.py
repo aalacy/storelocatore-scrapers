@@ -30,8 +30,7 @@ hd_it = {
     "x-requested-with": "XMLHttpRequest",
 }
 
-
-DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+DEFAULT_PROXY_URL = "https://groups-RESIDENTIAL,country-it:{}@proxy.apify.com:8000/"
 
 
 def set_proxies():
@@ -102,156 +101,173 @@ def fetch_data():
 
     # Proxy country must be passed with Italy ( it ) otherwise,
     # we may not get all the stores
-
     proxy_country_it = "it"
-    session_it = SgRequests(proxy_country=proxy_country_it)
-    session_it.proxies = set_proxies()
-    payload_it = "lat=45.4642035&lng=9.189982&radius=50000&mapId=amlocator-map-canvas6203f16fd942a&storeListId=amlocator_store_list6203f16fd967b&product=0&category=0&attributes%5B0%5D%5Bname%5D=2&attributes%5B0%5D%5Bvalue%5D=&attributes%5B1%5D%5Bname%5D=3&attributes%5B1%5D%5Bvalue%5D=&attributes%5B2%5D%5Bname%5D=4&attributes%5B2%5D%5Bvalue%5D=&attributes%5B3%5D%5Bname%5D=5&attributes%5B3%5D%5Bvalue%5D="
-    api_url_it = "https://www.barbour.com/amlocator/index/ajax/"
-    rit = session_it.post(api_url_it, data=json.dumps(payload_it), headers=hd_it)
-    data_it = rit.json()["items"]
-    for idx, poi in enumerate(data_it[0:]):
+    locator_url_global = "https://www.barbour.com/storelocator"
+    locator_url_us = "https://www.barbour.com/us/storelocator"
+    s_us = SgRequests(proxy_country=proxy_country_it)
+    s_us.proxies = set_proxies()
 
-        location_name = poi["name"]
-        logger.info(f"<< Location Name: {location_name}, IDX: {idx} >> ")  # noqa
-        country_code = poi["country"] if poi["country"] else ""
+    r = s_us.get(locator_url_global)
+    response_url = str(r.url)
 
-        # Page URL bassed on countries ISO code
-        page_url = get_page_url(poi["url_key"], country_code)
-
-        # Street Address
-        street_address = get_street_address(poi["address"])
-
-        # City
-        city = poi["city"]
-        if city or city is not None:
-            city = city.replace("?", "")
-        else:
-            city = ""
-
-        if "???" in city:
-            city = city.replace("?", "")
-        if "." == city:
-            city = ""
-
-        logger.info(f"[{idx}] << Round1 City: {city} >>")  # noqa
-        state = poi["state"]
-        if state or state is not None:
-            state = state
-        else:
-            state = ""
-        if state and state.isdigit():
-            state = ""
-        zip_code = poi["zip"]
-        store_number = poi["id"]
-
-        phone = poi["phone"]
-        if phone or phone is not None:
-            phone = phone
-        else:
-            phone = ""
-        if phone == "-":
-            phone = ""
-        location_type = ""
-        if poi["attributes"].get("stockist_type", {}).get("option_title"):
-            location_type = ", ".join(
-                poi["attributes"]["stockist_type"]["option_title"]
+    if response_url == "https://www.barbour.com/us/storelocator":
+        logger.info(f"locator url found to be based on the US : {response_url}")
+        logger.info(f"Please run with proxy based on Italy")
+        raise Exception("Please run with proxy based on Italy")
+    else:
+        logger.info(f"Response Locator URL: {response_url}")
+        logger.info(f"Proxy location found to be non-US and non-UK based")
+        with SgRequests(proxy_country=proxy_country_it) as session_it:
+            session_it.proxies = set_proxies()
+            payload_it = "lat=45.4642035&lng=9.189982&radius=50000&mapId=amlocator-map-canvas6203f16fd942a&storeListId=amlocator_store_list6203f16fd967b&product=0&category=0&attributes%5B0%5D%5Bname%5D=2&attributes%5B0%5D%5Bvalue%5D=&attributes%5B1%5D%5Bname%5D=3&attributes%5B1%5D%5Bvalue%5D=&attributes%5B2%5D%5Bname%5D=4&attributes%5B2%5D%5Bvalue%5D=&attributes%5B3%5D%5Bname%5D=5&attributes%5B3%5D%5Bvalue%5D="
+            api_url_it = "https://www.barbour.com/amlocator/index/ajax/"
+            rit = session_it.post(
+                api_url_it, data=json.dumps(payload_it), headers=hd_it
             )
-        latitude = poi["lat"]
-        if latitude or latitude is not None:
-            latitude = latitude
-        else:
-            latitude = MISSING
+            data_it = rit.json()["items"]
+            for idx, poi in enumerate(data_it[0:]):
+                location_name = poi["name"]
+                logger.info(
+                    f"<< Location Name: {location_name}, IDX: {idx} >> "
+                )  # noqa
+                country_code = poi["country"] if poi["country"] else ""
 
-        if latitude == "0.00000000":
-            latitude = MISSING
-        longitude = poi["lng"]
-        if longitude or longitude is not None:
-            longitude = longitude
-        else:
-            longitude = MISSING
+                # Page URL bassed on countries ISO code
+                page_url = get_page_url(poi["url_key"], country_code)
 
-        if longitude == "0.00000000":
-            longitude = MISSING
+                # Street Address
+                street_address = get_street_address(poi["address"])
 
-        raw_address = f'{street_address}, {poi["city"]}, {poi["state"]}, {poi["zip"]}, {poi["country"]}'.strip()
-        raw_address = " ".join(raw_address.split())
-        raw_address = raw_address.replace("None,", "")
-        raw_address = raw_address.replace(", ,  .,", "")
+                # City
+                city = poi["city"]
+                if city or city is not None:
+                    city = city.replace("?", "")
+                else:
+                    city = ""
 
-        addr = parse_address_intl(raw_address)
-        if not zip_code:
-            zip_code = addr.postcode
-        if not city:
-            city = addr.city
-        if not state:
-            state = addr.state
+                if "???" in city:
+                    city = city.replace("?", "")
+                if "." == city:
+                    city = ""
 
-        if phone and phone == zip_code:
-            phone = ""
-        if phone and phone == city:
-            phone = ""
-        if zip_code and "@" in zip_code:
-            zip_code = ""
-        if zip_code and zip_code == ".":
-            zip_code = ""
-        if phone and phone.startswith("-"):
-            phone = phone[1:]
-        if phone:
-            phone = (
-                phone.split("..")[0]
-                .replace("Voss", "")
-                .split("(P")[0]
-                .split("J")[0]
-                .split("Butik:")[-1]
-                .split("Inköp:")[0]
-                .replace("Butik", "")
-                .replace("Tel:", "")
-                .split("(butik")[0]
-                .split("/ 8 (800")[0]
-                .split("（バ")[0]
-                .replace("03-3567-2224", "")
-                .replace("https://www.proidee.de/", "")
-                .strip()
-            )
-            if phone.endswith("."):
-                phone = phone[:-1]
-        if city and city == "None":
-            city = ""
-        if zip_code and state:
-            zip_code = zip_code.replace(state, "").strip()
-        if street_address and city:
-            if city in street_address:
-                street_address = street_address.split(city)[0].strip()
-                if street_address.endswith(","):
-                    street_address = street_address[:-1]
-        if city and city == ", , None, .,":
-            city = ""
-        if city and city == ".":
-            city = ""
+                logger.info(f"[{idx}] << Round1 City: {city} >>")  # noqa
+                state = poi["state"]
+                if state or state is not None:
+                    state = state
+                else:
+                    state = ""
+                if state and state.isdigit():
+                    state = ""
+                zip_code = poi["zip"]
+                store_number = poi["id"]
 
-        if street_address and street_address.strip().startswith(","):
-            street_address = street_address[1:]
+                phone = poi["phone"]
+                if phone or phone is not None:
+                    phone = phone
+                else:
+                    phone = ""
+                if phone == "-":
+                    phone = ""
+                location_type = ""
+                if poi["attributes"].get("stockist_type", {}).get("option_title"):
+                    location_type = ", ".join(
+                        poi["attributes"]["stockist_type"]["option_title"]
+                    )
+                latitude = poi["lat"]
+                if latitude or latitude is not None:
+                    latitude = latitude
+                else:
+                    latitude = MISSING
 
-        item = SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation="",
-            raw_address=raw_address,
-        )
+                if latitude == "0.00000000":
+                    latitude = MISSING
+                longitude = poi["lng"]
+                if longitude or longitude is not None:
+                    longitude = longitude
+                else:
+                    longitude = MISSING
 
-        yield item
+                if longitude == "0.00000000":
+                    longitude = MISSING
+
+                raw_address = f'{street_address}, {poi["city"]}, {poi["state"]}, {poi["zip"]}, {poi["country"]}'.strip()
+                raw_address = " ".join(raw_address.split())
+                raw_address = raw_address.replace("None,", "")
+                raw_address = raw_address.replace(", ,  .,", "")
+
+                addr = parse_address_intl(raw_address)
+                if not zip_code:
+                    zip_code = addr.postcode
+                if not city:
+                    city = addr.city
+                if not state:
+                    state = addr.state
+
+                if phone and phone == zip_code:
+                    phone = ""
+                if phone and phone == city:
+                    phone = ""
+                if zip_code and "@" in zip_code:
+                    zip_code = ""
+                if zip_code and zip_code == ".":
+                    zip_code = ""
+                if phone and phone.startswith("-"):
+                    phone = phone[1:]
+                if phone:
+                    phone = (
+                        phone.split("..")[0]
+                        .replace("Voss", "")
+                        .split("(P")[0]
+                        .split("J")[0]
+                        .split("Butik:")[-1]
+                        .split("Inköp:")[0]
+                        .replace("Butik", "")
+                        .replace("Tel:", "")
+                        .split("(butik")[0]
+                        .split("/ 8 (800")[0]
+                        .split("（バ")[0]
+                        .replace("03-3567-2224", "")
+                        .replace("https://www.proidee.de/", "")
+                        .strip()
+                    )
+                    if phone.endswith("."):
+                        phone = phone[:-1]
+                if city and city == "None":
+                    city = ""
+                if zip_code and state:
+                    zip_code = zip_code.replace(state, "").strip()
+                if street_address and city:
+                    if city in street_address:
+                        street_address = street_address.split(city)[0].strip()
+                        if street_address.endswith(","):
+                            street_address = street_address[:-1]
+                if city and city == ", , None, .,":
+                    city = ""
+                if city and city == ".":
+                    city = ""
+
+                if street_address and street_address.strip().startswith(","):
+                    street_address = street_address[1:]
+
+                item = SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation="",
+                    raw_address=raw_address,
+                )
+
+                yield item
 
 
 def scrape():
