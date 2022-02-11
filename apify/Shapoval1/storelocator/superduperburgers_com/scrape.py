@@ -24,17 +24,19 @@ def fetch_data(sgw: SgWriter):
         delivery = "".join(d.xpath('.//strong[text()="*DELIVERY ONLY*"]/text()'))
         if delivery or location_name.find("Coming Soon") != -1:
             continue
-        ad = "".join(d.xpath(".//h3/following-sibling::p[1]/a[1]/text()"))
+        ad = (
+            "".join(d.xpath(".//h3/following-sibling::p[2]/a[1]/text()"))
+            .replace("(Directions)", "")
+            .strip()
+        )
         street_address = " ".join(ad.split(",")[:-2]).strip()
         street_address = " ".join(street_address.split())
         state = ad.split(",")[-1].split()[0].strip()
         postal = ad.split(",")[-1].split()[1].strip()
         country_code = "US"
         city = ad.split(",")[-2].strip()
-        phone = "".join(d.xpath(".//h3/following-sibling::p[2]//text()"))
-        hours_of_operation = "".join(
-            d.xpath(".//h3/following-sibling::p[last() - 1]//text()")
-        )
+        phone = "<MISSING>"
+        hours_of_operation = "".join(d.xpath(".//p[contains(text(), 'pm')]//text()"))
         if hours_of_operation.find("*") != -1:
             hours_of_operation = hours_of_operation.split("*")[0].strip()
 
