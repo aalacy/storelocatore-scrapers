@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -23,14 +23,14 @@ def fetch_data():
     domain = "pharmacy.jewelosco.com"
 
     all_coords = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
     for code in all_coords:
-        with SgChrome() as driver:
+        with SgFirefox() as driver:
             all_poi_html = []
 
             driver.get(start_url)
-            sleep(5)
+            sleep(15)
             driver.find_element_by_id("searchData").send_keys(code)
             driver.find_element_by_id("submitbutton").click()
             sleep(5)
@@ -39,10 +39,14 @@ def fetch_data():
             )
             for i, loc in enumerate(all_locations):
                 all_locations[i].click()
-                sleep(3)
+                sleep(5)
                 all_poi_html.append(etree.HTML(driver.page_source))
-                driver.back()
-                sleep(3)
+                try:
+                    driver.back()
+                except Exception:
+                    sleep(120)
+                    driver.back()
+                sleep(5)
                 all_locations = driver.find_elements_by_xpath(
                     '//button[contains(text(), "Store details")]'
                 )
@@ -54,21 +58,21 @@ def fetch_data():
                 next_page = ""
             if next_page:
                 next_page.click()
-                sleep(3)
+                sleep(10)
                 all_locations = driver.find_elements_by_xpath(
                     '//button[contains(text(), "Store details")]'
                 )
                 for i, loc in enumerate(all_locations):
                     all_locations[i].click()
-                    sleep(3)
+                    sleep(10)
                     all_poi_html.append(etree.HTML(driver.page_source))
                     driver.back()
-                    sleep(2)
+                    sleep(10)
                     next_page = driver.find_element_by_xpath(
                         '//li[@class="pagination-next ng-scope"]/a'
                     )
                     next_page.click()
-                    sleep(3)
+                    sleep(10)
                     all_locations = driver.find_elements_by_xpath(
                         '//button[contains(text(), "Store details")]'
                     )
@@ -80,7 +84,7 @@ def fetch_data():
                 next_page = ""
             if next_page:
                 next_page.click()
-                sleep(3)
+                sleep(10)
                 all_locations = driver.find_elements_by_xpath(
                     '//button[contains(text(), "Store details")]'
                 )
@@ -89,15 +93,15 @@ def fetch_data():
                         all_locations[i].click()
                     except Exception:
                         continue
-                    sleep(3)
+                    sleep(10)
                     all_poi_html.append(etree.HTML(driver.page_source))
                     driver.back()
-                    sleep(2)
+                    sleep(10)
                     next_page = driver.find_element_by_xpath(
                         '//li/a[contains(text(), "3")]'
                     )
                     next_page.click()
-                    sleep(3)
+                    sleep(10)
                     all_locations = driver.find_elements_by_xpath(
                         '//button[contains(text(), "Store details")]'
                     )

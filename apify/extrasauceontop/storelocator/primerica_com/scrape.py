@@ -7,6 +7,7 @@ from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
+import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -178,10 +179,17 @@ def get_data():
                                 state = address[-1].split(", ")[-1].split(" ")[0]
 
                                 if ccode == "US":
-                                    pcode = address[-1].split(", ")[-1].split(" ")[-1]
+                                    postal = address[-1].split(", ")[-1].split(" ")[-1]
+                                    pcode = ""
+                                    for character in postal:
+                                        if bool(re.search(r"\d", character)) is True:
+                                            pcode = pcode + character
+
+                                    if len(pcode) == 9:
+                                        pcode = pcode[:-4] + "-" + pcode[-4:]
 
                                 else:
-                                    pcode = (
+                                    postal = (
                                         address[-1].split(", ")[-1].split(" ")[-2]
                                         + address[-1].split(", ")[-1].split(" ")[-1]
                                     )

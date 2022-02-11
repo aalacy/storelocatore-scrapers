@@ -75,16 +75,19 @@ def fetch_data():
                 longitude = (
                     schema.split('"longitude":')[1].split("}")[0].replace("\n", "")
                 )
+                try:
 
-                hours_of_operation = (
-                    schema.split('"openingHours":')[1]
-                    .split("],")[0]
-                    .replace("[", "")
-                    .replace("\n", " ")
-                    .replace("         ", " ")
-                    .replace('"', "")
-                    .replace(" ,", "")
-                )
+                    hours_of_operation = (
+                        schema.split('"openingHours":')[1]
+                        .split("],")[0]
+                        .replace("[", "")
+                        .replace("\n", " ")
+                        .replace("         ", " ")
+                        .replace('"', "")
+                        .replace(" ,", "")
+                    )
+                except:
+                    hours_of_operation = MISSING
                 pa = parse_address_intl(raw_address)
                 state = pa.state
                 state = state.strip() if state else MISSING
