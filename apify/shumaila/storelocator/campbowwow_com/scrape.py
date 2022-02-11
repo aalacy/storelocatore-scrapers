@@ -1,6 +1,10 @@
-import csv
 import json
+from sgzip.static import static_coordinate_list
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -8,41 +12,11 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
-    url = "https://www.campbowwow.com/locations/?CallAjax=GetLocations"
-    loclist = session.get(url, headers=headers, verify=False).json()
+   
+    url = 'https://www.campbowwow.com/locations/?CallAjax=GetLocations'
+    loclist = session.get(url, headers=headers).json()
+    
     for loc in loclist:
 
         link = "https://www.campbowwow.com" + loc["Path"]
@@ -97,33 +71,37 @@ def fetch_data():
         except:
 
             hours = "<MISSING>"
-        data.append(
-            [
-                "https://www.campbowwow.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
-        )
+        
 
-        p += 1
-    return data
-
+        yield SgRecord(
+                locator_domain="https://www.campbowwow.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
+        
 
 def scrape():
-
-    data = fetch_data()
-    write_output(data)
+   
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
+
+
