@@ -59,6 +59,7 @@ def fetch_data():
                 soup.find("div", {"class": "opn_hours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Opening Times", "")
             )
             pa = parse_address_intl(raw_address)
 
@@ -74,6 +75,12 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
+            if len(street_address) < 3:
+                street_address = raw_address.split(",")[0]
+            if zip_postal == MISSING:
+                zip_postal = raw_address.split()
+                zip_postal = zip_postal[-2] + " " + zip_postal[-1]
+            street_address = street_address.replace(zip_postal, "")
             country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,

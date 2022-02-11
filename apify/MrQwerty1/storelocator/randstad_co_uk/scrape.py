@@ -46,8 +46,6 @@ def fetch_data(sgw: SgWriter):
             adr = "".join(j.get("address_line1") or [])
             adr2 = "".join(j.get("address_line2") or [])
             street_address = f"{adr} {adr2}".strip()
-            if not street_address:
-                continue
             city = "".join(j.get("locality") or [])
             state = "".join(j.get("administrative_area") or [])
             postal = "".join(j.get("postal_code") or [])
