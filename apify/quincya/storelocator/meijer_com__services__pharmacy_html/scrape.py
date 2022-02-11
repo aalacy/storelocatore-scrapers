@@ -1,3 +1,4 @@
+import time
 from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
@@ -43,7 +44,13 @@ def fetch_data(sgw: SgWriter):
         )
 
         log.info(base_link)
-        stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        try:
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        except:
+            session = SgRequests()
+            time.sleep(2)
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+
         for store in stores:
             location_name = store["displayName"]
             street_address = (
