@@ -38,7 +38,6 @@ def fetch_data():
                 continue
         except:
             continue
-        print(link)
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         street = soup.find("span", {"itemprop": "streetAddress"}).text
