@@ -46,6 +46,9 @@ def fetch_data(sgw: SgWriter):
             location_name = text[0].replace(",", "").strip()
             raw_address = " ".join(text[1].split())
 
+        if not raw_address:
+            raw_address = "".join(tree.xpath(".//small/text()")).strip()
+
         street_address, city, state, postal = get_international(raw_address)
         latitude = j.get("latitude")
         longitude = j.get("longitude")

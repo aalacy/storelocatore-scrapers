@@ -3,16 +3,16 @@ from typing import Iterable
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
-from sgscrape.pause_resume import CrawlState
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data() -> Iterable[dict]:
     http = SgRequests()
     logzilla = sglog.SgLogSetup().get_logger(logger_name="CRAWLER")
-    state = CrawlState()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_results=199, state=state
+        country_codes=[SearchableCountries.USA],
+        max_search_results=100,
+        expected_search_radius_miles=100,
     )
 
     url = "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations"
@@ -22,9 +22,8 @@ def fetch_data() -> Iterable[dict]:
     }
 
     for zipcode in search:
-        state.save_state()
         data = (
-            '{"maxDistance":"100000","lbro":"","requestType":"","requestServices":"","requestRefineTypes":"","requestRefineHours":"","requestZipCode":"'
+            '{"maxDistance":"1000","lbro":"","requestType":"","requestServices":"","requestRefineTypes":"","requestRefineHours":"","requestZipCode":"'
             + str(zipcode)
             + '","requestZipPlusFour":""}'
         )
@@ -135,7 +134,11 @@ def scrape():
     url = "https://www.usps.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
-        page_url=sp.MissingField(),
+        page_url=sp.MappingField(
+            mapping=["locationID"],
+            value_transform=lambda x: "https://tools.usps.com/find-location.htm?location="
+            + str(x),
+        ),
         location_name=sp.MappingField(
             mapping=["locationName"],
             is_required=False,
@@ -145,8 +148,7 @@ def scrape():
             is_required=False,
         ),
         longitude=sp.MappingField(
-            mapping=["longitude"],
-            is_required=False,
+            mapping=["longitude"], is_required=False, part_of_record_identity=True
         ),
         street_address=sp.MultiMappingField(
             mapping=[
@@ -156,6 +158,7 @@ def scrape():
             ],
             multi_mapping_concat_with=", ",
             is_required=False,
+            part_of_record_identity=True,
             value_transform=fix_comma,
         ),
         city=sp.MappingField(
@@ -182,11 +185,11 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(
             mapping=["locationServiceHours"],
+            part_of_record_identity=True,
             raw_value_transform=nice_hours,
         ),
         location_type=sp.MappingField(
-            mapping=["locationType"],
-            is_required=False,
+            mapping=["locationType"], is_required=False, part_of_record_identity=True
         ),
     )
 

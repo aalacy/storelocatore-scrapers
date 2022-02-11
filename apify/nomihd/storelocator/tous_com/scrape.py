@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "tous.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -52,65 +53,92 @@ def fetch_data():
 
             stores_list = json_res["shops"]
             for store in stores_list:
+                location_type = "<MISSING>"
+
                 if store["idShopType"] == "1":
-                    page_url = "https://www.tous.com/us-en/stores/view/" + store["id"]
-                    locator_domain = website
-                    location_name = store["name"].strip()
-                    street_address = store["address"].strip()
-                    city = store["city"].strip()
-                    if country_code == "CA":
-                        state = "<MISSING>"
+                    location_type = "TOUS Store"
+                elif store["idShopType"] == "2":
+                    location_type = "Point of sale"
+
+                page_url = "https://www.tous.com/us-en/stores/view/" + store["id"]
+                locator_domain = website
+                location_name = store["name"].strip()
+                street_address = store["address"].strip()
+                city = store["city"].strip()
+                zip = "<MISSING>"
+                state = "<MISSING>"
+                if country_code == "CA":
+                    state = "<MISSING>"
+                    zip = store["postalcode"].strip()
+                if country_code == "US":
+                    zip = store["postalcode"]
+                    if zip and len(zip.strip().split(" ")) == 2:
+                        zip = store["postalcode"].strip().split(" ")[1].strip()
+                        state = store["postalcode"].strip().split(" ")[0].strip()
+                    else:
                         zip = store["postalcode"].strip()
-                    if country_code == "US":
-                        zip = store["postalcode"]
-                        if zip and len(zip.strip().split(" ")) == 2:
-                            zip = store["postalcode"].strip().split(" ")[1].strip()
-                            state = store["postalcode"].strip().split(" ")[0].strip()
-                        else:
-                            zip = store["postalcode"].strip()
-                            state = "<MISSING>"
+                        state = "<MISSING>"
 
-                    street_address = street_address.replace("Merrick Park,", "").strip()
-                    if (
-                        street_address
-                        == "5757 Wayne Newton Blvd, Las Vegas, NV 89119, EE. UU."
-                    ):
-                        street_address = street_address.replace(
-                            ", Las Vegas, NV 89119, EE. UU.", ""
-                        ).strip()
-                        state = "NV"
+                street_address = street_address.replace("Merrick Park,", "").strip()
+                if (
+                    street_address
+                    == "5757 Wayne Newton Blvd, Las Vegas, NV 89119, EE. UU."
+                ):
+                    street_address = street_address.replace(
+                        ", Las Vegas, NV 89119, EE. UU.", ""
+                    ).strip()
+                    state = "NV"
 
-                    if "Richmond BC" == city:
-                        city = "Richmond"
-                        state = "BC"
+                if "Richmond BC" == city:
+                    city = "Richmond"
+                    state = "BC"
 
-                    store_number = store["id"]
-                    phone = store["phone"]
-                    if phone:
-                        phone = phone.strip()
+                raw_address = street_address
+                if len(city) > 0 and city != "<MISSING>":
+                    raw_address = raw_address + ", " + city
+                if len(state) > 0 and state != "<MISSING>":
+                    raw_address = raw_address + ", " + state
+                if len(zip) > 0 and zip != "<MISSING>":
+                    raw_address = raw_address + ", " + zip
 
-                    location_type = "<MISSING>"
-                    hours_of_operation = store["schedule"]
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if street_address:
+                    if formatted_addr.street_address_2:
+                        street_address = (
+                            street_address + ", " + formatted_addr.street_address_2
+                        )
+                else:
+                    if formatted_addr.street_address_2:
+                        street_address = formatted_addr.street_address_2
 
-                    latitude = store["coordinates"]["latitude"]
-                    longitude = store["coordinates"]["longitude"]
+                store_number = store["id"]
+                phone = store["phone"]
+                if phone:
+                    phone = phone.strip()
 
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
+                hours_of_operation = store["schedule"]
+
+                latitude = store["coordinates"]["latitude"]
+                longitude = store["coordinates"]["longitude"]
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():

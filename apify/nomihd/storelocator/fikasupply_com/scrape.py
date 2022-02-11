@@ -75,8 +75,8 @@ def fetch_data():
             store_number = store["properties"]["number"]
 
             latitude, longitude = (
-                store["geometry"]["coordinates"][0],
                 store["geometry"]["coordinates"][1],
+                store["geometry"]["coordinates"][0],
             )
             if latitude == longitude:
                 latitude = longitude = "<MISSING>"
