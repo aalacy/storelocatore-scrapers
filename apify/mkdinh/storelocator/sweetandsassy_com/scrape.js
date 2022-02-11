@@ -1,8 +1,52 @@
 const Apify = require('apify');
+const { difference } = require('lodash');
+const lodash = require('lodash');
 
 const MISSING = '<MISSING>';
 function getOrDefault(value) {
   return value || MISSING;
+}
+
+const Days = [
+  'MON',
+  'TUE',
+  'WED',
+  'THU',
+  'FRI',
+  'SAT',
+  'SUN'
+]
+
+function fillMissingDays(data) {
+  const availableDays = data.map(x => x.Interval);
+  const diff = difference(Days, availableDays);
+  
+  if (diff.length === 1) {
+    const dayLabel = diff[0];
+    data.map(day => {
+      if (!day.Interval) {
+        day.Interval = dayLabel;
+      }
+    })
+  } else if (diff.length === Days.length) {
+    data.map((day, idx) => {
+      day.Interval = Days[idx];
+    })
+  } else if (diff.length > 1) {
+    throw Error();
+  }
+  
+  const ordered = [];
+  Days.forEach(day => {
+    const found = data.find(x => x.Interval === day);
+    ordered.push(found);
+  });
+
+  if (ordered.length < 7) {
+    throw new Error();
+  }
+
+  return ordered;
 }
 
 function formatHoursOfOperation(serializedHours) {
@@ -17,8 +61,8 @@ function formatHoursOfOperation(serializedHours) {
     .replace(REMOVE_TRAILING_COLON_REGEX, '');
 
   const data = JSON.parse(`[${cleaned}]`);
-  const hours = data
-    .filter((x) => x.Interval)
+  const days = fillMissingDays(data);
+  const hours = days
     .map((day) => {
       const interval = day.Interval;
       const open = day.OpenTime.replace(REMOVE_SECONDS_REGEX, '');
