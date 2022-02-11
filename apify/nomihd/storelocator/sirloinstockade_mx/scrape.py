@@ -54,28 +54,6 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            raw_address = (
-                store_info.split('direccion: "')[1].strip().split('"')[0].strip()
-            )
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if street_address:
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
-            else:
-                if formatted_addr.street_address_2:
-                    street_address = formatted_addr.street_address_2
-
-            city = formatted_addr.city
-
-            state = formatted_addr.state
-
-            zip = formatted_addr.postcode
-
-            country_code = "MX"
-
             phone = (
                 store_info.split('tel: "')[1]
                 .strip()
@@ -92,6 +70,44 @@ def fetch_data():
                 .split("y")[0]
                 .strip()
             )
+
+            raw_address = (
+                store_info.split('direccion: "')[1].strip().split('"')[0].strip()
+            )
+            if "Tel." in raw_address:
+                if len(phone) <= 0:
+                    phone = raw_address.split("Tel.")[1].strip()
+                    raw_address = raw_address.split("Tel.")[0].strip()
+
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
+
+            city = formatted_addr.city
+
+            state = formatted_addr.state
+
+            zip = formatted_addr.postcode
+            if zip:
+                zip = (
+                    zip.replace("CP.", "")
+                    .replace("C.P", "")
+                    .replace("C.P.", "")
+                    .replace("CP", "")
+                    .strip()
+                    .replace(".", "")
+                    .strip()
+                )
+
+            country_code = "MX"
+
             hours_of_operation = (
                 store_info.split('horario: "')[1].strip().split('"')[0].strip()
             )

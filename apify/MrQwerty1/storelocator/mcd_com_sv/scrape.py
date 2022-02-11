@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
         try:
             hours = j["horarios"][0]["horarios"]
         except:
-            hours = []
+            hours = j["horarios"]["0"]["horarios"]
 
         for h in hours:
             day = h.get("description")

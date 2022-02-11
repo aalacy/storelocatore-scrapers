@@ -57,6 +57,16 @@ def fetch_data(sgw: SgWriter):
         longitude = (
             "".join(tree.xpath('//meta[@itemprop="longitude"]/@content')) or "<MISSING>"
         )
+        if (
+            page_url != "https://kalemecrazy.net/locations-2/"
+            and latitude != "<MISSING>"
+        ):
+            city = (
+                "".join(tree.xpath('//span[@itemprop="addressLocality"]//text()'))
+                .replace(".", "")
+                .strip()
+                or "<MISSING>"
+            )
         hours_of_operation = "<MISSING>"
         hours = tree.xpath('//meta[@itemprop="openingHours"]/@content') or "<MISSING>"
         if hours != "<MISSING>":
