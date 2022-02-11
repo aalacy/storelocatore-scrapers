@@ -15,7 +15,6 @@ headers = {
 
 def fetch_data():
     locs = []
-    links = []
     url = "https://www.roomstogo.com/stores"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
