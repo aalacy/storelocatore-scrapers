@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
         street_address = "".join(j.get("street")).strip() or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
-        country_code = "ZA"
+        country_code = j.get("country")
         city = j.get("city") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"

@@ -68,6 +68,14 @@ def fetch_data():
                     hours = hours + "; " + hrs
             if '"telephone":"' in line:
                 phone = line.split('"telephone":"')[1].split('"')[0]
+        if "0" not in hours:
+            hours = "<MISSING>"
+        if "ReviewBody,Monday" in hours:
+            hours = hours.split("ReviewBody,")[1].strip()
+        if "Friday: -" in hours:
+            hours = "<MISSING>"
+        if ",Monday" in hours:
+            hours = "Monday" + hours.split(",Monday")[1]
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
