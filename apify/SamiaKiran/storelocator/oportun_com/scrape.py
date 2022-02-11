@@ -1,4 +1,3 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
