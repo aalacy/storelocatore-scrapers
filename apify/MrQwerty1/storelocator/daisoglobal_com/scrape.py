@@ -55,7 +55,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("name")
         d = j.get("data") or {}
-        raw_address = d.get("address")
+        raw_address = d.get("address") or ""
         country = "US"
         if "Canada" in raw_address:
             country = "CA"
