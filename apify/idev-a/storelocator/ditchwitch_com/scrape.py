@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import Grain_2
+from sgzip.dynamic import Grain_1_KM
 from sglogging import SgLogSetup
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
@@ -63,12 +63,20 @@ class ExampleSearchIteration(SearchIteration):
                     street_address = loc["address1"]
                     if loc["address2"]:
                         street_address += " " + loc["address2"]
+                    city = loc["city"]
+                    if "Las Pinas City" in city:
+                        city = "Las Pinas City"
+                    if "MUNRO" in city:
+                        city = "MUNRO"
+                    if "ANDERBOLT" in city:
+                        city = "ANDERBOLT"
                     yield SgRecord(
                         page_url=base_url,
                         store_number=loc["clientkey"],
                         location_name=loc["name"],
+                        locator_domain=locator_domain,
                         street_address=street_address,
-                        city=loc["city"],
+                        city=city,
                         state=loc["state"],
                         zip_postal=loc["postalcode"],
                         country_code=loc["country"],
@@ -110,7 +118,7 @@ if __name__ == "__main__":
         "za",
     ]
     search_maker = DynamicSearchMaker(
-        use_state=False, search_type="DynamicZipAndGeoSearch", granularity=Grain_2()
+        use_state=False, search_type="DynamicZipAndGeoSearch", granularity=Grain_1_KM()
     )
     with SgWriter(
         deduper=SgRecordDeduper(
