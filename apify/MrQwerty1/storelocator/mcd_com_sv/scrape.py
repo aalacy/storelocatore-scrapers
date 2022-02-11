@@ -35,7 +35,10 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         cats = j.get("categorias") or []
-        location_type = ",".join(cats)
+        if not cats:
+            for c in j["horarios"]:
+                cats.append(c["name"])
+
         store_number = j.get("id")
 
         _tmp = []
@@ -51,6 +54,7 @@ def fetch_data(sgw: SgWriter):
             _tmp.append(f"{day}: {start}-{end}")
 
         hours_of_operation = ";".join(_tmp)
+        location_type = ",".join(cats)
 
         row = SgRecord(
             page_url=page_url,
