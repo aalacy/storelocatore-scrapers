@@ -28,12 +28,14 @@ class ExampleSearchIteration(SearchIteration):
         self.__http = http
         self.__state = CrawlStateSingleton.get_instance()
 
-    def do(self,
-           coord: Tuple[float, float],
-           zipcode: str,
-           current_country: str,
-           items_remaining: int,
-           found_location_at: Callable[[float, float], None]) -> Iterable[SgRecord]:
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
 
         lat, lng = coord
         api = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
@@ -91,14 +93,18 @@ if __name__ == "__main__":
     }
     locator_domain = "https://www.bp.com/"
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
-    search_maker = DynamicSearchMaker(search_type='DynamicGeoSearch', expected_search_radius_miles=10)
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", expected_search_radius_miles=500
+    )
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         with SgRequests() as https:
             search_iter = ExampleSearchIteration(http=https)
-            par_search = ParallelDynamicSearch(search_maker=search_maker,
-                                               search_iteration=search_iter,
-                                               country_codes=SearchableCountries.ALL)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=SearchableCountries.ALL,
+            )
 
             for rec in par_search.run():
                 writer.write_row(rec)
