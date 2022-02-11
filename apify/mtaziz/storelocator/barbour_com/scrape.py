@@ -110,13 +110,14 @@ def fetch_data():
     r = s_us.get(locator_url_global)
     response_url = str(r.url)
 
-    if response_url == "https://www.barbour.com/us/storelocator":
+    if response_url == locator_url_us:
         logger.info(f"locator url found to be based on the US : {response_url}")
-        logger.info(f"Please run with proxy based on Italy")
-        raise Exception("Please run with proxy based on Italy")
+        raise Exception("Please run with proxy based on the location of Italy")
     else:
         logger.info(f"Response Locator URL: {response_url}")
-        logger.info(f"Proxy location found to be non-US and non-UK based")
+        logger.info(
+            "<<< Proxy location found to be non-US and non-UK based:) Happy! >>>"
+        )
         with SgRequests(proxy_country=proxy_country_it) as session_it:
             session_it.proxies = set_proxies()
             payload_it = "lat=45.4642035&lng=9.189982&radius=50000&mapId=amlocator-map-canvas6203f16fd942a&storeListId=amlocator_store_list6203f16fd967b&product=0&category=0&attributes%5B0%5D%5Bname%5D=2&attributes%5B0%5D%5Bvalue%5D=&attributes%5B1%5D%5Bname%5D=3&attributes%5B1%5D%5Bvalue%5D=&attributes%5B2%5D%5Bname%5D=4&attributes%5B2%5D%5Bvalue%5D=&attributes%5B3%5D%5Bname%5D=5&attributes%5B3%5D%5Bvalue%5D="
