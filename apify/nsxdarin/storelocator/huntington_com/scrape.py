@@ -29,11 +29,11 @@ def fetch_data():
             y = lng
             url = "https://www.huntington.com/post/GetLocations/GetLocationsList"
             payload = {
-                "longitude": lng,
-                "latitude": lat,
+                "longitude": y,
+                "latitude": x,
                 "typeFilter": "1",
                 "envelopeFreeDepositsFilter": False,
-                "timeZoneOffset": "420",
+                "timeZoneOffset": "300",
                 "scController": "GetLocations",
                 "scAction": "GetLocationsList",
             }
@@ -51,9 +51,8 @@ def fetch_data():
                 typ = "<MISSING>"
                 website = "huntington.com"
                 country = "US"
-                lat = item["geometry"]["coordinates"][0]
-                lng = item["geometry"]["coordinates"][1]
-                search.found_location_at(lng, lat)
+                flng = item["geometry"]["coordinates"][0]
+                flat = item["geometry"]["coordinates"][1]
                 try:
                     hours = "Sun: " + item["properties"]["SundayLobbyHours"]
                     hours = hours + "; Mon: " + item["properties"]["MondayLobbyHours"]
@@ -68,7 +67,7 @@ def fetch_data():
                     hours = "<MISSING>"
                 loc = (
                     "https://www.huntington.com/Community/branch-info?locationId="
-                    + store
+                    + store.replace("bko", "")
                 )
                 yield SgRecord(
                     locator_domain=website,
@@ -82,8 +81,8 @@ def fetch_data():
                     phone=phone,
                     location_type=typ,
                     store_number=store,
-                    latitude=lat,
-                    longitude=lng,
+                    latitude=flat,
+                    longitude=flng,
                     hours_of_operation=hours,
                 )
         except:

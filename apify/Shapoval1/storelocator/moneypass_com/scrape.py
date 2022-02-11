@@ -1,12 +1,11 @@
 import json
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-
+from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
 from sgscrape.pause_resume import CrawlStateSingleton
 
@@ -36,24 +35,25 @@ headers = {
 
 
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
-def get_response(_zip, data):
+def get_response(data):
     with SgRequests() as http:
         response = http.post(api_url, headers=headers, data=json.dumps(data))
         time.sleep(random.randint(3, 7))
         if response.status_code == 200:
-            log.info(f"{_zip}  >> HTTP STATUS Return: {response.status_code}")
+            log.info(f"HTTP STATUS Return: {response.status_code}")
             return response
-        raise Exception(f"{_zip} >> HTTP Error Code: {response.status_code}")
+        raise Exception(f"HTTP Error Code: {response.status_code}")
 
 
-def get_data(_zip, sgw: SgWriter):
+def get_data(coord, sgw: SgWriter):
+    lat, lng = coord
 
     page_url = "https://www.moneypass.com/atm-locator.html"
 
     data = {
-        "Latitude": "",
-        "Longitude": "",
-        "Address": f"{str(_zip)}",
+        "Latitude": f"{lat}",
+        "Longitude": f"{lng}",
+        "Address": "",
         "City": "",
         "State": "",
         "Zipcode": "",
@@ -63,11 +63,11 @@ def get_data(_zip, sgw: SgWriter):
         "Filters": "ATMSF,ATMDP,HAATM,247ATM,",
     }
 
-    r = get_response(_zip, data)
+    r = get_response(data)
 
     js = r.json()["Features"]
     if js:
-        log.debug(f"From {_zip} stores = {len(js)}")
+        log.debug(f"From {lat,lng} stores = {len(js)}")
 
         for j in js:
             a = j.get("Properties")
@@ -78,7 +78,7 @@ def get_data(_zip, sgw: SgWriter):
             postal = a.get("Postalcode") or "<MISSING>"
             if postal == "0":
                 postal = "<MISSING>"
-            country_code = "US"
+            country_code = a.get("Country") or "<MISSING>"
             store_number = a.get("LocationId")
             phone = "<MISSING>"
             latitude = a.get("Latitude") or "<MISSING>"
@@ -109,10 +109,11 @@ def get_data(_zip, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    postals = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=1,
-        granularity=Grain_1_KM(),
+    postals = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.JAPAN],
+        max_search_distance_miles=300,
+        expected_search_radius_miles=50,
+        max_search_results=100,
     )
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -121,19 +122,15 @@ def fetch_data(sgw: SgWriter):
             future.result()
 
 
-def scrape():
+if __name__ == "__main__":
     CrawlStateSingleton.get_instance().save(override=True)
-    log.info(f"Start scrapping {locator_domain} ...")
-    start = time.time()
+
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         fetch_data(writer)
-    end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
-
-
-if __name__ == "__main__":
-    scrape()

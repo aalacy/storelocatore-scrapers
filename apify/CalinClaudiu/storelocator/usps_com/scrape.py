@@ -23,7 +23,7 @@ def fetch_data() -> Iterable[dict]:
 
     for zipcode in search:
         data = (
-            '{"maxDistance":"100000","lbro":"","requestType":"PO","requestServices":"","requestRefineTypes":"","requestRefineHours":"","requestZipCode":"'
+            '{"maxDistance":"1000","lbro":"","requestType":"","requestServices":"","requestRefineTypes":"","requestRefineHours":"","requestZipCode":"'
             + str(zipcode)
             + '","requestZipPlusFour":""}'
         )

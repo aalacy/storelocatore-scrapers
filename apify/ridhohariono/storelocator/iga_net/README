@@ -1,0 +1,10 @@
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+                       state       phone      zip               REASON  rowNumber
+325  Newfoundland & Labrador  7098965737  A0P 1E0  INVALID_CA_PROVINCE        325
+
+
+--ignore LatLngDuplicationValidator (same address with different location name)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+     latitude  longitude                                 street_address  num_addrs
+198  46.09669  -64.70039  {615, boulevard Dieppe, 615,boulevard Dieppe}          2

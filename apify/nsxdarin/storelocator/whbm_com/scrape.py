@@ -70,6 +70,8 @@ def fetch_data():
         )
         hrs = hrs.replace(": ;", ": Closed")
         hours = hrs
+        if ":" not in hours.split("Sun:")[1]:
+            hours = hours + " Closed"
         if country == "CA" or country == "US":
             yield SgRecord(
                 locator_domain=website,

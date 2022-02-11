@@ -2,6 +2,8 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
+import us
+
 
 logger = SgLogSetup().get_logger("76")
 
@@ -12,13 +14,17 @@ _headers = {
 locator_domain = "https://www.76.com/"
 base_url = "https://www.76.com/bin/stationfinderservlet?s=psx_76"
 
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA],
-)
+search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+
+
+def get_country_by_code(code=""):
+    if us.states.lookup(code):
+        return "US"
+    else:
+        return "MX"
 
 
 def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
     with SgRequests() as session:
         credential = session.get(base_url, headers=_headers).json()["credentials"]
         maxZ = search.items_remaining()
@@ -36,7 +42,10 @@ def fetch_data():
             except:
                 continue
             total += len(locations)
+            if locations:
+                search.found_location_at(lat, lng)
             for store in locations:
+
                 store["page_url"] = (
                     "https://www.76.com/station/"
                     + store["Brand"]
@@ -46,6 +55,7 @@ def fetch_data():
                     + store["EntityID"]
                 )
                 store["Phone"] = store["Phone"] or "<MISSING>"
+                store["country"] = get_country_by_code(store["AdminDistrict"])
                 yield store
             progress = (
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
@@ -87,7 +97,7 @@ def scrape():
             mapping=["PostalCode"],
         ),
         country_code=sp.MappingField(
-            mapping=["CountryRegion"],
+            mapping=["country"],
         ),
         phone=sp.MappingField(
             mapping=["Phone"],
@@ -97,7 +107,9 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["EntityID"],
         ),
-        location_type=sp.MissingField(),
+        location_type=sp.MappingField(
+            mapping=["Brand"],
+        ),
         raw_address=sp.MissingField(),
     )
 
