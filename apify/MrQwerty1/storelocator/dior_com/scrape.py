@@ -30,10 +30,11 @@ def get_data(api, sgw: SgWriter):
         adr1 = a.get("line1") or ""
         adr2 = a.get("line2") or ""
         street_address = " ".join(f"{adr1} {adr2}".split())
-        city = a.get("city")
-        state = a.get("region")
-        postal = a.get("postalCode")
+        city = a.get("city") or ""
+        state = a.get("region") or ""
+        postal = a.get("postalCode") or ""
         country = a.get("countryCode")
+        raw_address = " ".join(f"{adr1} {adr2} {city} {state} {postal}".split())
         latitude = c.get("lat")
         longitude = c.get("long")
         location_name = j.get("c_locationName") or j.get("name")
@@ -78,6 +79,7 @@ def get_data(api, sgw: SgWriter):
             phone=phone,
             hours_of_operation=hours_of_operation,
             locator_domain=locator_domain,
+            raw_address=raw_address,
         )
 
         sgw.write_row(row)
