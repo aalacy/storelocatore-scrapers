@@ -74,7 +74,7 @@ def get_data(slug, sgw: SgWriter):
     for d in divs:
         slug = "".join(d.xpath("./@href"))
         store_number = slug.split("=")[-1]
-        page_url = f"https://www.givenchy.com{slug}"
+        page_url = f"https://www.givenchy.com/us/en-US/store?StoreID={store_number}"
         location_name = " ".join("".join(d.xpath(".//h2//text()")).split())
         address = d.xpath(".//div[@class='store-address']//text()")
         address = list(filter(None, [a.replace(",", "").strip() for a in address]))

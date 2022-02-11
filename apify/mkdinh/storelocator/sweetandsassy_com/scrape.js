@@ -17,13 +17,17 @@ function formatHoursOfOperation(serializedHours) {
     .replace(REMOVE_TRAILING_COLON_REGEX, '');
 
   const data = JSON.parse(`[${cleaned}]`);
-  const hours = data.map((day) => ({
-    day: day.Interval,
-    open: day.OpenTime.replace(REMOVE_SECONDS_REGEX, ''),
-    close: day.CloseTime.replace(REMOVE_SECONDS_REGEX, ''),
-  }));
+  const hours = data
+    .filter((x) => x.Interval)
+    .map((day) => {
+      const interval = day.Interval;
+      const open = day.OpenTime.replace(REMOVE_SECONDS_REGEX, '');
+      const close = day.CloseTime.replace(REMOVE_SECONDS_REGEX, '');
 
-  return hours.length ? JSON.stringify(hours) : null;
+      return `${interval}: ${open}-${close}`;
+    });
+
+  return hours.length ? hours.join(', ') : null;
 }
 
 Apify.main(async () => {
@@ -40,7 +44,6 @@ Apify.main(async () => {
     stealth: true,
     useChrome: true,
     useApifyProxy: false,
-    groups: ['RESIDENTIAL'],
   };
 
   const crawler = new Apify.PuppeteerCrawler({
