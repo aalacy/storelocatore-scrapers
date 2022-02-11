@@ -30,7 +30,14 @@ def fetch_data():
                 sp1 = bs(res, "lxml")
                 raw_address = sp1.select_one("div.offset-md-2 p").text.strip()
                 addr = raw_address.split(",")
-                _cc = addr[-2].split()
+                if addr[-1].strip() == "UK":
+                    del addr[-1]
+                _cc = addr[-1].split()
+                street_address = ", ".join(addr[:-1])
+                city = " ".join(_cc[:-2])
+                if not city and len(addr) > 2:
+                    city = addr[-2]
+                    street_address = ", ".join(addr[:-2])
                 hours = [
                     ": ".join(hh.stripped_strings)
                     for hh in sp1.select("table.table-opening-hours tr")
@@ -45,8 +52,8 @@ def fetch_data():
                 yield SgRecord(
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
-                    street_address=" ".join(addr[:-2]),
-                    city=" ".join(_cc[:-2]),
+                    street_address=street_address,
+                    city=city,
                     state=state.select_one("div.accordion-title").text.strip(),
                     zip_postal=" ".join(_cc[-2:]),
                     latitude=latitude,
