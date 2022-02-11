@@ -29,7 +29,7 @@ def fetch_data():
             hoo = ""
             if poi.get("WeekDays"):
                 hoo = list(
-                    map(lambda d, h: d + " " + h, poi["WeekDays"], poi["storeHours"])
+                    map(lambda d, h: d + " " + h, poi["WeekDays"], poi["StoreHours"])
                 )
                 hoo = " ".join(hoo) if hoo else ""
 
