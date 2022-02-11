@@ -21,7 +21,6 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
         cities.append(str(item["id"]) + "|" + item["name"])
-    print(cities)
     website = "dominospizza.ru"
     loc = "<MISSING>"
     typ = "<MISSING>"
