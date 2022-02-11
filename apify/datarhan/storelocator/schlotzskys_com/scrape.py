@@ -40,12 +40,15 @@ def fetch_data():
             dom = etree.HTML(response.text)
             all_locations += dom.xpath('//a[@data-ya-track="visitpage"]/@href')
 
-    for url in all_locations:
+    for url in list(set(all_locations)):
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h2[@class="Core-title"]/text()')[0]
+        location_name = loc_dom.xpath('//h2[@class="Core-title"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath('//span[@class="Hero-geo"]/a/text()')
+        location_name = location_name[0]
         street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')[0]
         city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]
         state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0]
