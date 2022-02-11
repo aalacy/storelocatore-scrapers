@@ -60,7 +60,7 @@ def fetch_data():
                 street_address=street_address,
                 city=poi["address"]["city"],
                 state=poi["address"]["region"],
-                zip_postal=poi["address"]["zip"].replace("LV-", ""),
+                zip_postal=poi["address"]["zip"].replace("LV-", "").replace("LT-", ""),
                 country_code=poi["country"],
                 store_number="",
                 phone=poi["phone"],
