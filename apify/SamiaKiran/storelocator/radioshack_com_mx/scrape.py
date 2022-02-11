@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -28,10 +28,11 @@ def get_data(loc):
     phone = loc["WhatsApp"]
     latitude = loc["latitude"]
     longitude = loc["longitude"]
-    if latitude == 0:
-        if longitude == 0:
-            latitude = MISSING
-            longitude = MISSING
+    if latitude == "0.0":
+        if longitude == "0.0":
+            latitude, longitude = (
+                loc["url"].split("lat=")[1].split("&q=")[0].split("&long=")
+            )
     hours_of_operation = (
         str(loc["openings"])
         .replace("', '", " ")
@@ -39,6 +40,8 @@ def get_data(loc):
         .replace("{'", "")
         .replace("'}", "")
     )
+    if "-  jue  -  vie  -" in hours_of_operation:
+        hours_of_operation = MISSING
     return (
         location_name,
         store_number,
@@ -145,18 +148,11 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
