@@ -33,7 +33,7 @@ def fetch_data():
                 .replace("&#44;", ",")
                 .replace("&#39;", "'")
                 .replace(" ,", ",")
-                .replae(", ", ",")
+                .replace(", ", ",")
             )
             formatted_addr = parse_address_intl(rawadd)
             add = formatted_addr.street_address_1
