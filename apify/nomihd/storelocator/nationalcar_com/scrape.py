@@ -57,7 +57,7 @@ def fetch_data():
 
             phone = store["phones"]
             if phone:
-                phone = phone[0]["phone_number"]
+                phone = phone[0]["phone_number"].split(",")[0].strip()
             else:
                 phone = "<MISSING>"
 
