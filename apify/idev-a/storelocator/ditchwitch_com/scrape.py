@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import Grain_2
+from sgzip.dynamic import Grain_1_KM
 from sglogging import SgLogSetup
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         "za",
     ]
     search_maker = DynamicSearchMaker(
-        use_state=False, search_type="DynamicZipAndGeoSearch", granularity=Grain_2()
+        use_state=False, search_type="DynamicZipAndGeoSearch", granularity=Grain_1_KM()
     )
     with SgWriter(
         deduper=SgRecordDeduper(
