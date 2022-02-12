@@ -30,24 +30,33 @@ def fetch_data():
     if True:
         url = "https://ellis.be/en-be/restaurants/"
         r = session.get(url, headers=headers)
-        loclist = r.text.split("let restaurants = ")[1].split('}];')[0]
-        loclist= json.loads(loclist+"}]")
+        loclist = r.text.split("let restaurants = ")[1].split("}];")[0]
+        loclist = json.loads(loclist + "}]")
         for loc in loclist:
             location_name = strip_accents(loc["name"])
             log.info(location_name)
             store_number = loc["id"]
-            page_url = loc['url']
+            page_url = loc["url"]
             phone = loc["phone"]
             street_address = strip_accents(loc["address"])
             city = strip_accents(loc["city"])
             state = MISSING
             zip_postal = loc["zip"]
-            latitude = loc['location']["lat"]
-            longitude = loc['location']["lng"]
-            hours_of_operation =  BeautifulSoup(loc['hours'], "html.parser") .get_text(separator='|', strip=True).replace('|'," ")
+            latitude = loc["location"]["lat"]
+            longitude = loc["location"]["lng"]
+            hours_of_operation = (
+                BeautifulSoup(loc["hours"], "html.parser")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
             if hours_of_operation == "Closed":
-                hours_of_operation= MISSING
-            if city=="Amsterdam" or city=="Breda" or city=="Rotterdam" or city=="Utrecht":
+                hours_of_operation = MISSING
+            if (
+                city == "Amsterdam"
+                or city == "Breda"
+                or city == "Rotterdam"
+                or city == "Utrecht"
+            ):
                 country_code = "Netherlands"
             else:
                 country_code = "Belgium"
