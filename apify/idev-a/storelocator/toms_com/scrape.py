@@ -1,10 +1,12 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from bs4 import BeautifulSoup as bs
 import re
-
 
 logger = SgLogSetup().get_logger("toms.com")
 
@@ -13,22 +15,24 @@ _headers = {
 }
 
 locator_domain = "https://www.toms.com"
-base_url = "https://www.toms.com/us/toms-stores.html"
+base_url = "https://www.toms.com/on/demandware.store/Sites-toms-us-Site/en_US/Stores-FindStores?showMap=true&radius=30&categories=&typesStores=&lat={}&long={}"
+us_url = "https://www.toms.com/us/toms-stores.html"
+us_data = []
 
 
-def fetch_data():
+def fetch_us():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        soup = bs(session.get(us_url, headers=_headers).text, "lxml")
         links = soup.select("div.experience-commerce_assets-contentTile")
         logger.info(f"{len(links)} found")
         for link in links:
             if not link.select_one("span.c-content-tile__box-title"):
                 continue
             hours = []
-            _hr = link.find("strong", string=re.compile(r"Store hours"))
+            _hr = link.find("strong", string=re.compile(r"Store hours", re.IGNORECASE))
             if _hr:
                 for hh in _hr.find_parent().find_next_siblings("p"):
-                    if not hh.text.strip():
+                    if not hh.text.strip() or "hour" in hh.text.lower():
                         break
                     hours.append(hh.text.strip())
 
@@ -47,21 +51,26 @@ def fetch_data():
             if not _addr[0][0].isdigit():
                 del _addr[0]
             phone = ""
-            if link.find("strong", string=re.compile(r"Phone")):
+            if link.find("", string=re.compile(r"Phone")):
                 phone = (
-                    link.find("strong", string=re.compile(r"Phone"))
+                    link.find("", string=re.compile(r"Phone"))
                     .find_parent("p")
                     .text.replace("Phone", "")
+                    .replace("-", "")
+                    .strip()
                 )
                 if not phone:
                     phone = (
                         link.find("strong", string=re.compile(r"Phone"))
                         .find_parent()
                         .find_next_sibling("p")
-                        .text.strip()
+                        .text.replace("-", "")
+                        .strip()
                     )
-            try:
-                yield SgRecord(
+            if phone:
+                phone = phone.replace("\ufeff", "").strip()
+            us_data.append(
+                dict(
                     page_url=base_url,
                     location_name=link.select_one("span.c-content-tile__box-title")
                     .text.replace("Store Details", "")
@@ -75,14 +84,78 @@ def fetch_data():
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours).replace("–", "-"),
                 )
-            except:
-                import pdb
+            )
 
-                pdb.set_trace()
+
+def _v(pp):
+    if pp:
+        return (
+            pp.replace("(", "")
+            .replace(")", "")
+            .replace("-", "")
+            .replace(" ", "")
+            .strip()
+        )
+    else:
+        return ""
+
+
+def _data(phone):
+    for dd in us_data:
+        if _v(dd["phone"]) == _v(phone):
+            return dd
+
+    return {}
+
+
+def fetch_data():
+    for lat, lng in search:
+        with SgRequests() as session:
+            locations = session.get(base_url.format(lat, lng), headers=_headers).json()[
+                "stores"
+            ]
+            logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
+            for _ in locations:
+                search.found_location_at(_["latitude"], _["longitude"])
+                street_address = _["address1"]
+                if _["address2"]:
+                    street_address += " " + _["address2"]
+
+                hours = ""
+                state = ""
+                if _["countryCode"] == "US":
+                    dd = _data(_.get("phone"))
+                    hours = dd.get("hours_of_operation")
+                    state = dd.get("state")
+                yield SgRecord(
+                    page_url="https://www.toms.com/us/store-locator",
+                    store_number=_["ID"],
+                    location_name=_["name"],
+                    street_address=street_address.replace("\n", "").replace("\r", " "),
+                    city=_["city"],
+                    state=state,
+                    zip_postal=_.get("postalCode"),
+                    country_code=_["countryCode"],
+                    phone=_.get("phone"),
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours,
+                )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                }
+            )
+        )
+    ) as writer:
+        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+        fetch_us()
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

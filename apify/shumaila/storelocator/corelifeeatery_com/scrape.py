@@ -1,153 +1,156 @@
-from bs4 import BeautifulSoup
-import csv
-import string,usaddress
-import re, time,json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    pattern = re.compile(r'\s\s+')
-    cleanr = re.compile(r'<[^>]+>')
-    url = 'https://www.corelifeeatery.com/sitemap.xml'
-    r = session.get(url, headers=headers, verify=False)    
-    soup =BeautifulSoup(r.text, "html.parser")      
-    divlist = soup.findAll('loc')
     titlelist = []
-    p = 0
-    for div in divlist:
-        if div.text.find('locations') > -1:
-            #print(div.text)
-            r = session.get(div.text, headers=headers, verify=False)
-            soup =BeautifulSoup(r.text, "html.parser")
-            linklist = soup.findAll('loc')
-            for link in linklist:
-                link = link.text
-                
-                r = session.get(link, headers=headers, verify=False)
-                soup =BeautifulSoup(r.text, "html.parser")
-                title = soup.find('h1').text
-                if title.find('Opening Soon!') > -1:
-                    continue
-                hours = soup.text.split('Hours:',1)[1].lstrip().split('Features',1)[0].replace('\n',' ').strip()
-                longt,lat = soup.find('iframe')['src'].split('!2d',1)[1].split('!2m',1)[0].split('!3d',1)
-                try:
-                    lat = lat.split('!',1)[0]
-                except:
-                    pass
-               
-                content = soup.text.split('Location:',1)[1].split('Get Directions',1)[0].strip()
-                content1 = content.splitlines()
-                #print(content)
-                m = 0                
-                
-                phone = content1[-1]
-                address = content.replace(phone,'').replace('\n',' ').strip()
-                try:
-                    address = address.split('Located',1)[0]
-                except:
-                    pass
-                try:
-                    address = address.split('In the same',1)[0]
-                except:
-                    pass
-                try:
-                    address = address.split('Across',1)[0]
-                except:
-                    pass
-                try:
-                    address = address.split('Near',1)[0]
-                except:
-                    pass
-                address = usaddress.parse(address)
+    states = [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "DC",
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming",
+    ]
+    for st in states:
+        url = (
+            "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=500&location="
+            + st
+            + "&limit=21&api_key=517cae0628fdb6c71839280b8b3d36c0&v=20181201&resolvePlaceholders=true"
+        )
+        divlist = session.get(url, headers=headers, verify=False).json()["response"][
+            "entities"
+        ]
+        for div in divlist:
 
-                i = 0
-                street = ""
-                city = ""
-                state = ""
-                pcode = ""
-                while i < len(address):
-                    temp = address[i]
-                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find('Occupancy') != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
-                        street = street + " " + temp[0]
-                    if temp[1].find("PlaceName") != -1:
-                        city = city + " " + temp[0]
-                    if temp[1].find("StateName") != -1:
-                        state = state + " " + temp[0]
-                    if temp[1].find("ZipCode") != -1:
-                        pcode = pcode + " " + temp[0]
-                    i += 1
-
-                street = street.lstrip().replace(',','')
-                city = city.lstrip().replace(',','')
-                state = state.lstrip().replace(',','')
-                pcode = pcode.lstrip().replace(',','')
+            street = div["address"]["line1"]
+            try:
+                street = street + " " + str(div["address"]["line2"])
+            except:
+                pass
+            city = div["address"]["city"]
+            state = div["address"]["region"]
+            pcode = div["address"]["postalCode"]
+            hourslist = div["hours"]
+            hours = ""
+            for hr in hourslist:
+                day = hr
                 try:
-                    state = state.split(' ',1)[0]
+                    start = hourslist[hr]["openIntervals"][0]["start"] + " AM - "
                 except:
-                    pass
-                try:
-                    pcode = pcode.split(' ',1)[0]
-                except:
-                    pass
-                try:
-                    city = city.split('(')[0].split(' ')[-1]
-                except:
-                    pass
-                                
-                store = r.text.split('article id="post-',1)[1].split('"',1)[0]
-                if link in titlelist:
-                    continue
-                titlelist.append(link)
-                city = link.split('locations/',1)[1].split('-'+state.lower(),1)[0]
-                city = city.replace('-',' ').strip()
-                if 'salt lake city' in city:
-                    city = 'salt lake city'
-                city = city.capitalize() 
-                data.append([
-                        'https://www.corelifeeatery.com',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone.replace('Phone:','').strip(),
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-                #print(p,data[p])
-                p += 1
-                #input()
-                
-                
-            
-        
-    return data
+                    hours = "Closed"
+                    break
+                endstr = hourslist[hr]["openIntervals"][0]["end"]
+                end = int(endstr.split(":", 1)[0])
+                if end > 12:
+                    end = end - 12
+                hours = (
+                    hours
+                    + day
+                    + " "
+                    + start
+                    + str(end)
+                    + ":"
+                    + endstr.split(":", 1)[1]
+                    + " PM "
+                )
+            if len(hours) < 3:
+                hours = "<MISSING>"
+            lat = div["yextDisplayCoordinate"]["latitude"]
+            longt = div["yextDisplayCoordinate"]["longitude"]
+            try:
+                phone = div["localPhone"]
+            except:
+                phone = div["mainPhone"]
+            phone = phone.replace("+1", "")
+            phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+            try:
+                link = div["websiteUrl"]["url"]
+            except:
+                link = "<MISSING>"
+            title = "CoreLife Eatery"
+            if street in titlelist:
+                continue
+            titlelist.append(street)
+            yield SgRecord(
+                locator_domain="https://www.corelifeeatery.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number="<MISSING>",
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=lat,
+                longitude=longt,
+                hours_of_operation=hours,
+            )
 
 
-def scrape():    
-    data = fetch_data()
-    write_output(data)
-   
+def scrape():
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
+
 scrape()

@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "purdys.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -32,7 +34,7 @@ def fetch_data():
             page_url = (
                 f'https://www.purdys.com/shops/details/{store["internalid"].strip()}'
             )
-
+            log.info(page_url)
             locator_domain = website
             location_name = store["name"].strip()
 
@@ -74,12 +76,11 @@ def fetch_data():
                     ).strip()
                     hours_info = (
                         hours_info.replace("pm ", "pm | ")
+                        .replace("PM ", "PM | ")
                         .replace("closed ", "closed | ")
-                        .replace("CLOSED ", "CLOSED | ")
+                        .replace("CLOSED", "CLOSED | ")
                     )
-
                     hours_info = hours_info.split(" | ")
-
                     temp_day_tags = hours_sel.xpath('//div[@class="hours-days"]/text()')
                     day_tags = []
                     for temp in temp_day_tags:
@@ -122,7 +123,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

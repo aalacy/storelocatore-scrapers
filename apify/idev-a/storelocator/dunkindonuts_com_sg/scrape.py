@@ -33,17 +33,21 @@ def fetch_data():
                     hours = blocks[x + 1 :]
                     _addr = blocks[:x]
             addr = parse_address_intl(" ".join(_addr))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-
+            zip_postal = addr.postcode
+            if len(_addr) == 2:
+                street_address = _addr[0]
+                if "singapore" in _addr[1].split(",")[0].lower():
+                    street_address += " " + _addr[1].split(",")[0]
+            elif len(_addr) == 3:
+                street_address = " ".join(_addr[:-1])
+            if not zip_postal:
+                zip_postal = _addr[-1].split(" ")[-1]
             yield SgRecord(
                 page_url=base_url,
                 location_name=link.strong.text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city="Singapore",
+                zip_postal=zip_postal,
                 country_code="Singapore",
                 phone=phone,
                 locator_domain=locator_domain,
@@ -59,9 +63,6 @@ def fetch_data():
                     break
                 blocks.append(block)
             hours = []
-            import pdb
-
-            pdb.set_trace()
             phone = ""
             _addr = []
             for x, block in enumerate(blocks):

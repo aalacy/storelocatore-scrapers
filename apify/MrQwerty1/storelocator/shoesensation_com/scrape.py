@@ -7,10 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-
-    locator_domain = "https://www.shoesensation.com/"
-
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
         "Accept": "text/html, */*; q=0.01",
@@ -31,13 +27,11 @@ def fetch_data(sgw: SgWriter):
     for d in div:
         page_url = "".join(d.xpath(".//@data-href"))
 
-        session = SgRequests()
-
         r = session.get(page_url)
         tree = html.fromstring(r.text)
 
         location_name = "".join(
-            tree.xpath("//h2[@class='mw-sl__details__name']/text()")
+            tree.xpath("//h1[@class='mw-sl__details__name']/text()")
         ).strip()
         line = tree.xpath(
             "//li[@class='mw-sl__details__item mw-sl__details__item--location']/div[@class='info']/text()"
@@ -69,29 +63,25 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         store_number = page_url.split("-")[-1]
         if store_number.isalpha():
-            store_number = "<MISSING>"
-        phone = (
-            "".join(tree.xpath("//a[@class='btn btn-link phone']/text()")).strip()
-            or "<MISSING>"
-        )
+            store_number = SgRecord.MISSING
+
+        phone = "".join(tree.xpath("//a[@class='btn btn-link phone']/text()")).strip()
         text = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude, longitude = text.split("&center=")[1].split(",")
             if "0.00" in latitude:
                 raise IndexError
         except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         _tmp = []
         divs = tree.xpath("//div[@class='mw-sl__infotable__row']")
-        for d in divs:
-            day = "".join(d.xpath("./span[1]/text()")).replace("|", "").strip()
-            time = "".join(d.xpath("./span[2]/text()")).strip()
+        for di in divs:
+            day = "".join(di.xpath("./span[1]/text()")).replace("|", "").strip()
+            time = "".join(di.xpath("./span[2]/text()")).strip()
             _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ";".join(_tmp).replace("<br />", " ") or "<MISSING>"
-        if hours_of_operation.count("-;") > 2:
-            hours_of_operation = "<MISSING>"
+        hours_of_operation = ";".join(_tmp).replace("<br />", " ")
 
         row = SgRecord(
             locator_domain=locator_domain,
