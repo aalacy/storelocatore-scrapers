@@ -76,6 +76,27 @@ def fetch_data():
                 zc = formatted_addr.postcode if formatted_addr.postcode else "<MISSING>"
             if 'itemprop="telephone">' in line2:
                 phone = line2.split('itemprop="telephone">')[1].split("<")[0].strip()
+        if " TAR" in zc:
+            zc = zc.split(" TAR")[0]
+        raw_address = raw_address.replace("&#237;", "I")
+        raw_address = raw_address.replace("&#224;", "a")
+        raw_address = raw_address.replace("&#243;", "o")
+        raw_address = raw_address.replace("&#205;", "I")
+        raw_address = raw_address.replace("&#241;", "n")
+        raw_address = raw_address.replace("&#180;", "'")
+        raw_address = raw_address.replace("&#39;", "'")
+        raw_address = raw_address.replace("&#192;", "A")
+        raw_address = raw_address.replace("&#200;", "E")
+        raw_address = raw_address.replace("&#225;", "a")
+        raw_address = raw_address.replace("&#211;", "O")
+        raw_address = raw_address.replace("&#186;", "o")
+        raw_address = raw_address.replace("&#250;", "u")
+        raw_address = raw_address.replace("&#252;", "u")
+        raw_address = raw_address.replace("&#233;", "e")
+        raw_address = raw_address.replace("&#193;", "A")
+        raw_address = raw_address.replace("&#201;", "E")
+        raw_address = raw_address.replace("&#209;", "N")
+        raw_address = raw_address.replace("&#211;", "O")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

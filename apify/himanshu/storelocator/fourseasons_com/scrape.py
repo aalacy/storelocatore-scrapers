@@ -29,6 +29,9 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            zip_code = addr.postcode
+            if zip_code:
+                zip_code = zip_code.replace("DUBAI", "").strip()
 
             item = SgRecord(
                 locator_domain=domain,
@@ -37,7 +40,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode.replace("DUBAI", "").strip(),
+                zip_postal=zip_code,
                 country_code=poi["enCountry"],
                 store_number=poi["owsCode"],
                 phone=poi["propertyPhone"],

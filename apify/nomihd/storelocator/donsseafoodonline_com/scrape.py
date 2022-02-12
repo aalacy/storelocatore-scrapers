@@ -30,7 +30,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://www.donsseafoodonline.com/locations"
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath(
@@ -82,7 +82,7 @@ def fetch_data():
             location_type = "<MISSING>"
 
             hours = store_sel.xpath(
-                '//div[@class="sqs-block-content"]/p[./strong[contains(text(),"Hours:")]]/following-sibling::p/text()'
+                '//div[@class="sqs-block-content"]/p[./strong[contains(text(),"Hours")]]/following-sibling::p/text()'
             )
             hours_of_operation = "; ".join(hours).strip()
 

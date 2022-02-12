@@ -1,51 +1,49 @@
-import csv
 import json
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    session = SgRequests()
-    locator_domain = "https://oldchicago.com"
-    api_url = "https://oc-api-prod.azurewebsites.net/graphql"
-    headers = {"Content-Type": "application/json"}
-
-    data = {
-        "query": 'query LocationList_ViewerRelayQL($id_0:ID!) {node(id:$id_0) {...F0}} fragment F0 on Viewer {_locations3pwhxm:locations(first:1500,geoString:"") {edges {node {id,slug,locationId,title,isOpen,latitude,longitude,simpleHours {days,hours,id},distance,distancefromSearch,searchLatitude,searchLongitude,phone,address {route,streetNumber,stateCode,stateName,city,postalCode,id},comingSoon},cursor},pageInfo {hasNextPage,hasPreviousPage}},id}',
-        "variables": {"id_0": "Vmlld2VyOjA="},
+def get_additional(page_url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
     }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//script[contains(text(), 'Restaurant')]/text()"))
+    j = json.loads(text)
+    g = j.get("geo") or {}
+    lat = g.get("latitude")
+    lng = g.get("longitude")
+    phone = "".join(tree.xpath("//p[@class='location-phone']/a/text()")).strip()
 
-    r = session.post(api_url, headers=headers, data=json.dumps(data))
+    _tmp = []
+    hours = j.get("openingHoursSpecification") or []
+    for h in hours:
+        day = h.get("dayOfWeek")
+        start = h.get("opens")
+        end = h.get("closes")
+        _tmp.append(f"{day}: {start}-{end}")
+
+    return phone, lat, lng, ";".join(_tmp)
+
+
+def fetch_data(sgw: SgWriter):
+    headers = {"Content-Type": "application/json"}
+    api = "https://oc-api-prod.azurewebsites.net/graphql"
+    r = session.post(api, headers=headers, data=json.dumps(data))
 
     js = r.json()["data"]["node"]["_locations3pwhxm"]["edges"]
 
@@ -53,17 +51,16 @@ def fetch_data():
         j = j["node"]
         a = j.get("address")
         street_address = f"{a.get('streetNumber')} {a.get('route') or ''}".strip()
-        city = a.get("city") or "<MISSING>"
-        state = a.get("stateCode") or "<MISSING>"
-        postal = a.get("postalCode") or "<MISSING>"
+        city = a.get("city")
+        state = a.get("stateCode")
+        postal = a.get("postalCode")
         country_code = "US"
-        store_number = j.get("locationId") or "<MISSING>"
+        store_number = j.get("locationId")
         page_url = f'https://oldchicago.com/locations/{j.get("slug")}'
         location_name = j.get("title")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        phone = j.get("phone")
+        latitude = j.get("latitude") or ""
+        longitude = j.get("longitude")
 
         _tmp = []
         hours = j.get("simpleHours", []) or []
@@ -72,33 +69,36 @@ def fetch_data():
             time = h.get("hours")
             _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
+        if not phone:
+            phone, latitude, longitude, hours_of_operation = get_additional(page_url)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://oldchicago.com/"
+    data = {
+        "query": 'query LocationList_ViewerRelayQL($id_0:ID!) {node(id:$id_0) {...F0}} fragment F0 on Viewer {_locations3pwhxm:locations(first:1500,geoString:"") {edges {node {id,slug,locationId,title,isOpen,latitude,longitude,simpleHours {days,hours,id},distance,distancefromSearch,searchLatitude,searchLongitude,phone,address {route,streetNumber,stateCode,stateName,city,postalCode,id},comingSoon},cursor},pageInfo {hasNextPage,hasPreviousPage}},id}',
+        "variables": {"id_0": "Vmlld2VyOjA="},
+    }
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
