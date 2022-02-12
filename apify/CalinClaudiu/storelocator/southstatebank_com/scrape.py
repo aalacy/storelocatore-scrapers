@@ -2,9 +2,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -15,7 +13,7 @@ def fetch_data(sgw: SgWriter):
 
     titlelist = []
     url = "https://southstatebank.com/Global/About/CRA/Locations-Listing"
-    r = session.get(url, headers=headers)
+    r = session.get(url)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.select("a[href*=location-detail]")
 
@@ -28,7 +26,7 @@ def fetch_data(sgw: SgWriter):
         if link in titlelist:
             continue
         titlelist.append(link)
-        r = session.get(link, headers=headers)
+        r = session.get(link)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
         street = soup.find("div", {"class": "address"}).findAll("p")[0].text
