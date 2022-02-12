@@ -76,6 +76,11 @@ def fetch_data():
     driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
+    js_string = 'var element = document.getElementById("bfx-cc-wrapper-expanded");element.remove();'
+    try:
+        driver.execute_script(js_string)
+    except:
+        pass
     search_from = driver.find_element_by_id("storelocator-query")
     search_from.send_keys("london")
     driver.find_element_by_xpath('//*[@id="storeFinderForm"]/div/span/button').click()
