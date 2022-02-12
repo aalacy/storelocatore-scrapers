@@ -22,11 +22,14 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         hoo = loc_dom.xpath('//div[@class="store_locator_single_opening_hours"]/text()')
         hoo = ", ".join([e.strip() for e in hoo if e.strip()])
+        location_name = poi["na"]
+        if "COMING SOON" in location_name:
+            continue
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["na"],
+            location_name=location_name,
             street_address=poi["st"],
             city=poi["ct"],
             state=poi["rg"],
