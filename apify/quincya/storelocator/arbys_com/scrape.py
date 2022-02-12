@@ -108,9 +108,12 @@ def fetch_data(sgw: SgWriter):
             phone = "<MISSING>"
         if not location_name:
             location_name = "<MISSING>"
-        store_number = (
-            item.find(class_="store-id").text.replace("Store ID:", "").strip()
-        )
+        try:
+            store_number = (
+                item.find(class_="store-id").text.replace("Store ID:", "").strip()
+            )
+        except:
+            store_number = ""
         latitude = store["geo"]["latitude"]
         longitude = store["geo"]["longitude"]
 
