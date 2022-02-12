@@ -28,23 +28,22 @@ def fetch_data():
         soup = BeautifulSoup(stores_req.text, "html.parser")
         loc_block = soup.findAll("a", {"class": "is-choomblue"})
         for loc in loc_block:
-            link = loc['href']
-            store_id = link.split('/')[-1]
+            link = loc["href"]
+            store_id = link.split("/")[-1]
             req = session.get(link, headers=headers)
             bs = BeautifulSoup(req.text, "html.parser")
-            title = bs.find('div', {'class':'rl-name is-flex'}).find('h1').text
-            address = bs.find('div', {'class':'rl-address rl-item'}).findAll('p')
+            title = bs.find("div", {"class": "rl-name is-flex"}).find("h1").text
+            address = bs.find("div", {"class": "rl-address rl-item"}).findAll("p")
             street = address[0].text
             city = address[1].text
             state = address[2].text
-            coords = bs.find('div', {'class':'rl-address rl-item'}).find('a')['href']
-            lat, lng = coords.split('Location/')[1].split(',')
-            hours = bs.find('div', {'class':'rl-open-hours'}).find('ul').text
+            coords = bs.find("div", {"class": "rl-address rl-item"}).find("a")["href"]
+            lat, lng = coords.split("Location/")[1].split(",")
+            hours = bs.find("div", {"class": "rl-open-hours"}).find("ul").text
             hours = re.sub(pattern, " ", hours).strip()
-            hours = hours.replace('\n', ' ')
-            phone = bs.find('div', {'class':'rl-phone rl-item'}).text.strip()
+            hours = hours.replace("\n", " ")
+            phone = bs.find("div", {"class": "rl-phone rl-item"}).text.strip()
             pcode = MISSING
-
 
             yield SgRecord(
                 locator_domain=DOMAIN,
