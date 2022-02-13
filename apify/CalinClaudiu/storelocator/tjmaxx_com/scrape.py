@@ -189,7 +189,7 @@ if __name__ == "__main__":
                 },
                 fail_on_empty_id=True,
             ),
-            duplicate_streak_failure_factor = -1,
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         with SgRequests() as http1:
