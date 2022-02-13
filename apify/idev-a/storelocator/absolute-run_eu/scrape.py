@@ -96,7 +96,11 @@ def fetch_data():
                             ": ".join(hh.stripped_strings)
                             for hh in ch.table.select("tr")
                         ]
-                    if ch.name == "h2" and ch.find_next_sibling().name == "table":
+                    if (
+                        ch.name == "h2"
+                        and "Öffnungszeiten" in ch.text
+                        and ch.find_next_sibling().name == "table"
+                    ):
                         hours = [
                             ": ".join(hh.stripped_strings)
                             for hh in ch.find_next_sibling().select("tr")

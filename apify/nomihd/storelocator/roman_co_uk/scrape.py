@@ -72,7 +72,9 @@ def fetch_data():
                     './/div[@class="list-store-full"]//span[@itemprop="addressLocality"]//text()'
                 )
             ).strip()
-
+            if city == "18 Chequers Square":
+                street_address = "18 Chequers Square"
+                city = "<MISSING>"
             state = "".join(
                 store.xpath(
                     './/div[@class="list-store-full"]//span[@itemprop="addressRegion"]//text()'
@@ -122,7 +124,9 @@ def fetch_data():
                 .strip()
             )
 
-            store_number = "".join(store.xpath("./@id"))
+            store_number = (
+                "".join(store.xpath("./@id")).strip().replace("store", "").strip()
+            )
 
             latitude, longitude = "".join(store.xpath("./@data-latitude")), "".join(
                 store.xpath("./@data-longitude")

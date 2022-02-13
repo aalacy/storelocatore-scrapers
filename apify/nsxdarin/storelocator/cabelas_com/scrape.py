@@ -83,12 +83,15 @@ def fetch_data():
                     .split("<")[0]
                     .strip()
                 )
-            if 'content="https://www.google.com/maps/place/' in line2:
+            if 'content="https://www.google.com/maps/place/' in line2 and lat == "":
                 try:
                     lat = line2.split("@")[1].split(",")[0]
                     lng = line2.split("@")[1].split(",")[1]
                 except:
                     pass
+            if "&amp;ll=" in line2:
+                lat = line2.split("&amp;ll=")[1].split(",")[0]
+                lng = line2.split("&amp;ll=")[1].split(",")[1].split("&")[0]
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
                 name = name.split(" |")[0]
@@ -129,6 +132,7 @@ def fetch_data():
             name = name.split(",")[0].strip()
         if len(state) == 2:
             country = "US"
+        hours = hours.replace("<p; ", "").replace("<p;", "")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

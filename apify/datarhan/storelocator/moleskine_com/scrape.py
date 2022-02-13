@@ -3,7 +3,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import (
+    DynamicZipSearch,
+    Grain_1_KM,
+    SearchableCountries,
+)
 
 
 def fetch_data():
@@ -13,7 +17,9 @@ def fetch_data():
     domain = "moleskine.com"
 
     all_coodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=1,
+        granularity=Grain_1_KM(),
     )
     for code in all_coodes:
         frm = {"dwfrm_storelocator_country": "US", "dwfrm_storelocator_query": code}
@@ -32,7 +38,7 @@ def fetch_data():
                 city=poi["address"]["city"],
                 state="",
                 zip_postal=poi["address"]["zip"],
-                country_code="",
+                country_code="US",
                 store_number="",
                 phone=poi["phone"],
                 location_type=poi["type"],
@@ -49,7 +55,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

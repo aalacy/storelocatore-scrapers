@@ -39,6 +39,12 @@ def fetch_data():
                 + ", "
                 + _["data-store-postalcode"]
             )
+            raw_address = raw_address.strip()
+            while True:
+                if raw_address.endswith(","):
+                    raw_address = raw_address[:-1].strip()
+                else:
+                    break
             addr = parse_address_intl(raw_address + ", Malaysia")
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -56,6 +62,7 @@ def fetch_data():
                 hours.append(f"{day}: {temp[day]}")
 
             coord = _coord(locs, _["data-store-name"])
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["data-store-id"],

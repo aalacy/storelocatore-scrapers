@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 from sgrequests import SgRequests
