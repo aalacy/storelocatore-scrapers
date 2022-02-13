@@ -1,9 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("chompies")
 
@@ -11,61 +13,59 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+locator_domain = "https://chompies.com"
+base_url = "https://chompies.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxRqlWqBQCnUQoG"
+page_url = "https://chompies.com/contact/"
+
+
+def _pp(locs, address):
+    for loc in locs:
+        if not loc.h4 and not loc.p:
+            continue
+        if " ".join(address.split()[:2]) in list(loc.p.stripped_strings)[0]:
+            return loc
+
 
 def fetch_data():
-    locator_domain = "https://chompies.com"
-    base_url = "https://chompies.com/contact/"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("#pgc-870-1-0 h4 a")
-        links += soup.select("#pgc-870-1-1 h4 a")
-        for link in links:
-            page_url = link["href"]
-            if not page_url.startswith("http"):
-                page_url = locator_domain + link["href"]
+        locations = session.get(base_url, headers=_headers).json()["markers"]
+        locs = bs(session.get(page_url, headers=_headers).text, "lxml").select(
+            "div.so-panel.widget"
+        )
+        for _ in locations:
+            addr = parse_address_intl(_["address"])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            loc = _pp(locs, _["address"])
+            if not loc:
+                import pdb
 
-            logger.info(page_url)
-            _ = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = parse_address_intl(
-                _.select_one("p#ctl01_rptAddresses_ctl00_pAddressInfo").text.strip()
-            )
-            hours = [
-                " ".join(hh.stripped_strings)
-                for hh in _.select_one(
-                    "p#ctl01_rptAddresses_ctl00_pPhonenum"
-                ).find_next_siblings()
-            ]
-            temp = []
-            for x, hh in enumerate(hours):
-                if "FOR CURBSIDE PICKUP TEXT THE" in hh:
-                    continue
-                if "Leave or Read Reviews" in hh:
-                    continue
-                if "Location Hours:" in hh:
-                    hh = hh.replace("Location Hours:", "")
-                if "Limited to go menu" in hh:
-                    continue
-                if "Packaged items to take home" in hh:
-                    continue
-                temp.append(hh)
+                pdb.set_trace()
+            phone = ""
+            if loc.strong.a:
+                phone = loc.strong.a.text.strip()
             yield SgRecord(
                 page_url=page_url,
-                location_name=_.h2.text,
-                street_address=addr.street_address_1,
+                store_number=_["id"],
+                location_name=loc.h4.text.strip(),
+                street_address=street_address,
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
+                latitude=_["lat"],
+                longitude=_["lng"],
                 country_code="US",
-                phone=_.select_one("p#ctl01_rptAddresses_ctl00_pPhonenum")
-                .text.split(":")[-1]
-                .strip(),
+                phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(temp),
+                raw_address=_["address"],
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
