@@ -84,7 +84,6 @@ def fetch_data():
                         ).strip()
                         address = address.replace("</p>", "").strip()
                         strt = address.split("<br/>", 2)[1]
-                        print(strt)
                         hours = bs.findAll("p", {"class": "store-hours__day"})
                         hoo = ""
                         for hr in hours:
@@ -110,7 +109,7 @@ def fetch_data():
                             locator_domain=DOMAIN,
                             page_url=link,
                             location_name=title,
-                            street_address=street,
+                            street_address=strt,
                             city=city,
                             state=state,
                             zip_postal=pcode,
