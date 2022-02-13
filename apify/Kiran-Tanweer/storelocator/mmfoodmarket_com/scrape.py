@@ -75,6 +75,16 @@ def fetch_data():
                             bs = BeautifulSoup(req.text, "html.parser")
                         except AttributeError:
                             continue
+                        address = bs.find(
+                            "p", {"class": "store__detail store__detail--address"}
+                        )
+                        address = str(address)
+                        address = address.replace(
+                            '<p class="store__detail store__detail--address">', ""
+                        ).strip()
+                        address = address.replace("</p>", "").strip()
+                        strt = address.split("<br/>", 2)[1]
+                        print(strt)
                         hours = bs.findAll("p", {"class": "store-hours__day"})
                         hoo = ""
                         for hr in hours:
