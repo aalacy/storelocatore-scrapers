@@ -28,6 +28,8 @@ def get_data(url, sgw: SgWriter):
         return
     r = session.get(url)
     j = r.json()["profile"]
+    if j.get("c_pagesAboutDescription") == "Coming Soon":
+        return
 
     page_url = url.replace(".json", "")
     location_name = j.get("name")
