@@ -30,9 +30,17 @@ def fetch_data():
     if True:
         url = "https://newblanco.es/content/4-sobre-nosotros#"
         r = session.get(url, headers=headers)
-        loclist = r.text.split('<h1 style="text-align:center;">')[2].split('<div>')[0].split('<p style="text-align:center;"></p>')[1:]
+        loclist = (
+            r.text.split('<h1 style="text-align:center;">')[2]
+            .split("<div>")[0]
+            .split('<p style="text-align:center;"></p>')[1:]
+        )
         for loc in loclist:
-            loc = BeautifulSoup(loc, "html.parser").get_text(separator="|", strip=True).split("|")
+            loc = (
+                BeautifulSoup(loc, "html.parser")
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
             if "NEW BLANCO" in loc[0]:
                 del loc[0]
             location_name = strip_accents(loc[0])
@@ -52,7 +60,7 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
             raw_address = " ".join(loc[:-1])
-            phone = loc[-1].replace('Teléfono:','')
+            phone = loc[-1].replace("Teléfono:", "")
             country_code = "ES"
             yield SgRecord(
                 locator_domain=DOMAIN,
