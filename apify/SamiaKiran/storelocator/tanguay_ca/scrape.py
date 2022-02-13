@@ -30,23 +30,18 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        temp = 2
         url = "https://www.tanguay.ca/fr/trouvez-un-magasin/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "box_shadow box_store"})
         for loc in loclist:
-            location_name = (
-                loc.find("h3").get_text(separator="|", strip=True).replace("|", "")
-            )
+            location_name = loc.find("h3").get_text(separator='|', strip=True).replace('|',"")
             location_name = strip_accents(location_name)
-            if "distribution" in location_name:
-                continue
             log.info(location_name)
-            latitude = loc.find("input", {"id": "latitude_" + str(temp)})["value"]
-            longitude = loc.find("input", {"id": "longitude_" + str(temp)})["value"]
-            raw_address = loc.find("input", {"id": "address_" + str(temp)})["value"]
-            temp = temp + 1
+            temp = loc.find("div", {"class": "padding-store"}).findAll("input")
+            latitude = temp[0]['value']
+            longitude =temp[1]['value']
+            raw_address =temp[2]['value']
             pa = parse_address_intl(strip_accents(raw_address))
 
             street_address = pa.street_address_1
@@ -62,9 +57,7 @@ def fetch_data():
             zip_postal = zip_postal.strip() if zip_postal else MISSING
             phone = loc.select_one("a[href*=tel]").text
             country_code = "CA"
-            hours_of_operation = (
-                loc.find("table").get_text(separator="|", strip=True).replace("|", " ")
-            )
+            hours_of_operation = loc.find("table").get_text(separator='|', strip=True).replace('|'," ")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -80,7 +73,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
-                raw_address=raw_address,
+                raw_address =raw_address
             )
 
 
@@ -88,7 +81,7 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE}
             )
         )
     ) as writer:
