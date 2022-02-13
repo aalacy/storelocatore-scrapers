@@ -177,7 +177,7 @@ def search_location(driver, city, num=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
     for city in CITIES:
