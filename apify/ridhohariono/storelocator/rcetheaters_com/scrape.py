@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
 
 
-DOMAIN = "rcetheaters.es"
+DOMAIN = "rcetheaters.com"
 BASE_URL = "https://www.rcetheaters.com/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
