@@ -32,7 +32,10 @@ def fetch_data():
                 "https://locations.goodcentssubs.com/modules/multilocation/?near_location="
                 + zip_code
             )
-            stores_req = session.get(url, headers=headers).json()
+            try:
+                stores_req = session.get(url, headers=headers).json()
+            except AttributeError:
+                continue
             for stores in stores_req["objects"]:
                 state = stores["state"]
                 phone = stores["phonemap_e164"]["phone"]
