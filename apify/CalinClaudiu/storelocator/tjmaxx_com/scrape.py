@@ -169,9 +169,9 @@ def dattafetch(search, http1):
 if __name__ == "__main__":
     tocrawl = []
     tocrawl.append(SearchableCountries.CANADA)
-    # tocrawl.append(SearchableCountries.USA)
-    # tocrawl.append(SearchableCountries.AUSTRALIA)
-    # tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
+    tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.AUSTRALIA)
+    tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search = DynamicGeoSearch(
         country_codes=tocrawl,
         granularity=Grain_8(),
