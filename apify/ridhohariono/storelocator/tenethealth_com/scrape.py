@@ -58,7 +58,7 @@ def fetch_data():
         if "http" in street_address:
             street_address = MISSING
         state = val["state"]
-        city = re.sub(r"Suite\s\d+,|\s" + state, "", val["city"]).strip().rstrip(",")
+        city = re.sub(r"Suite\s.+,|\s" + state, "", val["city"]).strip().rstrip(",")
         zip_postal = val["zip"]
         country_code = "US"
         phone = (
