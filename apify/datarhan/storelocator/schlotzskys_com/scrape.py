@@ -44,7 +44,9 @@ def fetch_data():
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-
+        com_soon = loc_dom.xpath('//span[contains(text(), "Coming Soon")]')
+        if com_soon:
+            continue
         location_name = loc_dom.xpath('//h2[@class="Core-title"]/text()')
         if not location_name:
             location_name = loc_dom.xpath('//span[@class="Hero-geo"]/a/text()')
@@ -54,7 +56,8 @@ def fetch_data():
         state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0]
         zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
         country_code = loc_dom.xpath("//@data-country")[0]
-        phone = loc_dom.xpath('//div[@itemprop="telephone"]/text()')[0]
+        phone = loc_dom.xpath('//div[@itemprop="telephone"]/text()')
+        phone = phone[0] if phone else ""
         location_type = loc_dom.xpath("//main/@itemtype")[0].split("/")[-1]
         latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
         longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
