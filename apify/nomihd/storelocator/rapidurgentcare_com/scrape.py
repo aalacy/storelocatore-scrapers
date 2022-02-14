@@ -7,6 +7,8 @@ import lxml.html
 from sgselenium import SgChrome
 import time
 from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "rapidurgentcare.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -143,7 +145,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
