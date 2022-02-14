@@ -42,7 +42,6 @@ def fetch_data():
 
     for url in list(set(all_locations)):
         page_url = urljoin(start_url, url)
-        print(page_url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         com_soon = loc_dom.xpath('//span[contains(text(), "Coming Soon")]')
