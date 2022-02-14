@@ -82,13 +82,13 @@ def fetch_data():
     except:
         pass
     search_from = driver.find_element_by_id("storelocator-query")
-    search_from.send_keys("london")
-    driver.find_element_by_xpath('//*[@id="storeFinderForm"]/div/span/button').click()
-    driver.implicitly_wait(10)
     try:
         driver.find_element_by_id("bfx-wm-close-button").click()
     except:
         pass
+    search_from.send_keys("london")
+    driver.find_element_by_xpath('//*[@id="storeFinderForm"]/div/span/button').click()
+    driver.implicitly_wait(10)
     num = 1
     while True:
         log.info(f"Get all locations in page ({num})")
@@ -98,6 +98,7 @@ def fetch_data():
         )
         driver.execute_script("return arguments[0].scrollIntoView(true);", search_from)
         for store in stores:
+            driver.implicitly_wait(5)
             try:
                 store.click()
             except:
@@ -120,10 +121,10 @@ def fetch_data():
             else:
                 raw_address = ", ".join(address[:-1]).strip()
                 phone = (
-                    re.sub(r"Tel|:|Phone", "", address[-1], flags=re.IGNORECASE)
+                    re.sub(r"Tel.?|Tél.?|:|Phone", "", address[-1], flags=re.IGNORECASE)
                     .replace("\u202c", "")
                     .strip()
-                )
+                ).split("/")[0]
             street_address, city, state, zip_postal = getAddress(raw_address)
             country_code = MISSING
             hoo = ""
