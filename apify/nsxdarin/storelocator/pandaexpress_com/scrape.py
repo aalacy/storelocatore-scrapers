@@ -96,7 +96,7 @@ def fetch_data():
                         .rsplit(" ", 1)[0]
                     )
                     zc = address.strip().rsplit(" ", 1)[1]
-                    rawadd = address
+                    rawadd = address.replace("<br>", ", ").replace("  ", " ")
                 if '<div class="day_name">' in line2:
                     days = line2.split('<div class="day_name">')
                     for day in days:

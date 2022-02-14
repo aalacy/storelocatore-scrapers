@@ -78,7 +78,7 @@ def fetch_data():
                         hours = hours.replace("\n", " ")
                         hours = re.sub(pattern, " ", hours).strip()
                     except AttributeError:
-                        hours = MISSING
+                        hours = "Coming Soon"
 
                     title = "Hobby Lobby"
 
