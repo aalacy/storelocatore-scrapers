@@ -134,7 +134,11 @@ def scrape():
     url = "https://www.usps.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
-        page_url=sp.MissingField(),
+        page_url=sp.MappingField(
+            mapping=["locationID"],
+            value_transform=lambda x: "https://tools.usps.com/find-location.htm?location="
+            + str(x),
+        ),
         location_name=sp.MappingField(
             mapping=["locationName"],
             is_required=False,
