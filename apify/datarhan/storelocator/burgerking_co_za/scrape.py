@@ -7,7 +7,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://app.burgerking.co.za/management/api/store/locations"
     domain = "burgerking.co.za"
