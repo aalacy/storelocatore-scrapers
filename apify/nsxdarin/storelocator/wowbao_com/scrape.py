@@ -15,8 +15,8 @@ logger = SgLogSetup().get_logger("wowbao_com")
 
 
 def fetch_data():
-    for xlat in range(10, 60, 5):
-        for ylng in range(-160, -60, 5):
+    for xlat in range(10, 65, 3):
+        for ylng in range(-165, -55, 3):
             url = (
                 "https://api2.storepoint.co/v1/15fe0bd667ae7b/locations?lat="
                 + str(xlat)
@@ -77,7 +77,11 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

@@ -26,7 +26,6 @@ def fetch_data():
                     if (
                         lurl != "https://earthwisepet.com/stores/view/"
                         and "yakima" not in lurl
-                        and "bentleys-pet-stuff-algonquin" not in lurl
                     ):
                         locs.append(lurl)
     logger.info("Found %s Locations." % str(len(locs)))
