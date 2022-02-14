@@ -75,6 +75,19 @@ def fetch_data(sgw: SgWriter):
                 street_address = " ".join(raw_address.split(",")[:-2])
                 if city:
                     street_address = street_address.replace(city, "").strip()
+            if not city:
+                if "Melrose" in street_address:
+                    city = "Melrose"
+                if "Westray" in street_address:
+                    city = ""
+                else:
+                    city = raw_address.split(",")[-2].strip()
+                if city in street_address:
+                    street_address = street_address[
+                        : street_address.rfind(city)
+                    ].strip()
+            if street_address[-1] == ",":
+                street_address = street_address[:-1]
             country_code = "UK"
             store_number = store["id"]
             phone = store["telephone"]
