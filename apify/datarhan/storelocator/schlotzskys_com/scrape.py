@@ -42,6 +42,7 @@ def fetch_data():
 
     for url in list(set(all_locations)):
         page_url = urljoin(start_url, url)
+        print(page_url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         com_soon = loc_dom.xpath('//span[contains(text(), "Coming Soon")]')
@@ -64,9 +65,8 @@ def fetch_data():
         hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')[2:]
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
-        store_number = loc_dom.xpath('//a[contains(@href, "store_code")]/@href')[
-            0
-        ].split("=")[-1]
+        store_number = loc_dom.xpath('//a[contains(@href, "store_code")]/@href')
+        store_number = store_number[0].split("=")[-1] if store_number else ""
 
         item = SgRecord(
             locator_domain=domain,
