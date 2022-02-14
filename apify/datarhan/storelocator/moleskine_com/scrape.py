@@ -1,6 +1,6 @@
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -12,9 +12,11 @@ local = threading.local()
 
 def get_session():
     if not hasattr(local, "session"):
-        local.session = SgRequests()
+        local.session = SgChrome()
+        local.session.get('https://www.moleskine.com/en-us/')
 
     return local.session
+
 
 
 def fetch_locations(code):
@@ -54,9 +56,9 @@ def fetch_locations(code):
 
 
 def fetch_data():
-    search = static_zipcode_list(5, SearchableCountries.USA)
+    search = static_zipcode_list(20, SearchableCountries.USA)
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [executor.submit(fetch_locations, code) for code in search]
         for future in as_completed(futures):
             yield from future.result()
