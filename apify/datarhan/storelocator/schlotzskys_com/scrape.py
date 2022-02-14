@@ -64,6 +64,9 @@ def fetch_data():
         hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')[2:]
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
+        store_number = loc_dom.xpath('//a[contains(@href, "store_code")]/@href')[
+            0
+        ].split("=")[-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -74,7 +77,7 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number="",
+            store_number=store_number,
             phone=phone,
             location_type=location_type,
             latitude=latitude,
