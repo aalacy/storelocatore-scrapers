@@ -56,7 +56,7 @@ def fetch_locations(code, session):
 def fetch_data():
     search = static_zipcode_list(5, SearchableCountries.USA)
 
-    with SgRequests() as session, ThreadPoolExecutor() as executor:
+    with SgRequests() as session, ThreadPoolExecutor(max_workers=20) as executor:
         futures = [executor.submit(fetch_locations, code, session) for code in search]
         for future in as_completed(futures):
             yield from future.result()
