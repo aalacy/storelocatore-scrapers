@@ -29,7 +29,6 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://chavezsuper.com/locations"
     with SgRequests() as session:
         search_res = session.get(
             "https://chavezsuper.com/manage/web/api/locations", headers=headers
