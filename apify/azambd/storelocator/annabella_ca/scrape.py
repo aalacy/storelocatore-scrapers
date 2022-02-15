@@ -70,8 +70,7 @@ def fetch_stores():
 
     stores = []
     count = 0
-    for ps in allPs[0:16]:
-        print(f"PS: {ps}")
+    for ps in allPs[:-1]:
         location_name = location_names[count].strip()
         status = loc_status[count].strip()
         street_address = ps[0]
@@ -171,7 +170,7 @@ def fetch_data():
         page_url = f"{website}/pages/store-location"
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=website,
+            page_url=page_url,
             location_type=location_type,
             location_name=location_name,
             street_address=street_address,
