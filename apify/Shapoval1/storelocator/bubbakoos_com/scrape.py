@@ -55,7 +55,7 @@ def fetch_data(sgw: SgWriter):
             )
             with SgFirefox() as driver:
                 driver.get(page_url)
-                driver.implicitly_wait(20)
+                driver.implicitly_wait(15)
                 driver.maximize_window()
                 driver.switch_to.frame(0)
 
