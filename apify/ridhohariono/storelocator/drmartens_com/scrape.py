@@ -67,7 +67,7 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium(is_headless=False).chrome()
+    driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
     js_string = 'var element = document.getElementById("bfx-cc-wrapper-expanded");element.remove();'
@@ -126,10 +126,19 @@ def fetch_data():
             else:
                 raw_address = ", ".join(address[:-1]).strip()
                 phone = (
-                    re.sub(r"Tel.?|Tél.?|:|Phone", "", address[-1], flags=re.IGNORECASE)
-                    .replace("\u202c", "")
+                    (
+                        re.sub(
+                            r"Tel.?|Tél.?|:|Phone|Llamados y Whatsapp|Llamados",
+                            "",
+                            address[-1],
+                            flags=re.IGNORECASE,
+                        )
+                        .replace("\u202c", "")
+                        .strip()
+                    )
+                    .split("/")[0]
                     .strip()
-                ).split("/")[0]
+                )
             street_address, city, state, zip_postal = getAddress(raw_address)
             country_code = MISSING
             hoo = ""
