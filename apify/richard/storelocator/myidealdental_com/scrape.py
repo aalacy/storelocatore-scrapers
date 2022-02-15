@@ -84,7 +84,7 @@ def fetch_data(sgw: SgWriter):
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
         else:
-            location_name = div.h3.text
+            location_title = div.h3.text
             raw_address = list(div.address.stripped_strings)
             street_address = raw_address[1]
             city_line = (
