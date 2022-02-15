@@ -26,7 +26,13 @@ def fetch_data():
         city = loc["address"]["addressLocality"]
         state = loc["address"]["addressRegion"]
         pcode = loc["address"]["postalCode"]
-        ccode = loc["address"]["addressCountry"]
+        try:
+            ccode = loc["address"]["addressCountry"]
+        except:
+            if pcode.strip().isdigit():
+                ccode = "US"
+            else:
+                ccode = "CA"
         ltype = loc["image"]
         if len(phone) < 3:
             ltype = "Coming Soon"
@@ -107,7 +113,13 @@ def fetch_data():
                     .split('"', 1)[0]
                 )
             except:
-                ccode = soup.find("span", {"itemprop": "addressCountry"}).text
+                try:
+                    ccode = soup.find("span", {"itemprop": "addressCountry"}).text
+                except:
+                    if pcode.strip().isdigit():
+                        ccode = "US"
+                    else:
+                        ccode = "CA"
         if "Canada" in ccode:
             ccode = "CA"
         try:
