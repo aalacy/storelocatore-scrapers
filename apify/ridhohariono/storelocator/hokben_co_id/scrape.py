@@ -161,16 +161,21 @@ def search_location(driver, city, num=0):
     input = driver.find_element_by_id("findAddress")
     input.clear()
     input.send_keys(city)
-    time.sleep(1)
     try:
-        driver.find_element_by_xpath("/html/body/div[6]/div[1]").click()
+        driver.find_element_by_xpath("/html/body/div[5]/div[1]").click()
+        driver.implicitly_wait(5)
     except:
-        if num <= 3:
-            log.info(f"Search failed for {city}. retry num {num}")
-            return search_location(driver, city, num)
-        else:
-            driver.refresh()
-            return search_location(driver, city)
+        try:
+            driver.find_element_by_xpath("/html/body/div[6]/div[1]").click()
+            driver.implicitly_wait(5)
+        except:
+            if num <= 3:
+                log.info(f"Search failed for {city}. retry num {num}")
+                return search_location(driver, city, num)
+            else:
+                driver.refresh()
+                driver.implicitly_wait(10)
+                return search_location(driver, city)
     time.sleep(2)
     return driver
 

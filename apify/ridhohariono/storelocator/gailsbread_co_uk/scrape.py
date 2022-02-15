@@ -47,11 +47,19 @@ def fetch_data():
             state = store["state"] or MISSING
             zip_postal = store["zip"] or MISSING
             if zip_postal == MISSING:
-                zip_postal = street_address.split(",")[-1].strip()
-                if len(zip_postal) > 5 and len(zip_postal.split(" ")) > 1:
-                    street_address = re.sub(
-                        r",?\s?" + city + r"|,?\s?" + zip_postal, "", street_address
-                    )
+                zip = street_address.split(",")[-1].strip()
+                if len(zip) > 5 and len(zip) <= 8 and len(zip.split(" ")) > 1:
+                    zip_postal = zip
+                if (
+                    store["country"] != "United Kingdom"
+                    and len(store["country"]) > 5
+                    and len(store["country"]) <= 8
+                    and len(store["country"].split(" ")) > 1
+                ):
+                    zip_postal = store["country"]
+            street_address = re.sub(
+                r",?\s?" + city + r"|,?\s?" + zip_postal, "", street_address
+            )
             country_code = "UK"
             phone = store["phone"]
             hours_of_operation = (
