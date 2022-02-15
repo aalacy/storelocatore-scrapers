@@ -19,7 +19,6 @@ def fetch_data(sgw: SgWriter):
 
     num = 0
     for i in range(1, 100):
-        print(num)
         base_link = (
             "https://code.metalocator.com/index.php?user_lat=0&user_lng=0&postal_code=&radius=100&ml_location_override=&Itemid=12991&view=directory&layout=combined_bootstrap&tmpl=component&framed=1&ml_skip_interstitial=0&preview=0&parent_table=&parent_id=0&task=search_zip&search_type=point&_opt_out=&option=com_locator&limitstart=%s&filter_order=id&filter_order_Dir=asc"
             % num
