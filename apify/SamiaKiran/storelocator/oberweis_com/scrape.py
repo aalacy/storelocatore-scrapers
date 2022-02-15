@@ -45,7 +45,7 @@ def get_stores(loc):
         phone = loc["phone"]
     except:
         phone = MISSING
-    street_address = loc["address"]
+    street_address = loc["address"].replace("DELIVERY TO:", "")
     city = loc["city"]
     state = loc["state"]
     zip_postal = loc["zipCode"]
@@ -61,8 +61,13 @@ def get_stores(loc):
         hours = hours.split("Store Hours", 1)
         phone = hours[0].split("Phone:", 1)[1].split("Email", 1)[0].strip()
         hours_of_operation = hours[1]
+        if "This location is currently:" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("This location is currently")[
+                0
+            ]
     except:
         hours_of_operation = MISSING
+
     country_code = "US"
     return (
         location_name,
