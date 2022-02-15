@@ -10,9 +10,6 @@ from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
-# from sgpostal import sgpostal as parser
-
-
 website = "weedmaps.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
