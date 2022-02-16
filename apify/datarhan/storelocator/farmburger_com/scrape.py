@@ -52,8 +52,8 @@ def fetch_data():
             latitude = geo[0]
             longitude = geo[1]
         else:
-            latitude = re.findall("lat: parseFloat\('(.+?)'\),", loc_response.text)[0]
-            longitude = re.findall("lng: parseFloat\('(.+?)'\)", loc_response.text)[0]
+            latitude = re.findall(r"lat: parseFloat\('(.+?)'\),", loc_response.text)[0]
+            longitude = re.findall(r"lng: parseFloat\('(.+?)'\)", loc_response.text)[0]
 
         item = SgRecord(
             locator_domain=domain,
