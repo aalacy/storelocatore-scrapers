@@ -119,7 +119,6 @@ def fetch_data():
                 location_type = "Outlet Store"
         except:
             location_type = MISSING
-        location_type = MISSING
         store_number = row["i"]
         latitude = row["l"]
         longitude = row["g"]
