@@ -33,6 +33,16 @@ def fetch_data():
             state = loc["properties"]["state_province"]
             zip_postal = loc["properties"]["zip_postal_code"]
             phone = loc["properties"]["phone"]
+            if not phone:
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                phone = soup.findAll("p")
+                phone = (
+                    phone[2]
+                    .get_text(separator="|", strip=True)
+                    .split("|")[0]
+                    .replace("Phone:", "")
+                )
             hours_of_operation = loc["properties"]["additional_info"]
             hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
