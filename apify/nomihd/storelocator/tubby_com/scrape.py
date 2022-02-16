@@ -24,71 +24,87 @@ def fetch_data():
         stores = stores_sel.xpath('//div[@role="gridcell"]')
 
         for store in stores:
-            page_url = "".join(
-                store.xpath('.//a[@style="cursor:pointer"]/@href')[-1]
-            ).strip()
             locator_domain = website
-
             location_name = "".join(store.xpath(".//h2//text()")).strip()
-
-            log.info(page_url)
-            driver.get(page_url)
-            time.sleep(15)
-            store_sel = lxml.html.fromstring(driver.page_source)
-
-            address = store_sel.xpath("//div[@data-packed='false'][1]//text()")
-            add_list = []
-            for add in address:
-                if len("".join(add).strip()) > 0:
-                    add_list.append("".join(add).strip())
-
-            street_address = "".join(add_list[0]).strip()
-            city = add_list[1]
-            state_zip = add_list[2].replace(",", "").strip()
-            state = state_zip.split(" ")[0].strip()
-            if state == "City":
-                state = "MI"
-                city = "Imlay City"
-
-            zip = state_zip.split(" ")[-1].strip()
             country_code = "US"
-
-            store_number = page_url.split("-")[-1].strip()
             phone = "".join(
                 store.xpath('.//p//a[contains(@href,"tel:")][1]//text()')
             ).strip()
-
             location_type = "<MISSING>"
-            hours = store_sel.xpath(
-                '//p[@style="font-size:16px; line-height:1.5em;"]/span'
-            )
-            hours_list = []
-            for hour in hours:
-                day = "".join(hour.xpath("span[1]/text()")).strip()
-                tim = "".join(hour.xpath("span[2]/text()")).strip()
-                hours_list.append(day + tim)
 
-            if len(hours_list) <= 0:
+            temp_url = store.xpath('.//a[@style="cursor:pointer"]/@href')
+            if len(temp_url) > 0:
+                page_url = "".join(temp_url[-1]).strip()
+                store_number = page_url.split("-")[-1].strip()
+                add_list = []
+
+                while len(add_list) <= 0:
+                    log.info(page_url)
+                    driver.get(page_url)
+                    time.sleep(15)
+                    store_sel = lxml.html.fromstring(driver.page_source)
+
+                    address = store_sel.xpath("//div[@data-packed='false'][1]//text()")
+                    for add in address:
+                        if len("".join(add).strip()) > 0:
+                            add_list.append("".join(add).strip())
+
+                street_address = "".join(add_list[0]).strip()
+                city = add_list[1]
+                state_zip = add_list[2].replace(",", "").strip()
+                state = state_zip.split(" ")[0].strip()
+                if state == "City":
+                    state = "MI"
+                    city = "Imlay City"
+
+                zip = state_zip.split(" ")[-1].strip()
+
                 hours = store_sel.xpath(
-                    '//div[@data-packed="true"]/p[@class="font_8" and not(@style)]'
+                    '//p[@style="font-size:16px; line-height:1.5em;"]/span'
                 )
+                hours_list = []
                 for hour in hours:
-                    hours_list.append("".join(hour.xpath(".//text()")).strip())
+                    day = "".join(hour.xpath("span[1]/text()")).strip()
+                    tim = "".join(hour.xpath("span[2]/text()")).strip()
+                    hours_list.append(day + tim)
 
-            hours_of_operation = (
-                "; ".join(hours_list)
-                .strip()
-                .replace("; ; ", "")
-                .replace(":;", ":")
-                .strip()
-                .replace("; AM", "AM;")
-                .replace("-;", "-")
-                .strip()
-                .replace("; -", "-")
-                .replace(";;", ";")
-                .strip()
-                .replace("; PM", "PM")
-            )
+                if len(hours_list) <= 0:
+                    hours = store_sel.xpath(
+                        '//div[@data-packed="true"]/p[@class="font_8" and not(@style)]'
+                    )
+                    for hour in hours:
+                        hours_list.append("".join(hour.xpath(".//text()")).strip())
+
+                hours_of_operation = (
+                    "; ".join(hours_list)
+                    .strip()
+                    .replace("; ; ", "")
+                    .replace(":;", ":")
+                    .strip()
+                    .replace("; AM", "AM;")
+                    .replace("-;", "-")
+                    .strip()
+                    .replace("; -", "-")
+                    .replace(";;", ";")
+                    .strip()
+                    .replace("; PM", "PM")
+                )
+            else:
+                store_number = location_name.split(" ")[-1].strip()
+                page_url = search_url
+                address = store.xpath(".//div[@data-packed='false'][2]//text()")
+                raw_info = []
+                for add in address:
+                    if len("".join(add).strip().replace("\u200b", "").strip()) > 0:
+                        raw_info.append("".join(add).strip())
+
+                street_address = "".join(raw_info[0]).strip()
+                city = raw_info[1].split(",")[0].strip()
+                state = raw_info[1].split(",")[-1].strip().split(" ")[0].strip()
+                zip = raw_info[1].split(",")[-1].strip().split(" ")[-1].strip()
+                hours_of_operation = "<MISSING>"
+                phone = raw_info[-1].strip()
+
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
