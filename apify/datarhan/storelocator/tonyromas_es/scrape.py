@@ -62,7 +62,9 @@ def fetch_data():
                 zip_code = addr.postcode
             if not raw_address:
                 raw_address = ""
-            hoo = " ".join(poi_html.xpath('.//p[@class="horarios"]/text()')[0].split())
+            hoo = " ".join(
+                " ".join(poi_html.xpath('.//p[@class="horarios"]/text()')).split()
+            )
 
             item = SgRecord(
                 locator_domain=domain,
