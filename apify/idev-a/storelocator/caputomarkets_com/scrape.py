@@ -9,7 +9,6 @@ _headers = {
 }
 
 locator_domain = "https://caputomarkets.com/"
-page_url = "https://caputomarkets.com/shop/guide#modal=zip-check"
 base_url = "https://deliveries.locai.io/locations?clientId=bdaba286-2072-44e2-bf00-e2c13d6c68f7"
 
 
@@ -42,6 +41,9 @@ def fetch_data():
                 _["store"]["name"] if _["store"] else f"Caputo's {_['city']}"
             )
             street_address = street_address.replace(location_name, "").strip()
+            page_url = (
+                locator_domain + f'{_["city"].lower().replace(" ","-")}-store-location'
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,

@@ -71,9 +71,14 @@ def fetch_data():
                 hoo = (
                     " ".join(hoo.split())
                     .split(", Chiuso:")[0]
+                    .split("Chiusura:")[0]
                     .split(", Chiuso per")[0]
                     .split(", CHIUSURA")[0]
                     .split(", Festività")[0]
+                    .split("Assistenza")[0]
+                    .split("Chiuso:")[0]
+                    .split("Domenica: Chiuso")[0]
+                    + " Domenica: Chiuso"
                 )
 
                 item = SgRecord(
@@ -130,6 +135,19 @@ def fetch_data():
                 )
             else:
                 hoo = ""
+            if hoo:
+                hoo = hoo = (
+                    " ".join(hoo.split())
+                    .split(", Chiuso:")[0]
+                    .split("Chiusura:")[0]
+                    .split(", Chiuso per")[0]
+                    .split(", CHIUSURA")[0]
+                    .split(", Festività")[0]
+                    .split("Assistenza")[0]
+                    .split("Chiuso:")[0]
+                    .split("Domenica: Chiuso")[0]
+                    + " Domenica: Chiuso"
+                )
 
             latitude = re.findall(r'lat":(.+?),', loc_response.text)[0]
             longitude = re.findall(r'lng":(.+?)\}', loc_response.text)[0]
