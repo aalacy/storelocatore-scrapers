@@ -32,15 +32,24 @@ def fetch_data():
         phone = poi_data["phone"]
         if phone and phone == "./..":
             phone = ""
+        street_address = poi["address"]["thoroughfare"]
+        if street_address == "-":
+            street_address = ""
+        zip_code = poi["address"]["postal_code"]
+        if zip_code == "-":
+            zip_code = ""
+        city = poi["address"]["locality"]
+        if city == "-":
+            city = ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=poi["name"],
-            street_address=poi["address"]["thoroughfare"],
-            city=poi["address"]["locality"],
+            street_address=street_address,
+            city=city,
             state=poi["address"]["region"],
-            zip_postal=poi["address"]["postal_code"],
+            zip_postal=zip_code,
             country_code=poi["address"]["country"],
             store_number=poi["id"],
             phone=phone,
