@@ -62,7 +62,7 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            phone = loc.select_one("a[href*=tel]").text
+            phone = loc.select_one("a[href*=tel]").text.split()[1]
             country_code = "CA"
             hours_of_operation = (
                 loc.find("table").get_text(separator="|", strip=True).replace("|", " ")
