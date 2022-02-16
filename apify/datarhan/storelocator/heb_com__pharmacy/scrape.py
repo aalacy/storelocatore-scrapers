@@ -51,6 +51,8 @@ def fetch_data():
             .split("&")[0]
             .split("%2C")
         )
+        if len(geo) == 1:
+            geo = ["", ""]
 
         item = SgRecord(
             locator_domain=domain,
