@@ -109,9 +109,23 @@ def other_source(session, state):
 def fetch_other(session, state):
     # there's this API for nearby stores.. but nothing for actual store by id "https://www.walmart.com/store/electrode/api/fetch-nearby-stores?store-id={id}"
     for next_r in state.request_stack_iter():
-        res = SgRequests.raise_on_err(
-            session.get("https://www.walmart.com" + next_r.url, headers=headers)
-        )
+        logger.info(str("https://www.walmart.com" + next_r.url))
+        try:
+            res = SgRequests.raise_on_err(
+                session.get("https://www.walmart.com" + next_r.url, headers=headers)
+            )
+        except Exception as e:
+            if "520" in str(e):
+                try:
+                    res = SgRequests.raise_on_err(
+                        session.get(
+                            "https://www.walmart.com" + next_r.url, headers=headers
+                        )
+                    )
+                except Exception:
+                    continue
+            else:
+                raise Exception
         yield grab_json(b4(res.text, "lxml"))
 
 
@@ -124,7 +138,7 @@ def test_other(session):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    session = SgRequests()
+    session = SgRequests(dont_retry_status_codes=set([404, 520]))
     logger.info(test_other(session))
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
