@@ -40,14 +40,19 @@ def fetch_data():
 
                 while len(add_list) <= 0:
                     log.info(page_url)
-                    driver.get(page_url)
-                    time.sleep(15)
-                    store_sel = lxml.html.fromstring(driver.page_source)
+                    try:
+                        driver.get(page_url)
+                        time.sleep(15)
+                        store_sel = lxml.html.fromstring(driver.page_source)
 
-                    address = store_sel.xpath("//div[@data-packed='false'][1]//text()")
-                    for add in address:
-                        if len("".join(add).strip()) > 0:
-                            add_list.append("".join(add).strip())
+                        address = store_sel.xpath(
+                            "//div[@data-packed='false'][1]//text()"
+                        )
+                        for add in address:
+                            if len("".join(add).strip()) > 0:
+                                add_list.append("".join(add).strip())
+                    except:
+                        pass
 
                 street_address = "".join(add_list[0]).strip()
                 city = add_list[1]
