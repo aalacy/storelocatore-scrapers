@@ -115,7 +115,7 @@ def fetch_other(session, state):
                 session.get("https://www.walmart.com" + next_r.url, headers=headers)
             )
         except Exception as e:
-            if "520" in str(e):
+            if "520" or "404" in str(e):
                 try:
                     res = SgRequests.raise_on_err(
                         session.get(
