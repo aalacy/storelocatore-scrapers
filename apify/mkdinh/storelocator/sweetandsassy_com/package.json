@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "apify": "^0.15.4",
-    "axios": "^0.19.2"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "apify-cli": "^0.3.9",
