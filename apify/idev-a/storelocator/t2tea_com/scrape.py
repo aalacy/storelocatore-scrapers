@@ -54,9 +54,8 @@ class ExampleSearchIteration(SearchIteration):
             res = http.get(url, headers=_headers)
             locations = res.json()["stores"]
             logger.info(f"{len(locations)} found")
-            if locations:
-                found_location_at(lat, lng)
             for _ in locations:
+                found_location_at(_["latitude"], _["longitude"])
                 street_address = _["address1"]
                 if _.get("address2"):
                     street_address += ", " + _["address2"]

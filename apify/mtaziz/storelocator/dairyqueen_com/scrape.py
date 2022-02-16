@@ -14,7 +14,7 @@ import time
 
 logger = SgLogSetup().get_logger("dairyqueen_com")
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 10
+MAX_WORKERS = 5
 DOMAIN = "dairyqueen.com"
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
@@ -53,22 +53,15 @@ def get_response(idx, url):
 def get_store_urls():
     store_urls_raw = []
     store_urls_list = []
-    sitemap_urls = [
-        "https://www.dairyqueen.com/en-ca/sitemap.xml",
-        "https://www.dairyqueen.com/en-us/sitemap.xml",
-    ]
+    sitemap_urls = ["https://www.dairyqueen.com/en-us/sitemap.xml"]
     for idx, url in enumerate(sitemap_urls):
         r = get_response(idx, url)
         logger.info(f"Pulling Store URLs for: {url}")
-        en_ca = "<loc>https://www.dairyqueen.com/en-ca/locations/"
         en_us = "<loc>https://www.dairyqueen.com/en-us/locations/"
-        ca_loc = "-ca/locations/</loc>"
         us_loc = "-us/locations/</loc>"
         for line in r.iter_lines():
             line = str(line)
-            if (en_ca in line and ca_loc not in line) or (
-                en_us in line and us_loc not in line
-            ):
+            if en_us in line and us_loc not in line:
                 store_urls_raw.append(line.split("<loc>")[1].split("<")[0])
     for i in store_urls_raw:
         length_of_forward_slash = len(i.split("/"))
@@ -151,6 +144,14 @@ def fetch_records_us(idx, url, sgw: SgWriter):
         longitude = longitude if longitude else MISSING
 
         hours_of_operation = get_business_hoo(data)
+
+        comingsoon_flag = data.get("flags")["comingSoonFlag"]
+        if comingsoon_flag is True:
+            hours_of_operation = "Coming Soon"
+
+        temporarily_closed_flag = data.get("flags")["temporarilyClosedFlag"]
+        if temporarily_closed_flag is True:
+            hours_of_operation = "Temporarily Closed"
 
         # Raw Address
         raw_address = ""
@@ -240,7 +241,7 @@ def fetch_data2(sgw: SgWriter):
         tasks.extend(task_us)
         for future in as_completed(tasks):
             fr = future.result()
-            # fr returns a dict with the data
+            # fr returns a dict object with the data
             if fr is not None:
                 success_page_urls_set2.append(fr.as_dict()["page_url"])
                 sgw.write_row(fr)

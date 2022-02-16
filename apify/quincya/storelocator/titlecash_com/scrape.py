@@ -107,7 +107,7 @@ def fetch_data(sgw: SgWriter):
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-        street_address = raw_data[0]
+        street_address = raw_data[0].split("/")[0].strip()
         city_line = raw_data[1].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()

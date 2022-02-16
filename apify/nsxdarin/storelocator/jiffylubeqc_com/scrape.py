@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import unicodedata
 
 logger = SgLogSetup().get_logger("jiffylubeqc_com")
 
@@ -20,10 +21,9 @@ headers2 = {
 
 def fetch_data():
     locs = []
-    url = "https://jiffylubeqc.com/succursales/trouver-une-succursale/"
+    url = "https://jiffylubeqc.com/succursales/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if (
             'menu-item-depth-1" value="https://jiffylubeqc.com/succursales/' in line
             and "Trouver votre su" not in line
@@ -54,13 +54,10 @@ def fetch_data():
         r2 = session.get(loc, headers=headers2)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "<p><strong>" in line2:
                 name = line2.split("<p><strong>")[1].split("<")[0]
                 g = next(lines)
                 h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
                 add = g.split("<")[0]
                 city = name.split("Jiffy lube")[1].strip()
                 zc = h.split(",")[2].split("<")[0].strip()
@@ -89,20 +86,24 @@ def fetch_data():
                     hours = hours + "; " + hrs
         if phone == "":
             phone = "<MISSING>"
+
         hours = (
-            hours.replace(" à ", "-")
+            unicodedata.normalize("NFD", hours)
+            .encode("ascii", "ignore")
+            .decode("utf-8")
+        )
+        hours = (
+            hours.replace(" a ", " - ")
             .replace("Du ", "")
             .replace("Lundi au Vendredi", "Mon-Fri")
             .replace("Samedi", "Saturday")
             .replace("Dimanche", "Sunday")
+            .replace("FERME", "Closed")
+            .replace("à", "to")
+            .replace("Ferme", "Closed")
+            .replace(" et ", " and ")
         )
-        hours = (
-            hours.replace("Lundi", "Mon")
-            .replace("Mardi", "Tue")
-            .replace("mercredi", "Wed")
-            .replace("Jeudi", "Thu")
-            .replace("Vendredi", "Fri")
-        )
+        logger.info(f"HOO: {hours}")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

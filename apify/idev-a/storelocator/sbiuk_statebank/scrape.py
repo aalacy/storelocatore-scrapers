@@ -23,11 +23,16 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.panel")
         for _ in locations:
-            raw_address = _.select(
-                "div.panel-body > div.inner-page-content >  div.inner-row-content > p"
-            )[-1].text.strip()
-            if "Phone" in raw_address:
-                raw_address = ""
+            aa = list(
+                _.select_one(
+                    "div.inner-page-content div.inner-row-content"
+                ).stripped_strings
+            )
+            raw_address = aa[-1]
+            if "Business Hours:" in aa[0]:
+                continue
+            if not raw_address:
+                continue
             addr = parse_address_intl(raw_address + ", United Kingdom")
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
@@ -41,12 +46,16 @@ def fetch_data():
                 )[-1]
 
             hours = []
-            if _.find("strong", string=re.compile(r"Business hours")):
-                hours = (
-                    _.find("strong", string=re.compile(r"Business hours"))
-                    .find_next_sibling()
-                    .stripped_strings
-                )
+            hr = _.find("strong", string=re.compile(r"^Business hours", re.I))
+            if not hr:
+                hr = _.find("p", string=re.compile(r"^Business hours", re.I))
+            if hr:
+                hours = list(hr.find_next_sibling().stripped_strings)
+                if not hours:
+                    hours = list(
+                        hr.find_parent("li").find_next_sibling().stripped_strings
+                    )
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h4.text.strip(),
@@ -64,9 +73,7 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:

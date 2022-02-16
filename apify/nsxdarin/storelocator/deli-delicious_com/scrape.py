@@ -27,8 +27,12 @@ def fetch_data():
                 if '"s":"' in item:
                     name = item.split('"')[0]
                     state = item.split('"s":"')[1].split('"')[0]
-                    city = item.split('"c":"')[1].split('"')[0]
                     add = item.split('"ad":"')[1].split('"')[0].split(",")[0].strip()
+                    city = (
+                        item.split('"a":"')[1]
+                        .split("<span class='storecity'>")[1]
+                        .split("<")[0]
+                    )
                     zc = item.split('"pc":"')[1].split('"')[0]
                     phone = item.split('"p":"')[1].split('"')[0]
                     try:

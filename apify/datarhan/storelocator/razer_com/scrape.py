@@ -43,13 +43,21 @@ def fetch_data():
             street_address += " " + addr.street_address_2
         city = addr.city
         state = addr.state
-        state = state if state else "<MISSING>"
+        state = state if state else ""
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = [e for e in raw_data if "+" in e][0].replace("Tel: ", "").strip()
-        location_type = "<MISSING>"
+        zip_code = zip_code if zip_code else ""
+        country_code = ""
+        store_number = ""
+        phone = [e for e in raw_data if "+" in e]
+        phone = phone[0].replace("Tel: ", "").strip() if phone else ""
+        if not phone:
+            phone = [
+                e.strip()
+                for e in loc_dom.xpath('//p[@data-pnx-f="longText1"]/text()')
+                if "+" in e
+            ]
+            phone = phone[0] if phone else ""
+        location_type = ""
         geo = (
             loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
             .split("ll=")[-1]
@@ -78,7 +86,13 @@ def fetch_data():
         if "Sunday" in hours_of_operation[2]:
             hoo += " " + " ".join([e.strip() for e in hours_of_operation[1:3]])
         if "taipei" in store_url:
-            hoo = " ".join([e for e in raw_data if " – 2" in e])
+            hoo = (
+                " ".join(loc_dom.xpath('//div[@class="p-container lt1"]/text()'))
+                .split("營業時間")[-1]
+                .split("+")[0]
+                .replace("\n", " ")
+                .strip()
+            )
 
         item = SgRecord(
             locator_domain=domain,
@@ -95,6 +109,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,
+            raw_address=" ".join(raw_address),
         )
 
         yield item
