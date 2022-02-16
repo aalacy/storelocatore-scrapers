@@ -43,7 +43,7 @@ def fetch_data():
             street_address=raw_address[0].split(",")[0].strip(),
             city=raw_address[0].split(",")[-1].strip(),
             state=raw_address[1].split("-")[1],
-            zip_postal=raw_address[1].split("-")[0],
+            zip_postal=raw_address[1].split("-")[0].split("/")[0],
             country_code="ES",
             store_number="",
             phone=phone,
@@ -51,6 +51,7 @@ def fetch_data():
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation=hoo,
+            raw_address=" ".join(raw_address),
         )
 
         yield item
