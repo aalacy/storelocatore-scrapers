@@ -92,6 +92,11 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = hours_of_operation.split("Nova Health")[0].strip()
         if page_url != "https://www.novahealth.com/locations/":
             location_name = "".join(tree.xpath("//h1//text()")).strip() or "<MISSING>"
+        if (
+            page_url == "https://www.novahealth.com/locations/nova-health-mcminnville/"
+            and street_address == "4001 Tieton Drive"
+        ):
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
