@@ -1,75 +1,70 @@
-from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
-from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MappingField
-from sgscrape.simple_scraper_pipeline import MissingField
-import json
-from sglogging import sglog
-from sgselenium import SgFirefox
+from lxml import etree
+from time import sleep
+
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
+    session = SgRequests()
 
-    url = "https://www.friendlysrestaurants.com/locate/"
+    start_urls = [
+        "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=RYTHVSEODZRALZIS&center=37.27094681255562,-95.95631851752042&coordinates=11.36576814158218,-62.852159129670014,63.17612548352906,-129.06047790537082&multi_account=false&page=1&pageSize=100",
+        "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=RYTHVSEODZRALZIS&center=37.27094681255562,-95.95631851752042&coordinates=11.36576814158218,-62.852159129670014,63.17612548352906,-129.06047790537082&multi_account=false&page=2&pageSize=100",
+    ]
 
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Crawler")
-    logzilla.info(f"Initializing geckodriver")  # noqa
-    with SgFirefox() as driver:
-        logzilla.info(f"Getting page")  # noqa
-        driver.get(url)
-        logzilla.info(f"Waiting for page to load")  # noqa
-        req = driver.wait_for_request(  # noqa
-            "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png",
-            timeout=60,
-        )
-        logzilla.info(f"Looking for the right request.")  # noqa
-        for r in driver.requests:
-            if "/wp-admin/admin-ajax.php" in r.path:
-                data = r.response.body
-                if "wpid" in str(data):
-                    data = json.loads(data)
-                    for i in data:
-                        yield i
+    domain = "friendlysrestaurants.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    for start_url in start_urls:
+        all_locations = session.get(start_url, headers=hdr).json()
+        for poi in all_locations:
+            page_url = "https://locations.friendlysrestaurants.com/" + poi["llp_url"]
+            poi = poi["store_info"]
+            hoo = ""
+            if page_url.strip():
+                with SgFirefox() as driver:
+                    driver.get(page_url)
+                    sleep(5)
+                    loc_dom = etree.HTML(driver.page_source)
+                hoo = loc_dom.xpath('//dl[@itemprop="openingHours"]/@content')
+                hoo = hoo[0] if hoo else ""
 
-    logzilla.info(f"Finished grabbing data!!")  # noqa
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["name"],
+                street_address=poi["address"],
+                city=poi["locality"],
+                state=poi["region"],
+                zip_postal=poi["postcode"],
+                country_code=poi["country"],
+                store_number="",
+                phone=poi["phone"],
+                location_type="",
+                latitude=poi["latitude"],
+                longitude=poi["longitude"],
+                hours_of_operation=hoo,
+            )
 
-
-def pretty_hours(k):
-    return "; ".join(
-        [": ".join([i[0], str(str(i[1][0]) + "-" + str(i[1][1]))]) for i in k.items()]
-    ).replace("CLOSED-CLOSED", "Closed")
+            yield item
 
 
 def scrape():
-    url = "https://www.friendlysrestaurants.com"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(url),
-        page_url=MappingField(
-            mapping=["page"], value_transform=lambda x: x.replace("&#038;", "&")
-        ),
-        location_name=MappingField(mapping=["title"]),
-        latitude=MappingField(mapping=["lat"]),
-        longitude=MappingField(mapping=["lng"]),
-        street_address=MappingField(mapping=["street"]),
-        city=MappingField(mapping=["city"]),
-        state=MappingField(mapping=["state"]),
-        zipcode=MappingField(mapping=["zip"]),
-        country_code=MissingField(),
-        phone=MappingField(mapping=["phone"]),
-        store_number=MappingField(mapping=["id"]),
-        hours_of_operation=MappingField(
-            mapping=["store_hours"], raw_value_transform=pretty_hours
-        ),
-        location_type=MappingField(mapping=["type"], is_required=False),
-    )
-
-    pipeline = SimpleScraperPipeline(
-        scraper_name="friendlysrestaurants.com",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-
-    pipeline.run()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

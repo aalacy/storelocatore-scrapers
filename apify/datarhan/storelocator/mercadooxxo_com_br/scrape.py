@@ -3,19 +3,25 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
-    start_url = "https://www.mercadooxxo.com.br/api/get-tiendas?estado=&latitude=39.53698981058932&longitude=-0.5344406570678798"
+    start_url = "https://www.mercadooxxo.com.br/api/get-tiendas?estado=&latitude={}&longitude={}"
     domain = "mercadooxxo.com.br"
     hdr = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
     }
-    all_locations = session.get(start_url, headers=hdr).json()
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRAZIL], expected_search_radius_miles=500
+    )
+    all_locations = []
+    for lat, lng in all_coords:
+        all_locations += session.get(start_url.format(lat, lng), headers=hdr).json()
 
     for poi in all_locations:
         item = SgRecord(
@@ -23,9 +29,9 @@ def fetch_data():
             page_url="https://www.mercadooxxo.com.br/lojas",
             location_name=f'OXXO | {poi["plaza"]}',
             street_address=poi["calle"],
-            city=SgRecord.MISSING,
+            city=poi["ciudad"],
             state=SgRecord.MISSING,
-            zip_postal=SgRecord.MISSING,
+            zip_postal=poi["cp"],
             country_code="BR",
             store_number=poi["id"],
             phone=SgRecord.MISSING,

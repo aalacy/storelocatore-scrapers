@@ -2,6 +2,8 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
+import json
+from sgpostal import sgpostal as parser
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -20,87 +22,57 @@ headers = {
 }
 
 
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
 
     search_url = "https://cellplus.com/"
-    stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//li[./a[contains(text(),"Locations")]]/ul/li/a/@href')
-    for store_url in stores:
+    api_url = "https://cellplus.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
 
-        page_url = store_url
+    api_res = session.get(api_url, headers=headers)
+    json_res = json.loads(api_res.text)
+    stores = json_res["markers"]
+
+    for store in stores:
+
+        page_url = search_url + store["title"].lower().replace(" ", "-") + "/"
         log.info(page_url)
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
+        store_res = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_res.text)
 
-        location_name = "".join(
-            store_sel.xpath('//div[@id="locText"]/h1/span/text()')
-        ).strip()
+        location_name = store["title"]
         location_type = "<MISSING>"
         locator_domain = website
 
-        raw_address = list(
-            filter(
-                str,
-                store_sel.xpath(
-                    '//div[@id="locText"]/p[./span/strong[contains(text(),"Call")]]/text()'
-                ),
-            )
-        )
-        street_address = raw_address[0].strip()
-        city = raw_address[1].strip().split(",")[0].strip()
-        state_zip = raw_address[1].strip().split(",")[-1].strip()
-        state = state_zip.split(" ")[0].strip()
-        zip = state_zip.split(" ")[-1].strip()
+        raw_address = store["address"].replace(", USA", "")
+        formatted_addr = parser.parse_address_usa(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
+
+        if street_address is not None:
+            street_address = street_address.replace("Ste", "Suite")
+        city = formatted_addr.city
+        state = formatted_addr.state
+        zip = formatted_addr.postcode
 
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(
-                store_sel.xpath(
-                    '//div[@id="locText"]/p[./span/strong[contains(text(),"Call")]]/span/strong/text()'
-                )
-            )
+
+        store_number = store["id"]
+
+        phone = " ".join(store_sel.xpath("//div[h3 and p]/p[1]/text()")).strip()
+
+        hours = list(filter(str, store_sel.xpath("//div[h3 and p]/p[2]//text()")))
+
+        hours_of_operation = (
+            "; ".join(hours)
             .strip()
-            .replace("Call", "")
+            .replace(".;", ";")
+            .strip()
+            .replace("Temporary Hours;", "")
             .strip()
         )
 
-        hours = list(
-            filter(str, store_sel.xpath('//div[@id="locText"]/p')[-2].xpath("text()"))
-        )
-
-        hours_of_operation = "; ".join(hours)
-
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        map_link = "".join(
-            store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
-        ).strip()
-
-        latitude, longitude = get_latlng(map_link)
+        latitude, longitude = store["lat"], store["lng"]
 
         yield SgRecord(
             locator_domain=locator_domain,
