@@ -84,8 +84,8 @@ def fetch_data():
                 phone = ""
                 if "phoneNumber" in store:
                     phones = store["phoneNumber"]
-                    phone = phones.get("newCustomers") or phones.get(
-                        "existingCustomers"
+                    phone = phones.get("existingCustomers") or phones.get(
+                        "newCustomers"
                     )
 
                 street_address = ""

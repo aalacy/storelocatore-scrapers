@@ -22,7 +22,7 @@ def fetch_data():
         links = soup.select("url loc")
         logger.info(f"{len(links)} found")
         for link in links:
-            page_url = link.text
+            page_url = link.text.replace("//locations", "/locations")
             if "/locations/" not in page_url:
                 continue
             if len(page_url.split("/")) < 9:
