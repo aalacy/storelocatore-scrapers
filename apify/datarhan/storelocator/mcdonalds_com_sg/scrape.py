@@ -52,7 +52,12 @@ def fetch_data():
         hoo = poi_html.xpath(
             './/div[@class="location-ophour"]/div[@class="value"]/p[1]//text()'
         )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("McCaf")[0].strip()
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split("McCaf")[0]
+            .replace("Main Store: ", "")
+            .strip()
+        )
         store_id = int(poi_html.xpath("@data-attr")[0])
         latitude = [e[0] for e in all_coords if e[2] == store_id][0]
         longitude = [e[1] for e in all_coords if e[2] == store_id][0]
