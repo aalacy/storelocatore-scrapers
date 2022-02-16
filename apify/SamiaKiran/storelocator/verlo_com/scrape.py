@@ -38,7 +38,10 @@ def fetch_data():
         loclist = r.text.split("var location_data =")[1].split("[]}]")[0]
         loclist = json.loads(loclist + "[]}]")
         for loc in loclist[:-1]:
-            page_url = "http:" + loc["link"]
+            try:
+                page_url = "http:" + loc["link"]
+            except:
+                continue
             location_name = loc["name"]
             log.info(page_url)
             store_number = loc["id"]

@@ -10,7 +10,7 @@ _headers = {
 }
 
 locator_domain = "https://docmj.com"
-base_url = "https://docmj.com"
+base_url = "https://docmj.com/states/florida/"
 
 
 def fetch_data():
@@ -22,12 +22,12 @@ def fetch_data():
             .strip()
         )
         for state in states:
-            for _ in state["locations"]:
-                location_name = _["location_name"].replace("&#8211;", "-").strip()
+            for _ in state["cities"]:
+                location_name = _["city_name"].replace("&#8211;", "-").strip()
                 yield SgRecord(
-                    page_url=base_url,
-                    store_number=_["location_id"],
-                    location_name=location_name,
+                    page_url=_["city_page_permalink"],
+                    store_number=_["city_id"],
+                    location_name=location_name.split("(")[0],
                     city=location_name.split("(")[0]
                     .split("-")[0]
                     .replace("II", "")
@@ -35,8 +35,8 @@ def fetch_data():
                     .strip(),
                     state=state["state_name"],
                     country_code="US",
-                    latitude=_["coordinates"]["lat"],
-                    longitude=_["coordinates"]["lng"],
+                    latitude=_["locations"][0]["lat"],
+                    longitude=_["locations"][0]["lng"],
                     locator_domain=locator_domain,
                 )
 

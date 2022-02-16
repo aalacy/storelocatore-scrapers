@@ -5,12 +5,12 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "jigsaw-online.com"
 BASE_URL = "https://jigsaw-online.com"
 LOCATION_URL = "https://www.jigsaw-online.com/pages/store-locator"
-API_URL = "https://jigsawimagestorage.blob.core.windows.net/jigsaw-logos/google-map-data.json?cache=1631183163019"
+API_URL = "https://jigsawimagestorage.blob.core.windows.net/jigsaw-logos/google-map-data-V3.json"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -72,15 +72,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STORE_NUMBER,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
