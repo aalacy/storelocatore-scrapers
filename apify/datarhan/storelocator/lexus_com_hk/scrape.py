@@ -57,13 +57,16 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         phone = loc_dom.xpath('//div[@id="lblPhoneValue"]/text()')[0]
         hoo = loc_dom.xpath('//div[@id="lblOpenHourValue"]/text()')[0]
+        city = addr.city
+        if not city:
+            city = parse_address_intl(location_name).city
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code="HK",
