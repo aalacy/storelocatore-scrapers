@@ -50,7 +50,7 @@ def fetch_data():
                 loc_dom = etree.HTML(loc_response.text)
                 location_type = ", ".join(
                     loc_dom.xpath(
-                        '//tr[@id="service"]//span[@class="el_txtIcon"]/text()'
+                        '//*[@id="service"]//span[@class="el_txtIcon"]/text()'
                     )
                 )
                 if "新車取扱い" not in location_type:
