@@ -62,6 +62,7 @@ def fetch_data():
                     street_address + " " + city + " " + state + " " + zip_postal
                 )
                 raw_address = raw_address.replace(MISSING, "")
+                raw_address = html.unescape(raw_address)
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=country_url,
