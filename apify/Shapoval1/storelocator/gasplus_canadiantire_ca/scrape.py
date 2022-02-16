@@ -45,9 +45,9 @@ def get_data(coords, sgw: SgWriter):
             phone = j.get("storeTelephone")
             latitude = j.get("storeLatitude")
             location_type = "<MISSING>"
-            services = j.get("services") or "<MISSING>"
+            services = j.get("services")
             type_tmp = []
-            if services != "<MISSING>":
+            if services:
                 for s in services:
                     types = s.get("serviceName")
                     type_tmp.append(types)
