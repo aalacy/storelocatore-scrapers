@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
             location_soup.find("div", {"class": "club-address"}).stripped_strings
         )
 
-        geo_location = location_soup.find_all("iframe")[1]["src"]
+        geo_location = location_soup.find("iframe")["src"]
         name = location_soup.find("h1").text
 
         store = []
@@ -43,9 +43,15 @@ def fetch_data(sgw: SgWriter):
         store.append("<MISSING>")
         store.append(address[-1])
         store.append("<MISSING>")
-        store.append(geo_location.split("!3d")[1].split("!")[0])
-        store.append(geo_location.split("!2d")[1].split("!")[0])
-        store.append(hours)
+        try:
+            lat = geo_location.split("!3d")[1].split("!")[0]
+            lng = geo_location.split("!2d")[1].split("!")[0]
+        except:
+            lat = ""
+            lng = ""
+        store.append(lat)
+        store.append(lng)
+        store.append(hours.replace("Club Hours", "").strip())
         store.append(location["href"])
 
         sgw.write_row(

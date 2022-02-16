@@ -101,6 +101,10 @@ def fetch_data():
             loc = loc.replace("/ ", "/").replace(" ", "-")
             if "colchester-vt-314" in loc:
                 hours = "Mon-Fri.: 6:00am - 1:30pm, 6:00pm - 9:00pm; Sat.: 7:00am - 9:30am, 6:00pm - 8:00pm; Sun.: 7:00am - 7:00pm"
+            if "w-san-antonio-san-antonio-tx-1449" in loc:
+                hours = "Mon-Fri.: 6:00am - 9:00pm; Sat.: 7:00am - 7:00pm; Sun.: 7:00am - 7:00pm"
+            if "las-vegas-bus-ctr-las-vegas-nv-563" in loc:
+                hours = "Mon-Fri.: 6:00am - 7:00pm; Sat.: 6:00am - 5:00pm; Sun.: 9:00am - 6:00pm"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

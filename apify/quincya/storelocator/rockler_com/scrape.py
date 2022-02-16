@@ -1,39 +1,16 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -47,19 +24,25 @@ def fetch_data():
     js = base.text.split('ores":')[1].split("})")[0]
     stores = json.loads(js)
 
-    data = []
     found = []
     locator_domain = "rockler.com"
 
     for store in stores:
         link = store["url"].lower()
+        if "missouri-store" in link:
+            link = "https://www.rockler.com/retail/stores/mo/st-louis-missouri-hardware-store"
         if link in found:
             continue
         found.append(link)
 
         if "rockler.com/retail/stores/" in link and "retail-partner" not in link:
             location_name = store["name"]
-            raw_address = store["address"].split(",")
+            raw_address = (
+                store["address"]
+                .replace("Street Olathe", "Street, Olathe")
+                .replace("200C Round", "200C, Round")
+                .split(",")
+            )
             street_address = raw_address[0]
             city = raw_address[1].strip()
             state = raw_address[2].strip().split()[0]
@@ -82,6 +65,9 @@ def fetch_data():
             try:
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
+
+                if not phone:
+                    phone = list(base.find(class_="col-m-6").stripped_strings)[4]
                 try:
                     hours_of_operation = " ".join(
                         list(
@@ -108,36 +94,36 @@ def fetch_data():
                             )
                         )
             except:
-                link = "https://www.rockler.com/retail/stores/"
                 hours_of_operation = "<MISSING>"
-            hours_of_operation = hours_of_operation.replace("Store Hours", "").strip()
-
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+                if "Opening in Early" in base.text:
+                    continue
+                if req.status_code == 404:
+                    link = "https://www.rockler.com/retail/stores/"
+            hours_of_operation = (
+                hours_of_operation.replace("Store Hours", "")
+                .split("Holiday")[0]
+                .strip()
             )
 
-    return data
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
