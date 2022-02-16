@@ -6,6 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import lxml.html
 import json
+import html
 
 session = SgRequests()
 website = "desigual_com"
@@ -17,6 +18,13 @@ headers = {
 
 DOMAIN = "https://desigual.com"
 MISSING = SgRecord.MISSING
+
+
+def encode_string(data_field):
+    if data_field:
+        return html.unescape(str(data_field))
+    else:
+        return data_field
 
 
 def fetch_data():
@@ -77,18 +85,18 @@ def fetch_data():
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
+                    location_name=encode_string(location_name),
+                    street_address=encode_string(street_address),
+                    city=encode_string(city),
+                    state=encode_string(state),
+                    zip_postal=encode_string(zip_postal),
+                    country_code=encode_string(country_code),
+                    store_number=encode_string(store_number),
+                    phone=encode_string(phone),
                     location_type=MISSING,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
+                    latitude=encode_string(latitude),
+                    longitude=encode_string(longitude),
+                    hours_of_operation=encode_string(hours_of_operation),
                 )
             else:
                 cities_url = "".join(loc.xpath("a/@href")).strip()
@@ -131,18 +139,18 @@ def fetch_data():
                     yield SgRecord(
                         locator_domain=DOMAIN,
                         page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip_postal,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
+                        location_name=encode_string(location_name),
+                        street_address=encode_string(street_address),
+                        city=encode_string(city),
+                        state=encode_string(state),
+                        zip_postal=encode_string(zip_postal),
+                        country_code=encode_string(country_code),
+                        store_number=encode_string(store_number),
+                        phone=encode_string(phone),
                         location_type=MISSING,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
+                        latitude=encode_string(latitude),
+                        longitude=encode_string(longitude),
+                        hours_of_operation=encode_string(hours_of_operation),
                     )
 
 
