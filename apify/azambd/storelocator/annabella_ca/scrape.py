@@ -81,17 +81,29 @@ def fetch_stores():
 
         if len(ps) == 4:
             raw_address = f"{ps[2]} {ps[0]} {ps[1]} {ps[3]}"
+            log.info(f"From Length 4: {raw_address}")
             [city, state] = ps[1].split(", ")
             zip_postal = ps[3]
 
         elif len(ps) == 6:
             raw_address = f"{ps[2]} {ps[3]} {ps[0]} {ps[1]} {ps[4]}"
+            log.info(f"From Length 6: {raw_address}")
             if "," in ps[2]:
                 [city, state] = ps[2].split(", ")
             else:
                 [city, state] = ps[1].split(", ")
 
             zip_postal = ps[4]
+
+        elif len(ps) == 7:
+            raw_address = f"{ps[2]} {ps[3]} {ps[0]} {ps[1]} {ps[4]} {ps[5]}"
+            log.info(f"From Length 7: {raw_address}")
+            if "," in ps[2]:
+                [city, state] = ps[2].split(", ")
+            else:
+                [city, state] = ps[1].split(", ")
+
+            zip_postal = ps[5]
 
         else:
             raw_address = f"{ps[2]} {ps[0]} {ps[1]} {ps[3]} {ps[4]}"
