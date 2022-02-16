@@ -2,9 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import parse_address_intl
 import dirtyjson as json
 
 _headers = {
@@ -25,12 +24,23 @@ def fetch_data():
             if not _.h2:
                 continue
             raw_address = " ".join(_.p.stripped_strings)
-            addr = parse_address_intl(raw_address + ", Malaysia")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            if not street_address:
-                street_address = raw_address.split(",")[0].strip()
+            addr = raw_address.split(",")
+            if "Wilayah Persekutuan" in addr[-1]:
+                del addr[-1]
+            if "Malaysia" in addr[-1]:
+                del addr[-1]
+            c_z = addr[-1].split()
+            s_idx = -1
+            if c_z[0].isdigit():
+                city = " ".join(c_z[1:])
+                zip_postal = c_z[0]
+            else:
+                s_idx -= 1
+                city = " ".join(c_z)
+                zip_postal = addr[-2].split()[0]
+            if city == "Wilayah Persekutuan" and "Kuala Lumpur" in raw_address:
+                city = "Kuala Lumpur"
+            street_address = ", ".join(addr[:s_idx])
             hours = [": ".join(hh.stripped_strings) for hh in _.select("ul.uk-list li")]
             ss = json.loads(_.find("script", type="application/json").string)[
                 "markers"
@@ -39,9 +49,8 @@ def fetch_data():
                 page_url=base_url,
                 location_name=_.h2.text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=city,
+                zip_postal=zip_postal,
                 country_code="MY",
                 latitude=ss["lat"],
                 longitude=ss["lng"],
@@ -52,7 +61,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

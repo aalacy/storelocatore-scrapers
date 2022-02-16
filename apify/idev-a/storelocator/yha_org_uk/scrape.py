@@ -58,19 +58,13 @@ def fetch_data():
         logger.info(page_url)
         driver = get_driver()
         driver.get(page_url)
-        driver.wait_for_request(page_url.split("/")[-1])
         time.sleep(2)
         sp1 = bs(driver.page_source, "lxml")
-        try:
-            _addr = (
-                sp1.select_one("div.map-overlay__section a.location")
-                .text.strip()
-                .split(",")
-            )
-        except:
-            import pdb
-
-            pdb.set_trace()
+        _addr = (
+            sp1.select_one("div.map-overlay__section a.location")
+            .text.strip()
+            .split(",")
+        )
         phone = ""
         if sp1.find("a", href=re.compile(r"tel:")):
             phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()

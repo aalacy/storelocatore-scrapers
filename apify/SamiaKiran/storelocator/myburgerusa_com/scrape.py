@@ -43,9 +43,11 @@ def fetch_data():
             longitude = loc["lng"]
             hours_of_operation = loc["hours"]
             hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
-            hours_of_operation = hours_of_operation.get_text(
-                separator="|", strip=True
-            ).replace("|", " ")
+            hours_of_operation = (
+                hours_of_operation.get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("NORMAL HOURS Open", "")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

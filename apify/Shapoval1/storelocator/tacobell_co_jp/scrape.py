@@ -1,5 +1,5 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -33,18 +33,22 @@ def fetch_data(sgw: SgWriter):
         country_code = "JP"
         city = a.city or "<MISSING>"
         phone = (
-            " ".join(d.xpath("./p[3]/text()"))
+            " ".join(d.xpath("./p[contains(text(), '電話番号')]/text()"))
             .replace("\n", "")
             .replace("電話番号:", "")
             .strip()
         )
-        if phone.find("※一部対象外店舗あり") != -1:
-            phone = "<MISSING>"
+
         if location_name == "Uber Eats":
             continue
+        ids = "".join(d.xpath("./a[1]/@href")).replace("#", "").strip()
+        map_link = "".join(tree.xpath(f'//div[@id="{ids}"]//iframe/@src'))
+
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
         hours_of_operation = (
-            " ".join(d.xpath("./p[2]/text()"))
+            " ".join(d.xpath("./p[contains(text(), '営業時間')]/text()"))
             .replace("\n", "")
             .replace("営業時間:", "")
             .strip()
@@ -62,8 +66,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
             raw_address=ad,
         )

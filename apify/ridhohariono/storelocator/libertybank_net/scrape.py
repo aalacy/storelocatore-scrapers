@@ -95,7 +95,11 @@ def fetch_data():
     for page_url in page_urls:
         soup = pull_content(page_url)
         location_name = "Liberty Bank"
-        content = soup.find("a", {"href": re.compile(r"tel:.*")})
+        content = soup.find_all("a", {"href": re.compile(r"tel:.*")})
+        if len(content) > 1:
+            content = content[-1]
+        else:
+            content = content[0]
         get_parent = content.parent("p")
         if get_parent:
             address = (
