@@ -67,6 +67,9 @@ def fetch_data():
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
 
+            if street_address and street_address.replace("-", "").isdigit():
+                street_address = raw_address.split(",")[0].strip()
+
             city = formatted_addr.city
 
             state = formatted_addr.state
