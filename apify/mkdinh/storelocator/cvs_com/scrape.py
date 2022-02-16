@@ -21,6 +21,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 logger = SgLogSetup().get_logger("cvs_com")
 http.client._MAXHEADERS = 1000  # type: ignore
 
+MAX_WORKERS = 10
+
 
 start_time = datetime.now()
 
@@ -47,7 +49,7 @@ def write_output(data):
 def get_session():
     if (
         not hasattr(thread_local, "session")
-        or thread_local.request_count > 10
+        or thread_local.request_count > 5
         or thread_local.session_failed
     ):
         thread_local.session = SgRequests()
@@ -97,7 +99,7 @@ def enqueue_links(url, selectors):
 
 def scrape_state_urls(state_urls):
     city_urls = []
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(enqueue_links, url, [".states a"]) for url in state_urls
         ]
@@ -111,7 +113,7 @@ def scrape_state_urls(state_urls):
 def scrape_city_urls(city_urls):
     # scrape each city url and populate loc_urls with the results
     loc_urls = []
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(
                 enqueue_links, url, [".directions-link a", ".tb-store-link a"]
@@ -344,7 +346,7 @@ def get_location(page_url):
 
 
 def scrape_loc_urls(loc_urls):
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(get_location, loc) for loc in loc_urls]
         for future in as_completed(futures):
             try:
