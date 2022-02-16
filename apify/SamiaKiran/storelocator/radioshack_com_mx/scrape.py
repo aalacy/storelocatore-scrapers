@@ -22,10 +22,10 @@ def get_data(loc):
     location_name = loc["displayName"]
     store_number = loc["name"]
     phone = loc["WhatsApp"]
-    street_address = loc["line1"] + "" + loc["line2"]
+    street_address = loc["line1"]
     city = loc["town"]
     zip_postal = loc["postalCode"]
-    phone = loc["WhatsApp"]
+    phone = loc["phone"]
     latitude = loc["latitude"]
     longitude = loc["longitude"]
     if latitude == "0.0":
@@ -149,9 +149,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.PHONE, SgRecord.Headers.STREET_ADDRESS})
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)

@@ -41,7 +41,9 @@ def fetch_data():
                 state = loc["Province/State"]
                 zip_postal = loc["Postal/Zip Code"]
                 country_code = loc["Country"]
-                hours_of_operation = str(loc["Hours"]).replace("<br>", " ")
+                hours_of_operation = (
+                    str(loc["Hours"]).replace("<br>", " ").replace("\n", " ")
+                )
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url="https://www.radioshack.com/pages/store-locator",

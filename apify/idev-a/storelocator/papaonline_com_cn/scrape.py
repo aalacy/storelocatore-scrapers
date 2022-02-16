@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
@@ -11,7 +11,7 @@ _headers = {
 }
 
 locator_domain = "https://www.papaonline.com.cn"
-base_url = "https://www.papaonline.com.cn/js/chunk-0208ee52.b5383972.js"
+base_url = "https://www.papaonline.com.cn/js/chunk-748cb5cd.5da1f691.js"
 
 
 def fetch_data():
@@ -22,16 +22,12 @@ def fetch_data():
         for x, locs in enumerate(locations):
             for _ in locs["restaurant"]:
                 addr = parse_address_intl(_["address"])
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
+                street_address = _["address"].split("市")[-1]
                 city = addr.city
                 if not city or (city and len(city) == 1):
                     city = cities[x]
                 if city and len(city) > 3 and "市" in city:
                     city = city.split("市")[0] + "市"
-                if street_address == "1F" and city:
-                    street_address = _["address"].split(city)[-1]
                 yield SgRecord(
                     page_url="",
                     location_name=_["name"],

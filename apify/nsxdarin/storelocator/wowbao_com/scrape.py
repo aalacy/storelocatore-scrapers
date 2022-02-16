@@ -15,8 +15,8 @@ logger = SgLogSetup().get_logger("wowbao_com")
 
 
 def fetch_data():
-    for xlat in range(10, 60, 5):
-        for ylng in range(-160, -60, 5):
+    for xlat in range(10, 65, 3):
+        for ylng in range(-165, -55, 3):
             url = (
                 "https://api2.storepoint.co/v1/15fe0bd667ae7b/locations?lat="
                 + str(xlat)
