@@ -101,6 +101,10 @@ def fetch_data():
         single_state = session.get(STATE_API + str(zipcode), headers=HEADERS).json()[
             "data"
         ][0][0]
+        try:
+            single_state["id"]
+        except:
+            continue
         for type in store_type:
             state_url = (
                 API_STORES + str(single_state["id"]) + "&storetype=" + type["code"]
