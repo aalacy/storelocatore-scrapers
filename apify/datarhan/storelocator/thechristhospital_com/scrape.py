@@ -1,45 +1,25 @@
-import csv
+import ssl
 from lxml import etree
 from time import sleep
 
 from sgselenium import SgChrome
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
-    # Your scraper here
-    items = []
-
-    DOMAIN = "thechristhospital.com"
+    domain = "thechristhospital.com"
     start_url = "https://www.thechristhospital.com/locations"
     all_locations = []
     with SgChrome() as driver:
@@ -52,21 +32,26 @@ def fetch_data():
         next_page = driver.find_element_by_xpath('//a[contains(@id, "PageFwd")]')
         while next_page:
             next_page.click()
-            sleep(8)
+            sleep(20)
             dom = etree.HTML(driver.page_source)
             all_locations += dom.xpath('//div[@class="location"]')
             try:
                 next_page = driver.find_element_by_xpath(
                     '//a[contains(@id, "PageFwd")]'
                 )
-            except:
+            except Exception:
                 next_page = ""
 
     for poi_html in all_locations:
-        store_url = "<MISSING>"
+        page_url = "https://www.thechristhospital.com/locations"
+        own_url = poi_html.xpath('.//a[@class="location-header"]/@href')
+        if own_url:
+            page_url = own_url[0]
         location_name = poi_html.xpath(
             './/span[@class="location-header no-details-link"]/text()'
         )
+        if not location_name:
+            location_name = poi_html.xpath('.//a[@class="location-header"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         street_address = poi_html.xpath('.//span[@class="addressline"]/text()')[
             0
@@ -84,48 +69,53 @@ def fetch_data():
         zip_code = (
             zip_code[-1].strip().split(",")[-1].split()[-1] if zip_code else "<MISSING>"
         )
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath('.//span[@class="phonenumber"]//a/text()')
+        phone = poi_html.xpath('.//span[@class="phonenumber"]/b/text()')
+        phone = [e.strip() for e in phone if e.strip()]
         phone = phone[0].strip() if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = poi_html.xpath('.//div[@class="hours"]//text()')
+        hours_of_operation = poi_html.xpath(
+            './/h2[contains(text(), "Hours")]/following-sibling::dl//text()'
+        )
         hours_of_operation = [
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
-        if hours_of_operation == ["Hours"]:
-            hours_of_operation = ""
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=SgRecord.MISSING,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

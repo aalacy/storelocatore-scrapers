@@ -1,113 +1,83 @@
-import csv
+import json
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-session = SgRequests()
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
 
-    r = session.get(
-        "https://api.riddlesjewelry.com/storelocator/index/loadstore/?radius=10000&latitude=38.8619254&longitude=-97.654811&type=all",
-        headers=headers,
-    )
+    locator_domain = "https://www.riddlesjewelry.com/"
 
-    store_name = []
-    store_detail = []
-    return_main_object = []
-    k = r.json()
-    for idx, val in enumerate(k["storesjson"]):
-        tem_var = []
-        street_address1 = val["address"]
-        phone = val["phone"]
-        latitude = val["latitude"]
-        longitude = val["longitude"]
-        zipcode = val["zipcode"]
-        state = val["state"]
-        city = val["city"]
-        data_new = " IN " + str(city.upper()) + "," + str(state.upper())
-        store_name.append(val["store_name"].upper() + str(data_new))
-        tem_var.append(street_address1.replace(", Pueblo, CO 81008, USA", ""))
-        tem_var.append(city if city else "<MISSING>")
-        tem_var.append(state if state else "<MISSING>")
-        tem_var.append(zipcode if zipcode else "<MISSING>")
-        tem_var.append("US")
-        tem_var.append(val["storelocator_id"])
-        tem_var.append(phone)
-        tem_var.append("<MISSING>")
-        tem_var.append(latitude)
-        tem_var.append(longitude)
-        page_url = (
-            "https://www.riddlesjewelry.com/storelocator/index/details?locatorId="
-            + val["storelocator_id"]
+    session = SgRequests()
+
+    for i in range(20):
+
+        r = session.get(
+            "https://www.riddlesjewelry.com/storelocator/index/ajax/?address_1=&address_2=&city=&region=&country_id=&zipcode=&current_page="
+            + str(i),
+            headers=headers,
         )
 
-        hours_of_operation = ""
-        days = [
-            "monday_",
-            "tuesday_",
-            "wednesday_",
-            "thursday_",
-            "friday_",
-            "saturday_",
-            "sunday_",
-        ]
-        for day in days:
-            if val[day + "status"] == "1":
-                hours = val[day + "open"] + "-" + val[day + "close"]
-            else:
-                hours = "Closed"
-            hours_of_operation = (
-                hours_of_operation + " " + day.title().replace("_", "") + " " + hours
-            ).strip()
+        k = r.json()
+        for idx, val in enumerate(k["data"]):
+            street_address = val["address"][0].strip()
+            phone = val["telephone"]
+            latitude = val["latitude"]
+            longitude = val["longitude"]
+            zip_code = val["zipcode"]
+            state = val["region"]
+            city = val["city"]
+            location_name = val["storename"].replace("&#039;", "'")
+            country_code = "US"
+            store_number = val["storelocator_id"]
+            page_url = locator_domain + val["url_key"]
+            location_type = ""
 
-        tem_var.append(hours_of_operation)
-        tem_var.append(page_url)
-        store_detail.append(tem_var)
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://www.riddlesjewelry.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        return_main_object.append(store)
-    return return_main_object
+            hours_of_operation = ""
+            store_time = json.loads(val["storetime"])
+            for row in store_time:
+                if row["day_status"] == "1":
+                    hours = (
+                        row["days"]
+                        + " "
+                        + row["open_hour"]
+                        + ":"
+                        + row["open_minute"]
+                        + "-"
+                        + row["close_hour"]
+                        + ":"
+                        + row["close_minute"]
+                    )
+                else:
+                    hours = row["days"] + " Closed"
+                hours_of_operation = (hours_of_operation + " " + hours).strip()
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

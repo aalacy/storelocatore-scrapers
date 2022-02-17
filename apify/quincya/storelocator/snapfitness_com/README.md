@@ -1,3 +1,3 @@
 Hours available on page_url but inefficient since getting data from api.
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator Validation expected 912 POI, but only found 643 on website
+Validator sees "Cronulla" as Garbarge value. page_url https://www.snapfitness.com/au/gyms/cronulla/ set as "<INACCESSIBLE>"
+ --ignore CountryCodeFillRateChecker --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountryValidator --ignore CountValidator --ignore StateLevelCountValidator (Confirmed on website)
