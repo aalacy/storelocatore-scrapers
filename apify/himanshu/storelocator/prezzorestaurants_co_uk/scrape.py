@@ -27,7 +27,7 @@ def getAddress(raw_address):
             data = parse_address_intl(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
+                street_address = f"{street_address} {data.street_address_2}"
             city = data.city
             state = data.state
             zip_postal = data.postcode
@@ -109,7 +109,7 @@ def fetch_data():
             )
             store = pull_content(page_url + "?X-Requested-With=XMLHttpRequest")
             location_name = row.find("h4", {"data-autoheight": "header"}).text.strip()
-            raw_address = (
+            raw_address = str(
                 " ".join(
                     row.find("div", {"data-autoheight": "address"})
                     .get_text(strip=True, separator=",")
@@ -120,12 +120,19 @@ def fetch_data():
                 .replace(", ,", ",")
             )
             street_address, city, state, zip_postal = getAddress(raw_address)
+            if "None" in street_address or len(street_address) <= 3:
+                street_address = raw_address.split(",")[0].strip()
+            if city == MISSING:
+                city = raw_address.split(",")[-2].strip()
+            if "York" in city and city != "York":
+                city = "York"
             if zip_postal == MISSING:
-                zip = street_address.split(",")[-1].strip()
+                zip = raw_address.split(",")[-1].strip()
                 if len(zip) > 5 and len(zip) <= 8 and len(zip.split(" ")) > 1:
                     zip_postal = zip
             country_code = "UK"
             phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+            hours_of_operation = MISSING
             hours_of_operation = get_hoo(store)
             location_type = MISSING
             store_number = MISSING
