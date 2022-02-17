@@ -27,10 +27,8 @@ def fetch_data():
         if loc_dom.xpath('//div[contains(text(), "COMING SOON!")]'):
             continue
 
-        location_name = loc_dom.xpath('//div[@class="details"]/h1/text()')[0]
-        raw_data = loc_dom.xpath(
-            '//div[h1[contains(text(), "{}")]]//text()'.format(location_name)
-        )
+        location_name = loc_dom.xpath('//meta[@property="og:title"]/@content')[0]
+        raw_data = loc_dom.xpath('//div[@class="details"]//text()')
         raw_data = [e.strip() for e in raw_data if e.strip()]
         raw_adr = raw_data[1].split(", ")
         phone = raw_data[2]

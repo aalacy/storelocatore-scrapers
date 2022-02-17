@@ -3,9 +3,8 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import us
 import lxml.html
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "pickfords.com"
@@ -13,31 +12,6 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
-
-
-def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
-
-    city_state_zip = (
-        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
-    )
-
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
-
-    if not city or us.states.lookup(zip):
-        city = city + " " + state
-        state = zip
-        zip = "<MISSING>"
-
-    if city and state:
-        if not us.states.lookup(state):
-            city = city + " " + state
-            state = "<MISSING>"
-
-    country_code = "US"
-    return street_address, city, state, zip, country_code
 
 
 def get_latlng(map_link):
@@ -165,6 +139,14 @@ def fetch_data():
             )
             latitude, longitude = get_latlng(map_link)
 
+            if phone:
+                if not phone.replace(" ", "").strip().isdigit():
+                    phone = "<MISSING>"
+
+            if city == "Unit 2 Clifton Way":
+                city = "<MISSING>"
+                street_address = "Unit 2 Clifton Way"
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -187,7 +169,16 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

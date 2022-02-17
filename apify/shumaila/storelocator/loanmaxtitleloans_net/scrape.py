@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup
-import csv
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,50 +11,34 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    name = []
-    p = 0
 
     url = "https://www.loanmaxtitleloans.net/SiteMap.xml"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.findAll("loc")
+    linklist.append(
+        "https://www.loanmaxtitleloans.net/locations/wisconsin/green-bay/704-s-military-ave"
+    )
+    linklist.append(
+        "https://www.loanmaxtitleloans.net/locations/arizona/mesa/2009-w-main-st"
+    )
     for link in linklist:
-        link = link.text
-        if len(link.split("/")) < 5:
+        try:
+            link = link.text
+        except:
+            pass
+        try:
+            if (
+                "locations" in link
+                and len(link.split("locations/", 1)[1].split("/")) > 2
+            ):
+                pass
+            else:
+                continue
+        except:
             continue
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         street = soup.find("span", {"itemprop": "streetAddress"}).text
         city = soup.find("span", {"itemprop": "addressLocality"}).text
@@ -61,36 +47,34 @@ def fetch_data():
         title = "Loanmax - " + city + ", " + state
         phone = soup.find("span", {"itemprop": "telephone"}).text
         hours = soup.find("div", {"class": "store_hours"}).text.replace("\n", " ")
-        if street in name:
-            continue
-        name.append(street)
-        data.append(
-            [
-                "https://www.loanmaxtitleloans.net",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours,
-            ]
-        )
 
-        p += 1
-    return data
+        yield SgRecord(
+            locator_domain="https://www.loanmaxtitleloans.net/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude="<MISSING>",
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

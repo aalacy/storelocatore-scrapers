@@ -1,0 +1,6 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+          latitude        longitude                                     street_address  num_addrs
+7  52.938863000000  -1.203153000000  {Beeston Lane, The University of Nottingham, B...          2
