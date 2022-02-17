@@ -133,6 +133,9 @@ def get_data(param, sgw: SgWriter):
         city = SgRecord.MISSING
         state = SgRecord.MISSING
         postal = SgRecord.MISSING
+
+    if not street_address and not city:
+        return
     store_number = page_url.split("-")[-1]
     phone = "".join(
         tree.xpath(

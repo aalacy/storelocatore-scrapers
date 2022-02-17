@@ -70,10 +70,10 @@ def fetch_data():
                     zip = raw_info[-2].strip().split(" ", 1)[0].strip()
 
                 else:
-                    street_address = ", ".join(raw_info).strip()
-                    city = "<MISSING>"
+                    street_address = raw_info[0].strip()
+                    city = raw_info[-1].strip().split(" ", 1)[-1].strip()
                     state = "<MISSING>"
-                    zip = "<MISSING>"
+                    zip = raw_info[-1].strip().split(" ", 1)[0].strip()
 
             country_code = "CH"
             store_number = (
