@@ -95,7 +95,7 @@ def fetch_data():
                     zip_postal = pa.postcode
                     zip_postal = zip_postal.strip() if zip_postal else MISSING
                     latitude, longitude = (
-                        str(loc[2]).split("l=-")[1].split("&z")[0].split(",")
+                        str(loc[2]).split("l=")[1].split("&z")[0].split(",")
                     )
                     yield SgRecord(
                         locator_domain=DOMAIN,

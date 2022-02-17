@@ -275,6 +275,14 @@ def fetch_data(sgw: SgWriter):
                     == "Monday-Friday Closed Saturday Closed Sunday Closed"
                 ):
                     hours_of_operation = "Closed"
+            if hours_of_operation.find("Mon Closed;Mon Closed;") != -1:
+                hours_of_operation = hours_of_operation.replace(
+                    "Mon Closed;Mon Closed;", "Mon Closed"
+                )
+            if hours_of_operation.find("Sun Closed;Sun Closed") != -1:
+                hours_of_operation = hours_of_operation.replace(
+                    "Sun Closed;Sun Closed", "Sun Closed"
+                )
 
             row = SgRecord(
                 locator_domain=locator_domain,

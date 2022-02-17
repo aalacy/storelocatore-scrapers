@@ -15,10 +15,20 @@ _headers = {
 
 locator_domain = "https://morgenthalfrederics.com"
 base_url = "https://morgenthalfrederics.com/pages/boutique-locator"
+json_url = "https://api.storepoint.co/v1/15bfcae8d5180e/locations?rq"
+
+
+def _info(locs, phone):
+    for loc in locs:
+        if loc["phone"] == phone:
+            return loc
+
+    return dict()
 
 
 def fetch_data():
     with SgRequests() as session:
+        locs = session.get(json_url, headers=_headers).json()["results"]["locations"]
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         states = soup.select(
             "div.shogun-root div.shg-c  div.shg-row div.shg-c-lg-4.shg-c-md-4 div.shg-box-vertical-align-wrapper"
@@ -50,14 +60,19 @@ def fetch_data():
                         )
                 except:
                     pass
+                info = _info(locs, phone)
+                _addr = info["streetaddress"].split(",")
                 yield SgRecord(
                     page_url=page_url,
                     location_name=addr[0],
                     street_address=" ".join(addr[:-1]),
                     city=addr[-1].strip(),
                     state=_state,
+                    zip_postal=_addr[-2].strip().split()[-1],
                     country_code="US",
                     phone=phone,
+                    latitude=info["loc_lat"],
+                    longitude=info["loc_long"],
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
                     raw_address=" ".join(addr),

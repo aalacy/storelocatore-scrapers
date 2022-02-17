@@ -33,6 +33,7 @@ def fetch_data():
             )
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
 
             locator_domain = website
 
@@ -48,18 +49,29 @@ def fetch_data():
             raw_address = "<MISSING>"
             street_address = store_info["address"]["streetAddress"].strip()
             city = store_info["address"]["addressLocality"].strip()
-            state = (
-                store_res.text.split(store_info["address"]["streetAddress"] + ",")[1]
-                .split(",")[0]
-                .strip()
+            state = "<MISSING>"
+            temp_addr = store_sel.xpath(
+                '//section[@class="M-CONTMAST-RW-RBWM"]//p[@class="A-PAR16R-RW-ALL"]'
             )
+            if len(temp_addr) > 0:
+                if "," in "".join(temp_addr[0].xpath("text()")).strip():
+                    state = (
+                        "".join(temp_addr[0].xpath("text()"))
+                        .strip()
+                        .split("\n")[1]
+                        .strip()
+                        .replace(",", "")
+                        .strip()
+                    )
             zip = store_info["address"]["postalCode"].strip()
 
             country_code = store_info["address"]["addressCountry"].strip()
 
             store_number = page_url.split("/")[-2].split("-")[0].strip()
 
-            phone = store_info["contactPoint"][0]["telephone"]
+            phone = "<MISSING>"
+            if "contactPoint" in store_info:
+                phone = store_info["contactPoint"][0]["telephone"]
             location_type = "<MISSING>"
 
             hour_list = []

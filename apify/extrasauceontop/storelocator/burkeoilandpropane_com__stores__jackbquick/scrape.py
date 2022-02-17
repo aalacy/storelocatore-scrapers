@@ -29,7 +29,7 @@ def get_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
-        spans = grid.find_all("span", attrs={"style": "font-size:16px"})
+        spans = grid.find_all("span", attrs={"style": "font-size:16px;"})
 
         if len(spans) == 3:
             city = spans[-1].text.strip().split(", ")[0]
@@ -46,18 +46,18 @@ def get_data():
         elif len(spans) == 2:
             address = spans[-1].text.strip()
             city = (
-                grid.find("p", attrs={"style": "line-height:1.5em;font-size:17px"})
+                grid.find("p", attrs={"style": "font-size:16px; line-height:1.5em;"})
                 .find("span")
                 .text.strip()
             )
             state = (
-                grid.find("p", attrs={"style": "line-height:1.5em;font-size:17px"})
+                grid.find("p", attrs={"style": "font-size:16px; line-height:1.5em;"})
                 .find_all("span")[-1]
                 .text.strip()
                 .split(" ")[-2]
             )
             zipp = (
-                grid.find("p", attrs={"style": "line-height:1.5em;font-size:17px"})
+                grid.find("p", attrs={"style": "font-size:16px; line-height:1.5em;"})
                 .find_all("span")[-1]
                 .text.strip()
                 .split(" ")[-1]
