@@ -5,10 +5,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+import json
 
 DOMAIN = "maxsrestaurantna.com"
-BASE_URL = "https://www.maxsrestaurantna.com"
+BASE_URL = "https://www.maxsrestaurantna.com/"
 LOCATION_URL = "https://www.maxsrestaurantna.com/locations"
 HEADERS = {
     "Accept": "*/*",
@@ -21,31 +21,6 @@ session = SgRequests()
 MISSING = "<MISSING>"
 
 
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
-
-
 def pull_content(url):
     log.info("Pull content => " + url)
     HEADERS["Referer"] = url
@@ -56,57 +31,58 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.select("div.pm-location-search-list a[class='pagebutton']")
-    for row in contents:
-        page_url = BASE_URL + row["href"]
-        store = pull_content(page_url)
-        info = store.find("div", id="location")
-        info.find("div", {"class": "row location"}).decompose()
-        location_name = info.find("h4").text.strip()
-        addr = info.find_all("p")
-        raw_address = addr[0].get_text(strip=True, separator=",")
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        if len(zip_postal.split(" ")) > 1:
-            country_code = "CA"
-        else:
-            country_code = "US"
-        phone = addr[1].text.strip()
-        store_number = MISSING
-        hours_of_operation = (
-            info.find("div", {"class": "hours"})
-            .get_text(strip=True, separator=",")
-            .replace(",:,", ": ")
-            .replace("-,", "- ")
-            .replace(",pm", " pm")
-            .strip()
-        )
-        latitude = MISSING
-        longitude = MISSING
-        location_type = MISSING
-        log.info("Append {} => {}".format(location_name, street_address))
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+    data = json.loads(
+        soup.find("script", id="popmenu-apollo-state")
+        .string.replace("window.POPMENU_APOLLO_STATE = ", "")
+        .replace("};", "}")
+        .replace('" + "', "")
+        .strip()
+    )
+    for key, value in data.items():
+        if key.startswith("RestaurantLocation:"):
+            if "Coming Soon!" in value["customLocationContent"]:
+                continue
+            page_url = BASE_URL + value["slug"]
+            location_name = value["name"]
+            raw_address = value["fullAddress"].replace("\n", ", ")
+            city = value["city"]
+            state = value["state"]
+            zip_postal = value["postalCode"]
+            street_address = value["streetAddress"].strip()
+            country_code = value["country"]
+            phone = value["displayPhone"]
+            location_type = MISSING
+            store_number = value["id"]
+            latitude = value["lat"]
+            longitude = value["lng"]
+            try:
+                hours_of_operation = ", ".join(value["schemaHours"])
+            except:
+                MISSING
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
