@@ -13,11 +13,14 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         slug = j.get("slug")
         page_url = f"https://www.roomstogo.com{slug}"
-        street_address = f'{j.get("Address1")} {j.get("Address2") or ""}'.strip()
         city = j.get("City")
         state = j.get("State")
         postal = j.get("Zip")
-
+        adr1 = j.get("Address1") or ""
+        if f", {city}," in adr1:
+            adr1 = adr1.split(f", {city}")[0].strip()
+        adr2 = j.get("Address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
         location_name = j.get("StoreName") or f"{city}, {state}"
         phone = j.get("PhoneNumber")
         try:
