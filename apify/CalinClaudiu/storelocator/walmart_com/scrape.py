@@ -178,34 +178,37 @@ def fetch_data():
 
 
 def human_hours(k):
-    if not k["open24Hours"]:
-        unwanted = ["open24", "todayHr", "tomorrowHr"]
-        h = []
-        for day in list(k):
-            if not any(i in day for i in unwanted):
-                if k[day]:
-                    if "temporaryHour" not in day:
-                        if k[day]["closed"]:
-                            h.append(str(day).capitalize() + ": Closed")
-                        else:
-                            if k[day]["openFullDay"]:
-                                h.append(str(day).capitalize() + ": 24Hours")
+    try:
+        if not k["open24Hours"]:
+            unwanted = ["open24", "todayHr", "tomorrowHr"]
+            h = []
+            for day in list(k):
+                if not any(i in day for i in unwanted):
+                    if k[day]:
+                        if "temporaryHour" not in day:
+                            if k[day]["closed"]:
+                                h.append(str(day).capitalize() + ": Closed")
                             else:
-                                h.append(
-                                    str(day).capitalize()
-                                    + ": "
-                                    + str(k[day]["startHr"])
-                                    + "-"
-                                    + str(k[day]["endHr"])
-                                )
+                                if k[day]["openFullDay"]:
+                                    h.append(str(day).capitalize() + ": 24Hours")
+                                else:
+                                    h.append(
+                                        str(day).capitalize()
+                                        + ": "
+                                        + str(k[day]["startHr"])
+                                        + "-"
+                                        + str(k[day]["endHr"])
+                                    )
+                        else:
+                            if k[day]:
+                                h.append("Temporary hours: " + str(k[day].items()))
                     else:
-                        if k[day]:
-                            h.append("Temporary hours: " + str(k[day].items()))
-                else:
-                    h.append(str(day).capitalize() + ": <MISSING>")
-        return "; ".join(h)
-    else:
-        return "24/7"
+                        h.append(str(day).capitalize() + ": <MISSING>")
+            return "; ".join(h)
+        else:
+            return "24/7"
+    except Exception:
+        return str(k)
 
 
 def add_walmart(x):
