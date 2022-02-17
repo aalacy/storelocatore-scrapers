@@ -34,11 +34,12 @@ def fetch_data():
             continue
         try:
             r = session.get(link, headers=headers)
+
+            loc = r.text.split('<script type="application/ld+json">')[2].split(
+                "</script>", 1
+            )[0]
         except:
             continue
-        loc = r.text.split('<script type="application/ld+json">')[2].split(
-            "</script>", 1
-        )[0]
         loc = json.loads(loc.replace("\n", ""))
         title = loc["name"]
         street = loc["address"]["streetAddress"]

@@ -34,9 +34,20 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
+        info = "".join(a.xpath('//div[@class="mpfy-tooltip-content"]/p/text()')).split(
+            ","
+        )
+        info = list(filter(None, [a.strip() for a in info]))
         location_name = j.get("title")
         a = parse_address(International_Parser(), ad)
-        street_address = " ".join(ad.split(",")[:2]).strip()
+        street_address = "<MISSING>"
+        for i in info:
+            if "Road" in i or "Street" in i:
+                street_address = "".join(i)
+        if street_address == "<MISSING>":
+            street_address = "".join(info[1])
+        if len(street_address) < 6:
+            street_address = " ".join(info[:2])
         state = a.state or "<MISSING>"
         postal = ad.split(",")[-1].strip()
         if postal.find("Cheltenham") != -1:
