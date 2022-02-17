@@ -24,6 +24,23 @@ def fetch_data():
                 street_address += " " + addr.get("line_one")
             if addr.get("line_two"):
                 street_address += " " + addr.get("line_two")
+            ss = street_address.split(",")
+            if len(ss) > 1 and ss[-1].strip().endswith("Estate"):
+                del ss[-1]
+            street_address = (
+                ",".join(ss)
+                .replace("Georges Industrial Estate", "")
+                .replace("Moreton Hall Industrial Estate", "")
+                .replace("Barncoose Industrial Estate", "")
+                .replace("Chessington Park Industrial Estate", "")
+                .replace("Road Industrial Estate", "")
+                .replace("Wincheap Industrial Estate", "")
+                .strip()
+            )
+            if street_address.startswith(","):
+                street_address = street_address[1:]
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             hours = []
             for day, hh in _.get("opening_hours", {}).items():
                 if day == "__typename":
