@@ -1,63 +1,53 @@
-import csv
 import json
+from sglogging import sglog
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "tofs_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.tofs.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
     url = "https://api-cdn.storepoint.co/v1/15f4fbe5b10e3d/locations?rq"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     loclist = json.loads(r.text)
     loclist = loclist["results"]["locations"]
-
     for loc in loclist:
-        title = loc["name"]
-        store = loc["id"]
-        lat = loc["loc_lat"]
-        longt = loc["loc_long"]
-        address = loc["streetaddress"].split(",")
-        street = ",".join(address[:-3])
-        city = address[-3].lstrip()
-        state = " ".join(address[-2].split(" ")[:-2]).lstrip()
-        pcode = address[-2].split(" ")[-2] + " " + address[-2].split(" ")[-1]
-        ccode = address[-1].lstrip()
-        store_type = loc["tags"]
+
+        location_name = loc["name"]
+        log.info(location_name)
+        store_number = loc["id"]
+        latitude = loc["loc_lat"]
+        longitude = loc["loc_long"]
+        address_raw = loc["streetaddress"]
+        pa = parse_address_intl(address_raw)
+
+        street_address = pa.street_address_1
+        street_address = street_address if street_address else MISSING
+
+        city = pa.city
+        city = city.strip() if city else MISSING
+
+        state = pa.state
+        state = state.strip() if state else MISSING
+
+        zip_postal = pa.postcode
+        zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+        country_code = "UK"
+        location_type = loc["tags"]
         phone = loc["phone"]
         mon = loc["monday"]
         tues = loc["tuesday"]
@@ -83,50 +73,39 @@ def fetch_data():
             + ", Sun: "
             + sun
         )
-        if title == "":
-            title = "<MISSING>"
-        if store == "":
-            store = "<MISSING>"
-        if lat == "":
-            lat = "<MISSING>"
-        if longt == "":
-            longt = "<MISSING>"
-        if street == "":
-            street = "<MISSING>"
-        if city == "":
-            city = "<MISSING>"
-        if pcode == "":
-            pcode = "<MISSING>"
-        if ccode == "":
-            ccode = "UK"
-        if store_type == "":
-            store_type = "<MISSING>"
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-        data.append(
-            [
-                "https://www.tofs.com/",
-                "https://www.tofs.com/pages/store-finder",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                store_type,
-                lat,
-                longt,
-                hours_of_operation,
-            ]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url="https://www.tofs.com/pages/store-finder",
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+            raw_address=address_raw,
         )
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
