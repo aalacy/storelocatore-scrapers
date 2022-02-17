@@ -39,12 +39,12 @@ def get_data(url, sgw: SgWriter):
     if not js_block:
         return
     js = json.loads(js_block)
-    a = js.get("address") or "<MISSING>"
+    a = js.get("address")
     street_address = "<MISSING>"
     city = "<MISSING>"
     state = "<MISSING>"
     postal = "<MISSING>"
-    if a != "<MISSING>":
+    if a:
         street_address = a.get("streetAddress") or "<MISSING>"
         city = a.get("addressLocality") or "<MISSING>"
         state = a.get("addressRegion") or "<MISSING>"
