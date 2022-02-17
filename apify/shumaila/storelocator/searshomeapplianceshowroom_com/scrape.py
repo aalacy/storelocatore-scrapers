@@ -76,9 +76,9 @@ def fetch_data():
         )
 
         loclist = session.get(url, headers=headers).json()["payload"]["stores"]
-
         for loc in loclist:
             title = loc["storeName"]
+            print(title)
             pcode = loc["zipCode"]
             city = loc["city"]
             state = loc["stateCode"]
@@ -118,33 +118,35 @@ def fetch_data():
                 "security": {"authToken": "", "ts": "", "src": ""},
             }
             store = lat = longt = link = "<MISSING>"
-
-            locnow = session.post(search_url, json=myobj, headers=headers).json()[
-                "payload"
-            ]["nearByStores"]
-
-            for div in locnow:
-                if (
-                    city.upper() + " - AUTH HOMETOWN" == div["storeName"]
-                    or phone.replace("(", "")
-                    .replace(")", "")
-                    .replace("-", "")
-                    .replace(" ", "")
-                    .replace(".", "")
-                    == div["phone"]
-                ):
-                    store = str(div["unitNumber"])
-                    link = (
-                        "https://www.searshomeapplianceshowroom.com/home/"
-                        + state.lower()
-                        + "/"
-                        + city.lower()
-                        + "/"
-                        + store.replace("000", "")
-                    )
-                    longt = div["storeDetails"]["longitude"]
-                    lat = div["storeDetails"]["latitude"]
-                    break
+            try:
+                locnow = session.post(search_url, json=myobj, headers=headers).json()[
+                    "payload"
+                ]["nearByStores"]
+                for div in locnow:
+                    if (
+                        city.upper() + " - AUTH HOMETOWN" == div["storeName"]
+                        or phone.replace("(", "")
+                        .replace(")", "")
+                        .replace("-", "")
+                        .replace(" ", "")
+                        .replace(".", "")
+                        == div["phone"]
+                    ):
+                        store = str(div["unitNumber"])
+                        link = (
+                            "https://www.searshomeapplianceshowroom.com/home/"
+                            + state.lower()
+                            + "/"
+                            + city.lower()
+                            + "/"
+                            + store.replace("000", "")
+                        )
+                        longt = div["storeDetails"]["longitude"]
+                        lat = div["storeDetails"]["latitude"]
+                        break
+            except:
+                store = lat = longt = link = "<MISSING>"
+                print(street, state)
             yield SgRecord(
                 locator_domain="https://www.searshomeapplianceshowroom.com/",
                 page_url=link,
