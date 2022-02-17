@@ -78,7 +78,6 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()["payload"]["stores"]
         for loc in loclist:
             title = loc["storeName"]
-            print(title)
             pcode = loc["zipCode"]
             city = loc["city"]
             state = loc["stateCode"]
