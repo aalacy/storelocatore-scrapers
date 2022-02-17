@@ -22,6 +22,8 @@ def fetch_data():
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
         sn = poi["name"].lower().replace(" ", "-")
+        if poi["name"] == "BR Frederiksberg":
+            sn = "br-frederiksberg-centret"
         hoo = []
         for e in poi["hours"]:
             if e["closed"]:
