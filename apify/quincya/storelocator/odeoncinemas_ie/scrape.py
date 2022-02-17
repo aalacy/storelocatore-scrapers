@@ -1,4 +1,5 @@
 import json
+import os
 
 from bs4 import BeautifulSoup
 
@@ -10,6 +11,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
 
 from sgrequests import SgRequests
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-gb:{}@proxy.apify.com:8000/"
 
 
 def fetch_data(sgw: SgWriter):
