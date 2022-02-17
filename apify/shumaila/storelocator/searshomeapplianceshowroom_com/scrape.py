@@ -145,7 +145,6 @@ def fetch_data():
                         break
             except:
                 store = lat = longt = link = "<MISSING>"
-                print(street, state)
             yield SgRecord(
                 locator_domain="https://www.searshomeapplianceshowroom.com/",
                 page_url=link,
