@@ -46,7 +46,10 @@ def fetch_data():
                     if "," in phone:
                         phone = ""
                 raw_address = (
-                    raw_address.split("Tlf")[0].split("Teléf")[0].split("Telf")[0]
+                    raw_address.split("Tlf")[0]
+                    .split("Teléf")[0]
+                    .split("Telf")[0]
+                    .split("telf:")[0]
                 )
                 raw_address = " ".join(raw_address.split())
                 addr = parse_address_intl(raw_address)
@@ -59,7 +62,9 @@ def fetch_data():
                 zip_code = addr.postcode
             if not raw_address:
                 raw_address = ""
-            hoo = " ".join(poi_html.xpath('.//p[@class="horarios"]/text()')[0].split())
+            hoo = " ".join(
+                " ".join(poi_html.xpath('.//p[@class="horarios"]/text()')).split()
+            )
 
             item = SgRecord(
                 locator_domain=domain,
