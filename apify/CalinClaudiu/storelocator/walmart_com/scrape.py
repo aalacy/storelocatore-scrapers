@@ -112,14 +112,16 @@ def fetch_other(session, state):
         logger.info(str("https://www.walmart.com" + next_r.url))
         try:
             res = SgRequests.raise_on_err(
-            session.get("https://www.walmart.com" + next_r.url, headers=headers)
-        )
+                session.get("https://www.walmart.com" + next_r.url, headers=headers)
+            )
         except Exception as e:
             if "520" or "404" in str(e):
                 try:
                     res = SgRequests.raise_on_err(
-            session.get("https://www.walmart.com" + next_r.url, headers=headers)
-        )
+                        session.get(
+                            "https://www.walmart.com" + next_r.url, headers=headers
+                        )
+                    )
                 except Exception:
                     continue
             else:
@@ -136,7 +138,7 @@ def test_other(session):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    session = SgRequests(dont_retry_status_codes = set([404,520]))
+    session = SgRequests(dont_retry_status_codes=set([404, 520]))
     logger.info(test_other(session))
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
