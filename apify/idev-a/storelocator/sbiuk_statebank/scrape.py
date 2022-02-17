@@ -30,9 +30,9 @@ def fetch_data():
             )
             raw_address = aa[-1]
             if "Business Hours:" in aa[0]:
-                continue
+                raw_address = ""
             if not raw_address:
-                continue
+                raw_address = _.h4.text.strip()
             addr = parse_address_intl(raw_address + ", United Kingdom")
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
