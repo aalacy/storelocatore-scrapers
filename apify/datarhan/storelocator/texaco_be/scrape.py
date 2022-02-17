@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 
 
 def fetch_data():
@@ -22,7 +22,9 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BELGIUM], expected_search_radius_miles=20
+        country_codes=[SearchableCountries.BELGIUM],
+        expected_search_radius_miles=1,
+        granularity=Grain_2(),
     )
     for code in all_codes:
         frm = f"type=search&show=private&address={code}&ajax=1"
@@ -67,9 +69,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
         )
     ) as writer:
         for item in fetch_data():
