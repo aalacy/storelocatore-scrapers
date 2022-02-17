@@ -1,0 +1,14 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 6 concerning rows. Examples:
+     street_address              REASON  rowNumber
+21      CONGRESS ST  ADDR_HAS_NO_NUMBER         21
+36         UNION RD  ADDR_HAS_NO_NUMBER         36
+40          MAIN ST  ADDR_HAS_NO_NUMBER         40
+42  MONTICELLO BLVD  ADDR_HAS_NO_NUMBER         42
+46   CASTLETON ROAD  ADDR_HAS_NO_NUMBER         46
+
+
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+      zip state                REASON  rowNumber
+49  03025    MA  ZIPCODE_NOT_IN_STATE         49

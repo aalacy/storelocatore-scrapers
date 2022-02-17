@@ -1,131 +1,225 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries, Grain_2
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from typing import Iterable, Tuple, Callable
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
-import json
+import dirtyjson as json
+import re
+from tenacity import retry, stop_after_attempt, wait_fixed
 
-logger = SgLogSetup().get_logger("comerica_com")
-
+logger = SgLogSetup().get_logger("golftec")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
 locator_domain = "https://www.golftec.com"
-
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-    max_radius_miles=None,
-    max_search_results=None,
-)
+china_url = "https://www.golftec.cn/golf-lessons/nanshan"
+jp_url = "https://golftec.golfdigest.co.jp/"
 
 
-def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
-    total = 0
-    for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Geo Code %s..." % lat, lng))
-        url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
-        locations = session.get(url, headers=headers, timeout=15).json()
-        total += len(locations)
-        if "centers" in locations:
-            for _ in locations["centers"]:
-                page_url = f"{locator_domain}{_['link']}"
-                res = session.get(page_url, headers=headers, timeout=15)
-                if res.status_code != 200:
-                    continue
-                soup = bs(res.text, "lxml")
-                try:
-                    store = json.loads(
-                        soup.find("script", type="application/ld+json").string.strip()
+def fetch_cn(http, url):
+    logger.info(url)
+    res = http.get(url, headers=headers)
+    sp1 = bs(res.text, "lxml")
+    ss = json.loads(sp1.find("script", type="application/ld+json").string)
+    raw_address = (
+        sp1.find("p", string=re.compile(r"地址")).text.replace("地址", "").replace("：", "")
+    )
+    city = "市" + raw_address.split("市")[0]
+    street_address = raw_address.split("市")[-1]
+    hours = [
+        ": ".join(hh.stripped_strings)
+        for hh in sp1.select("div.center-details__hours ul li")
+    ]
+    yield SgRecord(
+        page_url=url,
+        location_name=ss["name"],
+        street_address=street_address,
+        city=city,
+        country_code="China",
+        latitude=ss["geo"]["latitude"],
+        longitude=ss["geo"]["longitude"],
+        phone=ss["contactPoint"]["telephone"],
+        hours_of_operation="; ".join(hours),
+        locator_domain="https://www.golftec.cn",
+        raw_address=raw_address,
+    )
+
+
+def fetch_jp(http, url):
+    logger.info(url)
+    res = http.get(url, headers=headers)
+    sp1 = bs(res.text, "lxml")
+    links = sp1.select("dl.p-footer__salesWrap dd")[0].select(
+        "ul.p-footer__store li.p-footer__store-list a"
+    )
+    for link in links:
+        if "sec01" in link["href"]:
+            continue
+        page_url = "https://golftec.golfdigest.co.jp" + link["href"]
+        logger.info(page_url)
+        sp2 = bs(http.get(page_url, headers=headers).text, "lxml")
+        s_data = json.loads(sp2.find("script", type="application/ld+json").string)
+        raw_address = (
+            " ".join(sp2.select_one("p.studioAccess__detail__adress").stripped_strings)
+            .replace("〒", "")
+            .strip()
+        )
+        zip_postal = raw_address.split()[0]
+        s_c = " ".join(raw_address.split()[1:])
+        ss = state = city = street_address = ""
+        if "都" in s_c:
+            ss = s_c.split("都")[-1]
+            state = s_c.split("都")[0] + "都"
+        elif "県" in s_c:
+            ss = s_c.split("県")[-1]
+            state = s_c.split("県")[0] + "県"
+        elif "府" in s_c:
+            ss = s_c.split("府")[-1]
+            state = s_c.split("府")[0] + "府"
+
+        if "市" in ss:
+            city = ss.split("市")[0] + "市"
+            street_address = ss.split("市")[-1]
+        else:
+            street_address = ss
+
+        hours = sp2.select_one(
+            "dl.p-studioInfo__desc.-businessHours dd.p-studioInfo__desc__content"
+        ).text.strip()
+        coord = (
+            sp2.select_one("p.studioAccess__detail__map")
+            .iframe["src"]
+            .split("!1d")[1]
+            .split("!2m")[0]
+            .split("!3m")[0]
+            .split("!3d")
+        )
+        yield SgRecord(
+            page_url=page_url,
+            location_name=s_data["name"],
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code="JP",
+            latitude=coord[1],
+            longitude=coord[0],
+            phone=s_data["telephone"],
+            hours_of_operation=hours,
+            locator_domain="https://golftec.golfdigest.co.jp",
+            raw_address=raw_address,
+        )
+
+
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(2))
+def get_locs(http, url):
+    res = http.get(url, headers=headers)
+    return res.json()
+
+
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        # Need to add dedupe. Added it in pipeline.
+        maxZ = items_remaining
+
+        lat = coord[0]
+        lng = coord[1]
+        with SgRequests(proxy_country="us") as http:
+            if items_remaining > maxZ:
+                maxZ = items_remaining
+            url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
+
+            try:
+                locations = get_locs(http, url)
+            except:
+                logger.info(f"[{lat}, {lng}] failed")
+                locations = {}
+
+            if "centers" in locations:
+                found_location_at(lat, lng)
+                for _ in locations["centers"]:
+                    page_url = f"{locator_domain}{_['link']}"
+                    res = http.get(page_url, headers=headers)
+                    if res.status_code != 200:
+                        continue
+                    soup = bs(res.text, "lxml")
+                    street_address = _["street1"]
+                    if _["street2"]:
+                        street_address += " " + _["street2"]
+                    if street_address and "coming soon" in street_address.lower():
+                        continue
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in soup.select(
+                            "div.center-details__hours div.seg-center-hours ul li"
+                        )
+                    ]
+                    if not hours:
+                        hours = [
+                            ": ".join(hh.stripped_strings)
+                            for hh in soup.select("div.center-details__hours ul li")
+                        ]
+                    yield SgRecord(
+                        page_url=page_url,
+                        store_number=_["cid"],
+                        location_name=_["name"],
+                        street_address=street_address.replace(
+                            "Inside Golf Town", ""
+                        ).strip(),
+                        city=_["city"],
+                        state=_["state"],
+                        zip_postal=_["zip"],
+                        country_code=_["country"],
+                        phone=_["phone"],
+                        hours_of_operation="; ".join(hours),
+                        locator_domain=locator_domain,
                     )
-                except:
-                    continue
-                search.found_location_at(
-                    store["geo"]["latitude"],
-                    store["geo"]["longitude"],
+
+                progress = str(round(100 - (items_remaining / maxZ * 100), 2)) + "%"
+
+                logger.info(
+                    f"[{lat}, {lng}] [{len(locations['centers'])}] | [{progress}]"
                 )
-                store["lat"] = store["geo"]["latitude"]
-                store["lng"] = store["geo"]["longitude"]
-                store["street"] = store["address"]["streetAddress"]
-                store["city"] = store["address"]["addressLocality"]
-                store["state"] = store["address"]["addressRegion"]
-                store["zip_postal"] = store["address"]["postalCode"]
-                store["country"] = store["address"]["addressCountry"]
-                hours = []
-                for hh in store["openingHoursSpecification"]:
-                    day = hh["dayOfWeek"].split("/")[-1]
-                    time = "closed"
-                    if "opens" in hh and "closes" in hh:
-                        time = f"{hh['opens']}-{hh['closes']}"
-                    hours.append(f"{day}: {time}")
-                store["hours"] = "; ".join(hours) or "<MISSING>"
-                yield store
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-
-            logger.info(
-                f"found: {len(locations)} | total: {total} | progress: {progress}"
-            )
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["url"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["name"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["lat"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["lng"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip_postal"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["telephone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
-        location_type=sp.MappingField(
-            mapping=["@type"],
-        ),
-        store_number=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
 
 
 if __name__ == "__main__":
-    scrape()
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_2()
+    )
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1500
+        )
+    ) as writer:
+        with SgRequests(proxy_country="us") as http:
+            for rec in fetch_cn(http, china_url):
+                writer.write_row(rec)
+
+            for rec in fetch_jp(http, jp_url):
+                writer.write_row(rec)
+
+            search_iter = ExampleSearchIteration()
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[
+                    SearchableCountries.USA,
+                    SearchableCountries.CANADA,
+                    SearchableCountries.SINGAPORE,
+                ],
+            )
+
+            for rec in par_search.run():
+                writer.write_row(rec)

@@ -2,12 +2,12 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
-from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
+from sglogging import SgLogSetup
 import dirtyjson as json
 
 logger = SgLogSetup().get_logger("kfcvietnam")
@@ -28,11 +28,11 @@ header1 = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-base_url = "https://kfcvietnam.com.vn/vi/nha-hang.html"
+base_url = "https://kfcvietnam.com.vn/vi/find-a-kfc.html"
 locator_domain = "https://kfcvietnam.com.vn"
 detail_url = "https://kfcvietnam.com.vn/vi/load_restaurant"
-session = SgRequests().requests_retry_session()
-max_workers = 4
+session = SgRequests()
+max_workers = 2
 
 
 def fetchConcurrentSingle(link):
@@ -66,9 +66,9 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def fetch_data():
+    res = session.get(base_url, headers=_headers).text
     locations = json.loads(
-        session.get(base_url, headers=_headers)
-        .text.split("var provine_name =")[1]
+        res.split("var provine_name =")[1]
         .split("var")[0]
         .replace("\r\n", "")
         .strip()[:-1]
@@ -80,32 +80,53 @@ def fetch_data():
     for link, res in fetchConcurrentList(links):
         for key, _ in enumerate(bs(res["html"], "lxml").select("li.find_store_item")):
             store_number = _["onclick"].split("(")[1].split(",")[0]
-            addr = parse_address_intl(
-                _.select_one("div.store_name p").text.strip() + ", Vietnam"
-            )
+            raw_address = _.select_one("div.store_name p").text.strip()
+            addr = parse_address_intl(raw_address + ", Vietnam")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             coord = res["restaurant"][key]
+            latitude = coord[1]
+            longitude = coord[2]
+            if float(latitude) < -90 or float(latitude) > 90:
+                latitude = str(latitude)[:2] + "." + str(latitude)[2:]
+            if float(longitude) < -180 or float(longitude) > 180:
+                longitude = str(longitude)[:3] + "." + str(longitude)[3:]
+
             hours = list(_.select_one("div.find_store_des").stripped_strings)[1:]
             yield SgRecord(
                 page_url=res["url"],
                 store_number=store_number,
-                location_name=_.select_one("div.store_name h5").text.strip(),
+                location_name=_.select_one("div.store_name h5")
+                .text.replace("–", "-")
+                .strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=link["name"],
                 state=addr.state,
-                zip_postal=addr.postcode,
                 country_code="Vietnam",
                 locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[2],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+
+        session.close()

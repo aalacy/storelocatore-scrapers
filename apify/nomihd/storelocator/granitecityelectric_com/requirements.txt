@@ -3,5 +3,5 @@ sglogging==0.0.4
 lxml==4.6.2
 us==1.0.0
 sgvalidator==0.0.70
-sgrequests==0.1.12
+sgrequests==0.1.13
 sgscrape==0.1.13
