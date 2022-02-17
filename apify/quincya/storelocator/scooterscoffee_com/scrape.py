@@ -72,7 +72,7 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = ""
             latitude = store["lat"]
             longitude = store["lng"]
-            link = ""
+            link = "https://www.scooterscoffee.com/locations"
 
             if "temporarily closed" in location_name.lower():
                 hours_of_operation = "Temporarily Closed"
