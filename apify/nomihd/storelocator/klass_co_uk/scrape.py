@@ -27,7 +27,7 @@ headers = {
     "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
-data = '{ "distanceLimit": "20", "latitude": "53.59773759999999",  "longittude": "-2.1739569",  "type": "0",  "address": "53.59787386433848, -2.1736965179443"}'
+data = '{ "distanceLimit": "99999999", "latitude": "53.59773759999999",  "longittude": "-2.1739569",  "type": "0",  "address": "53.59787386433848, -2.1736965179443"}'
 
 
 def fetch_data():
@@ -57,7 +57,13 @@ def fetch_data():
             elif location_type == "1":
                 location_type = "Klass Concessions"
 
-            raw_address = store["Address"]
+            raw_address = (
+                store["Address"]
+                .replace("Address:", "")
+                .strip()
+                .replace(",,", ",")
+                .strip()
+            )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
