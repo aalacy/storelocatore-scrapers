@@ -103,6 +103,9 @@ def fetch_data():
         if not contents:
             break
         for row in contents:
+            is_closed = row.find("div", {"data-autoheight": "description"}).text.strip()
+            if "Permanently closed" in is_closed:
+                continue
             page_url = (
                 BASE_URL
                 + row.find("a", {"class": "button secondary-button w-100 px-i"})["href"]
@@ -132,7 +135,6 @@ def fetch_data():
                     zip_postal = zip
             country_code = "UK"
             phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
-            hours_of_operation = MISSING
             hours_of_operation = get_hoo(store)
             location_type = MISSING
             store_number = MISSING
