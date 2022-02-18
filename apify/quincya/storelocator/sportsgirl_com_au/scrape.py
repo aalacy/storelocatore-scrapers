@@ -19,11 +19,11 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
-    base = str(BeautifulSoup(req.text, "lxml"))
+    base_str = str(BeautifulSoup(req.text, "lxml"))
 
     locator_domain = "https://www.sportsgirl.com.au"
 
-    js = base.split('defaultLocations":')[1].split("}}}")[0] + "}}}"
+    js = base_str.split('defaultLocations":')[1].split("}}}")[0] + "}}}"
     items = json.loads(js)["store"]["items"]
 
     for item in items:
