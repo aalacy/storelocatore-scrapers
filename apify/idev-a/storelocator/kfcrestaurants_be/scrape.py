@@ -37,17 +37,27 @@ def fetch_data():
             if res.status_code != 200:
                 continue
             sp1 = bs(res.text, "lxml")
-            addr = sp1.select_one("div.et_section_regular div.et_pb_text_inner p").text
-            if "Bekijk Google Maps" == addr:
-                addr = sp1.select_one(
+            raw_address = (
+                sp1.select_one("div.et_section_regular div.et_pb_text_inner p")
+                .text.replace(",", "")
+                .strip()
+            )
+            if "Bekijk Google Maps" == raw_address:
+                raw_address = sp1.select_one(
                     "div.et_section_regular div.et_pb_text_inner h2"
                 ).text
             street_address = sp1.select_one(
                 "div.et_section_regular div.et_pb_text_inner h1"
             ).text
-            _addr = addr.split(" ")
+            _addr = raw_address.split()
+            zip_postal = city = ""
             if len(_addr) > 2:
                 street_address = _addr[0]
+            if len(_addr) > 1:
+                city = _addr[-1]
+                zip_postal = _addr[-2]
+            if raw_address.isdigit():
+                zip_postal = raw_address
             try:
                 coord = (
                     sp1.select_one("div.et_section_regular div.et_pb_text_inner p a")[
@@ -58,7 +68,17 @@ def fetch_data():
                     .split(",")
                 )
             except:
-                coord = ["", ""]
+                try:
+                    coord = (
+                        sp1.select_one(
+                            "div.et_section_regular div.et_pb_text_inner p a"
+                        )["href"]
+                        .split("[[")[1]
+                        .split("],")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["", ""]
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("div.et_section_regular table tr")
@@ -72,9 +92,9 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h4.text.strip(),
-                street_address=street_address.replace(",", ""),
-                city=addr.split(" ")[-1].replace(",", ""),
-                zip_postal=addr.split(" ")[-2].replace(",", ""),
+                street_address=street_address,
+                city=city,
+                zip_postal=zip_postal,
                 country_code="Belgium",
                 locator_domain=locator_domain,
                 latitude=coord[0],
@@ -83,6 +103,7 @@ def fetch_data():
                 .replace("–", "-")
                 .replace("\xa0", "")
                 .replace("     ", ":"),
+                raw_address=raw_address,
             )
 
 

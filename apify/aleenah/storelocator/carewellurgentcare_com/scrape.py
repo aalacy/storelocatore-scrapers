@@ -58,6 +58,7 @@ def fetch_data():
             )
             if len(hours_of_operation) > 2:
                 del hours_of_operation[0]
+            hours_of_operation = " ".join(hours_of_operation)
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -73,7 +74,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
 
