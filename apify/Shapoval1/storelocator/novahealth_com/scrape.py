@@ -25,6 +25,10 @@ def fetch_data(sgw: SgWriter):
             .replace("&#038;", "&")
             .strip()
         )
+        if location_name.find("–") != -1:
+            location_name = location_name.split("–")[0].strip()
+        if location_name.find("—") != -1:
+            location_name = location_name.split("—")[0].strip()
         street_address = (
             f"{j.get('address')} {j.get('address2')}".strip() or "<MISSING>"
         )
@@ -49,6 +53,17 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//h2[contains(text(), "Hours")]/following-sibling::ul/li[1]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
         if phone == "<MISSING>" and page_url != "https://www.novahealth.com/locations/":
             phone = (
                 "".join(
@@ -90,8 +105,11 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.find("Nova Health") != -1:
             hours_of_operation = hours_of_operation.split("Nova Health")[0].strip()
-        if page_url != "https://www.novahealth.com/locations/":
-            location_name = "".join(tree.xpath("//h1//text()")).strip() or "<MISSING>"
+        if (
+            page_url == "https://www.novahealth.com/locations/nova-health-mcminnville/"
+            and street_address == "4001 Tieton Drive"
+        ):
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
