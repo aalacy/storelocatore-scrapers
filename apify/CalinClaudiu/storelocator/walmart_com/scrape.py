@@ -109,9 +109,23 @@ def other_source(session, state):
 def fetch_other(session, state):
     # there's this API for nearby stores.. but nothing for actual store by id "https://www.walmart.com/store/electrode/api/fetch-nearby-stores?store-id={id}"
     for next_r in state.request_stack_iter():
-        res = SgRequests.raise_on_err(
-            session.get("https://www.walmart.com" + next_r.url, headers=headers)
-        )
+        logger.info(str("https://www.walmart.com" + next_r.url))
+        try:
+            res = SgRequests.raise_on_err(
+                session.get("https://www.walmart.com" + next_r.url, headers=headers)
+            )
+        except Exception as e:
+            if "520" or "404" in str(e):
+                try:
+                    res = SgRequests.raise_on_err(
+                        session.get(
+                            "https://www.walmart.com" + next_r.url, headers=headers
+                        )
+                    )
+                except Exception:
+                    continue
+            else:
+                raise Exception
         yield grab_json(b4(res.text, "lxml"))
 
 
@@ -124,14 +138,14 @@ def test_other(session):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    session = SgRequests()
+    session = SgRequests(dont_retry_status_codes=set([404, 520]))
     logger.info(test_other(session))
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
         yield item
     maxZ = search.items_remaining()
     total = 0
-    for item in other_source(session):
+    for item in other_source(session, state):
         yield item
     for code in search:
         if search.items_remaining() > maxZ:
@@ -164,34 +178,37 @@ def fetch_data():
 
 
 def human_hours(k):
-    if not k["open24Hours"]:
-        unwanted = ["open24", "todayHr", "tomorrowHr"]
-        h = []
-        for day in list(k):
-            if not any(i in day for i in unwanted):
-                if k[day]:
-                    if "temporaryHour" not in day:
-                        if k[day]["closed"]:
-                            h.append(str(day).capitalize() + ": Closed")
-                        else:
-                            if k[day]["openFullDay"]:
-                                h.append(str(day).capitalize() + ": 24Hours")
+    try:
+        if not k["open24Hours"]:
+            unwanted = ["open24", "todayHr", "tomorrowHr"]
+            h = []
+            for day in list(k):
+                if not any(i in day for i in unwanted):
+                    if k[day]:
+                        if "temporaryHour" not in day:
+                            if k[day]["closed"]:
+                                h.append(str(day).capitalize() + ": Closed")
                             else:
-                                h.append(
-                                    str(day).capitalize()
-                                    + ": "
-                                    + str(k[day]["startHr"])
-                                    + "-"
-                                    + str(k[day]["endHr"])
-                                )
+                                if k[day]["openFullDay"]:
+                                    h.append(str(day).capitalize() + ": 24Hours")
+                                else:
+                                    h.append(
+                                        str(day).capitalize()
+                                        + ": "
+                                        + str(k[day]["startHr"])
+                                        + "-"
+                                        + str(k[day]["endHr"])
+                                    )
+                        else:
+                            if k[day]:
+                                h.append("Temporary hours: " + str(k[day].items()))
                     else:
-                        if k[day]:
-                            h.append("Temporary hours: " + str(k[day].items()))
-                else:
-                    h.append(str(day).capitalize() + ": <MISSING>")
-        return "; ".join(h)
-    else:
-        return "24/7"
+                        h.append(str(day).capitalize() + ": <MISSING>")
+            return "; ".join(h)
+        else:
+            return "24/7"
+    except Exception:
+        return str(k)
 
 
 def add_walmart(x):
