@@ -17,8 +17,17 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.findAll("loc")
+    linklist.append(
+        "https://www.loanmaxtitleloans.net/locations/wisconsin/green-bay/704-s-military-ave"
+    )
+    linklist.append(
+        "https://www.loanmaxtitleloans.net/locations/arizona/mesa/2009-w-main-st"
+    )
     for link in linklist:
-        link = link.text
+        try:
+            link = link.text
+        except:
+            pass
         try:
             if (
                 "locations" in link
