@@ -37,7 +37,7 @@ def fetch_data():
         page_url = row["storeURL"]
         location_name = row["storeName"]
         street_address = re.sub(
-            r"^.,|,.$",
+            r"^.,|,.$|, .$|,$",
             "",
             (row["shopAddress"] + ", " + row["streetAddress"]).strip().rstrip(","),
         ).strip()
