@@ -25,49 +25,54 @@ def fetch_data():
                 + str(y)
                 + "&radius=1000"
             )
-            r = session.get(url, headers=headers)
-            website = "swarovski.com"
-            for item in json.loads(r.content)["results"]:
-                name = item["displayName"]
-                store = item["name"]
-                loc = "https://www.swarovski.com" + item["url"]
-                lat = item["geoPoint"]["latitude"]
-                lng = item["geoPoint"]["longitude"]
-                add = item["address"]["line1"]
-                city = item["address"]["town"]
-                state = "<MISSING>"
-                zc = item["address"]["postalCode"]
-                phone = item["address"]["phone"]
-                country = item["address"]["country"]["isocode"]
-                typ = item["distributionType"]
-                hours = ""
-                for day in item["openingHours"]["weekDayOpeningList"]:
-                    dname = day["weekDay"]
-                    dopen = day["openingTime"]["formattedHour"]
-                    dclose = day["closingTime"]["formattedHour"]
-                    hrs = dname + ": " + dopen + "-" + dclose
-                    if day["closed"]:
-                        hrs = dname + ": Closed"
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+            try:
+                r = session.get(url, headers=headers)
+                website = "swarovski.com"
+                for item in json.loads(r.content)["results"]:
+                    name = item["displayName"]
+                    store = item["name"]
+                    loc = "https://www.swarovski.com" + item["url"]
+                    lat = item["geoPoint"]["latitude"]
+                    lng = item["geoPoint"]["longitude"]
+                    add = item["address"]["line1"]
+                    city = item["address"]["town"]
+                    state = "<MISSING>"
+                    zc = item["address"]["postalCode"]
+                    phone = item["address"]["phone"]
+                    country = item["address"]["country"]["isocode"]
+                    typ = item["distributionType"]
+                    hours = ""
+                    for day in item["openingHours"]["weekDayOpeningList"]:
+                        dname = day["weekDay"]
+                        dopen = day["openingTime"]["formattedHour"]
+                        dclose = day["closingTime"]["formattedHour"]
+                        hrs = dname + ": " + dopen + "-" + dclose
+                        if day["closed"]:
+                            hrs = dname + ": Closed"
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+                    if len(phone) < 6:
+                        phone = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+            except:
+                pass
 
 
 def scrape():

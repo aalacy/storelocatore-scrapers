@@ -33,19 +33,25 @@ def fetch_data():
         phone = loc_dom.xpath('//div[@class="wpsl-location-phone"]/p/text()')
         phone = phone[0].split("Phone: ")[-1] if phone else ""
         hoo = loc_dom.xpath(
-            '//p[contains(text(), "Hours of Operation")]/following-sibling::p/text()'
+            '//div[@class="wpsl-location-info"]/following-sibling::p/text()'
         )
         if not hoo:
-            hoo = loc_dom.xpath('//p[contains(text(), "Mon-")]/text()')
-        if not hoo:
-            hoo = loc_dom.xpath('//p[contains(text(), "Monday-")]/text()')
-        hoo = " ".join(
-            [
-                e.replace("\r", "").replace("\t", "").replace("\n", "").strip()
-                for e in hoo
-                if e.strip() and "Note: " not in e
-            ]
-        ).replace("Hours of Operation", "")
+            hoo = loc_dom.xpath('//div[@class="wpsl-location-additionalinfo"]/p/text()')
+        hoo = (
+            " ".join(
+                [
+                    e.replace("\r\n", " ")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace("\n", "")
+                    .strip()
+                    for e in hoo
+                    if e.strip() and "Note: " not in e
+                ]
+            )
+            .replace("Hours of Operation", "")
+            .replace("Hours of operation:", "")
+        )
 
         item = SgRecord(
             locator_domain=domain,

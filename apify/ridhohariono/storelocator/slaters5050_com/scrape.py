@@ -92,7 +92,7 @@ def fetch_data():
                 .text.strip()
                 .replace("HOURS", "")
             )
-            map_link = info.find("iframe")["data-src"]
+            map_link = info.find("iframe")["src"]
             latitude, longitude = get_latlong(map_link)
             location_type = MISSING
         else:

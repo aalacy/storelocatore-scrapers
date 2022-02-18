@@ -4,6 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "carlosokellys.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -37,7 +39,7 @@ def fetch_data():
 
         raw_info = store.xpath('div[@class="moduleItemIntrotext"]/p')
         if len(raw_info) > 0:
-            raw_info = raw_info[-1].xpath("text()")
+            raw_info = raw_info[-1].xpath(".//text()")
 
         add_list = []
         for add in raw_info:
@@ -66,26 +68,16 @@ def fetch_data():
             )
         ).strip()
 
-        hours_of_operation = (
-            "".join(
-                store.xpath(
-                    'div[@class="moduleItemIntrotext"]/p[contains(text(),"New Hours:")]/text()'
-                )
-            )
-            .strip()
-            .replace("New Hours:", "")
-            .strip()
-        )
-        if len(hours_of_operation) <= 0:
-            hours = store.xpath('div[@class="moduleItemIntrotext"]/p')
-            for hour in hours:
-                if "New Hours:" in "".join(hour.xpath(".//text()")).strip():
-                    hours_of_operation = (
-                        hour.xpath("text()")[-1]
-                        .strip()
-                        .replace("New Hours:", "")
-                        .strip()
-                    )
+        hours = store.xpath('div[@class="moduleItemIntrotext"]/p//text()')
+        hours_list = []
+        for hour in hours:
+            if (
+                "Sun-Thurs" in "".join(hour).strip()
+                or "Fri-Sat" in "".join(hour).strip()
+            ):
+                hours_list.append("".join(hour).strip())
+
+        hours_of_operation = "; ".join(hours_list).strip()
 
         store_number = "<MISSING>"
 
@@ -113,7 +105,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

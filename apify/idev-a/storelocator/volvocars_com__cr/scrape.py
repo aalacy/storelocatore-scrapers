@@ -79,9 +79,13 @@ def fetch_data():
                         .replace("(Após-Venda)", "")
                         .split(",")[0]
                         .replace("Växel:", "")
-                        .strip()
                         .split("/ +")[0]
+                        .split("/+")[0]
+                        .split("or")[0]
+                        .strip()
                     )
+                    if "@" in phone:
+                        phone = ""
                 yield SgRecord(
                     store_number=_["DealerId"],
                     location_name=_["Name"],

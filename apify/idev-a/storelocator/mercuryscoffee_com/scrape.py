@@ -33,7 +33,7 @@ def fetch_data():
 
             hours = []
             for y, bb in enumerate(block):
-                if bb.startswith("MON"):
+                if bb.startswith("MON") or bb.startswith("SUN"):
                     raw_address = " ".join(block[:y])
                     hours = block[y:-1]
                     break

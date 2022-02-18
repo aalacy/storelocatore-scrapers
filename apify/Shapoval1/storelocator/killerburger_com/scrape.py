@@ -33,7 +33,10 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
+        try:
+            postal = ad.split(",")[1].split()[1].strip()
+        except:
+            postal = "<MISSING>"
         country_code = "US"
         city = ad.split(",")[0].strip()
         jsblock = (
@@ -58,11 +61,19 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", " ")
             .replace("(New Hours)", "")
             .replace("Outdoor Seating Available too!", "")
+            .replace("Open", "")
             .strip()
             or "<MISSING>"
         )
         if phone == "Coming Soon":
             phone = "<MISSING>"
+            hours_of_operation = "Coming Soon"
+        cms = "".join(
+            d.xpath(
+                './/p[contains(text(), "COMING")]/text() | .//p[contains(text(), "OPENING")]/text()'
+            )
+        )
+        if cms:
             hours_of_operation = "Coming Soon"
 
         row = SgRecord(

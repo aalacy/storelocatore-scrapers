@@ -31,6 +31,8 @@ def fetch_data():
             all_locations = dom.xpath('//div[@class="location-name mb-20"]/a/@href')
             for page_url in all_locations:
                 loc_response = session.get(page_url)
+                if str(loc_response.url) != page_url:
+                    continue
                 loc_dom = etree.HTML(loc_response.text)
 
                 poi = loc_dom.xpath(
@@ -41,6 +43,8 @@ def fetch_data():
                 country_code = "US"
                 if len(zip_code.split()) == 2:
                     country_code = "CA"
+                hoo = loc_dom.xpath('//div[@class="hours"]//text()')
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -56,7 +60,7 @@ def fetch_data():
                     location_type=poi["@type"],
                     latitude=poi.get("geo", {}).get("latitude"),
                     longitude=poi.get("geo", {}).get("longitude"),
-                    hours_of_operation=poi.get("openingHours"),
+                    hours_of_operation=hoo,
                 )
 
                 yield item

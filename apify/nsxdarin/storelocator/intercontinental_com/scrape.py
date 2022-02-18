@@ -177,6 +177,8 @@ def fetch_data():
             and "7" not in phone
         ):
             phone = "<MISSING>"
+        city = city.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
         if " Hotels" not in name and name != "":
             yield SgRecord(
                 locator_domain=website,

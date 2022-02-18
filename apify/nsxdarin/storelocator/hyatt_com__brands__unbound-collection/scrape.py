@@ -20,7 +20,6 @@ def fetch_data():
     hours = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '{"spiritCode":"' in line:
             items = line.split('"spiritCode":"')
             for item in items:
