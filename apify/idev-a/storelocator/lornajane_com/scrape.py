@@ -56,12 +56,12 @@ class ExampleSearchIteration(SearchIteration):
                 if phone == "null":
                     phone = ""
                 try:
-                    coord = (
+                    _coord = (
                         _.select_one("a.store-map")["href"].split("addr=")[1].split(",")
                     )
-                    found_location_at(coord[0], coord[1])
+                    found_location_at(_coord[0], _coord[1])
                 except:
-                    coord = ["", ""]
+                    _coord = ["", ""]
                 page_url = _.select_one("div.store-name a")["href"]
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 hours = []
@@ -80,8 +80,8 @@ class ExampleSearchIteration(SearchIteration):
                     store_number=_["data-store-id"],
                     location_name=_["data-store-name"],
                     phone=phone,
-                    latitude=coord[0],
-                    longitude=coord[1],
+                    latitude=_coord[0],
+                    longitude=_coord[1],
                     hours_of_operation="; ".join(hours),
                     raw_address=raw_address,
                 )
