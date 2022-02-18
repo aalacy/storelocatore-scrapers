@@ -89,11 +89,9 @@ def fetch_data():
 
             hours_of_operation = "; ".join(hours_list).strip()
 
-            map_info = store_res.text.split("maps.LatLng(")[1].split(")")[0]
-
             latitude, longitude = (
-                map_info.split(",")[0].strip(),
-                map_info.split(",")[1].strip(),
+                "<MISSING>",
+                "<MISSING>",
             )
 
             yield SgRecord(

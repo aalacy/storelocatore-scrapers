@@ -27,23 +27,17 @@ def fetch_data(sgw: SgWriter):
         "li", {"class": "locations-list-item"}
     )
     for div in divlist:
-        if "soon to be ideal" in div.text.lower():
-            continue
         link = div.find("div", {"class": "location-links"}).find("a")["href"]
         logger.info(link)
 
-        r = session.get(link, headers=headers)
-        base = BeautifulSoup(r.text, "lxml")
-        js = base.find("script", attrs={"type": "application/ld+json"}).contents[0]
-        data = json.loads(js)
-
         location_id = div["data-office-id"]
-
-        # Type
         location_type = "Location"
 
-        # Name
+        r = session.get(link, headers=headers)
         try:
+            base = BeautifulSoup(r.text, "lxml")
+            js = base.find("script", attrs={"type": "application/ld+json"}).contents[0]
+            data = json.loads(js)
             location_title = data["name"]
             got_page = True
         except:
