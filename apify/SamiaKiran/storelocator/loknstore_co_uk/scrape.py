@@ -91,6 +91,11 @@ def fetch_data():
                 location_type = "Temporarily Closed"
             else:
                 location_type = MISSING
+            if zip_postal == MISSING:
+                temp = raw_address.split(",")
+                zip_postal = temp[-1].split()
+                zip_postal = zip_postal[1] + " " + zip_postal[-1]
+                street_address = temp[0] + temp[1]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
