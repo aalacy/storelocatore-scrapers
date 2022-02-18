@@ -110,7 +110,7 @@ def fetch_data():
                     ):
                         street_address = address
                     else:
-                        street_address = re.sub(f",\s*{city}", "", address)
+                        street_address = re.sub(fr",\s*{city}", "", address)
 
                 store_number = "<MISSING>"
                 location_type = store["Type"]
@@ -143,7 +143,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=f'{address}, {city}, {zip}'
+                    raw_address=f"{address}, {city}, {zip}",
                 )
 
 
