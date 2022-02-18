@@ -1,6 +1,5 @@
 from sgpostal.sgpostal import parse_address_intl
 import time
-import json
 from lxml import html
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
