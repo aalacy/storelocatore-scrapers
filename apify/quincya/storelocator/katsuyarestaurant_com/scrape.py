@@ -95,7 +95,10 @@ def fetch_data(sgw: SgWriter):
                 .split(",")[0]
             ).replace('"', "")
         else:
-            location_name = base.h4.text.strip()
+            try:
+                location_name = base.h4.text.strip()
+            except:
+                continue
 
         sgw.write_row(
             SgRecord(
