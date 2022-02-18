@@ -141,9 +141,6 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.STREET_ADDRESS,
                 }
             )
