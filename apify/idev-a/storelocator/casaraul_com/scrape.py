@@ -28,7 +28,7 @@ def fetch_data():
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
-                phone=p[-1],
+                phone=p[-1].text.strip(),
                 locator_domain=locator_domain,
                 raw_address=" ".join(addr),
             )

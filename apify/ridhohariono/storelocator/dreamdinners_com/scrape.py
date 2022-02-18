@@ -33,7 +33,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -75,6 +74,10 @@ def fetch_data():
         ).text.strip()
         raw_address = store.find("div").find("p").get_text(strip=True, separator=" ")
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "339 A" in street_address:
+            street_address = "339 A North El Camino Real"
+            city = "Encinitas"
+        city = city.replace("Sunnybrook Shopping Center", "").strip()
         phone = store.find("div").find("a").text.strip()
         country_code = "US"
         store_number = key

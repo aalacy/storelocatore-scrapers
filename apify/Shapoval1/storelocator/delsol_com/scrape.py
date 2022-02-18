@@ -27,6 +27,8 @@ def fetch_data(sgw: SgWriter):
             .replace("EASTERN", "")
             .strip()
         )
+        if country_code == "HAWAII" or country_code == "ALASKA":
+            country_code = "US"
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
@@ -57,8 +59,36 @@ def fetch_data(sgw: SgWriter):
         city = a.city or "<MISSING>"
         if city == "<MISSING>":
             city = location_name.split(",")[1].strip()
-        latitude = "".join(tree.xpath("//div/@data-latitude")) or "<MISSING>"
-        longitude = "".join(tree.xpath("//div/@data-longitude")) or "<MISSING>"
+        if page_url == "https://www.delsol.com/stores/cozumel":
+            street_address = (
+                " ".join(
+                    tree.xpath(
+                        '//*[text()="Address"]/following-sibling::p[1]/text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            city = (
+                " ".join(
+                    tree.xpath(
+                        '//*[text()="Address"]/following-sibling::p[1]/text()[2]'
+                    )
+                )
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+        text = "".join(tree.xpath('//a[contains(@href,"maps")]/@href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = (
             "".join(tree.xpath('//*[text()="Contact"]/following-sibling::a[1]/text()'))
             .replace("\n", "")
@@ -75,8 +105,8 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         if (
-            hours_of_operation.find("When ships port") != -1
-            or hours_of_operation.find("When ships are in port") != -1
+            hours_of_operation.count("When ships port") > 1
+            or hours_of_operation.count("When ships are in port") > 1
         ):
             hours_of_operation = "<MISSING>"
         if hours_of_operation.find("Open May to September") != -1:

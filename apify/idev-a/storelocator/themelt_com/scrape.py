@@ -1,10 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
-import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
+import json
+import time
 
 try:
     _create_unverified_https_context = (
@@ -15,10 +16,15 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
+locator_domain = "https://www.themelt.com"
+base_url = "https://www.themelt.com/locations"
+json_url = "https://www.themelt.com/_api/cloud-data/v1/wix-data/collections/query"
+
 
 def _p(val):
     if (
-        val.replace("(", "")
+        val
+        and val.replace("(", "")
         .replace(")", "")
         .replace("+", "")
         .replace("-", "")
@@ -34,17 +40,16 @@ def _p(val):
 
 
 def fetch_data():
-    locator_domain = "https://www.themelt.com/"
-    base_url = "https://www.themelt.com/locations"
-    json_url = "/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw"
     with SgChrome() as driver:
         driver.get(base_url)
-        driver.wait_for_request(json_url, 20)
+        driver.wait_for_request(json_url, 30)
+        time.sleep(3)
+        names = []
         for rr in driver.iter_requests():
             if json_url in rr.url:
                 locations = json.loads(rr.response.body)
 
-                for _ in locations["result"]["items"]:
+                for _ in locations["items"]:
                     hours = []
                     if _["days_01"]:
                         hours.append(f"{_['days_01']}: {_['hours_01']}")
@@ -58,6 +63,19 @@ def fetch_data():
                         street_address = cross_street
                     if cross_street.split(" ")[0].strip().isdigit():
                         street_address = cross_street
+                    street_address = (
+                        street_address.split("(")[0]
+                        .split("Between")[0]
+                        .replace("Westfield Oakridge Mall,", "")
+                        .replace("Taste Food Hall:", "")
+                        .replace("at Second St.", "")
+                        .strip()
+                    )
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
+                    if not street_address:
+                        street_address = _["address"]
+                    names.append(_["address"])
                     yield SgRecord(
                         page_url=base_url,
                         location_name=_["address"],
@@ -65,7 +83,7 @@ def fetch_data():
                         city=_["city"],
                         state=_["state"],
                         country_code="US",
-                        phone=_p(_["phone_number"]),
+                        phone=_p(_.get("phone_number")),
                         locator_domain=locator_domain,
                         hours_of_operation="; ".join(hours),
                     )

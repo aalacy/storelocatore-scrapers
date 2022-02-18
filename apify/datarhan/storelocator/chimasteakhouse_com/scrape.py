@@ -44,6 +44,8 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//p[label[contains(text(), "Hours of Operation:")]]/following-sibling::p[1]/text()'
         )
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@class="hours-of-operation"]//text()')
         hoo = " ".join(hoo)
 
         with SgFirefox() as driver:

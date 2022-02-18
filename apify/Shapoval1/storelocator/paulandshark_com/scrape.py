@@ -54,6 +54,8 @@ def fetch_data(sgw: SgWriter):
             street_address = street_address.split("By Appointment")[0].strip()
         state = j.get("region") or "<MISSING>"
         postal = j.get("postcode") or "<MISSING>"
+        if postal == "." or postal == "0" or postal == "1":
+            postal = "<MISSING>"
         country_code = j.get("country_id") or "<MISSING>"
         city = j.get("city") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
