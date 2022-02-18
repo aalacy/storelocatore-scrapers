@@ -68,7 +68,17 @@ def fetch_data():
                     .split(",")
                 )
             except:
-                coord = ["", ""]
+                try:
+                    coord = (
+                        sp1.select_one(
+                            "div.et_section_regular div.et_pb_text_inner p a"
+                        )["href"]
+                        .split("[[")[1]
+                        .split("],")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["", ""]
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("div.et_section_regular table tr")
