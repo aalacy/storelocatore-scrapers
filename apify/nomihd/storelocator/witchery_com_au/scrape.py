@@ -42,8 +42,14 @@ def fetch_data():
         stores = stores_sel.xpath('//section[@class="stores"]//li/a/@href')
         for store_url in stores:
             page_url = "https://www.witchery.com.au" + store_url
-            log.info(page_url)
-            driver.get(page_url)
+            is_timeout = True
+            while is_timeout is True:
+                try:
+                    log.info(page_url)
+                    driver.get(page_url)
+                    is_timeout = False
+                except:
+                    pass
             store_sel = lxml.html.fromstring(driver.page_source)
 
             locator_domain = website
