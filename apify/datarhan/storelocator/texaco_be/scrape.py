@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import csv
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -11,6 +12,10 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 
 def fetch_data():
     session = SgRequests()
+
+    with open("belgian-cities-geocoded.csv", newline="") as f:
+        reader = csv.reader(f)
+        all_cities = list(reader)
 
     start_url = "https://www.texaco.be/handler/fillingstation/list.php"
     domain = "texaco.be"
@@ -26,8 +31,9 @@ def fetch_data():
         expected_search_radius_miles=1,
         granularity=Grain_2(),
     )
-    for code in all_codes:
-        frm = f"type=search&show=private&address={code}&ajax=1"
+
+    for city in all_cities:
+        frm = f"type=search&show=private&address={city[1]}&ajax=1"
         data = session.post(start_url, headers=hdr, data=frm).json()
 
         if data["callback"]:
