@@ -23,6 +23,19 @@ headers = {
 }
 
 
+def stores_number(hid):
+    hnumber_api = (
+        f"https://www.banfield.com/api/HospitalApi/GetHospitalInfobyId?hospitalId={hid}"
+    )
+    session = SgRequests(proxy_country="ca")
+    try:
+        store = session.get(hnumber_api, headers=headers).json()["HospitalNumber"]
+        logger.info(f"from API - Store Number: {store}")
+        return store
+    except:
+        return "<MISSING>"
+
+
 def fetch_data():
     with SgRequests(dont_retry_status_codes=([404])) as session:
         stores_req = session.get(
@@ -89,16 +102,20 @@ def fetch_data():
                         else:
                             hours = hours + "; " + hrs
 
-            store = (
-                "".join(store_sel.xpath('//div[@class="hospital-id"]/text()'))
-                .strip()
-                .replace("(#", "")
-                .strip()
-                .replace(")", "")
-                .strip()
-            )
-            if len(store) <= 0:
+                if "hospitalId=" in line2:
+                    hospital_id = line2.split("hospitalId=")[1].split('"')[0]
+
+            try:
+                store = store_sel.xpath('//div[@class="hospital-id"]/text()')[0]
+                store = store.strip().replace("(#", "").strip().replace(")", "").strip()
+                logger.info(f"Store Number: {store}")
+            except:
                 logger.error(page_url)
+                store = "<MISSING>"
+
+            if store == "<MISSING>":
+                store = stores_number(hospital_id)
+
             add = add.replace("&amp;", "&").replace("amp;", "&")
 
             yield SgRecord(
