@@ -7,7 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 
 
 def fetch_data():
@@ -26,11 +25,6 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BELGIUM],
-        expected_search_radius_miles=1,
-        granularity=Grain_2(),
-    )
 
     for city in all_cities:
         frm = f"type=search&show=private&address={city[1]}&ajax=1"
