@@ -25,7 +25,7 @@ def fetch_data():
 
             try:
                 coord = (
-                    link.find("a", string=re.compile(f"Get Directions"))["href"]
+                    link.find("a", string=re.compile(r"Get Directions"))["href"]
                     .split("/@")[1]
                     .split("/data")[0]
                     .split(",")
