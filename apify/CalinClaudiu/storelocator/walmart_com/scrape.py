@@ -145,7 +145,7 @@ def fetch_data():
         yield item
     maxZ = search.items_remaining()
     total = 0
-    for item in fetch_other(session,state):
+    for item in fetch_other(session, state):
         yield item
     for code in search:
         if search.items_remaining() > maxZ:
