@@ -9,10 +9,11 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+locator_domain = "https://thecoopwickedchicken.com"
+base_url = "https://thecoopwickedchicken.com/locations/"
+
 
 def fetch_data():
-    locator_domain = "https://thecoop.ca/"
-    base_url = "https://thecoop.ca/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.single-page-content div.wpex-vc_section-has-fill")
@@ -36,6 +37,7 @@ def fetch_data():
                 longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("—", "-").replace("–", "-"),
+                raw_address=" ".join(addr),
             )
 
 
