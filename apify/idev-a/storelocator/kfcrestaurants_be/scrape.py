@@ -89,6 +89,8 @@ def fetch_data():
                         "div.et_section_regular .et_pb_text_1 p"
                     ).stripped_strings
                 )
+            if not city:
+                city = _.h4.text.split("|")[-1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h4.text.strip(),
