@@ -2,7 +2,6 @@ import re
 import json
 import time
 import random
-import simplejson
 import threading
 import http.client
 from datetime import datetime
@@ -151,17 +150,17 @@ def extract_value(key, html):
 def get_basic_info(id, page_schema, location, session):
     address = None
     try:
-            node = location.find("cvs-store-details")
-            props = json.loads(node["sd-props"])
-            store = props["cvsMyStoreDetailsProps"]["store"]
-            address = {
-                "street_address": store["addressLine"].strip(),
-                "city": store["addressCityDescriptionText"].strip(),
-                "state": store["addressState"].strip(),
-                "postal": store["addressZipCode"].strip(),
-                "phone": store["phoneNumber"].strip(),
-                "country_code": "US",
-            }
+        node = location.find("cvs-store-details")
+        props = json.loads(node["sd-props"])
+        store = props["cvsMyStoreDetailsProps"]["store"]
+        address = {
+            "street_address": store["addressLine"].strip(),
+            "city": store["addressCityDescriptionText"].strip(),
+            "state": store["addressState"].strip(),
+            "postal": store["addressZipCode"].strip(),
+            "phone": store["phoneNumber"].strip(),
+            "country_code": "US",
+        }
     except:
         addr = page_schema["address"]
         address = {
@@ -204,7 +203,7 @@ def get_geolocation(location, page_schema):
             latitude = None
             longitude = None
     try:
-        latitude = latitude or Nonegs
+        latitude = latitude or None
         longitude = longitude or None
     except:
         latitude = None
@@ -303,7 +302,7 @@ def get_location(page_url):
     street_address = re.sub(
         r"(\s*at\s+){1,2}", " ", get(basic_info, "street_address"), flags=re.IGNORECASE
     )
-   
+
     city = get(basic_info, "city")
     state = get(basic_info, "state")
     postal = get(basic_info, "postal")
