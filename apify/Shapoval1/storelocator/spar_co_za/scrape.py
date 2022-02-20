@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -35,22 +36,14 @@ def fetch_data(sgw: SgWriter):
         page_url = f"https://www.spar.co.za/Home/Store-View/{slug}"
         location_name = j.get("Name") or "<MISSING>"
         location_type = j.get("Type") or "<MISSING>"
-        ad = f"{j.get('PhysicalAddress')} {j.get('Suburb')}"
-        street_address = j.get("PhysicalAddress") or "<MISSING>"
+        ad = f"{j.get('PhysicalAddress')} {j.get('Town')}".strip()
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         country_code = "ZA"
-        city = j.get("Town") or "<MISSING>"
-        if (
-            str(city).find("Ave") != -1
-            or str(city).find("Street") != -1
-            or str(city).find("Marginal") != -1
-            or str(city).find("Road") != -1
-            or str(city).find("Avenue") != -1
-            or str(city).find("Streets") != -1
-        ):
-            street_address = f"{street_address} {city}"
-            city = "<MISSING>"
-        if str(city).find(",") != -1:
-            city = str(city).split(",")[-1].strip()
+        city = a.city or "<MISSING>"
         store_number = j.get("Id")
         latitude = j.get("GPSLat") or "<MISSING>"
         longitude = j.get("GPSLong") or "<MISSING>"
