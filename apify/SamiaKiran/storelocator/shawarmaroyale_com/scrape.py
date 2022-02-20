@@ -21,7 +21,6 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         r = session.get(DOMAIN, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
         city_list = r.text.split("CONTACT US")[0].split("<h3")[1:]
         for temp_city in city_list:
             temp_city = BeautifulSoup(temp_city, "html.parser")
