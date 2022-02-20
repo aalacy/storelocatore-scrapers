@@ -40,8 +40,8 @@ def fetch_data():
         phone = info["branch_phone"]
         hours_of_operation = (
             info["branch_opening_hours"]
-            .replace("<li>", "")
             .replace("</li><li>", ",")
+            .replace("<li>", "")
             .replace("</li>", "")
         )
         store_number = re.sub(r"\D+", "", info["branch_info"])
