@@ -57,6 +57,9 @@ def fetch_data():
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
+        if street_address and street_address.isdigit():
+            street_address = raw_address
+
         city = store["NCIU"]
         state = store["NDEP"]
         zip = "<MISSING>"

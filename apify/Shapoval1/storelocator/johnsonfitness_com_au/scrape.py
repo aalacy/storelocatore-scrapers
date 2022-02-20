@@ -18,31 +18,29 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     page_url = "https://www.johnsonfitness.com.au/pages/contact-us"
     location_name = "".join(tree.xpath('//meta[@property="og:site_name"]/@content'))
-    street_address = (
-        "".join(tree.xpath('//div[@class="rte rte-setting"]/p[2]/text()[1]'))
-        .replace("\n", "")
-        .strip()
-    )
+
     ad = (
-        "".join(tree.xpath('//div[@class="rte rte-setting"]/p[2]/text()[2]'))
-        .replace("\n", "")
-        .strip()
-    )
-    state = ad.split()[-2].strip()
-    postal = ad.split()[-1].strip()
-    country_code = "AU"
-    city = " ".join(ad.split()[:-2])
-    phone = (
         "".join(
-            tree.xpath(
-                '//p[contains(text(), "Sales & Marketing")]/following-sibling::div//strong[contains(text(), "Phone")]/following-sibling::text()'
-            )
+            tree.xpath('//div[@class="rte rte-setting appear-delay-1"]/p[1]/text()')
         )
         .replace("\n", "")
         .strip()
     )
+
+    street_address = ad.split(",")[0].strip()
+    state = ad.split()[-2].strip()
+    postal = ad.split()[-1].strip()
+    country_code = "AU"
+    city = " ".join(ad.split(",")[1].split()[:-2]).strip()
+    phone = (
+        "".join(tree.xpath('//p[./strong[contains(text(), "Sales")]]/text()[1]'))
+        .replace("\n", "")
+        .strip()
+    )
     hours_of_operation = (
-        " ".join(tree.xpath('//div[@class="rte rte-setting"]/p[3]/text()'))
+        " ".join(
+            tree.xpath('//div[@class="rte rte-setting appear-delay-1"]/p[2]/text()')
+        )
         .replace("\n", "")
         .strip()
     )
@@ -62,7 +60,7 @@ def fetch_data(sgw: SgWriter):
         latitude=SgRecord.MISSING,
         longitude=SgRecord.MISSING,
         hours_of_operation=hours_of_operation,
-        raw_address=f"{street_address} {ad}",
+        raw_address=ad,
     )
 
     sgw.write_row(row)
