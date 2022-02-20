@@ -47,7 +47,6 @@ def fetch_data():
                 .replace(")", "")
                 .replace(".", ""),
             ).split("?")[0]
-            print(store_url)
             location_name = poi["name"].replace("&#039;", "'")
             street_address = poi["line1"]
             city = poi["town"]
