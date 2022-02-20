@@ -27,8 +27,11 @@ def get_data(url, sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
+    try:
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+    except:
+        return
     js_block = "".join(tree.xpath('//div[@class="store-locator"]/@data-config'))
     js = json.loads(js_block)
     location_name = js.get("storeName") or "<MISSING>"
