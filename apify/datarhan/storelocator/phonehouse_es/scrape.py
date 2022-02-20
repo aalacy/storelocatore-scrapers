@@ -40,8 +40,12 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
+            if street_address and street_address.isnumeric():
+                street_address = raw_address.split(", ")[0]
             phone = loc_dom.xpath('//li/span[@class="pc"]/text()')
             phone = phone[0] if phone else ""
+            if phone and phone == "-":
+                phone = ""
             geo = (
                 loc_dom.xpath("//iframe/@src")[-1]
                 .split("!2d")[-1]

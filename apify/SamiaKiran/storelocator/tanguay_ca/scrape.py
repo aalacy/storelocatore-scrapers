@@ -40,10 +40,15 @@ def fetch_data():
             )
             location_name = strip_accents(location_name)
             log.info(location_name)
-            temp = loc.find("div", {"class": "padding-store"}).findAll("input")
+            temp = loc.find("div", {"class": "padding-store"})
+            raw_address = (
+                temp.get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Adresse :", "")
+            )
+            temp = temp.findAll("input")
             latitude = temp[0]["value"]
             longitude = temp[1]["value"]
-            raw_address = temp[2]["value"]
             pa = parse_address_intl(strip_accents(raw_address))
 
             street_address = pa.street_address_1
@@ -57,7 +62,7 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            phone = loc.select_one("a[href*=tel]").text
+            phone = loc.select_one("a[href*=tel]").text.split()[1]
             country_code = "CA"
             hours_of_operation = (
                 loc.find("table").get_text(separator="|", strip=True).replace("|", " ")
