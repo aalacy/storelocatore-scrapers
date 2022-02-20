@@ -51,8 +51,8 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
-                if street_address=="89 Park Pl Blvd":
-                    city="Barrie"
+                if street_address == "89 Park Pl Blvd":
+                    city = "Barrie"
                 if "1786 Stone Church Rd E " in raw_address:
                     city = "Hamilton"
                 country_code = "CA"
