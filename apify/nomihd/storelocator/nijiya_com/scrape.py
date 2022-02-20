@@ -4,7 +4,9 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "nijiya.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -40,9 +42,15 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if city:
+            if city == "West La":
+                city = "West L.A."
+            if city == "La":
+                city = "L.A."
+
         state = formatted_addr.state
         if state == "Of Industry":
-            city = location_name.replace("STORE", "").strip()
+            city = "City of Industry"
             state = "<MISSING>"
 
         zip = formatted_addr.postcode
@@ -51,17 +59,17 @@ def fetch_data():
         phone = raw_list[-1].strip().replace("TEL-", "").strip()
 
         sections = store.xpath('div[@style="display:block;"]')
+        hours_of_operation = ""
         for section in sections:
-            if (
-                "Temporary Store Hours"
-                in "".join(section.xpath("div/b/text()")).strip()
-            ):
+            if "Mon-Sun:" in "".join(section.xpath(".//text()")).strip():
                 hours_of_operation = (
-                    "".join(section.xpath("p/b/text()"))
+                    "".join(section.xpath(".//text()"))
                     .strip()
                     .encode("ascii", "replace")
                     .decode("utf-8")
                     .replace("?", "-")
+                    .strip()
+                    .replace("Regular Hours", "")
                     .strip()
                 )
 
@@ -92,7 +100,18 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

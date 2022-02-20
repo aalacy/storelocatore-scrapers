@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("mattressworldnorthwest")
 
@@ -22,6 +24,7 @@ def fetch_data():
         )
         for _ in locations:
             page_url = bs(_["popup_content"], "lxml").a["href"]
+            logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             block = list(sp1.select_one("div.address").stripped_strings)
             hours = []
@@ -32,8 +35,9 @@ def fetch_data():
             for x, hh in enumerate(hours):
                 if "Now Open" in hh:
                     del hours[x]
-            logger.info(page_url)
-
+            phone = ""
+            if sp1.select_one('span[itemprop="telephone"]'):
+                phone = sp1.select_one('span[itemprop="telephone"]').text
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one('h1[itemprop="name"]').text,
@@ -53,13 +57,13 @@ def fetch_data():
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 locator_domain=locator_domain,
-                phone=sp1.select_one('span[itemprop="telephone"]').text,
+                phone=phone,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

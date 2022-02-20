@@ -66,6 +66,12 @@ def get_data():
             zipp = city_state_zipp.split(", ")[1].split(" ")[1]
         except Exception:
             if "Mexico" in city_state_zipp:
+                city_parts = city.split(" ")[:-1]
+                city = ""
+                for part in city_parts:
+                    city = city + " " + part
+
+                city = city.strip()
                 state = "<MISSING>"
                 zipp = city_state_zipp.split("Mexico")[0].split(" ")[-1]
 
@@ -85,27 +91,47 @@ def get_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            hour = (
-                grid.find("div", attrs={"class": "hours"})
-                .text.split(" Happy")[0]
-                .split(" Kitchen")[0]
+            page_url = (
+                "https://www.rockandbrews.com"
+                + grid.find("a", attrs={"class": "details-button"})["href"]
             )
 
-            location_url_format = (
-                name.replace(" ", "-").replace("&", "-and-").replace(".", "").lower()
-            )
-            page_url = "https://www.rockandbrews.com/" + location_url_format
+            days = grid.find_all("span", attrs={"class": "hours-day"})
+            hour_parts = grid.find_all("span", attrs={"class": "hours-time"})
 
-            driver.get(page_url)
+            count = 0
+            if "temporarily closed" in grid.text.strip().lower():
+                hours = "Temporarily Closed"
+            else:
+                hours = ""
+                for day_bit in days:
+                    day = day_bit.text.strip()
+                    hour_part = hour_parts[count].text.strip().replace(" ", "")
+                    hours = hours + day + " " + hour_part + ", "
+
+                    count = count + 1
+
+                hours = hours[:-2]
+
+            try:
+                driver.get(page_url)
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "location-social"))
+                )
+
+            except Exception:
+                driver.get(page_url)
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "social"))
+                )
 
             html = driver.page_source
             soup = bs(html, "html.parser")
 
-            div = soup.find("div", attrs={"id": "location"})
-            try:
-                phone = div.find("a")["href"].replace("tel:", "")
-            except Exception:
-                phone = "<MISSING>"
+            a_tags = soup.find_all("a")
+            for tag in a_tags:
+                if "tel:" in tag["href"]:
+                    phone = tag["href"].replace("tel:", "")
 
             if bool(re.search("[a-zA-Z]", phone)):
                 phone = "<MISSING>"
@@ -123,7 +149,7 @@ def get_data():
                 "zip": zipp,
                 "phone": phone,
                 "location_type": location_type,
-                "hours": hour,
+                "hours": hours,
                 "country_code": country_code,
             }
 

@@ -6,131 +6,89 @@ from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
 
 
-def get_ids():
-    ids = []
-    r = session.get("https://www.dior.com/store/json/posG.json")
-    js = r.json()["items"]
-    for j in js:
-        ids.append(j[0])
-
-    return ids
-
-
-def generate_urls(ids):
+def get_urls():
     urls = []
-    u = "https://tpc33of0na.execute-api.eu-west-1.amazonaws.com/prod/PointOfSale?ids="
-    _tmp = []
-    cnt = 0
-    for i in ids:
-        if cnt == 100:
-            urls.append(f'{u}{",".join(_tmp)}')
-            _tmp = []
-            cnt = 0
-        _tmp.append(i)
-        cnt += 1
+    r = session.get("https://www.dior.com/fashion/stores/en_us.json")
+    js = r.json()["directoryHierarchy"].values()
+    for j in js:
+        slugs = j["children"].keys()
+        for slug in slugs:
+            urls.append(f"https://www.dior.com/fashion/stores/{slug}.json")
 
-    urls.append(f'{u}{",".join(_tmp)}')
     return urls
 
 
-def get_data(url, sgw: SgWriter):
-    r = session.get(url)
-    try:
-        js = r.json()["Items"]
-    except KeyError:
-        return
+def get_data(api, sgw: SgWriter):
+    r = session.get(api)
+    jss = r.json()["keys"]
 
-    for j in js:
-        location_name = j.get("defaultName").replace("\n", " ").strip()
-        ad1 = j.get("defaultStreet1") or ""
-        ad2 = j.get("defaultStreet2") or ""
-        ad1, ad2 = ad1.strip(), ad2.strip()
-        if not ad2:
-            street_address = ad1
-        else:
-            if ad1[0].isdigit():
-                street_address = ad1
-            else:
-                street_address = f"{ad1} {ad2}".strip()
+    for js in jss:
+        j = js["entity"]["profile"]
+        a = j.get("address") or {}
+        c = j.get("yextDisplayCoordinate") or {}
 
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
+        adr1 = a.get("line1") or ""
+        adr2 = a.get("line2") or ""
+        street_address = " ".join(f"{adr1} {adr2}".split())
+        city = a.get("city") or ""
+        state = a.get("region") or ""
+        postal = a.get("postalCode") or ""
+        country = a.get("countryCode")
+        raw_address = " ".join(f"{adr1} {adr2} {city} {state} {postal}".split())
+        latitude = c.get("lat")
+        longitude = c.get("long")
+        location_name = j.get("c_locationName") or j.get("name")
+        location_type = j.get("c_locationType")
+        page_url = j.get("c_pagesURL") or api.replace(".json", "")
 
-        city = j.get("defaultCity")
-        state = j.get("state")
-        postal = j.get("defaultZipCode", "").strip()
-        country_code = j.get("countryCode")
-
-        if len(postal) > 5 and country_code == "US":
-            state = postal.split()[0]
-            postal = postal.split()[1]
-
-        if len(postal) > 7 and country_code == "CA":
-            state = postal.split()[0]
-            postal = postal.replace(state, "").strip()
-
-        phone = j.get("phoneNumber")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+        try:
+            phone = j["mainPhone"]["display"]
+        except KeyError:
+            phone = SgRecord.MISSING
 
         _tmp = []
-        days = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-        ]
-        hours = j.get("calculatedWeeklyOpeningHours") or []
+        try:
+            days = j["hours"]["normalHours"]
+        except KeyError:
+            days = []
 
-        for h in hours:
-            index = h.get("day")
-            day = days[int(index)]
+        for d in days:
+            day = d.get("day")
+            try:
+                interval = d.get("intervals")[0]
+                start = str(interval.get("start")).zfill(4)
+                end = str(interval.get("end")).zfill(4)
+                line = f"{day}:  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+            except IndexError:
+                line = f"{day}: Closed"
+            _tmp.append(line)
 
-            t = h.get("hours")
-            if t:
-                start = t[0].get("from")
-                close = t[0].get("to")
-            else:
-                start, close = "", ""
-
-            if start and start != close:
-                _tmp.append(f"{day}: {start} - {close}")
-            else:
-                _tmp.append(f"{day}: Closed")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
+        hours_of_operation = ";".join(_tmp)
 
         row = SgRecord(
-            page_url=SgRecord.MISSING,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
             zip_postal=postal,
-            country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
+            country_code=country,
             latitude=latitude,
             longitude=longitude,
-            locator_domain=locator_domain,
+            location_type=location_type,
+            phone=phone,
             hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+            raw_address=raw_address,
         )
 
         sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
-    ids = get_ids()
-    urls = generate_urls(ids)
+    urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -140,6 +98,14 @@ if __name__ == "__main__":
     locator_domain = "https://www.dior.com/"
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
     ) as writer:
         fetch_data(writer)
