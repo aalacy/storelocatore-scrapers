@@ -41,7 +41,7 @@ def fetch_data():
                 latitude, longitude = (
                     loc.find("a")["href"].split("@")[1].split(",15z")[0].split(",")
                 )
-                pa = parse_address_intl(raw_address.replace("Mountain 1786 Stone", ""))
+                pa = parse_address_intl(raw_address.replace("Mountain", ""))
 
                 street_address = pa.street_address_1
                 street_address = street_address if street_address else MISSING
@@ -51,6 +51,10 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
+                if street_address == "89 Park Pl Blvd":
+                    city = "Barrie"
+                if "1786 Stone Church Rd E " in raw_address:
+                    city = "Hamilton"
                 country_code = "CA"
                 yield SgRecord(
                     locator_domain=DOMAIN,
