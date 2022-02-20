@@ -47,8 +47,8 @@ def fetch_data():
         store_number = re.sub(r"\D+", "", info["branch_info"])
         country_code = info["branch_country"]
         location_type = row["type"]
-        latitude = row["geometry"]["coordinates"][0]
-        longitude = row["geometry"]["coordinates"][1]
+        latitude = row["geometry"]["coordinates"][1]
+        longitude = row["geometry"]["coordinates"][0]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
