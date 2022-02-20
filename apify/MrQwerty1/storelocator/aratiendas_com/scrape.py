@@ -22,7 +22,7 @@ def get_international(line):
 
 def fetch_data(sgw: SgWriter):
     r = session.get(
-        "https://aratiendas.com/wp-content/litespeed/js/6f271627f4bd42f20b0d2f9bf3747aa2.js",
+        "https://aratiendas.com/wp-content/litespeed/js/0a919e1c60b386b974269b8bac1c64b6.js",
         headers=headers,
     )
     text = r.text

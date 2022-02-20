@@ -52,7 +52,9 @@ def fetch_data():
             '//h2[contains(text(), "Calendario de apertura")]/following-sibling::ul//text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = hoo[:2]
+        hoo = " ".join(hoo[:2])
+        if not raw_address:
+            raw_address = ""
 
         item = SgRecord(
             locator_domain=domain,

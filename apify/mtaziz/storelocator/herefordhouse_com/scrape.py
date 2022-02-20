@@ -6,9 +6,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
+import json
+import re
 
 DOMAIN = "herefordhouse.com"
-BASE_URL = "https://www.herefordhouse.com"
+BASE_URL = "https://www.herefordhouse.com/"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
@@ -55,56 +57,52 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(BASE_URL)
-    page_urls = (
-        soup.find("nav")
-        .find("span", text="Locations")
-        .find_next("div", {"class": "nav-dropdown-links"})
-        .find_all("a")
-    )
-    for row in page_urls:
-        page_url = BASE_URL + row["href"]
-        store = pull_content(page_url)
-        info = store.find("div", {"class": "pm-location-search-list"})
-        location_name = row.text.strip()
-        raw_address = (
-            info.find("p")
-            .get_text(strip=True, separator=",")
-            .replace(",Get Directions", "")
-            .strip()
-        )
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = info.select_one("p:nth-child(3)").text.strip()
-        country_code = "US"
-        store_number = MISSING
-        hours_of_operation = (
-            store.find("div", {"class": "hours"})
-            .get_text(strip=True, separator=",")
-            .replace("day,", "day")
-            .replace(":,", ": ")
-            .replace("-,", "- ")
-            .replace(",pm", " pm")
-            .strip()
-        )
-        latitude = MISSING
-        longitude = MISSING
-        location_type = MISSING
-        log.info("Append {} => {}".format(location_name, street_address))
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+    info = soup.find("script", {"id": "popmenu-apollo-state"})
+    info = re.search(r"window\.POPMENU_APOLLO_STATE\s+=\s+(.*);", info.string).group(1)
+    info = json.loads(info)
+    for key, value in info.items():
+        if key.startswith("RestaurantLocation:"):
+            page_url = BASE_URL + value["slug"]
+            location_name = value["name"]
+            raw_address = value["fullAddress"].replace("\n", ", ")
+            street_address = value["streetAddress"].replace("\n", ", ")
+            city = value["city"]
+            state = value["state"]
+            zip_postal = value["postalCode"]
+            country_code = value["country"]
+            phone = value["displayPhone"]
+            location_type = MISSING
+            store_number = value["id"]
+            latitude = value["lat"]
+            longitude = value["lng"]
+            hours_of_operation = (
+                ", ".join(value["schemaHours"])
+                .replace("Su", "Sunday:")
+                .replace("Mo", "Monday:")
+                .replace("Tu", "Tuesday:")
+                .replace("We", "Wednesday:")
+                .replace("Th", "Thursday:")
+                .replace("Fr", "Friday:")
+                .replace("Sa", "Saturday:")
+            )
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

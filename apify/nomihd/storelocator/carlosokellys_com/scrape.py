@@ -39,7 +39,7 @@ def fetch_data():
 
         raw_info = store.xpath('div[@class="moduleItemIntrotext"]/p')
         if len(raw_info) > 0:
-            raw_info = raw_info[-1].xpath("text()")
+            raw_info = raw_info[-1].xpath(".//text()")
 
         add_list = []
         for add in raw_info:

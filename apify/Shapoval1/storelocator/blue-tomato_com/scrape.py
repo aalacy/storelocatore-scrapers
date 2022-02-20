@@ -66,7 +66,7 @@ def fetch_data(sgw: SgWriter):
             )
             hours_of_operation = " ".join(hours_of_operation.split())
             cls = "".join(tree.xpath('//span[contains(text(), "closed")]/text()'))
-            if cls:
+            if cls and hours_of_operation == "<MISSING>":
                 hours_of_operation = "Closed"
 
             row = SgRecord(

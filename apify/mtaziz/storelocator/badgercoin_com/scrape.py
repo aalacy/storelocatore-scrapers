@@ -71,10 +71,9 @@ def fetch_records(idx, gurl, sgw: SgWriter):
             city = MISSING
             state = MISSING
             zip_postal = MISSING
-        logger.info(f"[{idx}] st_add: {street_address}")
-        logger.info(f"[{idx}] city: {city}")
-        logger.info(f"[{idx}] state: {state}")
-        logger.info(f"[{idx}] zip: {zip_postal}")
+        logger.info(
+            f"[{idx}] st_add: {street_address} | city: {city} | state: {state} | zip: {zip_postal}"
+        )
         country_code = "CA"
         logger.info(f"[{idx}] country_code: {country_code}")
 
@@ -104,17 +103,19 @@ def fetch_records(idx, gurl, sgw: SgWriter):
         latlng = re.findall(latlng_regex_pattern, spotlight)
         logger.info(f"Latlng: {latlng}")
 
+        latitude = None
+        longitude = None
+
         try:
             latitude = latlng[0]
         except:
             MISSING
 
-        logger.info(f"[{idx}] lat: {latitude}")
         try:
             longitude = latlng[1]
         except:
             MISSING
-        logger.info(f"[{idx}] long: {longitude}")
+        logger.info(f"[{idx}] Lat: {latitude} || Lng: {longitude}")
         hours_of_operation = ""
         try:
             hours = app_options.split("tel:")[-1]

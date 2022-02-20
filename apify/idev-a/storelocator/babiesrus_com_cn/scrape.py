@@ -5,14 +5,13 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
-from sgpostal.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.babiesrus.com.cn"
-base_url = "https://www.babiesrus.com.cn/en-cn/stores/"
+locator_domain = "https://www.toysrus.com.cn"
+base_url = "https://www.toysrus.com.cn/en-cn/stores/"
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -23,7 +22,7 @@ def _coord(locs, name):
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         sp1 = bs(session.get(base_url, headers=_headers).text, "lxml")
         locs = json.loads(sp1.select_one("div.map-canvas")["data-locations"])
         locations = sp1.select("div.store.store-item")
@@ -31,28 +30,6 @@ def fetch_data():
             street_address = _["data-store-address1"]
             if _["data-store-address2"]:
                 street_address += " " + _["data-store-address2"]
-            street_address = (
-                street_address.replace("Ganzhou", "Guangzhou")
-                .replace("Shang Ha", "Shanghai")
-                .replace("’", "'")
-            )
-            if "shenzhen" not in street_address and "shenzhe" in street_address:
-                street_address = street_address.replace("shenzhe", "shenzhen")
-            if "Beijing" not in street_address and "Beijn" in street_address:
-                street_address = street_address.replace("Beijn", "Beijing")
-            raw_address = street_address.strip()
-            addr = parse_address_intl(raw_address + ", China")
-            city = (
-                _["data-store-city"]
-                .replace("’", "'")
-                .replace("Ji'nan", "Jinan")
-                .replace("Ganzhou", "Guangzhou")
-            )
-            if "Haidian district of" not in street_address:
-                x = street_address.lower().rfind(city.lower())
-                street_address = street_address[:x].strip()
-            if street_address.endswith(","):
-                street_address = street_address[:-1]
             hours = []
             temp = {}
             for hh in bs(_["data-store-details"], "lxml").select(
@@ -73,16 +50,15 @@ def fetch_data():
                 store_number=_["data-store-id"],
                 location_name=_["data-store-name"],
                 street_address=street_address,
-                city=city,
-                state=addr.state,
+                city=_["data-store-city"],
+                state=_["data-store-statecode"],
                 zip_postal=_["data-store-postalcode"],
                 country_code="China",
                 latitude=coord["latitude"],
                 longitude=coord["longitude"],
-                location_type="babiesrus",
+                location_type="toysrus",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=raw_address,
             )
 
 
