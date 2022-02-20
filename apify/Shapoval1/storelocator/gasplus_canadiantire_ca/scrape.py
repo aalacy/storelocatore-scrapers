@@ -49,11 +49,16 @@ def get_data(url, sgw: SgWriter):
             )
         )
         js_hours = "".join(h.xpath(".//@data-working-hours"))
-        jsh = json.loads(js_hours)
-        opens = jsh.get("open")
-        closes = jsh.get("close")
-        line = f"{day} {opens} - {closes}"
-        tmp.append(line)
+        try:
+            jsh = json.loads(js_hours)
+            opens = jsh.get("open")
+            closes = jsh.get("close")
+            line = f"{day} {opens} - {closes}"
+            tmp.append(line)
+        except:
+            time = "".join(h.xpath(".//@data-working-hours"))
+            line = f"{day} {time}"
+            tmp.append(line)
     hours_of_operation = "; ".join(tmp) or "<MISSING>"
     store_number = js.get("storeNumber")
     location_type = (
@@ -90,7 +95,7 @@ def get_data(url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
