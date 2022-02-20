@@ -68,7 +68,17 @@ def fetch_data():
                     .split(",")
                 )
             except:
-                coord = ["", ""]
+                try:
+                    coord = (
+                        sp1.select_one(
+                            "div.et_section_regular div.et_pb_text_inner p a"
+                        )["href"]
+                        .split("[[")[1]
+                        .split("],")[0]
+                        .split(",")
+                    )
+                except:
+                    coord = ["", ""]
             hours = [
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("div.et_section_regular table tr")
@@ -79,6 +89,8 @@ def fetch_data():
                         "div.et_section_regular .et_pb_text_1 p"
                     ).stripped_strings
                 )
+            if not city:
+                city = _.h4.text.split("|")[-1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h4.text.strip(),
