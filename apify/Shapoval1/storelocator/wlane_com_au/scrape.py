@@ -26,21 +26,22 @@ def fetch_data(sgw: SgWriter):
         ad = tree.xpath('//h4[text()="Address"]/following-sibling::p[1]/text()')
         ad = list(filter(None, [a.strip() for a in ad]))
         js_block = "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
-
-        street_address = (
-            js_block.split('"streetAddress": "')[1]
-            .split('"')[0]
-            .replace("&amp;", "&")
-            .replace(",", "")
-            .strip()
-        )
+        street_address = "<MISSING>"
+        if len(ad) == 5:
+            street_address = "".join(ad[1]).strip()
+        if len(ad) == 4:
+            street_address = "".join(ad[0]).strip()
         if street_address == "1":
             street_address = "<MISSING>"
+        store_number = "<MISSING>"
+        location_name = js_block.split('"name": "')[1].split('"')[0].strip()
+        if page_url.find("-") != -1 and page_url.split("-")[-1].isdigit():
+            store_number = page_url.split("-")[-1].strip()
         city = js_block.split('"addressLocality": "')[1].split('"')[0].strip()
         state = js_block.split('"addressRegion": "')[1].split('"')[0].strip()
         postal = "".join(ad[-1]).strip()
         country_code = "AU"
-        location_name = js_block.split('"name": "')[1].split('"')[0].strip()
+
         phone = (
             "".join(tree.xpath('//span[contains(text(), "Phone")]/text()'))
             .replace("Phone:", "")
@@ -72,7 +73,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
