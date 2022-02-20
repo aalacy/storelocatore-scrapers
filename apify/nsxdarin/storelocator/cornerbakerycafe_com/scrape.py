@@ -1,5 +1,12 @@
-import csv
+from bs4 import BeautifulSoup
+
 from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sglogging import SgLogSetup
 
 session = SgRequests()
@@ -10,43 +17,15 @@ headers = {
 logger = SgLogSetup().get_logger("cornerbakerycafe_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     locs = []
     url = "https://cornerbakerycafe.com/locations/all"
     r = session.get(url, headers=headers)
     website = "cornerbakerycafe.com"
-    typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+        line = str(line)
         if '<a href="/location/' in line:
             locs.append(
                 "https://cornerbakerycafe.com" + line.split('href="')[1].split('"')[0]
@@ -58,6 +37,7 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
+        typ = ""
         phone = ""
         lat = ""
         lng = ""
@@ -66,15 +46,9 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if '"name": "' in line2 and name == "":
                 name = line2.split('"name": "')[1].split('"')[0]
-            if '"openingHours": [ "' in line2:
-                hours = (
-                    line2.split('"openingHours": [ "')[1]
-                    .split(" ]")[0]
-                    .replace('"', "")
-                )
             if '"telephone": "' in line2 and phone == "":
                 phone = line2.split('"telephone": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
@@ -95,30 +69,46 @@ def fetch_data():
                     .replace("\t", "")
                     .strip()
                 )
-        hours = hours.replace(", ", "; ")
-        if ":" not in hours:
-            hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+
+        if not phone:
+            continue
+
+        base = BeautifulSoup(r2.text, "lxml")
+        if "Temporarily Closed" in base.find(id="main-content").text:
+            hours = "Temporarily Closed"
+        else:
+            hours = " ".join(list(base.find(class_="dl-hours").stripped_strings))
+
+        try:
+            add = (
+                base.find(class_="loc-icon-home")
+                .get_text(" ")
+                .replace("\r\n", "")
+                .replace("Temporarily Closed", "")
+            )
+            add = add[: add.rfind(city)].split("ENTRANCE")[0].strip()
+        except:
+            pass
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                store_number=store,
+                phone=phone,
+                location_type=typ,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

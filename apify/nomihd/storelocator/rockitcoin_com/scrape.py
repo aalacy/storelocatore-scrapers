@@ -77,6 +77,17 @@ def fetch_data():
                 city = city.rsplit(" ", 1)[0].strip()
 
             zip = formatted_addr.postcode
+            if zip:
+                if zip.isalpha():
+                    zip = "<MISSING>"
+
+            if not city and not state:
+                if "," in raw_address:
+                    city = raw_address.split(",")[-1].strip().rsplit(" ", 1)[0].strip()
+                    state = (
+                        raw_address.split(",")[-1].strip().rsplit(" ", 1)[-1].strip()
+                    )
+                    street_address = raw_address.split(",")[0].strip()
 
             country_code = "US"
             store_number = "<MISSING>"
@@ -126,9 +137,7 @@ def scrape():
         deduper=SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )
