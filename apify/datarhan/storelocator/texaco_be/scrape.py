@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import csv
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -6,11 +7,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests()
+
+    with open("belgian-cities-geocoded.csv", newline="") as f:
+        reader = csv.reader(f)
+        all_cities = list(reader)
 
     start_url = "https://www.texaco.be/handler/fillingstation/list.php"
     domain = "texaco.be"
@@ -21,11 +25,9 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BELGIUM], expected_search_radius_miles=20
-    )
-    for code in all_codes:
-        frm = f"type=search&show=private&address={code}&ajax=1"
+
+    for city in all_cities:
+        frm = f"type=search&show=private&address={city[1]}&ajax=1"
         data = session.post(start_url, headers=hdr, data=frm).json()
 
         if data["callback"]:
@@ -52,7 +54,7 @@ def fetch_data():
                     city=poi["ct"],
                     state="",
                     zip_postal=poi["pc"],
-                    country_code="BE",
+                    country_code="",
                     store_number="",
                     phone=phone,
                     location_type="",
@@ -67,9 +69,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
         )
     ) as writer:
         for item in fetch_data():
