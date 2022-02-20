@@ -31,7 +31,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     for x in range(0, 200, 50):
-        api_url = f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2000&location=10000&offset={x}&limit=50&api_key=8a15ce20e57479e69a3059450e2a2914&v=20181201&resolvePlaceholders=true&languages=en&entityTypes=restaurant"
+        api_url = f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2500&location=10001&offset={x}&limit=50&api_key=8a15ce20e57479e69a3059450e2a2914&v=20181201&resolvePlaceholders=true&languages=en&entityTypes=restaurant"
 
         api_res = session.get(api_url, headers=headers)
 
