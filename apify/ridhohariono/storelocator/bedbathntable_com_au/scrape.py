@@ -6,8 +6,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-import re
-
 
 DOMAIN = "bedbathntable.com.au"
 LOCATION_URL = "https://www.bedbathntable.com.au/locator"
