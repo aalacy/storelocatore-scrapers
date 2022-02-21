@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
+import re
 
 
 DOMAIN = "bedbathntable.com.au"
@@ -47,6 +48,18 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
+def get_city(_city):
+    try:
+        if _city is not None and _city != MISSING:
+            data = parse_address_intl(_city)
+            city = data.city or MISSING
+            return city
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING
+
+
 def pull_content(url):
     log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
@@ -75,6 +88,11 @@ def fetch_data():
             strip=True, separator=","
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == MISSING:
+            if "Malvern" in raw_address:
+                city = "Malvern"
+            else:
+                city = get_city(location_name)
         if zip_postal == MISSING:
             zip_postal = info.find("div", {"class": "amlocator-zip"}).text.strip()
         country_code = "AU"
