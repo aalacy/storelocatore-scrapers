@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 
@@ -175,8 +175,7 @@ if __name__ == "__main__":
     search = DynamicGeoSearch(
         country_codes=tocrawl,
         granularity=Grain_8(),
-        expected_search_radius_miles=4,
-        max_search_results=25,
+        expected_search_radius_miles=2,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
