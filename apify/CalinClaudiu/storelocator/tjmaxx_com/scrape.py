@@ -174,7 +174,7 @@ if __name__ == "__main__":
     tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search = DynamicGeoSearch(
         country_codes=tocrawl,
-        granularity=Grain_8(),
+        granularity=Grain_4(),
         expected_search_radius_miles=2,
     )
     with SgWriter(
