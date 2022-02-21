@@ -41,7 +41,10 @@ def fetch_data():
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
                 hours_of_operation=" ".join(
-                    poi["storeHours"].split("WhatsApp")[0].split()
+                    poi["storeHours"]
+                    .replace("WE ARE OPEN!", "")
+                    .split("WhatsApp")[0]
+                    .split()
                 ),
             )
 
