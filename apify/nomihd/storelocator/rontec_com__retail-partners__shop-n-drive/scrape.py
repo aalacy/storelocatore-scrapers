@@ -110,9 +110,20 @@ def fetch_data():
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
+            if street_address:
+                street_address = (
+                    street_address.replace("Nn10 6Bq", "")
+                    .replace("Sr5 3Nx", "")
+                    .replace("Pe8 6Lb", "")
+                    .replace("Ll14 6Yy", "")
+                    .replace("Ig11 0At", "")
+                    .strip()
+                )
             city = formatted_addr.city
             state = formatted_addr.state
             zip = formatted_addr.postcode
+            if not zip:
+                zip = raw_address.split(",")[-1].strip()
 
             country_code = "GB"
 

@@ -90,6 +90,8 @@ def fetch_data():
                 hoo += day + ": " + hours + ","
         hours_of_operation = hoo.strip().rstrip(",")
         location_type = MISSING
+        if "VET" in location_name:
+            location_type = "VET"
         store_number = row["id"]
         latitude = row["location"]["lat"]
         longitude = row["location"]["lon"]
