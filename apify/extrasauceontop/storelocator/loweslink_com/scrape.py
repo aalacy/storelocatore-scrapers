@@ -124,7 +124,6 @@ def parse_location_section(location_list):
 
     locs = []
     for location in grouped_lists:
-        print(location)
         locator_domain = "loweslink.com"
         page_url = "https://www.loweslink.com/llmain/pubdocuments/distribution%20center%20information.pdf"
         location_name = location[0]
@@ -255,7 +254,6 @@ def get_data():
         index = index + 1
 
     for location in all_locations:
-        print(location)
         yield location
 
 
