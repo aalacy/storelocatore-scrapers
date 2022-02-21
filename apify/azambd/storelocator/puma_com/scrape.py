@@ -23,7 +23,7 @@ headers = {
 }
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-max_workers = 4
+max_workers = 10
 
 http = SgRequests()
 

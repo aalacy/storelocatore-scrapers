@@ -56,6 +56,13 @@ def fetch_data():
                     latitude = MISSING
                 if "null" in longitude:
                     longitude = MISSING
+                if len(zip_postal) < 3:
+                    zip_postal = MISSING
+                raw_address = (
+                    street_address + " " + city + " " + state + " " + zip_postal
+                )
+                raw_address = raw_address.replace(MISSING, "")
+                raw_address = html.unescape(raw_address)
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=country_url,
@@ -71,6 +78,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
                 )
 
 
