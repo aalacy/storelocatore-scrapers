@@ -23,7 +23,6 @@ def fetch_data():
         if not data.get("location"):
             continue
         for poi in data["location"]:
-            print(poi)
             hoo = " ".join(poi["lobbyHours"]) if poi.get("lobbyHours") else ""
 
             item = SgRecord(
