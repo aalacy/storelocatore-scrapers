@@ -16,7 +16,13 @@ def parse_pdf(pdf_url, x):
     open_pdf_file = open("my_pdf.pdf", "rb")
     read_pdf = PyPDF2.PdfFileReader(open_pdf_file)
 
-    final_text = unidecode.unidecode(read_pdf.getPage(x).extractText()).replace("\n-", "-").replace("\t", "").replace("(tm)", "'").replace("  Lowe's", "   Lowe's")
+    final_text = (
+        unidecode.unidecode(read_pdf.getPage(x).extractText())
+        .replace("\n-", "-")
+        .replace("\t", "")
+        .replace("(tm)", "'")
+        .replace("  Lowe's", "   Lowe's")
+    )
 
     return final_text
 
@@ -24,9 +30,9 @@ def parse_pdf(pdf_url, x):
 def parse_into_lines(pdf_text):
     while "    " in pdf_text:
         pdf_text = pdf_text.replace("    ", "   ")
-    
+
     pdf_text = pdf_text.replace("   ", "---")
-    
+
     while "  " in pdf_text:
         pdf_text = pdf_text.replace("  ", " ")
 
@@ -36,16 +42,18 @@ def parse_into_lines(pdf_text):
             line = "---Lowe's Mid-Atlantic RDC - #1420"
         line = line.replace(":---", ": ")
         if line[:3] == "---":
-            line = "last-+-" + line[3:] 
+            line = "last-+-" + line[3:]
         for part in line.split("---"):
-            if "Lowe's Franklin County, TX SDC #983 Lowe's Internet Fulfillment Center - #907" in part:
+            if (
+                "Lowe's Franklin County, TX SDC #983 Lowe's Internet Fulfillment Center - #907"
+                in part
+            ):
                 final_lines.append("Lowe's Franklin County, TX SDC #983")
                 final_lines.append("Lowe's Internet Fulfillment Center - #907")
             elif len(part) > 2:
                 final_lines.append(part.strip())
-    
+
     return final_lines
-    
 
 
 def is_name_line(line):
@@ -54,67 +62,66 @@ def is_name_line(line):
         x = 0
         for character in check:
             if character.isnumeric() is True:
-                x = x+1
+                x = x + 1
                 if x == 3:
                     return True
-            
+
             else:
                 x = 0
-    
+
     return False
-            
+
 
 def parse_location_section(location_list):
     grouped_lists = []
-    
+
     x = 0
-    if len(location_list)%2 == 0 and len(location_list) > 6:
+    if len(location_list) % 2 == 0 and len(location_list) > 6:
         list_1 = []
         list_2 = []
         for item in location_list:
 
             if x % 2 == 0:
                 list_1.append(item)
-            
+
             else:
                 list_2.append(item)
-            
-            x = x+1
-        
+
+            x = x + 1
+
         grouped_lists.append(list_1)
         grouped_lists.append(list_2)
 
     elif len(location_list) < 7:
         grouped_lists.append(location_list)
-    
-    elif len(location_list)%2 == 1:
+
+    elif len(location_list) % 2 == 1:
         list_1 = []
         list_2 = []
         for item in location_list[:-1]:
 
             if x % 2 == 0:
                 list_1.append(item)
-            
+
             else:
                 list_2.append(item)
 
-            x = x+1
+            x = x + 1
         grouped_lists.append(list_1)
         grouped_lists.append(list_2)
 
         if "last-+-" in location_list[-1]:
             list_2.append(location_list[-1])
-        
+
         else:
             list_1.append(location_list[-1])
-        
+
         grouped_lists.append(list_1)
         grouped_lists.append(list_2)
 
-    
     else:
         raise Exception
-    
+
     locs = []
     for location in grouped_lists:
         print(location)
@@ -131,35 +138,39 @@ def parse_location_section(location_list):
 
         if len(address_parts) == 2:
             address = address_parts[0]
-        
+
         if len(address_parts) == 3:
             address = address_parts[0] + " " + address_parts[1]
-        
+
         city = location[-2].split(",")[0].replace("th Street", "")
         state = location[-2].split(", ")[1].split(" ")[0]
         zipp = location[-2].split(", ")[1].split(" ")[1]
-        
-        phone = location[-1].lower().replace("phone", "").replace(" ", "").replace(":", "")
+
+        phone = (
+            location[-1].lower().replace("phone", "").replace(" ", "").replace(":", "")
+        )
         country_code = "US"
-        locs.append({
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        })
-    
+        locs.append(
+            {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+        )
+
     return locs
-    
+
 
 def get_data():
     pdf_url = "https://www.loweslink.com/llmain/pubdocuments/distribution%20center%20information.pdf"
@@ -167,7 +178,11 @@ def get_data():
     all_lines = []
     while True:
         try:
-            pdf_text = parse_pdf(pdf_url, x).replace("w\ne", "we").replace("Phone:\n", "Phone: ")
+            pdf_text = (
+                parse_pdf(pdf_url, x)
+                .replace("w\ne", "we")
+                .replace("Phone:\n", "Phone: ")
+            )
             final_text = parse_into_lines(pdf_text)
             for line in final_text:
                 if x != 1:
@@ -177,7 +192,7 @@ def get_data():
                 else:
                     all_lines.append(line)
 
-            x = x+1
+            x = x + 1
         except Exception:
             break
 
@@ -195,33 +210,40 @@ def get_data():
                 while True:
                     last_index = last_index + 1
                     try:
-                        if is_name_line(all_lines[last_index]) is True or "DC)" in all_lines[last_index] or "Fax:" in all_lines[last_index][:4]:
+                        if (
+                            is_name_line(all_lines[last_index]) is True
+                            or "DC)" in all_lines[last_index]
+                            or "Fax:" in all_lines[last_index][:4]
+                        ):
                             end = last_index
                             locs = parse_location_section(all_lines[index:last_index])
                             for loc in locs:
                                 yield loc
                             break
-                    
+
                     except Exception:
                         locs = parse_location_section(all_lines[index:last_index])
                         for loc in locs:
                             yield loc
                         break
 
-            
             else:
                 last_index = index + 1
                 while True:
                     last_index = last_index + 1
 
                     try:
-                        if is_name_line(all_lines[last_index]) is True or "DC)" in all_lines[last_index] or "Fax:" in all_lines[last_index][:4]:
+                        if (
+                            is_name_line(all_lines[last_index]) is True
+                            or "DC)" in all_lines[last_index]
+                            or "Fax:" in all_lines[last_index][:4]
+                        ):
                             end = last_index
                             locs = parse_location_section(all_lines[index:last_index])
                             for loc in locs:
                                 yield loc
                             break
-                    
+
                     except Exception:
                         locs = parse_location_section(all_lines[index:last_index])
                         for loc in locs:
@@ -231,7 +253,7 @@ def get_data():
             pass
 
         index = index + 1
-    
+
     for location in all_locations:
         print(location)
         yield location
