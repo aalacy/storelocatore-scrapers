@@ -54,7 +54,7 @@ def fetch_data():
                     city=poi["ct"],
                     state="",
                     zip_postal=poi["pc"],
-                    country_code="BE",
+                    country_code="",
                     store_number="",
                     phone=phone,
                     location_type="",

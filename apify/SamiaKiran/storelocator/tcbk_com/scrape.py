@@ -36,7 +36,9 @@ def fetch_data():
             hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
                 .get_text(separator="|", strip=True)
+                .replace("Only Drive Up access is available until further notice.", "")
                 .replace("|", " ")
+                .replace("2.22 miles", "")
                 .replace("Hours", "")
                 .replace("Lobby", "")
                 .replace("This branch will be closed 2/16/22", "")
@@ -76,8 +78,11 @@ def fetch_data():
                 i += 1
             zip_postal = zip_postal.split()[0]
             state = state.split()[0]
-            if "Drive Up" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("hours_of_operation")[0]
+            if "Drive" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Drive")[0]
+            hours_of_operation = hours_of_operation.replace("s Mon", "Mon")
+            if "Drive Up Only" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Drive Up Only")[1]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
