@@ -21,23 +21,24 @@ def fetch_data():
     for lat, lng in all_coords:
         data = session.get(start_url.format(lat, lng), headers=hdr).json()
         for poi in data["stores"]:
+            print(poi)
             page_url = f'https://www.suzuki.fr/store/show/{poi["slug"]}'
             location_type = ", ".join([e["post_name"] for e in poi["services"]])
             hoo = []
-            hoo_data = [
-                e for e in poi["schedules"] if e["name"] == "Espace commercial"
-            ][0]["dates"]
-            for day, hours in hoo_data.items():
-                time = []
-                for e in hours:
-                    if e["open"]:
-                        opens = e["open"]["date"].split()[-1].split(":00.")[0]
-                        closes = e["close"]["date"].split()[-1].split(":00.")[0]
-                        time.append(f"{opens} - {closes}")
-                time = " / ".join(time)
-                if not time:
-                    time = "closed"
-                hoo.append(f"{day}: {time}")
+            hoo_data = [e for e in poi["schedules"] if e["name"] == "Espace commercial"]
+            if hoo_data:
+                hoo_data = hoo_data[0]["dates"]
+                for day, hours in hoo_data.items():
+                    time = []
+                    for e in hours:
+                        if e["open"]:
+                            opens = e["open"]["date"].split()[-1].split(":00.")[0]
+                            closes = e["close"]["date"].split()[-1].split(":00.")[0]
+                            time.append(f"{opens} - {closes}")
+                    time = " / ".join(time)
+                    if not time:
+                        time = "closed"
+                    hoo.append(f"{day}: {time}")
             hoo = " ".join(hoo)
 
             item = SgRecord(
