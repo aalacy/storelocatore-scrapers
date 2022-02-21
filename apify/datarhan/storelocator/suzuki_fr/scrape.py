@@ -21,7 +21,6 @@ def fetch_data():
     for lat, lng in all_coords:
         data = session.get(start_url.format(lat, lng), headers=hdr).json()
         for poi in data["stores"]:
-            print(poi)
             page_url = f'https://www.suzuki.fr/store/show/{poi["slug"]}'
             location_type = ", ".join([e["post_name"] for e in poi["services"]])
             hoo = []
