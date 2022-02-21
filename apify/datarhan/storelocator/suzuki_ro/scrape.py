@@ -27,7 +27,6 @@ def fetch_data():
         all_locations = dom.xpath("//a[h2]")
         for poi_html in all_locations:
             page_url = poi_html.xpath("@href")[0]
-            print(page_url)
             response = get_with_retry(driver, page_url)
             loc_dom = etree.HTML(response)
             location_name = loc_dom.xpath("//h1/text()")[0].strip()
