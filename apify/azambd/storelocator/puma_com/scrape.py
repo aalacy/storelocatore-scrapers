@@ -15,6 +15,10 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import pycountry
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 website = "puma.com"
 MISSING = SgRecord.MISSING
 STORE_JSON_URL = "https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator?coordinates={}%2C{}8&loadMore=50"

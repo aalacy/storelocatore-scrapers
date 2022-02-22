@@ -32,7 +32,7 @@ def fetch_data():
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
-            hours_of_operation=poi["time"],
+            hours_of_operation=poi["time"].split("<p>")[0],
         )
 
         yield item
