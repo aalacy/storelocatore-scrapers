@@ -45,6 +45,8 @@ def fetch_data():
 
         location_name = poi["store_name"]
         street_address = poi["address"]
+        if "@" in street_address:
+            street_address = ""
         city = poi["city"]
         state = poi["state"]
         zip_code = poi["zipcode"]
