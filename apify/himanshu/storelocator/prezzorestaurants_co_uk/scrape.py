@@ -27,7 +27,7 @@ def getAddress(raw_address):
             data = parse_address_intl(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
+                street_address = f"{street_address} {data.street_address_2}"
             city = data.city
             state = data.state
             zip_postal = data.postcode
@@ -69,12 +69,14 @@ def pull_content(url):
 
 def get_hoo(soup):
     try:
-        hoo = (
+        hoo = re.sub(
+            r",Christmas.*",
+            "",
             soup.find("h4", text=re.compile(r"Opening times.*"))
             .find_next("div", {"class": "has-max-32-center has-text-left"})
             .get_text(strip=True, separator=",")
             .replace(":,", ": ")
-            .strip()
+            .strip(),
         )
     except:
         hoo = MISSING
@@ -103,13 +105,16 @@ def fetch_data():
         if not contents:
             break
         for row in contents:
+            is_closed = row.find("div", {"data-autoheight": "description"}).text.strip()
+            if "Permanently closed" in is_closed:
+                continue
             page_url = (
                 BASE_URL
                 + row.find("a", {"class": "button secondary-button w-100 px-i"})["href"]
             )
             store = pull_content(page_url + "?X-Requested-With=XMLHttpRequest")
             location_name = row.find("h4", {"data-autoheight": "header"}).text.strip()
-            raw_address = (
+            raw_address = str(
                 " ".join(
                     row.find("div", {"data-autoheight": "address"})
                     .get_text(strip=True, separator=",")
@@ -120,8 +125,14 @@ def fetch_data():
                 .replace(", ,", ",")
             )
             street_address, city, state, zip_postal = getAddress(raw_address)
+            if "None" in street_address or len(street_address) <= 3:
+                street_address = raw_address.split(",")[0].strip()
+            if city == MISSING:
+                city = raw_address.split(",")[-2].strip()
+            if "York" in city and city != "York":
+                city = "York"
             if zip_postal == MISSING:
-                zip = street_address.split(",")[-1].strip()
+                zip = raw_address.split(",")[-1].strip()
                 if len(zip) > 5 and len(zip) <= 8 and len(zip.split(" ")) > 1:
                     zip_postal = zip
             country_code = "UK"
