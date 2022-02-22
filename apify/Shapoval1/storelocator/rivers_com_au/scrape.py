@@ -12,20 +12,19 @@ def get_urls():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
-    r = session.get("https://www.rivers.com.au/Store.xml", headers=headers)
-    tree = html.fromstring(r.content)
-    return tree.xpath("//url/loc/text()")
+    r = session.get("https://www.rivers.com.au/store/StoreDirectory", headers=headers)
+    tree = html.fromstring(r.text)
+    return tree.xpath('//a[contains(@href, "stores")]/@href')
 
 
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://www.rivers.com.au/"
-    page_url = url
+    page_url = f"https://www.rivers.com.au{url}"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
     r = session.get(page_url, headers=headers)
-
     tree = html.fromstring(r.text)
     ad = tree.xpath('//h4[text()="Address"]/following-sibling::p[1]/text()')
     ad = list(filter(None, [a.strip() for a in ad]))

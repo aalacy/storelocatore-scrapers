@@ -1,3 +1,4 @@
+import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -76,6 +77,12 @@ def fetch_data():
         location_name = row["name"]
         raw_address = row["address"]
         street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address = re.sub(
+            r"^.+Westfield Shoppingtown|Westfield Warringah Mall|Westfield Whitford Shopping Centre",
+            "",
+            street_address,
+            flags=re.IGNORECASE,
+        )
         country_code = "AU"
         phone = row["phone"]
         try:
