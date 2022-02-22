@@ -1,10 +1,49 @@
-import csv
-import json
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_intl
 from datetime import datetime
 
-from sgrequests import SgRequests
 
-base_url = "https://www.joejuice.com"
+DOMAIN = "joejuice.com"
+LOCATION_URL = "https://orders.joejuice.com/"
+API_URL = "https://joepay-api.joejuice.com/me/stores"
+HEADERS = {
+    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+session = SgRequests(verify_ssl=False)
+
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
 
 def validate(item):
@@ -26,89 +65,49 @@ def get_value(item):
     return item
 
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    output_list = []
-    url = "https://joepay-api.joejuice.com/me/stores"
-    session = SgRequests()
-    request = session.get(url)
-    store_list = json.loads(request.text)
-    for store in store_list:
-        output = []
-        if "America" in get_value(store["timezone"]):
-            country = "United States"
-        elif "London" in get_value(store["timezone"]):
-            country = "United Kingdom"
+    data = session.get(API_URL, headers=HEADERS).json()
+    time_zone_country = {
+        "New_York": "US",
+        "Los_Angeles": "US",
+        "Chicago": "US",
+        "London": "UK",
+        "Helsinki": "FL",
+        "Stockholm": "SW",
+        "Copenhagen": "DK",
+        "Oslo": "NO",
+        "Berlin": "DE",
+        "Amsterdam": "NL",
+        "Zurich": "Switzerland",
+        "Paris": "FR",
+        "Vancouver": "CA",
+        "Singapore": "SG",
+        "Reykjavik": "IS",
+        "Brussels": "BE",
+        "Shanghai": "CN",
+        "Seoul": "KR",
+        "Sydney": "AU",
+    }
+    for store in data:
+        time_zone = store["timezone"].split("/")[1]
+        if store["timezone"].split("/")[1] in time_zone_country:
+            country_code = time_zone_country[time_zone]
         else:
-            continue
-        output.append(base_url)
-        output.append(get_value(store["name"]))
-        zip_code = "<MISSING>"
-        street_address = get_value(store["address"]).replace(
-            "New York City New York", ""
-        )
-        if street_address.find(",") != -1:
-            street_address = " ".join(street_address.split(",")[:-1])
-        if "B91 3RA" in store["address"]:
-            zip_code = "B91 3RA"
-            street_address = street_address.replace("B91 3RA", "").strip()
-        output.append(street_address)
-        city = store.get("city") or "<MISSING>"
-        if city == "<MISSING>":
-            city = "".join(store.get("name")).split("[")[1].split("]")[0]
-        state = "<MISSING>"
-        if city.find(",") != -1:
-            state = city.split(",")[1].strip()
-            city = city.split(",")[0].strip()
-        if state == "London":
-            state = "<MISSING>"
-
-        output.append(city)
-        output.append(state)
-        output.append(zip_code)
-        output.append(country)
-        output.append(get_value(store["externalId"]))
-        output.append("<MISSING>")
-        output.append("<MISSING>")
-        output.append(get_value(store["latitude"]))
-        output.append(get_value(store["longitude"]))
-        store_hours = []
-
+            country_code = MISSING
+        location_name = store["name"].strip()
+        if store["city"]:
+            street_address, _, state, zip_postal = getAddress(store["address"])
+            city = store["city"]
+        else:
+            street_address, city, state, zip_postal = getAddress(store["address"])
+        if city == MISSING:
+            if "Miami Beach" in location_name:
+                city = "Miami"
+            if "Aarhus" in location_name:
+                city = "Aarhus"
+                street_address = street_address.replace(city, "").strip()
+        phone = MISSING
+        hours_of_operation = []
         raw_hours = store["storeBusinessHours"]
         if raw_hours:
             for row in raw_hours:
@@ -134,22 +133,46 @@ def fetch_data():
                             "%I:%M %p"
                         )
                     )
-                store_hours.append(day + " " + hour)
+                hours_of_operation.append(day + " " + hour)
         else:
-            store_hours = "Store is closed"
+            hours_of_operation = "CLOSED"
         isOpen = store.get("isOpen")
         isOpenTomorrow = store.get("isOpenTomorrow")
         if not isOpen and not isOpenTomorrow:
-            store_hours = "Store is closed"
-        output.append(get_value(store_hours))
-        output.append("https://www.joejuice.com/stores")
-        output_list.append(output)
-    return output_list
+            hours_of_operation = "CLOSED"
+        location_type = MISSING
+        store_number = store["externalId"]
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

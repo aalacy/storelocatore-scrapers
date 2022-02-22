@@ -54,9 +54,13 @@ def fetch_data(sgw: SgWriter):
             link = "https://dekalash.com/find-a-studio/"
             hours_of_operation = ""
         else:
+            link = req.url
             base = BeautifulSoup(req.text, "lxml")
 
-            if "coming soon" in base.find(class_="elementor-row").text.lower():
+            try:
+                if "coming soon" in base.find(class_="elementor-row").text.lower():
+                    continue
+            except:
                 continue
 
             if "temporarily closed" in base.find(class_="elementor-row").text.lower():

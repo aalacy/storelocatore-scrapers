@@ -4,17 +4,19 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("hcrcenters")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.hcrcenters.com/"
+base_url = "https://www.hcrcenters.com/our-location/"
 
 
 def fetch_data():
-    locator_domain = "https://www.hcrcenters.com/"
-    base_url = "https://www.hcrcenters.com/our-location/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("div.our-location-info-blocks li.location-link")
@@ -30,7 +32,7 @@ def fetch_data():
                 coord = ss["hasMap"].split("/@")[1].split("/data")[0].split(",")
             except:
                 coord = (
-                    sp1.select_one(".responsive-map iframe")["src"]
+                    sp1.select_one(".responsive-map iframe")["data-lazy-src"]
                     .split("!2d")[1]
                     .split("!2m")[0]
                     .split("!3d")[::-1]
@@ -60,7 +62,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
