@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -47,35 +46,21 @@ def fetch_data():
                 state = address["addressRegion"]
                 zip_postal = address["postalCode"]
                 country_code = address["addressCountry"]
-                latitude = str(temp["geo"]["latitude"])
-                longitude = str(temp["geo"]["longitude"])
-                raw_address = (
-                    street_address + " " + city + " " + state + " " + zip_postal
-                )
+                latitude = str(["latitude"])
+                longitude = str(["longitude"])
 
             except:
                 location_name = (
                     "Lok'nStore " + soup.find("span", {"class": "store__name"}).text
                 )
                 phone = soup.find("p", {"class": "store__number"}).text
-                raw_address = (
-                    soup.find("p", {"class": "store__address__container"})
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
-                pa = parse_address_intl(raw_address)
-
-                street_address = pa.street_address_1
-                street_address = street_address if street_address else MISSING
-
-                city = pa.city
-                city = city.strip() if city else MISSING
-
-                state = pa.state
-                state = state.strip() if state else MISSING
-
-                zip_postal = pa.postcode
-                zip_postal = zip_postal.strip() if zip_postal else MISSING
+                address = soup.find(
+                    "p", {"class": "store__address__container"}
+                ).text.split(",")
+                street_address = address[0]
+                city = address[1]
+                state = address[2]
+                zip_postal = address[3]
                 country_code = "GB"
                 latitude = MISSING
                 longitude = MISSING
@@ -91,11 +76,8 @@ def fetch_data():
                 location_type = "Temporarily Closed"
             else:
                 location_type = MISSING
-            if zip_postal == MISSING:
-                temp = raw_address.split(",")
-                zip_postal = temp[-1].split()
-                zip_postal = zip_postal[1] + " " + zip_postal[-1]
-                street_address = temp[0] + temp[1]
+            if "Open hours : Closed" in hours_of_operation:
+                continue
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -111,7 +93,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
-                raw_address=raw_address,
             )
 
 
