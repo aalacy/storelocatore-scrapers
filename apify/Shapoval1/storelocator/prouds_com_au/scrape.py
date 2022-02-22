@@ -33,8 +33,8 @@ def fetch_data(sgw: SgWriter):
         try:
             ad = "".join(j.get("address")).split("\n")
         except:
-            ad = "<MISSING>"
-        if ad == "<MISSING>":
+            ad = []
+        if not ad:
             continue
         adr = " ".join(ad).replace("\r", "").replace("&amp;amp;amp;", "").strip()
         a = parse_address(International_Parser(), adr)
