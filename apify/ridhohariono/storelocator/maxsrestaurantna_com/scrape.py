@@ -82,9 +82,12 @@ def fetch_data():
                         if day["label"] in hday:
                             day_available = True
                             hoo += hday.replace(day["label"], day["name"]) + ","
-                            break
                     if not day_available:
                         hoo += day["name"] + " Closed" + ","
+                    hoo = hoo.replace(
+                        day["name"] + " 16:30-19:00," + day["name"] + " 11:30-15:00",
+                        day["name"] + " 11:30-15:00," + day["name"] + " 16:30-19:00",
+                    )
                 hours_of_operation = hoo.strip().rstrip(",")
                 log.info("Append {} => {}".format(location_name, street_address))
                 yield SgRecord(
