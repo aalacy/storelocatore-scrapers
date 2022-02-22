@@ -30,10 +30,11 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://shopandmall.ru/torgovye-centry?page={}&per-page=10"
-
+    URL_LIST = []
     with SgRequests() as session:
         page_no = 1
         while True:
+            log.info(f"fetching data from page:{page_no}")
             search_res = session.get(search_url.format(str(page_no)), headers=headers)
             stores_sel = lxml.html.fromstring(search_res.text)
             stores = stores_sel.xpath(
@@ -41,6 +42,8 @@ def fetch_data():
             )
             if len(stores) <= 0:
                 break
+
+            is_last_page = False
             for store in stores:
                 locator_domain = website
                 page_url = (
@@ -49,6 +52,11 @@ def fetch_data():
                         store.xpath('.//a[@class="catalog-card-info__title"]/@href')
                     ).strip()
                 )
+                if page_url in URL_LIST:
+                    is_last_page = True
+                    break
+
+                URL_LIST.append(page_url)
                 log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
 
@@ -71,6 +79,8 @@ def fetch_data():
                         store.xpath('.//div[@class="catalog-card-info__adress"]/text()')
                     )
                     .strip()
+                    .replace("\r\n", "")
+                    .replace("\n", "")
                     .split(",")
                 )
                 street_address = ", ".join(raw_address[1:]).strip()
@@ -128,7 +138,11 @@ def fetch_data():
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
-                page_no = page_no + 1
+
+            if is_last_page:
+                break
+
+            page_no = page_no + 1
 
 
 def scrape():
