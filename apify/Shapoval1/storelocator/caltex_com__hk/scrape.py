@@ -20,7 +20,9 @@ def fetch_data(sgw: SgWriter):
         page_url = "https://www.caltex.com/hk/en/find-a-caltex-station.html"
         location_name = j.get("name") or "<MISSING>"
         location_type = j.get("siteType") or "<MISSING>"
-        street_address = j.get("street") or "<MISSING>"
+        street_address = "".join(j.get("street")) or "<MISSING>"
+        if street_address.find("(") != -1:
+            street_address = street_address.split("(")[0].strip()
         state = j.get("state") or "<MISSING>"
         postal = j.get("postalCode") or "<MISSING>"
         country_code = "HK"

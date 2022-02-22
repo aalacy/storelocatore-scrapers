@@ -38,6 +38,7 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
+            postal = postal.replace(".", "").replace("CP", "").strip()
             country_code = slug.split(".")[0].capitalize().strip()
             city = location_name
             phone = (

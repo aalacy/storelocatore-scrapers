@@ -6,6 +6,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_data(sgw: SgWriter):
@@ -55,10 +58,18 @@ def fetch_data(sgw: SgWriter):
             )
             with SgFirefox() as driver:
                 driver.get(page_url)
-                driver.implicitly_wait(20)
+                driver.implicitly_wait(10)
                 driver.maximize_window()
                 driver.switch_to.frame(0)
 
+                try:
+                    WebDriverWait(driver, 2).until(
+                        EC.presence_of_element_located(
+                            (By.XPATH, '//div[@class="address"]')
+                        )
+                    )
+                except:
+                    driver.switch_to.default_content()
                 try:
                     ad = driver.find_element_by_xpath('//div[@class="address"]').text
                     ll = driver.find_element_by_xpath(
@@ -69,7 +80,6 @@ def fetch_data(sgw: SgWriter):
                     ll = "<MISSING>"
                 ll = "".join(ll)
                 ad = "".join(ad)
-
                 driver.switch_to.default_content()
                 a = usaddress.tag(ad, tag_mapping=tag)[0]
                 street_address = (
@@ -108,6 +118,10 @@ def fetch_data(sgw: SgWriter):
                     state = "".join(ad).split(",")[1]
                     street_address = "".join(adr)
                     postal = "".join(adrp)
+                if str(city).find("(") != -1:
+                    city = str(city).split("(")[0].strip()
+                if page_url == "https://www.bubbakoos.com/location/wlongbranchnj":
+                    hours_of_operation = "Open 7 Days: 11 AM – 9 PM"
 
                 row = SgRecord(
                     locator_domain=locator_domain,

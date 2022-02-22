@@ -42,6 +42,30 @@ def fetch_data():
                 lat = info["latitude"]
                 lng = info["longitude"]
                 link = "https://www.241pizza.com/" + store["llp_url"]
+                hours = hours.split(";")
+                hoo = ""
+                for hr in hours:
+                    hour = hr.split(",")
+                    if len(hour) > 1:
+                        day = hour[0]
+                        start = hour[1]
+                        end = hour[2]
+                        if day == "1":
+                            day = "Monday"
+                        if day == "2":
+                            day = "Tuesday"
+                        if day == "3":
+                            day = "Wednesday"
+                        if day == "4":
+                            day = "Thursday"
+                        if day == "5":
+                            day = "Friday"
+                        if day == "6":
+                            day = "Satday"
+                        if day == "7":
+                            day = "Sunday"
+                        hoo = hoo + ", " + day + " " + start + " - " + end
+                hoo = hoo.lstrip(", ").strip()
 
                 yield SgRecord(
                     locator_domain=DOMAIN,
@@ -57,7 +81,7 @@ def fetch_data():
                     location_type=MISSING,
                     latitude=lat,
                     longitude=lng,
-                    hours_of_operation=hours.strip(),
+                    hours_of_operation=hoo.strip(),
                 )
 
 

@@ -37,7 +37,11 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         phone = j.get("Phone") or "<MISSING>"
-        hours_of_operation = j.get("Hours") or "<MISSING>"
+        hours_of_operation = "".join(j.get("Hours")) or "<MISSING>"
+        if hours_of_operation.find("LPG Filling") != -1:
+            hours_of_operation = hours_of_operation.split("LPG Filling")[0].strip()
+        if hours_of_operation.find(", Public") != -1:
+            hours_of_operation = hours_of_operation.split(", Public")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

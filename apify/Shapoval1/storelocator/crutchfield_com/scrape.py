@@ -64,14 +64,15 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 d.xpath(
-                    './/following::p[./strong[contains(text(), "standard hours")]][1]/following-sibling::table[1]//tr/td//text()'
+                    './/following-sibling::h5[contains(text(), "Hours")][1]/following-sibling::table[1]//tr/td//text()'
                 )
             )
             .replace("\n", "")
-            .replace("\r", "")
             .strip()
+            or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

@@ -69,11 +69,20 @@ def fetch_data():
         info = row.select(
             "div.et_pb_module.et_pb_blurb.et_pb_blurb_position_left.et_pb_bg_layout_light"
         )
-        raw_address = info[0].get_text(strip=True, separator=",")
+        raw_address = (
+            info[0]
+            .get_text(strip=True, separator=",")
+            .replace("Dallas Fort Worth International Airport", "")
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = info[1].text.strip()
         country_code = "US"
-        hours_of_operation = info[3].get_text(strip=True, separator=",")
+        hours_of_operation = (
+            info[3]
+            .get_text(strip=True, separator=",")
+            .replace(", 24 Hour Drop-off", "")
+            .strip()
+        )
         location_type = MISSING
         store_number = MISSING
         latitude = MISSING

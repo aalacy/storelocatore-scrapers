@@ -1,0 +1,10 @@
+--ignore StreetAddressHasNumber  (Confirmed on website)
+
+--ignore CountryValidator (Not US phone)
+Found 16 concerning rows. Examples:
+       state      phone    zip            REASON  rowNumber
+0  <MISSING>  986850908  36003  INVALID_US_PHONE          0
+1  <MISSING>  981596300  15701  INVALID_US_PHONE          1
+2  <MISSING>  982251038  27002  INVALID_US_PHONE          2
+3  <MISSING>  988225270  32004  INVALID_US_PHONE          3
+4  <MISSING>  981121495  15005  INVALID_US_PHONE          4

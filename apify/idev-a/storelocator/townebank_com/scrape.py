@@ -30,6 +30,8 @@ def fetch_data(writer):
             street_address = _["addressOne"]
             if _["addressTwo"]:
                 street_address += " " + _["addressTwo"]
+            if "location only includes an ATM" in _["notes"]:
+                continue
 
             hours = []
             if _["lobbyHours"]:

@@ -29,7 +29,9 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("longitude")
         store_number = j.get("id")
         a = j.get("address") or {}
-        street_address = f'{a.get("address1")} {a.get("address2") or ""}'.strip()
+        street_address = f'{a.get("address1")} {a.get("address2") or ""}'.replace(
+            ",", ""
+        ).strip()
         city = a.get("suburb")
         state = a.get("state") or ""
         postal = a.get("postcode")

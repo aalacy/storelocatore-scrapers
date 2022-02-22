@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("carlsjr_com")
 
@@ -25,13 +26,17 @@ def fetch_data():
         if "<loc>https://carlsjr.com/locations/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
+        time.sleep(6)
         logger.info(loc)
         country = "US"
         typ = "<MISSING>"
         name = ""
         add = ""
         city = ""
-        state = loc.split("/locations/")[1].split("/")[0].upper()
+        if "/intl/" in loc:
+            state = loc.split("/locations/intl/")[1].split("/")[0].upper()
+        else:
+            state = loc.split("/locations/")[1].split("/")[0].upper()
         zc = ""
         phone = ""
         lat = ""
@@ -91,6 +96,31 @@ def fetch_data():
             country = "AU"
         if state.upper() in canada:
             country = "CA"
+        if "-spain" in state.lower():
+            country = "ES"
+            state = "<MISSING>"
+        if "-thailand" in state.lower():
+            country = "TH"
+            state = "<MISSING>"
+        if "jakarta" in state.lower():
+            country = "ID"
+            state = "<MISSING>"
+        if "singapore" in state.lower():
+            country = "SG"
+            state = "<MISSING>"
+        if phone.strip() == "0" or len(phone) <= 5:
+            phone = "<MISSING>"
+        if (
+            "1" not in phone
+            and "2" not in phone
+            and "3" not in phone
+            and "4" not in phone
+            and "5" not in phone
+            and "6" not in phone
+            and "7" not in phone
+            and "8" not in phone
+        ):
+            phone = "<MISSING>"
         if RB is False:
             if add != "":
                 yield SgRecord(

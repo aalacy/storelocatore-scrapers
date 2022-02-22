@@ -13,7 +13,7 @@ def get_international(line):
         "None", ""
     ).strip()
     city = adr.city or ""
-    state = adr.state
+    state = SgRecord.MISSING
     postal = adr.postcode
 
     return street_address, city, state, postal
@@ -34,6 +34,10 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(
             " ".join(table.xpath(".//tr[3]/td/text()")).split()
         )
+        if "西環一田店" in location_name:
+            hours_of_operation = (
+                table.xpath(".//tr[3]/td/text()")[0].split("：")[-1].strip()
+            )
         street_address, city, state, postal = get_international(raw_address)
 
         row = SgRecord(

@@ -26,7 +26,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         logger.info("Pulling Stores")
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if 'store-link" href="https://' in line:
                 locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
@@ -44,7 +43,6 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
             if '"name":"' in line2:
@@ -59,11 +57,9 @@ def fetch_data():
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
             if 'times__label">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 day = g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
             if 'store-opening-times__hours">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 hrs = (
                     day
                     + ": "
@@ -77,7 +73,6 @@ def fetch_data():
                 add = line2.split('"store-map__info-address">')[1].split("<")[0]
             if 'banner__info-address">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 state = "<MISSING>"
                 if g.count(",") == 2:
                     city = g.split(",")[1].strip()

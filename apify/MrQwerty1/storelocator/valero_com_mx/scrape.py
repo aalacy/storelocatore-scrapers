@@ -14,7 +14,7 @@ def get_international(line):
     ).strip()
     city = adr.city or ""
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or ""
 
     return street_address, city, state, postal
 
@@ -40,8 +40,12 @@ def fetch_data(sgw: SgWriter):
         if "–" in phone:
             phone = phone.split("–")[0].strip()
         street_address, city, state, postal = get_international(raw_address)
+        postal = postal.replace("C.P.", "").strip()
         text = "".join(d.xpath("./following-sibling::div[3]//a/@href"))
-        if "@" in text:
+        if ("!3d" and "!4d") in text:
+            latitude = text.split("!3d")[1].split("!")[0]
+            longitude = text.split("!4d")[1].split("!")[0].split("?")[0]
+        elif "@" in text:
             latitude, longitude = text.split("@")[1].split("/")[0].split(",")[:2]
         elif ("//" and ",") in text:
             latitude, longitude = text.split("//")[-1].split(",")
