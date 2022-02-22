@@ -25,17 +25,13 @@ def fetch_data():
         url = "https://www.greensnaturalfoods.com/grocery-store-near-me/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll(
-            "a", {"class": "elementor-button-link elementor-button elementor-size-sm"}
-        )
+        loclist = soup.findAll("ul")[-3].findAll("li")[:-1]
         for loc in loclist:
-            if "VIEW HERE" not in loc.text:
-                continue
-            page_url = loc["href"]
+            page_url = loc.find("a")["href"].replace("https:/www", "https://www")
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h3").text
+            location_name = soup.findAll("h3")[1].text
             temp = soup.findAll("span", {"class": "elementor-icon-list-text"})
             hours_of_operation = (
                 soup.findAll(
@@ -47,14 +43,18 @@ def fetch_data():
             )
             address = temp[0].text
             phone = temp[1].text
-            coords = (
-                soup.select_one("a[href*=maps]")["href"]
-                .split("@")[1]
-                .split(",17z")[0]
-                .split(",")
-            )
-            latitude = coords[0]
-            longitude = coords[1]
+            try:
+                coords = (
+                    soup.select_one("a[href*=maps]")["href"]
+                    .split("@")[1]
+                    .split(",17z")[0]
+                    .split(",")
+                )
+                latitude = coords[0]
+                longitude = coords[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -104,7 +104,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
