@@ -36,13 +36,14 @@ def fetch_data():
             hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
                 .get_text(separator="|", strip=True)
-                .replace("Only Drive Up access is available until further notice.", "")
                 .replace("|", " ")
+                .replace("Only Drive Up access is available until further notice.", "")
+                .replace("The drive up hours will be 9:00-11:30 – Drive Up Only", "")
                 .replace("2.22 miles", "")
                 .replace("Hours", "")
                 .replace("Lobby", "")
                 .replace("This branch will be closed 2/16/22", "")
-                .replace("Located inside of Raley", "")
+                .replace("Located inside of Raleys", "")
             )
             location_name = loc["name"]
             log.info(location_name)
@@ -81,8 +82,6 @@ def fetch_data():
             if "Drive" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("Drive")[0]
             hours_of_operation = hours_of_operation.replace("s Mon", "Mon")
-            if "Drive Up Only" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("Drive Up Only")[1]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
