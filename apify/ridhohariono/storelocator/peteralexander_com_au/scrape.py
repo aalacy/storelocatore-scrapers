@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
+import re
 
 
 DOMAIN = "peteralexander.com.au"
@@ -35,12 +36,14 @@ def fetch_data():
     for row in data:
         page_url = row["storeURL"]
         location_name = row["storeName"]
-        street_address = (
-            (row["shopAddress"] + ", " + row["streetAddress"]).strip().rstrip(",")
-        )
+        street_address = re.sub(
+            r"^.,|,.$|, .$|,$",
+            "",
+            (row["shopAddress"] + ", " + row["streetAddress"]).strip().rstrip(","),
+        ).strip()
         city = row["city"]
         state = row["state"]
-        zip_postal = row["zipcode"]
+        zip_postal = row["zipcode"].replace(".", "").strip()
         country_code = row["country"]
         phone = row["phone"]
         hours_of_operation = (
