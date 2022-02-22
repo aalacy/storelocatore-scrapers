@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
         "Sec-Fetch-Site": "same-origin",
         "TE": "trailers",
     }
-    json_data = {}
+    json_data = {"": ""}
     r = session.post(
         "https://terrywhitechemmart.com.au/store-api/get-stores-summary",
         headers=headers,
