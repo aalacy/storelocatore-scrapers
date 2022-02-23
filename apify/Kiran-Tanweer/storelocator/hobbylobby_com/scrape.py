@@ -57,7 +57,6 @@ def fetch_data():
                 locations = locations["data-stores"]
                 locations = json.loads(locations)
                 for loc in locations:
-                    print(loc)
                     lat = loc["latitude"]
                     lng = loc["longitude"]
                     add1 = loc["address1"]
@@ -68,7 +67,6 @@ def fetch_data():
                     pcode = loc["zipcode"]
                     phone = loc["phone"]
                     loc_link = "https://www.hobbylobby.com" + loc["linkUrl"]
-                    print(loc_link)
                     req = session.get(loc_link, headers=headers)
                     try:
                         bs = BeautifulSoup(req.text, "html.parser")
