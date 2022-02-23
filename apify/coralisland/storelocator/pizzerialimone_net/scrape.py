@@ -19,10 +19,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def fetch_data(sgw: SgWriter):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(LOCATION_URL, headers=headers)
+    r = session.get(LOCATION_URL, headers=HEADERS)
     tree = html.fromstring(r.text)
     div = tree.xpath('//h2[not(text()="HOURS")]')
     for d in div:
