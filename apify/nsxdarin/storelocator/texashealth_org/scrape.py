@@ -78,7 +78,7 @@ def fetch_data():
                     country_code=country_code,
                     store_number=store_number,
                     phone=phone.strip(),
-                    location_type=MISSING,
+                    location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=MISSING,
