@@ -2,7 +2,6 @@ from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-# import json
 import datetime
 
 session = SgRequests(proxy_country="gb")
