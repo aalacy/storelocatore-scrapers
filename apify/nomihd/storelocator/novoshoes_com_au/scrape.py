@@ -34,69 +34,133 @@ params = (
     ("source", "js"),
 )
 
+params_2 = (
+    ("option", "com_locator"),
+    ("view", "directory"),
+    ("force_link", "1"),
+    ("tmpl", "component"),
+    ("task", "search_zip"),
+    ("framed", "1"),
+    ("format", "raw"),
+    ("no_html", "1"),
+    ("templ/[/]", "address_format"),
+    ("layout", "_jsonfast"),
+    ("radius", "25"),
+    ("interface_revision", "58"),
+    ("user_lat", "0"),
+    ("user_lng", "0"),
+    ("state", ""),
+    ("Itemid", "9450"),
+    ("ml_skip_interstitial", "0"),
+    ("preview", "0"),
+    ("parent_table", ""),
+    ("parent_id", "0"),
+    ("search_type", "point"),
+    ("_opt_out", ""),
+    ("ml_location_override", ""),
+    ("reset", "true"),
+    ("nearest", "false"),
+    ("national", "true"),
+)
+
 
 def fetch_data():
     # Your scraper here
     search_url = "https://code.metalocator.com/index.php"
     with SgRequests() as session:
-        stores_req = session.get(search_url, headers=headers, params=params)
-        stores = json.loads(
-            stores_req.text.split("var location_data =")[1]
-            .strip()
-            .split("}];")[0]
-            .strip()
-            + "}]"
-        )
+        for index in range(0, 2):  # first australia, 2nd newzealand
+            if index == 0:
+                data = params
+            else:
+                data = params_2
 
-        for store in stores:
-            store_number = store["id"]
-            page_url = f"https://novo.locationlandingpages.com/{store_number}/9067"
-            locator_domain = website
-            location_name = store["name"]
+            stores_req = session.get(search_url, headers=headers, params=data)
+            if index == 0:
+                stores = json.loads(
+                    stores_req.text.split("var location_data =")[1]
+                    .strip()
+                    .split("}];")[0]
+                    .strip()
+                    + "}]"
+                )
+            else:
+                stores = stores_req.json()
 
-            street_address = store["address"]
-            if "address2" in store and len(store["address2"]) > 0:
-                street_address = street_address + ", " + store["address2"]
+            for store in stores:
+                store_number = store["id"]
+                if index == 0:
+                    page_url = (
+                        f"https://novo.locationlandingpages.com/{store_number}/9067"
+                    )
+                else:
+                    page_url = "https://www.novoshoes.co.nz/store-locator"
 
-            city = store["city"]
-            state = store["state"]
-            zip = store["postalcode"]
+                locator_domain = website
+                location_name = store["name"]
 
-            country_code = store["country"]
-            phone = store.get("phone", "<MISSING>")
+                street_address = store["address"]
+                if "address2" in store and len(store["address2"]) > 0:
+                    street_address = street_address + ", " + store["address2"]
 
-            location_type = "<MISSING>"
+                city = store.get("city", "<MISSING>")
+                state = store.get("state", "<MISSING>")
+                zip = store.get("postalcode", "<MISSING>")
 
-            latitude = store["lat"]
-            longitude = store["lng"]
+                raw_address = ""
+                if len(street_address) > 0 and street_address != "<MISSING>":
+                    raw_address = street_address
 
-            hours_of_operation = "<MISSING>"
-            if "hours" in store:
-                hours = store["hours"].split("}")[:-1]
-                hours_list = []
-                for hour in hours:
-                    day = hour.split("|")[0].strip().replace("{", "").strip()
-                    time = hour.split("|")[1].strip()
-                    hours_list.append(day + ":" + time)
+                if len(city) > 0 and city != "<MISSING>":
+                    raw_address = raw_address + ", " + city
 
-                hours_of_operation = "; ".join(hours_list).strip()
+                if len(state) > 0 and state != "<MISSING>":
+                    raw_address = raw_address + ", " + state
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                if len(zip) > 0 and zip != "<MISSING>":
+                    raw_address = raw_address + ", " + zip
+
+                if len(street_address.split(",")) >= 2:
+                    if "shop" in street_address.split(",")[0].strip().lower():
+                        street_address = ", ".join(
+                            street_address.split(",")[1:]
+                        ).strip()
+
+                country_code = store["country"]
+                phone = store.get("phone", "<MISSING>")
+
+                location_type = "<MISSING>"
+
+                latitude = store["lat"]
+                longitude = store["lng"]
+
+                hours_of_operation = "<MISSING>"
+                if "hours" in store:
+                    hours = store["hours"].split("}")[:-1]
+                    hours_list = []
+                    for hour in hours:
+                        day = hour.split("|")[0].strip().replace("{", "").strip()
+                        time = hour.split("|")[1].strip()
+                        hours_list.append(day + ":" + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
