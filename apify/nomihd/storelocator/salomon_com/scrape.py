@@ -67,7 +67,6 @@ def fetch_data():
                 longitude = "<MISSING>"
                 hours_of_operation = "<MISSING>"
                 slug = page_url.split("stores.salomon.com")[1].strip()
-                print(slug)
                 location_type = (
                     "".join(
                         stores_sel.xpath(
