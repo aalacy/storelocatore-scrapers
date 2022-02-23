@@ -39,9 +39,9 @@ def fetch_data(sgw: SgWriter):
         longitude = a.get("longitude") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
         hours_of_operation = "<MISSING>"
-        hours = j.get("normal_hours") or "<MISSING>"
+        hours = j.get("normal_hours")
         tmp = []
-        if hours != "<MISSING>":
+        if hours:
             for h in hours:
                 days = h.get("day_of_week")
                 opens = h.get("open_at")
