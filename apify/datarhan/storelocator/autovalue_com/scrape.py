@@ -32,29 +32,18 @@ def fetch_data():
         poi = loc_dom.xpath('//script[contains(text(), "AutoPartsStore")]/text()')[0]
         poi = demjson.decode(poi)
 
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
+        location_name = poi["name"].replace("&#39;", "'").replace("&amp;", "&")
         street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
         state = poi["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
         zip_code = poi["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["address"]["addressCountry"]
-        country_code = country_code if country_code else "<MISSING>"
         store_number = poi["@id"]
-        store_number = store_number if store_number else "<MISSING>"
         store_url = poi["url"]
         phone = poi["telephone"]
-        phone = phone if phone else "<MISSING>"
         location_type = poi["@type"]
-        location_type = location_type if location_type else "<MISSING>"
         latitude = poi["geo"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["geo"]["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
         hoo = []
         for elem in poi["openingHoursSpecification"]:
             day = elem["dayOfWeek"][0]

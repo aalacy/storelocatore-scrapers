@@ -3,10 +3,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.dynamic import DynamicGeoSearch
-from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicGeoSearch, Grain_8, SearchableCountries
 from tenacity import retry, stop_after_attempt, wait_fixed
+from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("massimodutti")
 
@@ -15,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "https://www.massimodutti.com/"
-base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009456/physical-store?appId=1&languageId=-1&latitude={}&longitude={}&favouriteStores=false&lastStores=false&closerStores=true&min=10&radioMax=100&receiveEcommerce=false&showBlockedMaxPackage=false"
+base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009527/physical-store?appId=1&languageId=-1&latitude={}&longitude={}"
 
 days = [
     "",
@@ -93,7 +92,9 @@ def fetch_records(search):
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
+    search = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, granularity=Grain_8()
+    )
     with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100

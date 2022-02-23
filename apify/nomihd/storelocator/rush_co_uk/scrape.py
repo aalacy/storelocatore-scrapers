@@ -54,6 +54,8 @@ def fetch_data():
                     )
 
                 city = formatted_addr.city
+                if not city:
+                    city = location_name.split("Rush")[1].strip()
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
                 country_code = formatted_addr.country
