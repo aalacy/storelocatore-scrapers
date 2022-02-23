@@ -22,6 +22,7 @@ def fetch_data():
     for x in range(1, 21):
         logger.info(str(x))
         add = ""
+        loc = ""
         name = ""
         city = ""
         state = ""
