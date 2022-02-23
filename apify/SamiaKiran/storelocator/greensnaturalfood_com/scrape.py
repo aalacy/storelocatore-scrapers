@@ -81,6 +81,20 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            if not state:
+                address = soup.find("meta", {"name": "twitter:description"})["content"]
+                address = (
+                    address.split(street_address.split()[0])[1]
+                    .split('"/>')[0]
+                    .split(",")
+                )
+                if len(address) == 2:
+                    city = address[0].split(".")[1]
+                else:
+                    city = address[1]
+                address = address[-1].strip().split()
+                state = address[0]
+                zip_postal = address[1]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
