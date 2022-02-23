@@ -24,6 +24,8 @@ def fetch_data():
         country_codes=[SearchableCountries.GERMANY],
         expected_search_radius_miles=1,
         granularity=Grain_1_KM(),
+        max_search_distance_miles=2
+
     )
     for lat, lng in all_coords:
         frm = f"s={lat}&n={lat + 0.2}&w={lng}&e={lng + 0.35}&netto=false&city=false&service=false&beverage=false&nonfood=false"
