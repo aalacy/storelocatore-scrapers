@@ -26,8 +26,10 @@ def fetch_data():
     nonce = re.search(r"var novadine_nonce = '(.*)'", content).group(1)
     data = session.get(API_URL.format(nonce), headers=HEADERS).json()
     for row in data:
-        page_url = BASE_URL.format(row["store_id"])
         location_name = row["name"]
+        if "Support Center" in location_name:
+            continue
+        page_url = BASE_URL.format(row["store_id"])
         street_address = row["address1"].strip()
         city = row["city"]
         state = row["state"]
