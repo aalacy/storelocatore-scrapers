@@ -45,6 +45,12 @@ def fetch_data():
                 )
                 hoo = loc_dom.xpath('//ul[@class="striplist timetable"]//text()')
                 hoo = " ".join([e.strip() for e in hoo if e.strip()])
+                zip_code = poi["pc"]
+                country_code = ""
+                if len(zip_code) == 4:
+                    country_code = "Belgium"
+                elif len(zip_code.split()) == 2:
+                    country_code = "Netherlands"
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -53,8 +59,8 @@ def fetch_data():
                     street_address=poi["st"],
                     city=poi["ct"],
                     state="",
-                    zip_postal=poi["pc"],
-                    country_code="",
+                    zip_postal=zip_code,
+                    country_code=country_code,
                     store_number="",
                     phone=phone,
                     location_type="",

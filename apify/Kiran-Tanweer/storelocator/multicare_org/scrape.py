@@ -6,10 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 from sgscrape import sgpostal as parser
-import os
 
-os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
-os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 session = SgRequests()
 website = "multicare_org"
@@ -87,6 +84,7 @@ def fetch_data():
         storeids = []
         loc_types = []
         hoo = []
+        web = []
         for j in location_type:
             for i in range(1, 11):
                 weburl = (
@@ -95,93 +93,94 @@ def fetch_data():
                     + "&searchloc=&coordinates=&locationType=&sortBy=&radius=1000&page_num="
                     + str(i)
                 )
-                session = SgRequests()
-                r = session.get(weburl, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
-                locations = soup.findAll("div", {"class": "location-list-card"})
-                for loc in locations:
-                    title = loc.find("h2", {"class": "title"}).text
-                    link = loc.find("h2", {"class": "title"}).find("a")["href"]
-                    storeid = loc["data-mcid"]
-                    loc_type = loc.find("div", {"class": "note"}).text
-                    address = loc.find("div", {"class": "details"}).text
-                    address = address.split("\n")[1]
-                    coords = loc.find(
-                        "div", {"class": "note distance js-distance-calc"}
-                    )
-                    lat = coords["data-latitude"]
-                    lng = coords["data-longitude"]
-                    phone = loc.find("a", {"class": "btn btn--solid"})["href"].lstrip(
-                        "tel:"
-                    )
-                    address = address.replace(",", "")
-                    address = address.strip()
-                    parsed = parser.parse_address_usa(address)
-                    street1 = (
-                        parsed.street_address_1
-                        if parsed.street_address_1
-                        else "<MISSING>"
-                    )
-                    street = (
-                        (street1 + ", " + parsed.street_address_2)
-                        if parsed.street_address_2
-                        else street1
-                    )
-                    city = parsed.city if parsed.city else "<MISSING>"
-                    state = parsed.state if parsed.state else "<MISSING>"
-                    pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+                web.append(weburl)
+                web.append(
+                    "https://www.multicare.org/find-a-location/?locationType=23&sortBy=alphabetical"
+                )
+                web.append(
+                    "https://www.multicare.org/find-a-location/?locationType=27&sortBy=alphabetical"
+                )
+        for weburl in web:
+            session = SgRequests()
+            r = session.get(weburl, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            locations = soup.findAll("div", {"class": "location-list-card"})
+            for loc in locations:
+                title = loc.find("h2", {"class": "title"}).text
+                link = loc.find("h2", {"class": "title"}).find("a")["href"]
+                storeid = loc["data-mcid"]
+                loc_type = loc.find("div", {"class": "note"}).text
+                address = loc.find("div", {"class": "details"}).text
+                address = address.split("\n")[1]
+                coords = loc.find("div", {"class": "note distance js-distance-calc"})
+                lat = coords["data-latitude"]
+                lng = coords["data-longitude"]
+                phone = loc.find("a", {"class": "btn btn--solid"})["href"].lstrip(
+                    "tel:"
+                )
+                phone = phone.replace("Urogynecology: ", "").strip()
+                address = address.replace(",", "")
+                address = address.strip()
+                parsed = parser.parse_address_usa(address)
+                street1 = (
+                    parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+                )
+                street = (
+                    (street1 + ", " + parsed.street_address_2)
+                    if parsed.street_address_2
+                    else street1
+                )
+                city = parsed.city if parsed.city else "<MISSING>"
+                state = parsed.state if parsed.state else "<MISSING>"
+                pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
-                    if link.find("indigo") != -1:
-                        link = link.split("indigo-")[1]
-                        link = "https://www.indigourgentcare.com/locations/" + link
-                        link = link.rstrip("/")
-                    if link.find("indigo") == -1:
-                        req = session.get(link, headers=headers3)
-                        bs = BeautifulSoup(req.text, "html.parser")
-                        hours = bs.find("div", {"class": "hours-content"})
-                        if hours is None:
-                            hours = "<MISSING>"
-                            hoo.append(hours)
-                        elif hours.text.strip() == "":
-                            hours = "<MISSING>"
-                            hoo.append(hours)
-                        else:
-                            hours = hours.text.strip()
-                            hours = hours.replace("\n", " ").strip()
-                            hours = hours.replace(
-                                "Open 7 days a week", "Mon-Sun"
-                            ).strip()
-                            hours = hours.lstrip("Hours ").strip()
-                            hoo.append(hours)
+                if link.find("indigo") != -1:
+                    link = link.split("indigo-")[1]
+                    link = "https://www.indigourgentcare.com/locations/" + link
+                    link = link.rstrip("/")
+                if link.find("indigo") == -1:
+                    req = session.get(link, headers=headers3)
+                    bs = BeautifulSoup(req.text, "html.parser")
+                    hours = bs.find("div", {"class": "hours-content"})
+                    if hours is None:
+                        hours = "<MISSING>"
+                        hoo.append(hours)
+                    elif hours.text.strip() == "":
+                        hours = "<MISSING>"
+                        hoo.append(hours)
                     else:
-                        try:
-                            request = session.get(link, headers=headers2)
-                            hours = BeautifulSoup(request.text, "html.parser")
-                            hours = hours.findAll(
-                                "div", {"class": "col-lg-6 col-md-6 col-xs-12"}
-                            )[2]
-                            hours = hours.text
-                            hours = hours.replace("\n", " ").strip()
-                            hours = hours.replace(
-                                "Open 7 days a week", "Mon-Sun"
-                            ).strip()
-                            hours = hours.lstrip("Hours ").strip()
-                            hoo.append(hours)
-                        except AttributeError:
-                            hours = "<MISSING>"
-                            hoo.append(hours)
-                    hours = hours.replace("By appointment", "<MISSING>")
-                    titles.append(title)
-                    streets.append(street)
-                    citys.append(city)
-                    states.append(state)
-                    pcodes.append(pcode)
-                    lats.append(lat)
-                    lngs.append(lng)
-                    storeids.append(storeid)
-                    loc_types.append(loc_type)
-                    rawlinks.append(link)
-                    phones.append(phone)
+                        hours = hours.text.strip()
+                        hours = hours.replace("\n", " ").strip()
+                        hours = hours.replace("Open 7 days a week", "Mon-Sun").strip()
+                        hours = hours.lstrip("Hours ").strip()
+                        hoo.append(hours)
+                else:
+                    try:
+                        request = session.get(link, headers=headers2)
+                        hours = BeautifulSoup(request.text, "html.parser")
+                        hours = hours.findAll(
+                            "div", {"class": "col-lg-6 col-md-6 col-xs-12"}
+                        )[2]
+                        hours = hours.text
+                        hours = hours.replace("\n", " ").strip()
+                        hours = hours.replace("Open 7 days a week", "Mon-Sun").strip()
+                        hours = hours.lstrip("Hours ").strip()
+                        hoo.append(hours)
+                    except AttributeError:
+                        hours = "<MISSING>"
+                        hoo.append(hours)
+                hours = hours.replace("By appointment", "<MISSING>")
+                titles.append(title)
+                streets.append(street)
+                citys.append(city)
+                states.append(state)
+                pcodes.append(pcode)
+                lats.append(lat)
+                lngs.append(lng)
+                storeids.append(storeid)
+                loc_types.append(loc_type)
+                rawlinks.append(link)
+                phones.append(phone)
     for url in rawlinks:
         if url.find("indigo") != -1:
             links.append(url)
@@ -211,11 +210,7 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
-    )
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
