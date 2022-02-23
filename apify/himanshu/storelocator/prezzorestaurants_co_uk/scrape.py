@@ -69,12 +69,14 @@ def pull_content(url):
 
 def get_hoo(soup):
     try:
-        hoo = (
+        hoo = re.sub(
+            r",Christmas.*",
+            "",
             soup.find("h4", text=re.compile(r"Opening times.*"))
             .find_next("div", {"class": "has-max-32-center has-text-left"})
             .get_text(strip=True, separator=",")
             .replace(":,", ": ")
-            .strip()
+            .strip(),
         )
     except:
         hoo = MISSING

@@ -27,17 +27,18 @@ def fetch_data():
         location_name = loc_dom.xpath("//h1/text()")[0]
         raw_address = loc_dom.xpath('//meta[@name="geo.placename"]/@content')
         raw_address = raw_address[0].split(", ") if raw_address else ""
-        if raw_address:
-            country_code = raw_address[-1]
         if not raw_address:
             raw_address = loc_dom.xpath(
                 '//h5[contains(text(), "Find Us")]/following-sibling::p[1]/text()'
             )
             raw_address = raw_address[:1] + raw_address[1].split(", ")
-            country_code = ""
         hoo = loc_dom.xpath(
             '//h5[contains(text(), "Hours")]/following-sibling::p/text()'
         )[0]
+        if "NOW OPEN" in hoo:
+            hoo = loc_dom.xpath(
+                '//h5[contains(text(), "Hours")]/following-sibling::p/text()'
+            )[1]
         phone = loc_dom.xpath(
             '//h5[contains(text(), "Take out")]/following-sibling::p[1]/text()'
         )
@@ -63,7 +64,7 @@ def fetch_data():
             city=raw_address[1],
             state=raw_address[2].split()[0],
             zip_postal=raw_address[2].split()[-1],
-            country_code=country_code,
+            country_code="US",
             store_number="",
             phone=phone,
             location_type="",
