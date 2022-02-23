@@ -31,7 +31,7 @@ def fetch_data():
         street = address[0]
         city = address[1]
         state, pcode = address[2].split(" ", 1)
-        phone = soup.select_one("a[href*=location]").text
+        phone = soup.select_one("a[href*=tel]").text
         try:
             hours = (
                 soup.text.split("Hours:", 1)[1]
@@ -41,6 +41,15 @@ def fetch_data():
             )
         except:
             hours = "<MISSING>"
+        try:
+            hours = (
+                hours.split("Hours:", 1)[1]
+                .split("RDU", 1)[0]
+                .replace("\n", " ")
+                .strip()
+            )
+        except:
+            pass
         if "call" in hours:
             hours = "<MISSING>"
         yield SgRecord(
@@ -57,7 +66,11 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=str(lat),
             longitude=str(longt),
-            hours_of_operation=hours,
+            hours_of_operation=str(hours.encode(encoding="ascii", errors="replace"))
+            .replace("?", "-")
+            .replace("b'", "")
+            .strip()
+            .replace("'", ""),
         )
 
 

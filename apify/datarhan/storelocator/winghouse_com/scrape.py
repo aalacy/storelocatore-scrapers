@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 from time import sleep
 
@@ -30,6 +29,9 @@ def fetch_data():
         location_name = loc_dom.xpath('//div[@class="name"]/text()')[0]
         raw_data = loc_dom.xpath('//div[@class="address"]/text()')
         raw_data = [e.strip() for e in raw_data if e.strip()]
+        city = raw_data[1].split(", ")[0]
+        if city == "775 W. Brandon Blvd.":
+            city = "Brandon"
         hoo = loc_dom.xpath('//div[@class="hours"]/text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
@@ -52,7 +54,7 @@ def fetch_data():
             page_url=page_url,
             location_name=location_name,
             street_address=raw_data[0],
-            city=raw_data[1].split(", ")[0],
+            city=city,
             state=" ".join(raw_data[1].split(", ")[-1].split()[:-1]),
             zip_postal=raw_data[1].split(", ")[-1].split()[-1],
             country_code="",

@@ -58,6 +58,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         except Exception as e:
             logger.info(f"Error: {e}")
             continue
+        store_number = r.text.split('data-storeId="')[1].split('"')[0]
         location_name = loc["name"]
         phone = loc["telephone"]
         if phone == 0:
@@ -93,7 +94,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
+            store_number=store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,

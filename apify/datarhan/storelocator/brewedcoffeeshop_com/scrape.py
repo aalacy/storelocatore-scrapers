@@ -33,7 +33,8 @@ def fetch_data():
             geo = geo.split("/@")[-1].split(",")[:2]
             latitude = geo[0]
             longitude = geo[1]
-        hoo = [e.strip() for e in raw_data if "AM" in e][0]
+        hoo = poi_html.xpath(".//text()")
+        hoo = ", ".join([e.strip() for e in hoo if "AM" in e])
 
         item = SgRecord(
             locator_domain=domain,

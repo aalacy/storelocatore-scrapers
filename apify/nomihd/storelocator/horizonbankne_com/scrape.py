@@ -22,40 +22,21 @@ def fetch_data():
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
 
-    cities_list = search_sel.xpath(
-        '//li[.//p[contains(text(),"LOCATIONS")]]/ul/li/a/@href'
-    )
+    stores = search_sel.xpath("//fluid-columns-repeater/div")
+    for store in stores:
 
-    for city_url in cities_list:
-
-        page_url = city_url
-        locator_domain = website
-        log.info(city_url)
-        page_res = session.get(city_url, headers=headers)
-        page_sel = lxml.html.fromstring(page_res.text)
-
-        location_name = "".join(
-            page_sel.xpath('//span[@style="color:#292929"]/text()')
+        page_url = "".join(
+            store.xpath('.//a[./span[contains(text(),"Learn More")]]/@href')
         ).strip()
+        locator_domain = website
+        store_info = list(filter(str, [x.strip() for x in store.xpath(".//text()")]))
+        location_name = store_info[0].strip()
 
-        street_address = (
-            "".join(
-                list(
-                    filter(
-                        str,
-                        page_sel.xpath(
-                            '//div[@data-testid="richTextElement"][./p/a[contains(@href,"google.com")]]/p[1]/text()'
-                        ),
-                    )
-                )
-            )
-            .split("-")[-1]
-            .strip()
-        )
+        street_address = store_info[1].strip()
 
-        city = location_name.split(",")[0].strip()
-        state = location_name.split(",")[-1].strip()
-        zip = "<MISSING>"
+        city = store_info[2].split(",")[0].strip()
+        state = store_info[2].split(",")[-1].strip().split(" ")[0].strip()
+        zip = store_info[2].split(",")[-1].strip().split(" ")[-1].strip()
 
         country_code = "US"
 
@@ -64,120 +45,38 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
-        phone = ""
-        hours_of_operation = ""
-        if len(street_address) > 0:
-
-            phone = "".join(
-                list(
-                    filter(
-                        str,
-                        page_sel.xpath(
-                            '//div[@data-testid="richTextElement"][./p/a[contains(@href,"google.com")]]/p/a/text()'
-                        ),
-                    )
-                )
-            ).strip()
-
-            hours_of_operation = (
-                "; ".join(
-                    page_sel.xpath(
-                        '//div[@data-testid="richTextElement"][./p[contains(text(),"Lobby Hours")]]/p[2]/text()'
-                    )
-                )
-                .strip()
-                .replace("\n", "")
-                .strip()
-            )
-
-            if "," in street_address:
-                zip = (
-                    street_address.split(",")[-1]
-                    .strip()
-                    .split(" ")[-1]
+        phone = store_info[3].strip()
+        hours_of_operation = "<MISSING>"
+        for index in range(0, len(store_info)):
+            if "Lobby" in store_info[index]:
+                hours_of_operation = (
+                    "; ".join(store_info[index + 1 : -1])
                     .strip()
                     .encode("ascii", "replace")
                     .decode("utf-8")
                     .replace("?", "")
                     .strip()
                 )
-                street_address = street_address.split(",")[0].strip()
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
-        else:
-            stores = list(
-                filter(
-                    str,
-                    page_sel.xpath(
-                        '//div[@data-testid="richTextElement"][./p//a[contains(@href,"google.com")]]'
-                    ),
-                )
-            )
-            hours = page_sel.xpath(
-                '//div[@data-testid="richTextElement"][./p//span[contains(text(),"Lobby ")]]'
-            )
-            for index in range(0, len(stores)):
-                street_address = (
-                    "-".join(stores[index].xpath("p[1]/span/span/span/text()"))
-                    .strip()
-                    .split("-")[-1]
-                    .strip()
-                )
-                phone = "".join(
-                    stores[index].xpath('./p//a[contains(@href,"google.com")]/text()')
-                ).strip()
-                hours_of_operation = (
-                    "; ".join(hours[index].xpath("p[3]//text()"))
-                    .strip()
-                    .replace("\n", "")
-                    .strip()
-                )
-
-                if "," in street_address:
-                    zip = (
-                        street_address.split(",")[-1]
-                        .strip()
-                        .split(" ")[-1]
-                        .strip()
-                        .encode("ascii", "replace")
-                        .decode("utf-8")
-                        .replace("?", "")
-                        .strip()
-                    )
-                    street_address = street_address.split(",")[0].strip()
-
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():

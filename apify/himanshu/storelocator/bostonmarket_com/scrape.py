@@ -40,10 +40,17 @@ def fetch_data():
             if total > 0:
                 stores = json.loads(stores_req.text)["response"]["entities"]
                 for store in stores:
+                    store_number = "<MISSING>"
                     page_url = store.get("url", "<MISSING>")
                     if page_url != "<MISSING>":
                         page_url = "https://www.bostonmarket.com/location/" + page_url
-
+                        location_r = session.get(page_url, headers=headers)
+                        location_soup = BeautifulSoup(location_r.text, "lxml")
+                        store_number = (
+                            location_soup.find("div", {"class": "Core-id"})
+                            .text.split("#")[-1]
+                            .strip()
+                        )
                     locator_domain = "bostonmarket.com"
                     location_name = store["profile"]["name"]
                     addr = store["profile"]["address"]
@@ -62,13 +69,14 @@ def fetch_data():
                     zip = addr["postalCode"]
 
                     country_code = addr["countryCode"]
+                    if country_code == "US" or country_code == "PR":
+                        continue
                     phone = "<MISSING>"
                     try:
                         phone = store["profile"]["mainPhone"]["display"]
                     except:
                         pass
 
-                    store_number = "<MISSING>"
                     location_type = "Restaurant"
                     hours_list = []
                     try:

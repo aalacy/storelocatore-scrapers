@@ -70,6 +70,8 @@ def fetch_data():
                 )
                 addr = parse_address_intl(raw_data)
                 phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0].strip()
+                if phone == "null":
+                    phone = ""
                 hoo = poi_html.xpath(
                     './/p[contains(text(), "Opening hours")]/following-sibling::p/strong/text()'
                 )
@@ -90,6 +92,7 @@ def fetch_data():
                     latitude="",
                     longitude="",
                     hours_of_operation=hoo,
+                    raw_address=raw_data,
                 )
 
                 yield item

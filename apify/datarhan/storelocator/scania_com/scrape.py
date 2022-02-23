@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -280,6 +278,24 @@ def fetch_data():
                     closes = e["openTimes"][0]["timeTo"]
                     hoo.append(f"{days}: {opens} - {closes}")
             hoo = " ".join(hoo)
+            state = poi["legalAddress"]["postalAddress"]["physicalAddress"][
+                "countryRegion"
+            ]["value"]
+            if state.isdigit():
+                state = ""
+            zip_code = poi["visitingAddress"]["postalAddress"]["physicalAddress"][
+                "postalCode"
+            ]
+            if zip_code:
+                zip_code = zip_code.replace("CEP:", "").strip()
+            city = poi["visitingAddress"]["postalAddress"]["physicalAddress"]["city"][
+                "value"
+            ].split(", ")[0]
+            if zip_code == "Griffith":
+                city = "Griffith"
+                zip_code = "2680"
+            if zip_code == "00000":
+                zip_code = ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -288,15 +304,9 @@ def fetch_data():
                 street_address=poi["visitingAddress"]["postalAddress"][
                     "physicalAddress"
                 ]["street"]["streetName"]["value"],
-                city=poi["visitingAddress"]["postalAddress"]["physicalAddress"]["city"][
-                    "value"
-                ].split(", ")[0],
-                state=poi["legalAddress"]["postalAddress"]["physicalAddress"][
-                    "countryRegion"
-                ]["value"],
-                zip_postal=poi["visitingAddress"]["postalAddress"]["physicalAddress"][
-                    "postalCode"
-                ],
+                city=city,
+                state=state,
+                zip_postal=zip_code,
                 country_code=poi["domicileCountry"]["countryCode"],
                 store_number=poi["dealerId"],
                 phone=poi["customerReceptionPhoneNumbers"][

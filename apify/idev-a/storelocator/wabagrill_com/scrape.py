@@ -44,8 +44,8 @@ def fetch_data(search):
                     if _["address_extended"]:
                         street_address += " " + _["address_extended"]
                     _tmp = []
+                    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
                     if _.get("store_hours"):
-                        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
                         hours = _.get("store_hours").split(";")[:-1]
                         i = 0
                         for d in days:
@@ -59,6 +59,9 @@ def fetch_data(search):
                             close = f"{time[2][:2]}:{time[2][2:]}"
                             _tmp.append(f"{d}: {start} - {close}")
                             i += 1
+                    else:
+                        for day in days:
+                            _tmp.append(f"{day}: closed")
                     yield SgRecord(
                         page_url=page_url,
                         location_name=_["name"],

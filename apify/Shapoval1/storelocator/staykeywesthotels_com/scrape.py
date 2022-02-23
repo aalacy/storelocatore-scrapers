@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -49,6 +50,17 @@ def fetch_data(sgw: SgWriter):
             latitude = a.get("latitude")
             longitude = a.get("longitude")
             phone = a.get("phone")
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                "".join(
+                    tree.xpath('//span[contains(text(), "Check In:")]/text()')
+                ).replace("Check In:", "")
+                + " - "
+                + "".join(
+                    tree.xpath('//span[contains(text(), "Check Out:")]/text()')
+                ).replace("Check Out:", "")
+            )
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -64,7 +76,7 @@ def fetch_data(sgw: SgWriter):
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
                 raw_address=ad,
             )
 

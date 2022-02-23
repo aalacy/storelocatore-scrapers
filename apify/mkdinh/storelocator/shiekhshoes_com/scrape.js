@@ -109,6 +109,7 @@ async function fetchData({ page, request }) {
     store_number: getOrDefault(store_number),
     hours_of_operation: getOrDefault(hours_of_operation),
     location_type: MISSING,
+    record_id: 'store_number',
   };
 }
 

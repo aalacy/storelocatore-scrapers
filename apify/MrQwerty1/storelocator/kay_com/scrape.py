@@ -47,6 +47,8 @@ def get_additional(page_url):
 
 def get_data(state, sgw: SgWriter):
     req = session.get(f"https://www.kay.com/store-finder/{state}")
+    if req.status_code == 404:
+        return
     root = html.fromstring(req.text)
 
     divs = root.xpath("//div[@class='col-md-3 col-lg-3 col-sm-4 col-xs-12' and ./span]")
