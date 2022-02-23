@@ -1,37 +1,10 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def get_hours(url):
@@ -39,9 +12,11 @@ def get_hours(url):
     url = url[1]
     data = {"_m_": "HoursPopup", "HoursPopup$_edit_": _id, "HoursPopup$_command_": ""}
 
-    session = SgRequests()
-    r = session.post(url, data=data)
-    tree = html.fromstring(r.text)
+    try:
+        r = session.post(url, data=data)
+        tree = html.fromstring(r.text)
+    except:
+        return {_id: "Coming Soon"}
 
     _tmp = []
     hours = tree.xpath("//tr")
@@ -50,19 +25,14 @@ def get_hours(url):
         time = "".join(h.xpath("./td[2]//text()")).strip()
         _tmp.append(f"{day}: {time}")
 
-    hoo = ";".join(_tmp) or "<MISSING>"
-    if hoo.count("Closed") == 7:
-        hoo = "Closed"
+    hoo = ";".join(_tmp)
 
     return {_id: hoo}
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = []
     hours = []
-    session = SgRequests()
-    locator_domain = "https://www.juiceitup.com/"
     r = session.get("https://www.juiceitup.com/stores/?CallAjax=GetLocations")
     js = r.json()
 
@@ -76,53 +46,42 @@ def fetch_data():
         for future in futures.as_completed(future_to_url):
             hours.append(future.result())
 
-    hours = {k: v for elem in hours for (k, v) in elem.items()}
+    hour = {k: v for elem in hours for (k, v) in elem.items()}
 
     for j in js:
         page_url = "https://www.juiceitup.com" + j.get("Path")
         _id = j.get("FranchiseLocationID")
         location_name = j.get("BusinessName")
-        street_address = (
-            f'{j.get("Address1")} {j.get("Address2") or ""}'.strip() or "<MISSING>"
+        street_address = f'{j.get("Address1")} {j.get("Address2") or ""}'.strip()
+        city = j.get("City")
+        state = j.get("State")
+        postal = j.get("ZipCode")
+        phone = j.get("Phone")
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
+        hours_of_operation = hour.get(_id)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            store_number=_id,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
-        city = j.get("City") or "<MISSING>"
-        state = j.get("State") or "<MISSING>"
-        postal = j.get("ZipCode") or "<MISSING>"
-        country_code = "US"
-        store_number = _id
-        phone = j.get("Phone") or "<MISSING>"
 
-        latitude = j.get("Latitude") or "<MISSING>"
-        longitude = j.get("Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = hours.get(_id)
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.juiceitup.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

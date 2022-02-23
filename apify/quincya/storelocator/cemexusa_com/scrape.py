@@ -1,102 +1,80 @@
-import csv
-
 from bs4 import BeautifulSoup
+
+from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+log = SgLogSetup().get_logger("cemexusa.com")
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    api_link = "https://www.cemexusa.com/documents/27329108/45560536/places-usa.json/d5c682be-7d3c-532f-229e-03312c304217"
-    stores = session.get(api_link, headers=headers).json()
+    api_link = "https://www.cemexusa.com/find-your-location?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=USA"
+    stores = session.get(api_link, headers=headers).json()["theNearestLocations"]
 
     locator_domain = "cemexusa.com"
-    found = []
 
     for store in stores:
-        location_name = store["name"].replace("amp;", "")
-        street_address = store["address"].replace("amp;", "")
-        if location_name == "Cantonment (Dual)" and location_name in found:
-            continue
-        found.append(location_name)
-        city = store["city"]
-        state = store["states"]
-        zip_code = store["postalCode"]
+        location_name = store["locationName"]
+        street_address = store["locationAddress"]["locationStreet"]
+        city = store["locationAddress"]["locationCity"]
+        state = store["locationAddress"]["locationRegion"]
+        zip_code = store["locationAddress"]["locationPostcode"]
         country_code = "US"
-        store_number = store["id"]
+        store_number = ""
+        latitude = store["locationAddress"]["locationCoordinates"]["latitude"]
+        longitude = store["locationAddress"]["locationCoordinates"]["longitude"]
+        hours_of_operation = store["openingHours"]
+        location_type = ", ".join(store["productList"])
+        phone = store["locationContact"]["locationOrdersPhone"]
+        link = "https://www.cemexusa.com/-/" + store["url"]
+        log.info(link)
+        if not state or not phone:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
-        latitude = store["latitude"]
-        longitude = store["longitude"]
+            try:
+                phone = base.find(class_="ld-contactbox-contacts").a.text
+            except:
+                pass
+            try:
+                state = (
+                    base.find(class_="ld-topbox-address-address")
+                    .text.split(",")[-2]
+                    .strip()
+                )
+            except:
+                pass
 
-        hours_of_operation = store["hours"]
-        if not hours_of_operation:
-            hours_of_operation = "<MISSING>"
-
-        location_type = store["product"]
-        if not location_type:
-            location_type = "<MISSING>"
-
-        try:
-            phone = (list(BeautifulSoup(store["phone"], "lxml").stripped_strings))[0]
-        except:
-            phone = "<MISSING>"
-
-        link = "https://www.cemexusa.com/find-your-location"
-
-        # Store data
-        yield [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
