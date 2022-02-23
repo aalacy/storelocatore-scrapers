@@ -89,11 +89,9 @@ def get_data(zips, sgw: SgWriter):
         )
         country_code = "US"
         phone = (
-            "".join(
-                tree.xpath(
-                    '//p[@itemprop="address"]//span[@itemprop="telephone"]/text()'
-                )
-            )
+            "".join(tree.xpath('//a[contains(@href, "tel")]/@href'))
+            .replace("tel:", "")
+            .strip()
             or "<MISSING>"
         )
         latitude = (

@@ -145,10 +145,23 @@ def test_other(session):
 def transform_types(rec):
     with open("das.txt", mode="w", encoding="utf-8") as file:
         file.write(str(json.dumps(rec)))
-    newrec = rec
-    types = [str(f"({i['id']}) - {i['displayName']};\n") for i in rec["allServices"]]
-    types = "".join(types)
-    newrec["rawadd"] = types
+
+    try:
+        newrec = rec
+        types = [
+            str(f"({i['id']}) - {i['displayName']};\n") for i in rec["allServices"]
+        ]
+        types = "".join(types)
+        newrec["rawadd"] = types
+    except Exception:
+        try:
+            newrec = rec
+            newrec["rawadd"] = (
+                str(rec["primaryServices"]) + " " + str(rec["secondaryServices"])
+            )
+        except Exception:
+            newrec = rec
+            newrec["rawadd"] = "<ERROR>"
     return newrec
 
 
@@ -156,7 +169,7 @@ def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    logger.info(test_other(session))
+    logger.info(transform_types(test_other(session)))
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
         yield transform_types(item)
