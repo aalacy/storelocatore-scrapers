@@ -37,13 +37,13 @@ def fetch_data():
             except Exception:
                 pass
             driver.find_element_by_xpath('//div[@class="item_select_city"]').click()
-            sleep(2)
+            sleep(5)
             all_regions[i1].click()
-            sleep(2)
+            sleep(5)
             driver.find_element_by_xpath(
                 '//div[@class="bl_selects_city"]/div[2]'
             ).click()
-            sleep(2)
+            sleep(5)
             all_cities = driver.find_elements_by_xpath(
                 '//select[@name="city"]/following-sibling::div[1]//div[@class="option"]'
             )
@@ -52,7 +52,7 @@ def fetch_data():
                     '//select[@name="city"]/following-sibling::div[1]//div[@class="option"]'
                 )
                 all_cities[i2].click()
-                sleep(2)
+                sleep(5)
                 dom = etree.HTML(driver.page_source)
                 all_locations = dom.xpath('//div[contains(@class, "shop_list_row")]')
                 for poi_html in all_locations:

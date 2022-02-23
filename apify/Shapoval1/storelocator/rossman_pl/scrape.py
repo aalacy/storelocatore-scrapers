@@ -38,7 +38,15 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("shopNumber")
         latitude = j.get("shopLocation").get("latitude")
         longitude = j.get("shopLocation").get("longitude")
-        days = ["monday", "monday", "monday", "monday", "monday", "monday", "monday"]
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
         tmp = []
         for d in days:
             day = d
@@ -47,6 +55,9 @@ def fetch_data(sgw: SgWriter):
             line = f"{day} {opens} - {closes}"
             tmp.append(line)
         hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("None - None", "Closed").strip()
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

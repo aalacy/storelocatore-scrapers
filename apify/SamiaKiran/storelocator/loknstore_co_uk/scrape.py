@@ -46,8 +46,8 @@ def fetch_data():
                 state = address["addressRegion"]
                 zip_postal = address["postalCode"]
                 country_code = address["addressCountry"]
-                latitude = str(temp["geo"]["latitude"])
-                longitude = str(temp["geo"]["longitude"])
+                latitude = str(["latitude"])
+                longitude = str(["longitude"])
 
             except:
                 location_name = (
@@ -76,6 +76,8 @@ def fetch_data():
                 location_type = "Temporarily Closed"
             else:
                 location_type = MISSING
+            if "Open hours : Closed" in hours_of_operation:
+                continue
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

@@ -124,21 +124,36 @@ def fetch_data():
                 store.find("h3", {"class": "st-loc-title"}).find("em").decompose()
                 store.find("h3", {"class": "st-loc-title"}).find("div").decompose()
                 location_name = store.find("h3", {"class": "st-loc-title"}).text.strip()
-                street_address = re.sub(
-                    r"-?\s?\(.*\)",
-                    "",
-                    store.find("span", {"class": "street_name"}).text.strip(),
+                raw_address = (
+                    store.find("div", {"class": "location-list-store-address"})
+                    .get_text(strip=True, separator=",")
+                    .replace(",Australia", "")
                 )
-                city = store.find("span", {"class": "suburb"}).text.strip()
-                state = single_state["statecode"]
-                zip_postal = store.find("span", {"class": "postcode"}).text.strip()
+                street_address, city, state, zip_postal = getAddress(raw_address)
+                if city == MISSING:
+                    city = store.find("span", {"class": "suburb"}).text.strip()
+                if state == MISSING:
+                    state = single_state["statecode"]
+                if zip_postal == MISSING:
+                    zip_postal = store.find("span", {"class": "postcode"}).text.strip()
+                street_address = (
+                    re.sub(
+                        city + r"|" + state + "|" + zip_postal,
+                        "",
+                        street_address,
+                        flags=re.IGNORECASE,
+                    )
+                    .strip()
+                    .rstrip(",")
+                )
                 country_code = "AU"
                 phone = store.find("span", {"class": "store-phone"}).text.strip()
-                hours_of_operation = (
+                hours_of_operation = " ".join(
                     content.find("div", {"class": "store-hours-container"})
                     .find("div", {"class": "hours-col"})
                     .get_text(strip=True, separator=",")
-                )
+                    .split()
+                ).strip()
                 location_type = type["name"]
                 store_number = store["data-id"]
                 latitude, longitude = (

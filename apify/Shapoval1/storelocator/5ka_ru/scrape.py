@@ -42,6 +42,9 @@ def get_data(url, sgw: SgWriter):
         hours_of_operation = (
             f"{j.get('work_start_time')} - {j.get('work_end_time')}" or "<MISSING>"
         )
+        hours_of_operation = hours_of_operation.replace(
+            "None - None", "<MISSING>"
+        ).strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -74,6 +77,8 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.STORE_NUMBER})
+        )
     ) as writer:
         fetch_data(writer)
