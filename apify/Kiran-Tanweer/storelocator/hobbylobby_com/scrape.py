@@ -43,9 +43,7 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
-        search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
-        )
+        search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
         for zipcode in search:
             search_url = "https://www.hobbylobby.com/stores/search?q=" + zipcode
             stores_req = session.get(search_url, headers=headers2)
@@ -59,6 +57,7 @@ def fetch_data():
                 locations = locations["data-stores"]
                 locations = json.loads(locations)
                 for loc in locations:
+                    print(loc)
                     lat = loc["latitude"]
                     lng = loc["longitude"]
                     add1 = loc["address1"]
@@ -69,14 +68,16 @@ def fetch_data():
                     pcode = loc["zipcode"]
                     phone = loc["phone"]
                     loc_link = "https://www.hobbylobby.com" + loc["linkUrl"]
+                    print(loc_link)
                     req = session.get(loc_link, headers=headers)
-                    bs = BeautifulSoup(req.text, "html.parser")
                     try:
+                        bs = BeautifulSoup(req.text, "html.parser")
                         hours = bs.find(
                             "table", {"class": "store-openings weekday_openings"}
                         ).text
                         hours = hours.replace("\n", " ")
                         hours = re.sub(pattern, " ", hours).strip()
+
                     except AttributeError:
                         hours = "Coming Soon"
 
@@ -96,7 +97,7 @@ def fetch_data():
                         location_type=MISSING,
                         latitude=lat,
                         longitude=lng,
-                        hours_of_operation=hours.strip(),
+                        hours_of_operation=MISSING,
                     )
 
 
