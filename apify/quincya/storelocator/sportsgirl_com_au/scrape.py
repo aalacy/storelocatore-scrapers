@@ -30,7 +30,20 @@ def fetch_data(sgw: SgWriter):
 
         link = item["url_key"]
         location_name = item["name"]
-        street_address = item["street"]
+        raw_address = item["street"]
+        if raw_address[-1:] == ",":
+            raw_address = raw_address[:-1]
+        if "," in raw_address:
+            street_address = raw_address.split(",")[-1].strip()
+        else:
+            street_address = raw_address
+
+        if "Building" in street_address or "214 Rockhampton" in street_address:
+            street_address = raw_address.split(",")[-2].strip()
+
+        if "Shop" in street_address:
+            street_address = " ".join(street_address.split()[2:]).strip()
+
         city = item["city"]
         state = item["state"]
         zip_code = item["postcode"]
@@ -64,6 +77,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
         )
 

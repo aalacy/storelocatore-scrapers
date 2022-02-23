@@ -37,13 +37,40 @@ def fetch_data():
             except Exception:
                 pass
             driver.find_element_by_xpath('//div[@class="item_select_city"]').click()
-            sleep(2)
+            sleep(5)
             all_regions[i1].click()
-            sleep(2)
+            sleep(5)
             driver.find_element_by_xpath(
                 '//div[@class="bl_selects_city"]/div[2]'
             ).click()
-            sleep(2)
+            sleep(5)
+            dom = etree.HTML(driver.page_source)
+            all_locations = dom.xpath('//div[contains(@class, "shop_list_row")]')
+            for poi_html in all_locations:
+                raw_data = poi_html.xpath(".//text()")
+                raw_data = [e.strip() for e in raw_data if e.strip()]
+                store_number = poi_html.xpath(".//input/@value")[0]
+                city = dom.xpath('//select[@name="city"]/option/text()')[0]
+                state = dom.xpath('//select[@name="region"]/option/text()')[0]
+
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=start_url,
+                    location_name="",
+                    street_address=raw_data[0],
+                    city=city,
+                    state=state,
+                    zip_postal="",
+                    country_code="RU",
+                    store_number=store_number,
+                    phone="",
+                    location_type="",
+                    latitude="",
+                    longitude="",
+                    hours_of_operation=raw_data[1],
+                )
+
+                yield item
             all_cities = driver.find_elements_by_xpath(
                 '//select[@name="city"]/following-sibling::div[1]//div[@class="option"]'
             )
@@ -52,7 +79,7 @@ def fetch_data():
                     '//select[@name="city"]/following-sibling::div[1]//div[@class="option"]'
                 )
                 all_cities[i2].click()
-                sleep(2)
+                sleep(5)
                 dom = etree.HTML(driver.page_source)
                 all_locations = dom.xpath('//div[contains(@class, "shop_list_row")]')
                 for poi_html in all_locations:
@@ -88,7 +115,13 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.CITY, SgRecord.Headers.STREET_ADDRESS})
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
+            )
         )
     ) as writer:
         for item in fetch_data():

@@ -51,7 +51,10 @@ def fetch_data(sgw: SgWriter):
                 phone = ""
         except:
             phone = ""
-        store_number = ""
+        try:
+            store_number = str(base).split('storeNumber"] = "')[1].split('";')[0]
+        except:
+            store_number = ""
         location_type = ""
 
         try:
