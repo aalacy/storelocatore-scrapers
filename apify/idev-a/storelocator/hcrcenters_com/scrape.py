@@ -112,11 +112,6 @@ def fetch_data():
                 else:
                     phone = bb[2].replace("|", "").strip()
 
-                if not _p(phone):
-                    import pdb
-
-                    pdb.set_trace()
-
                 yield SgRecord(
                     page_url=page_url,
                     location_name=link["title"],
