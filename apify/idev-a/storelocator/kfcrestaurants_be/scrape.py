@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import re
 
 logger = SgLogSetup().get_logger("")
 
@@ -63,9 +64,7 @@ def fetch_data():
                 zip_postal = raw_address
             try:
                 coord = (
-                    sp1.select_one("div.et_section_regular div.et_pb_text_inner p a")[
-                        "href"
-                    ]
+                    sp1.find("a", string=re.compile(r"Bekijk Google Maps"))["href"]
                     .split("/@")[1]
                     .split("/data")[0]
                     .split(",")
