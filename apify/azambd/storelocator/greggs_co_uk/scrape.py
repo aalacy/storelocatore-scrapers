@@ -36,7 +36,6 @@ def hoo(hours):
         dt = dt.strftime("%A")
         dtall.append(dt)
         open_time = hr["openingTime"].split("T")[1].replace("Z", "")
-        close_hr_date = hr["closingTime"].split("T")[0]
         close_time = hr["closingTime"].split("T")[1].replace("Z", "")
         allhours.append(f"{dt}:{open_time}-{close_time}")
 
