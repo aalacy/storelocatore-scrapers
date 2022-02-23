@@ -105,22 +105,31 @@ def fetch_data():
 
                         pcode = pcode.replace("-2A%231Lacombe", "T4L1Y8")
 
-                        yield SgRecord(
-                            locator_domain=DOMAIN,
-                            page_url=link,
-                            location_name=title,
-                            street_address=strt,
-                            city=city,
-                            state=state,
-                            zip_postal=pcode,
-                            country_code="CAN",
-                            store_number=storeid,
-                            phone=phone,
-                            location_type="Traditional",
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hoo,
-                        )
+                        if storeid not in [
+                            "3619",
+                            "3835",
+                            "3829",
+                            "3825",
+                            "3452",
+                            "3858",
+                        ]:
+
+                            yield SgRecord(
+                                locator_domain=DOMAIN,
+                                page_url=link,
+                                location_name=title,
+                                street_address=strt,
+                                city=city,
+                                state=state,
+                                zip_postal=pcode,
+                                country_code="CAN",
+                                store_number=storeid,
+                                phone=phone,
+                                location_type="Traditional",
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hoo,
+                            )
 
 
 def scrape():
