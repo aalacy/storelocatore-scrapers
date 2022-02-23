@@ -3,7 +3,7 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
 # import json
-import datetime, time
+import datetime
 
 session = SgRequests(proxy_country="gb")
 DOMAIN = "greggs.co.uk"
