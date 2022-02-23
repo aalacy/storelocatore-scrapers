@@ -58,6 +58,10 @@ class ExampleSearchIteration:
             numbers = nUS
         elif search.current_country() == "au":
             numbers = nAU
+        elif search.current_country() == "nf":
+            numbers = nAU
+        elif search.current_country() == "cx":
+            numbers = nAU
 
         url = str(
             f"https://marketingsl.tjx.com/storelocator/GetSearchResults?geolat={lat}&geolong={lng}&chain={numbers}&maxstores=25&radius=100"
@@ -170,6 +174,8 @@ if __name__ == "__main__":
     tocrawl = []
     tocrawl.append(SearchableCountries.CANADA)
     tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.NORFOLK_ISLAND)
+    tocrawl.append(SearchableCountries.CHRISTMAS_ISLAND)
     tocrawl.append(SearchableCountries.AUSTRALIA)
     tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search = DynamicGeoSearch(
