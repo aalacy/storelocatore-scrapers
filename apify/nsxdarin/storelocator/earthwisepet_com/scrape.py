@@ -21,6 +21,14 @@ def fetch_data():
     country = "US"
     for x in range(1, 21):
         logger.info(str(x))
+        add = ""
+        name = ""
+        city = ""
+        state = ""
+        zc = ""
+        phone = ""
+        lat = ""
+        lng = ""
         url = "https://www.earthwisepet.com/stores/search/?page=" + str(x)
         r = session.get(url, headers=headers)
         lines = r.iter_lines()
