@@ -2,3 +2,4 @@
 sgzip==0.10.2
 sgscrape==0.1.13
 sgrequests==0.2.4
+sglogging==0.0.4
