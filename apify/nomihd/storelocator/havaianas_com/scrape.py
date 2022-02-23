@@ -22,7 +22,7 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://us.havaianas.com/on/demandware.store/Sites-Havaianas-US-Site/default/Stores-FindStores?showMap=true&radius=300000000&postalCode="
-    with SgChrome(user_agent=user_agent, is_headless=False) as driver:
+    with SgChrome(user_agent=user_agent) as driver:
         driver.get(search_url)
         stores_sel = lxml.html.fromstring(driver.page_source)
         json_data = "".join(stores_sel.xpath("//body//text()")).strip()
