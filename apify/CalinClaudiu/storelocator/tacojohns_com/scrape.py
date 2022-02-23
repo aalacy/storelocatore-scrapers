@@ -32,7 +32,6 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     for state_url in state_list:
         logger.info(f"Fetching from: {state_url.text}")
         state_url = "https://locations.tacojohns.com" + state_url.find("a")["href"]
-        print(state_url)
         r = http.get(state_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         city_list = soup.find(
@@ -40,7 +39,6 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
         ).findAll("li")
         for city_url in city_list:
             city_url = "https://locations.tacojohns.com" + city_url.find("a")["href"]
-            print(city_url)
             r = http.get(city_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.find(
