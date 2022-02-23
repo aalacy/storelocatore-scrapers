@@ -23,7 +23,9 @@ def fetch_data():
         locations = soup.select("div#maintabContent div.subcontent-bg")
         for _ in locations:
             page_url = locator_domain + _.a["href"]
-            raw_address = _.p.text.strip()
+            raw_address = " ".join(_.p.stripped_strings)
+            if not raw_address or "Contact" in raw_address:
+                continue
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:

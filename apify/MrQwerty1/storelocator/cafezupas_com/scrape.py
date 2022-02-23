@@ -1,60 +1,27 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://cafezupas.com/"
-    page_url = "https://cafezupas.com/locations"
-    api_url = "https://dev.cafezupas.com/server.php?url=https://api.devcontrolcenter.zupas.com/api/markets/listing"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://cafezupas.com/server.php?url=https://api.controlcenter.zupas.com/api/markets/listing"
+    r = session.get(api)
     locations = r.json()["data"]["data"]
 
     for location in locations:
         js = location["locations"]
         for j in js:
-            street_address = j.get("address") or "<MISSING>"
-            city = j.get("city").replace(" WI", "") or "<MISSING>"
-            state = j.get("state") or "<MISSING>"
-            postal = j.get("zip") or "<MISSING>"
-            country_code = "US"
-            store_number = j.get("id") or "<MISSING>"
+            street_address = j.get("address")
+            city = j.get("city")
+            state = j.get("state")
+            postal = j.get("zip")
+            store_number = j.get("id")
             location_name = j.get("name")
-            phone = j.get("phone") or "<MISSING>"
-            latitude = j.get("lat") or "<MISSING>"
-            longitude = j.get("long") or "<MISSING>"
-            location_type = "<MISSING>"
+            phone = j.get("phone")
+            latitude = j.get("lat")
+            longitude = j.get("long")
 
             _tmp = []
             if j.get("mon_thurs_timings_open"):
@@ -74,33 +41,31 @@ def fetch_data():
             if j.get("sunday_timings"):
                 _tmp.append(f'Sun: {j.get("sunday_timings")}')
 
-            hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            hours_of_operation = ";".join(_tmp)
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                location_name=location_name,
+                page_url=page_url,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://cafezupas.com/"
+    page_url = "https://cafezupas.com/locations"
+    session = SgRequests()
+
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

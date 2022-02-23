@@ -15,7 +15,8 @@ days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sun
 
 def _p(val):
     if (
-        val.split("Ex")[0]
+        val
+        and val.split("Ex")[0]
         .replace("(", "")
         .replace(")", "")
         .replace("+", "")
@@ -42,16 +43,19 @@ def fetch_data():
                     hours += f"{_day}: {times};"
             if hours:
                 hours = hours[:-1]
+            street_address = _["address"]
+            if _.get("address2"):
+                street_address += " " + _["address2"]
             yield SgRecord(
                 page_url="https://www.whitestuff.com/action/ViewStoreFinder-Start",
                 location_name=_["name"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["city"],
                 zip_postal=_["postalCode"],
                 latitude=_["customAttributes"]["latitude"],
                 longitude=_["customAttributes"]["longitude"],
                 country_code=_["country"],
-                phone=_p(_["phoneBusiness"]),
+                phone=_p(_.get("phoneBusiness")),
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
             )
