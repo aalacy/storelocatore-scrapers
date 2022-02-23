@@ -1,4 +1,3 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -21,13 +20,17 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        type_url="https://www.texashealth.org//sxa/search/facets/?f=type&s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&sig=location-search"
-        type_list= session.get(type_url, headers=headers).json()['Facets'][0]['Values']
+        type_url = "https://www.texashealth.org//sxa/search/facets/?f=type&s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&sig=location-search"
+        type_list = session.get(type_url, headers=headers).json()["Facets"][0]["Values"]
         for location_type in type_list:
             log.info(f"{location_type['Count']} {location_type['Name']} Locations...")
-            location_type = location_type['Name']
-            url ="https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&type="+location_type+"&g=32.735687%7C-97.10806559999997&o=DistanceMi%2CAscending&p=125&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
-            loclist= session.get(url, headers=headers).json()["Results"]
+            location_type = location_type["Name"]
+            url = (
+                "https://www.texashealth.org//sxa/search/results/?s={E6D4398E-5377-4F52-A622-BA5985AA0E05}|{489713F2-2F53-486A-A99A-125A4921BB4F}&itemid={AF045BC3-3192-47D4-9F02-14F252C53DC8}&sig=location-search&type="
+                + location_type
+                + "&g=32.735687%7C-97.10806559999997&o=DistanceMi%2CAscending&p=125&v=%7B46E173AB-F518-41E7-BFB5-00206EDBA9E6%7D"
+            )
+            loclist = session.get(url, headers=headers).json()["Results"]
             country_code = "US"
             for loc in loclist:
                 store_number = loc["Id"]
