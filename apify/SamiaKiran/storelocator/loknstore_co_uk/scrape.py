@@ -46,9 +46,8 @@ def fetch_data():
                 state = address["addressRegion"]
                 zip_postal = address["postalCode"]
                 country_code = address["addressCountry"]
-                latitude = str(["latitude"])
-                longitude = str(["longitude"])
-
+                latitude = temp["latitude"]
+                longitude = temp["longitude"]
             except:
                 location_name = (
                     "Lok'nStore " + soup.find("span", {"class": "store__name"}).text
