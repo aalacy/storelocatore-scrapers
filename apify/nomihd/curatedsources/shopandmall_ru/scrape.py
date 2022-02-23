@@ -79,6 +79,8 @@ def fetch_data():
                         store.xpath('.//div[@class="catalog-card-info__adress"]/text()')
                     )
                     .strip()
+                    .replace("\r\n", "")
+                    .replace("\n", "")
                     .split(",")
                 )
                 street_address = ", ".join(raw_address[1:]).strip()
