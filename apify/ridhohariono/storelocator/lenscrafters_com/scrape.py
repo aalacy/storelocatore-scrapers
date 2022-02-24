@@ -44,10 +44,16 @@ def fetch_data():
                 "content"
             ]
             city = store.find("span", {"class": "c-address-city"}).text.strip()
-            state = store.find("abbr", {"class": "c-address-state"}).text.strip()
-            zip_postal = store.find(
-                "span", {"class": "c-address-postal-code"}
-            ).text.strip()
+            try:
+                state = store.find("abbr", {"class": "c-address-state"}).text.strip()
+            except:
+                state = MISSING
+            try:
+                zip_postal = store.find(
+                    "span", {"class": "c-address-postal-code"}
+                ).text.strip()
+            except:
+                zip_postal = MISSING
             country_code = store.find("address", id="address")["data-country"]
             try:
                 phone = store.find("div", id="phone-main").text.strip()
