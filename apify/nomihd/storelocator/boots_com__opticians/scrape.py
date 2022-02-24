@@ -70,9 +70,7 @@ def parallel_run(store_url):
             ).strip()
         break
 
-    country_code = "".join(
-        store_sel.xpath('//input[@id="storeCountryCode"]/@value')
-    ).strip()
+    country_code = "GB"
 
     store_number = "".join(
         store_sel.xpath('//input[@name="bootsStoreId"]/@value')
