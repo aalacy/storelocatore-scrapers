@@ -48,7 +48,6 @@ def fetch_data():
         logger.info(f"{len(locations)} found")
         for _ in locations:
             page_url = locator_domain + _.a["href"]
-            td = _.select("td")
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             addr = list(sp1.select_one("div.loc-address p").stripped_strings)
