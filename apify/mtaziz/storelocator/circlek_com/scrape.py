@@ -39,7 +39,6 @@ def get_flatten_data_list(data):
     # store data will be obtained from the response from page_url
 
     data_flatten = []
-    data_dict = {}
     for k, v in data.items():
         d1 = {}
         for k1, v1 in data[k].items():
@@ -176,7 +175,7 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
         street_address = data_dict["address"]
         city = data_dict["city"]
         state = data_dict["division_name"]
-        country = data_dict["country"]
+        country_code = data_dict["country"]
         if MISSING not in street_address:
             location_name = "Circle K at" + " " + street_address
         else:
@@ -307,7 +306,7 @@ def fetch_data(sgw: SgWriter):
     # Start Page Number: 0
     # End Page Number: 980
     START_PAGENUM = 0
-    END_PAGENUM = 5
+    END_PAGENUM = 980
     data_from_api = fetch_data_from_api_res(START_PAGENUM, END_PAGENUM)
     logger.info("API endpoints urls page_url extraction done!!")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
