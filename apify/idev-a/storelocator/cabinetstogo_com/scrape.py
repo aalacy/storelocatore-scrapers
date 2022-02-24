@@ -40,7 +40,10 @@ def fetch_data():
             if "not available" in phone:
                 phone = ""
             hours_of_operation = "; ".join(hours)
-            if "not available" in hours_of_operation:
+            if (
+                "not available" in hours_of_operation
+                or "RELOCATED" in hours_of_operation
+            ):
                 hours_of_operation = ""
             yield SgRecord(
                 page_url=page_url,
