@@ -21,7 +21,6 @@ function formatPhone(phone) {
 }
 
 async function enqueueStoreLinks({ page, requestQueue, request }) {
-  5;
   const { locations, curPage } = request.userData;
 
   const content = await page.content();
