@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
 
 
@@ -116,9 +118,9 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
+    log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
