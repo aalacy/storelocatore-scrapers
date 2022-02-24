@@ -39,26 +39,34 @@ def fetch_data():
         else:
             ltype = "<MISSING>"
         r = session.get(link, headers=headers)
-        try:
-            if len(pcode) < 3:
+        lat = longt = hours = "<MISSING>"
+        soup = BeautifulSoup(r.text, "html.parser")
+        if len(pcode) < 3:
+            try:
+                pcode = (
+                    r.text.split('"streetAddress":"' + street, 1)[1]
+                    .split('"postalCode":"', 1)[1]
+                    .split('"', 1)[0]
+                    .strip()
+                )
+            except:
                 try:
-                    pcode = (
-                        r.text.split('"streetAddress":"' + street, 1)[1]
-                        .split('"postalCode":"', 1)[1]
-                        .split('"', 1)[0]
-                        .strip()
-                    )
-                except:
                     pcode = (
                         r.text.split('"postalCode":"', 1)[1].split('"', 1)[0].strip()
                     )
+                except:
+                    pcode = soup.find("span", {"class": "c-address-postal-code"}).text
+        try:
+            lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+            longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+        except:
             try:
-                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-                longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
-            except:
                 lat = r.text.split('latitude" content="', 1)[1].split('"', 1)[0]
                 longt = r.text.split('longitude" content="', 1)[1].split('"', 1)[0]
-            soup = BeautifulSoup(r.text, "html.parser")
+            except:
+                lat = longt = "<MISSING>"
+        soup = BeautifulSoup(r.text, "html.parser")
+        try:
             try:
                 hours = (
                     soup.find("table", {"class": "hours"})
@@ -86,7 +94,7 @@ def fetch_data():
                 except:
                     pass
         except:
-            lat = longt = hours = "<MISSING>"
+            hours = "<MISSING>"
         try:
             if "Canada" in ccode:
                 ccode = "CA"
