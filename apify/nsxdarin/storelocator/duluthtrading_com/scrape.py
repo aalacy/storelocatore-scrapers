@@ -36,12 +36,15 @@ def fetch_data():
             zc = ""
             store = loc.split("StoreID=")[1]
             phone = ""
+            hours = ""
             lat = "<MISSING>"
             lng = "<MISSING>"
-            hours = ""
             r2 = session.get(loc, headers=headers)
             lines = r2.iter_lines()
             for line2 in lines:
+                if '"latitude":' in line2:
+                    lat = line2.split('"latitude":')[1].split(",")[0]
+                    lng = line2.split('"longitude":')[1].split("}")[0]
                 if '"address":{"' in line2:
                     name = line2.split('","name":"')[1].split('"')[0]
                     add = line2.split('"streetAddress":"')[1].split('"')[0]
