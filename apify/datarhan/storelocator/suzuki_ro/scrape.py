@@ -29,7 +29,7 @@ def fetch_data():
             page_url = poi_html.xpath("@href")[0]
             response = get_with_retry(driver, page_url)
             loc_dom = etree.HTML(response)
-            location_name = loc_dom.xpath("//h1/text()")[0].strip()
+            location_name = poi_html.xpath(".//h2/text()")[0]
             raw_data = loc_dom.xpath('//div[@class="global__map-showroom"]//p/text()')
             addr = parse_address_intl(raw_data[0])
             street_address = addr.street_address_1
