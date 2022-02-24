@@ -7,7 +7,7 @@ from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 
-#This is a code change
+# This is a code change
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
