@@ -24,10 +24,9 @@ def fetch_data():
         country_codes=[SearchableCountries.GERMANY],
         expected_search_radius_miles=1,
         granularity=Grain_1_KM(),
-        max_search_distance_miles=2,
     )
     for lat, lng in all_coords:
-        frm = f"s={lat}&n={lat + 0.25}&w={lng}&e={lng + 0.45}&netto=false&city=false&service=false&beverage=false&nonfood=false"
+        frm = f"s={lat}&n={lat + 0.35}&w={lng}&e={lng + 0.45}&netto=false&city=false&service=false&beverage=false&nonfood=false"
         all_locations = session.post(start_url, data=frm, headers=hdr).json()
         for poi in all_locations:
             hoo = etree.HTML(poi["store_opening"]).xpath("//text()")

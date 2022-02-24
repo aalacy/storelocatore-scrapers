@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -45,9 +46,12 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "https://www.spendless.com.au/stores"
         location_name = j.get("name") or "<MISSING>"
-        street_address = f"{j.get('street')} {j.get('street2')}".replace(
-            "None", ""
-        ).strip()
+        ad = f"{j.get('street')} {j.get('street2')}".replace("None", "").strip()
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         state = j.get("state") or "<MISSING>"
         postal = j.get("postcode") or "<MISSING>"
         country_code = "AU"
