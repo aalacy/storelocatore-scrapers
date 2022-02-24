@@ -46,17 +46,27 @@ def fetch_data():
             raw_address = ""
             phone = ""
             hours = []
+
+            hr = []
+            temp = []
             for x, bb in enumerate(blocks):
                 if "Phone:" in bb:
                     raw_address = blocks[x - 1]
                     phone = blocks[x + 1]
-                    temp = blocks[x + 2 :]
-            for hh in temp:
+                    hr = blocks[x + 2 :]
+                    break
+            for hh in hr:
                 if "7 days" in hh:
                     continue
                 if "Chompie" in hh:
                     break
-                hours.append(hh)
+                temp.append(hh)
+
+            if len(temp) % 2 == 0 and "Mon" not in temp[0]:
+                for x in range(0, len(temp), 2):
+                    hours.append(f"{temp[x]}: {temp[x+1]}")
+            else:
+                hours = temp
 
             addr = raw_address.split(",")
             info = _coord(locations, raw_address)
@@ -73,6 +83,7 @@ def fetch_data():
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
             )
 
