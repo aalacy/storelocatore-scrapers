@@ -270,6 +270,7 @@ def fetch_data():
         data = session.get(start_url.format(country_code), headers=hdr).json()
 
         for poi in data["dealers"]:
+            page_url = f'https://www.scania.com/us/en/home/admin/misc/dealer/dealer-details.html?dealer={poi["scaniaId"]}'
             hoo = []
             if poi.get("openingHours"):
                 for e in poi["openingHours"]:
@@ -299,7 +300,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.scania.com/us/en/home/dealer-locator.html",
+                page_url=page_url,
                 location_name=poi["organizationName"]["legalName"]["value"],
                 street_address=poi["visitingAddress"]["postalAddress"][
                     "physicalAddress"
