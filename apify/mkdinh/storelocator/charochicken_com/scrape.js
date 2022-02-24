@@ -6,14 +6,13 @@ function getOrDefault(value) {
 }
 
 Apify.main(async () => {
-  const requestList = await Apify.openRequestList('locations', [
-    {
-      url: 'http://www.charochicken.com/locations/',
-    },
-  ]);
+  const requestQueue = await Apify.openRequestQueue();
+  await requestQueue.addRequest({
+    url: 'https://charochicken.com/delivery/locations/',
+  });
 
   const crawler = new Apify.CheerioCrawler({
-    requestList,
+    requestQueue,
     async handlePageFunction({ $, request }) {
       const locations = $('iframe')
         .map(function () {
