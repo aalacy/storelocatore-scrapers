@@ -5,8 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import dirtyjson as json
-from sgpostal.sgpostal import parse_address_intl
+import json
 
 logger = SgLogSetup().get_logger("baartprograms")
 
@@ -72,10 +71,6 @@ def fetch_data():
                                     hours.append(hh)
                                     hh = []
 
-            city = _["location_city"]
-            if city.isdigit() or city == "D":
-                addr = parse_address_intl(_["location_address"])
-                city = addr.city
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["location_id"],
@@ -85,7 +80,7 @@ def fetch_data():
                 )[0]
                 .split("\n")[0]
                 .strip(),
-                city=city.split(",")[-1],
+                city=_["location_address"].split(",")[-3],
                 state=_["location_state"],
                 zip_postal=_["location_postal_code"],
                 latitude=_["location_latitude"],
