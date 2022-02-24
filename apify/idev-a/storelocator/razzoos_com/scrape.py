@@ -25,7 +25,7 @@ def fetch_data():
             page_url = link.text.replace("//locations", "/locations")
             if "/locations/" not in page_url:
                 continue
-            if len(page_url.split("/")) < 9:
+            if len(page_url.split("/")) < 8:
                 continue
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")

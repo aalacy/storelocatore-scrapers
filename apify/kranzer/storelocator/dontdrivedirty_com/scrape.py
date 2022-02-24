@@ -44,12 +44,18 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
+
+    geos = []
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[contains(@class, "single")]')
     for d in div:
 
         page_url = "".join(d.xpath('.//a[text()="See Details"]/@href'))
-        location_name = "".join(d.xpath('.//p[@class="h5 mb-2"]/strong/text()')).strip()
+        location_name = (
+            "".join(d.xpath('.//p[@class="h5 mb-2"]/strong/text()'))
+            .split("-")[0]
+            .strip()
+        )
         ad = (
             " ".join(d.xpath('.//strong[text()="Address: "]/following-sibling::text()'))
             .replace("\n", "")
@@ -64,38 +70,10 @@ def fetch_data(sgw: SgWriter):
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
         city = a.get("city") or "<MISSING>"
+        latitude, longitude = "", ""
         try:
-            latitude = (
-                "".join(d.xpath('.//a[text()="Get Directions"]/@href'))
-                .split("/")[-1]
-                .split(",")[0]
-                .strip()
-            )
-            longitude = (
-                "".join(d.xpath('.//a[text()="Get Directions"]/@href'))
-                .split("/")[-1]
-                .split(",")[1]
-                .strip()
-            )
-        except:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        hours_of_operation = (
-            " ".join(d.xpath('.//strong[text()="Hours: "]/following-sibling::text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        if "-" in hours_of_operation.strip()[0:4]:
-            hours_of_operation = "<MISSING>"
-        if "-" in location_name:
-            location_name = location_name + " " + "Coming Soon"
-        if latitude == "<MISSING>":
-            session = SgRequests()
-            try:
-                r = session.get(page_url, headers=headers)
-                tree = html.fromstring(r.text)
-            except:
-                latitude = longitude = "<MISSING>"
-                continue
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "lat:")]/text()'))
                 .split("lat:")[1]
@@ -108,9 +86,39 @@ def fetch_data(sgw: SgWriter):
                 .split("}")[0]
                 .strip()
             )
+        except:
+            latitude, longitude = "", ""
+
+        hours_of_operation = (
+            " ".join(d.xpath('.//strong[text()="Hours: "]/following-sibling::text()'))
+            .replace("\n", "")
+            .strip()
+        )
+
+        location_type = "Open"
+        if "-" in hours_of_operation.strip()[0:4]:
+            hours_of_operation = "<MISSING>"
+            location_type = "Coming Soon"
+
+        if "TEMPORARILY CLOSED" in location_name:
+            location_name = location_name.split("–")[0].strip()
+            location_type = "TEMPORARILY CLOSED".title()
+
+        if not latitude:
+            map_link = tree.xpath('.//a[@class="btn"]')[0].xpath("@href")[0]
+            latitude = map_link.split("@")[1].split(",")[0]
+            longitude = map_link.split("@")[1].split(",")[1].split(",")[0]
+
         if "data" in latitude:
             latitude = r.text.split("lat: ", 1)[1].split(",")[0].strip()
             longitude = r.text.split("lng: ", 1)[1].split("}")[0].strip()
+
+        if latitude + longitude in geos:
+            latitude = ""
+            longitude = ""
+        else:
+            geos.append(latitude + longitude)
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -122,7 +130,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=SgRecord.MISSING,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,

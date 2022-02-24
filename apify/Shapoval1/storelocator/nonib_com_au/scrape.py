@@ -36,7 +36,12 @@ def fetch_data(sgw: SgWriter):
         if street_address.find("(") != -1:
             street_address = street_address.split("(")[0].strip()
         street_address = street_address.replace(",", "").strip()
-        city = js_block.split('"addressLocality": "')[1].split('"')[0].strip()
+        city = (
+            js_block.split('"addressLocality": "')[1]
+            .split('"')[0]
+            .replace("&#160;", "")
+            .strip()
+        )
         state = js_block.split('"addressRegion": "')[1].split('"')[0].strip()
         postal = "".join(ad[-1]).strip()
         country_code = "AU"
