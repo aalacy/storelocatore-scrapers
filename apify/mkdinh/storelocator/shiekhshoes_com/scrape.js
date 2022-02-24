@@ -70,9 +70,9 @@ function extractHoursOfOperation($) {
 
 async function fetchData({ page, request }) {
   // waiting for google popup to load. Sometimes it stalls so just kick it back into queue
-  await page.waitForSelector('.store-item', { timeout: 10000 });
+  await page.waitForSelector('.store-item', { timeout: 15000 });
 
-  await setTimeout(() => {}, 5000);
+  await setTimeout(() => {}, 6000);
 
   const html = await page.content();
   const parser = parseHtml(html);
@@ -123,7 +123,7 @@ Apify.main(async function () {
       locations: [],
     },
   });
-
+  5;
   const proxyPassword = process.env.PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
