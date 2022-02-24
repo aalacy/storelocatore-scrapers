@@ -1,3 +1,4 @@
+from operator import le
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
@@ -28,11 +29,15 @@ def fetch_data():
                 ": ".join(hh.stripped_strings)
                 for hh in sp1.select("table.store-information_time_table tr")[1:]
             ]
-            if _["name"] in ["Troyes", "Poitiers"]:
+            if len(hours) == 1:
                 temp = hours
                 hours = []
                 for hh in json.loads(
-                    temp[0].replace('30""', '30"').replace('}"}', "}")
+                    temp[0]
+                    .replace('30""', '30"')
+                    .replace('}"}', "}")
+                    .replace('""', '"')
+                    .replace("30}", '30"}')
                 )["periods"]:
                     hours.append(
                         f"{hh['openDay']}: {hh['openTime']} - {hh['closeTime']}"
