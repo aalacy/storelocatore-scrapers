@@ -38,14 +38,20 @@ def fetch_data():
         location_name = poi_html.xpath('.//a[@class="store-map"]/text()')[0]
         raw_address = poi_html.xpath(".//address/div/text()")
         raw_address = [e.strip() for e in raw_address if e.strip() and "TLF" not in e]
-        raw_address = [e for e in raw_address if 'entrada por' not in e]
+        raw_address = [e for e in raw_address if "entrada por" not in e]
         phone = poi_html.xpath('.//a[@class="storelocator-phone"]/text()')
         phone = phone[0] if phone else ""
         location_type = ""
         if "El Corte Ingles" in location_name:
             location_type = "El Corte Ingles"
         hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
-        hoo = " ".join([e.replace('Horario:', '').replace('\n', '').strip() for e in hoo if e.strip()])
+        hoo = " ".join(
+            [
+                e.replace("Horario:", "").replace("\n", "").strip()
+                for e in hoo
+                if e.strip()
+            ]
+        )
 
         item = SgRecord(
             locator_domain=domain,
