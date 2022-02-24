@@ -24,7 +24,10 @@ def fetch_data():
         for link in locations:
             page_url = locator_domain + link["href"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            res = session.get(page_url, headers=_headers)
+            if res.status_code != 200:
+                continue
+            sp1 = bs(res.text, "lxml")
             hours = list(sp1.select("div#cb_id_CONTENT ul")[0].stripped_strings)
             raw_address = ", ".join(
                 list(sp1.select("div#cb_id_CONTENT ul")[-1].stripped_strings)
@@ -33,11 +36,15 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            if city:
+                if "Manchester" in city:
+                    city = "Manchester"
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("div#cb_id_CONTENT h1").text.strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=raw_address.split(",")[-1],
                 country_code="UK",
