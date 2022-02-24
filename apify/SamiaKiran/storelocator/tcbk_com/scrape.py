@@ -29,6 +29,7 @@ def fetch_data():
         for loc in loclist:
             loc = "{" + loc.replace("}},", "}}")
             loc = json.loads(loc)
+            location_type = loc["properties"]["marker"]
             latitude = loc["geometry"]["coordinates"][-1]
             longitude = loc["geometry"]["coordinates"][0]
             loc = loc["properties"]
@@ -94,7 +95,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
