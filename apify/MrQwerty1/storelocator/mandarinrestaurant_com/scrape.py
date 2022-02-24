@@ -1,70 +1,32 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.mandarinrestaurant.com/"
-    api_url = "https://www.mandarinrestaurant.com/wp-admin/admin-ajax.php?action=store_search&lat=43.65323&lng=-79.38318&max_results=200&search_radius=2000"
-    headers = {
-        "User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
-    }
-
-    session = SgRequests()
-    r = session.get(api_url, headers=headers)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.mandarinrestaurant.com/wp-admin/admin-ajax.php?action=store_search&lat=43.65323&lng=-79.38318&max_results=200&search_radius=2000"
+    r = session.get(api, headers=headers)
     js = r.json()
 
     for j in js:
-        street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country = j.get("country")
+        street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        country = j.get("country") or ""
         if "Canada" in country:
             country_code = "CA"
         else:
             country_code = "US"
 
-        store_number = "<MISSING>"
-        page_url = j.get("url") or "<MISSING>"
+        page_url = j.get("url")
         location_name = j.get("store")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
 
         source = j.get("hours") or "<html></html>"
         tree = html.fromstring(source)
@@ -80,37 +42,45 @@ def fetch_data():
                 ],
             )
         )
-        text = text[text.index("TAKE-OUT") + 1 : text.index("DELIVERY")]
-        hours_of_operation = (
-            ";".join(text).replace("CLOSED CLOSED", "CLOSED").replace("day;", "day ")
-            or "<MISSING>"
+        _tmp = []
+        write = False
+        for t in text:
+            if "TAKE-OUT" in t:
+                write = True
+                continue
+            if not write:
+                continue
+            if "DELIVERY" in t:
+                break
+            _tmp.append(t)
+
+        hours_of_operation = ";".join(_tmp).replace("y;", "y ")
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.mandarinrestaurant.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

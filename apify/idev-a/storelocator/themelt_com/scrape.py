@@ -73,6 +73,8 @@ def fetch_data():
                     )
                     if street_address.endswith(","):
                         street_address = street_address[:-1]
+                    if not street_address:
+                        street_address = _["address"]
                     names.append(_["address"])
                     yield SgRecord(
                         page_url=base_url,
