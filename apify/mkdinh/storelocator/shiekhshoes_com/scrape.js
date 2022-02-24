@@ -20,14 +20,14 @@ function formatPhone(phone) {
   return phone ? phone.replace(/-|\(|\)|\s/g, '') : null;
 }
 
-async function enqueueStoreLinks({ page, requestQueue, request }) {
+async function enqueueStoreLinks({ page, requestQueue, request }) {5
   const { locations, curPage } = request.userData;
 
   const content = await page.content();
   const $ = cheerio.load(content);
   const serialized = $('pre').html();
 
-  const { num_store, storesjson } = JSON.parse(serialized.replace(/&quot;/g, '"'));
+  const { num_store, storesjson } = JSON.parse(serialized.replace(/&quot;/g, '"')); 
 
   locations.push(...storesjson);
 
@@ -70,9 +70,9 @@ function extractHoursOfOperation($) {
 
 async function fetchData({ page, request }) {
   // waiting for google popup to load. Sometimes it stalls so just kick it back into queue
-  await page.waitForSelector('.store-item', { timeout: 10000 });
+  await page.waitForSelector('.store-item', { timeout: 15000 });
 
-  await setTimeout(() => {}, 5000);
+  await setTimeout(() => {}, 6000);
 
   const html = await page.content();
   const parser = parseHtml(html);
@@ -123,7 +123,7 @@ Apify.main(async function () {
       locations: [],
     },
   });
-
+5
   const proxyPassword = process.env.PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups
