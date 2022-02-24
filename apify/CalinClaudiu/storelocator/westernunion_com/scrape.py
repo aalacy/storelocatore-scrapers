@@ -43,9 +43,7 @@ headers[
 
 search = DynamicGeoSearch(
     country_codes=[
-        SearchableCountries.CANADA,
-        SearchableCountries.BRITAIN,
-        SearchableCountries.USA,
+        SearchableCountries.ALL,
     ],
     expected_search_radius_miles=80,
 )
