@@ -56,11 +56,17 @@ def fetch_data():
                         try:
                             lat = line3.split('"latitude\\": \\"')[1].split("\\")[0]
                         except:
-                            lat = line3.split('"latitude":')[1].split(",")[0]
+                            try:
+                                lat = line3.split('"latitude":')[1].split(",")[0]
+                            except:
+                                lat = "<MISSING>"
                         try:
                             lng = line3.split('"longitude\\": \\"')[1].split("\\")[0]
                         except:
-                            lng = line3.split('"longitude":')[1].split("}")[0]
+                            try:
+                                lng = line3.split('"longitude":')[1].split("}")[0]
+                            except:
+                                lng = "<MISSING>"
                         try:
                             add = line3.split('"streetAddress\\": \\"')[1].split("\\")[
                                 0

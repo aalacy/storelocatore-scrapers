@@ -25,8 +25,6 @@ def fetch_data():
     typ = "<MISSING>"
     website = "harborfreight.com"
     for clat, clng in search:
-        clat = "34"
-        clng = "-118"
         logger.info(str(clat) + "-" + str(clng))
         url = (
             "https://api.harborfreight.com/graphql?operationName=FindStoresNearCoordinates&variables=%7B%22filter%22%3A%7B%22status%22%3A%22OPEN%22%7D%2C%22latitude%22%3A"
