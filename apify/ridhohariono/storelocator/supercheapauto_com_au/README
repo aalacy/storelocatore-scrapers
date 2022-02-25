@@ -1,0 +1,5 @@
+--ignore CountryCodeFillRateChecker (AU)
+
+--ignore GeoConsistencyValidator (Not US zip)
+
+--ignore CountryValidator (Not us State)

@@ -1,10 +1,10 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -17,41 +17,59 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//div[./div[@class="one-loc-picture"]/img[not(contains(@src, "Coming-Soon"))]]'
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "var map_positions =")]/text()'))
+        .split("var map_positions =")[1]
+        .split(";")[0]
+        .strip()
     )
-    for d in div:
+    js = json.loads(div)
+    for j in js:
 
+        a = j.get("position_on_the_map")
+        str_number = a.get("street_number")
         page_url = "https://beyondjuiceryeatery.com/locations/"
-        location_name = "".join(d.xpath(".//h4/text()")).replace("\n", "").strip()
-        ad = "".join(d.xpath(".//h5/text()")).replace("\n", "").strip()
-        a = parse_address(USA_Best_Parser(), ad)
-        street_address = (
-            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
-            or "<MISSING>"
+        location_name = "".join(
+            tree.xpath(
+                f'//p[contains(text(), "{str_number}")]/preceding-sibling::p[1]/text()'
+            )
         )
-        state = a.state or "<MISSING>"
-        postal = a.postcode or "<MISSING>"
+        street_address = f"{a.get('street_number')} {a.get('street_name')}".strip()
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("post_code") or "<MISSING>"
         country_code = "US"
-        city = a.city or "<MISSING>"
-        if location_name.find("Bloomfield Hills") != -1 and city == "<MISSING>":
-            city = "Bloomfield Hills"
+        city = a.get("city") or "<MISSING>"
+        latitude = a.get("lat") or "<MISSING>"
+        longitude = a.get("lng") or "<MISSING>"
         phone = (
-            "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
+            "".join(
+                tree.xpath(
+                    f'//p[contains(text(), "{str_number}")]/following-sibling::p[1]//text()'
+                )
+            )
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
+        phone = " ".join(phone.split())
         hours_of_operation = (
-            " ".join(d.xpath('.//div[@class="one-loc-bottom"]//text()'))
+            "".join(
+                tree.xpath(
+                    f'//p[contains(text(), "{str_number}")]/following-sibling::div[@class="ol-oh"]//text()'
+                )
+            )
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        if location_name.find("SHELBY TOWNSHIP") != -1:
+            city = location_name.split("(")[0].capitalize().strip()
         if phone == "TEMPORARILY CLOSED":
             phone = "<MISSING>"
-            hours_of_operation = "TEMPORARILY CLOSED"
+            hours_of_operation = (
+                hours_of_operation.capitalize().replace(":", "").strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -65,9 +83,10 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)
