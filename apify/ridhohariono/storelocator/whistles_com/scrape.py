@@ -26,12 +26,13 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[
-            SearchableCountries.USA,
             SearchableCountries.BRITAIN,
+            SearchableCountries.USA,
             SearchableCountries.HONG_KONG,
             SearchableCountries.IRELAND,
+            SearchableCountries.AUSTRALIA,
         ],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=15,
         max_search_results=10,
     )
     for lat, long in search:
