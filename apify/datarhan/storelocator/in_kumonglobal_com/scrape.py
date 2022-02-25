@@ -110,7 +110,7 @@ def fetch_data():
         "lng": "106.6296638",
     }
     countries = {
-        # 'in': frm_in,
+        "in": frm_in,
         "bn": frm_bn,
         "kh": frm_kh,
         "id": frm_id,
