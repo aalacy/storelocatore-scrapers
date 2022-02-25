@@ -46,6 +46,12 @@ def fetch_data():
                 .text.replace("Target –", "")
                 .strip()
             )
+            try:
+                store.find("span", {"itemprop": "streetAddress"}).find(
+                    "strong"
+                ).decompose()
+            except:
+                pass
             street_address = (
                 store.find("span", {"itemprop": "streetAddress"})
                 .get_text(strip=True, separator=",")
