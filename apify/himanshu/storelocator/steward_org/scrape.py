@@ -63,7 +63,7 @@ def fetch_data():
                     loc = loc["Account__r"]
                     location_name = loc["Name"]
                     address = loc["ShippingAddress"]
-                    street_address = address["street"]
+                    street_address = address["street"].replace("\n", " ")
                     city = address["city"]
                     state = address["state"]
                     zip_postal = address["postalCode"]
