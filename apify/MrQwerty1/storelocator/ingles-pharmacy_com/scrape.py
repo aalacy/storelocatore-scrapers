@@ -156,5 +156,5 @@ while True:
         scrape()
         break
 
-    except Exception as e:
+    except Exception:
         continue
