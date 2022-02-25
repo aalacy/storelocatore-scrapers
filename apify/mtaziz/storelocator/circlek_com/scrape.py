@@ -175,6 +175,7 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
         street_address = data_dict["address"]
         city = data_dict["city"]
         state = data_dict["division_name"]
+        state = state.replace("franchise", "<MISSING>")
         country_code = data_dict["country"]
         if MISSING not in street_address:
             location_name = "Circle K at" + " " + street_address
