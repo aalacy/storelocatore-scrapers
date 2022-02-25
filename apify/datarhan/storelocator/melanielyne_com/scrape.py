@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 from lxml import etree
 
@@ -18,7 +19,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
     )
     scraped_urls = []
     for code in all_codes:
@@ -49,7 +50,8 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             city = addr.city
             state = addr.state
-            state = state if state else "<MISSING>"
+            if not state:
+                state = " ".join(raw_address[-1].split(", ")[-1].split()[:-1])
             zip_code = json.loads(
                 loc_dom.xpath('//div[@id="store-details-map"]/@data-store')[0]
             )["zip"]
@@ -65,6 +67,8 @@ def fetch_data():
             )
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            if street_address == "184":
+                street_address = "184 Laura - Edmonton Airport Outlets"
 
             item = SgRecord(
                 locator_domain=domain,
@@ -81,6 +85,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=" ".join(raw_address),
             )
 
             yield item

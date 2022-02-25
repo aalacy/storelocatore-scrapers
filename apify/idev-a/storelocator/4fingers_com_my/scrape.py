@@ -51,7 +51,7 @@ def fetch_data():
         soup = bs(res, "lxml")
         locations = soup.select("div.child-effect")
         for _ in locations:
-            if "Opening" in _.text:
+            if "Opening Soon" in _.text:
                 continue
             _addr = []
             for aa in _.select(
@@ -81,10 +81,6 @@ def fetch_data():
                     phone = ""
             name = _.select_one("div.headers-right").text.strip()
             coord = _coord(locs, name)
-            if not coord:
-                import pdb
-
-                pdb.set_trace()
             yield SgRecord(
                 page_url=base_url,
                 location_name=name,

@@ -32,8 +32,7 @@ def fetch_data():
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
-
-    store_list = search_sel.xpath('//p[@class="font_7" and @style="font-size:17px"]')
+    store_list = search_sel.xpath('//p[@class="font_7" and @style="font-size:17px;"]')
 
     for store in store_list:
 
@@ -49,7 +48,6 @@ def fetch_data():
         )
 
         raw_address = " ".join(store_info).strip()
-
         if len(raw_address) < 5:
             continue
 
@@ -86,7 +84,7 @@ def fetch_data():
                 [
                     x.strip()
                     for x in search_sel.xpath(
-                        '//p[@class="font_8" and @style="line-height:1.6em;text-align:center;font-size:15px"]//text()'
+                        '//p[@class="font_8" and @style="line-height:1.6em; text-align:center; font-size:15px;"]//text()'
                     )
                 ],
             )

@@ -73,6 +73,10 @@ def fetch_data(sgw: SgWriter):
                     ].strip()
             if street_address[-1:] == ",":
                 street_address = street_address[:-1]
+
+            if "Boksburg" in street_address:
+                city = "Boksburg"
+
             country_code = "ZA"
             store_number = ""
             location_type = "<MISSING>"

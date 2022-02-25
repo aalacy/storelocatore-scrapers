@@ -45,7 +45,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=f'https://www.thefoodwarehouse.com/store-locator/{poi["url"]}',
+            page_url=f'https://www.thefoodwarehouse.com{poi["url"]}',
             location_name=poi["name"],
             street_address=street_address,
             city=addr.city,

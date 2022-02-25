@@ -7,6 +7,13 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_phone(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//span[@class='number']/text()"))
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.ko2go.co.uk/"
     r = session.get(api, headers=headers)
@@ -21,6 +28,7 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("name")
         slug = j.get("alias")
         page_url = f"https://www.ko2go.co.uk/{slug}/"
+        phone = get_phone(page_url)
         street_address = j.get("address1")
         city = j.get("name")
         postal = j.get("postcode")
@@ -62,6 +70,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=postal,
             country_code="GB",
             store_number=store_number,
+            phone=phone,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,

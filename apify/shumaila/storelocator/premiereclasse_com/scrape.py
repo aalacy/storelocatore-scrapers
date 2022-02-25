@@ -27,11 +27,12 @@ def fetch_data():
             continue
         store = loc["Name"].replace("locale_", "")
         r = session.get(link, headers=headers)
-        content = r.text.split('<script type="application/ld+json">', 1)[1].split(
-            "</script", 1
-        )[0]
 
         try:
+            content = r.text.split('<script type="application/ld+json">', 1)[1].split(
+                "</script", 1
+            )[0]
+
             content = (json.loads(content))["mainEntity"][0]["mainEntity"]
         except:
             continue
