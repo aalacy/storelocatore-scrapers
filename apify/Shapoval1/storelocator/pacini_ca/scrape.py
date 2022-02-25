@@ -47,7 +47,7 @@ def fetch_data(sgw: SgWriter):
             postal = " ".join(ad.split(",")[1].split()[1:]).strip()
         if ad.count(",") == 2:
             street_address = (
-                ad.split(",")[0] + " ".join(ad.split(",")[1].split()[:-1]).strip()
+                ad.split(",")[0] + " " + " ".join(ad.split(",")[1].split()[:-1]).strip()
             )
             city = ad.split(",")[1].split()[-1]
             state = ad.split(",")[2].split()[0]
