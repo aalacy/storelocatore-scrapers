@@ -30,72 +30,92 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.servcorp.com/en/office-finder/"
-    stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath(
-        '//div[@class="location-listing-desktop"]/article[./div[@class="property-tile"]/header]'
+    countries_req = session.get(
+        "https://www.servcorp.com/en/locations/worldwide-locations/", headers=headers
     )
-    for store in stores:
-        page_url = (
-            "https://www.servcorp.com"
-            + "".join(store.xpath('div[@class="property-tile"]/header/a/@href')).strip()
-        )
-        locator_domain = website
-        location_name = "".join(
-            store.xpath('div[@class="property-tile"]/header/a/text()')
+    countries_sel = lxml.html.fromstring(countries_req.text)
+    countries = countries_sel.xpath('//article[@class="col-sm-6 col-md-4"]')
+    for country in countries:
+        country_code = "".join(
+            country.xpath('div[@class="property-tile"]/header/text()')
         ).strip()
+        search_url = "".join(
+            country.xpath('div[@class="property-tile"]/a/@href')
+        ).strip()
+        if "Australia" in country_code:
+            search_url = "https://www.servcorp.com.au/en/locations/"
 
-        raw_address = ", ".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store.xpath(
-                            './/div[@class="property-address"]//text()'
-                        )
-                    ],
-                )
+        if "Japan" in country_code:
+            search_url = "https://www.servcorp.co.jp/en/office-finder/"
+
+        log.info(search_url)
+        stores_req = session.get(search_url, headers=headers)
+        stores_sel = lxml.html.fromstring(stores_req.text)
+        stores = stores_sel.xpath(
+            '//div[@class="location-listing-desktop"]/article[./div[@class="property-tile"]/header]'
+        )
+        if len(stores) <= 0:
+            stores = stores_sel.xpath('//article[@class="col-sm-6 col-md-4"]')
+        for store in stores:
+            page_url = (
+                search_url.split("/en")[0].strip()
+                + "".join(
+                    store.xpath('div[@class="property-tile"]/header/a/@href')
+                ).strip()
             )
-        ).strip()
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            locator_domain = website
+            location_name = "".join(
+                store.xpath('div[@class="property-tile"]/header/a/text()')
+            ).strip()
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            raw_address = ", ".join(
+                list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store.xpath(
+                                './/div[@class="property-address"]//text()'
+                            )
+                        ],
+                    )
+                )
+            ).strip()
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        country_code = formatted_addr.country
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
-        store_number = "<MISSING>"
-        phone = "".join(store.xpath('.//span[@class="phone-btn"]//text()')).strip()
+            store_number = "<MISSING>"
+            phone = "".join(store.xpath('.//span[@class="phone-btn"]//text()')).strip()
 
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+            location_type = "<MISSING>"
+            hours_of_operation = "<MISSING>"
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

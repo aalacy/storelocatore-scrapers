@@ -7,6 +7,7 @@ from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 
+# This is a code change
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -57,6 +58,10 @@ class ExampleSearchIteration:
         elif search.current_country() == "us":
             numbers = nUS
         elif search.current_country() == "au":
+            numbers = nAU
+        elif search.current_country() == "nf":
+            numbers = nAU
+        elif search.current_country() == "cx":
             numbers = nAU
 
         url = str(
@@ -170,6 +175,8 @@ if __name__ == "__main__":
     tocrawl = []
     tocrawl.append(SearchableCountries.CANADA)
     tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.NORFOLK_ISLAND)
+    tocrawl.append(SearchableCountries.CHRISTMAS_ISLAND)
     tocrawl.append(SearchableCountries.AUSTRALIA)
     tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search = DynamicGeoSearch(

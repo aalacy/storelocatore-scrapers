@@ -128,7 +128,7 @@ def fetch_data():
                 country_code = "AU"
                 phone = store.find("span", {"class": "store-phone"}).text.strip()
                 hours_of_operation = re.sub(
-                    r"\s?,?Public.*|\(.*\)",
+                    r"\s?,?Public.*|\(.*\)|,\d{2}\/\d{2}.*|,\d{1}nd.*",
                     "",
                     " ".join(
                         content.find("div", {"class": "store-hours-container"})
