@@ -18,6 +18,7 @@ def fetch_data():
 
     for loc in loclist:
 
+        ltype = "<MISSING>"
         link = "https://www.campbowwow.com" + loc["Path"]
         store = loc["FranchiseLocationID"]
         title = loc["FranchiseLocationName"]
@@ -29,6 +30,10 @@ def fetch_data():
         lat = loc["Latitude"]
         longt = loc["Longitude"]
         phone = loc["Phone"]
+        if loc["ComingSoon"] == 0:
+            pass
+        else:
+            ltype = "Coming Soon"
         if len(str(phone)) < 3:
             phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
         else:
@@ -44,8 +49,8 @@ def fetch_data():
             hours = ""
             for hr in hourslist:
                 day = hr["Interval"]
-                if "Holiday" in day:
-                    break
+                if "Holiday" in day or len(day) < 2:
+                    continue
                 start = hr["OpenTime"]
                 end = hr["CloseTime"]
                 st = (int)(start.split(":", 1)[0])
@@ -68,7 +73,7 @@ def fetch_data():
                     + " PM "
                 )
         except:
-
+            ltype = "Coming Soon"
             hours = "<MISSING>"
         yield SgRecord(
             locator_domain="https://www.campbowwow.com/",
@@ -81,7 +86,7 @@ def fetch_data():
             country_code=ccode,
             store_number=str(store),
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,

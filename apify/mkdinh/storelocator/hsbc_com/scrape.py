@@ -1,5 +1,7 @@
 import json
+import re
 import lxml.html
+from time import sleep
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -66,6 +68,7 @@ def fetch_data():
         )
         for key in data_files.keys():
             url = data_files[key]
+            sleep(10)
             stores_req = session.get(
                 domain + url.replace(".cdata", ".udata"),
                 headers=headers,
@@ -101,7 +104,13 @@ def fetch_data():
                     )
 
                     parsed = parse_address(International_Parser(), address)
-                    street_address = parsed.street_address_1
+                    if (
+                        parsed.street_address_1 is not None
+                        and len(parsed.street_address_1) > 5
+                    ):
+                        street_address = address
+                    else:
+                        street_address = re.sub(fr",\s*{city}", "", address)
 
                 store_number = "<MISSING>"
                 location_type = store["Type"]
@@ -134,6 +143,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=f"{address}, {city}, {zip}",
                 )
 
 
