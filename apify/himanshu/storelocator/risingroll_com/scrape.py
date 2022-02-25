@@ -3,17 +3,23 @@ import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-
+session = SgRequests()
 website = "risingroll_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
+
+
+DOMAIN = "https://risingroll.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -21,72 +27,34 @@ def fetch_data():
         url = "https://risingroll.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "et_pb_blurb_content"})
+        loclist = soup.findAll("div", {"class": "pm-location"})
         for loc in loclist:
             if "coming soon" in loc.text.lower():
                 continue
-            page_url = loc.find("a")["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = (
-                soup.find("div", {"class": "header-content"}).find("h1").text
-            )
-            temp = (
-                soup.findAll("div", {"class": "et_pb_text_inner"})[1]
-                .get_text(separator="|", strip=True)
-                .replace("30308,", "30308")
-                .replace("Ralph G. Anderson", "")
-                .split("|")[1:]
-            )
-            if "Georgia Institute" in temp[0]:
-                temp.pop(0)
-            for i, s in enumerate(temp):
-                if "Owner:" in s or "Owners:" in s or "States" in s:
-                    indice = i
-            address = temp[:indice]
-            temp_address = address[-1].split()
-            if temp_address[-1].isdigit() and len(temp_address[-1]) == 5:
-                if "University" in address[1]:
-                    address = address[2:]
+            page_url = loc.find("a", string=re.compile("View Location & Menu"))
+            if not page_url:
+                page_url = url
             else:
-                del address[-1]
-            address = " ".join(x for x in address)
-            latitude, longitude = (
-                soup.find("iframe", {"src": re.compile("mapquest.com")})["src"]
-                .split("center=", 1)[1]
-                .split("&zoom=", 1)[0]
-                .split(",")
+                page_url = DOMAIN + page_url["href"]
+            location_name = loc.find("h4").text
+            log.info(page_url)
+            address = (
+                loc.find("a", {"class": "address-link"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            indice = indice + 1
-            temp = " ".join(x for x in temp[indice:])
             try:
-                hours_of_operation = temp.split("Open:", 1)[1]
-                if "We are following" in hours_of_operation:
-                    hours_of_operation = hours_of_operation.split(
-                        "We are following", 1
-                    )[0]
-                elif "The health and safety" in hours_of_operation:
-                    hours_of_operation = hours_of_operation.split(
-                        "The health and safety", 1
-                    )[0]
-                elif "Breakfast" in hours_of_operation:
-                    hours_of_operation = hours_of_operation.split("Breakfast", 1)[0]
-                else:
-                    hours_of_operation = hours_of_operation.split("Lunch", 1)[0]
-
+                hours_of_operation = (
+                    loc.find("div", {"class": "hours"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
             except:
-                hours_of_operation = "<MISSING>"
+                hours_of_operation = MISSING
             try:
-                phone = temp.split("P:", 1)[1].split()[0]
+                phone = loc.select_one("a[href*=tel]").text
             except:
-                try:
-                    phone = temp.split("T: ")[1]
-                except:
-                    try:
-                        phone = temp.split("P :")[1]
-                    except:
-                        phone = "<MISSING>"
+                phone = MISSING
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -115,7 +83,7 @@ def fetch_data():
                 i += 1
 
             yield SgRecord(
-                locator_domain="https://risingroll.com/",
+                locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=location_name.strip(),
                 street_address=street_address.strip(),
@@ -123,26 +91,25 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code="US",
-                store_number="<MISSING>",
+                store_number=MISSING,
                 phone=phone.strip(),
-                location_type="<MISSING>",
-                latitude=latitude.strip(),
-                longitude=longitude.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
             )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

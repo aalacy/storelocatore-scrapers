@@ -11,7 +11,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 DOMAIN = "anderinger.com"
-pdf_url = "https://www.anderinger.com/wp-content/uploads/2021/03/Deringer-locations-page-3-23-21.pdf"
+pdf_url = "https://www.anderinger.com/wp-content/uploads/2021/10/Deringer-locations-page-10-21.pdf"
 
 
 def write_output(data):
@@ -156,6 +156,8 @@ def extract(name, data):
     page_url = pdf_url
     location_name = name
     street_address = parsed_address.street_address_1
+    if parsed_address.street_address_2:
+        street_address += f", {parsed_address.street_address_2}"
     city = parsed_address.city
     state = parsed_address.state
     postal = parsed_address.postcode
