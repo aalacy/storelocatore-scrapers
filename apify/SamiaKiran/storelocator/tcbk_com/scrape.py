@@ -29,6 +29,7 @@ def fetch_data():
         for loc in loclist:
             loc = "{" + loc.replace("}},", "}}")
             loc = json.loads(loc)
+            location_type = loc["properties"]["marker"]
             latitude = loc["geometry"]["coordinates"][-1]
             longitude = loc["geometry"]["coordinates"][0]
             loc = loc["properties"]
@@ -37,10 +38,13 @@ def fetch_data():
                 BeautifulSoup(hours_of_operation, "html.parser")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Only Drive Up access is available until further notice.", "")
+                .replace("The drive up hours will be 9:00-11:30 – Drive Up Only", "")
+                .replace("2.22 miles", "")
                 .replace("Hours", "")
                 .replace("Lobby", "")
                 .replace("This branch will be closed 2/16/22", "")
-                .replace("Located inside of Raley", "")
+                .replace("Located inside of Raleys", "")
             )
             location_name = loc["name"]
             log.info(location_name)
@@ -76,8 +80,9 @@ def fetch_data():
                 i += 1
             zip_postal = zip_postal.split()[0]
             state = state.split()[0]
-            if "Drive Up" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("hours_of_operation")[0]
+            if "Drive" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Drive")[0]
+            hours_of_operation = hours_of_operation.replace("s Mon", "Mon")
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -90,7 +95,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
