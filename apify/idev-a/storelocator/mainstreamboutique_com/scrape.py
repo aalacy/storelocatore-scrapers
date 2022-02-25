@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import dirtyjson
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
@@ -61,9 +61,24 @@ def fetch_data():
                 sp1 = bs(res.text, "lxml")
                 _addr = []
                 for aa in sp1.select("div.shg-row div.shg-theme-text-content p"):
-                    if "GET DIRECTIONS" in aa.text:
+                    if "get direction" in aa.text.lower():
                         break
+                    if "Free Ship" in aa.text:
+                        break
+                    if not aa.text.strip():
+                        continue
                     _addr.append(aa.text.strip())
+                if _addr and _addr[0].startswith("Monday"):
+                    _addr = []
+                    for aa in sp1.select("div.shg-row div.shg-theme-text-content div"):
+                        if "get direction" in aa.text.lower():
+                            break
+                        if "Free Ship" in aa.text:
+                            break
+                        if not aa.text.strip():
+                            continue
+                        _addr.append(aa.text.strip())
+
                 if "We are closed" in sp1.select("div.shg-row > div")[1].text:
                     hours = ["Closed"]
                 elif "COMING SOON" in sp1.select("div.shg-row > div")[1].text:
@@ -85,7 +100,7 @@ def fetch_data():
                 if _.select_one("span.postal_zip"):
                     zip_postal = _.select_one("span.postal_zip").text.strip()
                 if not zip_postal:
-                    zip_postal = _addr[-1].strip()
+                    zip_postal = _addr[-1].split()[-1].strip()
                     if not zip_postal.isdigit():
                         zip_postal = ""
                 coord = ["", ""]
@@ -111,7 +126,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
