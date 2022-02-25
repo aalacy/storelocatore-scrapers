@@ -42,14 +42,22 @@ def fetch_data():
         stores = stores_sel.xpath('//section[@class="stores"]//li/a/@href')
         for store_url in stores:
             page_url = "https://www.witchery.com.au" + store_url
-            log.info(page_url)
-            driver.get(page_url)
+            is_timeout = True
+            while is_timeout is True:
+                try:
+                    log.info(page_url)
+                    driver.get(page_url)
+                    is_timeout = False
+                except:
+                    pass
             store_sel = lxml.html.fromstring(driver.page_source)
 
             locator_domain = website
             location_name = "".join(
                 store_sel.xpath('//div[@class="store"]/div[@class="detail"]/h1/text()')
             ).strip()
+            if len(location_name) <= 0:
+                continue
             log.info(location_name)
             street_Address_list = []
             add_1 = "".join(
@@ -113,6 +121,9 @@ def fetch_data():
                 hours_list.append(day + ":" + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation:
+                if hours_of_operation.count("Permanently closed") == 7:
+                    continue
 
             yield SgRecord(
                 locator_domain=locator_domain,

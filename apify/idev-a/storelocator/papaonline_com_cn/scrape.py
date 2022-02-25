@@ -22,21 +22,28 @@ def fetch_data():
         for x, locs in enumerate(locations):
             for _ in locs["restaurant"]:
                 addr = parse_address_intl(_["address"])
-                street_address = _["address"].split("市")[-1]
+                ss = _["address"].split("市")
+                if len(ss) == 1:
+                    street_address = ss[-1]
+                else:
+                    street_address = "市".join(ss[1:])
                 city = addr.city
                 if not city or (city and len(city) == 1):
                     city = cities[x]
                 if city and len(city) > 3 and "市" in city:
                     city = city.split("市")[0] + "市"
+                phone = _.get("phone")
+                if phone:
+                    phone = phone.replace("暂不外送", "")
                 yield SgRecord(
-                    page_url="",
+                    page_url="https://www.papaonline.com.cn/#/restaurantList",
                     location_name=_["name"],
                     street_address=street_address,
                     city=city,
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code="CN",
-                    phone=_.get("phone"),
+                    phone=phone,
                     locator_domain=locator_domain,
                     hours_of_operation=_["time"],
                     raw_address=_["address"],
