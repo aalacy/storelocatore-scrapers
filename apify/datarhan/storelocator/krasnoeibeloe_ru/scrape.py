@@ -50,7 +50,8 @@ def fetch_data():
                 raw_data = poi_html.xpath(".//text()")
                 raw_data = [e.strip() for e in raw_data if e.strip()]
                 store_number = poi_html.xpath(".//input/@value")[0]
-                city = dom.xpath('//select[@name="city"]/option/text()')[0]
+                city = dom.xpath('//select[@name="city"]/option/text()')
+                city = city[0] if city else ""
                 state = dom.xpath('//select[@name="region"]/option/text()')[0]
 
                 item = SgRecord(
@@ -117,7 +118,6 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.CITY,
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.STORE_NUMBER,
                 }
