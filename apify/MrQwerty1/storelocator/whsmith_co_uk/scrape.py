@@ -1,173 +1,89 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+    api = "https://www.whsmith.co.uk/mobify/proxy/api/s/whsmith/dw/shop/v21_3/stores"
+
+    for i in range(0, 5000, 200):
+        params = (
+            ("latitude", "57.28687230000001"),
+            ("longitude", "-2.3815684"),
+            ("distance_unit", "mi"),
+            ("country_code", "GB"),
+            ("max_distance", "3000.00"),
+            ("count", "200"),
+            ("start", f"{i}"),
         )
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["data"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
+        for j in js:
+            location_name = j.get("name")
+            store_number = j.get("id")
+            location_type = j.get("_type")
+            page_url = (
+                f"https://www.whsmith.co.uk/stores/details/?StoreID={store_number}"
+            )
+            street_address = f'{j.get("address1")} {j.get("address2") or ""}'.strip()
+            city = j.get("city")
+            state = j.get("state_code")
+            postal = j.get("postal_code")
+            country_code = "GB"
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+
+            _tmp = []
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
             ]
-        )
+            for day in days:
+                inter = j.get(f"c_openingTimes{day}")
+                if "closed" in inter:
+                    _tmp.append(f"{day}: Closed")
+                    continue
+                _tmp.append(f"{day}: {inter}")
+            hours_of_operation = ";".join(_tmp)
 
-        for row in data:
-            writer.writerow(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
+            sgw.write_row(row)
 
-def get_ids(coord):
-    lat, lon = coord
-    session = SgRequests()
-
-    data = {
-        "dwfrm_storelocator_city": "",
-        "dwfrm_storelocator_postalCode": "",
-        "dwfrm_storelocator_storeName": "",
-        "dwfrm_storelocator_searchPhrase": "",
-        "dwfrm_storelocator_longitude": lon,
-        "dwfrm_storelocator_latitude": lat,
-        "dwfrm_storelocator_county": "",
-    }
-
-    r = session.post(
-        "https://www.whsmith.co.uk/on/demandware.store/Sites-whsmith-Site/en_GB/Stores-FindStores",
-        data=data,
-    )
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//li[@data-id]/@data-id")
-
-
-def get_data(_id):
-    locator_domain = "https://www.whsmith.co.uk/"
-    page_url = f"https://www.whsmith.co.uk/stores/details?StoreID={_id.split('-')[1]}"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
-    street_address = (
-        " ".join(
-            ",".join(tree.xpath("//div[@itemprop='streetAddress']/text()")).split()
-        )
-        or "<MISSING>"
-    )
-    if street_address.endswith(","):
-        street_address = street_address[:-1]
-
-    city = (
-        "".join(tree.xpath("//div[@itemprop='addressLocality']/text()")).strip()
-        or "<MISSING>"
-    )
-    state = (
-        "".join(tree.xpath("//div[@itemprop='addressRegion']/text()")).strip()
-        or "<MISSING>"
-    )
-    postal = (
-        "".join(tree.xpath("//div[@itemprop='postalCode']/text()")).strip()
-        or "<MISSING>"
-    )
-    country_code = (
-        "".join(tree.xpath("//div[@itemprop='addressCountry']/text()")).strip()
-        or "<MISSING>"
-    )
-    if country_code == "United Kingdom":
-        country_code = "GB"
-
-    store_number = _id.split("-")[-1]
-    phone = (
-        "".join(tree.xpath("//span[@itemprop='telephone']/text()"))
-        .strip()
-        .replace("Unavailable - Customer Services:", "")
-        or "<MISSING>"
-    )
-    latitude = (
-        "".join(tree.xpath("//meta[@itemprop='latitude']/@content")) or "<MISSING>"
-    )
-    longitude = (
-        "".join(tree.xpath("//meta[@itemprop='longitude']/@content")) or "<MISSING>"
-    )
-    location_type = "<MISSING>"
-
-    _tmp = []
-    hours = tree.xpath("//div[@class='store-hours']/div[@class='store-day-wrapper']")
-    for h in hours:
-        day = "".join(h.xpath("./span[@class='store-day']/text()")).strip()
-        time = "".join(h.xpath("./span[@class='store-time']/text()")).strip()
-        _tmp.append(f"{day} {time}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if hours_of_operation.count("Closed") >= 7:
-        hours_of_operation = "Closed"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    _ids = set()
-    coords = static_coordinate_list(radius=20, country_code=SearchableCountries.BRITAIN)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_ids, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            ids = future.result()
-            for _id in ids:
-                if _id.find("footer") == -1:
-                    _ids.add(_id)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in _ids}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 200:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.whsmith.co.uk/"
+    headers = {
+        "x-dw-client-id": "7d637d46-28d8-44c4-b652-5eabde15e19e",
+    }
+
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

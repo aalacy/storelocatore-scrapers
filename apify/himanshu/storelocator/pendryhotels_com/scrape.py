@@ -1,146 +1,88 @@
-import re
-import csv
-import json
-from lxml import etree
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
-from sgselenium import SgFirefox
-from sgscrape.sgpostal import parse_address_intl
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+    locator_domain = "https://www.pendry.com/"
+    api_url = "https://www.pendry.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//h2[text()="Hotels & Resorts"]/following-sibling::ul[1]/li/a')
+    for d in div:
+
+        page_url = "".join(d.xpath(".//@href"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        ad = (
+            " ".join(
+                tree.xpath(
+                    '//span[@class="page-footer__address page-footer__address--small"]/a[contains(@href, "maps")]/text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        if ad == "<MISSING>":
+            continue
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        location_name = "Pendry " + city
+        text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//span[@class="page-footer__address page-footer__address--small"]/a[contains(@href, "tel")][1]/text()'
+                )
+            )
+            or "<MISSING>"
         )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=ad,
         )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
-
-def fetch_data():
-    # Your scraper here
-    items = []
-
-    start_url = "https://www.pendry.com/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
-
-    all_locations = dom.xpath(
-        '//h2[contains(text(), "Hotels & Resorts")]/following-sibling::ul[1]//a/@href'
-    )
-    for store_url in all_locations:
-        with SgFirefox() as driver:
-            driver.get(store_url)
-            loc_dom = etree.HTML(driver.page_source)
-        poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')
-        if poi:
-            poi = json.loads(poi[0])
-
-            location_name = poi["name"]
-            location_name = location_name if location_name else "<MISSING>"
-            street_address = poi["address"]["streetAddress"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
-            state = poi["address"]["addressRegion"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["address"]["addressCountry"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = "<MISSING>"
-            phone = poi["telephone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["@type"]
-            latitude = poi["geo"]["latitude"]
-            longitude = poi["geo"]["longitude"]
-        else:
-            location_name = loc_dom.xpath('//meta[@property="og:site_name"]/@content')
-            location_name = location_name[0] if location_name else "<MISSING>"
-            raw_address = loc_dom.xpath(
-                '//span[@class="page-footer__address page-footer__address--small"]/a/text()'
-            )
-            if not raw_address:
-                continue
-            addr = parse_address_intl(" ".join(raw_address))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += addr.street_address_2
-            street_address = street_address if street_address else "<MISSING>"
-            city = addr.city
-            city = city if city else "<MISSING>"
-            state = addr.state
-            state = state if state else "<MISSING>"
-            zip_code = addr.postcode
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
-            phone = loc_dom.xpath(
-                '//span[@class="page-footer__address page-footer__address--small"]/text()'
-            )
-            phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
-            location_type = "<MISSING>"
-            geo = (
-                loc_dom.xpath(
-                    '//span[@class="page-footer__address page-footer__address--small"]/a/@href'
-                )[0]
-                .split("/@")[-1]
-                .split(",")[:2]
-            )
-            latitude = geo[0]
-            longitude = geo[1]
-
-        hours_of_operation = "<MISSING>"
-
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

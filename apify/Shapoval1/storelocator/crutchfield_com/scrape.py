@@ -62,10 +62,16 @@ def fetch_data(sgw: SgWriter):
         )
 
         hours_of_operation = (
-            " ".join(d.xpath(".//following-sibling::table//tr/td/text()"))
+            " ".join(
+                d.xpath(
+                    './/following-sibling::h5[contains(text(), "Hours")][1]/following-sibling::table[1]//tr/td//text()'
+                )
+            )
             .replace("\n", "")
             .strip()
+            or "<MISSING>"
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -82,6 +88,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)

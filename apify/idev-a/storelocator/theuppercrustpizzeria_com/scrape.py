@@ -3,7 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("theuppercrustpizzeria")
 
@@ -18,42 +19,31 @@ base_url = "https://www.theuppercrustpizzeria.com/locations/"
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.location-box")
+        links = soup.select("div.location")
         logger.info(f"{len(links)} found")
         for link in links:
-            page_url = locator_domain + link.a["href"]
-            logger.info(page_url)
-            addr = link.select_one("p.location-desc").text.strip().split(",")
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = []
-            if sp1.find_all("h3", string=re.compile(r"Hours")):
-                _hr = sp1.find_all("h3", string=re.compile(r"Hours"))[-1]
-                if _hr:
-                    hours = [
-                        hh.strip()
-                        for hh in _hr.next_siblings
-                        if not hh.name and hh.strip()
-                    ]
-
+            page_url = base_url + "#" + link["id"]
+            block = list(link.p.stripped_strings)
+            addr = block[0].split(",")
             phone = ""
-            if sp1.find("a", href=re.compile(r"tel:")):
-                phone = sp1.find("a", href=re.compile(r"tel:")).text
+            if len(block) > 1:
+                phone = block[1].split("at")[-1]
             yield SgRecord(
                 page_url=page_url,
-                location_name=link.h2.text.strip(),
-                street_address=addr[0],
+                location_name=link.strong.text.strip(),
+                street_address=addr[0].replace("We are on", "").strip(),
                 city=addr[1].strip(),
                 state=addr[2].strip().split(" ")[0].strip(),
                 zip_postal=addr[2].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                raw_address=block[0].replace("We are on", "").strip(),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
