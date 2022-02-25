@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import SearchableCountries, Grain_4
+from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search_maker = DynamicSearchMaker(
-            use_state=False, search_type="DynamicGeoSearch", granularity=Grain_4()
+            use_state=False, search_type="DynamicGeoSearch", granularity=Grain_8()
         )
         search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
