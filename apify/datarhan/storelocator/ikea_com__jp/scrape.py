@@ -9,7 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://www.ikea.com/jp/en/stores/"
     domain = "ikea.com/jp"
     hdr = {
@@ -22,6 +22,8 @@ def fetch_data():
         '//pub-hide-empty-link//a[contains(@href, "/stores/")]/@href'
     )[1:]
     for page_url in all_locations:
+        if "public-safety-information" in page_url:
+            continue
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
