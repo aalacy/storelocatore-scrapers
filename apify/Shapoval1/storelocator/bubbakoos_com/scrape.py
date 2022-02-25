@@ -61,8 +61,9 @@ def fetch_data(sgw: SgWriter):
                 driver.implicitly_wait(10)
                 driver.maximize_window()
                 driver.switch_to.frame(0)
+
                 try:
-                    WebDriverWait(driver, 10).until(
+                    WebDriverWait(driver, 2).until(
                         EC.presence_of_element_located(
                             (By.XPATH, '//div[@class="address"]')
                         )
@@ -79,7 +80,6 @@ def fetch_data(sgw: SgWriter):
                     ll = "<MISSING>"
                 ll = "".join(ll)
                 ad = "".join(ad)
-
                 driver.switch_to.default_content()
                 a = usaddress.tag(ad, tag_mapping=tag)[0]
                 street_address = (
@@ -118,6 +118,10 @@ def fetch_data(sgw: SgWriter):
                     state = "".join(ad).split(",")[1]
                     street_address = "".join(adr)
                     postal = "".join(adrp)
+                if str(city).find("(") != -1:
+                    city = str(city).split("(")[0].strip()
+                if page_url == "https://www.bubbakoos.com/location/wlongbranchnj":
+                    hours_of_operation = "Open 7 Days: 11 AM – 9 PM"
 
                 row = SgRecord(
                     locator_domain=locator_domain,

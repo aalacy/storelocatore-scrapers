@@ -33,6 +33,12 @@ def fetch_data():
                 closes = hours["openIntervals"][0]["end"]
                 hoo.append(f"{day} {opens} - {closes}")
         hoo = " ".join(hoo)
+        if poi.get("yextDisplayCoordinate"):
+            latitude = poi["yextDisplayCoordinate"]["latitude"]
+            longitude = poi["yextDisplayCoordinate"]["longitude"]
+        else:
+            latitude = poi["geocodedCoordinate"]["latitude"]
+            longitude = poi["geocodedCoordinate"]["longitude"]
 
         item = SgRecord(
             locator_domain=domain,
@@ -46,8 +52,8 @@ def fetch_data():
             store_number=poi["id"],
             phone=poi["mainPhone"],
             location_type=", ".join(poi["services"]),
-            latitude=poi.get("geocodedCoordinate", {}).get("latitude"),
-            longitude=poi.get("geocodedCoordinate", {}).get("longitude"),
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 

@@ -92,6 +92,11 @@ def fetch_data():
         raw_address = raw_address.replace("&#186;", "o")
         raw_address = raw_address.replace("&#250;", "u")
         raw_address = raw_address.replace("&#252;", "u")
+        raw_address = raw_address.replace("&#233;", "e")
+        raw_address = raw_address.replace("&#193;", "A")
+        raw_address = raw_address.replace("&#201;", "E")
+        raw_address = raw_address.replace("&#209;", "N")
+        raw_address = raw_address.replace("&#211;", "O")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
