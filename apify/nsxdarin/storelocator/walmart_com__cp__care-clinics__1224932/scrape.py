@@ -287,7 +287,9 @@ def scrape():
         hours_of_operation=sp.MappingField(
             mapping=["operationalHours"], raw_value_transform=human_hours
         ),
-        location_type=sp.MappingField(mapping=["rawadd"],),
+        location_type=sp.MappingField(
+            mapping=["rawadd"],
+        ),
         raw_address=sp.MissingField(),
     )
 
