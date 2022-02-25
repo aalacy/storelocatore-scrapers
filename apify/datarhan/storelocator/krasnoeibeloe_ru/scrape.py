@@ -6,14 +6,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
     start_url = "https://krasnoeibeloe.ru/address/"
     domain = "krasnoeibeloe.ru"
 
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         sleep(10)
         try:
