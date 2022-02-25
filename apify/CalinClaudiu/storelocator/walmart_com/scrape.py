@@ -225,6 +225,7 @@ def scrape():
         ),
         location_name=sp.MappingField(
             mapping=["storeType", "name"],
+            value_transform = add_walmart
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
