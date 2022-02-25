@@ -83,6 +83,22 @@ def get_street_address(sta):
     return street_add
 
 
+def parse_street_address_round2(raw_add):
+    pai = parse_address_intl(raw_add)
+    sta1 = pai.street_address_1
+    sta2 = pai.street_address_2
+    sta = ""
+    if sta1 is not None and sta2 is None:
+        sta = sta1
+    elif sta1 is None and sta2 is not None:
+        sta = sta2
+    elif sta1 is not None and sta2 is not None:
+        sta = sta1 + ", " + sta2
+    else:
+        sta = "<MISSING>"
+    return sta
+
+
 def fetch_data():
     # NOTE: The geo location is important factor while accessing store Locator URL
 
@@ -249,7 +265,8 @@ def fetch_data():
 
                 if street_address and street_address.strip().startswith(","):
                     street_address = street_address[1:]
-
+                # Parsed street_address
+                street_address = parse_street_address_round2(raw_address)
                 item = SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,

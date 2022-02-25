@@ -55,27 +55,6 @@ def pull_content(url):
     return soup
 
 
-def get_hoo(hours_content):
-    days = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-    ]
-    hoo = ""
-    try:
-        hours = re.sub(r"\d{1}\|", "", hours_content).split(",")
-        for i in range(len(days)):
-            hoo += days[i] + ": " + hours[i] + ", "
-        hours_of_operation = hoo.strip().rstrip(",")
-    except:
-        hours_of_operation = MISSING
-    return hours_of_operation.strip()
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     store_type = [
@@ -94,7 +73,7 @@ def fetch_data():
     ]
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.AUSTRALIA],
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=20,
         max_search_results=5,
     )
     for zipcode in search:
@@ -124,21 +103,40 @@ def fetch_data():
                 store.find("h3", {"class": "st-loc-title"}).find("em").decompose()
                 store.find("h3", {"class": "st-loc-title"}).find("div").decompose()
                 location_name = store.find("h3", {"class": "st-loc-title"}).text.strip()
-                street_address = re.sub(
-                    r"-?\s?\(.*\)",
-                    "",
-                    store.find("span", {"class": "street_name"}).text.strip(),
+                raw_address = (
+                    store.find("div", {"class": "location-list-store-address"})
+                    .get_text(strip=True, separator=",")
+                    .replace(",Australia", "")
                 )
-                city = store.find("span", {"class": "suburb"}).text.strip()
-                state = single_state["statecode"]
-                zip_postal = store.find("span", {"class": "postcode"}).text.strip()
+                street_address, city, state, zip_postal = getAddress(raw_address)
+                if city == MISSING:
+                    city = store.find("span", {"class": "suburb"}).text.strip()
+                if state == MISSING:
+                    state = single_state["statecode"]
+                if zip_postal == MISSING:
+                    zip_postal = store.find("span", {"class": "postcode"}).text.strip()
+                street_address = (
+                    re.sub(
+                        city + r"|" + state + "|" + zip_postal,
+                        "",
+                        street_address,
+                        flags=re.IGNORECASE,
+                    )
+                    .strip()
+                    .rstrip(",")
+                )
                 country_code = "AU"
                 phone = store.find("span", {"class": "store-phone"}).text.strip()
-                hours_of_operation = (
-                    content.find("div", {"class": "store-hours-container"})
-                    .find("div", {"class": "hours-col"})
-                    .get_text(strip=True, separator=",")
-                )
+                hours_of_operation = re.sub(
+                    r"\s?,?Public.*|\(.*\)|,\d{2}\/\d{2}.*|,\d{1}nd.*",
+                    "",
+                    " ".join(
+                        content.find("div", {"class": "store-hours-container"})
+                        .get_text(strip=True, separator=",")
+                        .split()
+                    ).strip(),
+                    flags=re.IGNORECASE,
+                ).strip()
                 location_type = type["name"]
                 store_number = store["data-id"]
                 latitude, longitude = (
