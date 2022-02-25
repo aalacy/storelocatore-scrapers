@@ -34,6 +34,10 @@ def fetch_data():
             if "China" in addr[-1]:
                 del addr[-1]
             state = _["data-store-statecode"]
+            city = _["data-store-city"]
+            zip_postal = _["data-store-postalcode"]
+
+            raw_address = f"{street_address}, {city}, {state}"
             _ss = addr[-1].lower()
             if (
                 "province" in _ss
@@ -62,9 +66,9 @@ def fetch_data():
                 or "hebei" in _ss
                 or "beijng" in _ss
             ):
-                del addr[-1]
                 if not state:
                     state = addr[-1]
+                del addr[-1]
 
             _cc = addr[-1].lower().replace(" ", "").replace("'", "").replace("’", "")
             c_t = _["data-store-city"].replace("'", "").replace("’", "").lower()
@@ -73,6 +77,18 @@ def fetch_data():
 
             if not addr and len(street_address.split(",")) == 1:
                 addr = street_address.split(",")
+
+            if addr and ("Room" in addr[0] or "Area" in addr[0]):
+                del addr[0]
+
+            street_address = ", ".join(addr)
+            _street = street_address.split()
+            for x, aa in enumerate(_street):
+                if "district" in aa.lower():
+                    street_address = " ".join(_street[: x - 1])
+
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
 
             hours = []
             temp = {}
@@ -93,16 +109,17 @@ def fetch_data():
                 page_url=base_url,
                 store_number=_["data-store-id"].replace("store", ""),
                 location_name=_["data-store-name"],
-                street_address=", ".join(addr),
-                city=_["data-store-city"],
+                street_address=street_address,
+                city=city,
                 state=state,
-                zip_postal=_["data-store-postalcode"],
+                zip_postal=zip_postal,
                 country_code="China",
                 latitude=coord["latitude"],
                 longitude=coord["longitude"],
                 location_type="toysrus",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 

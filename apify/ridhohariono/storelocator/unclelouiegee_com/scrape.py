@@ -66,15 +66,25 @@ def fetch_data():
             coming_soon = re.search(r"Coming Soon", location_name, flags=re.IGNORECASE)
             if not coming_soon:
                 info = row.find("div", {"class": "listing-details"})
-                raw_address = (
+                raw_address = re.sub(
+                    r"\(.*\)",
+                    "",
                     info.find("span", text="Business Location")
                     .find_next("div", {"class": "value"})
                     .get_text(strip=True, separator=" ")
                     .replace("-", " ")
-                    .strip()
+                    .replace(":", ",")
+                    .replace("/", ",")
+                    .strip(),
                 )
                 street_address, city, state, zip_postal = getAddress(raw_address)
-                street_address = re.sub(r".*Island", "", street_address).strip()
+                if "Tampa" in raw_address:
+                    city = "Tampa"
+                if "Queens" in raw_address:
+                    city = "Queens"
+                street_address = re.sub(
+                    r".*Island|^\D+:|" + city + r"|" + state, "", street_address
+                ).strip()
                 country_code = "US"
                 try:
                     phone = re.sub(

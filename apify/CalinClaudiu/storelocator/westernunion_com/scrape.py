@@ -42,11 +42,7 @@ headers[
 ] = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Mobile Safari/537.36"
 
 search = DynamicGeoSearch(
-    country_codes=[
-        SearchableCountries.CANADA,
-        SearchableCountries.BRITAIN,
-        SearchableCountries.USA,
-    ],
+    country_codes=SearchableCountries.ALL,
     expected_search_radius_miles=80,
 )
 
