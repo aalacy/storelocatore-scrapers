@@ -73,7 +73,7 @@ def fetch_data(city_list):
                 except:
                     logger.warning("div.resultAddress")
                     continue
-                
+
                 if hourly == 1:
                     location_type = "daily"
                 else:
