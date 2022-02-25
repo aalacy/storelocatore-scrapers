@@ -30,8 +30,9 @@ def fetch_data():
             SearchableCountries.BRITAIN,
             SearchableCountries.HONG_KONG,
             SearchableCountries.IRELAND,
+            SearchableCountries.AUSTRALIA,
         ],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=50,
         max_search_results=10,
     )
     for lat, long in search:
