@@ -4,6 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 DOMAIN = "strandbags.com.au"
 LOCATION_URL = "https://www.strandbags.com.au/pages/store-locator"
@@ -24,7 +25,9 @@ def fetch_data():
     data = session.get(API_URL, headers=HEADERS).json()
     for row in data:
         location_name = row["name"]
-        street_address = row["address_line_2"]
+        street_address = re.sub(
+            r".*Centre,", "", row["address_line_2"], flags=re.IGNORECASE
+        )
         city = row["city"]
         state = row["state"]
         zip_postal = row["postal_code"]
