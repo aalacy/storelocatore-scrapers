@@ -67,7 +67,10 @@ def fetch_data():
                 zip_postal = MISSING
             if "Shop 120A" in street_address:
                 city = "Admiralty"
-            location_type = row["storeType"]
+            try:
+                location_type = row["storeType"]
+            except:
+                location_type = MISSING
             if "storeHours" in row and "TEMPORARILY CLOSED" in row["storeHours"]:
                 location_type = "TEMPORARILY CLOSED"
             store_number = row["ID"]
