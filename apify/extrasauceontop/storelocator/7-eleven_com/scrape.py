@@ -39,13 +39,18 @@ def get_data():
     for search_lat, search_lon in search:
         url = f"https://api.7-eleven.com/v4/stores?lat={search_lat}&lon={search_lon}&radius=10000&curr_lat={search_lat}&curr_lon={search_lon}&limit=500&features="
 
-        try:
-            data = session.get(url, headers=headers).json()
-
-        except Exception:
-            log.info(url)
-            log.info(session.get(url, headers=headers).text)
-            raise Exception
+        x = 0
+        while True:
+            x = x + 1
+            if x == 10:
+                log.info(url)
+                log.info(session.get(url, headers=headers).text)
+                raise Exception
+            try:
+                data = session.get(url, headers=headers).json()
+                break
+            except Exception:
+                continue
 
         locations = data["results"]
 
