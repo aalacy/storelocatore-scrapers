@@ -145,7 +145,7 @@ def fetch_data():
         yield item
     maxZ = search.items_remaining()
     total = 0
-    for item in other_source(session):
+    for item in fetch_other(session, state):
         yield item
     for code in search:
         if search.items_remaining() > maxZ:
@@ -224,7 +224,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name"],
+            mapping=["storeType", "name"], value_transform=add_walmart
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
@@ -267,6 +267,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=5,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()

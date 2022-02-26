@@ -53,6 +53,17 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//h2[contains(text(), "Hours")]/following-sibling::ul/li[1]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
         if phone == "<MISSING>" and page_url != "https://www.novahealth.com/locations/":
             phone = (
                 "".join(
