@@ -54,7 +54,7 @@ def fetch_data():
                 city = city[0] if city else ""
                 state = dom.xpath('//select[@name="region"]/option/text()')[0]
                 hoo = poi_html.xpath('.//div[@class="shop_l_time"]/div/text()')
-                hoo = ' '.join([e.strip() for e in hoo])
+                hoo = " ".join([e.strip() for e in hoo])
 
                 item = SgRecord(
                     locator_domain=domain,
