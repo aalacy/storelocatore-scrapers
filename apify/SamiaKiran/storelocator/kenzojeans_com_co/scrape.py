@@ -43,7 +43,7 @@ def fetch_data():
             country_code = loc["country"]
             latitude = loc["lat"]
             longitude = loc["lng"]
-            hours_of_operation = (
+            hours_of_operation = strip_accents(
                 BeautifulSoup(loc["hours"], "html.parser")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
