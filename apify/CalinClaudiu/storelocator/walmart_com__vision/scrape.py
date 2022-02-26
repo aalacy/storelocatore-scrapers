@@ -169,7 +169,6 @@ def human_hours(k):
     except Exception:
         return str(k)
 
-
 def gen_hours(rec):
     try:
         newrec = rec
