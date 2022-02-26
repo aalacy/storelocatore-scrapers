@@ -129,12 +129,6 @@ def fetch_other(session, state):
         yield grab_json(b4(res.text, "lxml"))
 
 
-def vision(x):
-    if any(i in x for i in ["ISION", "ision"]):
-        return "VISION"
-    return ""
-
-
 def test_other(session):
     res = SgRequests.raise_on_err(
         session.get("https://www.walmart.com/store/2784-beatrice-ne", headers=headers)
@@ -190,7 +184,23 @@ def gen_hours(rec):
                     newrec["horas"].append(str(i["name"] + " - " + str(e) + "<ERROR>"))
                 except Exception:
                     pass
-        newrec["horas"] = "\n".join(newrec["horas"])
+        try:
+            for i in rec["secondaryServices"]:
+                try:
+                    newrec["horas"].append(
+                        str(i["name"] + " - " + str(human_hours(i["operationalHours"])))
+                    )
+                except Exception as e:
+                    try:
+                        newrec["horas"].append(
+                            str(i["name"] + " - " + str(e) + "<ERROR>")
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if len(newrec["horas"]) > 0:
+            newrec["horas"] = "\n".join(newrec["horas"])
         return newrec
     except Exception as mf:
         newrec["horas"] = str(mf)
@@ -245,18 +255,21 @@ def fetch_data():
         try:
             r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
         except Exception:
-            r2 = api_get(url, headers, 15, 0, 15).json()
-        if r2["payload"]["nbrOfStores"]:
-            if int(r2["payload"]["nbrOfStores"]) > 0:
-                for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"]:
-                        if store["geoPoint"]["latitude"]:
-                            if store["geoPoint"]["longitude"]:
-                                search.found_location_at(
-                                    store["geoPoint"]["latitude"],
-                                    store["geoPoint"]["longitude"],
-                                )
-                    yield gen_hours(transform_types(store))
+            try:
+                r2 = api_get(url, headers, 0, 15).json()
+                if r2["payload"]["nbrOfStores"]:
+                    if int(r2["payload"]["nbrOfStores"]) > 0:
+                        for store in r2["payload"]["storesData"]["stores"]:
+                            if store["geoPoint"]:
+                                if store["geoPoint"]["latitude"]:
+                                    if store["geoPoint"]["longitude"]:
+                                        search.found_location_at(
+                                            store["geoPoint"]["latitude"],
+                                            store["geoPoint"]["longitude"],
+                                        )
+                            yield gen_hours(transform_types(store))
+            except Exception as e:
+                logger.error(f"{str(e)}\n{url}")
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
@@ -264,6 +277,12 @@ def fetch_data():
 
 def add_walmart(x):
     return x if "Walmart" in x else "Walmart " + x
+
+
+def vision(x):
+    if any(i in x for i in ["ISION", "ision"]):
+        return "VISION"
+    return ""
 
 
 def scrape():
