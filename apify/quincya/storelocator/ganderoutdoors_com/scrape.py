@@ -30,6 +30,8 @@ def fetch_data(sgw: SgWriter):
             base = BeautifulSoup(req.text, "lxml")
 
             location_name = base.h1.text.strip()
+            if "gander" not in location_name.lower():
+                continue
 
             raw_address = list(base.find(class_="col address").p.stripped_strings)
             street_address = raw_address[0].strip()
