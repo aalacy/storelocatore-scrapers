@@ -34,13 +34,19 @@ def fetch_data(search):
                 page_url = "https://locations.coffeetime.com" + _["llp_url"]
                 if _["open_or_closed"] == "coming soon":
                     continue
+                temp = {}
                 hours = []
                 for hh in _["store_info"]["hours"].split(";"):
                     if not hh:
                         continue
                     time1 = hh.split(",")[1][:2] + ":" + hh.split(",")[1][2:]
                     time2 = hh.split(",")[2][:2] + ":" + hh.split(",")[2][2:]
-                    hours.append(f"{days[int(hh.split(',')[0])]}: {time1}-{time2}")
+                    temp[days[int(hh.split(",")[0])]] = f"{time1}-{time2}"
+                for day in days:
+                    if temp.get(day):
+                        hours.append(f"{day}: {temp[day]}")
+                    else:
+                        hours.append(f"{day}: closed")
 
                 if not hours:
                     hours = ["Mon-Sun: Closed"]
