@@ -36,12 +36,19 @@ def fetch_data():
             zc = ""
             store = loc.split("StoreID=")[1]
             phone = ""
+            hours = ""
             lat = "<MISSING>"
             lng = "<MISSING>"
-            hours = ""
             r2 = session.get(loc, headers=headers)
             lines = r2.iter_lines()
             for line2 in lines:
+                if (
+                    'href="https://www.google.com/maps/place/' in line2
+                    and lat == "<MISSING>"
+                    and "/@" in line2
+                ):
+                    lat = line2.split("/@")[1].split(",")[0]
+                    lng = line2.split("/@")[1].split(",")[1]
                 if '"address":{"' in line2:
                     name = line2.split('","name":"')[1].split('"')[0]
                     add = line2.split('"streetAddress":"')[1].split('"')[0]
