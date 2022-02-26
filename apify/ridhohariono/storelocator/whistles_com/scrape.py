@@ -72,7 +72,7 @@ def fetch_data():
             except:
                 location_type = MISSING
             if "storeHours" in row and "TEMPORARILY CLOSED" in row["storeHours"]:
-                location_type = "TEMPORARILY CLOSED"
+                location_name = location_name + " - TEMPORARILY CLOSED"
             store_number = row["ID"]
             latitude = row["latitude"]
             longitude = row["longitude"]
