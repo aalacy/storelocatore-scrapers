@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
             session = SgRequests()
             time.sleep(5)
             req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+            soup = BeautifulSoup(req.text, "lxml")
             loc_json = json.loads(
                 soup.find("script", {"type": "application/ld+json"}).contents[0]
             )
