@@ -26,12 +26,13 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[
-            SearchableCountries.USA,
             SearchableCountries.BRITAIN,
+            SearchableCountries.USA,
             SearchableCountries.HONG_KONG,
             SearchableCountries.IRELAND,
+            SearchableCountries.AUSTRALIA,
         ],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=15,
         max_search_results=10,
     )
     for lat, long in search:
@@ -66,9 +67,12 @@ def fetch_data():
                 zip_postal = MISSING
             if "Shop 120A" in street_address:
                 city = "Admiralty"
-            location_type = row["storeType"]
+            try:
+                location_type = row["storeType"]
+            except:
+                location_type = MISSING
             if "storeHours" in row and "TEMPORARILY CLOSED" in row["storeHours"]:
-                location_type = "TEMPORARILY CLOSED"
+                location_name = location_name + " - TEMPORARILY CLOSED"
             store_number = row["ID"]
             latitude = row["latitude"]
             longitude = row["longitude"]
