@@ -39,13 +39,24 @@ def fetch_data(sgw: SgWriter):
                 soup.find("script", {"type": "application/ld+json"}).contents[0]
             )
         except:
-            session = SgRequests()
-            time.sleep(5)
-            req = session.get(link, headers=headers)
-            soup = BeautifulSoup(req.text, "lxml")
-            loc_json = json.loads(
-                soup.find("script", {"type": "application/ld+json"}).contents[0]
-            )
+            try:
+                session = SgRequests()
+                time.sleep(5)
+                req = session.get(link, headers=headers)
+                time.sleep(4)
+                soup = BeautifulSoup(req.text, "lxml")
+                loc_json = json.loads(
+                    soup.find("script", {"type": "application/ld+json"}).contents[0]
+                )
+            except:
+                session = SgRequests()
+                time.sleep(10)
+                req = session.get(link, headers=headers)
+                time.sleep(10)
+                soup = BeautifulSoup(req.text, "lxml")
+                loc_json = json.loads(
+                    soup.find("script", {"type": "application/ld+json"}).contents[0]
+                )
 
         try:
             addy = loc_json["address"]
@@ -75,7 +86,16 @@ def fetch_data(sgw: SgWriter):
         location_name = soup.find("h1", {"class": "StoreDetails-header"}).text
 
         phone_number = soup.find("span", {"class": "PhoneNumber-phone"}).text
-        hours = " ".join(loc_json["openingHours"])
+        hours = (
+            " ".join(loc_json["openingHours"])
+            .replace("Su-Sa", "Sun - Sat:")
+            .replace("Su-Fr", "Sun - Fri:")
+            .replace("-00:00", " - Midnight")
+            .replace("Su ", "Sun ")
+            .replace("Mo-Fr", "Mon - Fri")
+            .replace("Sa ", "Sat ")
+            .replace("  ", " ")
+        )
         country_code = "US"
 
         location_type = "<MISSING>"
