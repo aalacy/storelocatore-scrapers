@@ -32,7 +32,8 @@ def fetch_data():
             SearchableCountries.IRELAND,
             SearchableCountries.AUSTRALIA,
         ],
-        expected_search_radius_miles=15,
+        max_search_distance_miles=50,
+        expected_search_radius_miles=10,
         max_search_results=10,
     )
     for lat, long in search:
@@ -52,6 +53,8 @@ def fetch_data():
             state = MISSING
             city = row["city"]
             zip_postal = row["postalCode"]
+            if "Admiralty" in zip_postal:
+                zip_postal = MISSING
             try:
                 phone = re.subr(r"^00", "", row["phone"]).strip()
             except:
