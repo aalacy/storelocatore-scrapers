@@ -59,19 +59,36 @@ def fetch_data():
             latitude = coords[0]
             longitude = coords[1]
             country_code = "BR"
-            raw_address = strip_accents(
-                temp["1"]
-                + " "
-                + temp["2"].strip()
-                + " "
-                + temp["3"].strip()
-                + " "
-                + temp["4"].strip()
-                + " "
-                + temp["6"]
-                + " "
-                + temp["5"]
-            )
+            try:
+                raw_address = strip_accents(
+                    temp["1"]
+                    + " "
+                    + temp["2"].strip()
+                    + " "
+                    + temp["3"].strip()
+                    + " "
+                    + temp["4"].strip()
+                    + " "
+                    + temp["6"]
+                    + " "
+                    + temp["5"]
+                    + " "
+                    + temp["7"]
+                )
+            except:
+                raw_address = strip_accents(
+                    temp["1"]
+                    + " "
+                    + temp["2"].strip()
+                    + " "
+                    + temp["3"].strip()
+                    + " "
+                    + temp["4"].strip()
+                    + " "
+                    + temp["6"]
+                    + " "
+                    + temp["5"]
+                )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url="https://www.supermuffato.com.br/lojas-fisicas/enderecos",
