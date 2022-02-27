@@ -32,10 +32,7 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             location_name = j.get("name")
             store_number = j.get("shop_number")
-            slug = j.get("city_slug")
-            page_url = (
-                f"https://www.biedronka.pl/pl/shop,id,{store_number},title,{slug}"
-            )
+            page_url = f"https://www.biedronka.pl/pl/shop,id,{store_number}"
             street = j.get("street") or ""
             number = j.get("street_number") or ""
             street_address = f"{street} {number}".strip()
