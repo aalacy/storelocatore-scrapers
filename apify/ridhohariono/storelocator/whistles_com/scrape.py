@@ -50,10 +50,16 @@ def fetch_data():
             except:
                 pass
             street_address = street_address.split(" at ")[0].strip()
-            state = MISSING
+            if search.current_country().upper() in ["US", "AU", "IRELAND"]:
+                try:
+                    state = row["stateCode"]
+                except:
+                    state = MISSING
+            else:
+                state = MISSING
             city = row["city"]
             zip_postal = row["postalCode"]
-            if "Admiralty" in zip_postal:
+            if zip_postal and "Admiralty" in zip_postal:
                 zip_postal = MISSING
             try:
                 phone = re.subr(r"^00", "", row["phone"]).strip()
