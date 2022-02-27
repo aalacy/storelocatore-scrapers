@@ -62,17 +62,6 @@ def fetch_data(sgw: SgWriter):
         city = ad.split(",")[1].strip()
         latitude = "".join(i).split("lat")[1].split(",")[0].strip()
         longitude = "".join(i).split("lng")[1].split(",")[0].strip()
-        session = SgRequests()
-        r = session.get(
-            "https://communitysurgical.com/pages/servicing-locations", headers=headers
-        )
-        tree = html.fromstring(r.text)
-        phone = (
-            "".join(tree.xpath('//h1[contains(text(),"Phone")]/text()'))
-            .split("Phone:")[1]
-            .split("Fax")[0]
-            .strip()
-        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -84,7 +73,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=postal,
             country_code=country_code,
             store_number=SgRecord.MISSING,
-            phone=phone,
+            phone=SgRecord.MISSING,
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,

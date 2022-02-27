@@ -32,7 +32,7 @@ def fetch_stores():
     while True:
         response = request_with_retries(f"{store_url}{page}")
         body = html.fromstring(response.text, "lxml")
-        urls = body.xpath('//a[contains(text(), "View store")]/@href')
+        urls = body.xpath('//a[contains(text(), "View Store")]/@href')
         if len(urls) == 0:
             break
         for url in urls:

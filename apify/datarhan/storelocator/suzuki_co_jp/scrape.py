@@ -50,14 +50,14 @@ def fetch_data():
                 loc_dom = etree.HTML(loc_response.text)
                 location_type = ", ".join(
                     loc_dom.xpath(
-                        '//tr[@id="service"]//span[@class="el_txtIcon"]/text()'
+                        '//*[@id="service"]//span[@class="el_txtIcon"]/text()'
                     )
                 )
                 if "新車取扱い" not in location_type:
                     continue
                 raw_address = poi["pincode"]
                 addr = parse_address_intl(raw_address)
-                hoo = " ".join(poi["sales_hours"].split())
+                hoo = " ".join(poi["sales_hours"].split()).split("(")[0]
 
                 item = SgRecord(
                     locator_domain=domain,
