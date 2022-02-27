@@ -60,6 +60,7 @@ def fetch_data():
             city = row["city"]
             zip_postal = row["postalCode"]
             if zip_postal and "Admiralty" in zip_postal:
+                city = "Admiralty"
                 zip_postal = MISSING
             try:
                 phone = re.subr(r"^00", "", row["phone"]).strip()
