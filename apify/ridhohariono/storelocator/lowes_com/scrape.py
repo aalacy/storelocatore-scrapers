@@ -48,14 +48,16 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def pull_content(url):
+def pull_content(url, session=session, num=0):
+    num += 1
     log.info("Pull content => " + url)
-    HEADERS["Referer"] = url
     try:
         soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     except:
-        log.info("[RETRY] Pull content => " + url)
-        pull_content(url)
+        if num <= 3:
+            session = SgRequests(verify_ssl=False)
+            log.info("[RETRY] Pull content => " + url)
+            pull_content(url, session, num)
     return soup
 
 
