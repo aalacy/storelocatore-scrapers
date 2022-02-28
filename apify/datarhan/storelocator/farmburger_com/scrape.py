@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -24,12 +25,20 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath("//h1/text()")[0]
-        raw_address = loc_dom.xpath('//meta[@name="geo.placename"]/@content')[0].split(
-            ", "
-        )
+        raw_address = loc_dom.xpath('//meta[@name="geo.placename"]/@content')
+        raw_address = raw_address[0].split(", ") if raw_address else ""
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//h5[contains(text(), "Find Us")]/following-sibling::p[1]/text()'
+            )
+            raw_address = raw_address[:1] + raw_address[1].split(", ")
         hoo = loc_dom.xpath(
             '//h5[contains(text(), "Hours")]/following-sibling::p/text()'
         )[0]
+        if "NOW OPEN" in hoo:
+            hoo = loc_dom.xpath(
+                '//h5[contains(text(), "Hours")]/following-sibling::p/text()'
+            )[1]
         phone = loc_dom.xpath(
             '//h5[contains(text(), "Take out")]/following-sibling::p[1]/text()'
         )
@@ -38,7 +47,14 @@ def fetch_data():
                 '//h5[contains(text(), "Catering")]/following-sibling::p[1]/text()'
             )
         phone = phone[0] if phone else ""
-        geo = loc_dom.xpath('//meta[@name="geo.position"]/@content')[0].split(";")
+        geo = loc_dom.xpath('//meta[@name="geo.position"]/@content')
+        if geo:
+            geo = geo[0].split(";")
+            latitude = geo[0]
+            longitude = geo[1]
+        else:
+            latitude = re.findall(r"lat: parseFloat\('(.+?)'\),", loc_response.text)[0]
+            longitude = re.findall(r"lng: parseFloat\('(.+?)'\)", loc_response.text)[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -48,12 +64,12 @@ def fetch_data():
             city=raw_address[1],
             state=raw_address[2].split()[0],
             zip_postal=raw_address[2].split()[-1],
-            country_code=raw_address[-1],
+            country_code="US",
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo[0],
-            longitude=geo[1],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 

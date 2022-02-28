@@ -1,8 +1,12 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import Grain_1_KM
 from sglogging import SgLogSetup
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from typing import Iterable, Tuple, Callable
 
 logger = SgLogSetup().get_logger("ditchwitch")
 
@@ -10,96 +14,123 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-locator_domain = "https://www.ditchwitch.com"
+locator_domain = "http://ditchwitch.com/"
 base_url = "https://www.ditchwitch.com/find-a-dealer"
-
-search = static_zipcode_list(
-    country_code=SearchableCountries.USA,
-    radius=3,
-)
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
-def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    total = 0
-    for zip in search:
-        logger.info(("Pulling zip Code %s..." % zip))
-        url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxAddress={zip}"
-        res = session.get(url, headers=headers, timeout=15)
-        if res.status_code != 200:
-            continue
-        locations = res.json()
-        if "dealers" in locations:
-            total += len(locations["dealers"])
-            for loc in locations["dealers"]:
-                try:
-                    mon = "Mon " + loc["mon_open"] + "-" + loc["mon_close"]
-                    tue = "; Tue " + loc["tue_open"] + "-" + loc["tue_close"]
-                    wed = "; Wed " + loc["wed_open"] + "-" + loc["wed_close"]
-                    thu = "; Thu " + loc["thur_open"] + "-" + loc["thur_close"]
-                    fri = "; Fri " + loc["fri_open"] + "-" + loc["fri_close"]
-                    sat = "; Sat " + loc["sat_open"] + "-" + loc["sat_close"]
-                    sun = "; Sun " + loc["sun_open"] + "-" + loc["sun_close"]
-                    hours_of_operation = mon + tue + wed + thu + fri + sat + sun
-                except:
-                    hours_of_operation = "<MISSING>"
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        total = 0
+        lat = coord[0]
+        lng = coord[1]
+        with SgRequests(verify_ssl=False, proxy_country="us") as http:
+            current_country = current_country.upper()
+            logger.info(f"[{current_country}] {lat, lng}")
+            if current_country == "US":
+                url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxAddress={zipcode}&lat={lat}&lng={lng}"
+            else:
+                url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxCountryCode={current_country}&ajaxCountryQuery={zipcode}&ajaxCountryLocal=false&lat={lat}&lng={lng}"
+            res = http.get(url, headers=headers)
+            if res.status_code != 200:
+                return
+            try:
+                locations = res.json()
+            except:
+                return
+            if "dealers" in locations:
+                total += len(locations["dealers"])
+                for loc in locations["dealers"]:
+                    hours = []
+                    for day in days:
+                        day = day.lower()
+                        if loc.get(f"{day}_open"):
+                            open = loc[f"{day}_open"]
+                            close = loc[f"{day}_open"]
+                            if open:
+                                times = f"{open} - {close}"
+                            else:
+                                times = "Not Listed"
+                            hours.append(f"{day}: {times}")
 
-                loc["hours_of_operation"] = hours_of_operation
-                loc["state"] = loc["state"] or "<MISSING>"
-                loc["street_address"] = loc["address1"] + " " + loc.get("address2", "")
-                yield loc
+                    street_address = loc["address1"]
+                    if loc["address2"]:
+                        street_address += " " + loc["address2"]
+                    city = loc["city"]
+                    if "Las Pinas City" in city:
+                        city = "Las Pinas City"
+                    if "MUNRO" in city:
+                        city = "MUNRO"
+                    if "ANDERBOLT" in city:
+                        city = "ANDERBOLT"
+                    yield SgRecord(
+                        page_url=base_url,
+                        store_number=loc["clientkey"],
+                        location_name=loc["name"],
+                        locator_domain=locator_domain,
+                        street_address=street_address,
+                        city=city,
+                        state=loc["state"],
+                        zip_postal=loc["postalcode"],
+                        country_code=loc["country"],
+                        phone=loc["phone"],
+                        hours_of_operation="; ".join(hours),
+                    )
 
-            logger.info(f"found: {len(locations['dealers'])} | total: {total}")
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.ConstantField(base_url),
-        location_name=sp.MappingField(
-            mapping=["name"],
-        ),
-        store_number=sp.MappingField(
-            mapping=["clientkey"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street_address"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["postalcode"],
-        ),
-        country_code=sp.ConstantField("US"),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
-        location_type=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+                logger.info(
+                    f"found: [{current_country}] {len(locations['dealers'])} | total: {total}"
+                )
 
 
 if __name__ == "__main__":
-    scrape()
+    countries = [
+        "co",
+        "cz",
+        "ar",
+        "au",
+        "at",
+        "bg",
+        "ca",
+        "es",
+        "lb",
+        "lt",
+        "mx",
+        "my",
+        "nl",
+        "nz",
+        "ph",
+        "pl",
+        "ru",
+        "sa",
+        "se",
+        "sg",
+        "th",
+        "tr",
+        "ua",
+        "us",
+        "za",
+    ]
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicZipAndGeoSearch", granularity=Grain_1_KM()
+    )
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
+        )
+    ) as writer:
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=countries,
+        )
+
+        for rec in par_search.run():
+            writer.write_row(rec)
