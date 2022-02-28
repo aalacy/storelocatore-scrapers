@@ -243,8 +243,8 @@ def transform_types(rec):
 
 def please_write(what):
     with open("das.txt", mode="w", encoding="utf-8") as file:
-        file.write(str(json.dumps(test)))
-        logger.info(test)
+        file.write(str(json.dumps(what)))
+        logger.info(what)
 
 
 def fetch_data():
@@ -252,7 +252,7 @@ def fetch_data():
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
     test = gen_hours(transform_types(test_other(session)))
-
+    please_write(test)
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
         yield gen_hours(transform_types(item))
