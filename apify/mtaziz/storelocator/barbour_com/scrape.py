@@ -317,7 +317,7 @@ def fetch_data():
                         location_type=location_type,
                         latitude=latitude,
                         longitude=longitude,
-                        hours_of_operation="",
+                        hours_of_operation=hours_of_operation,
                         raw_address=raw_address,
                     )
 
