@@ -32,7 +32,8 @@ def fetch_data():
             SearchableCountries.IRELAND,
             SearchableCountries.AUSTRALIA,
         ],
-        expected_search_radius_miles=15,
+        max_search_distance_miles=50,
+        expected_search_radius_miles=10,
         max_search_results=10,
     )
     for lat, long in search:
@@ -49,9 +50,18 @@ def fetch_data():
             except:
                 pass
             street_address = street_address.split(" at ")[0].strip()
-            state = MISSING
+            if search.current_country().upper() in ["US", "AU", "IRELAND"]:
+                try:
+                    state = row["stateCode"]
+                except:
+                    state = MISSING
+            else:
+                state = MISSING
             city = row["city"]
             zip_postal = row["postalCode"]
+            if zip_postal and "Admiralty" in zip_postal:
+                city = "Admiralty"
+                zip_postal = MISSING
             try:
                 phone = re.subr(r"^00", "", row["phone"]).strip()
             except:
@@ -72,7 +82,7 @@ def fetch_data():
             except:
                 location_type = MISSING
             if "storeHours" in row and "TEMPORARILY CLOSED" in row["storeHours"]:
-                location_type = "TEMPORARILY CLOSED"
+                location_name = location_name + " - TEMPORARILY CLOSED"
             store_number = row["ID"]
             latitude = row["latitude"]
             longitude = row["longitude"]
