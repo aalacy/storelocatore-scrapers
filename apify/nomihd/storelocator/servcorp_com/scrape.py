@@ -39,21 +39,26 @@ def fetch_data():
         country_code = "".join(
             country.xpath('div[@class="property-tile"]/header/text()')
         ).strip()
-        if "Australia" in country_code or "Japan" in country_code:
-            continue
-
         search_url = "".join(
             country.xpath('div[@class="property-tile"]/a/@href')
         ).strip()
+        if "Australia" in country_code:
+            search_url = "https://www.servcorp.com.au/en/locations/"
+
+        if "Japan" in country_code:
+            search_url = "https://www.servcorp.co.jp/en/office-finder/"
+
         log.info(search_url)
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath(
             '//div[@class="location-listing-desktop"]/article[./div[@class="property-tile"]/header]'
         )
+        if len(stores) <= 0:
+            stores = stores_sel.xpath('//article[@class="col-sm-6 col-md-4"]')
         for store in stores:
             page_url = (
-                "https://www.servcorp.com"
+                search_url.split("/en")[0].strip()
                 + "".join(
                     store.xpath('div[@class="property-tile"]/header/a/@href')
                 ).strip()
