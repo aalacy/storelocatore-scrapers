@@ -43,7 +43,7 @@ def fetch_data():
                 thursday = f'Thursday: {poi["Day5"]}'
                 friday = f'Friday: {poi["Day6"]}'
                 saturday = f'Saturday: {poi["Day7"]}'
-                hoo = f"{monday}, {tuesday}, {wednesday}, {thursday}, {friday}, {saturday}, {sunday}"
+                hoo = f"{monday} {tuesday} {wednesday} {thursday} {friday} {saturday} {sunday}"
 
                 item = SgRecord(
                     locator_domain=domain,

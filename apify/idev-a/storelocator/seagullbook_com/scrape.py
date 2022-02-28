@@ -44,9 +44,6 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         divs = soup.select("div#STORES div")
-        import pdb
-
-        pdb.set_trace()
         for div in divs:
             location_name = raw_address = phone = hours = ""
             coord = []

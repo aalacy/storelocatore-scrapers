@@ -93,10 +93,10 @@ def fetch_data():
             zip_postal = city = state = ""
             _addr = raw_address.split(",")
             if "dublin" not in _addr[-2].lower():
-                zip_postal = _addr[-2]
+                zip_postal = _addr[-2].strip()
             else:
-                state = _addr[-2]
-            city = _addr[-3]
+                state = _addr[-2].strip()
+            city = _addr[-3].strip()
             street_address = " ".join(_addr[:-3])
 
         latitude = store["latitude"]
@@ -105,19 +105,31 @@ def fetch_data():
             latitude = ""
             longitude = ""
 
-        if city.strip() == "Street":
-            street_address = raw_address.split(",")[0]
-            city = raw_address.split(",")[1]
-        if city.strip() == "Floors":
-            street_address += " Floors"
+        if city:
+            if city == "Street":
+                street_address = raw_address.split(",")[0]
+                city = raw_address.split(",")[1]
+            if city == "Floors":
+                street_address += " Floors"
+
+        if store["country"] == "AU" and not city:
+            city = raw_address.split(",")[-4].strip()
+            if (
+                "Waters" in city
+                or "Mount" in city
+                or "Centre" in city
+                or "South" in city
+            ):
+                city = ""
+
         yield SgRecord(
             page_url=store["storeURL"],
             store_number=store["locId"],
             location_name=store["storeName"],
             street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
             latitude=latitude,
             longitude=longitude,
             country_code=country_code,

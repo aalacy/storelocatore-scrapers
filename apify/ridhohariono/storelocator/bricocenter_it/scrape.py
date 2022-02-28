@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import html
 
 
 DOMAIN = "bricocenter.it"
@@ -65,18 +66,23 @@ def fetch_data():
     for row in data["pdv"]:
         page_url = BASE_URL + row["url"]
         store = pull_content(page_url)
-        location_name = row["city"]
-        city = row["city"]
-        state = row["prov"]
+        location_name = html.unescape(row["city"])
+        city = location_name
+        state = html.unescape(row["prov"])
         zip_postal = row["cap"]
-        street_address = " ".join(
-            re.sub(r",?\s?" + city + r"|,?\s?" + state + r"|\(.*\)", "", row["address"])
-            .replace("&quot;", " ")
-            .strip()
-            .split()
-        )
+        street_address = html.unescape(
+            " ".join(
+                re.sub(
+                    r",?\s?" + city + r"|,?\s?" + state + r"|\(.*\)", "", row["address"]
+                )
+                .strip()
+                .split()
+            )
+        ).replace('"', "'")
         country_code = "IT"
-        phone = row["tel"].split("/")[0].split("<br>")[0].strip()
+        phone = re.sub(
+            r"[a-zA-Z].*|\/ \d{4} \d{7}|----.*", "", row["tel"].split("<br>")[0]
+        ).strip()
         store_number = row["id"]
         hours_of_operation = get_hoo(store)
         location_type = MISSING
