@@ -39,6 +39,14 @@ def fetch_data():
             if count != 5:
                 continue
             store = pull_content(page_url)
+            try:
+                hours_today = store.find(
+                    "div", {"class": "Hero-hoursToday"}
+                ).text.strip()
+                if "Coming Soon" in hours_today:
+                    continue
+            except:
+                pass
             location_name = store.find("h1", id="location-name").text.strip()
             street_address = store.find("meta", {"itemprop": "streetAddress"})[
                 "content"

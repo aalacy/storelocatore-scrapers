@@ -32,6 +32,8 @@ def fetch_data(sgw: SgWriter):
             state = j.get("region") or "<MISSING>"
             postal = j.get("postcode") or "<MISSING>"
             country_code = j.get("country") or "<MISSING>"
+            if state == "CA":
+                country_code = "US"
             city = j.get("city") or "<MISSING>"
             store_number = j.get("stockist_id") or "<MISSING>"
             page_url = (

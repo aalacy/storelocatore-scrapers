@@ -56,6 +56,8 @@ def fetch_data(sgw: SgWriter):
             city = city.split("(")[0].strip()
         if location_name.find(",") != -1 and street_address != "<MISSING>":
             state = location_name.split(",")[-1].strip()
+        if location_name.find("Madison") != -1:
+            city = "Madison"
         map_link = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
