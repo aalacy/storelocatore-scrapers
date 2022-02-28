@@ -109,7 +109,11 @@ if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_TYPE}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
             )
         )
     ) as writer:
