@@ -1,9 +1,6 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 import re
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from sgselenium import SgSelenium
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -24,7 +21,6 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "favorite.com"
-BASE_URL = "https://stores.favorite.com/"
 LOCATION_URL = "https://favorite.co.uk/store-finder?delivery=0&lat={}&lng={}"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -142,6 +138,23 @@ CITIES = [
     "Blackheath",
     "Battersea",
     "Hammersmith",
+    "Watlingstreet",
+    "Grays",
+    "Sidcup",
+    "Coulsdon",
+    "Wickford",
+    "Epsom",
+    "Upminster",
+    "Surrey",
+    "West Drayton",
+    "Great Linford",
+    "Bletchley",
+    "Cheshunt",
+    "Netherfield",
+    "Enfield",
+    "Hemel Hempstead",
+    "Watford",
+    "RAYNES PARK",
 ]
 
 
@@ -155,7 +168,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -171,79 +183,42 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
-
-
-def parse_hours(table):
-    data = table.find("tbody")
-    days = data.find_all("td", {"class": "c-hours-details-row-day"})
-    hours = data.find_all("td", {"class": "c-hours-details-row-intervals"})
-    hoo = []
-    for i in range(len(days)):
-        hours_formated = "{}: {}".format(days[i].text, hours[i].text)
-        hoo.append(hours_formated)
-    return ", ".join(hoo)
-
-
-def get_latlong(url):
-    latlong = re.search(r"lat=(-?[\d]*\.[\d]*)\&lng=(-[\d]*\.[\d]*)", url)
-    if not latlong:
-        return "<MISSING>", "<MISSING>"
-    return latlong.group(1), latlong.group(2)
-
-
-def wait_load(driver):
-    try:
-        WebDriverWait(driver, 5).until(
-            lambda driver: driver.execute_script("return jQuery.active == 0")
-        )
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located(
-                (By.XPATH, '//*[@id="ajx-storefinder"]/script')
-            )
-        )
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located(
-                (By.XPATH, '//*[@id="ajx-storefinder"]/div/div[1]/div[2]')
-            )
-        )
-    except:
-        driver.refresh()
-    return driver
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     driver = SgSelenium().chrome()
-    driver.get(
-        "https://favorite.co.uk/store-finder?postcode=london&delivery=0&lat=51.5073509&lng=-0.1277583"
-    )
+    driver.get("https://favorite.co.uk/")
+    driver.implicitly_wait(10)
     for city_list in CITIES:
-        driver = wait_load(driver)
-        driver.find_element_by_xpath('//*[@id="findstore-postcode"]').clear()
-        driver.find_element_by_xpath('//*[@id="findstore-postcode"]').send_keys(
-            city_list
-        )
-        driver.find_element_by_xpath('//*[@id="findstore-submit"]').click()
-        time.sleep(0.5)
-        driver = wait_load(driver)
-        script_element = driver.find_element_by_xpath(
-            '//*[@id="ajx-storefinder"]/script'
-        ).get_attribute("innerHTML")
+        driver.find_element_by_xpath(
+            '//*[@id="header"]/div[2]/div/div[2]/form/input'
+        ).clear()
+        driver.find_element_by_xpath(
+            '//*[@id="header"]/div[2]/div/div[2]/form/input'
+        ).send_keys(city_list)
+        driver.find_element_by_xpath(
+            '//*[@id="header"]/div[2]/div/div[2]/form/button'
+        ).click()
+        time.sleep(2)
+        driver.implicitly_wait(10)
+        staleElement = True
+        while staleElement:
+            try:
+                script_element = driver.find_element_by_xpath(
+                    '//*[@id="ajx-storefinder"]/script'
+                ).get_attribute("innerHTML")
+                soup = bs(driver.page_source, "lxml")
+                staleElement = False
+            except:
+                staleElement = True
         latlong = re.findall(
             r".*\?daddr=(\-?[0-9]+\.[0-9]+,\-?[0-9]+\.[0-9]+)", script_element
         )
-        soup = bs(driver.page_source, "lxml")
         main = soup.find("div", {"id": "ajx-storefinder"}).find_all(
             "div", {"class": "row row-store mb0"}
         )
         if not main:
             log.info(f"({city_list}) Element Not Found! trying to refresh...")
-            driver = wait_load(driver)
-            soup = bs(driver.page_source, "lxml")
+            driver.implicitly_wait(10)
             main = soup.find_all("div", {"class": "row row-store mb0"})
         index = 0
         for row in main:
@@ -265,7 +240,7 @@ def fetch_data():
                 city = "Crawley"
             country_code = "UK"
             store_number = "<MISSING>"
-            phone = soup.find(
+            phone = row.find(
                 "a", {"class": "store-no", "href": re.compile(r"tel\:\/\/.*")}
             )
             if not phone:
@@ -292,8 +267,12 @@ def fetch_data():
                 .replace("Delivery, ", "")
                 .strip()
             )
-            latitude = latlong[index].split(",")[0]
-            longitude = latlong[index].split(",")[1]
+            try:
+                latitude = latlong[index].split(",")[0]
+                longitude = latlong[index].split(",")[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             log.info(
                 f"Found Location ({city_list}) {location_name} => {raw_address} ({latitude}, {longitude})"
             )
@@ -325,9 +304,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )

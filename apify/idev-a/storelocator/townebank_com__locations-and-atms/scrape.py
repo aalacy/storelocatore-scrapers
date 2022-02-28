@@ -1,54 +1,66 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
+import dirtyjson as json
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://www.townebank.com"
+base_url = "https://www.townebank.com/locationapi/getLocations"
 
 
-def _d(_, location_type="branch"):
-    hours = []
-    if _["LobbyHours"]:
-        temp = [hh.strip() for hh in _["LobbyHours"].strip().split("\n") if hh.strip()]
-        for x in range(0, len(temp), 2):
-            hours.append(f"{temp[x]}: {temp[x+1]}")
-    page_url = locator_domain + _["Url"]
-    return SgRecord(
-        page_url=page_url,
-        location_name=_["LocationTitle"],
-        street_address=_["Address"],
-        city=_["City"],
-        state=_["StateCode"],
-        zip_postal=_["Zip"],
-        latitude=_["Latitude"],
-        longitude=_["Longitude"],
-        country_code="US",
-        location_type=location_type,
-        phone=_.get("Telephone"),
-        locator_domain=locator_domain,
-        hours_of_operation="; ".join(hours),
-    )
-
-
-def fetch_data():
-    atm_url = "https://www.townebank.com/api/search/searchlocations?latitude=0&longitude=0&locationType=ATMs"
-    base_url = "https://www.townebank.com/api/search/searchlocations?latitude=0&longitude=0&locationType=Office+Locations"
+def fetch_data(writer):
     with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()
-        for _ in locations["Locations"]:
-            yield _d(_)
-
-        session = SgRequests()
-        locations = session.get(atm_url, headers=_headers).json()
-        for _ in locations["Locations"]:
-            yield _d(_, "atm")
+        data = "atms=true"
+        locations = json.loads(
+            session.post(base_url, headers=_headers, data=data)
+            .text.strip()[1:-1]
+            .replace('\\\\"', "'")
+            .replace('\\"', '"')
+        )
+        for _ in locations:
+            location_type = ""
+            if "not available" in _["notes"]:
+                location_type = "branch"
+            elif "location only includes an ATM" in _["notes"]:
+                location_type = "atm"
+            else:
+                location_type = "branch, atm"
+            page_url = locator_domain + _["url"]
+            if _["notes"] and "coming soon" in _["notes"].lower():
+                continue
+            street_address = _["addressOne"]
+            if _["addressTwo"]:
+                street_address += " " + _["addressTwo"]
+            hours = []
+            if _["lobbyHours"]:
+                hours = bs(_["lobbyHours"], "lxml").stripped_strings
+            rec = SgRecord(
+                page_url=page_url,
+                store_number=_["nodeId"],
+                location_name=_["name"],
+                street_address=street_address,
+                city=_["city"],
+                state=_["stateDisplayName"],
+                zip_postal=_["zipCode"],
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                country_code="US",
+                phone=_["phoneNumber"],
+                location_type=location_type,
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours)
+                .replace("\\r", "")
+                .replace("\\n", ""),
+            )
+            writer.write_row(rec)
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
