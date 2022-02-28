@@ -31,7 +31,7 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.AUSTRALIA],
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=50,
         max_search_results=30,
     )
     for lat, long in search:
