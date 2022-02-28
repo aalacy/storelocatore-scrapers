@@ -13,7 +13,8 @@ def fetch_data():
     start_url = "https://www.vea.com.ar/api/dataentities/NT/search?_fields=name,grouping,image_maps,geocoordinates,SellerName,id,country,city,neighborhood,number,postalCode,state,street,schedule,services,paymentMethods,opening,hasPickup,hasDelivery,address,url_image,phone,%20&_where=isActive=true&_sort=name%20ASC"
     domain = "vea.com.ar"
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+        "REST-Range": "resources=0-999",
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
@@ -24,7 +25,7 @@ def fetch_data():
             page_url="https://www.vea.com.ar/sucursales",
             location_name=poi["name"],
             street_address=poi["address"].split(" - ")[0],
-            city=poi["address"].split(" - ")[-2],
+            city=poi["grouping"],
             state=poi["state"],
             zip_postal=poi["postalCode"],
             country_code=poi["country"],
