@@ -8,7 +8,7 @@ from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 def fetch_data(lat, lng, sgw: SgWriter):
     lat, lng = str(lat).replace(".", "_"), str(lng).replace(".", "_")
-    url = f"https://www.goodlifefitness.com/content/goodlife/en/clubs/jcr:content/root/responsivegrid/responsivegrid_1015243366/findaclub.ClubByMapBounds.{lat}.{lng}...20211014.json"
+    url = f"https://www.goodlifefitness.com/content/goodlife/en/clubs/jcr:content/root/responsivegrid/responsivegrid_1015243366/findaclub.ClubByMapBounds.{lat}.{lng}.undef.undef.2022127.json"
     r = session.get(url)
     js = r.json()["map"]["response"]
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
+            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=10
         )
         for la, ln in search:
             fetch_data(la, ln, writer)

@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "tous.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "brand.tous.com",
     "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
@@ -25,27 +27,50 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    country_list = ["US", "CA"]
 
-    for country in country_list:
-        api_res = session.get(
-            f"https://brand.tous.com/us-en/stores/listByCountry.html?idBusinessCountry={country}",
-            headers=headers,
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        countries_req = session.get(
+            "https://www.tous.com/us-en/stores", headers=headers
         )
-        json_res = json.loads(api_res.text)
+        countries = (
+            countries_req.text.split("countries:[{")[-1]
+            .strip()
+            .split(",center:")[0]
+            .strip()
+            .split('isoCode:"')[1:]
+        )
+        country_list = ["US}"] + countries
+        for country in country_list:
+            country_code = country.split("}")[0].strip().replace('"', "").strip()
+            log.info(f"pulling stores of {country_code}")
+            api_res = session.get(
+                f"https://brand.tous.com/us-en/stores/listByCountry.html?idBusinessCountry={country_code}",
+                headers=headers,
+            )
+            if isinstance(api_res, SgRequestError):
+                continue
+            json_res = json.loads(api_res.text)
 
-        stores_list = json_res["shops"]
-        for store in stores_list:
-            if store["idShopType"] == "1":
+            stores_list = json_res["shops"]
+            for store in stores_list:
+                location_type = "<MISSING>"
+
+                if store["idShopType"] == "1":
+                    location_type = "TOUS Store"
+                elif store["idShopType"] == "2":
+                    location_type = "Point of sale"
+
                 page_url = "https://www.tous.com/us-en/stores/view/" + store["id"]
                 locator_domain = website
                 location_name = store["name"].strip()
                 street_address = store["address"].strip()
                 city = store["city"].strip()
-                if country == "CA":
+                zip = "<MISSING>"
+                state = "<MISSING>"
+                if country_code == "CA":
                     state = "<MISSING>"
                     zip = store["postalcode"].strip()
-                if country == "US":
+                if country_code == "US":
                     zip = store["postalcode"]
                     if zip and len(zip.strip().split(" ")) == 2:
                         zip = store["postalcode"].strip().split(" ")[1].strip()
@@ -53,8 +78,6 @@ def fetch_data():
                     else:
                         zip = store["postalcode"].strip()
                         state = "<MISSING>"
-
-                country_code = country
 
                 street_address = street_address.replace("Merrick Park,", "").strip()
                 if (
@@ -70,10 +93,29 @@ def fetch_data():
                     city = "Richmond"
                     state = "BC"
 
-                store_number = store["id"]
-                phone = store["phone"].strip()
+                raw_address = street_address
+                if len(city) > 0 and city != "<MISSING>":
+                    raw_address = raw_address + ", " + city
+                if len(state) > 0 and state != "<MISSING>":
+                    raw_address = raw_address + ", " + state
+                if len(zip) > 0 and zip != "<MISSING>":
+                    raw_address = raw_address + ", " + zip
 
-                location_type = "<MISSING>"
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if street_address:
+                    if formatted_addr.street_address_2:
+                        street_address = (
+                            street_address + ", " + formatted_addr.street_address_2
+                        )
+                else:
+                    if formatted_addr.street_address_2:
+                        street_address = formatted_addr.street_address_2
+
+                store_number = store["id"]
+                phone = store["phone"]
+                if phone:
+                    phone = phone.strip()
 
                 hours_of_operation = store["schedule"]
 
@@ -95,13 +137,16 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
