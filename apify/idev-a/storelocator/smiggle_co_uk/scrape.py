@@ -111,6 +111,17 @@ def fetch_data():
                 city = raw_address.split(",")[1]
             if city == "Floors":
                 street_address += " Floors"
+
+        if store["country"] == "AU" and not city:
+            city = raw_address.split(",")[-4].strip()
+            if (
+                "Waters" in city
+                or "Mount" in city
+                or "Centre" in city
+                or "South" in city
+            ):
+                city = ""
+
         yield SgRecord(
             page_url=store["storeURL"],
             store_number=store["locId"],
