@@ -14,6 +14,7 @@ SITE_MAP = "https://www.lowes.com/sitemap/store0.xml"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+    "upgrade-insecure-requests": "1",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
