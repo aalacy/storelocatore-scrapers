@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -46,9 +46,8 @@ def fetch_data():
                 state = address["addressRegion"]
                 zip_postal = address["postalCode"]
                 country_code = address["addressCountry"]
-                latitude = str(temp["geo"]["latitude"])
-                longitude = str(temp["geo"]["longitude"])
-
+                latitude = temp["latitude"]
+                longitude = temp["longitude"]
             except:
                 location_name = (
                     "Lok'nStore " + soup.find("span", {"class": "store__name"}).text
@@ -76,6 +75,8 @@ def fetch_data():
                 location_type = "Temporarily Closed"
             else:
                 location_type = MISSING
+            if "Open hours : Closed" in hours_of_operation:
+                continue
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -95,18 +96,15 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
