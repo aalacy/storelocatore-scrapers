@@ -62,6 +62,8 @@ def fetch_data(sgw: SgWriter):
                 page_url = f"https://goforward.com{slug}"
                 location_type = c.get("contentType")
                 store_number = c.get("clinicId")
+        if page_url == "<MISSING>":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
