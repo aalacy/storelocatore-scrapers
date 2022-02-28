@@ -1,51 +1,17 @@
-import csv
 import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://www.workoutanytime.com/"
-    api_url = "https://www.workoutanytime.com/locations"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
-
-    session = SgRequests()
-    r = session.get(api_url, headers=headers)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.workoutanytime.com/locations"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
+
     text = (
         "".join(tree.xpath("//script[contains(text(), 'storeDataAry')]/text()"))
         .split(" = ")[1]
@@ -54,68 +20,64 @@ def fetch_data():
     js = json.loads(text)
 
     for j in js:
-        locator_domain = url
+        adr = j.get("address") or ""
         adr = (
-            j.get("address")
-            .replace("\n", "")
+            adr.replace("\n", "")
             .replace("\r", "")
             .replace("<br/>", "<br />")
             .split("<br />")
         )
-        if len(adr) == 2:
-            street_address = adr[0]
-        else:
-            street_address = " ".join(adr[:2])
+        adr = list(filter(None, [a.strip() for a in adr]))
+
+        street_address = ", ".join(adr[:-1])
         adr = adr[-1]
         city = adr.split(",")[0]
         adr = adr.split(",")[1].strip()
         state = adr.split()[0]
         postal = adr.split()[-1]
-        country_code = "US"
-        store_number = j.get("club_id") or "<MISSING>"
+        store_number = j.get("club_id")
         page_url = f'https://workoutanytime.com/{j.get("slug")}/'
         location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
 
         _tmp = []
-        hours = j.get("hours", "").split("<br />") or []
-        for h in hours:
+        hours = j.get("hours") or ""
+        for h in hours.split("<br />"):
             if (h.find(":") != -1 or h.find("-") != -1) and h.find("hours") == -1:
                 _tmp.append(h.strip())
 
-        hours_of_operation = ";".join(_tmp).replace("<br/>", ";") or "<MISSING>"
+        hours_of_operation = ";".join(_tmp).replace("<br/>", ";")
 
         if j.get("status") == "coming_soon" or j.get("status") == "presales":
             hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.workoutanytime.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

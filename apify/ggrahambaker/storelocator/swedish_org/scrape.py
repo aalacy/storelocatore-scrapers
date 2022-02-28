@@ -9,6 +9,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="swedish.org")
 
 session = SgRequests()
 
@@ -125,15 +128,23 @@ def fetch_data(sgw: SgWriter):
 
         if ".providence.org" in page_url:
             page_url = page_url.replace("https://www.swedish.org", "")
-
+        log.info("Pull content => " + page_url)
         r = session.get(page_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
 
         if ".providence.org" in page_url:
-            phoneNumber = soup.find(class_="loc-phone").text.strip()
-            hours_of_operation = " ".join(
-                list(soup.find(class_="hours-text").stripped_strings)
-            )
+            try:
+                phone = soup.find(class_="loc-phone")
+            except:
+                phone = soup.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+            try:
+                hours_of_operation = " ".join(
+                    list(soup.find(class_="clinic_hours").stripped_strings)
+                )
+            except:
+                hours_of_operation = (
+                    "Mon - Fri: 8 a.m. - 8 p.m.,Sat - Sun: 8 a.m. - 4 p.m."
+                )
         else:
             phone = soup.find(class_="mobile-only-phone")
             phoneNumber = clean_phone(phone)

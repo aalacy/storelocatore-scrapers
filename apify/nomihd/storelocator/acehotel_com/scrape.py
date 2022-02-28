@@ -40,9 +40,12 @@ def fetch_data():
             page_url = "".join(store.xpath(".//@href")).strip()
             if page_url[-1] != "/":
                 page_url = page_url + "/"
+
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
-
+            if "Coming soon:" in store_res.text:
+                log.info("ignored")
+                continue
             locator_domain = website
 
             store_info = list(
@@ -56,7 +59,18 @@ def fetch_data():
                     ],
                 )
             )
-
+            if len(store_info) <= 0:
+                store_info = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in contact_sel.xpath(
+                                f'//div[contains(@class,"text-single-content")]//span[strong[contains(text(),"{location_name}")]]/..//text()'
+                            )
+                        ],
+                    )
+                )
             raw_address = " ".join(store_info[1:]).split("Tel")[0].strip()
 
             formatted_addr = parser.parse_address_intl(raw_address)
@@ -81,6 +95,10 @@ def fetch_data():
             phone = contact_sel.xpath(
                 f'//div[contains(@class,"text-single-content")]//span[b[contains(text(),"{location_name}")]]/..//a[contains(@href,"tel:")]//text()'
             )
+            if len(phone) <= 0:
+                phone = contact_sel.xpath(
+                    f'//div[contains(@class,"text-single-content")]//span[stong[contains(text(),"{location_name}")]]/..//a[contains(@href,"tel:")]//text()'
+                )
             phone = "".join(phone[:1])
 
             location_type = "<MISSING>"
@@ -95,6 +113,8 @@ def fetch_data():
                 store_res.text.split('"longitude":')[1]
                 .split("},")[0]
                 .strip('" ')
+                .strip()
+                .replace('"', "")
                 .strip(),
             )
 
