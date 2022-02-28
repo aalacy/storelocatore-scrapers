@@ -180,6 +180,12 @@ def gen_hours(rec):
     try:
         newrec = rec
         newrec["horas"] = []
+        try:
+            newrec["horas"].append(
+                str("General" + " - " + str(human_hours(rec["operationalHours"])))
+            )
+        except Exception:
+            raise
         for i in rec["primaryServices"]:
             try:
                 newrec["horas"].append(
@@ -190,7 +196,25 @@ def gen_hours(rec):
                     newrec["horas"].append(str(i["name"] + " - " + str(e) + "<ERROR>"))
                 except Exception:
                     pass
-        newrec["horas"] = "\n".join(newrec["horas"])
+        try:
+            for i in rec["secondaryServices"]:
+                try:
+                    newrec["horas"].append(
+                        str(i["name"] + " - " + str(human_hours(i["operationalHours"])))
+                    )
+                except Exception as e:
+                    try:
+                        newrec["horas"].append(
+                            str(i["name"] + " - " + str(e) + "<ERROR>")
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if len(newrec["horas"]) > 0:
+            newrec["horas"] = "\n".join(newrec["horas"])
+        else:
+            raise
         return newrec
     except Exception as mf:
         newrec["horas"] = str(mf)
@@ -217,21 +241,25 @@ def transform_types(rec):
     return newrec
 
 
+def please_write(what):
+    with open("das.txt", mode="w", encoding="utf-8") as file:
+        file.write(str(json.dumps(test)))
+        logger.info(test)
+
+
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    with open("das.txt", mode="w", encoding="utf-8") as file:
-        test = gen_hours(transform_types(test_other(session)))
-        file.write(str(json.dumps(test)))
-        logger.info(test)
+    test = gen_hours(transform_types(test_other(session)))
+
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
-        yield transform_types(item)
+        yield gen_hours(transform_types(item))
     maxZ = search.items_remaining()
     total = 0
     for item in fetch_other(session, state):
-        yield transform_types(item)
+        yield gen_hours(transform_types(item))
     for code in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
@@ -256,7 +284,9 @@ def fetch_data():
                                     store["geoPoint"]["latitude"],
                                     store["geoPoint"]["longitude"],
                                 )
-                    yield gen_hours(transform_types(store))
+                    reczz = gen_hours(transform_types(store))
+                    please_write(reczz)
+                    yield reczz
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
@@ -304,9 +334,7 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["id"],
         ),
-        hours_of_operation=sp.MappingField(
-            mapping=["horas"],
-        ),
+        hours_of_operation=sp.MappingField(mapping=["horas"], is_required=False),
         location_type=sp.MappingField(mapping=["rawadd"], value_transform=vision),
         raw_address=sp.MissingField(),
     )
