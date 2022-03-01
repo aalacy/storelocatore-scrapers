@@ -64,7 +64,7 @@ def fetch_data():
                 street_address = street_address + " " + row["address2"]
             except:
                 pass
-            city = row["city"]
+            city = row["city"] or MISSING
             try:
                 addr = getAddress(street_address).strip()
             except:
@@ -82,7 +82,7 @@ def fetch_data():
                     state = MISSING
             else:
                 state = MISSING
-            zip_postal = row["postalCode"]
+            zip_postal = row["postalCode"] or MISSING
             if zip_postal and "Admiralty" in zip_postal:
                 city = "Admiralty"
                 zip_postal = MISSING
