@@ -185,15 +185,17 @@ def fetch_data():
             longitude = getJSparams(response.text, "storelongitude")
             hours_of_operation = bodyDiv.split("Store Hours")[1]
         else:
-            location_name = stringify_nodes(
-                body, "//p[@class='location-details-locationName']"
-            )
+
+            location_name = body.xpath(
+                "//p[@class='location-details-locationName']/text()"
+            )[0]
             latitude = MISSING
             longitude = MISSING
             store_number = MISSING
             bodyDiv = stringify_nodes(
                 body, "//div[contains(@class, 'restaurant-location-map-details')]"
             )
+
             street_address, city, state, zip_postal = get_address(bodyDiv)
             phone = get_phone(bodyDiv).split(" ")[0]
             hours_of_operation = bodyDiv.split(phone)[1].split("Live Music:")[0].strip()
@@ -206,8 +208,10 @@ def fetch_data():
         if raw_address[len(raw_address) - 1] == ",":
             raw_address = raw_address[:-1]
 
-        hours_of_operation = hours_of_operation.replace(raw_address, "").strip()
-        hours_of_operation = get_hoo(hours_of_operation)
+        hours_of_operation = (
+            hours_of_operation.replace(raw_address, "").replace("|", ",").strip()
+        )
+        # off calling get_hoo()
         yield SgRecord(
             locator_domain="tommybahama.com",
             store_number=store_number,
