@@ -61,7 +61,7 @@ def fetch_data():
         add = ""
         state = ""
         zc = ""
-        phone = ""
+        phone = "<MISSING>"
         lat = ""
         lng = ""
         hours = ""
@@ -74,6 +74,8 @@ def fetch_data():
                     .strip()
                     .replace("&#039;", "'")
                 )
+            if '<a href="tel:' in line2:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
             if '"streetAddress":"' in line2:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
