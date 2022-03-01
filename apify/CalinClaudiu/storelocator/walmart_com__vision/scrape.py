@@ -174,6 +174,12 @@ def gen_hours(rec):
     try:
         newrec = rec
         newrec["horas"] = []
+        try:
+            newrec["horas"].append(
+                str("General" + " - " + str(human_hours(rec["operationalHours"])))
+            )
+        except Exception:
+            pass
         for i in rec["primaryServices"]:
             try:
                 newrec["horas"].append(
@@ -201,6 +207,8 @@ def gen_hours(rec):
             pass
         if len(newrec["horas"]) > 0:
             newrec["horas"] = "\n".join(newrec["horas"])
+        else:
+            raise
         return newrec
     except Exception as mf:
         newrec["horas"] = str(mf)
@@ -227,21 +235,25 @@ def transform_types(rec):
     return newrec
 
 
+def please_write(what):
+    with open("das.txt", mode="w", encoding="utf-8") as file:
+        file.write(str(json.dumps(what)))
+        logger.info(what)
+
+
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    with open("das.txt", mode="w", encoding="utf-8") as file:
-        test = gen_hours(transform_types(test_other(session)))
-        file.write(str(json.dumps(test)))
-        logger.info(test)
+    test = gen_hours(transform_types(test_other(session)))
+    please_write(test)
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
-        yield transform_types(item)
+        yield gen_hours(transform_types(item))
     maxZ = search.items_remaining()
     total = 0
     for item in fetch_other(session, state):
-        yield transform_types(item)
+        yield gen_hours(transform_types(item))
     for code in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
@@ -255,21 +267,20 @@ def fetch_data():
         try:
             r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
         except Exception:
-            try:
-                r2 = api_get(url, headers, 0, 15).json()
-                if r2["payload"]["nbrOfStores"]:
-                    if int(r2["payload"]["nbrOfStores"]) > 0:
-                        for store in r2["payload"]["storesData"]["stores"]:
-                            if store["geoPoint"]:
-                                if store["geoPoint"]["latitude"]:
-                                    if store["geoPoint"]["longitude"]:
-                                        search.found_location_at(
-                                            store["geoPoint"]["latitude"],
-                                            store["geoPoint"]["longitude"],
-                                        )
-                            yield gen_hours(transform_types(store))
-            except Exception as e:
-                logger.error(f"{str(e)}\n{url}")
+            r2 = api_get(url, headers, 15, 0, 15).json()
+        if r2["payload"]["nbrOfStores"]:
+            if int(r2["payload"]["nbrOfStores"]) > 0:
+                for store in r2["payload"]["storesData"]["stores"]:
+                    if store["geoPoint"]:
+                        if store["geoPoint"]["latitude"]:
+                            if store["geoPoint"]["longitude"]:
+                                search.found_location_at(
+                                    store["geoPoint"]["latitude"],
+                                    store["geoPoint"]["longitude"],
+                                )
+                    reczz = gen_hours(transform_types(store))
+                    please_write(reczz)
+                    yield reczz
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
@@ -323,9 +334,7 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["id"],
         ),
-        hours_of_operation=sp.MappingField(
-            mapping=["horas"],
-        ),
+        hours_of_operation=sp.MappingField(mapping=["horas"], is_required=False),
         location_type=sp.MappingField(mapping=["rawadd"], value_transform=vision),
         raw_address=sp.MissingField(),
     )
