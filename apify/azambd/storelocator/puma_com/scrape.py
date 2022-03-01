@@ -15,6 +15,10 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import pycountry
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 website = "puma.com"
 MISSING = SgRecord.MISSING
 STORE_JSON_URL = "https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator?coordinates={}%2C{}8&loadMore=50"
@@ -23,7 +27,7 @@ headers = {
 }
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-max_workers = 4
+max_workers = 10
 
 http = SgRequests()
 
@@ -97,11 +101,6 @@ def fetch_single_store(store, retry=0):
         longitude = store["Lng"]
         page_url = f"https://about.puma.com{store['Url']}"
         location_type = "Outlet" if "Outlet" in location_name else "Store"
-
-        if location_type == "Outlet":
-            location_name = "Puma Outlet"
-        else:
-            location_name = "Puma Store"
 
         log.info(f"Scrapping {page_url}...")
         response = http.get(page_url)

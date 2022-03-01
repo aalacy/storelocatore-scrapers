@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -98,7 +98,8 @@ def fetch_data():
     }
     with SgRequests() as session:
         search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, expected_search_radius_miles=20
+            country_codes=SearchableCountries.ALL,
+            granularity=Grain_8(),
         )
         for item in search_all(session, search, hdr):
             yield item

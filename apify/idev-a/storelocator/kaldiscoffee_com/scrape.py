@@ -66,17 +66,29 @@ def fetch_data():
                     ]
                 else:
                     _hr = sp1.find("", string=re.compile(r"Fall(.)hours", re.I))
-                    _hp = _hr.find_parent("p")
-                    if not _hp:
-                        _hp = _hr.find_parent("h6")
-                    if _hp:
-                        for hh in _hp.find_next_siblings("p"):
-                            _hh = hh.text.lower()
-                            if "phone" in _hh:
-                                break
-                            if "aug" in _hh or "beginning" in _hh:
-                                continue
-                            hours.append("; ".join(hh.stripped_strings))
+                    if _hr:
+                        _hp = _hr.find_parent("p")
+                        if not _hp:
+                            _hp = _hr.find_parent("h6")
+                        if _hp:
+                            for hh in _hp.find_next_siblings("p"):
+                                _hh = hh.text.lower()
+                                if "phone" in _hh:
+                                    break
+                                if "aug" in _hh or "beginning" in _hh:
+                                    continue
+                                hours.append("; ".join(hh.stripped_strings))
+                    else:
+                        _hr = sp1.find(
+                            "strong", string=re.compile(r"^REGULAR HOURS:", re.I)
+                        )
+                        if _hr:
+                            _hp = _hr.find_parent("div").find_next_sibling("div")
+                            if _hp:
+                                for hh in list(_hp.stripped_strings):
+                                    if "Phone" in hh:
+                                        break
+                                    hours.append(hh)
 
             try:
                 coord = (

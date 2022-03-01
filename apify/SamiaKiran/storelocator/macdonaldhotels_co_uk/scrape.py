@@ -50,9 +50,9 @@ def fetch_data():
                 .find("p")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("View on map", "")
             )
             phone = soup.find("div", {"class": "infoPanel__tel"}).find("a").text
-            raw_address = raw_address.replace("View on map", "")
             try:
                 hours_of_operation = soup.find("p", string=re.compile("Check")).text
             except:
@@ -73,6 +73,9 @@ def fetch_data():
 
             latitude = MISSING
             longitude = MISSING
+            if zip_postal == MISSING:
+                zip_postal = raw_address.split()
+                zip_postal = zip_postal[-2] + " " + zip_postal[-1]
             country_code = "GB"
             yield SgRecord(
                 locator_domain=DOMAIN,

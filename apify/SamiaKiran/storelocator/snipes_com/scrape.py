@@ -102,21 +102,19 @@ def fetch_data():
                 address = " ".join(x.text for x in address)
                 address = strip_accents(address)
                 raw_address = html.unescape(address)
-                formatted_addr = parse_address_intl(raw_address)
-                street_address = formatted_addr.street_address_1
-                if street_address is None:
-                    street_address = formatted_addr.street_address_2
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
+                pa = parse_address_intl(raw_address)
 
-                city = formatted_addr.city if formatted_addr.city else SgRecord.MISSING
-                state = (
-                    formatted_addr.state if formatted_addr.state else SgRecord.MISSING
-                )
-                zip_postal = formatted_addr.postcode
-                zip_postal = zip_postal.strip() if zip_postal else SgRecord.MISSING
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
                 try:
                     phone = soup.select_one("a[href*=tel]")["href"].replace("tel:", "")
                 except:
@@ -131,6 +129,8 @@ def fetch_data():
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
+                if city is MISSING:
+                    city = raw_address.split()[-1]
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
