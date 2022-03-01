@@ -1,52 +1,24 @@
-import csv
 import json
-from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
 website = "bellacinos_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-        log.info(f"No of records being processed: {len(data)}")
+DOMAIN = "https://bellacinos.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    final_data = []
     daylist = {
         "1": "Monday",
         "2": "Tuesday",
@@ -65,13 +37,13 @@ def fetch_data():
     link_list = soup.findAll("loc")
     for loc in loclist:
         phone = loc["store_info"]["phone"]
-        title = loc["store_info"]["name"]
+        location_name = loc["store_info"]["name"]
         temp = loc["store_info"]["address"]
         temp = temp.replace(" ", "-")
         for link in link_list:
             link = str(link)
             if temp in link:
-                link = (
+                page_url = (
                     link.replace("<loc>", "")
                     .replace("</loc>", "")
                     .replace(
@@ -81,60 +53,72 @@ def fetch_data():
                 )
                 break
         try:
-            street = (
+            street_address = (
                 loc["store_info"]["address"]
                 + " "
                 + loc["store_info"]["address_extended"]
             )
         except:
-            street = loc["store_info"]["address"]
+            street_address = loc["store_info"]["address"]
+        log.info(page_url)
         city = loc["store_info"]["locality"]
         state = loc["store_info"]["region"]
-        pcode = loc["store_info"]["postcode"]
-        ccode = loc["store_info"]["country"]
-        store = loc["store_info"]["corporate_id"]
-        lat = loc["store_info"]["latitude"]
-        longt = loc["store_info"]["longitude"]
+        zip_postal = loc["store_info"]["postcode"]
+        country_code = loc["store_info"]["country"]
+        store_number = loc["store_info"]["corporate_id"]
+        latitude = loc["store_info"]["latitude"]
+        longitude = loc["store_info"]["longitude"]
         hour_list = loc["store_info"]["store_hours"]
-        hour_list = hour_list.split(";")
-        hour_list = hour_list[:-1]
-        if len(hour_list) < 7:
-            if "1," not in hour_list[0]:
-                hour_list.insert(0, "1,Closed,")
-            elif "7," not in hour_list[5]:
-                hour_list.append("7,Closed,")
-        hours = ""
-        for hour in hour_list:
-            hour = hour.split(",")
-            day = daylist[hour[0]]
-            open_time = hour[1]
-            close_time = hour[2]
-            hours = hours + day + " " + open_time + " " + close_time + " "
-        final_data.append(
-            [
-                "https://bellacinos.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+        if not hour_list:
+            hours_of_operation = MISSING
+        else:
+            hour_list = hour_list.split(";")
+            hour_list = hour_list[:-1]
+            if len(hour_list) < 7:
+                if "1," not in hour_list[0]:
+                    hour_list.insert(0, "1,Closed,")
+                elif "7," not in hour_list[5]:
+                    hour_list.append("7,Closed,")
+            hours_of_operation = ""
+            for hour in hour_list:
+                hour = hour.split(",")
+                day = daylist[hour[0]]
+                open_time = hour[1]
+                close_time = hour[2]
+                hours_of_operation = (
+                    hours_of_operation + day + " " + open_time + "-" + close_time + " "
+                )
+        hours_of_operation = hours_of_operation.replace("Closed-", "Closed")
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
         )
-    return final_data
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

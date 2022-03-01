@@ -90,7 +90,12 @@ def fetch_data():
                         )
                         street_address = raw_info[0].replace(",", "").strip()
                         city = " ".join(raw_info[1].strip().split(" ")[:-1]).strip()
-                        state = state_url.split("/")[-2]
+                        state = (
+                            state_url.split("restaurants/")[-1]
+                            .strip()
+                            .split("/")[0]
+                            .strip()
+                        )
                         zip = raw_info[1].strip().split(" ")[-1]
                         country_code = "AU"
 
@@ -131,7 +136,9 @@ def fetch_data():
                     page_url = state_res.url
 
                 if is_url_broken is False:
-                    location_name = "".join(store_sel.xpath("//title//text()")).strip()
+                    location_name = "".join(
+                        store_sel.xpath("//h1[@class='hero-restaurant__title']/text()")
+                    ).strip()
                     location_type = "<MISSING>"
 
                     street_address = " ".join(

@@ -79,14 +79,21 @@ def fetch_data():
                     "saturday",
                     "sunday",
                 ]:
-                    if hours[day].get("openIntervals"):
-                        hour_list.append(
-                            f"{day}: {hours[day]['openIntervals'][0]['start']} - {hours[day]['openIntervals'][0]['end']}"
-                        )
+                    if day in hours:
+                        if hours[day].get("openIntervals"):
+                            hour_list.append(
+                                f"{day}: {hours[day]['openIntervals'][0]['start']} - {hours[day]['openIntervals'][0]['end']}"
+                            )
+                        else:
+                            hour_list.append(f"{day}: Closed")
                     else:
                         hour_list.append(f"{day}: Closed")
 
             hours_of_operation = "; ".join(hour_list)
+
+            if "closed" in location_name.lower():
+                location_type = "Permanently Closed"
+                hours_of_operation = "<MISSING>"
 
             latitude = store["yextDisplayCoordinate"]["latitude"]
             longitude = store["yextDisplayCoordinate"]["longitude"]

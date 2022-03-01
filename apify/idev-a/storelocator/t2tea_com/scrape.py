@@ -10,7 +10,6 @@ from fuzzywuzzy import process
 import httpx
 from typing import Iterable, Tuple, Callable
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from sgzip.dynamic import Grain_2
 from sgpostal.sgpostal import parse_address_intl
 
 timeout = httpx.Timeout(10.0)
@@ -55,6 +54,7 @@ class ExampleSearchIteration(SearchIteration):
             locations = res.json()["stores"]
             logger.info(f"{len(locations)} found")
             for _ in locations:
+                found_location_at(_["latitude"], _["longitude"])
                 street_address = _["address1"]
                 if _.get("address2"):
                     street_address += ", " + _["address2"]
@@ -102,7 +102,6 @@ class ExampleSearchIteration(SearchIteration):
                     if addr.street_address_2:
                         street_address += " " + addr.street_address_2
 
-                found_location_at(_["latitude"], _["longitude"])
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["name"],
@@ -126,9 +125,7 @@ if __name__ == "__main__":
         countries = []
         country_map = {}
         logger.info("... read countries")
-        search_maker = DynamicSearchMaker(
-            search_type="DynamicGeoSearch", granularity=Grain_2()
-        )
+        search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
         for country in bs(http.get(base_url, headers=_headers).text, "lxml").select(
             "ul.location__list-contries li a"
         ):
@@ -144,6 +141,7 @@ if __name__ == "__main__":
             com2 = country["data-locale"]
             country_map[d_cc] = [com1, com2]
         logger.info("... search")
+        countries = ["au", "gb", "nz", "us", "sg"]
         with SgWriter(
             deduper=SgRecordDeduper(
                 RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
@@ -153,7 +151,7 @@ if __name__ == "__main__":
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
-                country_codes=list(set(countries)),
+                country_codes=countries,
             )
 
             for rec in par_search.run():

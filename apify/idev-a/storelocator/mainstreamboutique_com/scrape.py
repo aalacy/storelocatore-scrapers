@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import dirtyjson
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
@@ -54,38 +54,60 @@ def fetch_data():
                 + _.select_one("div.store_website a")["href"].split("/")[-1]
             )
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            _addr = [
-                aa
-                for aa in sp1.select("div.shg-row > div")[0].stripped_strings
-                if aa.strip()
-            ][2].split()
-            _addr = [aa for aa in _addr if aa.strip()]
+            res = session.get(page_url, headers=_headers)
             hours = []
-            if "We are closed" in sp1.select("div.shg-row > div")[1].text:
-                hours = ["Closed"]
-            else:
-                hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[1:]
-                for x in range(0, len(hh), 2):
-                    hours.append(f"{hh[x]} {hh[x+1]}")
-            phone = (
-                sp1.select("div.shg-row > div")[2].p.text.strip().split(":")[-1].strip()
-            )
+            phone = ""
+            if res.status_code == 200:
+                sp1 = bs(res.text, "lxml")
+                _addr = []
+                for aa in sp1.select("div.shg-row div.shg-theme-text-content p"):
+                    if "get direction" in aa.text.lower():
+                        break
+                    if "Free Ship" in aa.text:
+                        break
+                    if not aa.text.strip():
+                        continue
+                    _addr.append(aa.text.strip())
+                if _addr and _addr[0].startswith("Monday"):
+                    _addr = []
+                    for aa in sp1.select("div.shg-row div.shg-theme-text-content div"):
+                        if "get direction" in aa.text.lower():
+                            break
+                        if "Free Ship" in aa.text:
+                            break
+                        if not aa.text.strip():
+                            continue
+                        _addr.append(aa.text.strip())
 
-            if not _p(phone):
-                phone = ""
-            zip_postal = ""
-            if _.select_one("span.postal_zip"):
-                zip_postal = _.select_one("span.postal_zip").text.strip()
-            if not zip_postal:
-                zip_postal = _addr[-1].strip()
-                if not zip_postal.isdigit():
-                    zip_postal = ""
-            coord = ["", ""]
-            for loc in locs:
-                if str(loc["id"]) == store_number:
-                    coord = loc
-                    break
+                if "We are closed" in sp1.select("div.shg-row > div")[1].text:
+                    hours = ["Closed"]
+                elif "COMING SOON" in sp1.select("div.shg-row > div")[1].text:
+                    continue
+                else:
+                    hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[1:]
+                    for x in range(0, len(hh), 2):
+                        hours.append(f"{hh[x]} {hh[x+1]}")
+                phone = (
+                    sp1.select("div.shg-row > div")[2]
+                    .p.text.strip()
+                    .split(":")[-1]
+                    .strip()
+                )
+
+                if not _p(phone):
+                    phone = ""
+                zip_postal = ""
+                if _.select_one("span.postal_zip"):
+                    zip_postal = _.select_one("span.postal_zip").text.strip()
+                if not zip_postal:
+                    zip_postal = _addr[-1].split()[-1].strip()
+                    if not zip_postal.isdigit():
+                        zip_postal = ""
+                coord = ["", ""]
+                for loc in locs:
+                    if str(loc["id"]) == store_number:
+                        coord = loc
+                        break
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.select_one("span.name").text.strip(),
@@ -99,11 +121,14 @@ def fetch_data():
                 locator_domain=locator_domain,
                 phone=phone,
                 hours_of_operation="; ".join(hours),
+                raw_address=" ".join(_addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

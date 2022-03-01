@@ -82,20 +82,33 @@ def get_hoo(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.select("div.location-result")
+    contents = soup.select("ul.navBar-section li a")
     for row in contents:
-        page_url = row.find("h2", {"class": "title"}).find("a")["href"]
-        location_name = row.find("h2", {"class": "title"}).text.strip()
-        raw_address = row.find("address", {"class": "address"}).text.strip()
+        page_url = row["href"]
+        store = pull_content(page_url)
+        info = store.find("div", {"class": "page-content page-content--centered"})
+        location_name = store.find("h1", {"class": "page-heading"}).text.strip()
+        raw_address = (
+            info.find("strong", text="Address:")
+            .parent.text.replace("Address:", "")
+            .replace(" ", "")
+            .strip()
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = row.find("address", {"class": "phone"}).text.strip()
+        phone = info.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
         country_code = "US"
-        hours_of_operation = get_hoo(page_url)
+        hours_of_operation = (
+            info.find("table")
+            .get_text(strip=True, separator=",")
+            .replace("day,", "day: ")
+            .replace(",to,", " - ")
+            .strip()
+        )
         country_code = "US"
         store_number = MISSING
         location_type = MISSING
-        latitude = row["data-lat"]
-        longitude = row["data-lng"]
+        latitude = MISSING
+        longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

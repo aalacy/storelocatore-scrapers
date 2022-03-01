@@ -6,46 +6,56 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def get_coordinates(page_url):
-    r = session.get(page_url)
-    tree = html.fromstring(r.text.replace("!--", "").replace("--", ""))
-    lat = "".join(tree.xpath("//div[@data-latitude]/@data-latitude"))
-    lng = "".join(tree.xpath("//div[@data-longitude]/@data-longitude"))
+def get_ids():
+    r = session.get("https://www.biedronka.pl/pl/sklepy")
+    tree = html.fromstring(r.text)
 
-    return lat, lng
+    return tree.xpath("//map[@name='locationMap']/area/@data-map-id")
 
 
 def fetch_data(sgw: SgWriter):
-    for i in range(1, 300):
-        r = session.get(f"https://www.biedronka.pl/pl/sklepy/lista,,,page,{i}")
-        tree = html.fromstring(r.text)
+    fail_counter = 0
+    for i in range(1, 5000):
+        api = f"https://www.biedronka.pl/api/shop/getbycity?city={i}&special="
+        r = session.get(api, headers=headers)
+        try:
+            js = r.json()["items"]
+            if len(js) >= 1:
+                fail_counter = 0
+        except KeyError:
+            fail_counter += 1
+            js = []
 
-        divs = tree.xpath("//ul[@class='shopList']/li")
-        for d in divs:
-            location_name = "".join(d.xpath(".//h4/text()")).strip()
-            city = location_name
-            zs = d.xpath(".//span[@class='shopAddress']/text()")
-            zs = list(filter(None, [s.strip() for s in zs]))
-            if len(zs) == 1:
-                zs.append(SgRecord.MISSING)
-            postal, street_address = zs
+        if fail_counter > 15:
+            break
 
-            slug = str(html.tostring(d)).split('href="')[1].split('"')[0]
-            store_number = slug.split("id,")[1].split(",title")[0]
-            page_url = f"https://www.biedronka.pl{slug}"
+        for j in js:
+            location_name = j.get("name")
+            store_number = j.get("id")
+            page_url = f"https://www.biedronka.pl/pl/shop,id,{store_number}"
+            street = j.get("street") or ""
+            number = j.get("street_number") or ""
+            street_address = f"{street} {number}".strip()
+            city = j.get("city")
+            postal = j.get("zip_code")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
 
             _tmp = []
-            hours = d.xpath(".//span[contains(@class, 'hours')]")
-            for h in hours:
-                day = "".join(h.xpath("./preceding-sibling::text()[1]")).strip()
-                inter = "".join(h.xpath("./text()")).strip()
-                _tmp.append(f"{day} {inter}")
-            hours_of_operation = ";".join(_tmp)
+            days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
+            for day in days:
+                inter = j.get(f"hours_{day}")
+                _tmp.append(f"{day}: {inter}")
 
-            try:
-                latitude, longitude = get_coordinates(page_url)
-            except:
-                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+            hours_of_operation = ";".join(_tmp)
 
             row = SgRecord(
                 page_url=page_url,
@@ -63,12 +73,25 @@ def fetch_data(sgw: SgWriter):
 
             sgw.write_row(row)
 
-        if len(divs) < 18:
-            break
-
 
 if __name__ == "__main__":
     locator_domain = "https://www.biedronka.pl/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "X-Requested-With": "XMLHttpRequest",
+        "Connection": "keep-alive",
+        "Referer": "https://www.biedronka.pl/pl/sklepy",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
