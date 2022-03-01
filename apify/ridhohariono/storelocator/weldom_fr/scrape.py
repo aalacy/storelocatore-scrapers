@@ -7,6 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgselenium import SgSelenium
 import ssl
+import time
 
 try:
     _create_unverified_https_context = (
@@ -72,7 +73,7 @@ def fetch_data():
             """return fetch('https://www.weldom.fr/graphql', {
                 method: 'POST',
                 headers: """
-            + HEADERS
+            + str(HEADERS)
             + """,
                 body: JSON.stringify({
                     operationName: "storeList",
@@ -87,23 +88,50 @@ def fetch_data():
         )
         log.info(f"Search locations => {lat}, {long}")
         data = driver.execute_script(script)
+        try:
+            data["data"]["storeList"]
+        except:
+            log.info(str(data))
         for row in data["data"]["storeList"]:
             search.found_location_at(lat, long)
-            page_url = BASE_URL + "magasin/" + row["id"]
+            page_url = BASE_URL + "magasin/" + str(row["id"])
             location_name = row["name"].strip()
             addr = row["address"]
-            street_address = addr["street"].strip()
+            street_address = " ".join(addr["street"]).strip()
             city = addr["city"].strip()
             state = addr["region"] or MISSING
             zip_postal = addr["postcode"]
             country_code = addr["country_id"]
-            phone = addr["contact_phone"]
+            phone = row["contact_phone"].strip()
             hoo = ""
             for i in range(len(days)):
-                hour = row["opening_hours"][i]["slots"][0]
-                hoo += (
-                    days[i] + ": " + hour["start_time"] + "-" + hour["end_time"] + ","
-                )
+                if row["opening_hours"][i]["slots"]:
+                    if len(row["opening_hours"][i]["slots"]) > 1:
+                        hour = row["opening_hours"][i]["slots"]
+                        hoo += (
+                            days[i]
+                            + ": "
+                            + hour[0]["start_time"]
+                            + " - "
+                            + hour[0]["end_time"]
+                            + " / "
+                            + hour[1]["start_time"]
+                            + " - "
+                            + hour[1]["end_time"]
+                            + ","
+                        )
+                    else:
+                        hour = row["opening_hours"][i]["slots"][0]
+                        hoo += (
+                            days[i]
+                            + ": "
+                            + hour["start_time"]
+                            + " - "
+                            + hour["end_time"]
+                            + ","
+                        )
+                else:
+                    hoo += days[i] + ": Closed,"
             hours_of_operation = hoo.strip().rstrip(",")
             store_number = row["id"]
             location_type = MISSING
@@ -126,6 +154,7 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
+        time.sleep(2)
     driver.quit()
 
 
