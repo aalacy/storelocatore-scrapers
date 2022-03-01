@@ -24,6 +24,7 @@ def fetch_data():
         link = state.find("a", {"class": "Button2"})["href"]
         state = state.find("h2").text
         r = session.get(link, headers=headers)
+
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("table", {"class": "Expandable"})
 
@@ -133,8 +134,13 @@ def fetch_data():
                 .splitlines()
             )
 
-            m = 1
-            phone = loc[m].split(" at ", 1)[1]
+            m = 0
+
+            try:
+                phone = loc[m].split(" at ", 1)[1]
+            except:
+                m = m + 1
+                phone = loc[m].split(" at ", 1)[1]
             m = m + 1
             hours = loc[1]
             m = m + 1
