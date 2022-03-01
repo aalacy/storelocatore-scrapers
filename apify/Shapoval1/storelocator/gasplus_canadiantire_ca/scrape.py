@@ -67,7 +67,7 @@ def get_data(url, sgw: SgWriter):
     location_type = (
         ",".join(
             tree.xpath(
-                '//h2[contains(text(), "STORE SERVICES")]/following-sibling::ul/li/text()'
+                "//main[@class='store-locator__main']//h2[contains(text(), 'STORE SERVICES')]/following-sibling::ul[1]/li//text()"
             )
         )
         .replace("\n", "")

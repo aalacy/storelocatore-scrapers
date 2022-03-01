@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 import json
 
-# CalinClaudiu
 logger = SgLogSetup().get_logger("walmart_com")
 
 headers = {
@@ -131,9 +130,7 @@ def fetch_other(session, state):
 
 
 def vision(x):
-    if any(i in x for i in ["ISION", "ision"]):
-        return "VISION"
-    return ""
+    return x
 
 
 def test_other(session):
@@ -141,71 +138,6 @@ def test_other(session):
         session.get("https://www.walmart.com/store/2784-beatrice-ne", headers=headers)
     )
     return grab_json(b4(res.text, "lxml"))
-
-
-def transform_types(rec):
-    with open("das.txt", mode="w", encoding="utf-8") as file:
-        file.write(str(json.dumps(rec)))
-
-    try:
-        newrec = rec
-        types = [
-            str(f"({i['id']}) - {i['displayName']};\n") for i in rec["allServices"]
-        ]
-        types = "".join(types)
-        newrec["rawadd"] = types
-    except Exception:
-        try:
-            newrec = rec
-            newrec["rawadd"] = (
-                str(rec["primaryServices"]) + " " + str(rec["secondaryServices"])
-            )
-        except Exception:
-            newrec = rec
-            newrec["rawadd"] = "<ERROR>"
-    return newrec
-
-
-def fetch_data():
-    state = CrawlStateSingleton.get_instance()
-    session = SgRequests(dont_retry_status_codes=set([404, 520]))
-    # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    logger.info(transform_types(test_other(session)))
-    state.get_misc_value("init", default_factory=lambda: other_source(session, state))
-    for item in fetch_other(session, state):
-        yield transform_types(item)
-    maxZ = search.items_remaining()
-    total = 0
-    for item in fetch_other(session, state):
-        yield transform_types(item)
-    for code in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        found = 0
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
-            + code
-            + "&distance=100"
-        )
-        try:
-            r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
-        except Exception:
-            r2 = api_get(url, headers, 15, 0, 15).json()
-        if r2["payload"]["nbrOfStores"]:
-            if int(r2["payload"]["nbrOfStores"]) > 0:
-                for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"]:
-                        if store["geoPoint"]["latitude"]:
-                            if store["geoPoint"]["longitude"]:
-                                search.found_location_at(
-                                    store["geoPoint"]["latitude"],
-                                    store["geoPoint"]["longitude"],
-                                )
-                    yield transform_types(store)
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-        total += found
-        logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
 
 
 def human_hours(k):
@@ -240,6 +172,122 @@ def human_hours(k):
             return "24/7"
     except Exception:
         return str(k)
+
+
+def gen_hours(rec):
+    try:
+        newrec = rec
+        newrec["horas"] = []
+        try:
+            newrec["horas"].append(
+                str("General" + " - " + str(human_hours(rec["operationalHours"])))
+            )
+        except Exception:
+            pass
+        for i in rec["primaryServices"]:
+            try:
+                newrec["horas"].append(
+                    str(i["name"] + " - " + str(human_hours(i["operationalHours"])))
+                )
+            except Exception as e:
+                try:
+                    newrec["horas"].append(str(i["name"] + " - " + str(e) + "<ERROR>"))
+                except Exception:
+                    pass
+        try:
+            for i in rec["secondaryServices"]:
+                try:
+                    newrec["horas"].append(
+                        str(i["name"] + " - " + str(human_hours(i["operationalHours"])))
+                    )
+                except Exception as e:
+                    try:
+                        newrec["horas"].append(
+                            str(i["name"] + " - " + str(e) + "<ERROR>")
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if len(newrec["horas"]) > 0:
+            newrec["horas"] = "\n".join(newrec["horas"])
+        else:
+            raise
+        return newrec
+    except Exception as mf:
+        newrec["horas"] = str(mf)
+        return newrec
+
+
+def transform_types(rec):
+    try:
+        newrec = rec
+        types = [
+            str(f"({i['id']}) - {i['displayName']};\n") for i in rec["allServices"]
+        ]
+        types = "".join(types)
+        newrec["rawadd"] = types
+    except Exception:
+        try:
+            newrec = rec
+            newrec["rawadd"] = (
+                str(rec["primaryServices"]) + " " + str(rec["secondaryServices"])
+            )
+        except Exception:
+            newrec = rec
+            newrec["rawadd"] = "<ERROR>"
+    return newrec
+
+
+def please_write(what):
+    with open("das.txt", mode="w", encoding="utf-8") as file:
+        file.write(str(json.dumps(what)))
+        logger.info(what)
+
+
+def fetch_data():
+    state = CrawlStateSingleton.get_instance()
+    session = SgRequests(dont_retry_status_codes=set([404, 520]))
+    # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
+    test = gen_hours(transform_types(test_other(session)))
+    please_write(test)
+    state.get_misc_value("init", default_factory=lambda: other_source(session, state))
+    for item in fetch_other(session, state):
+        yield gen_hours(transform_types(item))
+    maxZ = search.items_remaining()
+    total = 0
+    for item in fetch_other(session, state):
+        yield gen_hours(transform_types(item))
+    for code in search:
+        if search.items_remaining() > maxZ:
+            maxZ = search.items_remaining()
+        found = 0
+        logger.info(("Pulling Zip Code %s..." % code))
+        url = (
+            "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
+            + code
+            + "&distance=100"
+        )
+        try:
+            r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
+        except Exception:
+            r2 = api_get(url, headers, 15, 0, 15).json()
+        if r2["payload"]["nbrOfStores"]:
+            if int(r2["payload"]["nbrOfStores"]) > 0:
+                for store in r2["payload"]["storesData"]["stores"]:
+                    if store["geoPoint"]:
+                        if store["geoPoint"]["latitude"]:
+                            if store["geoPoint"]["longitude"]:
+                                search.found_location_at(
+                                    store["geoPoint"]["latitude"],
+                                    store["geoPoint"]["longitude"],
+                                )
+                    reczz = gen_hours(transform_types(store))
+                    please_write(reczz)
+                    yield reczz
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        total += found
+        logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
 
 
 def add_walmart(x):
@@ -284,12 +332,8 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["id"],
         ),
-        hours_of_operation=sp.MappingField(
-            mapping=["operationalHours"], raw_value_transform=human_hours
-        ),
-        location_type=sp.MappingField(
-            mapping=["rawadd"],
-        ),
+        hours_of_operation=sp.MappingField(mapping=["horas"], is_required=False),
+        location_type=sp.MappingField(mapping=["rawadd"], value_transform=vision),
         raw_address=sp.MissingField(),
     )
 
