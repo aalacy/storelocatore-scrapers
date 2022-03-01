@@ -35,15 +35,29 @@ def fetch_data():
             s_data = session.get(url).json()
             for poi in s_data["Centers"]:
                 page_url = urljoin(c_url, poi["Url"])
-                sun_hours = poi["Day1"] if poi["Day1"] else "closed"
-                sunday = f"Sunday: {sun_hours}"
-                monday = f'Monday: {poi["Day2"]}'
-                tuesday = f'Tuesday: {poi["Day3"]}'
-                wednesday = f'Wednesday: {poi["Day4"]}'
-                thursday = f'Thursday: {poi["Day5"]}'
-                friday = f'Friday: {poi["Day6"]}'
-                saturday = f'Saturday: {poi["Day7"]}'
-                hoo = f"{monday}, {tuesday}, {wednesday}, {thursday}, {friday}, {saturday}, {sunday}"
+                hoo = []
+                if poi["Day1"]:
+                    sunday = f'Sunday: {poi["Day1"]}'
+                    hoo.append(sunday)
+                if poi["Day2"]:
+                    monday = f'Monday: {poi["Day2"]}'
+                    hoo.append(monday)
+                if poi["Day3"]:
+                    tuesday = f'Tuesday: {poi["Day3"]}'
+                    hoo.append(tuesday)
+                if poi["Day4"]:
+                    wednesday = f'Wednesday: {poi["Day4"]}'
+                    hoo.append(wednesday)
+                if poi["Day5"]:
+                    thursday = f'Thursday: {poi["Day5"]}'
+                    hoo.append(thursday)
+                if poi["Day6"]:
+                    friday = f'Friday: {poi["Day6"]}'
+                    hoo.append(friday)
+                if poi["Day7"]:
+                    saturday = f'Saturday: {poi["Day7"]}'
+                    hoo.append(saturday)
+                hoo = " ".join(hoo)
 
                 item = SgRecord(
                     locator_domain=domain,
