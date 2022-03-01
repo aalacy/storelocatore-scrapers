@@ -36,6 +36,7 @@ def get_data(page_url, sgw: SgWriter):
     text = "".join(tree.xpath("//script[contains(text(), 'var storeModel =')]/text()"))
     text = text.split("var storeModel =")[1].split("};")[0] + "}"
     j = json.loads(text)
+    location_type = j.get("StoreType")
     latitude = j.get("Latitude") or ""
     longitude = j.get("Longitude") or ""
     if str(latitude) == "0":
@@ -62,6 +63,7 @@ def get_data(page_url, sgw: SgWriter):
         store_number=store_number,
         latitude=latitude,
         longitude=longitude,
+        location_type=location_type,
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,

@@ -23,23 +23,26 @@ def fetch_data():
     if True:
         url = "https://www.jenniferfurniture.com/pages/store-locator"
         r = session.get(url, headers=headers)
-        token = r.text.split("storelocator_scripttag.js?v=")[1].split("\\u")[0]
-        url = (
-            "https://cdn.shopify.com/s/files/1/1101/6302/t/179/assets/sca.storelocator_scripttag.js?v="
-            + token
-            + "&shop=jennifer-convertibles.myshopify.com"
+        api_url = (
+            r.text.split("var urls = ")[1]
+            .split("]")[0]
+            .split('","')[-2]
+            .replace("\\/", "/")
         )
-        r = session.get(url, headers=headers)
-        loclist = json.loads(
-            r.text.split("locationsRaw:'")[1].split("'},function()")[0]
+        r = session.get(api_url, headers=headers)
+        loclist = (
+            r.text.split('"locationsRaw":"')[1]
+            .split('","app_url"')[0]
+            .replace('\\"', '"')
         )
+        loclist = json.loads(loclist)
         for loc in loclist:
             page_url = loc["web"].replace("\\/", "/")
             log.info(page_url)
             store_number = str(loc["id"])
             location_name = loc["name"]
             phone = loc["phone"]
-            street_address = loc["address"]
+            street_address = loc["address"].split(",")[1]
             city = loc["city"]
             state = loc["state"]
             zip_postal = loc["postal"]
@@ -48,9 +51,11 @@ def fetch_data():
             longitude = str(loc["lng"])
             hours_of_operation = loc["schedule"]
             hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
-            hours_of_operation = hours_of_operation.get_text(
-                separator="|", strip=True
-            ).replace("|", " ")
+            hours_of_operation = (
+                hours_of_operation.get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("\\r", "")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

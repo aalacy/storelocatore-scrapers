@@ -47,13 +47,20 @@ def fetch_data():
                 continue
 
             loc_response = session.get(page_url, headers=hdr)
+            if loc_response.status_code != 200:
+                continue
             loc_dom = etree.HTML(loc_response.text)
-
-            raw_data = loc_dom.xpath("//h2/span/text()")
+            raw_data = loc_dom.xpath(
+                '//div[p[span[contains(text(), "WELCOME TO")]]]/p//text()'
+            )
+            if len(raw_data) == 1:
+                raw_data = loc_dom.xpath(
+                    '//div[div[div[p[span[contains(text(), "WELCOME TO ")]]]]]/following-sibling::div[1]//text()'
+                )
+                raw_data = ["-"] + raw_data
             raw_data = [e.strip() for e in raw_data if e.strip()]
-            location_name = raw_data[0].replace("WELCOME TO ", "")
-            if "STORE HOURS" in raw_data[0] or "STORE HOURS" in raw_data[1]:
-                location_name = page_url.split("/")[-1].replace("-", " ").capitalize()
+            location_name = page_url.split("/")[-2].replace("-", " ").capitalize()
+            if not raw_data:
                 street_address = "<INACCESSIBLE>"
                 city = "<INACCESSIBLE>"
                 state = "<INACCESSIBLE>"

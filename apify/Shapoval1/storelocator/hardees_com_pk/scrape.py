@@ -17,13 +17,13 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="text-center wow fadeInUp"]')
+    div = tree.xpath('//div[@class="wow fadeInUp locateText"]')
     for d in div:
 
         page_url = "https://www.hardees.com.pk/locate-us"
         location_name = "".join(d.xpath(".//h4/text()"))
         ad = (
-            " ".join(d.xpath('.//p[@style="text-align: left"]/text()'))
+            " ".join(d.xpath('.//p[@class="text-left"]/text()'))
             .replace("\n", "")
             .strip()
         )
