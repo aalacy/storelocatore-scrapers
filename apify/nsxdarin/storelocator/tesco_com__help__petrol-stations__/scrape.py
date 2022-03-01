@@ -47,7 +47,7 @@ def fetch_data():
             add = ""
             city = ""
             zc = ""
-            phone = ""
+            phone = "<MISSING>"
             lat = ""
             lng = ""
             logger.info(loc)
@@ -83,11 +83,16 @@ def fetch_data():
                                 hours = hrs
                             else:
                                 hours = hours + "; " + hrs
+                    phone = (
+                        line.split(
+                            '"main store Petrol Filling Station hours dropdown"'
+                        )[1]
+                        .split('Phone-display">')[1]
+                        .split("<")[0]
+                    )
                 if '"pageName":"' in line:
                     name = line.split('"pageName":"')[1].split('"')[0]
                     store = line.split('"storeID":"')[1].split('"')[0]
-                if 'itemprop="telephone">' in line:
-                    phone = line.split('itemprop="telephone">')[1].split("<")[0]
                 if 'itemprop="latitude" content="' in line:
                     lat = line.split('itemprop="latitude" content="')[1].split('"')[0]
                     lng = line.split('itemprop="longitude" content="')[1].split('"')[0]
