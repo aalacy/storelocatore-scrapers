@@ -42,39 +42,54 @@ def fetch_data():
             page_url = locator_domain + link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = ""
+            hours = []
             _hr = sp1.find("strong", string=re.compile(r"^Hours"))
             if _hr:
-                hours = _hr.find_parent("h6").find_next_sibling().text.strip()
+                for hh in _hr.find_parent("h6").find_next_siblings():
+                    _hh = hh.text.strip()
+                    if (
+                        not _hh
+                        or "Looking" in _hh
+                        or "Click" in _hh
+                        or "Get" in _hh
+                        or _hh == "-"
+                    ):
+                        break
+                    hours.append(_hh)
             else:
                 _hr = sp1.find("h6", string=re.compile(r"Hours"))
                 if _hr:
-                    hours = "; ".join(
-                        [
-                            hh.text.strip().split("\n")[-1]
-                            for hh in _hr.find_next_siblings()
-                            if hh.text.strip()
-                            and hh.text.strip().split("\n")[-1] != "-"
-                        ]
-                    )
+                    hours = [
+                        hh.text.strip().split("\n")[-1]
+                        for hh in _hr.find_next_siblings()
+                        if hh.text.strip() and hh.text.strip().split("\n")[-1] != "-"
+                    ]
                 else:
                     _hr = sp1.find("", string=re.compile(r"Fall(.)hours", re.I))
-                    import pdb
+                    if _hr:
+                        _hp = _hr.find_parent("p")
+                        if not _hp:
+                            _hp = _hr.find_parent("h6")
+                        if _hp:
+                            for hh in _hp.find_next_siblings("p"):
+                                _hh = hh.text.lower()
+                                if "phone" in _hh:
+                                    break
+                                if "aug" in _hh or "beginning" in _hh:
+                                    continue
+                                hours.append("; ".join(hh.stripped_strings))
+                    else:
+                        _hr = sp1.find(
+                            "strong", string=re.compile(r"^REGULAR HOURS:", re.I)
+                        )
+                        if _hr:
+                            _hp = _hr.find_parent("div").find_next_sibling("div")
+                            if _hp:
+                                for hh in list(_hp.stripped_strings):
+                                    if "Phone" in hh:
+                                        break
+                                    hours.append(hh)
 
-                    pdb.set_trace()
-                    _hp = _hr.find_parent("p")
-                    if not _hp:
-                        _hp = _hr.find_parent("h6")
-                    if _hp:
-                        temp = []
-                        for hh in _hp.find_next_siblings("p"):
-                            _hh = hh.text.lower()
-                            if "phone" in _hh:
-                                break
-                            if "aug" in _hh or "beginning" in _hh:
-                                continue
-                            temp.append("; ".join(hh.stripped_strings))
-                        hours = "; ".join(temp)
             try:
                 coord = (
                     sp1.select("iframe")[-1]["src"]
@@ -92,7 +107,15 @@ def fetch_data():
                         .split("!3d")[::-1]
                     )
                 except:
-                    coord = ["", ""]
+                    try:
+                        coord = (
+                            sp1.select("iframe")[-1]["src"]
+                            .split("&ll=")[1]
+                            .split("&spn")[0]
+                            .split(",")
+                        )
+                    except:
+                        coord = ["", ""]
             phone = ""
             try:
                 street_address = sp1.select_one(".street-address").text.strip()
@@ -229,6 +252,16 @@ def fetch_data():
             location_type = ""
             if sp1.find("em", string=re.compile(r"temporarily closed")):
                 location_type = "temporarily closed"
+            hours_of_operation = (
+                "; ".join(hours)
+                .replace("Open", "")
+                .split("Bulk")[0]
+                .replace("–", "-")
+                .replace("\xa0", " ")
+                .replace("Normal Hours:", "")
+            )
+            if hours_of_operation.endswith(";"):
+                hours_of_operation = hours_of_operation[:-1]
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("h1.section__title-text").text.strip(),
@@ -242,10 +275,7 @@ def fetch_data():
                 latitude=coord[0],
                 longitude=coord[1],
                 location_type=location_type,
-                hours_of_operation=hours.split("Open")[0]
-                .split("Bulk")[0]
-                .replace("–", "-")
-                .replace("\xa0", " "),
+                hours_of_operation=hours_of_operation,
             )
 
 

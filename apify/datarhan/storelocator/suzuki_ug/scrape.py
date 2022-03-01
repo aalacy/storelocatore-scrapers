@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -42,6 +43,7 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@class="concession-schedules"]/div//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
+        geo = re.findall(f'"{location_name}",(.+?),"', loc_response.text)[0].split(",")
 
         item = SgRecord(
             locator_domain=domain,
@@ -55,8 +57,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type=location_type,
-            latitude="",
-            longitude="",
+            latitude=geo[0],
+            longitude=geo[1],
             hours_of_operation=hoo,
             raw_address=raw_address,
         )

@@ -94,9 +94,14 @@ def fetch_data():
                 )
 
                 phone = ""
-                if _["phoneNumbers"]["retailer"] != "0":
+                if (
+                    _["phoneNumbers"]["retailer"]
+                    and _["phoneNumbers"]["retailer"] != "0"
+                ):
                     phone = _["phoneNumbers"]["retailer"].split("R")[0].strip()
-                elif _["phoneNumbers"]["service"] != "0":
+                elif (
+                    _["phoneNumbers"]["service"] and _["phoneNumbers"]["service"] != "0"
+                ):
                     phone = _["phoneNumbers"]["service"]
                 location_type = []
                 for lt in _["capabilities"]:
@@ -105,9 +110,9 @@ def fetch_data():
                     location_type.append(lt)
                 yield SgRecord(
                     page_url=_["url"] if _["url"] else base_url,
-                    location_name=_["name"],
+                    location_name=_["name"].split("(")[0],
                     street_address=street_address,
-                    city=city,
+                    city=city.split("(")[0],
                     state=state,
                     zip_postal=zip_postal,
                     latitude=_["latitude"],

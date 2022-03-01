@@ -1,0 +1,5 @@
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.1.13
+sgrequests==0.1.13
+Unidecode==1.2.0
+PyPDF2==1.26.0
