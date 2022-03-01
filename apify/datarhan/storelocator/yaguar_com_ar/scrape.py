@@ -51,6 +51,15 @@ def fetch_data():
             .split("/")[0]
             .strip()
         )
+        phone = (
+            phone.replace("rotativas", "")
+            .split(" (")[0]
+            .split("- 15")[0]
+            .split("-  15")[0]
+            .strip()
+        )
+        if phone.endswith("-"):
+            phone = phone[:-1]
         hoo = loc_dom.xpath(
             '//i[@class="fas fa-clock"]/following-sibling::div[1]/text()'
         )[0]

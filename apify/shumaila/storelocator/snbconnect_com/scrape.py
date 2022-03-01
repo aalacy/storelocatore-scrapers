@@ -17,13 +17,14 @@ def fetch_data():
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://snbconnect.com/Locations"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.find("table", {"class": "Table-Staff-3Column"}).findAll("td")
     for state in statelist:
         link = state.find("a", {"class": "Button2"})["href"]
         state = state.find("h2").text
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
+
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("table", {"class": "Expandable"})
 
@@ -133,8 +134,13 @@ def fetch_data():
                 .splitlines()
             )
 
-            m = 1
-            phone = loc[m].split(" at ", 1)[1]
+            m = 0
+
+            try:
+                phone = loc[m].split(" at ", 1)[1]
+            except:
+                m = m + 1
+                phone = loc[m].split(" at ", 1)[1]
             m = m + 1
             hours = loc[1]
             m = m + 1
