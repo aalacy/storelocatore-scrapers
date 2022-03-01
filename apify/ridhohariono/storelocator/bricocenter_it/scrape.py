@@ -73,7 +73,9 @@ def fetch_data():
         street_address = html.unescape(
             " ".join(
                 re.sub(
-                    r",?\s?" + city + r"|,?\s?" + state + r"|\(.*\)", "", row["address"]
+                    r",?\s?" + city + r"|,?\s?" + state + r"|\(.*\)|" + zip_postal,
+                    "",
+                    row["address"],
                 )
                 .strip()
                 .split()
