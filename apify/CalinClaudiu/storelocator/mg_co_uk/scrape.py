@@ -1,3 +1,4 @@
+import re
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -40,6 +41,7 @@ def fetch_with_retry(url, retry=0):
 
 
 def fetch_data():
+    page_url = "https://www.mg.co.uk/dealers"
     search = static_zipcode_list(10, country_code=SearchableCountries.BRITAIN)
 
     for zipcode in search:
@@ -58,7 +60,11 @@ def fetch_data():
 
             details = store.get("sales_details") or store.get("after_sales")
             street_address = get(details, "address1")
+
             city = get(details, "town")
+            if re.search(r"^MG", city):
+                city = get(details, "address2")
+
             state = get(store, "state")
             postal = get(details, "postcode")
 
@@ -70,6 +76,7 @@ def fetch_data():
             )
 
             yield SgRecord(
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,

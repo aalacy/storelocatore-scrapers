@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgpostal import parse_address_intl
 import re
 
 
@@ -22,17 +23,32 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            return street_address
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[
-            SearchableCountries.USA,
             SearchableCountries.BRITAIN,
+            SearchableCountries.USA,
             SearchableCountries.HONG_KONG,
             SearchableCountries.IRELAND,
             SearchableCountries.AUSTRALIA,
         ],
-        expected_search_radius_miles=50,
+        max_search_distance_miles=50,
+        expected_search_radius_miles=10,
         max_search_results=10,
     )
     for lat, long in search:
@@ -48,10 +64,24 @@ def fetch_data():
                 street_address = street_address + " " + row["address2"]
             except:
                 pass
-            street_address = street_address.split(" at ")[0].strip()
-            state = MISSING
             city = row["city"]
+            street_address = re.sub(
+                r",?\s?.*Shopping Centre|" + city,
+                "",
+                getAddress(street_address).strip(),
+                flags=re.IGNORECASE,
+            )
+            if search.current_country().upper() in ["US", "AU", "IRELAND"]:
+                try:
+                    state = row["stateCode"]
+                except:
+                    state = MISSING
+            else:
+                state = MISSING
             zip_postal = row["postalCode"]
+            if zip_postal and "Admiralty" in zip_postal:
+                city = "Admiralty"
+                zip_postal = MISSING
             try:
                 phone = re.subr(r"^00", "", row["phone"]).strip()
             except:
@@ -62,14 +92,17 @@ def fetch_data():
             hoo = ""
             for day in row["workTimes"]:
                 hoo += day["weekDay"] + ": " + day["value"] + ","
-            hours_of_operation = hoo.strip().rstrip(",")
+            hours_of_operation = re.sub(r"\(.*\)", "", hoo.strip().rstrip(","))
             if "Shop 1036" in street_address:
                 zip_postal = MISSING
             if "Shop 120A" in street_address:
                 city = "Admiralty"
-            location_type = row["storeType"]
+            try:
+                location_type = row["storeType"]
+            except:
+                location_type = MISSING
             if "storeHours" in row and "TEMPORARILY CLOSED" in row["storeHours"]:
-                location_type = "TEMPORARILY CLOSED"
+                location_name = location_name + " - TEMPORARILY CLOSED"
             store_number = row["ID"]
             latitude = row["latitude"]
             longitude = row["longitude"]

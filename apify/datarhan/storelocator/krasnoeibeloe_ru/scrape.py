@@ -6,14 +6,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
     start_url = "https://krasnoeibeloe.ru/address/"
     domain = "krasnoeibeloe.ru"
 
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         sleep(10)
         try:
@@ -53,6 +53,8 @@ def fetch_data():
                 city = dom.xpath('//select[@name="city"]/option/text()')
                 city = city[0] if city else ""
                 state = dom.xpath('//select[@name="region"]/option/text()')[0]
+                hoo = poi_html.xpath('.//div[@class="shop_l_time"]/div/text()')
+                hoo = " ".join([e.strip() for e in hoo])
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -68,7 +70,7 @@ def fetch_data():
                     location_type="",
                     latitude="",
                     longitude="",
-                    hours_of_operation=raw_data[1],
+                    hours_of_operation=hoo,
                 )
 
                 yield item
