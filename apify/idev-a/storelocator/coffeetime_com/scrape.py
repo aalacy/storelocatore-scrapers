@@ -43,6 +43,8 @@ def fetch_data(search):
                     time2 = hh.split(",")[2][:2] + ":" + hh.split(",")[2][2:]
                     temp[days[int(hh.split(",")[0])]] = f"{time1}-{time2}"
                 for day in days:
+                    if not day:
+                        continue
                     if temp.get(day):
                         hours.append(f"{day}: {temp[day]}")
                     else:
