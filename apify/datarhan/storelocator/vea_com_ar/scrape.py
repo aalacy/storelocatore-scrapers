@@ -36,6 +36,7 @@ def fetch_data():
             hours_of_operation=poi["schedule"]
             .replace("Atención: ", "")
             .split("Horarios")[0]
+            .replace("Sin info", "")
             .strip(),
         )
 
