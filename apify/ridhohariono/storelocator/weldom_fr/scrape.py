@@ -35,16 +35,62 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
-def fetch_data():
-    log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
-    driver.get(BASE_URL)
+def set_cookie(driver):
     cookies = []
     for cookie in driver.get_cookies():
         if cookie["name"] == "dtPC":
             HEADERS["x-dtpc"] = cookie["value"]
         cookies.append(f"{cookie['name']}={cookie['value']}")
     HEADERS["Cookie"] = "; ".join(cookies)
+    return True
+
+
+def get_stores(driver, lat, long, num=0):
+    num += 1
+    variable = (
+        "variables: {gps_coordinate: {latitude: "
+        + str(lat)
+        + ",longitude: "
+        + str(long)
+        + ",},},"
+    )
+    script = (
+        """return fetch('https://www.weldom.fr/graphql', {
+            method: 'POST',
+            headers: """
+        + str(HEADERS)
+        + """,
+            body: JSON.stringify({
+                operationName: "storeList",
+                query: `
+                \n  query storeList($gps_coordinate: GpsCoordinatesFilter) {\n    storeList(gps_coordinate: $gps_coordinate) {\n      id\n      name\n      meta_description\n      meta_title\n      seller_code\n      distance\n      contact_phone\n      url_key\n      address {\n        city\n        latitude\n        longitude\n        country_id\n        postcode\n        region\n        region_id\n        street\n      }\n      image\n      opening_hours {\n        day_of_week\n        slots {\n          start_time\n          end_time\n        }\n      }\n      special_opening_hours {\n        day\n        slots {\n          start_time\n          end_time\n        }\n      }\n      is_available_for_cart\n      ereservation\n      eresa_without_stock\n      online_payment\n      # url_path\n      # type\n      # promotions {\n      #   entity_id\n      #   title\n      #   description\n      #   image\n      #   url\n      #   type\n      # }\n      messages {\n        title\n        message\n        link\n        label_link\n      }\n    }\n  }\n
+            `,
+                """
+        + variable
+        + """
+            }),
+        }).then((res) => res.json());"""
+    )
+    log.info(f"Search locations => {lat}, {long}")
+    try:
+        data = driver.execute_script(script)
+        data["data"]["storeList"]
+    except:
+        log.info("Failed geting store locations, retry for => " + str(num))
+        driver.quit()
+        time.sleep(5)
+        driver = SgSelenium().chrome()
+        driver.get(BASE_URL)
+        set_cookie(driver)
+        return get_stores(driver, lat, long, num)
+    return driver, data
+
+
+def fetch_data():
+    log.info("Fetching store_locator data")
+    driver = SgSelenium().chrome()
+    driver.get(BASE_URL)
+    set_cookie(driver)
     days = [
         "Monday",
         "Tuesday",
@@ -62,36 +108,7 @@ def fetch_data():
         max_search_results=5,
     )
     for lat, long in search:
-        variable = (
-            "variables: {gps_coordinate: {latitude: "
-            + str(lat)
-            + ",longitude: "
-            + str(long)
-            + ",},},"
-        )
-        script = (
-            """return fetch('https://www.weldom.fr/graphql', {
-                method: 'POST',
-                headers: """
-            + str(HEADERS)
-            + """,
-                body: JSON.stringify({
-                    operationName: "storeList",
-                    query: `
-                    \n  query storeList($gps_coordinate: GpsCoordinatesFilter) {\n    storeList(gps_coordinate: $gps_coordinate) {\n      id\n      name\n      meta_description\n      meta_title\n      seller_code\n      distance\n      contact_phone\n      url_key\n      address {\n        city\n        latitude\n        longitude\n        country_id\n        postcode\n        region\n        region_id\n        street\n      }\n      image\n      opening_hours {\n        day_of_week\n        slots {\n          start_time\n          end_time\n        }\n      }\n      special_opening_hours {\n        day\n        slots {\n          start_time\n          end_time\n        }\n      }\n      is_available_for_cart\n      ereservation\n      eresa_without_stock\n      online_payment\n      # url_path\n      # type\n      # promotions {\n      #   entity_id\n      #   title\n      #   description\n      #   image\n      #   url\n      #   type\n      # }\n      messages {\n        title\n        message\n        link\n        label_link\n      }\n    }\n  }\n
-                `,
-                    """
-            + variable
-            + """
-                }),
-            }).then((res) => res.json());"""
-        )
-        log.info(f"Search locations => {lat}, {long}")
-        data = driver.execute_script(script)
-        try:
-            data["data"]["storeList"]
-        except:
-            log.info(str(data))
+        data = get_stores(driver, lat, long)
         for row in data["data"]["storeList"]:
             search.found_location_at(lat, long)
             page_url = BASE_URL + "magasin/" + str(row["id"])
