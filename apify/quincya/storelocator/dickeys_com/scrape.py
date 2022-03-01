@@ -120,7 +120,6 @@ def fetch_data(sgw: SgWriter):
             street_address = store["address"]["address"]
             if street_address in found:
                 continue
-            found.append(street_address)
             city = store["address"]["city"]
             state = store["address"]["state"]["label"]
             zip_code = store["address"]["zip"]
@@ -133,6 +132,7 @@ def fetch_data(sgw: SgWriter):
             slug = store["slug"]
             if "wing-boss" in slug or "burger" in slug or "trailer-birds" in slug:
                 continue
+            found.append(street_address)
             location_name = city.title() + " - " + slug.replace("-", " ").title()
             link = "https://www.dickeys.com/locations/%s/%s/%s" % (state, city, slug)
 
@@ -152,6 +152,9 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = (
                     hours_of_operation + " " + day + " " + hours
                 ).strip()
+            hours_of_operation = (
+                hours_of_operation.split("Thanks")[0].split("Chris")[0].strip()
+            )
 
             sgw.write_row(
                 SgRecord(
