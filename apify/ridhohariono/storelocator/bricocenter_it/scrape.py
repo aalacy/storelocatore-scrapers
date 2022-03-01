@@ -57,6 +57,7 @@ def get_hoo(content):
                     + ends[i].text.replace("alle", "")
                 ).strip()
         hoo += days[i] + ": " + hour + ", "
+    hoo = re.sub(r"-?\s?\s?\s?Puoi acquistare anche in e-commerce!?", "", hoo).strip()
     return hoo.strip().rstrip(",")
 
 
@@ -73,7 +74,9 @@ def fetch_data():
         street_address = html.unescape(
             " ".join(
                 re.sub(
-                    r",?\s?" + city + r"|,?\s?" + state + r"|\(.*\)", "", row["address"]
+                    r",?\s?" + city + r"|,?\s?" + state + r"|\(.*\)|" + zip_postal,
+                    "",
+                    row["address"],
                 )
                 .strip()
                 .split()
