@@ -7,12 +7,12 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch
 import lxml.html
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "bareminerals.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 headers = {
     "Connection": "keep-alive",
@@ -28,9 +28,6 @@ headers = {
     "Sec-Fetch-Dest": "empty",
     "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
-
-
-id_list = []
 
 
 def fetch_us_data():
@@ -76,8 +73,6 @@ def fetch_us_data():
 
                 locator_domain = website
                 location_name = store_json["name"]
-                if location_name == "":
-                    location_name = "<MISSING>"
 
                 street_address = store_json["address"]["streetAddress"]
                 city = store_json["address"]["addressLocality"]
@@ -174,12 +169,7 @@ def fetch_records_for(tup):
 def process_record(raw_results_from_one_coordinate):
     stores, current_country = raw_results_from_one_coordinate
     for store in stores:
-        if store["uid"] in id_list:
-            continue
-
-        id_list.append(store["uid"])
-
-        page_url = "<MISSING>"
+        page_url = "https://www.bareminerals.com/find-a-store/"
         locator_domain = website
         location_name = store["name"]
         street_address = store["address1"]
@@ -193,7 +183,7 @@ def process_record(raw_results_from_one_coordinate):
         if country_code is None or country_code == "":
             country_code = current_country
 
-        store_number = store["uid"]
+        store_number = "<MISSING>"
         phone = store.get("phone", "<MISSING>")
 
         location_type = "<MISSING>"
@@ -281,7 +271,17 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
+        )
     ) as writer:
         countries = ["US", "AT", "CA", "FR", "DE", "IE", "GB"]
 
@@ -291,20 +291,19 @@ def scrape():
             if country != "US":
                 try:
                     search = DynamicGeoSearch(
-                        expected_search_radius_miles=100, country_codes=[country]
+                        expected_search_radius_miles=5, country_codes=[country]
                     )
                     results = parallelize(
                         search_space=[
                             (
                                 coord,
-                                search.current_country(),
+                                country,
                                 str(f"{currentCountryCount}/{totalCountries}"),
                             )
                             for coord in search
                         ],
                         fetch_results_for_rec=fetch_records_for,
                         processing_function=process_record,
-                        max_threads=20,  # tweak to see what's fastest
                     )
                     for rec in results:
                         writer.write_row(rec)

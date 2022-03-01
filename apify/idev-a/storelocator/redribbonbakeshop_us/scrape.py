@@ -17,7 +17,9 @@ base_url = "https://locations.redribbonbakeshop.us/"
 
 
 def _d(sp1, page_url):
-    street_address = sp1.select_one('meta[itemprop="streetAddress"]').text.strip()
+    street_address = sp1.select_one(
+        "address div.Address-line span.Address-line1"
+    ).text.strip()
     raw_address = " ".join(
         [" ".join(aa.stripped_strings) for aa in sp1.select("address div.Address-line")]
     )

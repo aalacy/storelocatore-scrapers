@@ -1,170 +1,79 @@
-import csv
-import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://www.yogapod.com"
-    api_url = "https://www.yogapod.com/"
+    api_url = "https://www.yogapod.com/wp-admin/admin-ajax.php?action=store_search&lat=40.01499&lng=-105.27055&max_results=25&search_radius=5000&autoload=1"
     session = SgRequests()
-    r = session.get(api_url)
-    tree = html.fromstring(r.text)
-
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
 
-    div = tree.xpath('//div[@class=" vc_custom_1601583357342"]/div/div/select/option')
-    for d in div:
-
-        slug = "".join(d.xpath(".//@value"))
-        if slug == "":
-            continue
-        if slug.find("/apex/") != -1:
-            slug = "/apexgainesvillenw/"
-        page_url = f"{locator_domain}{slug}"
-        if page_url.find("https://www.yogapod.com/gainesvillesw/") != -1:
-            continue
-        session = SgRequests()
-        r = session.get(page_url)
-        tree = html.fromstring(r.text)
-        div = tree.xpath('//ul[@itemscope="itemscope"]')
-        for d in div:
-            line = d.xpath('.//span[@itemprop="address"]//text()')
-            line = list(filter(None, [a.strip() for a in line]))
-            line = " ".join(line)
-            ad = line
-            if line.find("University") != -1:
-                line = line.split("Center")[1].strip()
-            if line.find("Plaza") != -1:
-                line = line.split("Plaza")[1].strip()
-            a = usaddress.tag(line, tag_mapping=tag)[0]
-            street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-                "None", ""
-            ).strip()
-            if street_address.find("3045") != -1:
-                street_address = " ".join(ad.split(",")[:2]).replace("  ", " ").strip()
-            if street_address.find("4280") != -1:
-                street_address = ad.split("Tucson")[0].replace(",", "")
-            city = a.get("city")
-            state = a.get("state")
-            postal = a.get("postal")
-            country_code = "US"
-            store_number = "<MISSING>"
-            location_name = "".join(d.xpath('.//span[@itemprop="jobTitle"]/text()'))
+        page_url = j.get("url") or "<MISSING>"
+        location_name = j.get("store") or "<MISSING>"
+        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        if phone == "<MISSING>":
+            r = session.get("https://www.yogapod.com/studios/")
+            tree = html.fromstring(r.text)
             phone = "".join(
-                d.xpath(
-                    './/*[contains(@data-name, "mk-icon-phone")]/following-sibling::span/text()'
+                tree.xpath(
+                    f'//h1[./a[@href="{page_url}"]]/following-sibling::p[last()]/text()'
                 )
-            )
-            map_link = "".join(
-                d.xpath('.//preceding::iframe[contains(@src, "/maps/embed")]/@src')
             )
 
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-            if street_address.find("3045") != -1:
-                map_link = "".join(
-                    d.xpath('.//preceding::iframe[contains(@src, "-82.37053")]/@src')
-                )
-                latitude = map_link.split("!1d")[1].strip().split("!")[0].strip()
-                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-            location_type = "<MISSING>"
+        hours = j.get("hours") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            a = html.fromstring(hours)
             hours_of_operation = (
-                " ".join(
-                    d.xpath(
-                        './/preceding::h4[contains(text(), "HOURS")]/following-sibling::h6/text() | .//preceding::table[@class="mabel-bhi-businesshours"]//tr/td/text() | .//preceding::div[@id="text-block-58"]/h6/text()'
-                    )
-                )
-                .replace("\n", "")
-                .replace("Child Care 8:00AM – 10:30AM", "")
-                .strip()
-                or "<MISSING>"
+                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
             )
-            if page_url.find("gainesville") != -1:
-                page_url = "https://www.yogapod.com/gainesville/"
+            hours_of_operation = " ".join(hours_of_operation.split())
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

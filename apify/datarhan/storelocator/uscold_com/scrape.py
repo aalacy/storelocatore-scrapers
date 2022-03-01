@@ -15,27 +15,34 @@ def fetch_data():
 
     with SgFirefox() as driver:
         driver.get(start_url)
-        sleep(15)
+        sleep(25)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath("//tr[@mid]")
     for poi_html in all_locations:
         location_name = poi_html.xpath('.//td[contains(@class, "title")]/text()')[0]
         raw_address = poi_html.xpath('.//td[contains(@class, "address")]/text()')[0]
-        phone = poi_html.xpath('.//td[@class="wpgmza_table_description"]/p/text()')
-        phone = [e.strip() for e in phone if "P:" in e]
-        phone = phone[0] if phone else ""
+        data = poi_html.xpath('.//td[@class="wpgmza_table_description"]/p/text()')
+        phone = [e.strip() for e in data if "p:" in e.lower()]
+        if not phone:
+            phone = [e.strip() for e in data if "tel:" in e.lower()]
+        phone = (
+            phone[0].split("P:")[-1].split("p:")[-1].split("Tel:")[-1] if phone else ""
+        )
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
+        city = addr.city
+        if city == "Park":
+            city = "McClellan Park"
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code="",

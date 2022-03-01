@@ -73,7 +73,7 @@ def get_data(page_url, sgw: SgWriter):
     street_address, city, state, postal = get_address(raw_address)
 
     try:
-        text = "".join(tree.xpath("//iframe/@data-src"))
+        text = "".join(tree.xpath("//iframe/@data-src|//iframe/@src"))
         latitude = text.split("!3d")[1].split("!")[0]
         longitude = text.split("!2d")[1].split("!")[0]
     except:

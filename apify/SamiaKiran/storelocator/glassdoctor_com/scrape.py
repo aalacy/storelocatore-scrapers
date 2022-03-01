@@ -3,21 +3,22 @@ import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape import sgpostal as parser
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "glassdoctor_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
 DOMAIN = "https://glassdoctor.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def strip_accents(text):
@@ -38,7 +39,9 @@ def fetch_data():
             if loc.find("a").text == "Michigan" or "portland" in page_url:
                 continue
             log.info(page_url)
-            r = session.get(page_url, headers=headers, allow_redirects=True)
+            r = session.get(page_url, headers=headers)
+            if "Opening Soon!" in r.text:
+                continue
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1").text.replace("\n", "")
             try:
@@ -48,17 +51,19 @@ def fetch_data():
                     .replace("|", " ")
                     .replace(",", " ")
                 )
-                formatted_addr = parser.parse_address_intl(raw_address)
-                street_address = formatted_addr.street_address_1
-                if street_address is None:
-                    street_address = formatted_addr.street_address_2
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
-                city = formatted_addr.city
-                state = formatted_addr.state if formatted_addr.state else "<MISSING>"
-                zip_postal = formatted_addr.postcode
+                pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
             except:
                 try:
                     street_address = soup.find(
@@ -96,27 +101,11 @@ def fetch_data():
             except:
                 pass
             phone = phone.replace("Call", "")
-            try:
-                coords = soup.select_one("iframe[src*=maps]")["src"]
-                r = session.get(coords, headers=headers)
-                coords = r.text.split("],0],")[0].rsplit("[null,null,", 1)[1].split(",")
-                latitude = coords[0]
-                longitude = coords[1]
-                if "null" in latitude:
-                    coords = (
-                        r.text.split("],5],")[0].rsplit("[null,null,", 1)[1].split(",")
-                    )
-                    latitude = coords[0]
-                    longitude = coords[1]
-                    if "null" in latitude:
-                        coords = r.text.split("],")[3].rsplit(",[", 1)[1].split(",")
-                        latitude = coords[0]
-                        longitude = coords[1]
-            except:
-                latitude = MISSING
-                longitude = MISSING
-            if not street_address:
-                street_address = MISSING
+            if not city:
+                city = r.text.split('"city":"')[1].split('"')[0]
+            store_number = r.text.split('"franchisee":"')[1].split('"')[0]
+            latitude = MISSING
+            longitude = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -126,7 +115,7 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal,
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
                 latitude=latitude,
@@ -139,7 +128,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
