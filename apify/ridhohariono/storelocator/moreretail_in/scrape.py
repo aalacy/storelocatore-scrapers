@@ -74,6 +74,8 @@ def fetch_data():
         data = session.post(API_URL, headers=HEADERS, data={"city": city}).json()
         for row in data["stores"]:
             location_name = row["name"].replace("\n", " ").strip()
+            if "MORE" in location_name.upper() and len(location_name.split(",")) > 1:
+                location_name = location_name.split(",")[0]
             city = row["city"]
             state = row["state"]
             zip_postal = row["pincode"]
@@ -90,7 +92,7 @@ def fetch_data():
             store_number = row["id"]
             location_type = row["store_type"]
             country_code = "IN"
-            location_type = MISSING
+            location_type = row["store_type"]
             if not row["map_location"]:
                 latitude = MISSING
                 longitude = MISSING

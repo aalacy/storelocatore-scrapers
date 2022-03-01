@@ -26,9 +26,9 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         try:
-            latitude, longitude = j["geometry"]["coordinates"]
+            longitude, latitude = j["geometry"]["coordinates"]
         except:
-            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+            longitude, latitude = SgRecord.MISSING, SgRecord.MISSING
 
         j = j["properties"]
         location_name = j.get("name")

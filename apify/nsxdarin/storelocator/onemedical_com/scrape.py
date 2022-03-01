@@ -18,7 +18,7 @@ def fetch_data():
     url = "https://www.onemedical.com/locations/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<a href="/locations/' in line and 'class="link-list' in line:
+        if 'href="/locations/' in line and "tabindex" not in line:
             code = line.split("/locations/")[1].split('"')[0]
             lurl = "https://www.onemedical.com/api/locations/?code=" + code
             logger.info(("Pulling Region %s..." % code))
@@ -115,6 +115,8 @@ def fetch_data():
             hours = hours.split(" (")[0].strip()
         if "; Wednesday 3" in hours:
             hours = hours.split("; Wednesday 3")[0].strip()
+        if "Closed every" in hours:
+            hours = "Temporarily Closed"
         yield SgRecord(
             locator_domain=website,
             page_url=purl,

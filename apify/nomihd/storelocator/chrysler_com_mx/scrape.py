@@ -82,7 +82,9 @@ def fetch_data():
                         store.xpath(".//a[contains(@href,'tel:')]//text()")
                     ).strip()
 
-                    page_url = "<MISSING>"
+                    page_url = "".join(
+                        store.xpath('./div[@class="field url"]/a/@href')
+                    ).strip()
 
                     hours_of_operation = "<MISSING>"
 

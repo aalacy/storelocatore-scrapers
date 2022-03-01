@@ -28,8 +28,8 @@ def fetch_data(sgw: SgWriter):
 
             page_u_slug = "".join(l.xpath('.//p[@class="direccion"]/a/@href'))
             page_url = f"http://www.supercor.es{page_u_slug}"
-            location_name = "".join(l.xpath(".//preceding::h3[1]/text()"))
             location_type = "".join(l.xpath('.//p[@class="logo"]/span/text()'))
+            location_name = location_type
             street_address = (
                 "".join(l.xpath('.//p[@class="direccion"]/text()'))
                 .replace("\n", "")

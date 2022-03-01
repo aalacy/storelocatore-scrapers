@@ -39,6 +39,7 @@ def fetch_data(sgw: SgWriter):
             )
             .replace("\n", "")
             .replace("&NBSP;", "")
+            .replace("&AMP;", "&")
             .strip()
         )
         a = parse_address(International_Parser(), ad)

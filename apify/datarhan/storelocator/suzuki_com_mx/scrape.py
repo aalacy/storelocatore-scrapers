@@ -16,7 +16,6 @@ def fetch_data():
 
     data = session.get(start_url, headers=hdr).json()
     for e in data["items"]:
-        city = e["name"]
         for poi in e["items"]:
             street_address = poi["street"]
             if street_address and poi["extNumber"]:
@@ -25,13 +24,25 @@ def fetch_data():
                 street_address = poi["extNumber"]
             if poi["intNumber"]:
                 street_address += " " + poi["intNumber"]
+            if street_address and poi["suburb"]:
+                street_address += ", " + poi["suburb"]
+            if street_address == "1313":
+                street_address = poi["address"].split(poi["suburb"])[0].strip()
+            if not street_address:
+                street_address = (
+                    " ".join(poi["address"].split())
+                    .split(poi["municipality"].strip())[0]
+                    .strip()
+                )
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url="https://www.suzuki.com.mx/autos/concesionarias",
                 location_name=poi["name"],
                 street_address=street_address,
-                city=city,
+                city=poi["municipality"],
                 state=poi["state"],
                 zip_postal=poi["zipCode"],
                 country_code="MX",
