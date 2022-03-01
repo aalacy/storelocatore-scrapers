@@ -73,11 +73,6 @@ function extractHoursOfOperation($) {
 }
 
 async function fetchData({ page, request }) {
-  // waiting for google popup to load. Sometimes it stalls so just kick it back into queue
-  await page.waitForSelector('.store-item', { timeout: 15000 });
-
-  await setTimeout(() => {}, 6000);
-
   const html = await page.content();
   const parser = parseHtml(html);
   const storePopup = parser.$('.store-item');
