@@ -65,10 +65,14 @@ def fetch_data():
             except:
                 pass
             city = row["city"]
+            try:
+                addr = getAddress(street_address).strip()
+            except:
+                addr = street_address
             street_address = re.sub(
                 r",?\s?.*Shopping Centre|" + city,
                 "",
-                getAddress(street_address).strip(),
+                addr,
                 flags=re.IGNORECASE,
             )
             if search.current_country().upper() in ["US", "AU", "IRELAND"]:
