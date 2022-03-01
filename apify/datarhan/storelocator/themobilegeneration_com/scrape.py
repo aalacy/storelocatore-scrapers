@@ -45,7 +45,7 @@ def fetch_data():
             sleep(5)
             try:
                 driver.find_element_by_xpath(
-                    '//select[@data-wpgmza-filter-widget-class="WPGMZA\CustomFieldFilterWidget\Dropdown"]'
+                    '//select[contains(@data-wpgmza-filter-widget-class, "Dropdown")]'
                 ).click()
             except Exception:
                 pass
