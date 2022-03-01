@@ -210,6 +210,10 @@ def fetch_data():
         hours = hours.replace(" (Toddler time: 10:00 AM to 1:00 PM) ", "").replace(
             " (Toddler time: 9 AM to 11 AM)", ""
         )
+        try:
+            hours = hours.split(" Tuesday s and Thursday s ", 1)[0]
+        except:
+            pass
         yield SgRecord(
             locator_domain="https://www.bigairusa.com/",
             page_url=link,
