@@ -46,6 +46,7 @@ def fetch_data():
                 '//div[@class="study-periods-for-day-of-week clearfix"]//text()'
             )
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            country_code = start_url.split(".")[-1][:-1]
 
             item = SgRecord(
                 locator_domain=domain,
@@ -55,7 +56,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code="",
+                country_code=country_code,
                 store_number="",
                 phone=phone,
                 location_type="",
