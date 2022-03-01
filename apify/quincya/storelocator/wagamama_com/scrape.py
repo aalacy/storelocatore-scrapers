@@ -80,6 +80,14 @@ def fetch_data(sgw: SgWriter):
             list(base.find(class_="c-hours-details").tbody.stripped_strings)
         )
 
+        try:
+            if "back soon" in base.find(class_="Core-eventTitle").text.lower():
+                hours_of_operation = "Temporarily Closed"
+            if "near" in base.find(class_="Core-eventTitle").text.lower():
+                continue
+        except:
+            pass
+
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
