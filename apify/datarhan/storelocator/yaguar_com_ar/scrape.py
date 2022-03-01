@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -65,6 +66,7 @@ def fetch_data():
         )[0]
         with SgFirefox() as driver:
             driver.get(page_url)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
         geo = (
             loc_dom.xpath("//iframe/@src")[-1].split("q=")[-1].split("&")[0].split(",")
