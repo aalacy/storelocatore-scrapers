@@ -77,6 +77,10 @@ def fetch_data():
         lng = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if '<div class="Heading--lead ContentBanner-title">' in line2:
+                name = line2.split('<div class="Heading--lead ContentBanner-title">')[
+                    1
+                ].split("<")[0]
             if '"normalHours":[' in line2:
                 days = (
                     line2.split('"normalHours":[')[1].split(']},"')[0].split('"day":"')
