@@ -20,12 +20,18 @@ def fetch_data():
         geo = poi["geoCoordinates"]
         zip_code = poi["zipList"][0] if poi.get("zipList") else ""
         hoo = poi["schedule"][0] if poi.get("schedule") else ""
+        if "Metro" in poi["name"]:
+            continue
+        street_address = poi["address"]
+        if poi["name"] == "Wong Panorama":
+            street_address = "Av. Javier Prado Este Sublote 4B-4C"
+            hoo = "Lunes a Domingo de 8:00 a.m. a 10:00 p.m."
 
         item = SgRecord(
             locator_domain=domain,
             page_url="https://www.wong.pe/institucional/nuestras-tiendas",
             location_name=poi["name"],
-            street_address=poi["address"],
+            street_address=street_address,
             city="",
             state="",
             zip_postal=zip_code,
