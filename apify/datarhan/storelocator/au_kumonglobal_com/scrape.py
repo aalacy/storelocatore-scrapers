@@ -27,6 +27,7 @@ def fetch_data():
             location_name = " ".join(
                 poi_html.xpath('.//span[@class="centre-heading"]/text()')
             )
+            country_code = "https://www.kumonsearch.co.nz/".split(".")[-1].split("/")[0]
             url = poi_html.xpath('.//a[contains(text(), "More Info")]/@href')[0]
             page_url = urljoin(start_url, url)
             raw_address = poi_html.xpath(
@@ -59,7 +60,7 @@ def fetch_data():
                 city=city,
                 state=state,
                 zip_postal=zip_code,
-                country_code="",
+                country_code=country_code,
                 store_number="",
                 phone=phone,
                 location_type="",
