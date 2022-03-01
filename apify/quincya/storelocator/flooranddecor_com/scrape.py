@@ -14,6 +14,9 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers2 = {"User-Agent": user_agent}
+
     locator_domain = "https://www.flooranddecor.com/"
     base_link = "https://www.flooranddecor.com/on/demandware.store/Sites-floor-decor-Site/default/Stores-GetStores?ajax=true"
 
@@ -66,12 +69,9 @@ def fetch_data(sgw: SgWriter):
             continue
 
         for store in stores:
-            location_type = "<MISSING>"
             location_name = store["name"]
             if store["isUpcomingStore"]:
                 continue
-            if "CLOSED" in location_name.upper():
-                location_type = "Closed"
             try:
                 street_address = (store["address1"] + " " + store["address2"]).strip()
             except:
@@ -81,17 +81,38 @@ def fetch_data(sgw: SgWriter):
             zip_code = store["postalCode"]
             country_code = store["countryCode"]
             phone = store["phone"]
+            location_type = store["storetype"]
             latitude = store["latitude"]
             longitude = store["longitude"]
             search.found_location_at(latitude, longitude)
             store_number = store["ID"]
+            link = "https://www.flooranddecor.com/store?storeID=" + str(store_number)
             hours_of_operation = BeautifulSoup(store["pickupHours"], "lxml").get_text(
                 " "
             )
-            if "cannot be" in hours_of_operation:
-                hours_of_operation = ""
+            if store["storeStatus"]["temporarilyClosed"]:
+                hours_of_operation = "Temporarily Closed"
+            if store["storeStatus"]["comingSoon"]:
+                continue
+            if store["storeStatus"]["closed"] or "CLOSED" in location_name.upper():
+                hours_of_operation = "Closed"
 
-            link = "https://www.flooranddecor.com/store?storeID=" + str(store_number)
+            if "cannot be" in hours_of_operation:
+                req = session.get(link, headers=headers2)
+                base = BeautifulSoup(req.text, "lxml")
+                try:
+                    hours_of_operation = " ".join(
+                        list(
+                            base.find(
+                                class_="b-storelocator_hours-list"
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    if "closed for rebuild" in base.text.lower():
+                        hours_of_operation = "Temporarily Closed"
+                    else:
+                        hours_of_operation = ""
 
             sgw.write_row(
                 SgRecord(

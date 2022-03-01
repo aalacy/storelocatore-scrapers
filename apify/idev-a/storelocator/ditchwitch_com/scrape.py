@@ -31,7 +31,7 @@ class ExampleSearchIteration(SearchIteration):
         total = 0
         lat = coord[0]
         lng = coord[1]
-        with SgRequests(verify_ssl=False) as http:
+        with SgRequests(verify_ssl=False, proxy_country="us") as http:
             current_country = current_country.upper()
             logger.info(f"[{current_country}] {lat, lng}")
             if current_country == "US":
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         "za",
     ]
     search_maker = DynamicSearchMaker(
-        use_state=False, search_type="DynamicZipAndGeoSearch", granularity=Grain_1_KM()
+        search_type="DynamicZipAndGeoSearch", granularity=Grain_1_KM()
     )
     with SgWriter(
         deduper=SgRecordDeduper(
