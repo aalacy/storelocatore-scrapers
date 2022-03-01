@@ -214,11 +214,13 @@ def fetch_data():
             hours = hours.split(" Tuesday s and Thursday s ", 1)[0]
         except:
             pass
-        if "" in link:
+        if "https://www.bigairusa.com/corona/" in link:
             hours = hours.replace(
                 "Friday 3:00 PM to 7:00 PM 11:00 AM to 7:00 PM 11:00 AM to 8:00 PM",
                 "Friday  3:00 PM to 7:00 PM Saturday 11:00 AM to 7:00 PM Sunday 11:00 AM to 8:00 PM",
             )
+        if "https://www.bigairusa.com/buena-park/" in link:
+            hours = hours.replace("Toddler Time: 10:00 AM to 1:00 PM", "")
         yield SgRecord(
             locator_domain="https://www.bigairusa.com/",
             page_url=link,
