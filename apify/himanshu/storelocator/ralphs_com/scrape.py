@@ -140,7 +140,6 @@ def fetch_data(sgw: SgWriter):
                 location_type = "fuel"
             latitude = key1["location"]["lat"]
             longitude = key1["location"]["lng"]
-            # search.found_location_at(latitude, longitude)
 
             hours = ""
             try:
