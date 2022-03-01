@@ -96,6 +96,18 @@ def fetch_data():
             .strip()
         )
         add = add.replace("Rose E. Schneider Family YMCA<br>", "")
+        if "160 Medical Center" in add:
+            zc = "16025"
+        hours = (
+            hours.replace("<strong>", "")
+            .replace("</strong>", "")
+            .replace("<ul>", "")
+            .replace("<li>", "")
+            .replace("</ul>", "")
+            .replace("</li>", "")
+            .replace(":", ": ")
+            .replace("  ", " ")
+        )
         yield SgRecord(
             locator_domain=website,
             page_url=lurl,

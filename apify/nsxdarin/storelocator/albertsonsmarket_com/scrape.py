@@ -39,7 +39,10 @@ def fetch_data():
                     phone = item.split('"PhoneNumber":"')[1].split('"')[0]
                     lat = item.split('"Latitude":')[1].split(",")[0]
                     lng = item.split('"Longitude":')[1].split(",")[0]
-                    hours = item.split('"StoreHours":"')[1].split('"')[0]
+                    try:
+                        hours = item.split('"StoreHours":"')[1].split('"')[0]
+                    except:
+                        hours = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
