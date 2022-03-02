@@ -19,9 +19,6 @@ def fetch_data():
             try:
                 _ = json.loads(loc.split(" = ")[1])["location"]
             except:
-                import pdb
-
-                pdb.set_trace()
                 break
             addr = _["address"]
             street_address = addr["street"]
