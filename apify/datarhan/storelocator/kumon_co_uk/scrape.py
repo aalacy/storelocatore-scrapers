@@ -94,6 +94,7 @@ def fetch_data():
                 country_code = domain.split(".")[0]
             else:
                 country_code = domain.split(".")[-1]
+            country_code = country_code.split("/")[-1]
 
             location_name = loc_dom.xpath('//h1[@class="text-center"]/text()')[0]
             street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[
