@@ -33,6 +33,8 @@ def fetch_data():
                 phone = (
                     soup.select_one("h1.single-title small")
                     .text.split("P:")[-1]
+                    .split("or")[0]
+                    .split("•")[0]
                     .strip()
                 )
                 hours_of_operation = soup.select_one("div.location-top h3").text
