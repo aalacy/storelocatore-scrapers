@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup as bs
 import json
 from sglogging import SgLogSetup
 from fuzzywuzzy import process
+from sgscrape.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("phoenix")
 
@@ -78,7 +79,11 @@ def fetch_data():
                     .replace("-", "")
                     .strip()
                 )
-            addr = loc.select_one("div.campus-dir-item__location a").text.split(",")
+            raw_address = loc.select_one("div.campus-dir-item__location a").text.strip()
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             coord = ["", ""]
             href = loc.select_one("div.campus-dir-item__location a")["href"]
             try:
@@ -91,10 +96,10 @@ def fetch_data():
             record = SgRecord(
                 page_url="https://www.phoenix.edu/campus-locations.html#additional-campus-directory",
                 location_name=loc.h4.text.strip(),
-                street_address=addr[0].replace("\r\n", ""),
-                city=addr[1],
-                state=addr[-1].strip().split()[0],
-                zip_postal=addr[-1].strip().split()[-1],
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 latitude=coord[0],
                 longitude=coord[1],
                 country_code="US",
@@ -120,7 +125,15 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.CITY, SgRecord.Headers.PHONE}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

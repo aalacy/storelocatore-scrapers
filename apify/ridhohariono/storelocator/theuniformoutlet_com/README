@@ -1,0 +1,4 @@
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+      zip state                REASON  rowNumber
+22  07753    NY  ZIPCODE_NOT_IN_STATE         22

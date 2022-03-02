@@ -27,14 +27,15 @@ def fetch_data():
         dom = etree.HTML(response.text)
         all_states = dom.xpath('//a[@class="Directory-listLink"]')
         for state in all_states:
-            url = urljoin(country_url, state.xpath("@href")[0])
+            state_url = urljoin(country_url, state.xpath("@href")[0])
             count = state.xpath("@data-count")[0][1:-1]
             if count == "1":
-                all_locations.append(url)
+                all_locations.append(state_url)
                 continue
-            response = session.get(urljoin(country_url, url))
+            response = session.get(urljoin(country_url, state_url))
             dom = etree.HTML(response.text)
             all_locations += dom.xpath('//a[span[@class="LocationName"]]/@href')
+            all_locations += dom.xpath('//a[@data-ya-track="businessname"]/@href')
             cities = dom.xpath('//a[@class="Directory-listLink"]')
             for city in cities:
                 url = city.xpath("@href")[0]
@@ -42,11 +43,12 @@ def fetch_data():
                 if count == "1":
                     all_locations.append(url)
                     continue
-                response = session.get(urljoin(start_url, url))
+                response = session.get(urljoin(state_url, url))
                 dom = etree.HTML(response.text)
                 all_locations += dom.xpath('//a[span[@class="LocationName"]]/@href')
+                all_locations += dom.xpath('//a[@data-ya-track="businessname"]/@href')
 
-    for url in all_locations:
+    for url in list(set(all_locations)):
         if "https" not in url:
             if url.startswith(".."):
                 url = url[2:]
@@ -54,11 +56,16 @@ def fetch_data():
         else:
             page_url = url
         page_url = page_url.replace("/../", "/")
+        if "1000-premium-outlets-drive-1871" in page_url:
+            continue
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = "".join(loc_dom.xpath('//h1[@itemprop="name"]//text()'))
-        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')[0]
+        if "STORE CLOSED" in location_name:
+            continue
+        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')
+        street_address = street_address[0]
         city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]
         state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0]
         zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]

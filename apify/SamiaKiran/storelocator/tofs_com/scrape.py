@@ -75,7 +75,7 @@ def fetch_data():
         )
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=url,
+            page_url="https://www.tofs.com/pages/store-finder",
             location_name=location_name,
             street_address=street_address.strip(),
             city=city.strip(),

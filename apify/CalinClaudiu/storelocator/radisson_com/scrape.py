@@ -69,11 +69,15 @@ def no_json(soup):
 def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
-        response = session.get(url, headers=headers)
-        soup = b4(response.text, "lxml")
-        logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
-        if len(response.text) < 400:
-            logzilla.info(f"Content\n{response.text}\n\n")
+        try:
+            response = session.get(url, headers=headers)
+            soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
+        except Exception as e:
+            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
+
         try:
             data = json.loads(
                 str(
@@ -89,7 +93,10 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
                 strict=False,
             )
         except Exception:
-            data = no_json(response.text)
+            try:
+                data = no_json(response.text)
+            except Exception:
+                data = {}
         data["index"] = index
         data["requrl"] = url
         data["STATUS"] = True

@@ -1,47 +1,19 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
 import lxml.html
+from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("genesishealth_com")
-
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36",
@@ -52,11 +24,11 @@ def fetch_data():
         "https://www.genesishealth.com/facilities/location-search-results/",
         headers=headers,
     )
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "html.parser")
 
     for page in soup.find("div", {"class": "Pagination"}).find_all("option"):
         r1 = session.get(page["value"].replace("~", base_url))
-        soup1 = BeautifulSoup(r1.text, "lxml")
+        soup1 = BeautifulSoup(r1.text, "html.parser")
         for script in soup1.find("div", {"class": "LocationsList"}).find_all("li"):
 
             location_name = script.find("a")["title"]
@@ -101,7 +73,7 @@ def fetch_data():
                 logger.info(page_url)
                 store_req = session.get(page_url)
                 store_sel = lxml.html.fromstring(store_req.text)
-                location_soup = BeautifulSoup(store_req.text, "lxml")
+                location_soup = BeautifulSoup(store_req.text, "html.parser")
                 coords = location_soup.find("script", {"type": "application/ld+json"})
                 if coords:
                     try:
@@ -110,45 +82,51 @@ def fetch_data():
                     except:
                         lat = "<MISSING>"
                         lng = "<MISSING>"
-                    location_type = str(coords).split('"@type": "')[1].split('"')[0]
                 else:
                     lat = "<MISSING>"
                     lng = "<MISSING>"
-                    location_type = "<MISSING>"
 
                 temp_hours = store_sel.xpath("//div[@class='DaySchedule ClearFix']")
                 hours_list = []
-                hours = ""
+
                 for hour in temp_hours:
                     day = "".join(hour.xpath('div[@class="Day"]/text()')).strip()
                     time = "".join(hour.xpath('div[@class="Times"]/text()')).strip()
                     hours_list.append(day + time)
 
                 hours = "; ".join(hours_list).strip()
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address.replace("Floor", "").replace("floor", ""))
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append(store_number)
-            store.append(phone)
-            store.append(location_type)
-            store.append(lat)
-            store.append(lng)
-            store.append(hours)
-            store.append(page_url)
 
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            yield store
+            row = SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
-
-def scrape():
-
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

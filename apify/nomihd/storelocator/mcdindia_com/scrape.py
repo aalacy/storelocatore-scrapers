@@ -67,7 +67,17 @@ def fetch_data():
                 )
             )
 
-            raw_address = " ".join(full_address)
+            raw_address = ", ".join(full_address)
+            try:
+                temp_add = (
+                    raw_address.rsplit("-", 1)[-1].strip().replace(" ", "").strip()
+                )
+                if temp_add.isdigit():
+                    raw_address = (
+                        raw_address.rsplit("-", 1)[0].strip() + ", " + temp_add
+                    )
+            except:
+                pass
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
@@ -75,11 +85,61 @@ def fetch_data():
 
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
+
+            if street_address:
+                try:
+                    temp_add = (
+                        street_address.rsplit("-", 1)[-1]
+                        .strip()
+                        .replace(" ", "")
+                        .strip()
+                    )
+                    if temp_add.isdigit():
+                        street_address = full_address.rsplit("-", 1)[0].strip()
+                except:
+                    pass
+
+            if street_address and street_address.isdigit():
+                street_address = ", ".join(raw_address.split(",")[:-2]).strip()
+
             city = "".join(store.xpath("./@data-city")).strip()
             state = formatted_addr.state
             zip = formatted_addr.postcode
+            if zip:
+                zip = zip.split("-")[-1].strip()
 
-            country_code = "IND"
+            if not zip:
+                try:
+                    temp_zip = (
+                        raw_address.split(",")[-1].strip().replace(" ", "").strip()
+                    )
+                    if temp_zip.isdigit() and len(temp_zip) == 6:
+                        zip = temp_zip
+                except:
+                    pass
+
+            if not zip:
+                try:
+                    temp_zip = (
+                        raw_address.split(" ")[-1]
+                        .strip()
+                        .replace(" ", "")
+                        .strip()
+                        .replace(".", "")
+                        .strip()
+                    )
+                    if temp_zip.isdigit():
+                        zip = temp_zip
+                        if len(zip) == 3:
+                            zip = raw_address.split(" ")[-2].strip() + zip
+                            if len(zip) != 6:
+                                zip = "<MISSING>"
+                        else:
+                            zip = "<MISSING>"
+                except:
+                    pass
+
+            country_code = "IN"
 
             store_number = "".join(store.xpath("./@id")).strip().replace("post-", "")
 

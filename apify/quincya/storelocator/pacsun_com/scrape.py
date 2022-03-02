@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
         store_number = store["ID"]
         hours_of_operation = BeautifulSoup(store["storeHours"], "lxml").get_text(" ")
 
-        link = "https://www.pacsun.com/stores"
+        link = "https://www.pacsun.com/store?id=" + str(store_number)
 
         sgw.write_row(
             SgRecord(

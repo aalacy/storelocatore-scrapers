@@ -24,10 +24,15 @@ def fetch_data():
         )[0]
         raw_addr = poi_html.xpath('.//p[@class="storelocator-address"]/text()')
         raw_addr = [e.strip() for e in raw_addr if e.strip()]
+        if len(raw_addr) == 1:
+            raw_addr = raw_addr[0].split(", ")
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else ""
         hoo = poi_html.xpath('.//p[@class="storelocator-opening-daily "]//text()')
         hoo = " ".join([e.strip() for e in hoo])
+        zip_code = raw_addr[-1]
+        if len(zip_code.split()[-1]) > 3:
+            zip_code = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -36,7 +41,7 @@ def fetch_data():
             street_address=raw_addr[-3],
             city=raw_addr[-2],
             state="",
-            zip_postal=raw_addr[-1],
+            zip_postal=zip_code,
             country_code="",
             store_number="",
             phone=phone,

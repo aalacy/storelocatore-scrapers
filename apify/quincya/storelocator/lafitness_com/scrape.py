@@ -21,7 +21,6 @@ def fetch_data(sgw: SgWriter):
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9",
         "Connection": "keep-alive",
-        "Content-Length": "0",
         "Content-Type": "application/json; charset=utf-8",
         "Host": "lafitness.com",
         "Origin": "https://lafitness.com",

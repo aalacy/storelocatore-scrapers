@@ -13,11 +13,11 @@ logger = SgLogSetup().get_logger("communitymedicalservices")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://communitymedicalservices.org/"
+base_url = "https://communitymedicalservices.org/locations/"
 
 
 def fetch_data():
-    locator_domain = "https://communitymedicalservices.org/"
-    base_url = "https://communitymedicalservices.org/locations/"
     with SgRequests() as session:
         links = json.loads(
             session.get(base_url, headers=_headers)
@@ -32,29 +32,35 @@ def fetch_data():
                 continue
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            _pp = sp1.find("h4", string=re.compile(r"Phone:"))
+            _pp = sp1.find("", string=re.compile(r"^Phone:"))
             phone = ""
             if _pp:
                 phone = (
-                    list(_pp.find_next_sibling().stripped_strings)[0]
+                    list(_pp.find_parent().find_next_sibling().stripped_strings)[0]
                     .split(":")[-1]
                     .replace("Phone", "")
                 )
             addr = list(
-                sp1.find("h4", string=re.compile(r"Location:"))
+                sp1.find("", string=re.compile(r"^Location:"))
+                .find_parent()
                 .find_next_sibling("p")
                 .stripped_strings
             )
-            _hr = sp1.find(
-                "script",
-                src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
-            )
-            if _hr:
-                hours = json.loads(
-                    session.get(_hr["src"], headers=_headers)
-                    .text.split("Yext._embed(")[1][:-1]
-                    .strip()
-                )["entities"][0]["attributes"]["hours"]
+            hours = []
+            _hh = sp1.find("h3", string=re.compile(r"^Hours:"))
+            if _hh:
+                hours = list(_hh.find_next_sibling().stripped_strings)
+            else:
+                _hr = sp1.find(
+                    "script",
+                    src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
+                )
+                if _hr:
+                    res = session.get(_hr["src"], headers=_headers).text
+                    if "Entity not found" not in res:
+                        hours = json.loads(res.split("Yext._embed(")[1][:-1].strip())[
+                            "entities"
+                        ][0]["attributes"]["hours"]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
